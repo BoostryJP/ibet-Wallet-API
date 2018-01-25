@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from time import sleep
 from web3 import Web3
 from solc import compile_source
 
@@ -10,6 +9,15 @@ web3.personal.unlockAccount(web3.eth.accounts[0],"password",1000)
 
 compile_sol = compile_source(source_code)
 
+print('------abi------')
+print(compile_sol['<stdin>:MyToken']['abi'])
+
+print('------bin------')
+print(compile_sol['<stdin>:MyToken']['bin'])
+
+print('------bin-runtime------')
+print(compile_sol['<stdin>:MyToken']['bin-runtime'])
+
 MyContract = web3.eth.contract(
     abi = compile_sol['<stdin>:MyToken']['abi'],
     bytecode = compile_sol['<stdin>:MyToken']['bin'],
@@ -18,18 +26,3 @@ MyContract = web3.eth.contract(
 
 trans_hash = MyContract.deploy(transaction={'from':web3.eth.accounts[0]})
 print(trans_hash)
-
-# wait for mining
-#trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
-#print(trans_receipt)
-
-# get the contract address
-#contract_address = trans_receipt['contractAddress']
-
-# now we can instantiate the contract factory to get an instance of the contract.
-#my_contract = MyContract(contract_address)
-#print(my_contract)
-
-# now you should be able to call the contract methods.
-#balance = my_contract.call().getBalance(obj.eth.accounts[0])
-#print(balance)
