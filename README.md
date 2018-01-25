@@ -225,3 +225,11 @@ geth --datadir ~/eth_private --networkid 15 --cache=512 --rpc --rpcaddr "0.0.0.0
 ```
 $ sudo apt-get install solc
 ```
+
+* pyethereumをインストール
+```
+$ sudo apt-get install libssl-dev build-essential automake pkg-config libtool libffi-dev libgmp-dev libyaml-cpp-dev
+$ git clone https://github.com/ethereum/pyethereum/
+$ cd pyethereum
+$ python setup.py install
+```
