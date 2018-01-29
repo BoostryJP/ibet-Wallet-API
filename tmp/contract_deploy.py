@@ -2,7 +2,7 @@
 from web3 import Web3
 from solc import compile_source
 
-source_code = 'contract MyToken {     address issuer;     mapping (address => uint) balances;      event Issue(address account, uint amount);     event Transfer(address from, address to, uint amount);      function MyToken() {         issuer = msg.sender;     }      function issue(address account, uint amount) {         if (msg.sender != issuer) throw;         balances[account] += amount;     }      function transfer(address to, uint amount) {         if (balances[msg.sender] < amount) throw;          balances[msg.sender] -= amount;         balances[to] += amount;          Transfer(msg.sender, to, amount);     }      function getBalance(address account) constant returns (uint) {         return balances[account];     } }'
+source_code = 'contract MyToken {  string public name;  string public symbol;  uint8 public decimals;  uint256 public totalSupply;  mapping (address => uint256) public balanceOf;  event Transfer(address indexed from, address indexed to, uint256 value);  function MyToken(uint256 _supply, string _name, string _symbol, uint8 _decimals) {    balanceOf[msg.sender] = _supply;    name = _name;    symbol = _symbol;    decimals = _decimals;    totalSupply = _supply;  }  function transfer(address _to, uint256 _value) {    if (balanceOf[msg.sender] < _value) throw;    if (balanceOf[_to] + _value < balanceOf[_to]) throw;    balanceOf[msg.sender] -= _value;    balanceOf[_to] += _value;    Transfer(msg.sender, _to, _value);  }}'
 
 web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
 web3.personal.unlockAccount(web3.eth.accounts[0],"password",1000)
@@ -24,5 +24,5 @@ MyContract = web3.eth.contract(
     bytecode_runtime = compile_sol['<stdin>:MyToken']['bin-runtime'],
 )
 
-trans_hash = MyContract.deploy(transaction={'from':web3.eth.accounts[0]})
-print(trans_hash)
+#trans_hash = MyContract.deploy(transaction={'from':web3.eth.accounts[0]})
+#print(trans_hash)

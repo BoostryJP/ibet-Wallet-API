@@ -8,7 +8,10 @@ from app.middleware import JSONTranslator, DatabaseSessionManager
 from app.database import db_session, init_session
 
 from app.api.common import base
+from app.api.v1 import eth
 from app.api.v1 import issuers
+from app.api.v1 import tokenTemplates
+from app.api.v1 import contracts
 
 from app.errors import AppError
 
@@ -20,8 +23,21 @@ class App(falcon.API):
         LOG.info('API Server is starting')
 
         self.add_route('/', base.BaseResource())
-        self.add_route('/v1/users', issuers.Collection())
-        self.add_route('/v1/users/{user_id}', issuers.Item())
+
+        # Ethereum
+        self.add_route('/v1/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
+
+        # 発行体登録・認証
+        self.add_route('/v1/Users', issuers.Collection())
+        self.add_route('/v1/Users/{user_id}', issuers.Item())
+
+        # コントラクトテンプレート登録・コンパイル、参照
+        self.add_route('/v1/TokenTemplate', tokenTemplates.CompileSol())
+        self.add_route('/v1/TokenTemplates', tokenTemplates.GetAll())
+        self.add_route('/v1/TokenTemplates/{contract_id}', tokenTemplates.GetContractABI())
+
+        # コントラクトデプロイ
+        self.add_route('/v1/Contract', contracts.ContractDeploy())
 
         self.add_error_handler(AppError, AppError.handle)
 

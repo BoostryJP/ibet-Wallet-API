@@ -51,18 +51,11 @@ ERR_PASSWORD_NOT_MATCH = {
     'title': 'Password Not Match'
 }
 
-ERR_INDEX_NOT_FOUND = {
+ERR_DATA_NOT_EXISTS = {
     'status': falcon.HTTP_404,
-    'code': 23,
-    'title': 'Index Not Found'
+    'code': 30,
+    'title': 'Data Not Exists'
 }
-
-ERR_WORD_NOT_EXISTS = {
-    'status': falcon.HTTP_404,
-    'code': 24,
-    'title': 'Word Not Exists'
-}
-
 
 class AppError(Exception):
     def __init__(self, error=ERR_UNKNOWN, description=None):
@@ -130,13 +123,7 @@ class PasswordNotMatch(AppError):
         self.error['description'] = description
 
 
-class IndexNotFoundError(AppError):
+class DataNotExistsError(AppError):
     def __init__(self, description=None):
-        super().__init__(ERR_INDEX_NOT_FOUND)
-        self.error['description'] = description
-
-
-class WordNotExistsError(AppError):
-    def __init__(self, description=None):
-        super().__init__(ERR_WORD_NOT_EXISTS)
+        super().__init__(ERR_DATA_NOT_EXISTS)
         self.error['description'] = description
