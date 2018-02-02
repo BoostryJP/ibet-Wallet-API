@@ -217,7 +217,7 @@ INFO [01-23|09:53:51] Generating DAG in progress               epoch=0 percentag
 ### 2-5. RPC起動
 * RPCを起動する。
 ```
-geth --datadir ~/eth_private --networkid 15 --cache=512 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain “*” --rpcapi “admin,db,eth,debug,miner,net,shh,txpool,personal,web3” console
+geth --datadir ~/eth_private --networkid 15 --cache=512 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" console
 ```
 
 ## 3. その他依存ライブラリ
