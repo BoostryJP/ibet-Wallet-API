@@ -181,6 +181,12 @@ $ geth --datadir ~/eth_private --networkid 15 console
 "0x7ae52ca0c275982bb1c27e7ef5a6e920aad655c2"
 ```
 
+* （補足）アカウントのアンロック
+```
+> personal.unlockAccount("0x7ae52ca0c275982bb1c27e7ef5a6e920aad655c2", "password")
+```
+
+
 ### 2-4. マイニング実行
 * 以下のコマンドを実行する。
 ```
