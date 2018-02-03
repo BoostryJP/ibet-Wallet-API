@@ -2,16 +2,14 @@
 import json
 
 from web3 import Web3
-from eth_utils import to_checksum_address
 
 web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
 
 trans_hash = '0x873d4fd3d8e9b02beaab7f54342a57ce5abe3c100a50d830dc8994f3a3bfc2dc'
 trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
-print('-----trans_hash-----')
-print(trans_receipt)
 
 contract_address = trans_receipt['contractAddress']
+print(contract_address)
 
 abi_json = "[{'constant': True, 'inputs': [], 'name': 'name', 'outputs': [{'name': '', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'totalSupply', 'outputs': [{'name': '', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'decimals', 'outputs': [{'name': '', 'type': 'uint8'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': '', 'type': 'address'}], 'name': 'balanceOf', 'outputs': [{'name': '', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'symbol', 'outputs': [{'name': '', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': '_owner', 'type': 'address'}], 'name': 'getBalanceOf', 'outputs': [{'name': '', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': False, 'inputs': [{'name': '_to', 'type': 'address'}, {'name': '_value', 'type': 'uint256'}], 'name': 'transfer', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'inputs': [{'name': '_supply', 'type': 'uint256'}, {'name': '_name', 'type': 'string'}, {'name': '_symbol', 'type': 'string'}, {'name': '_decimals', 'type': 'uint8'}], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'constructor'}, {'anonymous': False, 'inputs': [{'indexed': True, 'name': 'from', 'type': 'address'}, {'indexed': True, 'name': 'to', 'type': 'address'}, {'indexed': False, 'name': 'value', 'type': 'uint256'}], 'name': 'Transfer', 'type': 'event'}, {'anonymous': False, 'inputs': [{'indexed': True, 'name': 'sender', 'type': 'address'}, {'indexed': False, 'name': 'value', 'type': 'uint256'}], 'name': 'Issue', 'type': 'event'}]"
 
@@ -28,8 +26,13 @@ my_contract = web3.eth.contract(
     bytecode_runtime = bytecode_runtime
 )
 
-owner = to_checksum_address("0x7ae52ca0c275982bb1c27e7ef5a6e920aad655c2")
-balance = my_contract.functions.getBalanceOf(owner).call({"to":contract_address})
+transfer_filter = my_contract.eventFilter('Transfer', {'filter': {},'fromBlock':'earliest'})
+print(transfer_filter.get_new_entries())
+#[]
 
-print('-----balance-----')
-print(balance)
+print(transfer_filter.get_all_entries())
+#[{'args': {'from': '0x7AE52CA0c275982bB1c27e7eF5a6e920aAd655C2', 'to': '0x9bA95eC04393f718628F07b0cA01377Cb6D01e73', 'value': 100}, 'event': 'Transfer', 'logIndex': 0, 'transactionIndex': 0, 'transactionHash': HexBytes('0x274fbe27f2969b7d2932c71093c1caf2c0f598e4a36cc7ed691dff683ad90bf9'), 'address': '0x89a24897486eCeF71A6752450D100E85f886E222', 'blockHash': HexBytes('0x3035eb62421f84cc0c4e4bc355fbb89b2d4db848282ed2d73a3f1a51d07c67ea'), 'blockNumber': 964}, {'args': {'from': '0x7AE52CA0c275982bB1c27e7eF5a6e920aAd655C2', 'to': '0x9bA95eC04393f718628F07b0cA01377Cb6D01e73', 'value': 100}, 'event': 'Transfer', 'logIndex': 0, 'transactionIndex': 0, 'transactionHash': HexBytes('0x3bd1b93f50e6d304b9cd29ca1f9e23405f516a718364c7fee559a2c879c49ff9'), 'address': '0x89a24897486eCeF71A6752450D100E85f886E222', 'blockHash': HexBytes('0xedfba8412f852752ecd253659e7b3fd6694b61fe69115a887774724b78664a46'), 'blockNumber': 986}]
+
+transfer_filter = my_contract.eventFilter('Transfer', {'filter': {},'fromBlock':965})
+print(transfer_filter.get_all_entries())
+#[{'args': {'from': '0x7AE52CA0c275982bB1c27e7eF5a6e920aAd655C2', 'to': '0x9bA95eC04393f718628F07b0cA01377Cb6D01e73', 'value': 100}, 'event': 'Transfer', 'logIndex': 0, 'transactionIndex': 0, 'transactionHash': HexBytes('0x3bd1b93f50e6d304b9cd29ca1f9e23405f516a718364c7fee559a2c879c49ff9'), 'address': '0x89a24897486eCeF71A6752450D100E85f886E222', 'blockHash': HexBytes('0xedfba8412f852752ecd253659e7b3fd6694b61fe69115a887774724b78664a46'), 'blockNumber': 986}]
