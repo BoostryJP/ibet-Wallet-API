@@ -3,6 +3,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
 from web3 import Web3
+from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
@@ -22,7 +23,7 @@ class GetTransactionCount(BaseResource):
         LOG.info('v1.Eth.GetTransactionCount')
 
         web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
-        nonce = web3.eth.getTransactionCount(eth_address)
+        nonce = web3.eth.getTransactionCount(to_checksum_address(eth_address))
         gasprice = web3.eth.gasPrice
 
         transaction_count = {'nonce':nonce, 'gasprice':gasprice}
