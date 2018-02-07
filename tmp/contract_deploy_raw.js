@@ -47,7 +47,7 @@ const gasPrice = 20000000000;
 const gasPriceHex = web3.toHex(gasPrice);
 const gasLimitHex = web3.toHex(5000000);
 
-const nonce = 4;
+const nonce = 5;
 const nonceHex = web3.toHex(nonce);
 
 const rawTx = {
@@ -65,6 +65,7 @@ const serializedTx = tx.serialize();
 
 console.log("0x" + serializedTx.toString("hex"));
 
+/*
 web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), (err, hash) => {
     if (err) { console.log(err); return; }
 
@@ -91,3 +92,4 @@ function waitForTransactionReceipt(hash) {
         //testContract(receipt.contractAddress);
     }
 }
+*/
