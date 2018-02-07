@@ -12,7 +12,7 @@ from app.errors import AppError, InvalidParameterError, DataNotExistsError
 LOG = log.get_logger()
 
 # ------------------------------
-# コントラクトデプロイ
+# トークン発行
 # ------------------------------
 class ContractDeploy(BaseResource):
     '''

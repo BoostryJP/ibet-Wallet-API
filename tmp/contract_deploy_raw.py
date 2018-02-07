@@ -19,7 +19,7 @@ bytecode = utils.decode_hex(bytecode_str)
 print(bytecode)
 
 tx = Transaction(
-    nonce=40,
+    nonce=50,
     to='',
     value=0,
     gasprice=18000000000,

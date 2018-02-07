@@ -6,12 +6,14 @@ from eth_utils import to_checksum_address
 
 web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
 
-trans_hash = '0x873d4fd3d8e9b02beaab7f54342a57ce5abe3c100a50d830dc8994f3a3bfc2dc'
+#trans_hash = '0x873d4fd3d8e9b02beaab7f54342a57ce5abe3c100a50d830dc8994f3a3bfc2dc'
+trans_hash = '0x8891fe72704e18bdbeb3e43f9a4da120b149f326931d2b3dcb54fb0f30144f90'
 trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
 print('-----trans_hash-----')
 print(trans_receipt)
 
 contract_address = trans_receipt['contractAddress']
+#contract_address = '0xc7B2440Bcd1D1Ccdc6B3A272A2BaB7f7D5150E01'
 
 abi_json = "[{'constant': True, 'inputs': [], 'name': 'name', 'outputs': [{'name': '', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'totalSupply', 'outputs': [{'name': '', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'decimals', 'outputs': [{'name': '', 'type': 'uint8'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': '', 'type': 'address'}], 'name': 'balanceOf', 'outputs': [{'name': '', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [], 'name': 'symbol', 'outputs': [{'name': '', 'type': 'string'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': True, 'inputs': [{'name': '_owner', 'type': 'address'}], 'name': 'getBalanceOf', 'outputs': [{'name': '', 'type': 'uint256'}], 'payable': False, 'stateMutability': 'view', 'type': 'function'}, {'constant': False, 'inputs': [{'name': '_to', 'type': 'address'}, {'name': '_value', 'type': 'uint256'}], 'name': 'transfer', 'outputs': [], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'function'}, {'inputs': [{'name': '_supply', 'type': 'uint256'}, {'name': '_name', 'type': 'string'}, {'name': '_symbol', 'type': 'string'}, {'name': '_decimals', 'type': 'uint8'}], 'payable': False, 'stateMutability': 'nonpayable', 'type': 'constructor'}, {'anonymous': False, 'inputs': [{'indexed': True, 'name': 'from', 'type': 'address'}, {'indexed': True, 'name': 'to', 'type': 'address'}, {'indexed': False, 'name': 'value', 'type': 'uint256'}], 'name': 'Transfer', 'type': 'event'}, {'anonymous': False, 'inputs': [{'indexed': True, 'name': 'sender', 'type': 'address'}, {'indexed': False, 'name': 'value', 'type': 'uint256'}], 'name': 'Issue', 'type': 'event'}]"
 

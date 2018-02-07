@@ -12,6 +12,7 @@ from app.api.v1 import eth
 from app.api.v1 import issuers
 from app.api.v1 import tokenTemplates
 from app.api.v1 import contracts
+from app.api.v1 import position
 
 from app.errors import AppError
 
@@ -36,8 +37,11 @@ class App(falcon.API):
         self.add_route('/v1/TokenTemplates', tokenTemplates.GetAll())
         self.add_route('/v1/TokenTemplates/{contract_id}', tokenTemplates.GetContractABI())
 
-        # コントラクトデプロイ
+        # トークン新規発行
         self.add_route('/v1/Contract', contracts.ContractDeploy())
+
+        # 保有トークン一覧
+        self.add_route('/v1/MyTokens/{eth_address}', position.MyTokens())
 
         self.add_error_handler(AppError, AppError.handle)
 
