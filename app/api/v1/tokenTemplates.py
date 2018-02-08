@@ -3,6 +3,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
 from solc import compile_source
+import json
 
 from app import log
 from app.api.common import BaseResource
@@ -32,7 +33,7 @@ class CompileSol(BaseResource):
 
         token_template.template_name = template_name
         token_template.solidity_code = solidity_code
-        token_template.abi = str(compile_sol['<stdin>:MyToken']['abi'])
+        token_template.abi = json.dumps(compile_sol['<stdin>:MyToken']['abi'])
         token_template.bytecode = str(compile_sol['<stdin>:MyToken']['bin'])
         token_template.bytecode_runtime = str(compile_sol['<stdin>:MyToken']['bin-runtime'])
 
