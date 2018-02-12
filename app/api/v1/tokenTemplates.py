@@ -31,11 +31,13 @@ class CompileSol(BaseResource):
 
         compile_sol = compile_source(solidity_code)
 
+        contract_name = '<stdin>:' + template_name
+
         token_template.template_name = template_name
         token_template.solidity_code = solidity_code
-        token_template.abi = json.dumps(compile_sol['<stdin>:MyToken']['abi'])
-        token_template.bytecode = str(compile_sol['<stdin>:MyToken']['bin'])
-        token_template.bytecode_runtime = str(compile_sol['<stdin>:MyToken']['bin-runtime'])
+        token_template.abi = json.dumps(compile_sol[contract_name]['abi'])
+        token_template.bytecode = str(compile_sol[contract_name]['bin'])
+        token_template.bytecode_runtime = str(compile_sol[contract_name]['bin-runtime'])
 
         session.add(token_template)
         self.on_success(res)
