@@ -57,15 +57,9 @@ class MyTokens(BaseResource):
                     raise DataNotExistsError()
 
                 web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
-                abi = json.loads(
-                    token_template['abi']\
-                    .replace("'", '"')\
-                    .replace('True', 'true')\
-                    .replace('False', 'false')
-                )
                 token_contract = web3.eth.contract(
                     address=mytoken['token_address'],
-                    abi = abi,
+                    abi = token_template['abi'],
                     bytecode = token_template['bytecode'],
                     bytecode_runtime = token_template['bytecode_runtime']
                 )
