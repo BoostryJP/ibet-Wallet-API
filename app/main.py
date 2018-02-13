@@ -41,7 +41,7 @@ class App(falcon.API):
         self.add_route('/v1/Contract', contracts.ContractDeploy())
 
         # 保有トークン一覧
-        self.add_route('/v1/MyTokens/{eth_address}', position.MyTokens())
+        self.add_route('/v1/MyTokens/', position.MyTokens())
 
         self.add_error_handler(AppError, AppError.handle)
 

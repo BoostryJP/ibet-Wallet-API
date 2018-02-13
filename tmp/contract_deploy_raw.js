@@ -47,7 +47,7 @@ const gasPrice = 20000000000;
 const gasPriceHex = web3.toHex(gasPrice);
 const gasLimitHex = web3.toHex(5000000);
 
-const nonce = 5;
+const nonce = 7;
 const nonceHex = web3.toHex(nonce);
 
 const rawTx = {
