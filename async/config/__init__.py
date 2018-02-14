@@ -22,3 +22,6 @@ engine = alchemy.create_engine(DATABASE_URL, echo=False)
 # async process
 ASYNC_PROCESS = CONFIG['async_process']
 interval_time = ASYNC_PROCESS['interval']
+
+# web3
+WEB3_HTTP_PROVIDER = CONFIG['web3']['HTTPProvider']

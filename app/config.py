@@ -26,3 +26,6 @@ DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 DB_AUTOCOMMIT = True
 
 LOG_LEVEL = CONFIG['logging']['level']
+
+WEB3_HTTP_PROVIDER = CONFIG['web3']['HTTPProvider']
+WEB3_CHAINID = CONFIG['web3']['chainid']

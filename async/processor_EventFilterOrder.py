@@ -2,9 +2,9 @@
 import time
 import json
 from web3 import Web3
-from config import engine, interval_time
+from config import engine, interval_time, WEB3_HTTP_PROVIDER
 
-web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
+web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
 
 while True:
 
