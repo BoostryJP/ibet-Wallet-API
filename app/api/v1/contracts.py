@@ -122,3 +122,45 @@ class MyContracts(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return request_json
+
+
+# ------------------------------
+# トークン一覧
+# ------------------------------
+class Contracts(BaseResource):
+    '''
+    Handle for endpoint: /v1/Contracts
+    '''
+    def on_get(self, req, res):
+        LOG.info('v1.contracts.MyContracts')
+        session = req.context['session']
+
+        contract_db_list = session.query(Contract).all()
+
+        contracts = []
+        for contract_db in contract_db_list:
+            row = contract_db.to_dict()
+
+            try:
+                token_template = TokenTemplate.find_one(
+                    session, row['template_id']
+                ).to_dict()
+            except NoResultFound:
+                raise DataNotExistsError()
+
+            web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+            token_contract = web3.eth.contract(
+                address=row['contract_address'],
+                abi = token_template['abi'],
+                bytecode = token_template['bytecode'],
+                bytecode_runtime = token_template['bytecode_runtime']
+            )
+            token_name = token_contract.functions.name().call()
+
+            contracts.append({
+                'contract_address': row['contract_address'],
+                'token_name': token_name,
+                'template_name': token_template['template_name']
+            })
+
+        self.on_success(res, contracts)

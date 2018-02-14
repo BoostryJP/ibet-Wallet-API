@@ -43,6 +43,9 @@ class App(falcon.API):
         # 発行済みトークン一覧
         self.add_route('/v1/MyContracts', contracts.MyContracts())
 
+        # トークン一覧
+        self.add_route('/v1/Contracts', contracts.Contracts())
+
         # 保有トークン一覧
         self.add_route('/v1/MyTokens', position.MyTokens())
 
