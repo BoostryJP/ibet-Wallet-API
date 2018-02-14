@@ -8,6 +8,7 @@ from app import log
 from app.api.common import BaseResource
 from app.model import Contract, TokenTemplate
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
+from app import config
 
 LOG = log.get_logger()
 
@@ -26,7 +27,7 @@ class ContractDeploy(BaseResource):
         template_id = request_json['template_id']
         raw_tx_hex = request_json['raw_tx_hex']
 
-        web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
+        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         tx_hash = web3.eth.sendRawTransaction(raw_tx_hex)
 
         contract = Contract()
@@ -84,7 +85,7 @@ class MyContracts(BaseResource):
             except NoResultFound:
                 raise DataNotExistsError()
 
-            web3 = Web3(Web3.HTTPProvider('http://localhost:8545'))
+            web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
             token_contract = web3.eth.contract(
                 address=row['contract_address'],
                 abi = token_template['abi'],
