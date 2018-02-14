@@ -26,7 +26,8 @@ class GetTransactionCount(BaseResource):
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         nonce = web3.eth.getTransactionCount(to_checksum_address(eth_address))
         gasprice = web3.eth.gasPrice
+        chainid = config.WEB3_CHAINID
 
-        transaction_count = {'nonce':nonce, 'gasprice':gasprice}
+        eth_info = {'nonce':nonce, 'gasprice':gasprice, 'chainid':chainid}
 
-        self.on_success(res, transaction_count)
+        self.on_success(res, eth_info)
