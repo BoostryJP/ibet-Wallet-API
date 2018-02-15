@@ -25,8 +25,8 @@ const abi = JSON.parse('[{"constant":true,"inputs":[],"name":"name","outputs":[{
 const contract = new web3.eth.contract(abi);
 
 const supply = 10000;
-const name = "testcoin";
-const symbol = "TC";
+const name = "testcoin2";
+const symbol = "TC2";
 const decimals = 1;
 
 // Get contract data
@@ -47,7 +47,7 @@ const gasPrice = 20000000000;
 const gasPriceHex = web3.toHex(gasPrice);
 const gasLimitHex = web3.toHex(5000000);
 
-const nonce = 7;
+const nonce = 8;
 const nonceHex = web3.toHex(nonce);
 
 const rawTx = {
