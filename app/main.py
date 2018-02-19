@@ -38,10 +38,10 @@ class App(falcon.API):
         self.add_route('/v1/TokenTemplates/{contract_id}', tokenTemplates.GetContractABI())
 
         # トークン新規発行
-        self.add_route('/v1/Contract', contracts.ContractDeploy())
+        #self.add_route('/v1/Contract', contracts.ContractDeploy())
 
         # 発行済みトークン一覧
-        self.add_route('/v1/MyContracts', contracts.MyContracts())
+        #self.add_route('/v1/MyContracts', contracts.MyContracts())
 
         # トークン一覧
         self.add_route('/v1/Contracts', contracts.Contracts())
