@@ -15,29 +15,21 @@ LOG = log.get_logger()
 # ------------------------------
 # コントラクトテンプレート登録
 # ------------------------------
-class CompileSol(BaseResource):
+class SetTemplate(BaseResource):
     '''
     Handle for endpoint: /v1/TokenTemplate/
     '''
     def on_post(self, req, res):
-        LOG.info('v1.tokenTemplates.CompileSol')
+        LOG.info('v1.tokenTemplates.SetTemplate')
         session = req.context['session']
 
-        request_json = CompileSol.validate(req)
-        solidity_code = request_json['solidity_code']
+        request_json = SetTemplate.validate(req)
         template_name = request_json['template_name']
+        abi = request_json['abi']
 
         token_template = TokenTemplate()
-
-        compile_sol = compile_source(solidity_code)
-
-        contract_name = '<stdin>:' + template_name
-
         token_template.template_name = template_name
-        token_template.solidity_code = solidity_code
-        token_template.abi = json.dumps(compile_sol[contract_name]['abi'])
-        token_template.bytecode = str(compile_sol[contract_name]['bin'])
-        token_template.bytecode_runtime = str(compile_sol[contract_name]['bin-runtime'])
+        token_template.abi = abi
 
         session.add(token_template)
         self.on_success(res)
@@ -49,8 +41,8 @@ class CompileSol(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
-            'solidity_code': {'type': 'string', 'empty': False, 'required': True},
-            'template_name': {'type': 'string', 'empty': False, 'required': True}
+            'template_name': {'type': 'string', 'empty': False, 'required': True},
+            'abi': {'type': 'string', 'empty': False, 'required': True}
         })
 
         if not validator.validate(request_json):

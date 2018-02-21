@@ -33,15 +33,9 @@ class App(falcon.API):
         self.add_route('/v1/Users/{user_id}', issuers.Item())
 
         # コントラクトテンプレート登録・コンパイル、参照
-        self.add_route('/v1/TokenTemplate', tokenTemplates.CompileSol())
+        self.add_route('/v1/TokenTemplate', tokenTemplates.SetTemplate())
         self.add_route('/v1/TokenTemplates', tokenTemplates.GetAll())
         self.add_route('/v1/TokenTemplates/{contract_id}', tokenTemplates.GetContractABI())
-
-        # トークン新規発行
-        #self.add_route('/v1/Contract', contracts.ContractDeploy())
-
-        # 発行済みトークン一覧
-        #self.add_route('/v1/MyContracts', contracts.MyContracts())
 
         # トークン一覧
         self.add_route('/v1/Contracts', contracts.Contracts())
