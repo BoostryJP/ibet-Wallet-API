@@ -28,6 +28,16 @@ class MyTokens(BaseResource):
         request_json = MyTokens.validate(req)
         address_list = request_json['address_list']
 
+        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+
+        list_contract_address = '0x4E017fbE3d2F876335478Ee7a4CeFd3EEDf8fdbA'
+        list_contract_abi = json.loads('[{"constant": false,"inputs": [{"name": "_token_address","type": "address"},{"name": "_token_template","type": "string"}],"name": "register","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "_num","type": "uint256"}],"name": "getTokenByNum","outputs": [{"name": "token_address","type": "address"},{"name": "token_template","type": "string"},{"name": "owner_address","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [{"name": "_token_address","type": "address"}],"name": "getOwnerAddress","outputs": [{"name": "issuer_address","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [{"name": "_token_address","type": "address"}],"name": "getTokenByAddress","outputs": [{"name": "token_address","type": "address"},{"name": "token_template","type": "string"},{"name": "owner_address","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "getListLength","outputs": [{"name": "length","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_token_address","type": "address"},{"name": "_new_owner_address","type": "address"}],"name": "changeOwner","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"}]')
+
+        ListContract = web3.eth.contract(
+            address = list_contract_address,
+            abi = list_contract_abi,
+        )
+
         position_list = []
         for eth_address in address_list:
             # ポートフォリオのリストを取得
@@ -47,34 +57,51 @@ class MyTokens(BaseResource):
 
             token_template = None
             for mytoken in portfolio_list:
-                try:
-                    token_template_id = session.query(Contract).filter(
-                        Contract.contract_address == mytoken['token_address']
-                    ).one().to_dict()['template_id']
-                    token_template = TokenTemplate.find_one(
-                        session, token_template_id
-                    ).to_dict()
-                except NoResultFound:
-                    raise DataNotExistsError()
+                token_address = to_checksum_address(mytoken['token_address'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                print(token_template)
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
 
-                web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-                token_contract = web3.eth.contract(
-                    address=mytoken['token_address'],
-                    abi = token_template['abi'],
-                    bytecode = token_template['bytecode'],
-                    bytecode_runtime = token_template['bytecode_runtime']
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
                 )
 
                 owner = to_checksum_address(mytoken['account'])
-                balance = token_contract.functions\
-                    .balanceOf(owner)\
-                    .call({"to":mytoken['token_address']})
-                name = token_contract.functions.name().call()
+                balance = TokenContract.functions.balanceOf(owner).call()
+
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                faceValue = TokenContract.functions.faceValue().call()
+                interestRate = TokenContract.functions.interestRate().call()
+                interestPaymentDate1 = TokenContract.functions.interestPaymentDate1().call()
+                interestPaymentDate2 = TokenContract.functions.interestPaymentDate2().call()
+                redemptionDate = TokenContract.functions.redemptionDate().call()
+                redemptionAmount = TokenContract.functions.redemptionAmount().call()
+                returnDate = TokenContract.functions.returnDate().call()
+                returnAmount = TokenContract.functions.returnAmount().call()
+                purpose = TokenContract.functions.purpose().call()
 
                 position_list.append({
-                    "token_address": mytoken['token_address'],
-                    "name": name,
-                    "balance": balance
+                    'token_address': mytoken['token_address'],
+                    'balance': balance,
+                    'name':name,
+                    'symbol':symbol,
+                    'totalSupply':totalSupply,
+                    'faceValue':faceValue,
+                    'interestRate':interestRate,
+                    'interestPaymentDate1':interestPaymentDate1,
+                    'interestPaymentDate2':interestPaymentDate2,
+                    'redemptionDate':redemptionDate,
+                    'redemptionAmount':redemptionAmount,
+                    'returnDate':returnDate,
+                    'returnAmount':returnAmount,
+                    'purpose':purpose,
                 })
 
         self.on_success(res, position_list)
