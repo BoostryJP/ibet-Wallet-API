@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import requests
 
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
@@ -43,6 +44,7 @@ class Contracts(BaseResource):
             token = ListContract.functions.getTokenByNum(i).call()
             token_address = token[0]
             token_template = token[1]
+            owner_address = token[2]
             abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template).first().abi
             token_abi = json.loads(abi_str)
 
@@ -64,9 +66,23 @@ class Contracts(BaseResource):
             returnAmount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
 
+            image_url_s = TokenContract.functions.image_urls(0).call()
+            image_url_m = TokenContract.functions.image_urls(1).call()
+            image_url_l = TokenContract.functions.image_urls(2).call()
+
+            company_name = ''
+            try:
+                company_list = requests.get('https://s3-ap-northeast-1.amazonaws.com/ibet-company-list-dev/company_list.json').json()
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+            except:
+                pass
+
             token_list.append({
                 'token_address':token_address,
                 'token_template':token_template,
+                'company_name':company_name,
                 'name':name,
                 'symbol':symbol,
                 'totalSupply':totalSupply,
@@ -79,6 +95,11 @@ class Contracts(BaseResource):
                 'returnDate':returnDate,
                 'returnAmount':returnAmount,
                 'purpose':purpose,
+                'image_url':[
+                    {'type':'small', 'url':image_url_s},
+                    {'type':'medium', 'url':image_url_m},
+                    {'type':'large', 'url':image_url_l},
+                ]
             })
 
         self.on_success(res, token_list)
