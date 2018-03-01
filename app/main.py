@@ -27,6 +27,7 @@ class App(falcon.API):
 
         # Ethereum
         self.add_route('/v1/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
+        self.add_route('/v1/Eth/SendRawTransaction', eth.SendRawTransaction())
 
         # 発行体登録・認証
         self.add_route('/v1/Users', issuers.Collection())
