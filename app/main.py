@@ -12,6 +12,7 @@ from app.api.v1 import eth
 from app.api.v1 import issuers
 from app.api.v1 import tokenTemplates
 from app.api.v1 import contracts
+from app.api.v1 import marketInformation
 from app.api.v1 import position
 
 from app.errors import AppError
@@ -33,13 +34,16 @@ class App(falcon.API):
         self.add_route('/v1/Users', issuers.Collection())
         self.add_route('/v1/Users/{user_id}', issuers.Item())
 
-        # コントラクトテンプレート登録・コンパイル、参照
+        # トークンテンプレート登録・参照
         self.add_route('/v1/TokenTemplate', tokenTemplates.SetTemplate())
         self.add_route('/v1/TokenTemplates', tokenTemplates.GetAll())
         self.add_route('/v1/TokenTemplates/{contract_id}', tokenTemplates.GetContractABI())
 
-        # トークン一覧
+        # 公開中トークン一覧
         self.add_route('/v1/Contracts', contracts.Contracts())
+
+        # 板情報
+        self.add_route('/v1/OrderList', marketInformation.OrderList())
 
         # 保有トークン一覧
         self.add_route('/v1/MyTokens', position.MyTokens())
