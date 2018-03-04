@@ -25,7 +25,6 @@ class OrderList(BaseResource):
     '''
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.OrderList')
-        session = req.context['session']
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         request_json = OrderList.validate(req)
@@ -82,6 +81,63 @@ class OrderList(BaseResource):
             'order_type':{'type': 'string', 'empty': False, 'required': True, 'allowed':['buy','sell']},
             'price':{'type': 'number', 'empty': False, 'required': True},
             'amount':{'type': 'number', 'empty': False, 'required': True},
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return request_json
+
+
+# ------------------------------
+# 現在値取得
+# ------------------------------
+class LastPrice(BaseResource):
+    '''
+    Handle for endpoint: /v1/LastPrice
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.marketInformation.LastPrice')
+
+        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+
+        request_json = LastPrice.validate(req)
+
+        exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
+        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
+
+        ExchangeContract = web3.eth.contract(
+            address = exchange_contract_address,
+            abi = exchange_contract_abi,
+        )
+
+        price_list = []
+        for token_address in request_json['address_list']:
+            try:
+                last_price = ExchangeContract.functions.lastPrice(to_checksum_address(token_address)).call()
+            except:
+                last_price = 0
+            price_list.append({'token_address':token_address, 'last_price':last_price})
+
+        self.on_success(res, price_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'address_list': {
+                'type': 'list',
+                'empty': False,
+                'required': True,
+                'schema': {
+                    'type': 'string',
+                    'required': True,
+                    'empty': False,
+                }
+            }
         })
 
         if not validator.validate(request_json):

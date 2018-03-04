@@ -45,6 +45,9 @@ class App(falcon.API):
         # 板情報
         self.add_route('/v1/OrderList', marketInformation.OrderList())
 
+        # 現在値
+        self.add_route('/v1/LastPrice', marketInformation.LastPrice())
+
         # 保有トークン一覧
         self.add_route('/v1/MyTokens', position.MyTokens())
 
