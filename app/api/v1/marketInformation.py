@@ -144,3 +144,77 @@ class LastPrice(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return request_json
+
+
+# ------------------------------
+# 歩み値取得
+# ------------------------------
+class Tick(BaseResource):
+    '''
+    Handle for endpoint: /v1/Tick
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.marketInformation.Tick')
+
+        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+
+        request_json = Tick.validate(req)
+
+        exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
+        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
+
+        ExchangeContract = web3.eth.contract(
+            address = exchange_contract_address,
+            abi = exchange_contract_abi,
+        )
+
+        tick_list = []
+        for token_address in request_json['address_list']:
+            tick = []
+            try:
+                event_filter = ExchangeContract.eventFilter(
+                    'Agree', {
+                        'filter':{'tokenAddress':token_address},
+                        'fromBlock':'earliest'
+                    }
+                )
+                entries = event_filter.get_all_entries()
+                for entry in entries:
+                    tick.append({
+                        'buyAddress':entry['args']['buyAddress'],
+                        'sellAddress':entry['args']['sellAddress'],
+                        'orderId':entry['args']['orderId'],
+                        'agreementId':entry['args']['agreementId'],
+                        'price':entry['args']['price'],
+                        'amount':entry['args']['amount'],
+                    })
+                tick_list.append({'token_address':token_address, 'tick':tick})
+                print(tick_list)
+            except:
+                tick_list = []
+
+        self.on_success(res,tick_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'address_list': {
+                'type': 'list',
+                'empty': False,
+                'required': True,
+                'schema': {
+                    'type': 'string',
+                    'required': True,
+                    'empty': False,
+                }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return request_json
