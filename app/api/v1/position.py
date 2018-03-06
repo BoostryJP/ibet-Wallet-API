@@ -105,23 +105,33 @@ class MyTokens(BaseResource):
                     returnDate = TokenContract.functions.returnDate().call()
                     returnAmount = TokenContract.functions.returnAmount().call()
                     purpose = TokenContract.functions.purpose().call()
+                    image_url_small = TokenContract.functions.getImageURL(0).call()
+                    image_url_medium = TokenContract.functions.getImageURL(1).call()
+                    image_url_large = TokenContract.functions.getImageURL(2).call()
 
                     position_list.append({
-                        'token_address': mytoken['token_address'],
+                        'token': {
+                            'token_address': mytoken['token_address'],
+                            'name':name,
+                            'symbol':symbol,
+                            'totalSupply':totalSupply,
+                            'faceValue':faceValue,
+                            'interestRate':interestRate,
+                            'interestPaymentDate1':interestPaymentDate1,
+                            'interestPaymentDate2':interestPaymentDate2,
+                            'redemptionDate':redemptionDate,
+                            'redemptionAmount':redemptionAmount,
+                            'returnDate':returnDate,
+                            'returnAmount':returnAmount,
+                            'purpose':purpose,
+                            'image_url': [
+                                {'type': 'small', 'url': image_url_small},
+                                {'type': 'medium', 'url': image_url_medium},
+                                {'type': "large", 'url': image_url_large}
+                            ]
+                        },
                         'balance': balance,
-                        'commitment': commitment,
-                        'name':name,
-                        'symbol':symbol,
-                        'totalSupply':totalSupply,
-                        'faceValue':faceValue,
-                        'interestRate':interestRate,
-                        'interestPaymentDate1':interestPaymentDate1,
-                        'interestPaymentDate2':interestPaymentDate2,
-                        'redemptionDate':redemptionDate,
-                        'redemptionAmount':redemptionAmount,
-                        'returnDate':returnDate,
-                        'returnAmount':returnAmount,
-                        'purpose':purpose,
+                        'commitment': commitment
                     })
 
         self.on_success(res, position_list)
