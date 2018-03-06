@@ -1,6 +1,6 @@
 var keythereum = require("keythereum");
-var datadir = "/home/yoshihitoaso/eth_test_net";
-var address= "0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0";
+var datadir = "/home/yoshihito/eth_test_net";
+var address= "0x590acc995c350dc21f92523b8937ce32f879e65a";
 const password = "password";
 
 var keyObject = keythereum.importFromFile(address, datadir);

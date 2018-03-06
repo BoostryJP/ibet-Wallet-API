@@ -30,30 +30,40 @@ class MyTokens(BaseResource):
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
-        list_contract_address = '0x4E017fbE3d2F876335478Ee7a4CeFd3EEDf8fdbA'
-        list_contract_abi = json.loads('[{"constant": false,"inputs": [{"name": "_token_address","type": "address"},{"name": "_token_template","type": "string"}],"name": "register","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "_num","type": "uint256"}],"name": "getTokenByNum","outputs": [{"name": "token_address","type": "address"},{"name": "token_template","type": "string"},{"name": "owner_address","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [{"name": "_token_address","type": "address"}],"name": "getOwnerAddress","outputs": [{"name": "issuer_address","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [{"name": "_token_address","type": "address"}],"name": "getTokenByAddress","outputs": [{"name": "token_address","type": "address"},{"name": "token_template","type": "string"},{"name": "owner_address","type": "address"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": true,"inputs": [],"name": "getListLength","outputs": [{"name": "length","type": "uint256"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_token_address","type": "address"},{"name": "_new_owner_address","type": "address"}],"name": "changeOwner","outputs": [],"payable": false,"stateMutability": "nonpayable","type": "function"}]')
-
+        # TokenList Contract
+        list_contract_address = config.TOKEN_LIST_CONTRACT_ADDRESS
+        list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
         ListContract = web3.eth.contract(
             address = list_contract_address,
             abi = list_contract_abi,
         )
 
+        # Exchange Contract
+        exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
+        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
+        ExchangeContract = web3.eth.contract(
+            address = exchange_contract_address,
+            abi = exchange_contract_abi,
+        )
+
         position_list = []
-        for eth_address in address_list:
-            # ポートフォリオのリストを取得
+        for buy_address in request_json['address_list']:
             portfolio_list = []
             try:
-                portfolio_db_list = session.query(Portfolio).filter(
-                    Portfolio.account_address == eth_address
-                ).all()
-                for portfolio_db in portfolio_db_list:
-                    row = portfolio_db.to_dict()
+                event_filter = ExchangeContract.eventFilter(
+                    'Agree', {
+                        'filter':{'buyAddress':to_checksum_address(buy_address)},
+                        'fromBlock':'earliest'
+                    }
+                )
+                entries = event_filter.get_all_entries()
+                for entry in entries:
                     portfolio_list.append({
-                        "account":row['account_address'],
-                        "token_address":row['contract_address']
+                        'account':entry['args']['buyAddress'],
+                        'token_address':entry['args']['tokenAddress'],
                     })
-            except NoResultFound:
-                continue
+            except:
+                portfolio_list = []
 
             token_template = None
             for mytoken in portfolio_list:

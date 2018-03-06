@@ -174,7 +174,7 @@ class Tick(BaseResource):
             try:
                 event_filter = ExchangeContract.eventFilter(
                     'Agree', {
-                        'filter':{'tokenAddress':token_address},
+                        'filter':{'tokenAddress':to_checksum_address(token_address)},
                         'fromBlock':'earliest'
                     }
                 )
@@ -189,7 +189,6 @@ class Tick(BaseResource):
                         'amount':entry['args']['amount'],
                     })
                 tick_list.append({'token_address':token_address, 'tick':tick})
-                print(tick_list)
             except:
                 tick_list = []
 
