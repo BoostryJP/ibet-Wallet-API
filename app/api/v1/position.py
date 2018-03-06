@@ -26,7 +26,6 @@ class MyTokens(BaseResource):
         session = req.context['session']
 
         request_json = MyTokens.validate(req)
-        address_list = request_json['address_list']
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
@@ -47,8 +46,9 @@ class MyTokens(BaseResource):
         )
 
         position_list = []
-        for buy_address in request_json['address_list']:
+        for buy_address in request_json['account_address_list']:
             portfolio_list = []
+            # 約定イベントから買い注文アドレスが一致するイベントを抽出する
             try:
                 event_filter = ExchangeContract.eventFilter(
                     'Agree', {
@@ -65,17 +65,22 @@ class MyTokens(BaseResource):
             except:
                 portfolio_list = []
 
+            # リストをユニークにする
+            portfolio_list_uniq = []
+            for portfolio in portfolio_list:
+                if portfolio not in portfolio_list_uniq :
+                    portfolio_list_uniq.append(portfolio)
+
+            # 残高（balance）、残注文（commitment）を取得する
             token_template = None
-            for mytoken in portfolio_list:
+            for mytoken in portfolio_list_uniq:
                 token_address = to_checksum_address(mytoken['token_address'])
                 token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                print(token_template)
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
                 abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
                 token_abi = json.loads(abi_str)
-
                 TokenContract = web3.eth.contract(
                     address = token_address,
                     abi = token_abi
@@ -83,36 +88,41 @@ class MyTokens(BaseResource):
 
                 owner = to_checksum_address(mytoken['account'])
                 balance = TokenContract.functions.balanceOf(owner).call()
+                commitment = ExchangeContract.functions.commitments(token_address,owner).call()
 
-                name = TokenContract.functions.name().call()
-                symbol = TokenContract.functions.symbol().call()
-                totalSupply = TokenContract.functions.totalSupply().call()
-                faceValue = TokenContract.functions.faceValue().call()
-                interestRate = TokenContract.functions.interestRate().call()
-                interestPaymentDate1 = TokenContract.functions.interestPaymentDate1().call()
-                interestPaymentDate2 = TokenContract.functions.interestPaymentDate2().call()
-                redemptionDate = TokenContract.functions.redemptionDate().call()
-                redemptionAmount = TokenContract.functions.redemptionAmount().call()
-                returnDate = TokenContract.functions.returnDate().call()
-                returnAmount = TokenContract.functions.returnAmount().call()
-                purpose = TokenContract.functions.purpose().call()
+                if balance == 0 and commitment == 0:
+                    continue
+                else:
+                    name = TokenContract.functions.name().call()
+                    symbol = TokenContract.functions.symbol().call()
+                    totalSupply = TokenContract.functions.totalSupply().call()
+                    faceValue = TokenContract.functions.faceValue().call()
+                    interestRate = TokenContract.functions.interestRate().call()
+                    interestPaymentDate1 = TokenContract.functions.interestPaymentDate1().call()
+                    interestPaymentDate2 = TokenContract.functions.interestPaymentDate2().call()
+                    redemptionDate = TokenContract.functions.redemptionDate().call()
+                    redemptionAmount = TokenContract.functions.redemptionAmount().call()
+                    returnDate = TokenContract.functions.returnDate().call()
+                    returnAmount = TokenContract.functions.returnAmount().call()
+                    purpose = TokenContract.functions.purpose().call()
 
-                position_list.append({
-                    'token_address': mytoken['token_address'],
-                    'balance': balance,
-                    'name':name,
-                    'symbol':symbol,
-                    'totalSupply':totalSupply,
-                    'faceValue':faceValue,
-                    'interestRate':interestRate,
-                    'interestPaymentDate1':interestPaymentDate1,
-                    'interestPaymentDate2':interestPaymentDate2,
-                    'redemptionDate':redemptionDate,
-                    'redemptionAmount':redemptionAmount,
-                    'returnDate':returnDate,
-                    'returnAmount':returnAmount,
-                    'purpose':purpose,
-                })
+                    position_list.append({
+                        'token_address': mytoken['token_address'],
+                        'balance': balance,
+                        'commitment': commitment,
+                        'name':name,
+                        'symbol':symbol,
+                        'totalSupply':totalSupply,
+                        'faceValue':faceValue,
+                        'interestRate':interestRate,
+                        'interestPaymentDate1':interestPaymentDate1,
+                        'interestPaymentDate2':interestPaymentDate2,
+                        'redemptionDate':redemptionDate,
+                        'redemptionAmount':redemptionAmount,
+                        'returnDate':returnDate,
+                        'returnAmount':returnAmount,
+                        'purpose':purpose,
+                    })
 
         self.on_success(res, position_list)
 
@@ -123,7 +133,7 @@ class MyTokens(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
-            'address_list': {
+            'account_address_list': {
                 'type': 'list',
                 'schema': {'type': 'string'},
                 'empty': False,
