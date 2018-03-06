@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
+import requests
+
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
@@ -36,6 +38,11 @@ class MyTokens(BaseResource):
             address = list_contract_address,
             abi = list_contract_abi,
         )
+
+        try:
+            company_list = requests.get(config.COMPANY_LIST_URL).json()
+        except:
+            company_list = []
 
         # Exchange Contract
         exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
@@ -109,9 +116,18 @@ class MyTokens(BaseResource):
                     image_url_medium = TokenContract.functions.getImageURL(1).call()
                     image_url_large = TokenContract.functions.getImageURL(2).call()
 
+                    owner_address = TokenContract.functions.owner().call()
+
+                    company_name = ''
+                    for company in company_list:
+                        if to_checksum_address(company['address']) == owner_address:
+                            company_name = company['corporate_name']
+
                     position_list.append({
                         'token': {
                             'token_address': mytoken['token_address'],
+                            'token_template': token_template[1],
+                            'company_name': company_name,
                             'name':name,
                             'symbol':symbol,
                             'totalSupply':totalSupply,
