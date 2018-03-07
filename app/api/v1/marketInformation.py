@@ -19,15 +19,15 @@ LOG = log.get_logger()
 # ------------------------------
 # 板情報取得
 # ------------------------------
-class OrderList(BaseResource):
+class OrderBook(BaseResource):
     '''
-    Handle for endpoint: /v1/OrderList
+    Handle for endpoint: /v1/OrderBook
     '''
     def on_post(self, req, res):
-        LOG.info('v1.marketInformation.OrderList')
+        LOG.info('v1.marketInformation.OrderBook')
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        request_json = OrderList.validate(req)
+        request_json = OrderBook.validate(req)
 
         exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
@@ -44,7 +44,7 @@ class OrderList(BaseResource):
             orderbook = ExchangeContract.functions.orderBook(num).call()
 
             if request_json['order_type'] == 'buy': #買注文の場合、指値以下の売注文を検索
-                if orderbook[1] == request_json['token_address'] and \
+                if orderbook[1] == to_checksum_address(request_json['token_address']) and \
                     orderbook[4] == False and \
                     orderbook[3] <= request_json['price']:
                     order_list_tmp.append({
@@ -53,7 +53,7 @@ class OrderList(BaseResource):
                         'amount':orderbook[2]
                     })
             else: #売注文の場合、指値以上の買注文を検索
-                if orderbook[1] == request_json['token_address'] and \
+                if orderbook[1] == to_checksum_address(request_json['token_address']) and \
                     orderbook[4] == True and \
                     orderbook[3] >= request_json['price']:
                     order_list_tmp.append({
