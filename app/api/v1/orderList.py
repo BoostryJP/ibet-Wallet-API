@@ -129,7 +129,7 @@ class OrderList(BaseResource):
                             },
                             'order':{
                                 'orderId':order_id,
-                                'amout':orderBook[2],
+                                'amount':orderBook[2],
                                 'price':orderBook[3],
                                 'isBuy':orderBook[4]
                             }
@@ -218,7 +218,7 @@ class OrderList(BaseResource):
                             'agreement':{
                                 'orderId':order_id,
                                 'agreementId':agreement_id,
-                                'amout':agreement[1],
+                                'amount':agreement[1],
                                 'price':agreement[2],
                                 'isBuy':True
                             }
@@ -298,7 +298,7 @@ class OrderList(BaseResource):
                                 ]
                             },
                             'agreement':{
-                                'amout':agreement[1],
+                                'amount':agreement[1],
                                 'price':agreement[2],
                                 'isBuy':False
                             }
@@ -387,7 +387,7 @@ class OrderList(BaseResource):
                             'agreement':{
                                 'orderId':order_id,
                                 'agreementId':agreement_id,
-                                'amout':agreement[1],
+                                'amount':agreement[1],
                                 'price':agreement[2],
                                 'isBuy':True
                             }
@@ -469,7 +469,7 @@ class OrderList(BaseResource):
                             'agreement':{
                                 'orderId':order_id,
                                 'agreementId':agreement_id,
-                                'amout':agreement[1],
+                                'amount':agreement[1],
                                 'price':agreement[2],
                                 'isBuy':False
                             }
