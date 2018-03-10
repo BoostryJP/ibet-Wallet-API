@@ -11,7 +11,7 @@ from eth_utils import to_checksum_address
 from app import log
 from app.api.common import BaseResource
 from app.model import TokenTemplate
-from app.errors import AppError, InvalidParameterError, DataNotExistsError
+from app.errors import AppError, InvalidParameterError
 from app import config
 
 LOG = log.get_logger()
