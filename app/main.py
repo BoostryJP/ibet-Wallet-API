@@ -15,6 +15,7 @@ from app.api.v1 import contracts
 from app.api.v1 import marketInformation
 from app.api.v1 import position
 from app.api.v1 import orderList
+from app.api.v1 import notification
 
 from app.errors import AppError
 
@@ -57,6 +58,9 @@ class App(falcon.API):
 
         # 注文一覧・約定一覧
         self.add_route('/v1/OrderList', orderList.OrderList())
+
+        # 通知一覧
+        self.add_route('/v1/Notifications', notification.Notifications())
 
         self.add_error_handler(AppError, AppError.handle)
 
