@@ -86,6 +86,9 @@ class OrderBook(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
+        if not Web3.isAddress(request_json['token_address']):
+            raise InvalidParameterError
+
         return request_json
 
 
