@@ -504,4 +504,8 @@ class OrderList(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
         return request_json
