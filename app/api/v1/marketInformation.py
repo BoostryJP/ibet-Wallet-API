@@ -143,6 +143,10 @@ class LastPrice(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
+        for token_address in request_json['address_list']:
+            if not Web3.isAddress(token_address):
+                raise InvalidParameterError
+
         return request_json
 
 
