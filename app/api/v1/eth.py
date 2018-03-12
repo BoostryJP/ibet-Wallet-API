@@ -9,7 +9,6 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import Contract
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 

@@ -9,7 +9,6 @@ from app.database import db_session, init_session
 
 from app.api.common import base
 from app.api.v1 import eth
-from app.api.v1 import issuers
 from app.api.v1 import tokenTemplates
 from app.api.v1 import contracts
 from app.api.v1 import marketInformation
@@ -31,10 +30,6 @@ class App(falcon.API):
         # Ethereum
         self.add_route('/v1/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
         self.add_route('/v1/Eth/SendRawTransaction', eth.SendRawTransaction())
-
-        # 発行体登録・認証
-        self.add_route('/v1/Users', issuers.Collection())
-        self.add_route('/v1/Users/{user_id}', issuers.Item())
 
         # トークンテンプレート登録・参照
         self.add_route('/v1/TokenTemplate', tokenTemplates.SetTemplate())

@@ -10,7 +10,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import Contract, TokenTemplate
+from app.model import TokenTemplate
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 
