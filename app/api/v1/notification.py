@@ -38,8 +38,48 @@ class Notifications(BaseResource):
             abi = exchange_contract_abi,
         )
 
+        # WhiteList Contract
+        whitelist_contract_address = config.WHITE_LIST_CONTRACT_ADDRESS
+        whitelist_contract_abi = json.loads(config.WHITE_LIST_CONTRACT_ABI)
+        WhiteListContract = web3.eth.contract(
+            address = whitelist_contract_address,
+            abi = whitelist_contract_abi,
+        )
+
         notifications = []
         for account_address in request_json['account_address_list']:
+            # イベント：本人確認依頼
+            event_filter = WhiteListContract.eventFilter(
+                'Register', {
+                    'filter':{'account_address':to_checksum_address(account_address)},
+                    'fromBlock':request_json['from']['block_number']
+                }
+            )
+            entries = event_filter.get_all_entries()
+            for entry in entries:
+                notifications.append({
+                    'block_number':entry['blockNumber'],
+                    'transaction_hash':web3.toHex(entry['transactionHash']),
+                    'notification_type':'WhiteListRegister',
+                    'args':entry['args']
+                })
+
+            # イベント：本人確認完了
+            event_filter = WhiteListContract.eventFilter(
+                'Confirm', {
+                    'filter':{'account_address':to_checksum_address(account_address)},
+                    'fromBlock':request_json['from']['block_number']
+                }
+            )
+            entries = event_filter.get_all_entries()
+            for entry in entries:
+                notifications.append({
+                    'block_number':entry['blockNumber'],
+                    'transaction_hash':web3.toHex(entry['transactionHash']),
+                    'notification_type':'WhiteListConfirm',
+                    'args':entry['args']
+                })
+
             # イベント：注文
             event_filter = ExchangeContract.eventFilter(
                 'NewOrder', {
