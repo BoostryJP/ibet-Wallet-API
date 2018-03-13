@@ -42,11 +42,18 @@ class PaymentAccount(BaseResource):
             to_checksum_address(request_json['agent_address'])
         ).call()
 
-        response_json = {
-            'account_address': account_info[0],
-            'agent_address': account_info[1],
-            'approval_status': account_info[3]
-        }
+        if account_info[0] == '0x0000000000000000000000000000000000000000':
+            response_json = {
+                'account_address': request_json['account_address'],
+                'agent_address': request_json['agent_address'],
+                'approval_status': 'NONE'
+            }
+        else:
+            response_json = {
+                'account_address': account_info[0],
+                'agent_address': account_info[1],
+                'approval_status': account_info[3]
+            }
 
         self.on_success(res, response_json)
 
