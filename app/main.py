@@ -9,6 +9,7 @@ from app.database import db_session, init_session
 
 from app.api.common import base
 from app.api.v1 import eth
+from app.api.v1 import user
 from app.api.v1 import tokenTemplates
 from app.api.v1 import contracts
 from app.api.v1 import marketInformation
@@ -56,6 +57,9 @@ class App(falcon.API):
 
         # 通知一覧
         self.add_route('/v1/Notifications', notification.Notifications())
+
+        # 決済用口座登録状況参照
+        self.add_route('/v1/User/PaymentAccount', user.PaymentAccount())
 
         self.add_error_handler(AppError, AppError.handle)
 
