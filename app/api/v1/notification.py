@@ -48,7 +48,7 @@ class Notifications(BaseResource):
 
         notifications = []
         for account_address in request_json['account_address_list']:
-            # イベント：本人確認依頼
+            # イベント：決済用口座登録
             event_filter = WhiteListContract.eventFilter(
                 'Register', {
                     'filter':{'account_address':to_checksum_address(account_address)},
@@ -64,9 +64,9 @@ class Notifications(BaseResource):
                     'args':entry['args']
                 })
 
-            # イベント：本人確認完了
+            # イベント：決済用口座情報更新
             event_filter = WhiteListContract.eventFilter(
-                'Confirm', {
+                'ChangeInfo', {
                     'filter':{'account_address':to_checksum_address(account_address)},
                     'fromBlock':request_json['from']['block_number']
                 }
@@ -76,7 +76,55 @@ class Notifications(BaseResource):
                 notifications.append({
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
-                    'notification_type':'WhiteListConfirm',
+                    'notification_type':'WhiteListChangeInfo',
+                    'args':entry['args']
+                })
+
+            # イベント：決済用口座承認
+            event_filter = WhiteListContract.eventFilter(
+                'Approve', {
+                    'filter':{'account_address':to_checksum_address(account_address)},
+                    'fromBlock':request_json['from']['block_number']
+                }
+            )
+            entries = event_filter.get_all_entries()
+            for entry in entries:
+                notifications.append({
+                    'block_number':entry['blockNumber'],
+                    'transaction_hash':web3.toHex(entry['transactionHash']),
+                    'notification_type':'WhiteListApprove',
+                    'args':entry['args']
+                })
+
+            # イベント：決済用口座警告
+            event_filter = WhiteListContract.eventFilter(
+                'Warn', {
+                    'filter':{'account_address':to_checksum_address(account_address)},
+                    'fromBlock':request_json['from']['block_number']
+                }
+            )
+            entries = event_filter.get_all_entries()
+            for entry in entries:
+                notifications.append({
+                    'block_number':entry['blockNumber'],
+                    'transaction_hash':web3.toHex(entry['transactionHash']),
+                    'notification_type':'WhiteListWarn',
+                    'args':entry['args']
+                })
+
+            # イベント：決済用口座非承認・凍結
+            event_filter = WhiteListContract.eventFilter(
+                'Unapprove', {
+                    'filter':{'account_address':to_checksum_address(account_address)},
+                    'fromBlock':request_json['from']['block_number']
+                }
+            )
+            entries = event_filter.get_all_entries()
+            for entry in entries:
+                notifications.append({
+                    'block_number':entry['blockNumber'],
+                    'transaction_hash':web3.toHex(entry['transactionHash']),
+                    'notification_type':'WhiteListUnapprove',
                     'args':entry['args']
                 })
 
