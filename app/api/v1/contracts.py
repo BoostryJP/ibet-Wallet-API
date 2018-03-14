@@ -39,6 +39,7 @@ class Contracts(BaseResource):
 
         list_length = ListContract.functions.getListLength().call()
 
+        company_list = []
         try:
             company_list = requests.get(config.COMPANY_LIST_URL).json()
         except:
