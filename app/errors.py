@@ -57,6 +57,12 @@ ERR_DATA_NOT_EXISTS = {
     'title': 'Data Not Exists'
 }
 
+ERR_ETH_VALUE_ERROR = {
+    'status': falcon.HTTP_400,
+    'code': 40,
+    'title': 'Eth ValueError'
+}
+
 class AppError(Exception):
     def __init__(self, error=ERR_UNKNOWN, description=None):
         self.error = error
@@ -127,3 +133,8 @@ class DataNotExistsError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_DATA_NOT_EXISTS)
         self.error['description'] = description
+
+class EthValueError(AppError):
+    def __init__(self, code=None, message=None):
+        super().__init__(ERR_ETH_VALUE_ERROR)
+        self.error['description'] = 'code: %i, message: %s' % (code, message)

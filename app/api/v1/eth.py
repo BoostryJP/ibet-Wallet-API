@@ -9,7 +9,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import AppError, InvalidParameterError, DataNotExistsError
+from app.errors import AppError, InvalidParameterError, EthValueError
 from app import config
 
 LOG = log.get_logger()
@@ -51,8 +51,9 @@ class SendRawTransaction(BaseResource):
         for raw_tx_hex in raw_tx_hex_list:
             try:
                 tx_hash = web3.eth.sendRawTransaction(raw_tx_hex)
-            except:
-                raise InvalidParameterError
+            except ValueError as e:
+                reason = e.args[0]
+                raise EthValueError(reason['code'],reason['message'])
 
             count = 0
             tx = None
