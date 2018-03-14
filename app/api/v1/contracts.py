@@ -77,6 +77,7 @@ class Contracts(BaseResource):
             image_url_l = TokenContract.functions.image_urls(2).call()
 
             company_name = ''
+            rsa_publickey = ''
             for company in company_list:
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
