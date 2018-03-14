@@ -9,6 +9,7 @@ from app.database import db_session, init_session
 
 from app.api.common import base
 from app.api.v1 import eth
+from app.api.v1 import company
 from app.api.v1 import user
 from app.api.v1 import tokenTemplates
 from app.api.v1 import contracts
@@ -36,6 +37,9 @@ class App(falcon.API):
         self.add_route('/v1/TokenTemplate', tokenTemplates.SetTemplate())
         self.add_route('/v1/TokenTemplates', tokenTemplates.GetAll())
         self.add_route('/v1/TokenTemplates/{contract_id}', tokenTemplates.GetContractABI())
+
+        # 会社情報参照
+        self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
 
         # 公開中トークン一覧
         self.add_route('/v1/Contracts', contracts.Contracts())
