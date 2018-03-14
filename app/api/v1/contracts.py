@@ -39,6 +39,11 @@ class Contracts(BaseResource):
 
         list_length = ListContract.functions.getListLength().call()
 
+        try:
+            company_list = requests.get(config.COMPANY_LIST_URL).json()
+        except:
+            pass
+
         token_list = []
         for i in range(list_length):
             token = ListContract.functions.getTokenByNum(i).call()
@@ -71,18 +76,17 @@ class Contracts(BaseResource):
             image_url_l = TokenContract.functions.image_urls(2).call()
 
             company_name = ''
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL).json()
-                for company in company_list:
-                    if to_checksum_address(company['address']) == owner_address:
-                        company_name = company['corporate_name']
-            except:
-                pass
+            for company in company_list:
+                if to_checksum_address(company['address']) == owner_address:
+                    company_name = company['corporate_name']
+                    rsa_publickey = company['rsa_publickey']
 
             token_list.append({
                 'token_address':token_address,
                 'token_template':token_template,
+                'owner_address': owner_address,
                 'company_name':company_name,
+                'rsa_publickey':rsa_publickey,
                 'name':name,
                 'symbol':symbol,
                 'totalSupply':totalSupply,
