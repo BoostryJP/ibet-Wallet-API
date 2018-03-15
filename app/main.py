@@ -65,6 +65,9 @@ class App(falcon.API):
         # 決済用口座登録状況参照
         self.add_route('/v1/User/PaymentAccount', user.PaymentAccount())
 
+        # 名簿用個人情報参照
+        self.add_route('/v1/User/PersonalInfo', user.PersonalInfo())
+
         self.add_error_handler(AppError, AppError.handle)
 
 init_session()
