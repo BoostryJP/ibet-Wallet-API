@@ -128,7 +128,7 @@ class OrderList(BaseResource):
                                 ]
                             },
                             'order':{
-                                'orderId':order_id,
+                                'order_id':order_id,
                                 'amount':orderBook[2],
                                 'price':orderBook[3],
                                 'isBuy':orderBook[4]
@@ -216,7 +216,7 @@ class OrderList(BaseResource):
                                 ]
                             },
                             'agreement':{
-                                'orderId':order_id,
+                                'order_id':order_id,
                                 'agreementId':agreement_id,
                                 'amount':agreement[1],
                                 'price':agreement[2],
@@ -385,7 +385,7 @@ class OrderList(BaseResource):
                                 ]
                             },
                             'agreement':{
-                                'orderId':order_id,
+                                'order_id':order_id,
                                 'agreementId':agreement_id,
                                 'amount':agreement[1],
                                 'price':agreement[2],
@@ -467,7 +467,7 @@ class OrderList(BaseResource):
                                 ]
                             },
                             'agreement':{
-                                'orderId':order_id,
+                                'order_id':order_id,
                                 'agreementId':agreement_id,
                                 'amount':agreement[1],
                                 'price':agreement[2],
