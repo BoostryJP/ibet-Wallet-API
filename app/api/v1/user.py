@@ -22,7 +22,7 @@ class PaymentAccount(BaseResource):
     '''
     Handle for endpoint: /v1/User/PaymentAccount
     '''
-    def on_post(self, req, res):
+    def on_get(self, req, res):
         LOG.info('v1.User.PaymentAccount')
 
         request_json = PaymentAccount.validate(req)
@@ -59,9 +59,8 @@ class PaymentAccount(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
-        if request_json is None:
-            raise InvalidParameterError
+        request_json = {'account_address': req.get_param('account_address'),
+                'agent_address': req.get_param('agent_address')}
 
         validator = Validator({
             'account_address': {'type': 'string', 'empty': False, 'required': True},
