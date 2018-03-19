@@ -47,20 +47,36 @@ class OrderBook(BaseResource):
                 if orderbook[1] == to_checksum_address(request_json['token_address']) and \
                     orderbook[4] == False and \
                     orderbook[3] <= request_json['price']:
-                    order_list_tmp.append({
-                        'order_id':num,
-                        'price':orderbook[3],
-                        'amount':orderbook[2]
-                    })
+                    if 'account_address' in request_json and \
+                        orderbook[0] != to_checksum_address(request_json['account_address']):
+                        order_list_tmp.append({
+                            'order_id':num,
+                            'price':orderbook[3],
+                            'amount':orderbook[2]
+                        })
+                    elif 'account_address' not in request_json:
+                        order_list_tmp.append({
+                            'order_id':num,
+                            'price':orderbook[3],
+                            'amount':orderbook[2]
+                        })
             else: #売注文の場合、指値以上の買注文を検索
                 if orderbook[1] == to_checksum_address(request_json['token_address']) and \
                     orderbook[4] == True and \
                     orderbook[3] >= request_json['price']:
-                    order_list_tmp.append({
-                        'order_id':num,
-                        'price':orderbook[3],
-                        'amount':orderbook[2]
-                    })
+                    if 'account_address' in request_json and \
+                        orderbook[0] != to_checksum_address(request_json['account_address']):
+                        order_list_tmp.append({
+                            'order_id':num,
+                            'price':orderbook[3],
+                            'amount':orderbook[2]
+                        })
+                    elif 'account_address' not in request_json:
+                        order_list_tmp.append({
+                            'order_id':num,
+                            'price':orderbook[3],
+                            'amount':orderbook[2]
+                        })
 
         if request_json['order_type'] == 'buy':
             order_list = sorted(order_list_tmp, key=lambda x: x['price'])
@@ -76,6 +92,7 @@ class OrderBook(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
+            'account_address': {'type': 'string'},
             'token_address': {'type': 'string', 'empty': False, 'required': True},
             'token_template':{'type': 'string', 'empty': False, 'required': True},
             'order_type':{'type': 'string', 'empty': False, 'required': True, 'allowed':['buy','sell']},
