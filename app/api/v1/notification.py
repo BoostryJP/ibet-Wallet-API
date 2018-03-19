@@ -268,7 +268,12 @@ class Notifications(BaseResource):
                 response_list_tmp.append(item)
 
         max_size = len(response_list_tmp)
-        if max_size > request_json['size']:
+        if max_size == 0:
+            response_list = []
+            latest_block_number = request_json['from']['block_number']
+            latest_transaction_hash = request_json['from']['transaction_hash']
+            has_next = False
+        elif max_size > request_json['size']:
             list_size = request_json['size']
             response_list = response_list_tmp[0:list_size]
             latest_block_number = response_list[list_size-1]['block_number']
