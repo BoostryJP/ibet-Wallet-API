@@ -33,7 +33,6 @@ class Notifications(BaseResource):
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
         if config.WEB3_CHAINID == '4':
-            print('hoge')
             from web3.middleware import geth_poa_middleware
             web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
