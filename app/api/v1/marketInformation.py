@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
+from datetime import datetime, timezone, timedelta
+JST = timezone(timedelta(hours=+9), 'JST')
 
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
@@ -181,6 +183,9 @@ class Tick(BaseResource):
         LOG.info('v1.marketInformation.Tick')
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        if config.WEB3_CHAINID == '4':
+            from web3.middleware import geth_poa_middleware
+            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         request_json = Tick.validate(req)
 
@@ -205,10 +210,11 @@ class Tick(BaseResource):
                 entries = event_filter.get_all_entries()
                 for entry in entries:
                     tick.append({
-                        'buyAddress':entry['args']['buyAddress'],
-                        'sellAddress':entry['args']['sellAddress'],
-                        'orderId':entry['args']['orderId'],
-                        'agreementId':entry['args']['agreementId'],
+                        'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
+                        'buy_address':entry['args']['buyAddress'],
+                        'sell_address':entry['args']['sellAddress'],
+                        'order_id':entry['args']['orderId'],
+                        'agreement_id':entry['args']['agreementId'],
                         'price':entry['args']['price'],
                         'amount':entry['args']['amount'],
                     })
