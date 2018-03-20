@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
+from datetime import datetime, timezone, timedelta
+JST = timezone(timedelta(hours=+9), 'JST')
 
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
@@ -30,6 +32,11 @@ class Notifications(BaseResource):
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
+        if config.WEB3_CHAINID == '4':
+            print('hoge')
+            from web3.middleware import geth_poa_middleware
+            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
         # Exchange Contract
         exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
@@ -58,10 +65,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'WhiteListRegister',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済用口座情報更新
@@ -74,10 +82,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'WhiteListChangeInfo',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済用口座承認
@@ -90,10 +99,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'WhiteListApprove',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済用口座警告
@@ -106,10 +116,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'WhiteListWarn',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済用口座非承認・凍結
@@ -122,10 +133,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'WhiteListUnapprove',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：注文
@@ -138,10 +150,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'NewOrder',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：注文取消
@@ -154,10 +167,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'CancelOrder',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：約定（買）
@@ -170,10 +184,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'BuyAgreement',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：約定（売）
@@ -186,10 +201,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'SellAgreement',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済OK（買）
@@ -202,10 +218,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'BuySettlementOK',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済OK（売）
@@ -218,10 +235,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'SellSettlementOK',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済NG（買）
@@ -234,10 +252,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'BuySettlementNG',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
             # イベント：決済NG（売）
@@ -250,10 +269,11 @@ class Notifications(BaseResource):
             entries = event_filter.get_all_entries()
             for entry in entries:
                 notifications.append({
+                    'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'SellSettlementNG',
-                    'args':entry['args']
+                    'args':dict(entry['args'])
                 })
 
         # blockNumber => transactionHash でソート
