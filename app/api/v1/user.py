@@ -46,7 +46,7 @@ class PaymentAccount(BaseResource):
             response_json = {
                 'account_address': request_json['account_address'],
                 'agent_address': request_json['agent_address'],
-                'approval_status': 'NONE'
+                'approval_status': 0
             }
         else:
             response_json = {
