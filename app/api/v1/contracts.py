@@ -51,61 +51,63 @@ class Contracts(BaseResource):
             token_address = token[0]
             token_template = token[1]
             owner_address = token[2]
-            abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template).first().abi
-            token_abi = json.loads(abi_str)
 
-            TokenContract = web3.eth.contract(
-                address = to_checksum_address(token_address),
-                abi = token_abi
-            )
+            if token_template == 'IbetStraightBond':
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template).first().abi
+                token_abi = json.loads(abi_str)
 
-            name = TokenContract.functions.name().call()
-            symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
-            faceValue = TokenContract.functions.faceValue().call()
-            interestRate = TokenContract.functions.interestRate().call()
-            interestPaymentDate1 = TokenContract.functions.interestPaymentDate1().call()
-            interestPaymentDate2 = TokenContract.functions.interestPaymentDate2().call()
-            redemptionDate = TokenContract.functions.redemptionDate().call()
-            redemptionAmount = TokenContract.functions.redemptionAmount().call()
-            returnDate = TokenContract.functions.returnDate().call()
-            returnAmount = TokenContract.functions.returnAmount().call()
-            purpose = TokenContract.functions.purpose().call()
+                TokenContract = web3.eth.contract(
+                    address = to_checksum_address(token_address),
+                    abi = token_abi
+                )
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                faceValue = TokenContract.functions.faceValue().call()
+                interestRate = TokenContract.functions.interestRate().call()
+                interestPaymentDate1 = TokenContract.functions.interestPaymentDate1().call()
+                interestPaymentDate2 = TokenContract.functions.interestPaymentDate2().call()
+                redemptionDate = TokenContract.functions.redemptionDate().call()
+                redemptionAmount = TokenContract.functions.redemptionAmount().call()
+                returnDate = TokenContract.functions.returnDate().call()
+                returnAmount = TokenContract.functions.returnAmount().call()
+                purpose = TokenContract.functions.purpose().call()
 
-            company_name = ''
-            rsa_publickey = ''
-            for company in company_list:
-                if to_checksum_address(company['address']) == owner_address:
-                    company_name = company['corporate_name']
-                    rsa_publickey = company['rsa_publickey']
+                image_url_s = TokenContract.functions.image_urls(0).call()
+                image_url_m = TokenContract.functions.image_urls(1).call()
+                image_url_l = TokenContract.functions.image_urls(2).call()
 
-            token_list.append({
-                'token_address':token_address,
-                'token_template':token_template,
-                'owner_address': owner_address,
-                'company_name':company_name,
-                'rsa_publickey':rsa_publickey,
-                'name':name,
-                'symbol':symbol,
-                'totalSupply':totalSupply,
-                'faceValue':faceValue,
-                'interestRate':interestRate,
-                'interestPaymentDate1':interestPaymentDate1,
-                'interestPaymentDate2':interestPaymentDate2,
-                'redemptionDate':redemptionDate,
-                'redemptionAmount':redemptionAmount,
-                'returnDate':returnDate,
-                'returnAmount':returnAmount,
-                'purpose':purpose,
-                'image_url':[
-                    {'type':'small', 'url':image_url_s},
-                    {'type':'medium', 'url':image_url_m},
-                    {'type':'large', 'url':image_url_l},
-                ]
-            })
+                company_name = ''
+                rsa_publickey = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+                        rsa_publickey = company['rsa_publickey']
+
+                token_list.append({
+                    'token_address':token_address,
+                    'token_template':token_template,
+                    'owner_address': owner_address,
+                    'company_name':company_name,
+                    'rsa_publickey':rsa_publickey,
+                    'name':name,
+                    'symbol':symbol,
+                    'totalSupply':totalSupply,
+                    'faceValue':faceValue,
+                    'interestRate':interestRate,
+                    'interestPaymentDate1':interestPaymentDate1,
+                    'interestPaymentDate2':interestPaymentDate2,
+                    'redemptionDate':redemptionDate,
+                    'redemptionAmount':redemptionAmount,
+                    'returnDate':returnDate,
+                    'returnAmount':returnAmount,
+                    'purpose':purpose,
+                    'image_url':[
+                        {'type':'small', 'url':image_url_s},
+                        {'type':'medium', 'url':image_url_m},
+                        {'type':'large', 'url':image_url_l},
+                    ]
+                })
 
         self.on_success(res, token_list)
