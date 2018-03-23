@@ -40,7 +40,7 @@ class Notifications(BaseResource):
         exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
         ExchangeContract = web3.eth.contract(
-            address = exchange_contract_address,
+            address = to_checksum_address(exchange_contract_address),
             abi = exchange_contract_abi,
         )
 
@@ -48,7 +48,7 @@ class Notifications(BaseResource):
         whitelist_contract_address = config.WHITE_LIST_CONTRACT_ADDRESS
         whitelist_contract_abi = json.loads(config.WHITE_LIST_CONTRACT_ABI)
         WhiteListContract = web3.eth.contract(
-            address = whitelist_contract_address,
+            address = to_checksum_address(whitelist_contract_address),
             abi = whitelist_contract_abi,
         )
 

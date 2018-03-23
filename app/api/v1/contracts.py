@@ -33,7 +33,7 @@ class Contracts(BaseResource):
         list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
 
         ListContract = web3.eth.contract(
-            address = list_contract_address,
+            address = to_checksum_address(list_contract_address),
             abi = list_contract_abi,
         )
 
@@ -55,7 +55,7 @@ class Contracts(BaseResource):
             token_abi = json.loads(abi_str)
 
             TokenContract = web3.eth.contract(
-                address = token_address,
+                address = to_checksum_address(token_address),
                 abi = token_abi
             )
 

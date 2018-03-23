@@ -35,7 +35,7 @@ class MyTokens(BaseResource):
         list_contract_address = config.TOKEN_LIST_CONTRACT_ADDRESS
         list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
         ListContract = web3.eth.contract(
-            address = list_contract_address,
+            address = to_checksum_address(list_contract_address),
             abi = list_contract_abi,
         )
 
@@ -48,7 +48,7 @@ class MyTokens(BaseResource):
         exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
         ExchangeContract = web3.eth.contract(
-            address = exchange_contract_address,
+            address = to_checksum_address(exchange_contract_address),
             abi = exchange_contract_abi,
         )
 

@@ -33,7 +33,7 @@ class PaymentAccount(BaseResource):
         whitelist_contract_address = config.WHITE_LIST_CONTRACT_ADDRESS
         whitelist_contract_abi = json.loads(config.WHITE_LIST_CONTRACT_ABI)
         WhiteListContract = web3.eth.contract(
-            address = whitelist_contract_address,
+            address = to_checksum_address(whitelist_contract_address),
             abi = whitelist_contract_abi,
         )
 
@@ -97,7 +97,7 @@ class PersonalInfo(BaseResource):
         personalinfo_contract_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
         personalinfo_contract_abi = json.loads(config.PERSONAL_INFO_CONTRACT_ABI)
         PersonalInfoContract = web3.eth.contract(
-            address = personalinfo_contract_address,
+            address = to_checksum_address(personalinfo_contract_address),
             abi = personalinfo_contract_abi,
         )
 

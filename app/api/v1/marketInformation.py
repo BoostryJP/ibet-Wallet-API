@@ -35,7 +35,7 @@ class OrderBook(BaseResource):
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
 
         ExchangeContract = web3.eth.contract(
-            address = exchange_contract_address,
+            address = to_checksum_address(exchange_contract_address),
             abi = exchange_contract_abi,
         )
 
@@ -129,7 +129,7 @@ class LastPrice(BaseResource):
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
 
         ExchangeContract = web3.eth.contract(
-            address = exchange_contract_address,
+            address = to_checksum_address(exchange_contract_address),
             abi = exchange_contract_abi,
         )
 
@@ -193,7 +193,7 @@ class Tick(BaseResource):
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
 
         ExchangeContract = web3.eth.contract(
-            address = exchange_contract_address,
+            address = to_checksum_address(exchange_contract_address),
             abi = exchange_contract_abi,
         )
 
