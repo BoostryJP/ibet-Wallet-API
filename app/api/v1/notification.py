@@ -27,6 +27,7 @@ class Notifications(BaseResource):
     '''
     def on_post(self, req, res):
         LOG.info('v1.Notification.Notifications')
+        session = req.context['session']
 
         request_json = Notifications.validate(req)
 
@@ -51,6 +52,19 @@ class Notifications(BaseResource):
             address = to_checksum_address(whitelist_contract_address),
             abi = whitelist_contract_abi,
         )
+
+        # TokenList Contract
+        list_contract_address = config.TOKEN_LIST_CONTRACT_ADDRESS
+        list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
+        ListContract = web3.eth.contract(
+            address = to_checksum_address(list_contract_address),
+            abi = list_contract_abi,
+        )
+
+        try:
+            company_list = requests.get(config.COMPANY_LIST_URL).json()
+        except:
+            company_list = []
 
         notifications = []
         for account_address in request_json['account_address_list']:
@@ -148,11 +162,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'NewOrder',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
@@ -165,11 +200,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'CancelOrder',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
@@ -182,11 +238,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'BuyAgreement',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
@@ -199,11 +276,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'SellAgreement',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
@@ -216,11 +314,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'BuySettlementOK',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
@@ -233,11 +352,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'SellSettlementOK',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
@@ -250,11 +390,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'BuySettlementNG',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
@@ -267,11 +428,32 @@ class Notifications(BaseResource):
             )
             entries = event_filter.get_all_entries()
             for entry in entries:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                token_abi = json.loads(abi_str)
+                TokenContract = web3.eth.contract(
+                    address = token_address,
+                    abi = token_abi
+                )
+                token_name = TokenContract.functions.name().call()
+                owner_address = TokenContract.functions.owner().call()
+
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
                 notifications.append({
                     'block_timestamp':datetime.fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST).strftime("%Y/%m/%d %H:%M:%S"),
                     'block_number':entry['blockNumber'],
                     'transaction_hash':web3.toHex(entry['transactionHash']),
                     'notification_type':'SellSettlementNG',
+                    'token_name': token_name,
+                    'company_name': company_name,
                     'args':dict(entry['args'])
                 })
 
