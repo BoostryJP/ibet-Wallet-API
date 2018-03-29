@@ -158,7 +158,8 @@ class OrderList(BaseResource):
                                 'order_id':order_id,
                                 'amount':orderBook[2],
                                 'price':orderBook[3],
-                                'isBuy':orderBook[4]
+                                'isBuy':orderBook[4],
+                                'canceled':orderBook[6]
                             }
                         })
 
@@ -274,7 +275,8 @@ class OrderList(BaseResource):
                                 'agreementId':agreement_id,
                                 'amount':agreement[1],
                                 'price':agreement[2],
-                                'isBuy':True
+                                'isBuy':True,
+                                'canceled':agreement[3]
                             }
                         })
 
@@ -381,7 +383,8 @@ class OrderList(BaseResource):
                             'agreement':{
                                 'amount':agreement[1],
                                 'price':agreement[2],
-                                'isBuy':False
+                                'isBuy':False,
+                                'canceled':agreement[3]
                             }
                         })
 
