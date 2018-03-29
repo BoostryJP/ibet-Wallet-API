@@ -29,6 +29,7 @@ class Contracts(BaseResource):
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
+        # TokenList-Contractへの接続
         list_contract_address = config.TOKEN_LIST_CONTRACT_ADDRESS
         list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
 
@@ -36,9 +37,9 @@ class Contracts(BaseResource):
             address = to_checksum_address(list_contract_address),
             abi = list_contract_abi,
         )
-
         list_length = ListContract.functions.getListLength().call()
 
+        # 企業リストの情報を取得する
         company_list = []
         try:
             company_list = requests.get(config.COMPANY_LIST_URL).json()
@@ -47,21 +48,27 @@ class Contracts(BaseResource):
 
         token_list = []
         for i in range(list_length):
+            # TokenList-Contractからトークンの情報を取得する
             token = ListContract.functions.getTokenByNum(i).call()
             token_address = token[0]
             token_template = token[1]
             owner_address = token[2]
 
+            # IbetStraightBondフォーマットのもののみを選択する
             if token_template == 'IbetStraightBond':
+
+                # トークンのABIを検索する
                 abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template).first().abi
                 token_abi = json.loads(abi_str)
 
                 try:
+                    # Token-Contractへの接続
                     TokenContract = web3.eth.contract(
                         address = to_checksum_address(token_address),
                         abi = token_abi
                     )
 
+                    # Token-Contractから情報を取得する
                     name = TokenContract.functions.name().call()
                     symbol = TokenContract.functions.symbol().call()
                     totalSupply = TokenContract.functions.totalSupply().call()
@@ -74,17 +81,41 @@ class Contracts(BaseResource):
                     returnDate = TokenContract.functions.returnDate().call()
                     returnAmount = TokenContract.functions.returnAmount().call()
                     purpose = TokenContract.functions.purpose().call()
-
                     image_url_s = TokenContract.functions.image_urls(0).call()
                     image_url_m = TokenContract.functions.image_urls(1).call()
                     image_url_l = TokenContract.functions.image_urls(2).call()
 
+                    # 企業リストから、企業名とRSA鍵を取得する
                     company_name = ''
                     rsa_publickey = ''
                     for company in company_list:
                         if to_checksum_address(company['address']) == owner_address:
                             company_name = company['corporate_name']
                             rsa_publickey = company['rsa_publickey']
+
+                    # 第三者認定（Sign）のイベント情報を検索する
+                    event_filter = TokenContract.eventFilter(
+                        'Sign', {
+                            'filter':{},
+                            'fromBlock':'earliest'
+                        }
+                    )
+                    try:
+                        entries = event_filter.get_all_entries()
+                    except:
+                        entries = []
+
+                    certification = []
+                    for entry in entries:
+                        isSigned = False
+                        if TokenContract.functions.\
+                            signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
+                            isSigned = True
+
+                        certification.append({
+                            'signer':entry['args']['signer'],
+                            'is_signed':isSigned
+                        })
 
                     token_list.append({
                         'token_address':token_address,
@@ -108,7 +139,8 @@ class Contracts(BaseResource):
                             {'type':'small', 'url':image_url_s},
                             {'type':'medium', 'url':image_url_m},
                             {'type':'large', 'url':image_url_l},
-                        ]
+                        ],
+                        'certification':certification
                     })
                 except:
                     pass
