@@ -74,6 +74,7 @@ class OrderList(BaseResource):
                         if token_template[0] == '0x0000000000000000000000000000000000000000':
                             continue
 
+                        # Token-Contractへの接続
                         abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
@@ -81,6 +82,7 @@ class OrderList(BaseResource):
                             abi = token_abi
                         )
 
+                        # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
                         symbol = TokenContract.functions.symbol().call()
                         totalSupply = TokenContract.functions.totalSupply().call()
@@ -96,13 +98,37 @@ class OrderList(BaseResource):
                         image_url_small = TokenContract.functions.getImageURL(0).call()
                         image_url_medium = TokenContract.functions.getImageURL(1).call()
                         image_url_large = TokenContract.functions.getImageURL(2).call()
-
                         owner_address = TokenContract.functions.owner().call()
 
+                        # 企業リストから、企業名を取得する
                         company_name = ''
                         for company in company_list:
                             if to_checksum_address(company['address']) == owner_address:
                                 company_name = company['corporate_name']
+
+                        # 第三者認定（Sign）のイベント情報を検索する
+                        event_filter = TokenContract.eventFilter(
+                            'Sign', {
+                                'filter':{},
+                                'fromBlock':'earliest'
+                            }
+                        )
+                        try:
+                            entries = event_filter.get_all_entries()
+                        except:
+                            entries = []
+
+                        certification = []
+                        for entry in entries:
+                            isSigned = False
+                            if TokenContract.functions.\
+                                signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
+                                isSigned = True
+
+                            certification.append({
+                                'signer':entry['args']['signer'],
+                                'is_signed':isSigned
+                            })
 
                         order_list.append({
                             'token':{
@@ -125,7 +151,8 @@ class OrderList(BaseResource):
                                     {'type': 'small', 'url': image_url_small},
                                     {'type': 'medium', 'url': image_url_medium},
                                     {'type': "large", 'url': image_url_large}
-                                ]
+                                ],
+                                'certification':certification
                             },
                             'order':{
                                 'order_id':order_id,
@@ -162,6 +189,7 @@ class OrderList(BaseResource):
                         if token_template[0] == '0x0000000000000000000000000000000000000000':
                             continue
 
+                        # Token-Contractへの接続
                         abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
@@ -169,6 +197,7 @@ class OrderList(BaseResource):
                             abi = token_abi
                         )
 
+                        # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
                         symbol = TokenContract.functions.symbol().call()
                         totalSupply = TokenContract.functions.totalSupply().call()
@@ -184,13 +213,37 @@ class OrderList(BaseResource):
                         image_url_small = TokenContract.functions.getImageURL(0).call()
                         image_url_medium = TokenContract.functions.getImageURL(1).call()
                         image_url_large = TokenContract.functions.getImageURL(2).call()
-
                         owner_address = TokenContract.functions.owner().call()
 
+                        # 企業リストから、企業名を取得する
                         company_name = ''
                         for company in company_list:
                             if to_checksum_address(company['address']) == owner_address:
                                 company_name = company['corporate_name']
+
+                        # 第三者認定（Sign）のイベント情報を検索する
+                        event_filter = TokenContract.eventFilter(
+                            'Sign', {
+                                'filter':{},
+                                'fromBlock':'earliest'
+                            }
+                        )
+                        try:
+                            entries = event_filter.get_all_entries()
+                        except:
+                            entries = []
+
+                        certification = []
+                        for entry in entries:
+                            isSigned = False
+                            if TokenContract.functions.\
+                                signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
+                                isSigned = True
+
+                            certification.append({
+                                'signer':entry['args']['signer'],
+                                'is_signed':isSigned
+                            })
 
                         settlement_list.append({
                             'token':{
@@ -213,7 +266,8 @@ class OrderList(BaseResource):
                                     {'type': 'small', 'url': image_url_small},
                                     {'type': 'medium', 'url': image_url_medium},
                                     {'type': "large", 'url': image_url_large}
-                                ]
+                                ],
+                                'certification':certification
                             },
                             'agreement':{
                                 'order_id':order_id,
@@ -244,6 +298,7 @@ class OrderList(BaseResource):
                         if token_template[0] == '0x0000000000000000000000000000000000000000':
                             continue
 
+                        # Token-Contractへの接続
                         abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
@@ -251,6 +306,7 @@ class OrderList(BaseResource):
                             abi = token_abi
                         )
 
+                        # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
                         symbol = TokenContract.functions.symbol().call()
                         totalSupply = TokenContract.functions.totalSupply().call()
@@ -266,13 +322,37 @@ class OrderList(BaseResource):
                         image_url_small = TokenContract.functions.getImageURL(0).call()
                         image_url_medium = TokenContract.functions.getImageURL(1).call()
                         image_url_large = TokenContract.functions.getImageURL(2).call()
-
                         owner_address = TokenContract.functions.owner().call()
 
+                        # 企業リストから、企業名を取得する
                         company_name = ''
                         for company in company_list:
                             if to_checksum_address(company['address']) == owner_address:
                                 company_name = company['corporate_name']
+
+                        # 第三者認定（Sign）のイベント情報を検索する
+                        event_filter = TokenContract.eventFilter(
+                            'Sign', {
+                                'filter':{},
+                                'fromBlock':'earliest'
+                            }
+                        )
+                        try:
+                            entries = event_filter.get_all_entries()
+                        except:
+                            entries = []
+
+                        certification = []
+                        for entry in entries:
+                            isSigned = False
+                            if TokenContract.functions.\
+                                signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
+                                isSigned = True
+
+                            certification.append({
+                                'signer':entry['args']['signer'],
+                                'is_signed':isSigned
+                            })
 
                         settlement_list.append({
                             'token':{
@@ -295,7 +375,8 @@ class OrderList(BaseResource):
                                     {'type': 'small', 'url': image_url_small},
                                     {'type': 'medium', 'url': image_url_medium},
                                     {'type': "large", 'url': image_url_large}
-                                ]
+                                ],
+                                'certification':certification
                             },
                             'agreement':{
                                 'amount':agreement[1],
@@ -331,6 +412,7 @@ class OrderList(BaseResource):
                         if token_template[0] == '0x0000000000000000000000000000000000000000':
                             continue
 
+                        # Token-Contractへの接続
                         abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
@@ -338,6 +420,7 @@ class OrderList(BaseResource):
                             abi = token_abi
                         )
 
+                        # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
                         symbol = TokenContract.functions.symbol().call()
                         totalSupply = TokenContract.functions.totalSupply().call()
@@ -353,13 +436,37 @@ class OrderList(BaseResource):
                         image_url_small = TokenContract.functions.getImageURL(0).call()
                         image_url_medium = TokenContract.functions.getImageURL(1).call()
                         image_url_large = TokenContract.functions.getImageURL(2).call()
-
                         owner_address = TokenContract.functions.owner().call()
 
+                        # 企業リストから、企業名を取得する
                         company_name = ''
                         for company in company_list:
                             if to_checksum_address(company['address']) == owner_address:
                                 company_name = company['corporate_name']
+
+                        # 第三者認定（Sign）のイベント情報を検索する
+                        event_filter = TokenContract.eventFilter(
+                            'Sign', {
+                                'filter':{},
+                                'fromBlock':'earliest'
+                            }
+                        )
+                        try:
+                            entries = event_filter.get_all_entries()
+                        except:
+                            entries = []
+
+                        certification = []
+                        for entry in entries:
+                            isSigned = False
+                            if TokenContract.functions.\
+                                signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
+                                isSigned = True
+
+                            certification.append({
+                                'signer':entry['args']['signer'],
+                                'is_signed':isSigned
+                            })
 
                         complete_list.append({
                             'token':{
@@ -382,7 +489,8 @@ class OrderList(BaseResource):
                                     {'type': 'small', 'url': image_url_small},
                                     {'type': 'medium', 'url': image_url_medium},
                                     {'type': "large", 'url': image_url_large}
-                                ]
+                                ],
+                                'certification':certification
                             },
                             'agreement':{
                                 'order_id':order_id,
@@ -413,6 +521,7 @@ class OrderList(BaseResource):
                         if token_template[0] == '0x0000000000000000000000000000000000000000':
                             continue
 
+                        # Token-Contractへの接続
                         abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
@@ -420,6 +529,7 @@ class OrderList(BaseResource):
                             abi = token_abi
                         )
 
+                        # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
                         symbol = TokenContract.functions.symbol().call()
                         totalSupply = TokenContract.functions.totalSupply().call()
@@ -435,13 +545,37 @@ class OrderList(BaseResource):
                         image_url_small = TokenContract.functions.getImageURL(0).call()
                         image_url_medium = TokenContract.functions.getImageURL(1).call()
                         image_url_large = TokenContract.functions.getImageURL(2).call()
-
                         owner_address = TokenContract.functions.owner().call()
 
+                        # 企業リストから、企業名を取得する
                         company_name = ''
                         for company in company_list:
                             if to_checksum_address(company['address']) == owner_address:
                                 company_name = company['corporate_name']
+
+                        # 第三者認定（Sign）のイベント情報を検索する
+                        event_filter = TokenContract.eventFilter(
+                            'Sign', {
+                                'filter':{},
+                                'fromBlock':'earliest'
+                            }
+                        )
+                        try:
+                            entries = event_filter.get_all_entries()
+                        except:
+                            entries = []
+
+                        certification = []
+                        for entry in entries:
+                            isSigned = False
+                            if TokenContract.functions.\
+                                signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
+                                isSigned = True
+
+                            certification.append({
+                                'signer':entry['args']['signer'],
+                                'is_signed':isSigned
+                            })
 
                         complete_list.append({
                             'token':{
@@ -464,7 +598,8 @@ class OrderList(BaseResource):
                                     {'type': 'small', 'url': image_url_small},
                                     {'type': 'medium', 'url': image_url_medium},
                                     {'type': "large", 'url': image_url_large}
-                                ]
+                                ],
+                                'certification':certification
                             },
                             'agreement':{
                                 'order_id':order_id,
