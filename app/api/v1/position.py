@@ -97,6 +97,7 @@ class MyTokens(BaseResource):
                 balance = TokenContract.functions.balanceOf(owner).call()
                 commitment = ExchangeContract.functions.commitments(token_address,owner).call()
 
+                # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                 if balance == 0 and commitment == 0:
                     continue
                 else:
@@ -115,13 +116,37 @@ class MyTokens(BaseResource):
                     image_url_small = TokenContract.functions.getImageURL(0).call()
                     image_url_medium = TokenContract.functions.getImageURL(1).call()
                     image_url_large = TokenContract.functions.getImageURL(2).call()
-
                     owner_address = TokenContract.functions.owner().call()
 
+                    # 企業リストから、企業名を取得する
                     company_name = ''
                     for company in company_list:
                         if to_checksum_address(company['address']) == owner_address:
                             company_name = company['corporate_name']
+
+                    # 第三者認定（Sign）のイベント情報を検索する
+                    event_filter = TokenContract.eventFilter(
+                        'Sign', {
+                            'filter':{},
+                            'fromBlock':'earliest'
+                        }
+                    )
+                    try:
+                        entries = event_filter.get_all_entries()
+                    except:
+                        entries = []
+
+                    certification = []
+                    for entry in entries:
+                        isSigned = False
+                        if TokenContract.functions.\
+                            signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
+                            isSigned = True
+
+                        certification.append({
+                            'signer':entry['args']['signer'],
+                            'is_signed':isSigned
+                        })
 
                     position_list.append({
                         'token': {
@@ -144,7 +169,8 @@ class MyTokens(BaseResource):
                                 {'type': 'small', 'url': image_url_small},
                                 {'type': 'medium', 'url': image_url_medium},
                                 {'type': "large", 'url': image_url_large}
-                            ]
+                            ],
+                            'certification':certification
                         },
                         'balance': balance,
                         'commitment': commitment
