@@ -29,16 +29,19 @@ class OrderBook(BaseResource):
         LOG.info('v1.marketInformation.OrderBook')
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+
+        # 入力値チェック
         request_json = OrderBook.validate(req)
 
+        # 取引所コントラクトに接続
         exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
-
         ExchangeContract = web3.eth.contract(
             address = to_checksum_address(exchange_contract_address),
             abi = exchange_contract_abi,
         )
 
+        # 最新の注文ID（latestOrderId）を取得
         latest_orderid = ExchangeContract.functions.latestOrderId().call()
 
         order_list_tmp = []
@@ -46,40 +49,61 @@ class OrderBook(BaseResource):
             orderbook = ExchangeContract.functions.orderBook(num).call()
 
             if request_json['order_type'] == 'buy': #買注文の場合、指値以下の売注文を検索
+                # OrderBookのリストから、以下の条件をすべて満たす注文を抽出する。
+                # 1) Token Address が指定したものと同じ
+                # 2) 売注文
+                # 3) 未キャンセル
+                # 4) 残注文あり
+                # 5) 指値以下
                 if orderbook[1] == to_checksum_address(request_json['token_address']) and \
                     orderbook[4] == False and \
+                    orderbook[6] == False and \
+                    orderbook[2] > 0 and \
                     orderbook[3] <= request_json['price']:
                     if 'account_address' in request_json and \
                         orderbook[0] != to_checksum_address(request_json['account_address']):
+                        # アカウントアドレスを指定した場合、指定したアカウントから出されている注文を除外する。
                         order_list_tmp.append({
                             'order_id':num,
                             'price':orderbook[3],
                             'amount':orderbook[2]
                         })
                     elif 'account_address' not in request_json:
+                        # アカウントアドレスを指定しない場合、条件に該当したすべての注文を選択する。
                         order_list_tmp.append({
                             'order_id':num,
                             'price':orderbook[3],
                             'amount':orderbook[2]
                         })
             else: #売注文の場合、指値以上の買注文を検索
+                # OrderBookのリストから、以下の条件をすべて満たす注文を抽出する。
+                # 1) Token Address が指定したものと同じ
+                # 2) 買注文
+                # 3) 未キャンセル
+                # 4) 残注文あり
+                # 5) 指値以下
                 if orderbook[1] == to_checksum_address(request_json['token_address']) and \
                     orderbook[4] == True and \
+                    orderbook[6] == False and \
+                    orderbook[2] > 0 and \
                     orderbook[3] >= request_json['price']:
                     if 'account_address' in request_json and \
                         orderbook[0] != to_checksum_address(request_json['account_address']):
+                        # アカウントアドレスを指定した場合、指定したアカウントから出されている注文を除外する。
                         order_list_tmp.append({
                             'order_id':num,
                             'price':orderbook[3],
                             'amount':orderbook[2]
                         })
                     elif 'account_address' not in request_json:
+                        # アカウントアドレスを指定しない場合、条件に該当したすべての注文を選択する。
                         order_list_tmp.append({
                             'order_id':num,
                             'price':orderbook[3],
                             'amount':orderbook[2]
                         })
 
+        # 買注文の場合は価格の昇順に、売注文の場合は価格の降順にソートする。
         if request_json['order_type'] == 'buy':
             order_list = sorted(order_list_tmp, key=lambda x: x['price'])
         else:
