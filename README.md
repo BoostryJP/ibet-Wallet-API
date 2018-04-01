@@ -94,7 +94,7 @@ listen_addresses = '*'
 $ psql --username=ethuser --password --dbname=ethcache
 ```
 
-## 2. Ethereumインストール&設定
+## 2. Ethereumインストール&設定（※PrivateNetを利用する場合）
 ### 2-1. Ethereumインストール
 * 以下のコマンドでインストールを行う。
 ```
@@ -227,11 +227,6 @@ geth --datadir ~/eth_private --networkid 15 --cache=512 --rpc --rpcaddr "0.0.0.0
 ```
 
 ## 3. その他依存ライブラリ
-* solcをインストール
-```
-$ sudo apt-get install solc
-```
-
 * pyethereumをインストール
 ```
 $ sudo apt-get install libssl-dev build-essential automake pkg-config libtool libffi-dev libgmp-dev libyaml-cpp-dev
