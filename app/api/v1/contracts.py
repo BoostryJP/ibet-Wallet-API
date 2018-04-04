@@ -74,8 +74,18 @@ class Contracts(BaseResource):
                     totalSupply = TokenContract.functions.totalSupply().call()
                     faceValue = TokenContract.functions.faceValue().call()
                     interestRate = TokenContract.functions.interestRate().call()
-                    interestPaymentDate1 = TokenContract.functions.interestPaymentDate1().call()
-                    interestPaymentDate2 = TokenContract.functions.interestPaymentDate2().call()
+
+                    interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
+                    interestPaymentDate = json.loads(
+                        interestPaymentDate_string.replace("'", '"').replace('True', 'true').replace('False', 'false'))
+
+                    interestPaymentDate1 = ''
+                    interestPaymentDate2 = ''
+                    if 'interestPaymentDate1' in interestPaymentDate:
+                        interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
+                    if 'interestPaymentDate2' in interestPaymentDate:
+                        interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
+
                     redemptionDate = TokenContract.functions.redemptionDate().call()
                     redemptionAmount = TokenContract.functions.redemptionAmount().call()
                     returnDate = TokenContract.functions.returnDate().call()

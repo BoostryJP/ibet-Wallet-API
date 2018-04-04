@@ -95,7 +95,7 @@ class MyTokens(BaseResource):
 
                 owner = to_checksum_address(mytoken['account'])
                 balance = TokenContract.functions.balanceOf(owner).call()
-                commitment = ExchangeContract.functions.commitments(token_address,owner).call()
+                commitment = ExchangeContract.functions.commitments(owner,token_address).call()
 
                 # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                 if balance == 0 and commitment == 0:
@@ -106,8 +106,18 @@ class MyTokens(BaseResource):
                     totalSupply = TokenContract.functions.totalSupply().call()
                     faceValue = TokenContract.functions.faceValue().call()
                     interestRate = TokenContract.functions.interestRate().call()
-                    interestPaymentDate1 = TokenContract.functions.interestPaymentDate1().call()
-                    interestPaymentDate2 = TokenContract.functions.interestPaymentDate2().call()
+
+                    interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
+                    interestPaymentDate = json.loads(
+                        interestPaymentDate_string.replace("'", '"').replace('True', 'true').replace('False', 'false'))
+
+                    interestPaymentDate1 = ''
+                    interestPaymentDate2 = ''
+                    if 'interestPaymentDate1' in interestPaymentDate:
+                        interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
+                    if 'interestPaymentDate2' in interestPaymentDate:
+                        interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
+
                     redemptionDate = TokenContract.functions.redemptionDate().call()
                     redemptionAmount = TokenContract.functions.redemptionAmount().call()
                     returnDate = TokenContract.functions.returnDate().call()
