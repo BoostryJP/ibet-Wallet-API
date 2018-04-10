@@ -68,6 +68,10 @@ class Contracts(BaseResource):
                         abi = token_abi
                     )
 
+                    # 償還済みの銘柄はリストに返さない
+                    if TokenContract.functions.isRedeemed().call() == True:
+                        continue
+
                     # Token-Contractから情報を取得する
                     name = TokenContract.functions.name().call()
                     symbol = TokenContract.functions.symbol().call()
