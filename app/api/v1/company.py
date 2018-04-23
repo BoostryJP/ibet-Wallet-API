@@ -23,14 +23,17 @@ class CompanyInfo(BaseResource):
 
         company_list = []
         isExist = False
+
         try:
             company_list = requests.get(config.COMPANY_LIST_URL).json()
-            for company_info in company_list:
-                if to_checksum_address(company_info['address']) == \
-                    to_checksum_address(eth_address):
-                    isExist = True
-                    self.on_success(res, company_info)
-            if not isExist:
-                raise DataNotExistsError('eth_address: %s' % eth_address)
         except:
             raise AppError
+
+        for company_info in company_list:
+            if to_checksum_address(company_info['address']) == \
+                to_checksum_address(eth_address):
+                isExist = True
+                self.on_success(res, company_info)
+        if isExist == False:
+            raise DataNotExistsError('eth_address: %s' % eth_address)
+        
