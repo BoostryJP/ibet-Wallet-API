@@ -29,6 +29,7 @@ RUN apt-get update -q \
  libgmp-dev \
  language-pack-ja-base \
  language-pack-ja \
+ git \
  libyaml-cpp-dev && \
  apt-get install -y software-properties-common && \
  add-apt-repository -y ppa:ethereum/ethereum && \
