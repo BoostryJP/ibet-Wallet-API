@@ -38,10 +38,13 @@ RUN apt-get update -q \
 # remove unnessesory package files
 RUN apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY pyenv /home/apl/.pyenv/
-RUN chown -R apl:apl /home/apl
 
 # install pyenv
+RUN git clone https://github.com/pyenv/pyenv.git
+RUN mkdir -p /home/apl \
+ && mv /pyenv /home/apl/.pyenv/ \
+ && chown -R apl:apl /home/apl
+
 USER apl
 RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~apl/.bash_profile \
  && echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~apl/.bash_profile \
@@ -54,10 +57,15 @@ RUN . ~/.bash_profile \
  && pyenv global 3.6.2 \
  && pip install --upgrade pip
 
-# requirements
-COPY tmr-node/requirements.txt /app/requirements.txt
+# requirements 1
+COPY requirements.txt /app/requirements.txt
 RUN . ~/.bash_profile \
  && pip install -r /app/requirements.txt
+
+# requirements 2
+COPY app/tests/requirements.txt /app/requirements2.txt
+RUN . ~/.bash_profile \
+ && pip install -r /app/requirements2.txt
 
 # pyethereum
 USER root
@@ -70,12 +78,10 @@ RUN . ~/.bash_profile \
 
 # app
 USER root
-COPY tmr-node /app/tmr-node
+COPY . /app/tmr-node/
 RUN chown -R apl:apl /app/tmr-node && \
     chmod 755 /app/tmr-node
+
 USER apl
 COPY qa.sh /app/tmr-node
-
-EXPOSE 5000
-
 CMD /app/tmr-node/qa.sh
