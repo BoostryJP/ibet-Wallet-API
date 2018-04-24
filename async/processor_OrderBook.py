@@ -97,7 +97,7 @@ class DBSink:
         order.amount = amount
         order.agent_address = agent_address
         order.is_cancelled = False
-        self.db.add(order)
+        self.db.merge(order)
 
     def on_cancel_order(self, order_id):
         order = self.__get_order(order_id)
@@ -110,7 +110,7 @@ class DBSink:
         agreement.counterpart_address = counterpart_address
         agreement.amount = amount
         agreement.status = AgreementStatus.PENDING.value
-        self.db.add(agreement)
+        self.db.merge(agreement)
 
     def on_settlement_ok(self, order_id, agreement_id):
         agreement = self.__get_agreement(order_id, agreement_id)
