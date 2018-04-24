@@ -85,4 +85,4 @@ RUN chown -R apl:apl /app/tmr-node && \
     chmod 755 /app/tmr-node
 
 USER apl
-CMD /app/tmr-node/qa.sh
+CMD /app/tmr-node/app/tests/qa.sh
