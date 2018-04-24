@@ -70,11 +70,12 @@ RUN . ~/.bash_profile \
 
 # pyethereum
 USER root
-COPY pyethereum /code/pyethereum
-RUN chown -R apl:apl /code
+RUN git clone https://github.com/ethereum/pyethereum/ \
+    && rm pyethereum/.python-version
+RUN chown -R apl:apl pyethereum
 USER apl
 RUN . ~/.bash_profile \
- && cd code/pyethereum \
+ && cd pyethereum \
  && python setup.py install
 
 # app
