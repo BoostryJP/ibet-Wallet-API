@@ -15,3 +15,20 @@ class Order(Base):
     amount = Column(BigInteger)
     agent_address = Column(String(256))
     is_cancelled = Column(Boolean)
+
+    def __repr__(self):
+        return "<Order id='%d'>" % \
+            (self.id)
+
+    FIELDS = {
+        'id': int,
+        'token_address': str,
+        'account_address': str,
+        'is_buy': bool,
+        'price': int,
+        'amount': int,
+        'agent_address': str,
+        'is_cancelled': bool,
+    }
+
+    FIELDS.update(Base.FIELDS)

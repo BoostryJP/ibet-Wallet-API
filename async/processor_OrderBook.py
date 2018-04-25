@@ -10,11 +10,10 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 import time
-from enum import Enum
 from web3 import Web3
 from eth_utils import to_checksum_address
 from app import config
-from app.model import Agreement, Order
+from app.model import Agreement, AgreementStatus, Order
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -25,11 +24,6 @@ URI = os.environ.get('DATABASE_URL') or 'postgresql://ethuser:ethpass@localhost:
 engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
-
-class AgreementStatus(Enum):
-    PENDING=0
-    DONE=1
-    CANCELED=2
 
 class Sinks:
     def __init__(self):
@@ -65,19 +59,19 @@ class Sinks:
 class ConsoleSink:
     def on_new_order(self, token_address, order_id, account_address, is_buy,
                      price, amount, agent_address):
-        print("NewOrder: {}".format(order_id))
+        logging.info("NewOrder: {}".format(order_id))
 
     def on_cancel_order(self, order_id):
-        print("CancelOrder: {}".format(order_id))
+        logging.info("CancelOrder: {}".format(order_id))
 
     def on_agree(self, order_id, agreement_id, counterpart_address, amount):
-        print("Agree: orderId={}, agreementId={}".format(order_id, agreement_id))
+        logging.info("Agree: orderId={}, agreementId={}".format(order_id, agreement_id))
 
     def on_settlement_ok(self, order_id, agreement_id):
-        print("SettlementOK: orderId={}, agreementId={}".format(order_id, agreement_id))
+        logging.info("SettlementOK: orderId={}, agreementId={}".format(order_id, agreement_id))
 
     def on_settlement_ng(self, order_id, agreement_id):
-        print("SettlementNG: orderId={}, agreementId={}".format(order_id, agreement_id))
+        logging.info("SettlementNG: orderId={}, agreementId={}".format(order_id, agreement_id))
 
     def flush(self):
         return
@@ -105,8 +99,8 @@ class DBSink:
 
     def on_agree(self, order_id, agreement_id, counterpart_address, amount):
         agreement = Agreement()
-        agreement.orderId = order_id
-        agreement.agreementId = agreement_id
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
         agreement.counterpart_address = counterpart_address
         agreement.amount = amount
         agreement.status = AgreementStatus.PENDING.value
@@ -130,8 +124,8 @@ class DBSink:
 
     def __get_agreement(self, order_id, agreement_id):
         return self.db.query(Agreement).\
-            filter(Order.orderId==order_id).\
-            filter(Order.agreementId==agreement_id).\
+            filter(Order.order_id==order_id).\
+            filter(Order.agreement_id==agreement_id).\
             first()
         
 class Processor:
@@ -213,7 +207,6 @@ class Processor:
             order_id = args['orderId']
 
             orderbook = self.exchange_contract.functions.orderBook.num(order_id).call()
-            print(orderbook)
             is_buy = orderbook[4]
             
             counterpart_address = args['buyAddress']
