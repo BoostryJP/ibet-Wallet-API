@@ -101,7 +101,7 @@ class TestV1Tick():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'][0]['token_address'] == token_address
-        assert resp.json['data'][0]['tick'][0]['buy_address'] == eth_account['trader']
-        assert resp.json['data'][0]['tick'][0]['sell_address'] == eth_account['issuer']
+        assert resp.json['data'][0]['tick'][0]['buy_address'] == eth_account['trader']['account_address']
+        assert resp.json['data'][0]['tick'][0]['sell_address'] == eth_account['issuer']['account_address']
         assert resp.json['data'][0]['tick'][0]['price'] == 1000
         assert resp.json['data'][0]['tick'][0]['amount'] == 100
