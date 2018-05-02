@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
+import os
 
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
@@ -30,7 +31,7 @@ class PaymentAccount(BaseResource):
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
         # WhiteList Contract
-        whitelist_contract_address = config.WHITE_LIST_CONTRACT_ADDRESS
+        whitelist_contract_address = os.environ.get('WHITE_LIST_CONTRACT_ADDRESS')
         whitelist_contract_abi = json.loads(config.WHITE_LIST_CONTRACT_ABI)
         WhiteListContract = web3.eth.contract(
             address = to_checksum_address(whitelist_contract_address),
@@ -94,7 +95,7 @@ class PersonalInfo(BaseResource):
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
         # WhiteList Contract
-        personalinfo_contract_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
+        personalinfo_contract_address = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
         personalinfo_contract_abi = json.loads(config.PERSONAL_INFO_CONTRACT_ABI)
         PersonalInfoContract = web3.eth.contract(
             address = to_checksum_address(personalinfo_contract_address),

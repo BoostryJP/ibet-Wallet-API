@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
+import os
 
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
@@ -32,7 +33,7 @@ class OrderList(BaseResource):
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
         # Exchange Contract
-        exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
+        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
         ExchangeContract = web3.eth.contract(
             address = to_checksum_address(exchange_contract_address),
