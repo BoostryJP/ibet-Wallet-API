@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
+import os
 from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
 
@@ -115,7 +116,7 @@ class LastPrice(BaseResource):
 
         request_json = LastPrice.validate(req)
 
-        exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
+        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
 
         ExchangeContract = web3.eth.contract(
@@ -179,7 +180,7 @@ class Tick(BaseResource):
 
         request_json = Tick.validate(req)
 
-        exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
+        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
 
         ExchangeContract = web3.eth.contract(
