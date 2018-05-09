@@ -8,7 +8,7 @@ from app.model import Base
 class Order(Base):
     __tablename__ = 'order'
     id = Column(BigInteger, primary_key=True)
-    token_address = Column(String(256))
+    token_address = Column(String(256), index=True)
     account_address = Column(String(256))
     is_buy = Column(Boolean)
     price = Column(BigInteger)

@@ -124,8 +124,8 @@ class DBSink:
 
     def __get_agreement(self, order_id, agreement_id):
         return self.db.query(Agreement).\
-            filter(Order.order_id==order_id).\
-            filter(Order.agreement_id==agreement_id).\
+            filter(Agreement.order_id==order_id).\
+            filter(Agreement.agreement_id==agreement_id).\
             first()
         
 class Processor:
@@ -206,7 +206,7 @@ class Processor:
             args = event['args']
             order_id = args['orderId']
 
-            orderbook = self.exchange_contract.functions.orderBook.num(order_id).call()
+            orderbook = self.exchange_contract.functions.orderBook(order_id).call()
             is_buy = orderbook[4]
             
             counterpart_address = args['buyAddress']
@@ -229,7 +229,8 @@ class Processor:
             }
         )
         for event in event_filter.get_all_entries():
-            self.sink.on_settlement_ok(self, args['orderId'], args['agreementId'])
+            args = event['args']
+            self.sink.on_settlement_ok(args['orderId'], args['agreementId'])
         self.web3.eth.uninstallFilter(event_filter.filter_id)
 
     def __sync_settlement_ng(self, block_from, block_to):
@@ -240,7 +241,8 @@ class Processor:
             }
         )
         for event in event_filter.get_all_entries():
-            self.sink.on_settlement_ng(self, args['orderId'], args['agreementId'])
+            args = event['args']
+            self.sink.on_settlement_ng(args['orderId'], args['agreementId'])
         self.web3.eth.uninstallFilter(event_filter.filter_id)
     
             

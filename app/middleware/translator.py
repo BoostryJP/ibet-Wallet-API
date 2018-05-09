@@ -8,7 +8,7 @@ from app.errors import InvalidParameterError
 
 class JSONTranslator(object):
     def process_request(self, req, res):
-        if req.content_type == 'application/json':
+        if self.__get_content_type(req) == 'application/json':
             try:
                 raw_json = req.stream.read()
             except Exception:
@@ -22,3 +22,18 @@ class JSONTranslator(object):
                 raise InvalidParameterError('Cannot be decoded by utf-8')
         else:
             req.context['data'] = None
+
+    def __get_content_type(self, req):
+        """
+        Content-Typeヘッダからtype/subtype部分を抜き出します。
+        例) 
+          "application/json; charset=utf-8" => "application/json"
+          "application/json" => "application/json"
+          None => None
+        """
+        
+        content_type = req.content_type
+        if content_type is None:
+            return None
+        else:
+            return content_type.split(";")[0]
