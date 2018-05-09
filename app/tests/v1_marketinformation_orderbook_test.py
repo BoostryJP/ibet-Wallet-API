@@ -3,6 +3,7 @@
 import app.model
 from app.model import Order, Agreement, AgreementStatus
 
+
 class TestV1OrderBook():
     # テスト対象API
     apiurl_base = '/v1/OrderBook'
@@ -21,7 +22,7 @@ class TestV1OrderBook():
         order.agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
         order.is_cancelled = False
         session.add(order)
-        
+
         request_body = {
             "token_address": token_address,
             "order_type": "buy",
@@ -30,14 +31,8 @@ class TestV1OrderBook():
             "account_address": "0xeb6e99675595fb052cc68da0eeecb2d5a3826378",
         }
         resp = client.simulate_post(self.apiurl_base, json=request_body)
-        assumed_body = [
-	    {
-                "order_id": 1,
-		"price": 1000,
-		"amount": 100
-            }
-	]
-        
+        assumed_body = [{"order_id": 1, "price": 1000, "amount": 100}]
+
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
@@ -46,8 +41,8 @@ class TestV1OrderBook():
     def test_normal_1_2(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         account_addresses = [
-            "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A", # client
-            "0x31b98d14007bdee637298086988a0bbd31184523", # 注文者1
+            "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
+            "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
         agent_address = "0x4cc120790781c9b61bb8d9893d439efdf02e2d30"
@@ -62,7 +57,7 @@ class TestV1OrderBook():
         order.agent_address = agent_address
         order.is_cancelled = False
         session.add(order)
-        
+
         order = Order()
         order.id = 1
         order.token_address = token_address
@@ -103,7 +98,7 @@ class TestV1OrderBook():
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
         session.add(agreement)
-        
+
         agreement = Agreement()
         agreement.order_id = 2
         agreement.agreement_id = 0
@@ -119,21 +114,18 @@ class TestV1OrderBook():
             "amount": 200,
             "account_address": "0xeb6e99675595fb052cc68da0eeecb2d5a3826378",
         }
-        
+
         resp = client.simulate_post(self.apiurl_base, json=request_body)
-        assumed_body = [
-	    {
-                "order_id": 0,
-		"price": 1000,
-		"amount": 100
-            },
-            {
-                "order_id": 2,
-		"price": 3000,
-		"amount": 50
-            }
-	]
-        
+        assumed_body = [{
+            "order_id": 0,
+            "price": 1000,
+            "amount": 100
+        }, {
+            "order_id": 2,
+            "price": 3000,
+            "amount": 50
+        }]
+
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
