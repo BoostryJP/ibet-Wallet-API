@@ -50,7 +50,7 @@ class TestV1Tick():
         return bond_token
 
 
-    # エラー系1：存在しない取引コントラクトアドレスを指定
+    # 正常系1：存在しない取引コントラクトアドレスを指定
     #  -> ゼロ件リストが返却される
     def test_tick_normal_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
