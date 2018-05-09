@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
 
+from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
@@ -13,7 +14,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import TokenTemplate
+from app.model import TokenTemplate, Order, Agreement
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 
@@ -30,88 +31,54 @@ class OrderBook(BaseResource):
         LOG.info('v1.marketInformation.OrderBook')
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        session = req.context['session']
 
         # 入力値チェック
         request_json = OrderBook.validate(req)
 
-        # 取引所コントラクトに接続
-        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
-        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
-        ExchangeContract = web3.eth.contract(
-            address = to_checksum_address(exchange_contract_address),
-            abi = exchange_contract_abi,
-        )
+        # 注文を抽出
+        is_buy = request_json['order_type'] == 'sell' # 相対注文が買い注文かどうか
+        # 抽出条件) 1. Token Addressが指定したものと同じ
+        #          2. クライアントが買い注文をしたい場合 => 売り注文を抽出
+        #                         売り注文をしたい場合 => 買い注文を抽出
+        #          3. 未キャンセル
+        #          4. 残注文あり
+        #          5. 指値以下
+        orders = session.query(Order, func.sum(Agreement.amount)).\
+                 outerjoin(Agreement, Order.id == Agreement.order_id).\
+                 group_by(Order.id).\
+                 filter(Order.token_address == request_json['token_address']).\
+                 filter(Order.is_buy == is_buy).\
+                 filter(Order.is_cancelled == False).\
+                 filter(Order.price <= request_json['price']).\
+                 all()
 
-        # 最新の注文ID（latestOrderId）を取得
-        latest_orderid = ExchangeContract.functions.latestOrderId().call()
-
+        # レスポンス用の注文一覧を構築
         order_list_tmp = []
-        for num in range(latest_orderid):
-            orderbook = ExchangeContract.functions.orderBook(num).call()
+        for (order, agreement_amount) in orders:
+            # 残存注文数量 = 発注数量 - 約定済み数量
+            amount = order.amount
+            if not(agreement_amount is None):
+                amount -= int(agreement_amount)
 
-            if request_json['order_type'] == 'buy': #買注文の場合、指値以下の売注文を検索
-                # OrderBookのリストから、以下の条件をすべて満たす注文を抽出する。
-                # 1) Token Address が指定したものと同じ
-                # 2) 売注文
-                # 3) 未キャンセル
-                # 4) 残注文あり
-                # 5) 指値以下
-                if orderbook[1] == to_checksum_address(request_json['token_address']) and \
-                    orderbook[4] == False and \
-                    orderbook[6] == False and \
-                    orderbook[2] > 0 and \
-                    orderbook[3] <= request_json['price']:
-                    if 'account_address' in request_json and \
-                        orderbook[0] != to_checksum_address(request_json['account_address']):
-                        # アカウントアドレスを指定した場合、指定したアカウントから出されている注文を除外する。
-                        order_list_tmp.append({
-                            'order_id':num,
-                            'price':orderbook[3],
-                            'amount':orderbook[2]
-                        })
-                    elif 'account_address' not in request_json:
-                        # アカウントアドレスを指定しない場合、条件に該当したすべての注文を選択する。
-                        order_list_tmp.append({
-                            'order_id':num,
-                            'price':orderbook[3],
-                            'amount':orderbook[2]
-                        })
-            else: #売注文の場合、指値以上の買注文を検索
-                # OrderBookのリストから、以下の条件をすべて満たす注文を抽出する。
-                # 1) Token Address が指定したものと同じ
-                # 2) 買注文
-                # 3) 未キャンセル
-                # 4) 残注文あり
-                # 5) 指値以下
-                if orderbook[1] == to_checksum_address(request_json['token_address']) and \
-                    orderbook[4] == True and \
-                    orderbook[6] == False and \
-                    orderbook[2] > 0 and \
-                    orderbook[3] >= request_json['price']:
-                    if 'account_address' in request_json and \
-                        orderbook[0] != to_checksum_address(request_json['account_address']):
-                        # アカウントアドレスを指定した場合、指定したアカウントから出されている注文を除外する。
-                        order_list_tmp.append({
-                            'order_id':num,
-                            'price':orderbook[3],
-                            'amount':orderbook[2]
-                        })
-                    elif 'account_address' not in request_json:
-                        # アカウントアドレスを指定しない場合、条件に該当したすべての注文を選択する。
-                        order_list_tmp.append({
-                            'order_id':num,
-                            'price':orderbook[3],
-                            'amount':orderbook[2]
-                        })
+            # 残注文ありの注文のみを抽出する
+            if amount <= 0:
+                continue
+            
+            order_list_tmp.append({
+                'order_id': order.id,
+                'price': order.price,
+                'amount': amount,
+            })
 
-        # 買注文の場合は価格の昇順に、売注文の場合は価格の降順にソートする。
+        # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
         if request_json['order_type'] == 'buy':
             order_list = sorted(order_list_tmp, key=lambda x: x['price'])
         else:
             order_list = sorted(order_list_tmp, key=lambda x: -x['price'])
 
         self.on_success(res, order_list)
-
+        
     @staticmethod
     def validate(req):
         request_json = req.context['data']
@@ -121,7 +88,6 @@ class OrderBook(BaseResource):
         validator = Validator({
             'account_address': {'type': 'string'},
             'token_address': {'type': 'string', 'empty': False, 'required': True},
-            'token_template':{'type': 'string', 'empty': False, 'required': True},
             'order_type':{'type': 'string', 'empty': False, 'required': True, 'allowed':['buy','sell']},
             'price':{'type': 'number', 'empty': False, 'required': True},
             'amount':{'type': 'number', 'empty': False, 'required': True},
