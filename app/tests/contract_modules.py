@@ -10,7 +10,6 @@ from .contract_config import IbetStraightBond, PersonalInfo
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
-
 # 株主名簿用個人情報登録
 def register_personalinfo(invoker, personal_info):
     web3.eth.defaultAccount = invoker['account_address']
