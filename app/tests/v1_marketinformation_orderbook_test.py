@@ -206,8 +206,8 @@ class TestV1OrderBook():
             'message': 'Invalid Parameter'
         }
 
-    # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
-    def test_orderbook_error_3(self, client):
+    # エラー系3-1：入力値エラー（token_addressがアドレスフォーマットではない）
+    def test_orderbook_error_3_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74" #アドレスが短い
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
@@ -231,10 +231,60 @@ class TestV1OrderBook():
             'message': 'Invalid Parameter'
         }
 
-    # エラー系4：入力値エラー（account_addressがアドレスフォーマットではない）
-    def test_orderbook_error_4(self, client):
+    # エラー系3-2：入力値エラー（token_addressがstring以外）
+    def test_orderbook_error_3_2(self, client):
+        token_address = 123456789123456789123456789123456789
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
+
+        request_params = {
+            "token_address": token_address,
+            "order_type": "buy",
+            "price": 5000,
+            "amount": 200,
+            "account_address": account_address,
+        }
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # エラー系4-1：入力値エラー（account_addressがアドレスフォーマットではない）
+    def test_orderbook_error_4_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637" #アドレスが短い
+
+        request_params = {
+            "token_address": token_address,
+            "order_type": "buy",
+            "price": 5000,
+            "amount": 200,
+            "account_address": account_address,
+        }
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # エラー系4-2：入力値エラー（account_addressがstring以外）
+    def test_orderbook_error_4_2(self, client):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        account_address = 123456789123456789123456789123456789
 
         request_params = {
             "token_address": token_address,
@@ -281,8 +331,58 @@ class TestV1OrderBook():
             'message': 'Invalid Parameter'
         }
 
-    # エラー系6：HTTPメソッドが不正
+    # エラー系6：入力値エラー（priceが数字以外）
     def test_orderbook_error_6(self, client):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
+
+        request_params = {
+            "token_address": token_address,
+            "order_type": "buy",
+            "price": "5000",
+            "amount": 200,
+            "account_address": account_address,
+        }
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # エラー系7：入力値エラー（amountが数字以外）
+    def test_orderbook_error_7(self, client):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
+
+        request_params = {
+            "token_address": token_address,
+            "order_type": "buy",
+            "price": 5000,
+            "amount": "200",
+            "account_address": account_address,
+        }
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # エラー系8：HTTPメソッドが不正
+    def test_orderbook_error_8(self, client):
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
