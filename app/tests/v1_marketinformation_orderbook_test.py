@@ -219,7 +219,7 @@ class TestV1OrderBook():
             "account_address": account_address,
         }
 
-        headers = {}
+        headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
         resp = client.simulate_post(
