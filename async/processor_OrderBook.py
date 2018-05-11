@@ -17,10 +17,13 @@ from app.model import Agreement, AgreementStatus, Order
 
 logging.basicConfig(level=logging.DEBUG)
 
-WEB3_HTTP_PROVIDER = os.environ.get('WEB3_HTTP_PROVIDER') or 'http://localhost:8545'
-web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
+# 設定の取得
+WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
+URI = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
+IBET_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
 
-URI = os.environ.get('DATABASE_URL') or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
+# 初期化
+web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
 engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
@@ -132,7 +135,7 @@ class Processor:
     def __init__(self, web3, sink):
         self.web3 = web3
         
-        exchange_contract_address = config.IBET_EXCHANGE_CONTRACT_ADDRESS
+        exchange_contract_address = IBET_EXCHANGE_CONTRACT_ADDRESS
         exchange_contract_abi = config.IBET_EXCHANGE_CONTRACT_ABI
         self.exchange_contract = web3.eth.contract(
             address = to_checksum_address(exchange_contract_address),
