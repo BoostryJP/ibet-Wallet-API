@@ -6,7 +6,7 @@ from eth_utils import to_checksum_address
 
 from app import config
 from .account_config import eth_account
-from .contract_config import IbetStraightBond, PersonalInfo
+from .contract_config import IbetStraightBond, PersonalInfo, TokenList
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
@@ -100,6 +100,20 @@ def issue_bond_token(invoker, attribute):
     return {'address': contract_address, 'abi': IbetStraightBond['abi']}
 
 
+# 債券トークンのリスト登録
+def register_bond_list(invoker, bond_token, token_list):
+    TokenListContract = web3.eth.contract(
+        address=token_list['address'], abi=token_list['abi'])
+
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],
+                                invoker['password'])
+
+    tx_hash = TokenListContract.functions.register(bond_token['address'], 'IbetStraightBond').\
+        transact({'from':invoker['account_address'], 'gas':4000000})
+    tx = wait_transaction_receipt(tx_hash)
+
+
 # 債券トークンの募集
 def offer_bond_token(invoker, bond_exchange, bond_token, amount, price):
     bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount)
@@ -159,6 +173,29 @@ def get_latest_orderid(bond_exchange):
         address=bond_exchange['address'], abi=bond_exchange['abi'])
     latest_orderid = ExchangeContract.functions.latestOrderId().call()
     return latest_orderid
+
+
+# 直近約定IDを取得
+def get_latest_agreementid(bond_exchange, order_id):
+    ExchangeContract = web3.eth.contract(
+        address=bond_exchange['address'], abi=bond_exchange['abi'])
+    latest_agreementid = ExchangeContract.functions.latestAgreementIds(order_id).call()
+    return latest_agreementid
+
+
+# 債券約定の資金決済
+def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],
+                                invoker['password'])
+
+    ExchangeContract = web3.eth.contract(
+        address=bond_exchange['address'], abi=bond_exchange['abi'])
+
+    tx_hash = ExchangeContract.functions.\
+        confirmAgreement(order_id, agreement_id).\
+        transact({'from':invoker['account_address'], 'gas':4000000})
+    tx = wait_transaction_receipt(tx_hash)
 
 
 # トランザクションがブロックに取り込まれるまで待つ
