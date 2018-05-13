@@ -58,7 +58,10 @@ class SendRawTransaction(BaseResource):
                 tx_hash = web3.eth.sendRawTransaction(raw_tx_hex)
             except ValueError as e:
                 reason = e.args[0]
-                raise EthValueError(reason['code'],reason['message'])
+                if type(reason) == str:
+                    raise InvalidParameterError(reason)
+                else:
+                    raise EthValueError(reason['code'],reason['message'])
 
             count = 0
             tx = None
