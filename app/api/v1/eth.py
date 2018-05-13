@@ -24,6 +24,11 @@ class GetTransactionCount(BaseResource):
     def on_get(self, req, res, eth_address):
         LOG.info('v1.Eth.GetTransactionCount')
 
+        try:
+            eth_address = to_checksum_address(eth_address)
+        except ValueError:
+            raise InvalidParameterError
+
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         nonce = web3.eth.getTransactionCount(to_checksum_address(eth_address))
         gasprice = web3.eth.gasPrice
