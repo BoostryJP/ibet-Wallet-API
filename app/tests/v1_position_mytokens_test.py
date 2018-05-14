@@ -81,6 +81,13 @@ class TestV1MyTokens():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        bond_exchange = shared_contract['IbetStraightBondExchange']
+        token_list = shared_contract['TokenList']
+
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange[
+            'address']
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
