@@ -11,7 +11,7 @@ function stop () {
 
 case "$1" in
     start)
-        start()
+        start
         ;;
     stop)
         stop
