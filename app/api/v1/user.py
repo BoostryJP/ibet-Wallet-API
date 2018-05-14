@@ -116,7 +116,7 @@ class PersonalInfo(BaseResource):
         else:
             response_json = {
                 'account_address': info[0],
-                'agent_address': info[1],
+                'owner_address': info[1],
                 'registered': True
             }
 
