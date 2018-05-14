@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
-import pytest
 import json
 import os
 
-from web3 import Web3
-
 from app import config
-from .account_config import eth_account
 
 
 # ノード情報取得API
