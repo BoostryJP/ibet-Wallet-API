@@ -41,7 +41,7 @@ class OrderList(BaseResource):
         )
 
         # TokenList Contract
-        list_contract_address = config.TOKEN_LIST_CONTRACT_ADDRESS
+        list_contract_address = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
         list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
         ListContract = web3.eth.contract(
             address = to_checksum_address(list_contract_address),

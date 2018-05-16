@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import json
 import requests
 
@@ -24,7 +25,7 @@ class Contracts(BaseResource):
         super().__init__()
 
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-    
+
     '''
     Handle for endpoint: /v1/Contracts
     '''
@@ -37,7 +38,7 @@ class Contracts(BaseResource):
         request_json = Contracts.validate(req)
 
         # TokenList-Contractへの接続
-        list_contract_address = config.TOKEN_LIST_CONTRACT_ADDRESS
+        list_contract_address = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
         list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
 
         ListContract = self.web3.eth.contract(
@@ -48,7 +49,7 @@ class Contracts(BaseResource):
 
         if request_json['cursor'] != None and request_json['cursor'] > list_length:
             raise InvalidParameterError("cursor parameter must be less than token list num")
-            
+
         # パラメータを設定
         cursor = request_json['cursor']
         if cursor is None:
@@ -60,7 +61,10 @@ class Contracts(BaseResource):
         # 企業リストの情報を取得する
         company_list = []
         try:
-            company_list = requests.get(config.COMPANY_LIST_URL).json()
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json' , 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL).json()
         except:
             pass
 
@@ -83,7 +87,7 @@ class Contracts(BaseResource):
                 token_list.append(token_detail)
 
         self.on_success(res, token_list)
-        
+
 
     def get_token_detail(self, token_id, session, token_address, token_template, owner_address, company_list):
         """
@@ -194,7 +198,7 @@ class Contracts(BaseResource):
                 }
             except Exception as e:
                 return None
-        
+
     @staticmethod
     def validate(req):
         request_json = {
