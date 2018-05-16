@@ -25,7 +25,10 @@ class CompanyInfo(BaseResource):
         isExist = False
 
         try:
-            company_list = requests.get(config.COMPANY_LIST_URL).json()
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json' , 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL).json()
         except:
             raise AppError
 
@@ -36,4 +39,3 @@ class CompanyInfo(BaseResource):
                 self.on_success(res, company_info)
         if isExist == False:
             raise DataNotExistsError('eth_address: %s' % eth_address)
-        

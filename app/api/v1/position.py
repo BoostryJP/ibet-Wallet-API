@@ -43,7 +43,10 @@ class MyTokens(BaseResource):
         )
 
         try:
-            company_list = requests.get(config.COMPANY_LIST_URL).json()
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json' , 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL).json()
         except:
             company_list = []
 
