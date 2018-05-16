@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import time
 
 from eth_utils import to_checksum_address
+from web3 import Web3
+
 import app.model
 from app.model import TokenTemplate
+from app import config
 
 from .account_config import eth_account
-from .contract_config import IbetStraightBond
+from .contract_config import IbetStraightBond, TokenList
 from .contract_modules import issue_bond_token, register_bond_list
 
 
@@ -18,16 +22,52 @@ class TestV1Contracts():
     # テスト対象API
     apiurl = '/v1/Contracts/'
 
+    def tokenlist_contract():
+        deployer = eth_account['deployer']
+
+        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        web3.eth.defaultAccount = deployer['account_address']
+        web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
+        TokenListContract = web3.eth.contract(
+            abi = TokenList['abi'],
+            bytecode = TokenList['bytecode'],
+            bytecode_runtime = TokenList['bytecode_runtime'],
+        )
+
+        tx_hash = TokenListContract.deploy(
+            transaction={'from':deployer['account_address'], 'gas':4000000}
+        ).hex()
+
+        count = 0
+        tx = None
+        while True:
+            time.sleep(1)
+            try:
+                tx = web3.eth.getTransactionReceipt(tx_hash)
+            except:
+                continue
+            count += 1
+            if tx is not None or count > 10:
+                break
+
+        contract_address = ''
+        if tx is not None :
+            # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
+            if 'contractAddress' in tx.keys():
+                contract_address = tx['contractAddress']
+
+        return {'address':contract_address, 'abi':TokenList['abi']}
+
     # ＜正常系1＞
     # 発行済債券あり（1件）
     # cursor=設定なし、 limit=設定なし
     # -> 1件返却
-    def test_contracts_normal_1(self, client, session, shared_contract):
+    def test_contracts_normal_1(self, client, session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = shared_contract['TokenList']
+        token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：TokenTemplate登録
@@ -117,12 +157,12 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=設定なし、 limit=設定なし
     # -> 登録が新しい順にリストが返却
-    def test_contracts_normal_2(self, client, session, shared_contract):
+    def test_contracts_normal_2(self, client, session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = shared_contract['TokenList']
+        token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：TokenTemplate登録
@@ -263,12 +303,12 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=2、 limit=2
     # -> 登録が新しい順にリストが返却（2件）
-    def test_contracts_normal_3(self, client, session, shared_contract):
+    def test_contracts_normal_3(self, client, session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = shared_contract['TokenList']
+        token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：TokenTemplate登録
@@ -409,12 +449,12 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=1、 limit=1
     # -> 登録が新しい順にリストが返却（1件）
-    def test_contracts_normal_4(self, client, session, shared_contract):
+    def test_contracts_normal_4(self, client, session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = shared_contract['TokenList']
+        token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：TokenTemplate登録
@@ -507,12 +547,12 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=1、 limit=2
     # -> 登録が新しい順にリストが返却（1件）
-    def test_contracts_normal_5(self, client, session, shared_contract):
+    def test_contracts_normal_5(self, client, session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = shared_contract['TokenList']
+        token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：TokenTemplate登録
@@ -604,12 +644,12 @@ class TestV1Contracts():
     # ＜正常系6＞
     # 債券未発行、商品リスト（TokenList）のみ登録あり
     # -> ゼロ件リストが返却
-    def test_contracts_normal_6(self, client, session, shared_contract):
+    def test_contracts_normal_6(self, client, session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = shared_contract['TokenList']
+        token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：TokenTemplate登録
