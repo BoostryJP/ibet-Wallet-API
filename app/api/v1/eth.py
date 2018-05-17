@@ -53,29 +53,38 @@ class SendRawTransaction(BaseResource):
         request_json = SendRawTransaction.validate(req)
         raw_tx_hex_list = request_json['raw_tx_hex_list']
 
-        for raw_tx_hex in raw_tx_hex_list:
+        result = []
+
+        for i, raw_tx_hex in enumerate(raw_tx_hex_list):
             try:
                 tx_hash = web3.eth.sendRawTransaction(raw_tx_hex)
             except ValueError as e:
-                reason = e.args[0]
-                if type(reason) == str:
-                    raise InvalidParameterError(reason)
-                else:
-                    raise EthValueError(reason['code'],reason['message'])
+                result.append({
+                    'id': i+1,
+                    'status': 0,
+                })
+                continue
 
-            count = 0
-            tx = None
-            while True:
-                try:
-                    tx = web3.eth.getTransactionReceipt(tx_hash)
-                except:
-                    time.sleep(1)
+            try:
+                tx = web3.eth.waitForTransactionReceipt(tx_hash, 30)
+            except:
+                # NOTE: eth.waitForTransactionReceiptは本来はExceptionではなくNoneを返す仕様だが、
+                #       バグでExceptionを返すようになっているため対応しておく
+                tx = None
+                pass
 
-                count += 1
-                if tx is not None or count > 30:
-                    break
+            if tx is None:
+                result.append({
+                    'id': i+1,
+                    'status': 0,
+                })
+            else:
+                result.append({
+                    'id': i+1,
+                    'status': tx['status'],
+                })
 
-        self.on_success(res)
+        self.on_success(res, result)
 
     @staticmethod
     def validate(req):
