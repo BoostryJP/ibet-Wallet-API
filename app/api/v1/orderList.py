@@ -48,10 +48,15 @@ class OrderList(BaseResource):
             abi = list_contract_abi,
         )
 
+        # 企業リストの情報を取得する
+        company_list = []
         try:
-            company_list = requests.get(config.COMPANY_LIST_URL).json()
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json' , 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL).json()
         except:
-            company_list = []
+            pass
 
         # 1) 注文一覧
         order_list = []

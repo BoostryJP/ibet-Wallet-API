@@ -19,7 +19,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 @pytest.fixture(scope = 'session')
 def client():
     config.DB_AUTOCOMMIT = False
-    
+
     init_session()
     middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
     return testing.TestClient(App(middleware=middleware))
@@ -41,13 +41,13 @@ def whitelist_contract():
     count = 0
     tx = None
     while True:
-        time.sleep(1)
+        time.sleep(0.1)
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
             continue
         count += 1
-        if tx is not None or count > 10:
+        if tx is not None or count > 120:
             break
 
     contract_address = ''
@@ -75,13 +75,13 @@ def personalinfo_contract():
     count = 0
     tx = None
     while True:
-        time.sleep(1)
+        time.sleep(0.1)
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
             continue
         count += 1
-        if tx is not None or count > 10:
+        if tx is not None or count > 120:
             break
 
     contract_address = ''
@@ -115,13 +115,13 @@ def bond_exchange_contract(whitelist_address, personalinfo_address):
     count = 0
     tx = None
     while True:
-        time.sleep(1)
+        time.sleep(0.1)
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
             continue
         count += 1
-        if tx is not None or count > 10:
+        if tx is not None or count > 120:
             break
 
     contract_address = ''
@@ -149,13 +149,13 @@ def tokenlist_contract():
     count = 0
     tx = None
     while True:
-        time.sleep(1)
+        time.sleep(0.1)
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
             continue
         count += 1
-        if tx is not None or count > 10:
+        if tx is not None or count > 120:
             break
 
     contract_address = ''
@@ -203,4 +203,3 @@ def session(request, db):
 
     request.addfinalizer(teardown)
     return session
-

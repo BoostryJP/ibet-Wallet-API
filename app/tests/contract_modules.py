@@ -205,7 +205,7 @@ def wait_transaction_receipt(tx_hash):
     tx = None
 
     while True:
-        time.sleep(1)
+        time.sleep(0.1)
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
@@ -214,7 +214,7 @@ def wait_transaction_receipt(tx_hash):
         count += 1
         if tx is not None:
             break
-        elif count > 10:
+        elif count > 120:
             raise Exception
 
     return tx
