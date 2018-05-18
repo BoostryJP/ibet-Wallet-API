@@ -94,143 +94,24 @@ listen_addresses = '*'
 $ psql --username=ethuser --password --dbname=ethcache
 ```
 
-## 2. Ethereumインストール&設定（※PrivateNetを利用する場合）
-### 2-1. Ethereumインストール
-* 以下のコマンドでインストールを行う。
-```
-$ sudo apt-get install software-properties-common
-$ sudo add-apt-repository -y ppa:ethereum/ethereum
-$ sudo apt-get update
-$ sudo apt-get install ethereum
-```
+## 2. 開発環境用の Quorum(Ethereum) の構築
+* Dockerコンテナを利用して、ローカルの開発環境にQuorumクラスタを構築する。
+* https://github.com/N-Village/tmr-docker の、`quorum-dev`を利用する。
 
-* バージョンの確認。
-```
-$ geth version
-Geth
-Version: 1.7.3-stable
-Git Commit: 4bb3c89d44e372e6a9ab85a8be0c9345265c763a
-Architecture: amd64
-Protocol Versions: [63 62]
-Network Id: 1
-Go Version: go1.9
-Operating System: linux
-GOPATH=
-GOROOT=/usr/lib/go-1.9
-```
+  1. docker-ceのインストール
+  2. docker-composeのインストール
+  3. tmr-dockerリポジトリをチェックアウト
+  4. ./quorum-dev/ に移動
+  5. docker-compose up -d でクラスタが起動する。
+  6. 起動後の状態は以下のような状態になる（※ContainerID等は異なる）
+  7. `geth attach http://localhost:8545` で`quorum-dev_validator-0_1`に接続できる。
+  8. テスト用アカウントして、新規のアカウントを4つ（deployer, issuer, agent, trader）作成する。 `personal.newAccount("password")` で作成する。
 
-### 2-2. private net を作成
 ```
-$ mkdir ~/eth_private
-$ cd eth_private
-```
-
-* genesis.jsonを作成する。
-```
-$ cat genesis.json
-{
-  "config": {
-        "chainId": 15,
-        "homesteadBlock": 0,
-        "eip155Block": 0,
-        "eip158Block": 0
-    },
-  "alloc"      : {},
-  "coinbase"   : "0x0000000000000000000000000000000000000000",
-  "difficulty" : "0x20000",
-  "extraData"  : "",
-  "gasLimit"   : "0x2fefd8",
-  "nonce"      : "0x0000000000000042",
-  "mixhash"    : "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "parentHash" : "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "timestamp"  : "0x00"
-}
-```
-
-* 初期化（genesis blockの作成）
-```
-$ geth --datadir ~/eth_private init ~/eth_private/genesis.json
-```
-
-* 起動
-```
-$ geth --datadir ~/eth_private --networkid 15
-```
-
-* コンソール立ち上げ
-```
-$ geth --datadir ~/eth_private --networkid 15 console
-```
-
-### 2-3. アカウント作成
-* 新しいアカウントを作成する。
-```
-> personal.newAccount("password")
-"0x7ae52ca0c275982bb1c27e7ef5a6e920aad655c2"
-```
-
-* アカウントの一覧を確認。
-```
-> eth.accounts
-["0x7ae52ca0c275982bb1c27e7ef5a6e920aad655c2"]
-```
-
-* coinbaseを確認。
-```
-> eth.coinbase
-"0x7ae52ca0c275982bb1c27e7ef5a6e920aad655c2"
-```
-
-* （補足）アカウントのアンロック
-```
-> personal.unlockAccount("0x7ae52ca0c275982bb1c27e7ef5a6e920aad655c2", "password")
-```
-
-
-### 2-4. マイニング実行
-* 以下のコマンドを実行する。
-```
-> miner.start()
-INFO [01-23|09:53:31] Updated mining threads                   threads=0
-INFO [01-23|09:53:31] Transaction pool price threshold updated price=18000000000
-INFO [01-23|09:53:31] Starting mining operation
-INFO [01-23|09:53:31] Commit new mining work                   number=1 txs=0 uncles=0 elapsed=252.509µs
-null
-> INFO [01-23|09:53:35] Generating DAG in progress               epoch=0 percentage=0 elapsed=3.180s
-INFO [01-23|09:53:38] Generating DAG in progress               epoch=0 percentage=1 elapsed=6.343s
-INFO [01-23|09:53:42] Generating DAG in progress               epoch=0 percentage=2 elapsed=9.576s
-INFO [01-23|09:53:45] Generating DAG in progress               epoch=0 percentage=3 elapsed=12.738s
-INFO [01-23|09:53:48] Generating DAG in progress               epoch=0 percentage=4 elapsed=15.946s
-INFO [01-23|09:53:51] Generating DAG in progress               epoch=0 percentage=5 elapsed=19.051s
-（※以下省略）
-```
-
-* マイニングを停止する。
-```
-> miner.stop()
-```
-
-* 残高確認（Wei換算）
-```
-> eth.getBalance(eth.accounts[0])
-```
-
-* 残高確認（Ether換算）
-```
-> web3.fromWei(eth.getBalance(eth.accounts[0]),"ether")
-```
-
-### 2-5. RPC起動
-* RPCを起動する。
-```
-geth --datadir ~/eth_private --networkid 15 --cache=512 --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" console
-```
-
-## 3. その他依存ライブラリ
-* pyethereumをインストール
-```
-$ sudo apt-get install libssl-dev build-essential automake pkg-config libtool libffi-dev libgmp-dev libyaml-cpp-dev
-$ git clone https://github.com/ethereum/pyethereum/
-$ cd pyethereum
-$ python setup.py install
+CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                                                                         NAMES
+1f51a0df93dc        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8547->8545/tcp, 0.0.0.0:30305->30303/tcp   quorum-dev_validator-2_1
+9c5d149dd582        quay.io/amis/ethstats:latest   "npm start"              2 weeks ago         Up 2 days           0.0.0.0:3000->3000/tcp                                                        quorum-dev_eth-stats_1
+56fc9f3a0d72        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8548->8545/tcp, 0.0.0.0:30306->30303/tcp   quorum-dev_validator-3_1
+a4cfd7c80e14        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           0.0.0.0:8545->8545/tcp, 0.0.0.0:30303->30303/tcp, 8546/tcp, 30303-30304/udp   quorum-dev_validator-0_1
+a3b215425e01        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8546->8545/tcp, 0.0.0.0:30304->30303/tcp   quorum-dev_validator-1_1
 ```
