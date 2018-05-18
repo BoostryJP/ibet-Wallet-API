@@ -129,9 +129,9 @@ class TestV1EthSendRawTransaction():
             }
         }
 
-    # ＜エラー系6＞
+    # ＜エラー系6：ステータスコードは200＞
     # 入力値が正しくない（rawtransactionではない）
-    # -> 400エラー（InvalidParameterError）
+    # -> status = 0
     def test_sendraw_error_6(self, client):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
@@ -142,12 +142,6 @@ class TestV1EthSendRawTransaction():
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code':
-            88,
-            'message':
-            'Invalid Parameter',
-            'description':
-            "when sending a str, it must be a hex string. Got: 'some_raw_tx_1'"
-        }
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == [{'id': 1, 'status': 0}]
