@@ -31,6 +31,9 @@ class OrderList(BaseResource):
         request_json = OrderList.validate(req)
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        if config.WEB3_CHAINID == '4' or '2017':
+            from web3.middleware import geth_poa_middleware
+            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         # Exchange Contract
         exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')

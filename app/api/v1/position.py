@@ -33,6 +33,9 @@ class MyTokens(BaseResource):
         request_json = MyTokens.validate(req)
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        if config.WEB3_CHAINID == '4' or '2017':
+            from web3.middleware import geth_poa_middleware
+            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         # TokenList Contract
         list_contract_address = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')

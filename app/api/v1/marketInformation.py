@@ -194,6 +194,9 @@ class LastPrice(BaseResource):
         LOG.info('v1.marketInformation.LastPrice')
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        if config.WEB3_CHAINID == '4' or '2017':
+            from web3.middleware import geth_poa_middleware
+            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         request_json = LastPrice.validate(req)
 
