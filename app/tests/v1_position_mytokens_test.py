@@ -72,34 +72,10 @@ class TestV1MyTokens():
 
         return bond_token
 
-    # 正常系1：預かりなし
-    #  -> リストゼロ件で返却
-    def test_position_normal_1(self, client, shared_contract):
-        account = eth_account['trader']
-        request_params = {"account_address_list": [account['account_address']]}
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        bond_exchange = shared_contract['IbetStraightBondExchange']
-        token_list = shared_contract['TokenList']
-
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange[
-            'address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assumed_body = []
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
-
-    # 正常系2：預かりあり（1件）
-    #  -> リスト1件で返却
-    def test_position_normal_2(self, client, session, shared_contract):
+    # ＜正常系1＞
+    # 債券新規発行 -> 約定（1件）
+    #  -> 該当債券の預かりが返却
+    def test_position_normal_1(self, client, session, shared_contract):
         tokenTemplate = TokenTemplate()
         tokenTemplate.id = 1
         tokenTemplate.template_name = 'IbetStraightBond'
@@ -137,7 +113,7 @@ class TestV1MyTokens():
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
-        assumed_body = [{
+        assumed_body = {
             'token': {
                 'token_address':
                 token_address,
@@ -183,11 +159,14 @@ class TestV1MyTokens():
             },
             'balance': 100,
             'commitment': 0
-        }]
+        }
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address:
+                assert token == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_position_error_1(self, client):
