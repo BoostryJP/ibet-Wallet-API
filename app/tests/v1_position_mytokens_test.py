@@ -4,7 +4,6 @@ import json
 import os
 
 import app.model
-from app.model import TokenTemplate
 
 from .account_config import eth_account
 from .contract_config import IbetStraightBond
@@ -76,12 +75,6 @@ class TestV1MyTokens():
     # 債券新規発行 -> 約定（1件）
     #  -> 該当債券の預かりが返却
     def test_position_normal_1(self, client, session, shared_contract):
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
-
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']

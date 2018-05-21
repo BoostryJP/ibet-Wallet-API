@@ -11,7 +11,6 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import TokenTemplate
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 
@@ -26,7 +25,6 @@ class OrderList(BaseResource):
     '''
     def on_post(self, req, res):
         LOG.info('v1.OrderList.OrderList')
-        session = req.context['session']
 
         request_json = OrderList.validate(req)
 
@@ -84,7 +82,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                        abi_str = config.STRAIGHT_BOND_ABI['abi']
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
                             address = token_address,
@@ -210,7 +208,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                        abi_str = config.STRAIGHT_BOND_ABI['abi']
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
                             address = token_address,
@@ -330,7 +328,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                        abi_str = config.STRAIGHT_BOND_ABI['abi']
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
                             address = token_address,
@@ -455,7 +453,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                        abi_str = config.STRAIGHT_BOND_ABI['abi']
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
                             address = token_address,
@@ -574,7 +572,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                        abi_str = config.STRAIGHT_BOND_ABI['abi']
                         token_abi = json.loads(abi_str)
                         TokenContract = web3.eth.contract(
                             address = token_address,
