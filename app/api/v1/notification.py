@@ -13,7 +13,6 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import TokenTemplate
 from app.errors import AppError, InvalidParameterError
 from app import config
 
@@ -28,7 +27,6 @@ class Notifications(BaseResource):
     '''
     def on_post(self, req, res):
         LOG.info('v1.Notification.Notifications')
-        session = req.context['session']
 
         request_json = Notifications.validate(req)
 
@@ -168,7 +166,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,
@@ -206,7 +204,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,
@@ -244,7 +242,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,
@@ -282,7 +280,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,
@@ -320,7 +318,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,
@@ -358,7 +356,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,
@@ -396,7 +394,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,
@@ -434,7 +432,7 @@ class Notifications(BaseResource):
                 if token_template[0] == '0x0000000000000000000000000000000000000000':
                     continue
 
-                abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template[1]).first().abi
+                abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
                 TokenContract = web3.eth.contract(
                     address = token_address,

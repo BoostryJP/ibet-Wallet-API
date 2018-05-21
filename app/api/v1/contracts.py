@@ -11,7 +11,6 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import TokenTemplate
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 
@@ -33,8 +32,6 @@ class Contracts(BaseResource):
     '''
     def on_get(self, req, res):
         LOG.info('v1.contracts.Contracts')
-
-        session = req.context['session']
 
         # Validation
         request_json = Contracts.validate(req)
@@ -80,7 +77,6 @@ class Contracts(BaseResource):
             token = ListContract.functions.getTokenByNum(i).call()
 
             token_detail = self.get_token_detail(token_id = i,
-                                                 session = session,
                                                  company_list = company_list,
                                                  token_address = token[0],
                                                  token_template = token[1],
@@ -91,15 +87,15 @@ class Contracts(BaseResource):
         self.on_success(res, token_list)
 
 
-    def get_token_detail(self, token_id, session, token_address, token_template, owner_address, company_list):
+    def get_token_detail(self, token_id, token_address, token_template, owner_address, company_list):
         """
         トークン詳細を取得する。
         取得に失敗した場合はNoneを返す。
         """
 
         if token_template == 'IbetStraightBond':
-                            # トークンのABIを検索する
-            abi_str = session.query(TokenTemplate).filter(TokenTemplate.template_name == token_template).first().abi
+            # トークンのABIを検索する
+            abi_str = config.STRAIGHT_BOND_ABI['abi']
             token_abi = json.loads(abi_str)
 
             try:

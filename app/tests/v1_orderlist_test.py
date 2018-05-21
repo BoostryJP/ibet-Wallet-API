@@ -4,7 +4,6 @@ import json
 import os
 
 import app.model
-from app.model import TokenTemplate
 
 from .account_config import eth_account
 from .contract_config import IbetStraightBond
@@ -186,12 +185,6 @@ class TestV1OrderList():
     # 注文中あり（1件）、決済中なし、約定済なし
     #  -> order_listが1件返却
     def test_orderlist_normal_2(self, client, session, shared_contract):
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
-
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']
@@ -278,12 +271,6 @@ class TestV1OrderList():
     # 注文中なし、決済中あり（1件）、約定済なし
     #  -> settlement_listが1件返却
     def test_orderlist_normal_3(self, client, session, shared_contract):
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
-
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']
@@ -371,12 +358,6 @@ class TestV1OrderList():
     # 注文中なし、決済中なし、約定済あり（1件）
     #  -> complete_listが1件返却
     def test_orderlist_normal_4(self, client, session, shared_contract):
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
-
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']

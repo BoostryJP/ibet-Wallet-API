@@ -7,7 +7,6 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 
 import app.model
-from app.model import TokenTemplate
 from app import config
 
 from .account_config import eth_account
@@ -69,13 +68,6 @@ class TestV1Contracts():
         # TokenListコントラクト
         token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-
-        # データ準備：TokenTemplate登録
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
 
         # データ準備：債券新規発行
         attribute = {
@@ -164,13 +156,6 @@ class TestV1Contracts():
         # TokenListコントラクト
         token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-
-        # データ準備：TokenTemplate登録
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
 
         # データ準備：債券新規発行
         bond_list = []
@@ -311,13 +296,6 @@ class TestV1Contracts():
         token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
-        # データ準備：TokenTemplate登録
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
-
         # データ準備：債券新規発行
         bond_list = []
         for i in range(0, 2):
@@ -457,13 +435,6 @@ class TestV1Contracts():
         token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
-        # データ準備：TokenTemplate登録
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
-
         # データ準備：債券新規発行
         bond_list = []
         for i in range(0, 2):
@@ -555,13 +526,6 @@ class TestV1Contracts():
         token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
-        # データ準備：TokenTemplate登録
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
-
         # データ準備：債券新規発行
         bond_list = []
         for i in range(0, 2):
@@ -651,13 +615,6 @@ class TestV1Contracts():
         # TokenListコントラクト
         token_list = TestV1Contracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-
-        # データ準備：TokenTemplate登録
-        tokenTemplate = TokenTemplate()
-        tokenTemplate.id = 1
-        tokenTemplate.template_name = 'IbetStraightBond'
-        tokenTemplate.abi = IbetStraightBond['abi']
-        session.add(tokenTemplate)
 
         # データ準備：商品リスト登録
         token_address = to_checksum_address(

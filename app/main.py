@@ -35,9 +35,7 @@ class App(falcon.API):
         self.add_route('/v1/Eth/SendRawTransaction', eth.SendRawTransaction())
 
         # トークンテンプレート登録・参照
-        self.add_route('/v1/TokenTemplate', tokenTemplates.SetTemplate())
-        self.add_route('/v1/TokenTemplates', tokenTemplates.GetAll())
-        self.add_route('/v1/TokenTemplates/{contract_id}', tokenTemplates.GetContractABI())
+        self.add_route('/v1/StraightBondABI/', tokenTemplates.GetStraightBondABI())
 
         # 会社情報参照
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
