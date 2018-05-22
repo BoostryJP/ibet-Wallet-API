@@ -2,15 +2,15 @@
 import pytest
 
 '''
-発行会社情報参照API
+決済代行業者情報参照API
 /v1/Company/{eth_address}
 '''
-class TestV1Company():
+class TestV1CompanyPaymentAgentInfo():
 
     # テスト対象API
-    apiurl_base = '/v1/Company/'
+    apiurl_base = '/v1/PaymentAgent/'
 
-    # 正常系1-1： 発行会社リストに指定したアドレスの情報が存在
+    # 正常系1-1：決済代行業者リストに指定したアドレスの情報が存在
     def test_normal_1_1(self, client):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd'
         apiurl = self.apiurl_base + eth_address
@@ -30,7 +30,7 @@ class TestV1Company():
         assert resp.json['data'] == assumed_body
 
 
-    # エラー系1-1： 発行会社リストに指定したアドレスの情報が存在しない
+    # エラー系1-1：決済代行業者会社リストに指定したアドレスの情報が存在しない
     def test_error_1_1(self, client):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf1'
         apiurl = self.apiurl_base + eth_address
