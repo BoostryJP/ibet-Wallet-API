@@ -3,3 +3,4 @@
 from .base import Base
 from .order import Order
 from .agreement import Agreement, AgreementStatus
+from .notification import Notification
