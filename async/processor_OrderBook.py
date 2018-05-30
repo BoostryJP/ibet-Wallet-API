@@ -14,6 +14,7 @@ from web3 import Web3
 from eth_utils import to_checksum_address
 from app import config
 from app.model import Agreement, AgreementStatus, Order
+from web3.middleware import geth_poa_middleware
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,6 +25,7 @@ IBET_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRE
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
