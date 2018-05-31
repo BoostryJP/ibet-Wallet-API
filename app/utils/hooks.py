@@ -3,7 +3,6 @@
 import falcon
 from web3.auto import w3
 from eth_account.messages import defunct_hash_message
-from .signature import create_canonical_request
 from app.errors import InvalidParameterError
 
 class VerifySignature(object):
