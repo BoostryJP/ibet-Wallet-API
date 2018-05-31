@@ -14,13 +14,9 @@ def verify_signature(req, resp, resource, params):
     if len(req.query_string) > 0:
         query_string = "?" + req.query_string
     request_body = ""
-    try:
-        req.stream.seek(0)
-        request_body = req.stream.read()
-        req.stream.seek(0)
-    except Exception:
-        pass
-
+    if "raw_data" in req.context:
+        request_body = req.context["raw_data"]
+    
     signature = req.get_header(HEADER_SIGNATURE_KEY, default="")
     
     canonical_request = create_canonical_request(
@@ -29,6 +25,7 @@ def verify_signature(req, resp, resource, params):
         query_string=query_string,
         request_body=request_body,
     )
+    print(canonical_request)
 
     # 署名の検証
     req.context["address"] = w3.eth.account.recoverHash(
