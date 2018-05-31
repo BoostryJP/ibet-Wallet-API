@@ -10,4 +10,3 @@ def create_canonical_request(method, request_path, query_string = "", request_bo
                        query_string + "\n"+\
                        request_body_hash
     return canoncal_request
-

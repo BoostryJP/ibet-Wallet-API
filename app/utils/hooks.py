@@ -4,31 +4,47 @@ import falcon
 from web3.auto import w3
 from eth_account.messages import defunct_hash_message
 from .signature import create_canonical_request
+from app.errors import InvalidParameterError
 
-HEADER_SIGNATURE_KEY = "X-ibet-Signature"
-def verify_signature(req, resp, resource, params):
-    # リクエスト情報の取得
-    method = req.method
-    request_path = req.path
-    query_string = ""
-    if len(req.query_string) > 0:
-        query_string = "?" + req.query_string
-    request_body = ""
-    if "raw_data" in req.context:
-        request_body = req.context["raw_data"]
+class VerifySignature(object):
+    """
+    署名検証及び認証を行うHookです
+    リクエストの署名を検証し、req.context["address"]にアドレスを格納します。
+    """
     
-    signature = req.get_header(HEADER_SIGNATURE_KEY, default="")
+    HEADER_SIGNATURE_KEY = "X-ibet-Signature"
     
-    canonical_request = create_canonical_request(
-        method=method,
-        request_path=request_path,
-        query_string=query_string,
-        request_body=request_body,
-    )
-    print(canonical_request)
+    def _get_request_body(self, req):
+        if "raw_data" in req.context:
+            return req.context["raw_data"]
+        return "{}"
 
-    # 署名の検証
-    req.context["address"] = w3.eth.account.recoverHash(
-        defunct_hash_message(text=canonical_request),
-        signature=signature,
-    )
+    def _get_query_string(self, req):
+        kvs = []
+        for k, v in sorted(req.params.items()):
+            kvs.append(k + "=" + v)
+
+        if len(kvs) == 0:
+            return ""
+        return "?" + "&".join(kvs)
+            
+    def _canonical_request(self, req):
+        request_body = self._get_request_body(req)
+        request_body_hash = w3.sha3(text=request_body).hex()
+        canonical_request = req.method + "\n" +\
+                            req.path + "\n" +\
+                            self._get_query_string(req) + "\n" +\
+                            request_body_hash
+        return canonical_request
+
+    def __call__(self, req, resp, resource, params):
+        signature = req.get_header(VerifySignature.HEADER_SIGNATURE_KEY)
+        if signature is None:
+            raise InvalidParameterError("signature is empty")
+
+        canonical_request = self._canonical_request(req)
+
+        req.context["address"] = w3.eth.account.recoverHash(
+            defunct_hash_message(text=canonical_request),
+            signature=signature,
+        )
