@@ -116,3 +116,21 @@ class TestVerifySignature():
                     'Content-Type': 'application/json',
                 }
             )
+
+    # <異常系3
+    # 署名のフォーマットが不正
+    def test_verify_signature_error_3(self):
+        with pytest.raises(InvalidParameterError):
+            self.cli.simulate_post(
+                "/v1/Register",
+                params={
+                    'password': 123,
+                    'name': 'abcd',
+                },
+                body='{"address": "Tokyo, Japan"}',
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-ibet-Signature': '0xaf7117049ab338ea7f',
+                }
+            )
+            

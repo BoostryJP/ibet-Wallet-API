@@ -45,7 +45,10 @@ class VerifySignature(object):
 
         canonical_request = self._canonical_request(req)
 
-        req.context["address"] = w3.eth.account.recoverHash(
-            defunct_hash_message(text=canonical_request),
-            signature=signature,
-        )
+        try:
+            req.context["address"] = w3.eth.account.recoverHash(
+                defunct_hash_message(text=canonical_request),
+                signature=signature,
+            )
+        except Exception:
+            raise InvalidParameterError("failed to recover hash")
