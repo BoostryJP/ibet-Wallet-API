@@ -3,6 +3,7 @@ import falcon
 from falcon import testing
 from app.utils.hooks import VerifySignature
 from app.middleware.translator import JSONTranslator
+from app.errors import InvalidParameterError
 
 class TestVerifySignature():
     class HandlerMock():
@@ -100,3 +101,18 @@ class TestVerifySignature():
         assert res.status_code == 200
         assert res.text != "0xBE65f2024C1De5CCCe3b20e38Cf93a0A9Bcbbf8a"
         
+    # <異常系2>
+    # 署名が空
+    def test_verify_signature_error_2(self):
+        with pytest.raises(InvalidParameterError):
+            self.cli.simulate_post(
+                "/v1/Register",
+                params={
+                    'password': 123,
+                    'name': 'abcd',
+                },
+                body='{"address": "Tokyo, Japan"}',
+                headers={
+                    'Content-Type': 'application/json',
+                }
+            )
