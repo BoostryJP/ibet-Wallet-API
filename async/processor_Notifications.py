@@ -96,6 +96,7 @@ class Watcher:
         
             self.watch(entries)
             self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
+            db_session.commit()
         finally:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
@@ -484,7 +485,6 @@ def main():
         for watcher in watchers:
             fs.append(e.submit(watcher.loop))
         wait_all_futures(fs)
-        db_session.commit()
 
         elapsed_time = time.time() - start_time
         print("[LOOP] finished in {} secs".format(elapsed_time))
