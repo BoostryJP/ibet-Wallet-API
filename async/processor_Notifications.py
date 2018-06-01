@@ -240,7 +240,7 @@ class WatchExchangeCancelOrder(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRES,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
