@@ -16,7 +16,7 @@ from app import config
 from app.model import Notification
 import json
 from async.lib.token import TokenFactory
-from async.lib.company_list import CompanyList
+from async.lib.company_list import CompanyListFactory
 from async.lib.misc import wait_all_futures
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -40,18 +40,19 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
-tokenFactory = TokenFactory(web3)
+token_factory = TokenFactory(web3)
+company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 
 # コントラクトの生成
-exchangeContract = web3.eth.contract(
+exchange_contract = web3.eth.contract(
     address = to_checksum_address(IBET_EXCHANGE_CONTRACT_ADDRESS),
     abi = IBET_EXCHANGE_CONTRACT_ABI,
 )
-whiteListContract = web3.eth.contract(
+white_list_contract = web3.eth.contract(
     address = to_checksum_address(WHITE_LIST_CONTRACT_ADDRESS),
     abi = WHITE_LIST_CONTRACT_ABI,
 )
-listContract = web3.eth.contract(
+list_contract = web3.eth.contract(
     address = to_checksum_address(TOKEN_LIST_CONTRACT_ADDRESS),
     abi = TOKEN_LIST_CONTRACT_ABI,
 )
@@ -85,7 +86,7 @@ class Watcher:
 # イベント：決済用口座登録
 class WatchWhiteListRegister(Watcher):
     def __init__(self):
-        super().__init__(whiteListContract, "Register", {})
+        super().__init__(white_list_contract, "Register", {})
     
     def watch(self, entries):
         for entry in entries:
@@ -101,7 +102,7 @@ class WatchWhiteListRegister(Watcher):
 # イベント：決済用口座情報更新
 class WatchWhiteListChangeInfo(Watcher):
     def __init__(self):
-        super().__init__(whiteListContract, "ChangeInfo", {})
+        super().__init__(white_list_contract, "ChangeInfo", {})
 
     def watch(self, entries):
         for entry in entries:
@@ -117,7 +118,7 @@ class WatchWhiteListChangeInfo(Watcher):
 # イベント：決済用口座承認
 class WatchWhiteListApprove(Watcher):
     def __init__(self):
-        super().__init__(whiteListContract, "Approve", {})
+        super().__init__(white_list_contract, "Approve", {})
 
     def watch(self, entries):
         for entry in entries:
@@ -133,7 +134,7 @@ class WatchWhiteListApprove(Watcher):
 # イベント：決済用口座警告
 class WatchWhiteListWarn(Watcher):
     def __init__(self):
-        super().__init__(whiteListContract, "Warn", {})
+        super().__init__(white_list_contract, "Warn", {})
 
     def watch(self, entries):
         for entry in entries:
@@ -149,7 +150,7 @@ class WatchWhiteListWarn(Watcher):
 # イベント：決済用口座非承認・凍結
 class WatchWhiteListUnapprove(Watcher):
     def __init__(self):
-        super().__init__(whiteListContract, "Unapprove", {})
+        super().__init__(white_list_contract, "Unapprove", {})
 
     def watch(self, entries):
         for entry in entries:
@@ -161,13 +162,42 @@ class WatchWhiteListUnapprove(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
+
+# イベント（注文）
+class WatchExchangeNewOrder(Watcher):
+    def __init__(self):
+        super().__init__(exchange_contract, "NewOrder", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+            token = token_factory.get_straight_bond(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+            }
+            
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "NewOrder"
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
             
 def main():
     watchers = [WatchWhiteListRegister(),
                 WatchWhiteListChangeInfo(),
                 WatchWhiteListApprove(),
                 WatchWhiteListWarn(),
-                WatchWhiteListUnapprove()]
+                WatchWhiteListUnapprove(),
+                WatchExchangeNewOrder()]
     
     e = ThreadPoolExecutor(max_workers = 2)
     while True:

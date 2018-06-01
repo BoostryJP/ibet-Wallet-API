@@ -1,5 +1,5 @@
 import json
-import app.config
+from app import config
 
 class TokenFactory:
     def __init__(self, web3):
