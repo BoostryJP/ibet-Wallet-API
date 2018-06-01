@@ -13,11 +13,12 @@ class Notification(Base):
     __tablename__ = 'notification'
 
     # 通知ID
-    # Spec: 0x | <blockNumber> | <transactionIndex> | <logIndex>
+    # Spec: 0x | <blockNumber> | <transactionIndex> | <logIndex> | <optionType>
     #   ( | は文字列連結 )
     #   <blockNumber>: blockNumberをhexstringで表現したもの。12桁
     #   <transactionIndex>: transactionIndex（block内でのトランザクションの採番）をhexstringで表現したもの。6桁
     #   <logIndex>: logIndex（transaction内でのログの採番）をhexstringで表現したもの。6桁
+    #   <optionType>: 上記が等しいが通知としては別にした場合に付与する識別子。2桁(デフォルトは00)
     notification_id = Column(String(256), primary_key=True)
 
     # 通知タイプ(例：BuySettlementOK, BuyAgreementなど)
