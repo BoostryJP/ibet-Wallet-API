@@ -33,13 +33,13 @@ class Notification(Base):
     address = Column(String(256))
 
     # 既読フラグ
-    is_read = Column(Boolean)
+    is_read = Column(Boolean, default=False)
     # 重要フラグ
-    is_flagged = Column(Boolean)
+    is_flagged = Column(Boolean, default=False)
     # 削除フラグ
-    is_deleted = Column(Boolean)
+    is_deleted = Column(Boolean, default=False)
     # 削除日付
-    deleted_at = Column(DateTime)
+    deleted_at = Column(DateTime, default=None)
 
     # 通知イベントの内容
     args = Column(JSON)

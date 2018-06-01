@@ -63,7 +63,7 @@ class Watcher:
         self.filter_params = filter_params
         self.from_block = 0
 
-    def gen_notification_id(self, entry):
+    def _gen_notification_id(self, entry):
         return "0x{:012x}{:06x}{:06x}".format(
             entry["blockNumber"],
             entry["transactionIndex"],
@@ -82,30 +82,92 @@ class Watcher:
         self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
         db_session.commit()
 
+# イベント：決済用口座登録
 class WatchWhiteListRegister(Watcher):
     def __init__(self):
         super().__init__(whiteListContract, "Register", {})
     
     def watch(self, entries):
         for entry in entries:
-            print(entry)
             notification = Notification()
-            notification.notification_id = self.gen_notification_id(entry)
-            notification.notification_type = "Register"
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "WhiteListRegister"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
-            notification.is_read = False
-            notification.is_flagged = False
-            notification.is_deleted = False
-            notification.deleted_at = None
             notification.args = dict(entry["args"])
             notification.metainfo = {}
-            print(notification)
             db_session.merge(notification)
-        
 
+# イベント：決済用口座情報更新
+class WatchWhiteListChangeInfo(Watcher):
+    def __init__(self):
+        super().__init__(whiteListContract, "ChangeInfo", {})
+
+    def watch(self, entries):
+        for entry in entries:
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "WhiteListChangeInfo"
+            notification.priority = 0
+            notification.address = entry["args"]["account_address"]
+            notification.args = dict(entry["args"])
+            notification.metainfo = {}
+            db_session.merge(notification)
+
+# イベント：決済用口座承認
+class WatchWhiteListApprove(Watcher):
+    def __init__(self):
+        super().__init__(whiteListContract, "Approve", {})
+
+    def watch(self, entries):
+        for entry in entries:
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "WhiteListApprove"
+            notification.priority = 0
+            notification.address = entry["args"]["account_address"]
+            notification.args = dict(entry["args"])
+            notification.metainfo = {}
+            db_session.merge(notification)
+
+# イベント：決済用口座警告
+class WatchWhiteListWarn(Watcher):
+    def __init__(self):
+        super().__init__(whiteListContract, "Warn", {})
+
+    def watch(self, entries):
+        for entry in entries:
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "WhiteListWarn"
+            notification.priority = 0
+            notification.address = entry["args"]["account_address"]
+            notification.args = dict(entry["args"])
+            notification.metainfo = {}
+            db_session.merge(notification)
+
+# イベント：決済用口座非承認・凍結
+class WatchWhiteListUnapprove(Watcher):
+    def __init__(self):
+        super().__init__(whiteListContract, "Unapprove", {})
+
+    def watch(self, entries):
+        for entry in entries:
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "WhiteListUnapprove"
+            notification.priority = 0
+            notification.address = entry["args"]["account_address"]
+            notification.args = dict(entry["args"])
+            notification.metainfo = {}
+            db_session.merge(notification)
+            
 def main():
-    watchers = [WatchWhiteListRegister()]
+    watchers = [WatchWhiteListRegister(),
+                WatchWhiteListChangeInfo(),
+                WatchWhiteListApprove(),
+                WatchWhiteListWarn(),
+                WatchWhiteListUnapprove()]
     
     e = ThreadPoolExecutor(max_workers = 2)
     while True:
@@ -113,6 +175,7 @@ def main():
         for watcher in watchers:
             fs.append(e.submit(watcher.loop))
         wait_all_futures(fs)
+        db_session.commit()
         time.sleep(3)
     
     print("OK")
