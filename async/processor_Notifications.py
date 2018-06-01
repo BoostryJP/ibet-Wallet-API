@@ -206,6 +206,7 @@ class WatchExchangeNewOrder(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
             
             notification = Notification()
@@ -239,6 +240,7 @@ class WatchExchangeCancelOrder(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRES,
             }
 
             notification = Notification()
@@ -272,6 +274,7 @@ class WatchExchangeBuyAgreement(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -305,6 +308,7 @@ class WatchExchangeSellAgreement(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -338,6 +342,7 @@ class WatchExchangeBuySettlementOK(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -371,6 +376,7 @@ class WatchExchangeSellSettlementOK(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -405,6 +411,7 @@ class WatchExchangeBuySettlementNG(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -438,6 +445,7 @@ class WatchExchangeSellSettlementNG(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
+                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
