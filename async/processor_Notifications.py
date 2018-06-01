@@ -36,6 +36,8 @@ WHITE_LIST_CONTRACT_ADDRESS = os.environ.get("WHITE_LIST_CONTRACT_ADDRESS")
 WHITE_LIST_CONTRACT_ABI = json.loads(config.WHITE_LIST_CONTRACT_ABI)
 TOKEN_LIST_CONTRACT_ADDRESS = os.environ.get("TOKEN_LIST_CONTRACT_ADDRESS")
 TOKEN_LIST_CONTRACT_ABI = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
+WORKER_COUNT = os.environ.get("WORKER_COUNT") or 8
+SLEEP_INTERVAL = os.environ.get("SLEEP_INTERVAL") or 3
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
@@ -109,7 +111,7 @@ class WatchWhiteListRegister(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = "WhiteListRegister"
-            notification.priority = 0
+            notification.priority = 2
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -276,7 +278,7 @@ class WatchExchangeBuyAgreement(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = "BuyAgreement"
-            notification.priority = 0
+            notification.priority = 1
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -309,7 +311,7 @@ class WatchExchangeSellAgreement(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = "SellAgreement"
-            notification.priority = 0
+            notification.priority = 2
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -342,7 +344,7 @@ class WatchExchangeBuySettlementOK(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = "BuySettlementOK"
-            notification.priority = 0
+            notification.priority = 1
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -375,7 +377,7 @@ class WatchExchangeSellSettlementOK(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = "SellSettlementOK"
-            notification.priority = 0
+            notification.priority = 1
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -409,7 +411,7 @@ class WatchExchangeBuySettlementNG(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = "BuySettlementNG"
-            notification.priority = 0
+            notification.priority = 2
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -442,7 +444,7 @@ class WatchExchangeSellSettlementNG(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = "SellSettlementNG"
-            notification.priority = 0
+            notification.priority = 2
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -467,7 +469,7 @@ def main():
         WatchExchangeSellSettlementNG(),
     ]
     
-    e = ThreadPoolExecutor(max_workers = 8)
+    e = ThreadPoolExecutor(max_workers = WORKER_COUNT)
     while True:
         start_time = time.time()
         
@@ -480,7 +482,7 @@ def main():
         elapsed_time = time.time() - start_time
         print("[LOOP] finished in {} secs".format(elapsed_time))
 
-        time.sleep(max(3 - elapsed_time, 0))
+        time.sleep(max(SLEEP_INTERVAL - elapsed_time, 0))
     
     print("OK")
 
