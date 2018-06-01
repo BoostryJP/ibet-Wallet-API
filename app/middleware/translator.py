@@ -15,6 +15,7 @@ class JSONTranslator(object):
                 message = 'Read Error'
                 raise falcon('Bad request', message)
             try:
+                req.context['raw_data'] = raw_json.decode('utf-8')
                 req.context['data'] = json.loads(raw_json.decode('utf-8'))
             except ValueError:
                 raise InvalidParameterError('No JSON object could be decoded or Malformed JSON')
