@@ -96,7 +96,6 @@ class Watcher:
         
             self.watch(entries)
             self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
-            db_session.commit()
         finally:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
