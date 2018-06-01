@@ -20,7 +20,8 @@ from async.lib.company_list import CompanyListFactory
 from async.lib.misc import wait_all_futures
 from concurrent.futures import ThreadPoolExecutor
 import time
-
+from datetime import datetime, timezone, timedelta
+JST = timezone(timedelta(hours=+9), "JST")
 
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -71,6 +72,9 @@ class Watcher:
             entry["logIndex"],
         )
 
+    def _gen_block_timestamp(self, entry):
+        return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
+
     def loop(self):
         print("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
         self.filter_params["fromBlock"] = self.from_block
@@ -95,6 +99,7 @@ class WatchWhiteListRegister(Watcher):
             notification.notification_type = "WhiteListRegister"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
@@ -111,6 +116,7 @@ class WatchWhiteListChangeInfo(Watcher):
             notification.notification_type = "WhiteListChangeInfo"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
@@ -127,6 +133,7 @@ class WatchWhiteListApprove(Watcher):
             notification.notification_type = "WhiteListApprove"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
@@ -143,6 +150,7 @@ class WatchWhiteListWarn(Watcher):
             notification.notification_type = "WhiteListWarn"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
@@ -159,6 +167,7 @@ class WatchWhiteListUnapprove(Watcher):
             notification.notification_type = "WhiteListUnapprove"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
@@ -187,6 +196,36 @@ class WatchExchangeNewOrder(Watcher):
             notification.notification_type = "NewOrder"
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+# イベント（注文取消）
+class WatchExchangeCancelOrder(Watcher):
+    def __init__(self):
+        super().__init__(exchange_contract, "CancelOrder", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+            token = token_factory.get_straight_bond(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "CancelOrder"
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
@@ -197,9 +236,10 @@ def main():
                 WatchWhiteListApprove(),
                 WatchWhiteListWarn(),
                 WatchWhiteListUnapprove(),
-                WatchExchangeNewOrder()]
+                WatchExchangeNewOrder(),
+                WatchExchangeCancelOrder()]
     
-    e = ThreadPoolExecutor(max_workers = 2)
+    e = ThreadPoolExecutor(max_workers = 8)
     while True:
         fs = []
         for watcher in watchers:

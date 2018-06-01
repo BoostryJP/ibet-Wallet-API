@@ -41,6 +41,9 @@ class Notification(Base):
     # 削除日付
     deleted_at = Column(DateTime, default=None)
 
+    # 通知が発生した日付（blockTime）
+    block_timestamp = Column(DateTime)
+
     # 通知イベントの内容
     args = Column(JSON)
     # 通知のメタデータ（通知イベントには入っていないが、取りたい情報。トークン名など）
