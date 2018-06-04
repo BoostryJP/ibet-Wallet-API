@@ -21,7 +21,7 @@ DB_AUTOCOMMIT = True
 
 LOG_LEVEL = CONFIG['logging']['level']
 
-WEB3_HTTP_PROVIDER = CONFIG['web3']['HTTPProvider']
+WEB3_HTTP_PROVIDER = os.environ.get('WEB3_HTTP_PROVIDER') or CONFIG['web3']['HTTPProvider']
 WEB3_CHAINID = CONFIG['web3']['chainid']
 
 # WhiteList-Contract
