@@ -1,4 +1,5 @@
 from falcon import testing
+from falcon.util import json as util_json
 from web3.auto import w3
 from eth_account.messages import defunct_hash_message
 
@@ -11,6 +12,9 @@ class TestAuthClient(testing.TestClient):
     def _canonical_request(self, method, path, request_body, query_string):
         if request_body == None:
             request_body = "{}"
+
+        if query_string != "":
+            query_string = "?" + query_string
 
         request_body_hash = w3.sha3(text=request_body).hex()
         canonical_request = method + "\n" +\
@@ -33,7 +37,7 @@ class TestAuthClient(testing.TestClient):
 
         if len(kvs) == 0:
             return ""
-        return "?" + "&".join(kvs)
+        return "&".join(kvs)
 
     def simulate_auth_get(self, path, private_key, params = None, query_string = None):
         if query_string is None:
@@ -49,3 +53,16 @@ class TestAuthClient(testing.TestClient):
                           headers={
                               TestAuthClient.HEADER_SIGNATURE_KEY: signature,
                           })
+
+    def simulate_auth_post(self, path, private_key, body = None, json = None):
+        canonical_body = body
+        if not (json is None):
+            canonical_body = util_json.dumps(json, ensure_ascii=False)
+        signature = self._generate_signature(private_key, method="POST",
+                                             path=path, request_body=canonical_body,
+                                             query_string="")
+
+        return self.simulate_post(path, body=body, json=json,
+                                  headers={
+                                      TestAuthClient.HEADER_SIGNATURE_KEY: signature,
+                                  })

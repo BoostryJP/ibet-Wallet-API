@@ -54,6 +54,26 @@ class Notification(Base):
         return "<Notification(notification_id='{}', notification_type='{}')>" \
             .format(self.notification_id, self.notification_type)
 
+    @staticmethod
+    def format_timestamp(datetime):
+        if datetime is None:
+            return None
+        return datetime.strftime("%Y/%m/%d %H:%M:%S")
+
+    def json(self):
+        return {
+            "notification_type": self.notification_type,
+            "id": self.notification_id,
+            "priority": self.priority,
+            "block_timestamp": Notification.format_timestamp(self.block_timestamp),
+            "is_read": self.is_read,
+            "is_flagged": self.is_flagged,
+            "is_deleted": self.is_deleted,
+            "deleted_at": Notification.format_timestamp(self.deleted_at),
+            "args": self.args,
+            "metainfo": self.metainfo,
+        }
+
     FIELDS = {
         "notification_id": int,
         "notification_type": str,
