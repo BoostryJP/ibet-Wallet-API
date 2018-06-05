@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
 import falcon
 from cerberus import Validator
 from eth_utils import to_checksum_address
 from sqlalchemy import desc
 from web3 import Web3
-from datetime import datetime
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, AppError
+from app.errors import InvalidParameterError, DataNotExistsError
 from app.model import Notification
 from app.utils.hooks import VerifySignature
 
@@ -83,6 +84,9 @@ class Notifications(BaseResource):
         notification = session.query(Notification).\
             filter(Notification.notification_id == request_json["id"]).\
             first()
+
+        if notification is None:
+            raise DataNotExistsError("notification not found")
 
         if notification.address != address:
             raise InvalidParameterError("authentication failed")
@@ -183,3 +187,41 @@ class Notifications(BaseResource):
             raise InvalidParameterError
 
         return validator.document
+
+# ------------------------------
+# 通知一覧
+# ------------------------------
+class NotificationCount(BaseResource):
+    '''
+    Handle for endpoint: /v1/NotificationCount/
+    '''
+
+    @falcon.before(VerifySignature())
+    def on_get(self, req, res):
+        LOG.info("v1.Notification.NotificationCount")
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        NotificationCount.validate(req)
+
+        # リクエストから情報を抽出
+        address = to_checksum_address(req.context["address"])
+
+        # 未読数を取得
+        count = session.query(Notification).\
+            filter(Notification.address == address).\
+            filter(Notification.is_read == False).\
+            filter(Notification.is_deleted == False).\
+            count()
+
+        self.on_success(res, {
+            "unread_counts": count,
+        })
+
+    @staticmethod
+    def validate(req):
+        if not Web3.isAddress(req.context["address"]):
+            raise InvalidParameterError
+
+        return {}

@@ -8,7 +8,17 @@ class TestV1Notification():
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
 
+    private_key_2 = "0000000000000000000000000000000000000000000000000000000000000002"
+    address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
+
+    # HACK: updateでcommitされてしまう対策
+    def teardown_method(self, method):
+        self.session.query(Notification).delete()
+        self.session.commit()
+
     def _insert_test_data(self, session):
+        self.session = session # HACK: updateでcommitされてしまう対策
+
         n = Notification()
         n.notification_id = "0x00000021034300000000000000"
         n.notification_type = "SampleNotification1"
@@ -368,6 +378,19 @@ class TestV1Notification():
         assert resp.status_code == 200
         assert resp.json["data"] == assumed_body
 
+    # ＜正常系1-7＞
+    # 0件データの場合
+    def test_get_notification_normal_7(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_get(self.apiurl,
+                                        private_key=TestV1Notification.private_key_2)
+
+        assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == assumed_body
+
 
     # ＜正常系1-1＞
     # 重要フラグの更新
@@ -445,3 +468,88 @@ class TestV1Notification():
         assert resp.json["data"] == assumed_body
         assert n.is_flagged == False
         assert n.is_read == True
+
+    # ＜正常系1-3＞
+    # 削除フラグの更新（オン）
+    def test_post_notification_normal_3(self, client, session):
+        self._insert_test_data(session)
+
+        notification_id = "0x00000011034000000000000000"
+        resp = client.simulate_auth_post(self.apiurl,
+                                         json={
+                                             "id": notification_id,
+                                             "is_deleted": True,
+                                         },
+                                         private_key=TestV1Notification.private_key)
+
+        n = session.query(Notification). \
+            filter(Notification.notification_id == notification_id). \
+            first()
+
+        assert resp.status_code == 200
+        assert n.is_read == False
+        assert n.is_flagged == True
+        assert n.is_deleted == True
+        assert n.deleted_at is not None
+
+    # ＜正常系1-3＞
+    # 削除フラグの更新（オン→オフ）
+    def test_post_notification_normal_4(self, client, session):
+        self._insert_test_data(session)
+
+        notification_id = "0x00000011034000000000000000"
+        client.simulate_auth_post(self.apiurl,
+                                         json={
+                                             "id": notification_id,
+                                             "is_deleted": True,
+                                         },
+                                         private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_post(self.apiurl,
+                                  json={
+                                      "id": notification_id,
+                                      "is_deleted": False,
+                                  },
+                                  private_key=TestV1Notification.private_key)
+
+
+        n = session.query(Notification). \
+            filter(Notification.notification_id == notification_id). \
+            first()
+
+        assert resp.status_code == 200
+        assert n.is_read == False
+        assert n.is_flagged == True
+        assert n.is_deleted == False
+        assert n.deleted_at is None
+
+    # ＜異常系1-1＞
+    # 権限なしパターン。重要フラグの更新
+    def test_post_notification_fail_1(self, client, session):
+        self._insert_test_data(session)
+
+        notification_id = "0x00000021034300000000000000"
+        resp = client.simulate_auth_post(self.apiurl,
+                                         json={
+                                             "id": notification_id,
+                                             "is_flagged": True,
+                                         },
+                                         private_key=TestV1Notification.private_key_2)
+
+        assert resp.status_code == 400
+        assert resp.json["meta"]["code"] == 88
+
+    # ＜異常系1-2＞
+    # 存在しない通知の更新
+    def test_post_notification_fail_2(self, client, session):
+        self._insert_test_data(session)
+
+        notification_id = "0x00000021034100000000000003"
+        resp = client.simulate_auth_post(self.apiurl,
+                                         json={
+                                             "id": notification_id,
+                                             "is_flagged": True,
+                                         },
+                                         private_key=TestV1Notification.private_key)
+
+        assert resp.status_code == 404
+        assert resp.json["meta"]["code"] == 30
