@@ -40,12 +40,13 @@ class OrderBook(BaseResource):
 
         # 入力値を抽出
         token_address = to_checksum_address(request_json['token_address'])
-        account_address = to_checksum_address(request_json['account_address'])
 
         # 注文を抽出
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
 
         if 'account_address' in request_json:
+            account_address = to_checksum_address(request_json['account_address'])
+
             if is_buy == True:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
