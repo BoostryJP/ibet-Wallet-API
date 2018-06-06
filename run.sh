@@ -5,6 +5,7 @@ cd /app/tmr-node
 
 # async
 nohup python async/processor_OrderBook.py < /dev/null 2>&1 /dev/null &
+nohup python async/processor_Notifications.py < /dev/null 2>&1 /dev/null &
 
 #run server
 ./bin/run.sh start
