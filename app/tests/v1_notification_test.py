@@ -161,7 +161,7 @@ class TestV1Notification():
         ]
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json["data"]["notifications"] == assumed_body
 
     # ＜正常系1-2＞
     # フラグ済みの通知のみ表示
@@ -194,7 +194,7 @@ class TestV1Notification():
         ]
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json["data"]["notifications"] == assumed_body
 
     # ＜正常系1-3＞
     # 削除済みの通知のみ表示
@@ -227,7 +227,7 @@ class TestV1Notification():
         ]
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json["data"]["notifications"] == assumed_body
 
     # ＜正常系1-4＞
     # 優先度順にソート
@@ -293,7 +293,7 @@ class TestV1Notification():
         ]
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json["data"]["notifications"] == assumed_body
 
     # ＜正常系1-5＞
     # 全ての通知を表示 + カーソル使用
@@ -342,7 +342,7 @@ class TestV1Notification():
         ]
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json["data"]["notifications"] == assumed_body
 
     # ＜正常系1-6＞
     # 全ての通知を表示 + カーソル使用 + リミット使用
@@ -376,7 +376,7 @@ class TestV1Notification():
         ]
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json["data"]["notifications"] == assumed_body
 
     # ＜正常系1-7＞
     # 0件データの場合
@@ -389,7 +389,7 @@ class TestV1Notification():
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json["data"]["notifications"] == assumed_body
 
 
     # ＜正常系1-1＞

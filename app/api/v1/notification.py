@@ -66,7 +66,7 @@ class Notifications(BaseResource):
             notification["sort_id"] = sort_id
             notification_list.append(notification)
 
-        self.on_success(res, notification_list)
+        self.on_success(res, {"notifications": notification_list})
 
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
