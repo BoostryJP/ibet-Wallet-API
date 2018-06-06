@@ -38,10 +38,15 @@ class OrderBook(BaseResource):
         # 入力値チェック
         request_json = OrderBook.validate(req)
 
+        # 入力値を抽出
+        token_address = to_checksum_address(request_json['token_address'])
+
         # 注文を抽出
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
 
         if 'account_address' in request_json:
+            account_address = to_checksum_address(request_json['account_address'])
+
             if is_buy == True:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -54,11 +59,11 @@ class OrderBook(BaseResource):
                 orders = session.query(Order, func.sum(Agreement.amount)).\
                          outerjoin(Agreement, Order.id == Agreement.order_id).\
                          group_by(Order.id).\
-                         filter(Order.token_address == request_json['token_address']).\
+                         filter(Order.token_address == token_address).\
                          filter(Order.is_buy == False).\
                          filter(Order.is_cancelled == False).\
                          filter(Order.price <= request_json['price']).\
-                         filter(Order.account_address != request_json['account_address']).\
+                         filter(Order.account_address != account_address).\
                          all()
             else:  # 売注文
                 # ＜抽出条件＞
@@ -71,11 +76,11 @@ class OrderBook(BaseResource):
                 orders = session.query(Order, func.sum(Agreement.amount)).\
                          outerjoin(Agreement, Order.id == Agreement.order_id).\
                          group_by(Order.id).\
-                         filter(Order.token_address == request_json['token_address']).\
+                         filter(Order.token_address == token_address).\
                          filter(Order.is_buy == True).\
                          filter(Order.is_cancelled == False).\
                          filter(Order.price >= request_json['price']).\
-                         filter(Order.account_address != request_json['account_address']).\
+                         filter(Order.account_address != account_address).\
                          all()
 
         else:
@@ -89,7 +94,7 @@ class OrderBook(BaseResource):
                 orders = session.query(Order, func.sum(Agreement.amount)).\
                          outerjoin(Agreement, Order.id == Agreement.order_id).\
                          group_by(Order.id).\
-                         filter(Order.token_address == request_json['token_address']).\
+                         filter(Order.token_address == token_address).\
                          filter(Order.is_buy == False).\
                          filter(Order.is_cancelled == False).\
                          filter(Order.price <= request_json['price']).\
@@ -105,7 +110,7 @@ class OrderBook(BaseResource):
                 orders = session.query(Order, func.sum(Agreement.amount)).\
                          outerjoin(Agreement, Order.id == Agreement.order_id).\
                          group_by(Order.id).\
-                         filter(Order.token_address == request_json['token_address']).\
+                         filter(Order.token_address == token_address).\
                          filter(Order.is_buy == True).\
                          filter(Order.is_cancelled == False).\
                          filter(Order.price >= request_json['price']).\

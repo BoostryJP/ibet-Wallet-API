@@ -3,3 +3,8 @@ __pycache__/
 .venv/
 .pytest_cache/
 .vscode
+
+
+# Intellij
+.idea
+/*.iml
