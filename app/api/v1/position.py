@@ -81,7 +81,30 @@ class MyTokens(BaseResource):
                         entry['args']['tokenAddress'],
                     })
             except:
-                portfolio_list = []
+                pass
+
+            # トークン送信イベントから送信先アドレスが一致するイベントを抽出する
+            try:
+                event_filter = ExchangeContract.eventFilter(
+                    'Transfer', {
+                        'filter': {
+                            'to': to_checksum_address(buy_address)
+                        },
+                        'fromBlock': 'earliest'
+                    })
+                entries = event_filter.get_all_entries()
+                print(entries)
+                for entry in entries:
+                    portfolio_list.append({
+                        'account':
+                        entry['args']['to'],
+                        'token_address':
+                        entry['args']['tokenAddress'],
+                    })
+            except:
+                pass
+
+            print(portfolio_list)
 
             # リストをユニークにする
             portfolio_list_uniq = []
@@ -122,18 +145,22 @@ class MyTokens(BaseResource):
 
                     interestPaymentDate_string = TokenContract.functions.interestPaymentDate(
                     ).call()
-                    interestPaymentDate = json.loads(
-                        interestPaymentDate_string.replace("'", '"').replace(
-                            'True', 'true').replace('False', 'false'))
 
                     interestPaymentDate1 = ''
                     interestPaymentDate2 = ''
-                    if 'interestPaymentDate1' in interestPaymentDate:
-                        interestPaymentDate1 = interestPaymentDate[
-                            'interestPaymentDate1']
-                    if 'interestPaymentDate2' in interestPaymentDate:
-                        interestPaymentDate2 = interestPaymentDate[
-                            'interestPaymentDate2']
+                    try:
+                        interestPaymentDate = json.loads(
+                            interestPaymentDate_string.replace("'", '"').replace(
+                                'True', 'true').replace('False', 'false'))
+
+                        if 'interestPaymentDate1' in interestPaymentDate:
+                            interestPaymentDate1 = interestPaymentDate[
+                                'interestPaymentDate1']
+                        if 'interestPaymentDate2' in interestPaymentDate:
+                            interestPaymentDate2 = interestPaymentDate[
+                                'interestPaymentDate2']
+                    except:
+                        pass
 
                     redemptionDate = TokenContract.functions.redemptionDate(
                     ).call()
