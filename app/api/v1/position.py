@@ -116,11 +116,11 @@ class MyTokens(BaseResource):
             token_template = None
             for mytoken in portfolio_list_uniq:
                 token_address = to_checksum_address(mytoken['token_address'])
-                token_template = ListContract.functions.getTokenByAddress(
-                    token_address).call()
-                if token_template[
-                        0] == '0x0000000000000000000000000000000000000000':
-                    continue
+                #token_template = ListContract.functions.getTokenByAddress(
+                #    token_address).call()
+                #if token_template[
+                #        0] == '0x0000000000000000000000000000000000000000':
+                #    continue
 
                 abi_str = config.STRAIGHT_BOND_ABI['abi']
                 token_abi = json.loads(abi_str)
@@ -214,8 +214,8 @@ class MyTokens(BaseResource):
                         'token': {
                             'token_address':
                             mytoken['token_address'],
-                            'token_template':
-                            token_template[1],
+                            #'token_template':
+                            #token_template[1],
                             'company_name':
                             company_name,
                             'name':
