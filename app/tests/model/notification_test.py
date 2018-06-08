@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 JST = timezone(timedelta(hours=+9), "JST")
 
 class TestNotification():
-    # HACK: 実際にcommitをしないとDBに書き込まれず、タイムゾーンの変化が再現でいないため
+    # HACK: 実際にcommitをしないとDBに書き込まれず、タイムゾーンの変化が再現できないため
     def teardown_method(self, method):
         self.session.query(Notification).delete()
         self.session.commit()
