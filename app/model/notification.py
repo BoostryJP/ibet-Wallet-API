@@ -3,9 +3,11 @@
 from sqlalchemy import Column, Index
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from app.model import Base
+
+JST = timezone(timedelta(hours=+9), "JST")
 
 # 通知データをキャッシュするためのテーブル
 # 既読情報や重要フラグの情報なども保存される
@@ -58,7 +60,8 @@ class Notification(Base):
     def format_timestamp(datetime):
         if datetime is None:
             return None
-        return datetime.strftime("%Y/%m/%d %H:%M:%S")
+        datetimejp = datetime.astimezone(JST)
+        return datetimejp.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):
         return {
