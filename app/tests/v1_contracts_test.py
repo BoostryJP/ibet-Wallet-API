@@ -58,7 +58,7 @@ class TestV1Contracts():
         count = 0
         tx = None
         while True:
-            time.sleep(1)
+            time.sleep(float(config.TEST_INTARVAL))
             try:
                 tx = web3.eth.getTransactionReceipt(tx_hash)
             except:

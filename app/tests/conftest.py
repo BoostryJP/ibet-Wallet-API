@@ -45,7 +45,7 @@ def whitelist_contract():
     count = 0
     tx = None
     while True:
-        time.sleep(0.5)
+        time.sleep(float(config.TEST_INTARVAL))
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
@@ -79,7 +79,7 @@ def personalinfo_contract():
     count = 0
     tx = None
     while True:
-        time.sleep(0.5)
+        time.sleep(float(config.TEST_INTARVAL))
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
@@ -119,7 +119,7 @@ def bond_exchange_contract(whitelist_address, personalinfo_address):
     count = 0
     tx = None
     while True:
-        time.sleep(0.5)
+        time.sleep(float(config.TEST_INTARVAL))
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
@@ -153,7 +153,7 @@ def tokenlist_contract():
     count = 0
     tx = None
     while True:
-        time.sleep(0.1)
+        time.sleep(float(config.TEST_INTARVAL))
         try:
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
