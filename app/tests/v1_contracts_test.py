@@ -21,6 +21,24 @@ class TestV1Contracts():
     # テスト対象API
     apiurl = '/v1/Contracts/'
 
+    def bond_token_attribute():
+        attribute = {
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'faceValue': 10000,
+            'interestRate': 1000,
+            'interestPaymentDate1': '0331',
+            'interestPaymentDate2': '0930',
+            'redemptionDate': '20191231',
+            'redemptionAmount': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
+            'memo': 'メモ'
+        }
+        return attribute
+
     def tokenlist_contract():
         deployer = eth_account['deployer']
 
@@ -70,7 +88,20 @@ class TestV1Contracts():
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：債券新規発行
-        attribute = {
+        attribute = TestV1Contracts.bond_token_attribute()
+        bond_token = issue_bond_token(issuer, attribute)
+        register_bond_list(issuer, bond_token, token_list)
+
+        query_string = ''
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [{
+            'id': 0,
+            'token_address': bond_token['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
             'totalSupply': 1000000,
@@ -82,62 +113,12 @@ class TestV1Contracts():
             'redemptionAmount': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。'
-        }
-
-        bond_token = issue_bond_token(issuer, attribute)
-        register_bond_list(issuer, bond_token, token_list)
-
-        query_string = ''
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
-
-        assumed_body = [{
-            'id':
-            0,
-            'token_address':
-            bond_token['address'],
-            'token_template':
-            'IbetStraightBond',
-            'owner_address':
-            issuer['account_address'],
-            'company_name':
-            '',
-            'rsa_publickey':
-            '',
-            'name':
-            'テスト債券',
-            'symbol':
-            'BOND',
-            'totalSupply':
-            1000000,
-            'faceValue':
-            10000,
-            'interestRate':
-            1000,
-            'interestPaymentDate1':
-            '0331',
-            'interestPaymentDate2':
-            '0930',
-            'redemptionDate':
-            '20191231',
-            'redemptionAmount':
-            10000,
-            'returnDate':
-            '20191231',
-            'returnAmount':
-            '商品券をプレゼント',
-            'purpose':
-            '新商品の開発資金として利用。',
-            'image_url': [{
-                'type': 'small',
-                'url': ''
-            }, {
-                'type': 'medium',
-                'url': ''
-            }, {
-                'type': 'large',
-                'url': ''
-            }],
+            'purpose': '新商品の開発資金として利用。',
+            'image_url': [
+                {'type': 'small', 'url': ''},
+                {'type': 'medium','url': ''},
+                {'type': 'large','url': ''}
+            ],
             'certification': []
         }]
 
@@ -160,21 +141,7 @@ class TestV1Contracts():
         # データ準備：債券新規発行
         bond_list = []
         for i in range(0, 2):
-            attribute = {
-                'name': 'テスト債券',
-                'symbol': 'BOND',
-                'totalSupply': 1000000,
-                'faceValue': 10000,
-                'interestRate': 1000,
-                'interestPaymentDate1': '0331',
-                'interestPaymentDate2': '0930',
-                'redemptionDate': '20191231',
-                'redemptionAmount': 10000,
-                'returnDate': '20191231',
-                'returnAmount': '商品券をプレゼント',
-                'purpose': '新商品の開発資金として利用。'
-            }
-
+            attribute = TestV1Contracts.bond_token_attribute()
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -183,42 +150,24 @@ class TestV1Contracts():
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [{
-            'id':
-            1,
-            'token_address':
-            bond_list[1]['address'],
-            'token_template':
-            'IbetStraightBond',
-            'owner_address':
-            issuer['account_address'],
-            'company_name':
-            '',
-            'rsa_publickey':
-            '',
-            'name':
-            'テスト債券',
-            'symbol':
-            'BOND',
-            'totalSupply':
-            1000000,
-            'faceValue':
-            10000,
-            'interestRate':
-            1000,
-            'interestPaymentDate1':
-            '0331',
-            'interestPaymentDate2':
-            '0930',
-            'redemptionDate':
-            '20191231',
-            'redemptionAmount':
-            10000,
-            'returnDate':
-            '20191231',
-            'returnAmount':
-            '商品券をプレゼント',
-            'purpose':
-            '新商品の開発資金として利用。',
+            'id': 1,
+            'token_address': bond_list[1]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'faceValue': 10000,
+            'interestRate': 1000,
+            'interestPaymentDate1': '0331',
+            'interestPaymentDate2': '0930',
+            'redemptionDate': '20191231',
+            'redemptionAmount': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'type': 'small',
                 'url': ''
@@ -231,42 +180,24 @@ class TestV1Contracts():
             }],
             'certification': []
         }, {
-            'id':
-            0,
-            'token_address':
-            bond_list[0]['address'],
-            'token_template':
-            'IbetStraightBond',
-            'owner_address':
-            issuer['account_address'],
-            'company_name':
-            '',
-            'rsa_publickey':
-            '',
-            'name':
-            'テスト債券',
-            'symbol':
-            'BOND',
-            'totalSupply':
-            1000000,
-            'faceValue':
-            10000,
-            'interestRate':
-            1000,
-            'interestPaymentDate1':
-            '0331',
-            'interestPaymentDate2':
-            '0930',
-            'redemptionDate':
-            '20191231',
-            'redemptionAmount':
-            10000,
-            'returnDate':
-            '20191231',
-            'returnAmount':
-            '商品券をプレゼント',
-            'purpose':
-            '新商品の開発資金として利用。',
+            'id': 0,
+            'token_address': bond_list[0]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'faceValue': 10000,
+            'interestRate': 1000,
+            'interestPaymentDate1': '0331',
+            'interestPaymentDate2': '0930',
+            'redemptionDate': '20191231',
+            'redemptionAmount': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'type': 'small',
                 'url': ''
@@ -299,21 +230,7 @@ class TestV1Contracts():
         # データ準備：債券新規発行
         bond_list = []
         for i in range(0, 2):
-            attribute = {
-                'name': 'テスト債券',
-                'symbol': 'BOND',
-                'totalSupply': 1000000,
-                'faceValue': 10000,
-                'interestRate': 1000,
-                'interestPaymentDate1': '0331',
-                'interestPaymentDate2': '0930',
-                'redemptionDate': '20191231',
-                'redemptionAmount': 10000,
-                'returnDate': '20191231',
-                'returnAmount': '商品券をプレゼント',
-                'purpose': '新商品の開発資金として利用。'
-            }
-
+            attribute = TestV1Contracts.bond_token_attribute()
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -322,42 +239,24 @@ class TestV1Contracts():
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [{
-            'id':
-            1,
-            'token_address':
-            bond_list[1]['address'],
-            'token_template':
-            'IbetStraightBond',
-            'owner_address':
-            issuer['account_address'],
-            'company_name':
-            '',
-            'rsa_publickey':
-            '',
-            'name':
-            'テスト債券',
-            'symbol':
-            'BOND',
-            'totalSupply':
-            1000000,
-            'faceValue':
-            10000,
-            'interestRate':
-            1000,
-            'interestPaymentDate1':
-            '0331',
-            'interestPaymentDate2':
-            '0930',
-            'redemptionDate':
-            '20191231',
-            'redemptionAmount':
-            10000,
-            'returnDate':
-            '20191231',
-            'returnAmount':
-            '商品券をプレゼント',
-            'purpose':
-            '新商品の開発資金として利用。',
+            'id': 1,
+            'token_address': bond_list[1]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'faceValue': 10000,
+            'interestRate': 1000,
+            'interestPaymentDate1': '0331',
+            'interestPaymentDate2': '0930',
+            'redemptionDate': '20191231',
+            'redemptionAmount': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'type': 'small',
                 'url': ''
@@ -370,42 +269,24 @@ class TestV1Contracts():
             }],
             'certification': []
         }, {
-            'id':
-            0,
-            'token_address':
-            bond_list[0]['address'],
-            'token_template':
-            'IbetStraightBond',
-            'owner_address':
-            issuer['account_address'],
-            'company_name':
-            '',
-            'rsa_publickey':
-            '',
-            'name':
-            'テスト債券',
-            'symbol':
-            'BOND',
-            'totalSupply':
-            1000000,
-            'faceValue':
-            10000,
-            'interestRate':
-            1000,
-            'interestPaymentDate1':
-            '0331',
-            'interestPaymentDate2':
-            '0930',
-            'redemptionDate':
-            '20191231',
-            'redemptionAmount':
-            10000,
-            'returnDate':
-            '20191231',
-            'returnAmount':
-            '商品券をプレゼント',
-            'purpose':
-            '新商品の開発資金として利用。',
+            'id': 0,
+            'token_address': bond_list[0]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'faceValue': 10000,
+            'interestRate': 1000,
+            'interestPaymentDate1': '0331',
+            'interestPaymentDate2': '0930',
+            'redemptionDate': '20191231',
+            'redemptionAmount': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'type': 'small',
                 'url': ''
@@ -438,21 +319,7 @@ class TestV1Contracts():
         # データ準備：債券新規発行
         bond_list = []
         for i in range(0, 2):
-            attribute = {
-                'name': 'テスト債券',
-                'symbol': 'BOND',
-                'totalSupply': 1000000,
-                'faceValue': 10000,
-                'interestRate': 1000,
-                'interestPaymentDate1': '0331',
-                'interestPaymentDate2': '0930',
-                'redemptionDate': '20191231',
-                'redemptionAmount': 10000,
-                'returnDate': '20191231',
-                'returnAmount': '商品券をプレゼント',
-                'purpose': '新商品の開発資金として利用。'
-            }
-
+            attribute = TestV1Contracts.bond_token_attribute()
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -461,42 +328,24 @@ class TestV1Contracts():
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [{
-            'id':
-            0,
-            'token_address':
-            bond_list[0]['address'],
-            'token_template':
-            'IbetStraightBond',
-            'owner_address':
-            issuer['account_address'],
-            'company_name':
-            '',
-            'rsa_publickey':
-            '',
-            'name':
-            'テスト債券',
-            'symbol':
-            'BOND',
-            'totalSupply':
-            1000000,
-            'faceValue':
-            10000,
-            'interestRate':
-            1000,
-            'interestPaymentDate1':
-            '0331',
-            'interestPaymentDate2':
-            '0930',
-            'redemptionDate':
-            '20191231',
-            'redemptionAmount':
-            10000,
-            'returnDate':
-            '20191231',
-            'returnAmount':
-            '商品券をプレゼント',
-            'purpose':
-            '新商品の開発資金として利用。',
+            'id': 0,
+            'token_address': bond_list[0]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'faceValue': 10000,
+            'interestRate': 1000,
+            'interestPaymentDate1': '0331',
+            'interestPaymentDate2': '0930',
+            'redemptionDate': '20191231',
+            'redemptionAmount': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'type': 'small',
                 'url': ''
@@ -529,21 +378,7 @@ class TestV1Contracts():
         # データ準備：債券新規発行
         bond_list = []
         for i in range(0, 2):
-            attribute = {
-                'name': 'テスト債券',
-                'symbol': 'BOND',
-                'totalSupply': 1000000,
-                'faceValue': 10000,
-                'interestRate': 1000,
-                'interestPaymentDate1': '0331',
-                'interestPaymentDate2': '0930',
-                'redemptionDate': '20191231',
-                'redemptionAmount': 10000,
-                'returnDate': '20191231',
-                'returnAmount': '商品券をプレゼント',
-                'purpose': '新商品の開発資金として利用。'
-            }
-
+            attribute = TestV1Contracts.bond_token_attribute()
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -552,42 +387,24 @@ class TestV1Contracts():
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [{
-            'id':
-            0,
-            'token_address':
-            bond_list[0]['address'],
-            'token_template':
-            'IbetStraightBond',
-            'owner_address':
-            issuer['account_address'],
-            'company_name':
-            '',
-            'rsa_publickey':
-            '',
-            'name':
-            'テスト債券',
-            'symbol':
-            'BOND',
-            'totalSupply':
-            1000000,
-            'faceValue':
-            10000,
-            'interestRate':
-            1000,
-            'interestPaymentDate1':
-            '0331',
-            'interestPaymentDate2':
-            '0930',
-            'redemptionDate':
-            '20191231',
-            'redemptionAmount':
-            10000,
-            'returnDate':
-            '20191231',
-            'returnAmount':
-            '商品券をプレゼント',
-            'purpose':
-            '新商品の開発資金として利用。',
+            'id': 0,
+            'token_address': bond_list[0]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'faceValue': 10000,
+            'interestRate': 1000,
+            'interestPaymentDate1': '0331',
+            'interestPaymentDate2': '0930',
+            'redemptionDate': '20191231',
+            'redemptionAmount': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'type': 'small',
                 'url': ''
@@ -600,32 +417,6 @@ class TestV1Contracts():
             }],
             'certification': []
         }]
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
-
-    # ＜正常系6＞
-    # 債券未発行、商品リスト（TokenList）のみ登録あり
-    # -> ゼロ件リストが返却
-    def test_contracts_normal_6(self, client, session):
-        # テスト用アカウント
-        issuer = eth_account['issuer']
-
-        # TokenListコントラクト
-        token_list = TestV1Contracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-
-        # データ準備：商品リスト登録
-        token_address = to_checksum_address(
-            '0xe883a6f441ad5682d37df31d34fc012bcb07a740')  # 任意のアドレス
-        bond_token = {'address': token_address, 'abi': ''}
-        register_bond_list(issuer, bond_token, token_list)
-
-        query_string = 'cursor=1&limit=1'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
-
-        assumed_body = []
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}

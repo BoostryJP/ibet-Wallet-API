@@ -19,11 +19,7 @@ class TestV1OrderList():
     # テスト対象API
     apiurl = '/v1/OrderList/'
 
-    # 注文中明細の作成：発行体
-    @staticmethod
-    def order_event(bond_exchange, personal_info, white_list, token_list):
-        issuer = eth_account['issuer']
-
+    def bond_token_attribute():
         attribute = {
             'name': 'テスト債券',
             'symbol': 'BOND',
@@ -36,8 +32,17 @@ class TestV1OrderList():
             'redemptionAmount': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。'
+            'purpose': '新商品の開発資金として利用。',
+            'memo': 'メモ'
         }
+        return attribute
+
+    # 注文中明細の作成：発行体
+    @staticmethod
+    def order_event(bond_exchange, personal_info, white_list, token_list):
+        issuer = eth_account['issuer']
+
+        attribute = TestV1OrderList.bond_token_attribute()
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -63,20 +68,7 @@ class TestV1OrderList():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = {
-            'name': 'テスト債券',
-            'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0331',
-            'interestPaymentDate2': '0930',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。'
-        }
+        attribute = TestV1OrderList.bond_token_attribute()
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -109,20 +101,7 @@ class TestV1OrderList():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = {
-            'name': 'テスト債券',
-            'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0331',
-            'interestPaymentDate2': '0930',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。'
-        }
+        attribute = TestV1OrderList.bond_token_attribute()
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行

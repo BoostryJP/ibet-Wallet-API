@@ -7,6 +7,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
+
 from eth_utils import to_checksum_address
 
 from app import log
@@ -15,6 +17,9 @@ from app.errors import AppError, InvalidParameterError
 from app import config
 
 LOG = log.get_logger()
+
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # ------------------------------
 # 決済用口座登録状況参照
@@ -27,11 +32,6 @@ class PaymentAccount(BaseResource):
         LOG.info('v1.User.PaymentAccount')
 
         request_json = PaymentAccount.validate(req)
-
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        if config.WEB3_CHAINID == '4' or '2017':
-            from web3.middleware import geth_poa_middleware
-            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         # WhiteList Contract
         whitelist_contract_address = os.environ.get('WHITE_LIST_CONTRACT_ADDRESS')
@@ -94,11 +94,6 @@ class PersonalInfo(BaseResource):
         LOG.info('v1.User.PersonalInfo')
 
         request_json = PersonalInfo.validate(req)
-
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        if config.WEB3_CHAINID == '4' or '2017':
-            from web3.middleware import geth_poa_middleware
-            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         # WhiteList Contract
         personalinfo_contract_address = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')

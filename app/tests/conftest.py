@@ -109,7 +109,7 @@ def bond_exchange_contract(whitelist_address, personalinfo_address):
     ]
 
     tx_hash = BondExchangeContract.deploy(
-        transaction={'from':deployer['account_address'], 'gas':5000000},
+        transaction={'from':deployer['account_address'], 'gas':5500000},
         args=arguments
     ).hex()
 

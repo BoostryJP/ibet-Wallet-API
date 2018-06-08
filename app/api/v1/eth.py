@@ -5,6 +5,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
+
 from eth_utils import to_checksum_address
 
 from app import log
@@ -13,6 +15,9 @@ from app.errors import AppError, InvalidParameterError, EthValueError
 from app import config
 
 LOG = log.get_logger()
+
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # ------------------------------
 # nonce取得
@@ -29,13 +34,11 @@ class GetTransactionCount(BaseResource):
         except ValueError:
             raise InvalidParameterError
 
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         nonce = web3.eth.getTransactionCount(to_checksum_address(eth_address))
         gasprice = web3.eth.gasPrice
         chainid = config.WEB3_CHAINID
 
         eth_info = {'nonce':nonce, 'gasprice':gasprice, 'chainid':chainid}
-
         self.on_success(res, eth_info)
 
 # ------------------------------
@@ -47,11 +50,6 @@ class SendRawTransaction(BaseResource):
     '''
     def on_post(self, req, res):
         LOG.info('v1.Eth.SendRawTransaction')
-
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        if config.WEB3_CHAINID == '4' or '2017':
-            from web3.middleware import geth_poa_middleware
-            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         request_json = SendRawTransaction.validate(req)
         raw_tx_hex_list = request_json['raw_tx_hex_list']

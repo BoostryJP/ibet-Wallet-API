@@ -32,7 +32,8 @@ class TestV1Tick():
             'redemptionAmount': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。'
+            'purpose': '新商品の開発資金として利用。',
+            'memo': 'メモ'
         }
 
         # 発行体オペレーション

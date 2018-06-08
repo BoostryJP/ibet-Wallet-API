@@ -39,7 +39,8 @@ class TestV1MyTokens():
             'redemptionAmount': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。'
+            'purpose': '新商品の開発資金として利用。',
+            'memo': 'メモ'
         }
 
         # ＜発行体オペレーション＞
@@ -96,48 +97,31 @@ class TestV1MyTokens():
         print("-- token_address --")
         print(token_address)
 
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange[
-            'address']
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'token': {
-                'token_address':
-                token_address,
-                'token_template':
-                'IbetStraightBond',
-                'company_name':
-                '',
-                'name':
-                'テスト債券',
-                'symbol':
-                'BOND',
-                'totalSupply':
-                1000000,
-                'faceValue':
-                10000,
-                'interestRate':
-                1000,
-                'interestPaymentDate1':
-                '0331',
-                'interestPaymentDate2':
-                '0930',
-                'redemptionDate':
-                '20191231',
-                'redemptionAmount':
-                10000,
-                'returnDate':
-                '20191231',
-                'returnAmount':
-                '商品券をプレゼント',
-                'purpose':
-                '新商品の開発資金として利用。',
+                'token_address': token_address,
+                #'token_template': 'IbetStraightBond',
+                'company_name': '',
+                'name': 'テスト債券',
+                'symbol': 'BOND',
+                'totalSupply': 1000000,
+                'faceValue': 10000,
+                'interestRate': 1000,
+                'interestPaymentDate1': '0331',
+                'interestPaymentDate2': '0930',
+                'redemptionDate': '20191231',
+                'redemptionAmount': 10000,
+                'returnDate': '20191231',
+                'returnAmount': '商品券をプレゼント',
+                'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
                     'type': 'small',
                     'url': ''

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import time
 import json
+
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 from app import config
@@ -9,9 +11,7 @@ from .account_config import eth_account
 from .contract_config import IbetStraightBond, PersonalInfo, TokenList
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-if config.WEB3_CHAINID == '4' or '2017':
-    from web3.middleware import geth_poa_middleware
-    web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # 株主名簿用個人情報登録
 def register_personalinfo(invoker, personal_info):
@@ -82,7 +82,7 @@ def issue_bond_token(invoker, attribute):
         attribute['faceValue'], attribute['interestRate'], interestPaymentDate,
         attribute['redemptionDate'], attribute['redemptionAmount'],
         attribute['returnDate'], attribute['returnAmount'],
-        attribute['purpose']
+        attribute['purpose'], attribute['memo']
     ]
 
     tx_hash = TokenContract.deploy(

@@ -7,6 +7,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
+
 from eth_utils import to_checksum_address
 
 from app import log
@@ -23,9 +25,7 @@ class Contracts(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        if config.WEB3_CHAINID == '4' or '2017':
-            from web3.middleware import geth_poa_middleware
-            self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
     '''
     Handle for endpoint: /v1/Contracts

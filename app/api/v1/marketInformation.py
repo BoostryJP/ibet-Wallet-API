@@ -10,6 +10,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
 
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
+
 from eth_utils import to_checksum_address
 
 from app import log
@@ -20,19 +22,19 @@ from app import config
 
 LOG = log.get_logger()
 
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # ------------------------------
 # 板情報取得
 # ------------------------------
 class OrderBook(BaseResource):
+
     '''
     Handle for endpoint: /v1/OrderBook
     '''
-
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.OrderBook')
-
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         session = req.context['session']
 
         # 入力値チェック
@@ -55,7 +57,6 @@ class OrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
-                print("------------------ buy ----------------------")
                 orders = session.query(Order, func.sum(Agreement.amount)).\
                          outerjoin(Agreement, Order.id == Agreement.order_id).\
                          group_by(Order.id).\
@@ -198,15 +199,10 @@ class LastPrice(BaseResource):
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.LastPrice')
 
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        if config.WEB3_CHAINID == '4' or '2017':
-            from web3.middleware import geth_poa_middleware
-            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
         request_json = LastPrice.validate(req)
 
-        exchange_contract_address = os.environ.get(
-            'IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
 
         ExchangeContract = web3.eth.contract(
@@ -268,15 +264,9 @@ class Tick(BaseResource):
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.Tick')
 
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        if config.WEB3_CHAINID == '4' or '2017':
-            from web3.middleware import geth_poa_middleware
-            web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-
         request_json = Tick.validate(req)
 
-        exchange_contract_address = os.environ.get(
-            'IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
 
         ExchangeContract = web3.eth.contract(
@@ -290,31 +280,21 @@ class Tick(BaseResource):
             try:
                 event_filter = ExchangeContract.eventFilter(
                     'Agree', {
-                        'filter': {
-                            'tokenAddress': to_checksum_address(token_address)
-                        },
+                        'filter': {'tokenAddress': to_checksum_address(token_address)},
                         'fromBlock': 'earliest'
                     })
                 entries = event_filter.get_all_entries()
                 for entry in entries:
                     tick.append({
-                        'block_timestamp':
-                        datetime.fromtimestamp(
-                            web3.eth.getBlock(
-                                entry['blockNumber'])['timestamp'],
-                            JST).strftime("%Y/%m/%d %H:%M:%S"),
-                        'buy_address':
-                        entry['args']['buyAddress'],
-                        'sell_address':
-                        entry['args']['sellAddress'],
-                        'order_id':
-                        entry['args']['orderId'],
-                        'agreement_id':
-                        entry['args']['agreementId'],
-                        'price':
-                        entry['args']['price'],
-                        'amount':
-                        entry['args']['amount'],
+                        'block_timestamp': datetime.fromtimestamp(
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
+                            strftime("%Y/%m/%d %H:%M:%S"),
+                        'buy_address': entry['args']['buyAddress'],
+                        'sell_address': entry['args']['sellAddress'],
+                        'order_id': entry['args']['orderId'],
+                        'agreement_id': entry['args']['agreementId'],
+                        'price': entry['args']['price'],
+                        'amount': entry['args']['amount'],
                     })
                 tick_list.append({
                     'token_address': token_address,
