@@ -107,8 +107,8 @@ def bond_exchange_contract(whitelist_address, personalinfo_address):
     )
 
     arguments = [
-        to_checksum_address(whitelist_address),
-        to_checksum_address(personalinfo_address)
+        whitelist_address,
+        personalinfo_address
     ]
 
     tx_hash = BondExchangeContract.deploy(
