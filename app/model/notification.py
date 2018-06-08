@@ -60,7 +60,7 @@ class Notification(Base):
     def format_timestamp(datetime):
         if datetime is None:
             return None
-        datetimejp= datetime.astimezone(JST)
+        datetimejp = datetime.astimezone(JST)
         return datetimejp.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):
