@@ -4,6 +4,8 @@ from falcon import testing
 
 import time
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
+from eth_utils import to_checksum_address
 
 from app.main import App
 from app.middleware import JSONTranslator, DatabaseSessionManager
@@ -16,6 +18,7 @@ from .contract_config import WhiteList, PersonalInfo, IbetStraightBondExchange,\
     TokenList
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope = 'session')
 def client():
@@ -104,8 +107,8 @@ def bond_exchange_contract(whitelist_address, personalinfo_address):
     )
 
     arguments = [
-        whitelist_address,
-        personalinfo_address
+        to_checksum_address(whitelist_address),
+        to_checksum_address(personalinfo_address)
     ]
 
     tx_hash = BondExchangeContract.deploy(
