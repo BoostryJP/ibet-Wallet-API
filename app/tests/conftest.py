@@ -28,6 +28,7 @@ def client():
     middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
     return TestAuthClient(App(middleware=middleware))
 
+@pytest.fixture(scope = 'session')
 def whitelist_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
@@ -62,6 +63,7 @@ def whitelist_contract():
 
     return {'address':contract_address, 'abi':WhiteList['abi']}
 
+@pytest.fixture(scope = 'session')
 def personalinfo_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
@@ -96,6 +98,7 @@ def personalinfo_contract():
 
     return {'address':contract_address, 'abi':PersonalInfo['abi']}
 
+@pytest.fixture(scope = 'session')
 def bond_exchange_contract(whitelist_address, personalinfo_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
@@ -136,6 +139,7 @@ def bond_exchange_contract(whitelist_address, personalinfo_address):
 
     return {'address':contract_address, 'abi':IbetStraightBondExchange['abi']}
 
+@pytest.fixture(scope = 'session')
 def tokenlist_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
