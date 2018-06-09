@@ -5,6 +5,7 @@ import time
 
 from eth_utils import to_checksum_address
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
 
 import app.model
 from app import config
@@ -13,6 +14,8 @@ from .account_config import eth_account
 from .contract_config import IbetStraightBond, TokenList
 from .contract_modules import issue_bond_token, register_bond_list
 
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # トークン一覧参照API
 # /v1/Contracts
@@ -41,8 +44,6 @@ class TestV1Contracts():
 
     def tokenlist_contract():
         deployer = eth_account['deployer']
-
-        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
         web3.eth.defaultAccount = deployer['account_address']
         web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
         TokenListContract = web3.eth.contract(
@@ -64,7 +65,7 @@ class TestV1Contracts():
             except:
                 continue
             count += 1
-            if tx is not None or count > 10:
+            if tx is not None or count > 120:
                 break
 
         contract_address = ''
