@@ -46,12 +46,12 @@ class TestV1Contracts():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
         web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
+
         TokenListContract = web3.eth.contract(
             abi = TokenList['abi'],
             bytecode = TokenList['bytecode'],
             bytecode_runtime = TokenList['bytecode_runtime'],
         )
-
         tx_hash = TokenListContract.deploy(
             transaction={'from':deployer['account_address'], 'gas':4000000}
         ).hex()
@@ -65,7 +65,7 @@ class TestV1Contracts():
             except:
                 continue
             count += 1
-            if tx is not None or count > 120:
+            if tx is not None or count > 10:
                 break
 
         contract_address = ''

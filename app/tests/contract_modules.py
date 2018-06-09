@@ -71,10 +71,8 @@ def issue_bond_token(invoker, attribute):
     )
 
     interestPaymentDate = json.dumps({
-        'interestPaymentDate1':
-        attribute['interestPaymentDate1'],
-        'interestPaymentDate2':
-        attribute['interestPaymentDate2']
+        'interestPaymentDate1': attribute['interestPaymentDate1'],
+        'interestPaymentDate2': attribute['interestPaymentDate2']
     })
 
     arguments = [
@@ -88,7 +86,7 @@ def issue_bond_token(invoker, attribute):
     tx_hash = TokenContract.deploy(
         transaction={
             'from': invoker['account_address'],
-            'gas': 4000000
+            'gas': 5000000
         },
         args=arguments).hex()
 
@@ -202,7 +200,7 @@ def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
 
 
 # トランザクションがブロックに取り込まれるまで待つ
-# 10秒以上経過した場合は失敗とみなす（Falseを返す）
+# インターバルで10回以上経過した場合は失敗とみなす（Falseを返す）
 def wait_transaction_receipt(tx_hash):
     count = 0
     tx = None
@@ -213,11 +211,10 @@ def wait_transaction_receipt(tx_hash):
             tx = web3.eth.getTransactionReceipt(tx_hash)
         except:
             continue
-
         count += 1
         if tx is not None:
             break
-        elif count > 120:
+        elif count > 10:
             raise Exception
 
     return tx
