@@ -85,7 +85,7 @@ def issue_bond_token(invoker, attribute):
     tx_hash = TokenContract.deploy(
         transaction={
             'from': invoker['account_address'],
-            'gas': 4000000
+            'gas': 800000000
         },
         args=arguments).hex()
 
