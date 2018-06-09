@@ -4,4 +4,4 @@ source ~/.bash_profile
 cd /app/tmr-node
 
 # test
-pytest
+pytest -v -s
