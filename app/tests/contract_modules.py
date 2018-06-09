@@ -211,5 +211,6 @@ def wait_transaction_receipt(tx_hash):
             break
         elif count > 10:
             raise Exception
+    print(tx)
 
     return tx
