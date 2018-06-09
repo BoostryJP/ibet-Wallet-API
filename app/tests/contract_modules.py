@@ -16,8 +16,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # 株主名簿用個人情報登録
 def register_personalinfo(invoker, personal_info):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'],
-                                invoker['password'])
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
     PersonalInfoContract = web3.eth.contract(
         address=personal_info['address'], abi=personal_info['abi'])
@@ -36,8 +35,7 @@ def register_whitelist(invoker, white_list):
 
     # 1) 登録 from Invoker
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'],
-                                invoker['password'])
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
     agent = eth_account['agent']
     encrypted_info = 'some_encrypted_info'
@@ -57,8 +55,7 @@ def register_whitelist(invoker, white_list):
 # 債券トークンの発行
 def issue_bond_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'],
-                                invoker['password'])
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
     abi = IbetStraightBond['abi']
     bytecode = IbetStraightBond['bytecode']
@@ -86,9 +83,11 @@ def issue_bond_token(invoker, attribute):
     tx_hash = TokenContract.deploy(
         transaction={
             'from': invoker['account_address'],
-            'gas': 5000000
+            'gas': 4000000
         },
         args=arguments).hex()
+
+    print('------ token issued ------')
 
     tx = wait_transaction_receipt(tx_hash)
 
@@ -107,8 +106,7 @@ def register_bond_list(invoker, bond_token, token_list):
         address=token_list['address'], abi=token_list['abi'])
 
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'],
-                                invoker['password'])
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
     tx_hash = TokenListContract.functions.register(bond_token['address'], 'IbetStraightBond').\
         transact({'from':invoker['account_address'], 'gas':4000000})
@@ -124,8 +122,7 @@ def offer_bond_token(invoker, bond_exchange, bond_token, amount, price):
 # 取引コントラクトに債券トークンをチャージ
 def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'],
-                                invoker['password'])
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
     TokenContract = web3.eth.contract(
         address=bond_token['address'], abi=bond_token['abi'])
@@ -156,8 +153,7 @@ def make_sell_bond_token(invoker, bond_exchange, bond_token, amount, price):
 # 債券トークンの買いTake注文
 def take_buy_bond_token(invoker, bond_exchange, order_id, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'],
-                                invoker['password'])
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
     ExchangeContract = web3.eth.contract(
         address=bond_exchange['address'], abi=bond_exchange['abi'])
@@ -187,8 +183,7 @@ def get_latest_agreementid(bond_exchange, order_id):
 # 債券約定の資金決済
 def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'],
-                                invoker['password'])
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
     ExchangeContract = web3.eth.contract(
         address=bond_exchange['address'], abi=bond_exchange['abi'])
@@ -204,7 +199,6 @@ def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
 def wait_transaction_receipt(tx_hash):
     count = 0
     tx = None
-
     while True:
         time.sleep(float(config.TEST_INTARVAL))
         try:
