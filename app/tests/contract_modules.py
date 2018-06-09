@@ -81,22 +81,20 @@ def issue_bond_token(invoker, attribute):
     ]
 
     tx_hash = TokenContract.deploy(
-        transaction={
-            'from': invoker['account_address'],
-            'gas': 4000000
-        },
-        args=arguments).hex()
+        transaction={'from':invoker['account_address'], 'gas':4000000},
+        args=arguments
+    ).hex()
+
+    print('---- token issued ----')
 
     tx = wait_transaction_receipt(tx_hash)
+    print('---- transaction is done ----')
 
     contract_address = ''
     if tx is not None:
         # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
         if 'contractAddress' in tx.keys():
             contract_address = tx['contractAddress']
-
-    print('--- contract address ---')
-    print(contract_address)
 
     return {'address': contract_address, 'abi': IbetStraightBond['abi']}
 
@@ -211,6 +209,5 @@ def wait_transaction_receipt(tx_hash):
             break
         elif count > 10:
             raise Exception
-    print(tx)
 
     return tx
