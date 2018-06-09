@@ -80,6 +80,8 @@ def issue_bond_token(invoker, attribute):
         attribute['purpose'], attribute['memo']
     ]
 
+    print('------ issue token------')
+
     tx_hash = TokenContract.deploy(
         transaction={
             'from': invoker['account_address'],
