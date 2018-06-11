@@ -12,11 +12,12 @@ class TestNotification():
         self.session.query(Notification).delete()
         self.session.commit()
 
-    # バグ対応：通知情報をDBに保存する際にUTCに変換されるため、表示の際はJSTで表示する
+    # バグ対応：PostgreSQLがUTCに設定されていると想定した場合、
+    #   表示時にJSTに変換する必要がある
     def test_format_timestamp(self, session):
         self.session = session
 
-        utime = 1528450912 # == '2018/06/08 18:41:52'
+        utime = 1528450912 # == '2018/06/08 18:41:52' in JST
 
         n = Notification()
         n.notification_id = "0x0"
@@ -29,4 +30,4 @@ class TestNotification():
             first()
 
         json = n2.json()
-        assert json["block_timestamp"] == "2018/06/09 03:41:52"
+        assert json["block_timestamp"] == "2018/06/08 18:41:52"
