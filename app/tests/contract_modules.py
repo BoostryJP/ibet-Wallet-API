@@ -85,10 +85,7 @@ def issue_bond_token(invoker, attribute):
         args=arguments
     ).hex()
 
-    print('---- token issued ----')
-
     tx = wait_transaction_receipt(tx_hash)
-    print('---- transaction is done ----')
 
     contract_address = ''
     if tx is not None:
