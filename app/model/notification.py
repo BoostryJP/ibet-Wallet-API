@@ -61,6 +61,7 @@ class Notification(Base):
     def format_timestamp(datetime):
         if datetime is None:
             return None
+        # DBにはUTCで書き込まれているため、UTC -> JSTへの変換を実施
         datetimejp = datetime.replace(tzinfo=UTC).astimezone(JST)
         return datetimejp.strftime("%Y/%m/%d %H:%M:%S")
 
