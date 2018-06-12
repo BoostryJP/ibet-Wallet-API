@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from app.model import Base
 
+UTC = timezone(timedelta(hours=0), "UTC")
 JST = timezone(timedelta(hours=+9), "JST")
 
 # 通知データをキャッシュするためのテーブル
@@ -60,7 +61,8 @@ class Notification(Base):
     def format_timestamp(datetime):
         if datetime is None:
             return None
-        datetimejp = datetime.astimezone(JST)
+        # DBにはUTCで書き込まれているため、UTC -> JSTへの変換を実施
+        datetimejp = datetime.replace(tzinfo=UTC).astimezone(JST)
         return datetimejp.strftime("%Y/%m/%d %H:%M:%S")
 
     def json(self):

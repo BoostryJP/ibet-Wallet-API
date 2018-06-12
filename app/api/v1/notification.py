@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 import falcon
 from cerberus import Validator
@@ -14,7 +14,7 @@ from app.model import Notification
 from app.utils.hooks import VerifySignature
 
 LOG = log.get_logger()
-
+JST = timezone(timedelta(hours=+9), "JST")
 
 # ------------------------------
 # 通知一覧
@@ -100,7 +100,7 @@ class Notifications(BaseResource):
         if "is_deleted" in request_json:
             notification.is_deleted = request_json["is_deleted"]
             if request_json["is_deleted"]:
-                notification.deleted_at = datetime.now()
+                notification.deleted_at = datetime.now(tz=JST)
             else:
                 notification.deleted_at = None
 

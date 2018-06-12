@@ -12,21 +12,23 @@ class TestNotification():
         self.session.query(Notification).delete()
         self.session.commit()
 
-    # バグ対応：通知情報をDBに保存する際にUTCに変換されるため、表示の際はJSTで表示する
+    # バグ対応：DBにはUTC設定で書き込まれているため、表示の際にはJSTに変換して表示する
     def test_format_timestamp(self, session):
         self.session = session
 
-        utime = 1528450912 # == '2018/06/08 18:41:52'
+        # JST: 2018/06/08 18:41:52
+        # UTC: 2018/06/08 09:41:52
+        utime = 1528450912
 
         n = Notification()
         n.notification_id = "0x0"
         n.block_timestamp = datetime.fromtimestamp(utime, JST)
         session.add(n)
-        session.commit()
+        session.commit() # DBはUTC設定になっているので、保存時にUTCに変換される
 
         n2 = session.query(Notification).\
             filter(Notification.notification_id == "0x0").\
             first()
 
-        json = n2.json()
-        assert json["block_timestamp"] == "2018/06/09 03:41:52"
+        json = n2.json() # DBから取り出し、表示する際にJSTに変換する
+        assert json["block_timestamp"] == "2018/06/08 18:41:52"
