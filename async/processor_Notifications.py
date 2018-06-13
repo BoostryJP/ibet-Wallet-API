@@ -87,13 +87,14 @@ class Watcher:
         start_time = time.time()
         try:
             print("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
-        
+
             self.filter_params["fromBlock"] = self.from_block
             event_filter = self.contract.eventFilter(self.filter_name, self.filter_params)
             entries = event_filter.get_all_entries()
+            web3.eth.uninstallFilter(event_filter.filter_id)
             if len(entries) == 0:
                 return
-        
+
             self.watch(entries)
             self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
             db_session.commit()
@@ -105,7 +106,7 @@ class Watcher:
 class WatchWhiteListRegister(Watcher):
     def __init__(self):
         super().__init__(white_list_contract, "Register", {})
-    
+
     def watch(self, entries):
         for entry in entries:
             notification = Notification()
@@ -199,7 +200,7 @@ class WatchExchangeNewOrder(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -209,7 +210,7 @@ class WatchExchangeNewOrder(Watcher):
                 "token_name": token.name,
                 "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
             }
-            
+
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = "NewOrder"
@@ -233,7 +234,7 @@ class WatchExchangeCancelOrder(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -267,7 +268,7 @@ class WatchExchangeBuyAgreement(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -301,7 +302,7 @@ class WatchExchangeSellAgreement(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -335,7 +336,7 @@ class WatchExchangeBuySettlementOK(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -369,7 +370,7 @@ class WatchExchangeSellSettlementOK(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -390,7 +391,7 @@ class WatchExchangeSellSettlementOK(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
-            
+
 # イベント：決済NG（買）
 class WatchExchangeBuySettlementNG(Watcher):
     def __init__(self):
@@ -404,7 +405,7 @@ class WatchExchangeBuySettlementNG(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -438,7 +439,7 @@ class WatchExchangeSellSettlementNG(Watcher):
 
             if not token_list.is_registered(token_address):
                 continue
-            
+
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
@@ -458,8 +459,8 @@ class WatchExchangeSellSettlementNG(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
-            
-            
+
+
 def main():
     watchers = [
         WatchWhiteListRegister(),
@@ -476,11 +477,11 @@ def main():
         WatchExchangeBuySettlementNG(),
         WatchExchangeSellSettlementNG(),
     ]
-    
+
     e = ThreadPoolExecutor(max_workers = WORKER_COUNT)
     while True:
         start_time = time.time()
-        
+
         fs = []
         for watcher in watchers:
             fs.append(e.submit(watcher.loop))
@@ -490,7 +491,7 @@ def main():
         print("[LOOP] finished in {} secs".format(elapsed_time))
 
         time.sleep(max(SLEEP_INTERVAL - elapsed_time, 0))
-    
+
     print("OK")
 
 if __name__ == "__main__":

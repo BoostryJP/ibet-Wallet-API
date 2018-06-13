@@ -278,12 +278,13 @@ class Tick(BaseResource):
         for token_address in request_json['address_list']:
             tick = []
             try:
-                event_filter = ExchangeContract.eventFilter(
-                    'Agree', {
-                        'filter': {'tokenAddress': to_checksum_address(token_address)},
-                        'fromBlock': 'earliest'
-                    })
+                event_filter = ExchangeContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'tokenAddress': to_checksum_address(token_address)}
+                )
                 entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
                 for entry in entries:
                     tick.append({
                         'block_timestamp': datetime.fromtimestamp(

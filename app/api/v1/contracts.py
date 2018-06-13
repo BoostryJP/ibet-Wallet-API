@@ -145,16 +145,12 @@ class Contracts(BaseResource):
                         rsa_publickey = company['rsa_publickey']
 
                 # 第三者認定（Sign）のイベント情報を検索する
-                event_filter = TokenContract.eventFilter(
-                    'Sign', {
-                        'filter':{},
-                        'fromBlock':'earliest'
-                    }
-                )
+                event_filter = TokenContract.events.Sign.createFilter(fromBlock='earliest')
                 try:
                     entries = event_filter.get_all_entries()
                 except:
                     entries = []
+                self.web3.eth.uninstallFilter(event_filter.filter_id)
 
                 certification = []
                 for entry in entries:
