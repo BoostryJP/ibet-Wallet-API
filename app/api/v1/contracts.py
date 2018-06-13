@@ -123,6 +123,17 @@ class Contracts(BaseResource):
 
                 interestPaymentDate1 = ''
                 interestPaymentDate2 = ''
+                interestPaymentDate3 = ''
+                interestPaymentDate4 = ''
+                interestPaymentDate5 = ''
+                interestPaymentDate6 = ''
+                interestPaymentDate7 = ''
+                interestPaymentDate7 = ''
+                interestPaymentDate9 = ''
+                interestPaymentDate10 = ''
+                interestPaymentDate11 = ''
+                interestPaymentDate12 = ''
+
                 if 'interestPaymentDate1' in interestPaymentDate:
                     interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
                 if 'interestPaymentDate2' in interestPaymentDate:
