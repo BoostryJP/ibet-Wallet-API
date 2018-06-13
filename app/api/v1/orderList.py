@@ -64,13 +64,13 @@ class OrderList(BaseResource):
         for account_address in request_json['account_address_list']:
             try:
                 # 指定したアカウントアドレスから発生している注文イベントを抽出する
-                event_filter = ExchangeContract.eventFilter(
-                    'NewOrder', {
-                        'filter':{'accountAddress':to_checksum_address(account_address)},
-                        'fromBlock':'earliest'
-                    }
+                event_filter = ExchangeContract.events.NewOrder.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'accountAddress': to_checksum_address(account_address)}
                 )
                 entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
                 for entry in entries:
                     order_id = entry['args']['orderId']
                     orderBook = ExchangeContract.functions.orderBook(order_id).call()
@@ -124,16 +124,12 @@ class OrderList(BaseResource):
                                 company_name = company['corporate_name']
 
                         # 第三者認定（Sign）のイベント情報を検索する
-                        event_filter = TokenContract.eventFilter(
-                            'Sign', {
-                                'filter':{},
-                                'fromBlock':'earliest'
-                            }
-                        )
+                        event_filter = TokenContract.events.Sign.createFilter(fromBlock='earliest')
                         try:
                             entries = event_filter.get_all_entries()
                         except:
                             entries = []
+                        web3.eth.uninstallFilter(event_filter.filter_id)
 
                         certification = []
                         for entry in entries:
@@ -188,13 +184,12 @@ class OrderList(BaseResource):
         for account_address in request_json['account_address_list']:
             try:
                 # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
-                event_filter_buy = ExchangeContract.eventFilter(
-                    'Agree', {
-                        'filter':{'buyAddress':to_checksum_address(account_address)},
-                        'fromBlock':'earliest'
-                    }
+                event_filter = ExchangeContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'buyAddress': to_checksum_address(account_address)}
                 )
-                entries = event_filter_buy.get_all_entries()
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
                     order_id = entry['args']['orderId']
@@ -250,16 +245,12 @@ class OrderList(BaseResource):
                                 company_name = company['corporate_name']
 
                         # 第三者認定（Sign）のイベント情報を検索する
-                        event_filter = TokenContract.eventFilter(
-                            'Sign', {
-                                'filter':{},
-                                'fromBlock':'earliest'
-                            }
-                        )
+                        event_filter = TokenContract.events.Sign.createFilter(fromBlock='earliest')
                         try:
                             entries = event_filter.get_all_entries()
                         except:
                             entries = []
+                        web3.eth.uninstallFilter(event_filter.filter_id)
 
                         certification = []
                         for entry in entries:
@@ -308,13 +299,12 @@ class OrderList(BaseResource):
                         })
 
                 # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
-                event_filter_sell = ExchangeContract.eventFilter(
-                    'Agree', {
-                        'filter':{'sellAddress':to_checksum_address(account_address)},
-                        'fromBlock':'earliest'
-                    }
+                event_filter = ExchangeContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'sellAddress': to_checksum_address(account_address)}
                 )
-                entries = event_filter_sell.get_all_entries()
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
                     order_id = entry['args']['orderId']
@@ -370,16 +360,12 @@ class OrderList(BaseResource):
                                 company_name = company['corporate_name']
 
                         # 第三者認定（Sign）のイベント情報を検索する
-                        event_filter = TokenContract.eventFilter(
-                            'Sign', {
-                                'filter':{},
-                                'fromBlock':'earliest'
-                            }
-                        )
+                        event_filter = TokenContract.events.Sign.createFilter(fromBlock='earliest')
                         try:
                             entries = event_filter.get_all_entries()
                         except:
                             entries = []
+                        web3.eth.uninstallFilter(event_filter.filter_id)
 
                         certification = []
                         for entry in entries:
@@ -433,13 +419,12 @@ class OrderList(BaseResource):
         for account_address in request_json['account_address_list']:
             try:
                 # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
-                event_filter_buy = ExchangeContract.eventFilter(
-                    'SettlementOK', {
-                        'filter':{'buyAddress':to_checksum_address(account_address)},
-                        'fromBlock':'earliest'
-                    }
+                event_filter = ExchangeContract.events.SettlementOK.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'buyAddress': to_checksum_address(account_address)}
                 )
-                entries = event_filter_buy.get_all_entries()
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
                     order_id = entry['args']['orderId']
@@ -495,16 +480,12 @@ class OrderList(BaseResource):
                                 company_name = company['corporate_name']
 
                         # 第三者認定（Sign）のイベント情報を検索する
-                        event_filter = TokenContract.eventFilter(
-                            'Sign', {
-                                'filter':{},
-                                'fromBlock':'earliest'
-                            }
-                        )
+                        event_filter = TokenContract.events.Sign.createFilter(fromBlock='earliest')
                         try:
                             entries = event_filter.get_all_entries()
                         except:
                             entries = []
+                        web3.eth.uninstallFilter(event_filter.filter_id)
 
                         certification = []
                         for entry in entries:
@@ -552,13 +533,12 @@ class OrderList(BaseResource):
                         })
 
                 # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
-                event_filter_sell = ExchangeContract.eventFilter(
-                    'Agree', {
-                        'filter':{'sellAddress':to_checksum_address(account_address)},
-                        'fromBlock':'earliest'
-                    }
+                event_filter = ExchangeContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'sellAddress': to_checksum_address(account_address)}
                 )
-                entries = event_filter_sell.get_all_entries()
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
                     order_id = entry['args']['orderId']
@@ -614,16 +594,12 @@ class OrderList(BaseResource):
                                 company_name = company['corporate_name']
 
                         # 第三者認定（Sign）のイベント情報を検索する
-                        event_filter = TokenContract.eventFilter(
-                            'Sign', {
-                                'filter':{},
-                                'fromBlock':'earliest'
-                            }
-                        )
+                        event_filter = TokenContract.events.Sign.createFilter(fromBlock='earliest')
                         try:
                             entries = event_filter.get_all_entries()
                         except:
                             entries = []
+                        web3.eth.uninstallFilter(event_filter.filter_id)
 
                         certification = []
                         for entry in entries:

@@ -143,8 +143,7 @@ class TestV1OrderList():
 
         bond_exchange = shared_contract['IbetStraightBondExchange']
         token_list = shared_contract['TokenList']
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange[
-            'address']
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         resp = client.simulate_post(
@@ -169,8 +168,7 @@ class TestV1OrderList():
         white_list = shared_contract['WhiteList']
         token_list = shared_contract['TokenList']
 
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange[
-            'address']
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         bond_token, order_id, agreement_id = TestV1OrderList.order_event(
@@ -191,36 +189,21 @@ class TestV1OrderList():
 
         assumed_body = [{
             'token': {
-                'token_address':
-                bond_token['address'],
-                'token_template':
-                'IbetStraightBond',
-                'company_name':
-                '',
-                'name':
-                'テスト債券',
-                'symbol':
-                'BOND',
-                'totalSupply':
-                1000000,
-                'faceValue':
-                10000,
-                'interestRate':
-                1000,
-                'interestPaymentDate1':
-                '0331',
-                'interestPaymentDate2':
-                '0930',
-                'redemptionDate':
-                '20191231',
-                'redemptionAmount':
-                10000,
-                'returnDate':
-                '20191231',
-                'returnAmount':
-                '商品券をプレゼント',
-                'purpose':
-                '新商品の開発資金として利用。',
+                'token_address': bond_token['address'],
+                'token_template': 'IbetStraightBond',
+                'company_name': '',
+                'name': 'テスト債券',
+                'symbol': 'BOND',
+                'totalSupply': 1000000,
+                'faceValue': 10000,
+                'interestRate': 1000,
+                'interestPaymentDate1': '0331',
+                'interestPaymentDate2': '0930',
+                'redemptionDate': '20191231',
+                'redemptionAmount': 10000,
+                'returnDate': '20191231',
+                'returnAmount': '商品券をプレゼント',
+                'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
                     'type': 'small',
                     'url': ''
@@ -277,36 +260,21 @@ class TestV1OrderList():
 
         assumed_body = [{
             'token': {
-                'token_address':
-                bond_token['address'],
-                'token_template':
-                'IbetStraightBond',
-                'company_name':
-                '',
-                'name':
-                'テスト債券',
-                'symbol':
-                'BOND',
-                'totalSupply':
-                1000000,
-                'faceValue':
-                10000,
-                'interestRate':
-                1000,
-                'interestPaymentDate1':
-                '0331',
-                'interestPaymentDate2':
-                '0930',
-                'redemptionDate':
-                '20191231',
-                'redemptionAmount':
-                10000,
-                'returnDate':
-                '20191231',
-                'returnAmount':
-                '商品券をプレゼント',
-                'purpose':
-                '新商品の開発資金として利用。',
+                'token_address': bond_token['address'],
+                'token_template': 'IbetStraightBond',
+                'company_name': '',
+                'name': 'テスト債券',
+                'symbol': 'BOND',
+                'totalSupply': 1000000,
+                'faceValue': 10000,
+                'interestRate': 1000,
+                'interestPaymentDate1': '0331',
+                'interestPaymentDate2': '0930',
+                'redemptionDate': '20191231',
+                'redemptionAmount': 10000,
+                'returnDate': '20191231',
+                'returnAmount': '商品券をプレゼント',
+                'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
                     'type': 'small',
                     'url': ''
@@ -342,8 +310,7 @@ class TestV1OrderList():
         white_list = shared_contract['WhiteList']
         token_list = shared_contract['TokenList']
 
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange[
-            'address']
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         bond_token, order_id, agreement_id = TestV1OrderList.settlement_event(
@@ -364,36 +331,21 @@ class TestV1OrderList():
 
         assumed_body = [{
             'token': {
-                'token_address':
-                bond_token['address'],
-                'token_template':
-                'IbetStraightBond',
-                'company_name':
-                '',
-                'name':
-                'テスト債券',
-                'symbol':
-                'BOND',
-                'totalSupply':
-                1000000,
-                'faceValue':
-                10000,
-                'interestRate':
-                1000,
-                'interestPaymentDate1':
-                '0331',
-                'interestPaymentDate2':
-                '0930',
-                'redemptionDate':
-                '20191231',
-                'redemptionAmount':
-                10000,
-                'returnDate':
-                '20191231',
-                'returnAmount':
-                '商品券をプレゼント',
-                'purpose':
-                '新商品の開発資金として利用。',
+                'token_address': bond_token['address'],
+                'token_template': 'IbetStraightBond',
+                'company_name': '',
+                'name': 'テスト債券',
+                'symbol': 'BOND',
+                'totalSupply': 1000000,
+                'faceValue': 10000,
+                'interestRate': 1000,
+                'interestPaymentDate1': '0331',
+                'interestPaymentDate2': '0930',
+                'redemptionDate': '20191231',
+                'redemptionAmount': 10000,
+                'returnDate': '20191231',
+                'returnAmount': '商品券をプレゼント',
+                'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
                     'type': 'small',
                     'url': ''

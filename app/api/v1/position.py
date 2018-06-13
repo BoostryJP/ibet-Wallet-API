@@ -62,12 +62,13 @@ class MyTokens(BaseResource):
             portfolio_list = []
             # 約定イベントから買い注文アドレスが一致するイベントを抽出する
             try:
-                event_filter = ExchangeContract.eventFilter(
-                    'Agree', {
-                        'filter': {'buyAddress': to_checksum_address(buy_address)},
-                        'fromBlock': 'earliest'
-                    })
+                event_filter = ExchangeContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'buyAddress': to_checksum_address(buy_address)}
+                )
                 entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
                 for entry in entries:
                     portfolio_list.append({
                         'account': entry['args']['buyAddress'],
@@ -78,12 +79,13 @@ class MyTokens(BaseResource):
 
             # トークン送信イベントから送信先アドレスが一致するイベントを抽出する
             try:
-                event_filter = ExchangeContract.eventFilter(
-                    'Transfer', {
-                        'filter': {'to': to_checksum_address(buy_address)},
-                        'fromBlock': 'earliest'
-                    })
+                event_filter = ExchangeContract.events.Transfer.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'to': to_checksum_address(buy_address)}
+                )
                 entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
                 for entry in entries:
                     portfolio_list.append({
                         'account': entry['args']['to'],
@@ -158,15 +160,12 @@ class MyTokens(BaseResource):
                             company_name = company['corporate_name']
 
                     # 第三者認定（Sign）のイベント情報を検索する
-                    event_filter = TokenContract.eventFilter(
-                        'Sign', {
-                            'filter': {},
-                            'fromBlock': 'earliest'
-                        })
+                    event_filter = TokenContract.events.Sign.createFilter(fromBlock='earliest')
                     try:
                         entries = event_filter.get_all_entries()
                     except:
                         entries = []
+                    web3.eth.uninstallFilter(event_filter.filter_id)
 
                     certification = []
                     for entry in entries:
