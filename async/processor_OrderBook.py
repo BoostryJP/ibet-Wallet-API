@@ -16,7 +16,7 @@ from app import config
 from app.model import Agreement, AgreementStatus, Order
 from web3.middleware import geth_poa_middleware
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
