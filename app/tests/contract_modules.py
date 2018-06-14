@@ -69,7 +69,17 @@ def issue_bond_token(invoker, attribute):
 
     interestPaymentDate = json.dumps({
         'interestPaymentDate1': attribute['interestPaymentDate1'],
-        'interestPaymentDate2': attribute['interestPaymentDate2']
+        'interestPaymentDate2': attribute['interestPaymentDate2'],
+        'interestPaymentDate3': attribute['interestPaymentDate3'],
+        'interestPaymentDate4': attribute['interestPaymentDate4'],
+        'interestPaymentDate5': attribute['interestPaymentDate5'],
+        'interestPaymentDate6': attribute['interestPaymentDate6'],
+        'interestPaymentDate7': attribute['interestPaymentDate7'],
+        'interestPaymentDate8': attribute['interestPaymentDate8'],
+        'interestPaymentDate9': attribute['interestPaymentDate9'],
+        'interestPaymentDate10': attribute['interestPaymentDate10'],
+        'interestPaymentDate11': attribute['interestPaymentDate11'],
+        'interestPaymentDate12': attribute['interestPaymentDate12'],
     })
 
     arguments = [
