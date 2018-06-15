@@ -26,13 +26,16 @@ class TestV1NodeInfo():
         exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         exchange_abi = config.IBET_EXCHANGE_CONTRACT_ABI
 
+        agent_address = os.environ.get('AGENT_ADDRESS')
+
         assumed_body = {
             'white_list_address': whitelist_address,
             'white_list_abi': whitelist_abi,
             'personal_info_address': personalinfo_address,
             'personal_info_abi': personalinfo_abi,
             'ibet_exchange_address': exchange_address,
-            'ibet_exchange_abi': exchange_abi
+            'ibet_exchange_abi': exchange_abi,
+            'agent_address': agent_address
         }
 
         assert resp.status_code == 200
