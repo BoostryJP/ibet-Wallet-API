@@ -12,17 +12,15 @@ INI_FILE = os.path.join(
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
-POSTGRES = CONFIG['postgres']
-DB_CONFIG = (POSTGRES['user'], POSTGRES['password'], POSTGRES['host'], POSTGRES['database'])
-DATABASE_URL = "postgresql+psycopg2://%s:%s@%s/%s" % DB_CONFIG
+URI = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
 
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 DB_AUTOCOMMIT = True
 
 LOG_LEVEL = CONFIG['logging']['level']
 
-WEB3_HTTP_PROVIDER = os.environ.get('WEB3_HTTP_PROVIDER') or CONFIG['web3']['HTTPProvider']
-WEB3_CHAINID = CONFIG['web3']['chainid']
+WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
+WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
 
 # WhiteList-Contract
 WHITE_LIST_CONTRACT_ABI = '[{"constant": true,"inputs": [{"name": "","type": "address"},{"name": "","type": "address"}],"name": "payment_accounts","outputs": [{"name": "account_address","type": "address"},{"name": "agent_address","type": "address"},{"name": "encrypted_info","type": "string"},{"name": "approval_status","type": "uint8"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_agent_address","type": "address"},{"name": "_encrypted_info","type": "string"}],"name": "register","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "_agent_address","type": "address"},{"name": "_encrypted_info","type": "string"}],"name": "changeInfo","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "_account_address","type": "address"}],"name": "ban","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": true,"inputs": [{"name": "_account_address","type": "address"},{"name": "_agent_address","type": "address"}],"name": "isRegistered","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "view","type": "function"},{"constant": false,"inputs": [{"name": "_account_address","type": "address"}],"name": "approve","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "_account_address","type": "address"}],"name": "warn","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"constant": false,"inputs": [{"name": "_account_address","type": "address"}],"name": "unapprove","outputs": [{"name": "","type": "bool"}],"payable": false,"stateMutability": "nonpayable","type": "function"},{"inputs": [],"payable": false,"stateMutability": "nonpayable","type": "constructor"},{"anonymous": false,"inputs": [{"indexed": true,"name": "account_address","type": "address"},{"indexed": true,"name": "agent_address","type": "address"}],"name": "Register","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"name": "account_address","type": "address"},{"indexed": true,"name": "agent_address","type": "address"}],"name": "ChangeInfo","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"name": "account_address","type": "address"},{"indexed": true,"name": "agent_address","type": "address"}],"name": "Approve","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"name": "account_address","type": "address"},{"indexed": true,"name": "agent_address","type": "address"}],"name": "Warn","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"name": "account_address","type": "address"},{"indexed": true,"name": "agent_address","type": "address"}],"name": "Unapprove","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"name": "account_address","type": "address"},{"indexed": true,"name": "agent_address","type": "address"}],"name": "Ban","type": "event"}]'
