@@ -24,6 +24,8 @@ class NodeInfo(BaseResource):
 
             'ibet_exchange_address': os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'),
             'ibet_exchange_abi': config.IBET_EXCHANGE_CONTRACT_ABI,
+
+            'agent_address': os.environ.get('AGENT_ADDRESS'),
         }
 
         self.on_success(res, nodeInfo)
