@@ -12,7 +12,7 @@ INI_FILE = os.path.join(
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
-URI = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
+DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
 
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 DB_AUTOCOMMIT = True
