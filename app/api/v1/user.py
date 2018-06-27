@@ -15,6 +15,7 @@ from app import log
 from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError
 from app import config
+from app.contracts import Contract
 
 LOG = log.get_logger()
 
@@ -34,12 +35,8 @@ class PaymentAccount(BaseResource):
         request_json = PaymentAccount.validate(req)
 
         # WhiteList Contract
-        whitelist_contract_address = os.environ.get('WHITE_LIST_CONTRACT_ADDRESS')
-        whitelist_contract_abi = json.loads(config.WHITE_LIST_CONTRACT_ABI)
-        WhiteListContract = web3.eth.contract(
-            address = to_checksum_address(whitelist_contract_address),
-            abi = whitelist_contract_abi,
-        )
+        WhiteListContract = Contract.get_contract(
+            'WhiteList', os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'))
 
         account_info = WhiteListContract.functions.payment_accounts(
             to_checksum_address(request_json['account_address']),
@@ -95,13 +92,9 @@ class PersonalInfo(BaseResource):
 
         request_json = PersonalInfo.validate(req)
 
-        # WhiteList Contract
-        personalinfo_contract_address = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
-        personalinfo_contract_abi = json.loads(config.PERSONAL_INFO_CONTRACT_ABI)
-        PersonalInfoContract = web3.eth.contract(
-            address = to_checksum_address(personalinfo_contract_address),
-            abi = personalinfo_contract_abi,
-        )
+        # PersonalInfo Contract
+        PersonalInfoContract = Contract.get_contract(
+            'PersonalInfo', os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS'))
 
         info = PersonalInfoContract.functions.personal_info(
             to_checksum_address(request_json['account_address']),
