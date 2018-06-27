@@ -15,6 +15,7 @@ from app import log
 from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
+from app.contracts import Contract
 
 LOG = log.get_logger()
 
@@ -34,20 +35,14 @@ class OrderList(BaseResource):
         request_json = OrderList.validate(req)
 
         # Exchange Contract
-        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
-        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
-        ExchangeContract = web3.eth.contract(
-            address = to_checksum_address(exchange_contract_address),
-            abi = exchange_contract_abi,
+        ExchangeContract = Contract.get_contract(
+            'IbetStraightBondExchange',
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
         # TokenList Contract
-        list_contract_address = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
-        list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
-        ListContract = web3.eth.contract(
-            address = to_checksum_address(list_contract_address),
-            abi = list_contract_abi,
-        )
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
         # 企業リストの情報を取得する
         company_list = []
@@ -82,12 +77,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = config.STRAIGHT_BOND_ABI['abi']
-                        token_abi = json.loads(abi_str)
-                        TokenContract = web3.eth.contract(
-                            address = token_address,
-                            abi = token_abi
-                        )
+                        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
 
                         # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
@@ -248,12 +238,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = config.STRAIGHT_BOND_ABI['abi']
-                        token_abi = json.loads(abi_str)
-                        TokenContract = web3.eth.contract(
-                            address = token_address,
-                            abi = token_abi
-                        )
+                        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
 
                         # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
@@ -408,12 +393,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = config.STRAIGHT_BOND_ABI['abi']
-                        token_abi = json.loads(abi_str)
-                        TokenContract = web3.eth.contract(
-                            address = token_address,
-                            abi = token_abi
-                        )
+                        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
 
                         # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
@@ -573,12 +553,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = config.STRAIGHT_BOND_ABI['abi']
-                        token_abi = json.loads(abi_str)
-                        TokenContract = web3.eth.contract(
-                            address = token_address,
-                            abi = token_abi
-                        )
+                        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
 
                         # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
@@ -732,12 +707,7 @@ class OrderList(BaseResource):
                             continue
 
                         # Token-Contractへの接続
-                        abi_str = config.STRAIGHT_BOND_ABI['abi']
-                        token_abi = json.loads(abi_str)
-                        TokenContract = web3.eth.contract(
-                            address = token_address,
-                            abi = token_abi
-                        )
+                        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
 
                         # Token-Contractから情報を取得する
                         name = TokenContract.functions.name().call()
