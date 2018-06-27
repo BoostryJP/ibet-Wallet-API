@@ -15,6 +15,7 @@ from app import log
 from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
+from app.contracts import Contract
 
 LOG = log.get_logger()
 
@@ -37,13 +38,9 @@ class Contracts(BaseResource):
         request_json = Contracts.validate(req)
 
         # TokenList-Contractへの接続
-        list_contract_address = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
-        list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
-        ListContract = self.web3.eth.contract(
-            address = to_checksum_address(list_contract_address),
-            abi = list_contract_abi,
-        )
         list_length = ListContract.functions.getListLength().call()
 
         if request_json['cursor'] != None and request_json['cursor'] > list_length:
@@ -94,15 +91,11 @@ class Contracts(BaseResource):
         """
 
         if token_template == 'IbetStraightBond':
-            # トークンのABIを検索する
-            abi_str = config.STRAIGHT_BOND_ABI['abi']
-            token_abi = json.loads(abi_str)
-
             try:
                 # Token-Contractへの接続
-                TokenContract = self.web3.eth.contract(
-                    address = to_checksum_address(token_address),
-                    abi = token_abi
+                TokenContract = Contract.get_contract(
+                    'IbetStraightBond',
+                    to_checksum_address(token_address)
                 )
 
                 # 償還済みの銘柄はリストに返さない
@@ -249,12 +242,14 @@ class Contracts(BaseResource):
             'cursor': {
                 'type': 'integer',
                 'coerce': int,
+                'min':0,
                 'required': False,
                 'nullable': True,
             },
             'limit': {
                 'type': 'integer',
                 'coerce': int,
+                'min':0,
                 'required': False,
                 'nullable': True,
             },
