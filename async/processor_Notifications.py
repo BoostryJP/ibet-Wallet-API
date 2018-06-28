@@ -14,6 +14,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from eth_utils import to_checksum_address
 from app import config
 from app.model import Notification
+from app.contracts import Contract
 import json
 from async.lib.token import TokenFactory
 from async.lib.company_list import CompanyListFactory
@@ -30,12 +31,6 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 # 設定の取得
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or "http://localhost:8545"
 URI = os.environ.get("DATABASE_URL") or "postgresql://ethuser:ethpass@localhost:5432/ethcache"
-IBET_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
-IBET_EXCHANGE_CONTRACT_ABI = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
-WHITE_LIST_CONTRACT_ADDRESS = os.environ.get("WHITE_LIST_CONTRACT_ADDRESS")
-WHITE_LIST_CONTRACT_ABI = json.loads(config.WHITE_LIST_CONTRACT_ABI)
-TOKEN_LIST_CONTRACT_ADDRESS = os.environ.get("TOKEN_LIST_CONTRACT_ADDRESS")
-TOKEN_LIST_CONTRACT_ABI = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
 WORKER_COUNT = int(os.environ.get("WORKER_COUNT") or 8)
 SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL") or 3)
 
@@ -49,18 +44,12 @@ token_factory = TokenFactory(web3)
 company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 
 # コントラクトの生成
-exchange_contract = web3.eth.contract(
-    address = to_checksum_address(IBET_EXCHANGE_CONTRACT_ADDRESS),
-    abi = IBET_EXCHANGE_CONTRACT_ABI,
-)
-white_list_contract = web3.eth.contract(
-    address = to_checksum_address(WHITE_LIST_CONTRACT_ADDRESS),
-    abi = WHITE_LIST_CONTRACT_ABI,
-)
-list_contract = web3.eth.contract(
-    address = to_checksum_address(TOKEN_LIST_CONTRACT_ADDRESS),
-    abi = TOKEN_LIST_CONTRACT_ABI,
-)
+exchange_contract = Contract.get_contract(
+    'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+white_list_contract = Contract.get_contract(
+    'WhiteList', os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'))
+list_contract = Contract.get_contract(
+    'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
 #
 token_list = TokenList(list_contract)
