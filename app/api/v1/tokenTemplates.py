@@ -16,6 +16,6 @@ class GetStraightBondABI(BaseResource):
     '''
     def on_get(self, req, res):
         LOG.info('v1.tokenTemplates.GetABI')
-        abi_str = config.STRAIGHT_BOND_ABI['abi']
-        abi = json.loads(abi_str)
+        contracts = json.load(open('data/contracts.json' , 'r'))
+        abi = contracts['IbetStraightBond']['abi']
         self.on_success(res, abi)
