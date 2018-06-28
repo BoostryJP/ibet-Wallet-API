@@ -14,6 +14,7 @@ from web3 import Web3
 from eth_utils import to_checksum_address
 from app import config
 from app.model import Agreement, AgreementStatus, Order
+from app.contracts import Contract
 from web3.middleware import geth_poa_middleware
 
 logging.basicConfig(level=logging.WARNING)
@@ -21,7 +22,6 @@ logging.basicConfig(level=logging.WARNING)
 # 設定の取得
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
 URI = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
-IBET_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
@@ -121,7 +121,7 @@ class DBSink:
 
     def flush(self):
         self.db.commit()
-        
+
     def __get_order(self, order_id):
         return self.db.query(Order).\
             filter(Order.id==order_id).\
@@ -132,16 +132,13 @@ class DBSink:
             filter(Agreement.order_id==order_id).\
             filter(Agreement.agreement_id==agreement_id).\
             first()
-        
+
 class Processor:
     def __init__(self, web3, sink):
         self.web3 = web3
-        
-        exchange_contract_address = IBET_EXCHANGE_CONTRACT_ADDRESS
-        exchange_contract_abi = config.IBET_EXCHANGE_CONTRACT_ABI
-        self.exchange_contract = web3.eth.contract(
-            address = to_checksum_address(exchange_contract_address),
-            abi = exchange_contract_abi,
+        self.exchange_contract = Contract.get_contract(
+            'IbetStraightBondExchange',
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
         self.sink = sink
         self.latest_block = web3.eth.blockNumber
@@ -153,7 +150,7 @@ class Processor:
         blockTo = web3.eth.blockNumber
         if blockTo == self.latest_block:
             return
-        
+
         self.__sync_all(self.latest_block+1, blockTo)
         self.latest_block = blockTo
 
@@ -213,11 +210,11 @@ class Processor:
 
             orderbook = self.exchange_contract.functions.orderBook(order_id).call()
             is_buy = orderbook[4]
-            
+
             counterpart_address = args['buyAddress']
             if is_buy:
                 counterpart_address = args['sellAddress']
-            
+
             self.sink.on_agree(
                 order_id = args['orderId'],
                 agreement_id = args['agreementId'],
@@ -249,8 +246,8 @@ class Processor:
             args = event['args']
             self.sink.on_settlement_ng(args['orderId'], args['agreementId'])
         self.web3.eth.uninstallFilter(event_filter.filter_id)
-    
-            
+
+
 sink = Sinks()
 sink.register(ConsoleSink())
 sink.register(DBSink(db_session))
