@@ -6,7 +6,6 @@ import os
 import app.model
 
 from .account_config import eth_account
-from .contract_config import IbetStraightBond
 from .contract_modules import issue_bond_token, offer_bond_token, \
     register_personalinfo, register_whitelist, take_buy_bond_token, get_latest_orderid, \
     register_bond_list, get_latest_agreementid, bond_confirm_agreement

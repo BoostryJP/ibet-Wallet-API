@@ -19,6 +19,7 @@ from app.api.common import BaseResource
 from app.model import Order, Agreement
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
+from app.contracts import Contract
 
 LOG = log.get_logger()
 
@@ -166,11 +167,13 @@ class OrderBook(BaseResource):
             },
             'price': {
                 'type': 'integer',
+                'min': 0,
                 'empty': False,
                 'required': True
             },
             'amount': {
                 'type': 'integer',
+                'min': 0,
                 'empty': False,
                 'required': True
             },
@@ -199,15 +202,11 @@ class LastPrice(BaseResource):
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.LastPrice')
 
-
         request_json = LastPrice.validate(req)
 
-        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
-        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
-
-        ExchangeContract = web3.eth.contract(
-            address=to_checksum_address(exchange_contract_address),
-            abi=exchange_contract_abi,
+        ExchangeContract = Contract.get_contract(
+            'IbetStraightBondExchange',
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
         price_list = []
@@ -266,12 +265,9 @@ class Tick(BaseResource):
 
         request_json = Tick.validate(req)
 
-        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
-        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
-
-        ExchangeContract = web3.eth.contract(
-            address=to_checksum_address(exchange_contract_address),
-            abi=exchange_contract_abi,
+        ExchangeContract = Contract.get_contract(
+            'IbetStraightBondExchange',
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
         tick_list = []

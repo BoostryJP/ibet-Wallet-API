@@ -17,14 +17,16 @@ class TestV1NodeInfo():
     def test_nodeinfo_normal_1(self, client):
         resp = client.simulate_get(self.apiurl)
 
+        contracts = json.load(open('data/contracts.json' , 'r'))
+
         whitelist_address = os.environ.get('WHITE_LIST_CONTRACT_ADDRESS')
-        whitelist_abi = config.WHITE_LIST_CONTRACT_ABI
+        whitelist_abi = contracts['WhiteList']['abi']
 
         personalinfo_address = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
-        personalinfo_abi = config.PERSONAL_INFO_CONTRACT_ABI
+        personalinfo_abi = contracts['PersonalInfo']['abi']
 
         exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
-        exchange_abi = config.IBET_EXCHANGE_CONTRACT_ABI
+        exchange_abi = contracts['IbetStraightBondExchange']['abi']
 
         agent_address = os.environ.get('AGENT_ADDRESS')
 

@@ -125,12 +125,14 @@ class Notifications(BaseResource):
             "cursor": {
                 "type": "integer",
                 "coerce": int,
+                "min":0,
                 "required": False,
                 "nullable": True,
             },
             "limit": {
                 "type": "integer",
                 "coerce": int,
+                "min":0,
                 "required": False,
                 "nullable": True,
             },

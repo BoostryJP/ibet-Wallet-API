@@ -11,11 +11,10 @@ from app.main import App
 from app.middleware import JSONTranslator, DatabaseSessionManager
 from app.database import db_session, init_session, engine
 from app import config
+from app.contracts import Contract
 from app.testutil.auth_client import TestAuthClient
 
 from .account_config import eth_account
-from .contract_config import WhiteList, PersonalInfo, IbetStraightBondExchange,\
-    TokenList
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -33,146 +32,46 @@ def whitelist_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
-    WhiteListContract = web3.eth.contract(
-        abi = WhiteList['abi'],
-        bytecode = WhiteList['bytecode'],
-        bytecode_runtime = WhiteList['bytecode_runtime'],
-    )
 
-    tx_hash = WhiteListContract.deploy(
-        transaction={'from':deployer['account_address'], 'gas':4000000}
-    ).hex()
+    contract_address, abi = Contract.deploy_contract(
+        'WhiteList', [], deployer['account_address'])
 
-    count = 0
-    tx = None
-    while True:
-        time.sleep(float(config.TEST_INTARVAL))
-        try:
-            tx = web3.eth.getTransactionReceipt(tx_hash)
-        except:
-            continue
-        count += 1
-        if tx is not None or count > 120:
-            break
-
-    contract_address = ''
-    if tx is not None :
-        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-        if 'contractAddress' in tx.keys():
-            contract_address = tx['contractAddress']
-
-    return {'address':contract_address, 'abi':WhiteList['abi']}
+    return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
 def personalinfo_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
-    PersonalInfoContract = web3.eth.contract(
-        abi = PersonalInfo['abi'],
-        bytecode = PersonalInfo['bytecode'],
-        bytecode_runtime = PersonalInfo['bytecode_runtime'],
-    )
 
-    tx_hash = PersonalInfoContract.deploy(
-        transaction={'from':deployer['account_address'], 'gas':4000000}
-    ).hex()
+    contract_address, abi = Contract.deploy_contract(
+        'PersonalInfo', [], deployer['account_address'])
 
-    count = 0
-    tx = None
-    while True:
-        time.sleep(float(config.TEST_INTARVAL))
-        try:
-            tx = web3.eth.getTransactionReceipt(tx_hash)
-        except:
-            continue
-        count += 1
-        if tx is not None or count > 120:
-            break
-
-    contract_address = ''
-    if tx is not None :
-        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-        if 'contractAddress' in tx.keys():
-            contract_address = tx['contractAddress']
-
-    return {'address':contract_address, 'abi':PersonalInfo['abi']}
+    return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
 def bond_exchange_contract(whitelist_address, personalinfo_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
-    BondExchangeContract = web3.eth.contract(
-        abi = IbetStraightBondExchange['abi'],
-        bytecode = IbetStraightBondExchange['bytecode'],
-        bytecode_runtime = IbetStraightBondExchange['bytecode_runtime'],
-    )
 
-    arguments = [
-        whitelist_address,
-        personalinfo_address
-    ]
+    args = [whitelist_address, personalinfo_address]
 
-    tx_hash = BondExchangeContract.deploy(
-        transaction={'from':deployer['account_address'], 'gas':5500000},
-        args=arguments
-    ).hex()
+    contract_address, abi = Contract.deploy_contract(
+        'IbetStraightBondExchange', args, deployer['account_address'])
 
-    count = 0
-    tx = None
-    while True:
-        time.sleep(float(config.TEST_INTARVAL))
-        try:
-            tx = web3.eth.getTransactionReceipt(tx_hash)
-        except:
-            continue
-        count += 1
-        if tx is not None or count > 120:
-            break
-
-    contract_address = ''
-    if tx is not None :
-        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-        if 'contractAddress' in tx.keys():
-            contract_address = tx['contractAddress']
-
-    return {'address':contract_address, 'abi':IbetStraightBondExchange['abi']}
+    return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
 def tokenlist_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
-    TokenListContract = web3.eth.contract(
-        abi = TokenList['abi'],
-        bytecode = TokenList['bytecode'],
-        bytecode_runtime = TokenList['bytecode_runtime'],
-    )
 
-    tx_hash = TokenListContract.deploy(
-        transaction={'from':deployer['account_address'], 'gas':4000000}
-    ).hex()
+    contract_address, abi = Contract.deploy_contract(
+        'TokenList', [], deployer['account_address'])
 
-    count = 0
-    tx = None
-    while True:
-        time.sleep(float(config.TEST_INTARVAL))
-        try:
-            tx = web3.eth.getTransactionReceipt(tx_hash)
-        except:
-            continue
-        count += 1
-        if tx is not None or count > 120:
-            break
-
-    contract_address = ''
-    if tx is not None :
-        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-        if 'contractAddress' in tx.keys():
-            contract_address = tx['contractAddress']
-
-    return {'address':contract_address, 'abi':TokenList['abi']}
+    return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
 def shared_contract():

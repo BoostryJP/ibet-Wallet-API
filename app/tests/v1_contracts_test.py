@@ -2,6 +2,7 @@
 import json
 import os
 import time
+import sys
 
 from eth_utils import to_checksum_address
 from web3 import Web3
@@ -9,9 +10,9 @@ from web3.middleware import geth_poa_middleware
 
 import app.model
 from app import config
+from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_config import IbetStraightBond, TokenList
 from .contract_modules import issue_bond_token, register_bond_list
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -57,34 +58,10 @@ class TestV1Contracts():
         web3.eth.defaultAccount = deployer['account_address']
         web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
 
-        TokenListContract = web3.eth.contract(
-            abi = TokenList['abi'],
-            bytecode = TokenList['bytecode'],
-            bytecode_runtime = TokenList['bytecode_runtime'],
-        )
-        tx_hash = TokenListContract.deploy(
-            transaction={'from':deployer['account_address'], 'gas':4000000}
-        ).hex()
+        contract_address, abi = Contract.deploy_contract(
+            'TokenList', [], deployer['account_address'])
 
-        count = 0
-        tx = None
-        while True:
-            time.sleep(float(config.TEST_INTARVAL))
-            try:
-                tx = web3.eth.getTransactionReceipt(tx_hash)
-            except:
-                continue
-            count += 1
-            if tx is not None or count > 10:
-                break
-
-        contract_address = ''
-        if tx is not None :
-            # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-            if 'contractAddress' in tx.keys():
-                contract_address = tx['contractAddress']
-
-        return {'address':contract_address, 'abi':TokenList['abi']}
+        return {'address':contract_address, 'abi':abi}
 
     # ＜正常系1＞
     # 発行済債券あり（1件）
@@ -520,10 +497,10 @@ class TestV1Contracts():
             'description': 'method: POST, url: /v1/Contracts'
         }
 
-    # ＜エラー系2＞
+    # ＜エラー系2-1＞
     # cursorに文字が含まれる
     # -> 入力エラー
-    def test_contracts_error_2(self, client):
+    def test_contracts_error_2_1(self, client):
         query_string = 'cursor=a&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -539,11 +516,92 @@ class TestV1Contracts():
             }
         }
 
-    # ＜エラー系3＞
+    # ＜エラー系2-2＞
+    # cursorが負値
+    # -> 入力エラー
+    def test_contracts_error_2_2(self, client):
+        query_string = 'cursor=-1&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'cursor': 'min value is 0'}
+        }
+
+    # ＜エラー系2-3＞
+    # cursorが小数
+    # -> 入力エラー
+    def test_contracts_error_2_3(self, client):
+        query_string = 'cursor=0.1&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'cursor': [
+                    "field 'cursor' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # ＜エラー系2-4＞
+    # cursorがint最大値
+    # -> 入力エラー
+    def test_contracts_error_2_4(self, client):
+        max_value = str(sys.maxsize)
+        query_string = 'cursor=' + max_value + '&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': 'cursor parameter must be less than token list num'
+        }
+
+    # ＜エラー系3-1＞
     # limitに文字が含まれる
     # -> 入力エラー
-    def test_contracts_error_3(self, client):
+    def test_contracts_error_3_1(self, client):
         query_string = 'cursor=1&limit=a'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # ＜エラー系3-2＞
+    # limitが負値
+    # -> 入力エラー
+    def test_contracts_error_3_2(self, client):
+        query_string = 'cursor=1&limit=-1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'limit': 'min value is 0'}
+        }
+
+    # ＜エラー系3-3＞
+    # limitが小数
+    # -> 入力エラー
+    def test_contracts_error_3_3(self, client):
+        query_string = 'cursor=1&limit=0.1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 400

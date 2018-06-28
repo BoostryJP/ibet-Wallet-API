@@ -1,6 +1,7 @@
 import os
+import json
 
-from app import log, config
+from app import log
 from app.api.common import BaseResource
 
 LOG = log.get_logger()
@@ -15,15 +16,17 @@ class NodeInfo(BaseResource):
     def on_get(self, req, res):
         LOG.info('v1.nodeInfo.GetNodeInfo')
 
+        contracts = json.load(open('data/contracts.json' , 'r'))
+
         nodeInfo = {
             'white_list_address': os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'),
-            'white_list_abi': config.WHITE_LIST_CONTRACT_ABI,
+            'white_list_abi': contracts['WhiteList']['abi'],
 
             'personal_info_address': os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS'),
-            'personal_info_abi': config.PERSONAL_INFO_CONTRACT_ABI,
+            'personal_info_abi': contracts['PersonalInfo']['abi'],
 
             'ibet_exchange_address': os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'),
-            'ibet_exchange_abi': config.IBET_EXCHANGE_CONTRACT_ABI,
+            'ibet_exchange_abi': contracts['IbetStraightBondExchange']['abi'],
 
             'agent_address': os.environ.get('AGENT_ADDRESS'),
         }

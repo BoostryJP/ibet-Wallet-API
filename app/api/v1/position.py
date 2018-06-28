@@ -14,6 +14,7 @@ from app import log
 from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
+from app.contracts import Contract
 
 LOG = log.get_logger()
 
@@ -34,12 +35,8 @@ class MyTokens(BaseResource):
         request_json = MyTokens.validate(req)
 
         # TokenList Contract
-        list_contract_address = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
-        list_contract_abi = json.loads(config.TOKEN_LIST_CONTRACT_ABI)
-        ListContract = web3.eth.contract(
-            address=to_checksum_address(list_contract_address),
-            abi=list_contract_abi,
-        )
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
         try:
             if config.APP_ENV == 'local':
@@ -50,12 +47,8 @@ class MyTokens(BaseResource):
             company_list = []
 
         # Exchange Contract
-        exchange_contract_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
-        exchange_contract_abi = json.loads(config.IBET_EXCHANGE_CONTRACT_ABI)
-        ExchangeContract = web3.eth.contract(
-            address=to_checksum_address(exchange_contract_address),
-            abi=exchange_contract_abi,
-        )
+        ExchangeContract = Contract.get_contract(
+            'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
         position_list = []
         for buy_address in request_json['account_address_list']:
@@ -107,10 +100,8 @@ class MyTokens(BaseResource):
                 #token_template = ListContract.functions.getTokenByAddress(token_address).call()
                 #if token_template[0] == '0x0000000000000000000000000000000000000000':
                 #    continue
-
-                abi_str = config.STRAIGHT_BOND_ABI['abi']
-                token_abi = json.loads(abi_str)
-                TokenContract = web3.eth.contract(address=token_address, abi=token_abi)
+                TokenContract = Contract.get_contract(
+                    'IbetStraightBond', token_address)
 
                 owner = to_checksum_address(mytoken['account'])
                 balance = TokenContract.functions.balanceOf(owner).call()

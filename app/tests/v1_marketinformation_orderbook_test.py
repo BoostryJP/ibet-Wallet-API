@@ -872,6 +872,32 @@ class TestV1OrderBook():
             }
         }
 
+    # エラー系6-3：入力値エラー（priceがマイナス）
+    def test_orderbook_error_6_3(self, client):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
+
+        request_params = {
+            "token_address": token_address,
+            "order_type": "buy",
+            "price": -5000,
+            "amount": 200,
+            "account_address": account_address,
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'price': 'min value is 0'}
+        }
+
     # エラー系7-1：入力値エラー（amountがString）
     def test_orderbook_error_7_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
@@ -926,6 +952,32 @@ class TestV1OrderBook():
             'description': {
                 'amount': 'must be of integer type'
             }
+        }
+
+    # エラー系7-3：入力値エラー（amountがマイナス）
+    def test_orderbook_error_7_3(self, client):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
+
+        request_params = {
+            "token_address": token_address,
+            "order_type": "buy",
+            "price": 5000,
+            "amount": -200,
+            "account_address": account_address,
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'amount': 'min value is 0'},
         }
 
     # エラー系8：HTTPメソッドが不正

@@ -7,8 +7,9 @@ from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 from app import config
+from app.contracts import Contract
+
 from .account_config import eth_account
-from .contract_config import IbetStraightBond, PersonalInfo, TokenList
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -18,20 +19,21 @@ def register_personalinfo(invoker, personal_info):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
-    PersonalInfoContract = web3.eth.contract(
-        address=personal_info['address'], abi=personal_info['abi'])
+    PersonalInfoContract = Contract.get_contract(
+        'PersonalInfo', personal_info['address'])
 
     issuer = eth_account['issuer']
     encrypted_info = 'some_encrypted_info'
-    tx_hash = PersonalInfoContract.functions.register(issuer['account_address'], encrypted_info).\
+    tx_hash = PersonalInfoContract.functions.register(
+        issuer['account_address'], encrypted_info).\
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = wait_transaction_receipt(tx_hash)
 
 
 # 決済用銀行口座情報登録
 def register_whitelist(invoker, white_list):
-    WhiteListContract = web3.eth.contract(
-        address=white_list['address'], abi=white_list['abi'])
+    WhiteListContract = Contract.get_contract(
+        'WhiteList', white_list['address'])
 
     # 1) 登録 from Invoker
     web3.eth.defaultAccount = invoker['account_address']
@@ -39,7 +41,8 @@ def register_whitelist(invoker, white_list):
 
     agent = eth_account['agent']
     encrypted_info = 'some_encrypted_info'
-    tx_hash = WhiteListContract.functions.register(agent['account_address'], encrypted_info).\
+    tx_hash = WhiteListContract.functions.register(
+        agent['account_address'], encrypted_info).\
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = wait_transaction_receipt(tx_hash)
 
@@ -57,64 +60,45 @@ def issue_bond_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
-    abi = IbetStraightBond['abi']
-    bytecode = IbetStraightBond['bytecode']
-    bytecode_runtime = IbetStraightBond['bytecode_runtime']
-
-    TokenContract = web3.eth.contract(
-        abi=abi,
-        bytecode=bytecode,
-        bytecode_runtime=bytecode_runtime,
-    )
-
     interestPaymentDate = json.dumps({
-        'interestPaymentDate1': attribute['interestPaymentDate1'],
-        'interestPaymentDate2': attribute['interestPaymentDate2'],
-        'interestPaymentDate3': attribute['interestPaymentDate3'],
-        'interestPaymentDate4': attribute['interestPaymentDate4'],
-        'interestPaymentDate5': attribute['interestPaymentDate5'],
-        'interestPaymentDate6': attribute['interestPaymentDate6'],
-        'interestPaymentDate7': attribute['interestPaymentDate7'],
-        'interestPaymentDate8': attribute['interestPaymentDate8'],
-        'interestPaymentDate9': attribute['interestPaymentDate9'],
-        'interestPaymentDate10': attribute['interestPaymentDate10'],
-        'interestPaymentDate11': attribute['interestPaymentDate11'],
-        'interestPaymentDate12': attribute['interestPaymentDate12'],
+    'interestPaymentDate1': attribute['interestPaymentDate1'],
+    'interestPaymentDate2': attribute['interestPaymentDate2'],
+    'interestPaymentDate3': attribute['interestPaymentDate3'],
+    'interestPaymentDate4': attribute['interestPaymentDate4'],
+    'interestPaymentDate5': attribute['interestPaymentDate5'],
+    'interestPaymentDate6': attribute['interestPaymentDate6'],
+    'interestPaymentDate7': attribute['interestPaymentDate7'],
+    'interestPaymentDate8': attribute['interestPaymentDate8'],
+    'interestPaymentDate9': attribute['interestPaymentDate9'],
+    'interestPaymentDate10': attribute['interestPaymentDate10'],
+    'interestPaymentDate11': attribute['interestPaymentDate11'],
+    'interestPaymentDate12': attribute['interestPaymentDate12'],
     })
 
     arguments = [
-        attribute['name'], attribute['symbol'], attribute['totalSupply'],
-        attribute['faceValue'], attribute['interestRate'], interestPaymentDate,
-        attribute['redemptionDate'], attribute['redemptionAmount'],
-        attribute['returnDate'], attribute['returnAmount'],
-        attribute['purpose'], attribute['memo']
+    attribute['name'], attribute['symbol'], attribute['totalSupply'],
+    attribute['faceValue'], attribute['interestRate'], interestPaymentDate,
+    attribute['redemptionDate'], attribute['redemptionAmount'],
+    attribute['returnDate'], attribute['returnAmount'],
+    attribute['purpose'], attribute['memo']
     ]
 
-    tx_hash = TokenContract.deploy(
-        transaction={'from':invoker['account_address'], 'gas':4000000},
-        args=arguments
-    ).hex()
+    contract_address, abi = Contract.deploy_contract(
+        'IbetStraightBond', arguments, invoker['account_address'])
 
-    tx = wait_transaction_receipt(tx_hash)
-
-    contract_address = ''
-    if tx is not None:
-        # ブロックの状態を確認して、コントラクトアドレスが登録されているかを確認する。
-        if 'contractAddress' in tx.keys():
-            contract_address = tx['contractAddress']
-
-    return {'address': contract_address, 'abi': IbetStraightBond['abi']}
+    return {'address': contract_address, 'abi': abi}
 
 
 # 債券トークンのリスト登録
 def register_bond_list(invoker, bond_token, token_list):
-    TokenListContract = web3.eth.contract(
-        address=token_list['address'], abi=token_list['abi'])
+    TokenListContract = Contract.get_contract(
+        'TokenList', token_list['address'])
 
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
-    tx_hash = TokenListContract.functions.register(bond_token['address'], 'IbetStraightBond').\
+    tx_hash = TokenListContract.functions.register(
+        bond_token['address'], 'IbetStraightBond').\
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = wait_transaction_receipt(tx_hash)
 
@@ -130,8 +114,8 @@ def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
-    TokenContract = web3.eth.contract(
-        address=bond_token['address'], abi=bond_token['abi'])
+    TokenContract = Contract.get_contract(
+        'IbetStraightBond', bond_token['address'])
 
     tx_hash = TokenContract.functions.transfer(bond_exchange['address'], amount).\
         transact({'from':invoker['account_address'], 'gas':4000000})
@@ -143,8 +127,8 @@ def make_sell_bond_token(invoker, bond_exchange, bond_token, amount, price):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
-    ExchangeContract = web3.eth.contract(
-        address=bond_exchange['address'], abi=bond_exchange['abi'])
+    ExchangeContract = Contract.get_contract(
+        'IbetStraightBondExchange', bond_exchange['address'])
 
     agent = eth_account['agent']
 
@@ -161,8 +145,8 @@ def take_buy_bond_token(invoker, bond_exchange, order_id, amount):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
-    ExchangeContract = web3.eth.contract(
-        address=bond_exchange['address'], abi=bond_exchange['abi'])
+    ExchangeContract = Contract.get_contract(
+        'IbetStraightBondExchange', bond_exchange['address'])
 
     tx_hash = ExchangeContract.functions.\
         executeOrder(order_id, amount, True).\
@@ -172,16 +156,18 @@ def take_buy_bond_token(invoker, bond_exchange, order_id, amount):
 
 # 直近注文IDを取得
 def get_latest_orderid(bond_exchange):
-    ExchangeContract = web3.eth.contract(
-        address=bond_exchange['address'], abi=bond_exchange['abi'])
+    ExchangeContract = Contract.get_contract(
+        'IbetStraightBondExchange', bond_exchange['address'])
+
     latest_orderid = ExchangeContract.functions.latestOrderId().call()
     return latest_orderid
 
 
 # 直近約定IDを取得
 def get_latest_agreementid(bond_exchange, order_id):
-    ExchangeContract = web3.eth.contract(
-        address=bond_exchange['address'], abi=bond_exchange['abi'])
+    ExchangeContract = Contract.get_contract(
+        'IbetStraightBondExchange', bond_exchange['address'])
+
     latest_agreementid = ExchangeContract.functions.latestAgreementIds(order_id).call()
     return latest_agreementid
 
@@ -191,8 +177,8 @@ def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
 
-    ExchangeContract = web3.eth.contract(
-        address=bond_exchange['address'], abi=bond_exchange['abi'])
+    ExchangeContract = Contract.get_contract(
+        'IbetStraightBondExchange', bond_exchange['address'])
 
     tx_hash = ExchangeContract.functions.\
         confirmAgreement(order_id, agreement_id).\

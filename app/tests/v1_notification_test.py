@@ -105,6 +105,10 @@ class TestV1Notification():
 
         session.commit()
 
+    # ---------------------------------------------------------------------------
+    # GET
+    # ---------------------------------------------------------------------------
+
     # ＜正常系1-1＞
     # 全ての通知を表示
     def test_get_notification_normal_1(self, client, session):
@@ -395,6 +399,96 @@ class TestV1Notification():
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
+    # ＜エラー系1-1＞
+    # cursorがマイナス
+    def test_get_notification_error_1_1(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params = {
+                                            "cursor": "-1",
+                                            "limit": "1",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'cursor': 'min value is 0'}
+        }
+
+    # ＜エラー系1-2＞
+    # cursorが小数
+    def test_get_notification_error_1_2(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params = {
+                                            "cursor": "0.1",
+                                            "limit": "1",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'cursor': [
+                    "field 'cursor' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # ＜エラー系2-1＞
+    # limitがマイナス
+    def test_get_notification_error_2_1(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params = {
+                                            "cursor": "1",
+                                            "limit": "-1",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'limit': 'min value is 0'}
+        }
+
+    # ＜エラー系2-2＞
+    # limitが小数
+    def test_get_notification_error_2_2(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params = {
+                                            "cursor": "1",
+                                            "limit": "0.1",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+
+    # ---------------------------------------------------------------------------
+    # POST
+    # ---------------------------------------------------------------------------
 
     # ＜正常系1-1＞
     # 重要フラグの更新
