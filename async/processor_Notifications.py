@@ -33,6 +33,7 @@ WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or "http://localhost:8
 URI = os.environ.get("DATABASE_URL") or "postgresql://ethuser:ethpass@localhost:5432/ethcache"
 WORKER_COUNT = int(os.environ.get("WORKER_COUNT") or 8)
 SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL") or 3)
+IBET_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
