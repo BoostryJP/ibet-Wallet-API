@@ -117,7 +117,7 @@ class TestV1MyTokens():
         assumed_body = {
             'token': {
                 'token_address': token_address,
-                #'token_template': 'IbetStraightBond',
+                'token_template': 'IbetStraightBond',
                 'company_name': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
