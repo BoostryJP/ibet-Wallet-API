@@ -97,9 +97,10 @@ class MyTokens(BaseResource):
             #token_template = None
             for mytoken in portfolio_list_uniq:
                 token_address = to_checksum_address(mytoken['token_address'])
-                #token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                #if token_template[0] == '0x0000000000000000000000000000000000000000':
-                #    continue
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
                 TokenContract = Contract.get_contract(
                     'IbetStraightBond', token_address)
 
@@ -204,7 +205,7 @@ class MyTokens(BaseResource):
                     position_list.append({
                         'token': {
                             'token_address': mytoken['token_address'],
-                            #'token_template': token_template[1],
+                            'token_template': token_template[1],
                             'company_name': company_name,
                             'name': name,
                             'symbol': symbol,
