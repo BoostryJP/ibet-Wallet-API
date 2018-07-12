@@ -160,7 +160,7 @@ class WatchWhiteListWarn(Watcher):
             notification.metainfo = {}
             db_session.merge(notification)
 
-# イベント：決済用口座非承認・凍結
+# イベント：決済用口座非承認
 class WatchWhiteListUnapprove(Watcher):
     def __init__(self):
         super().__init__(white_list_contract, "Unapprove", {})
@@ -171,6 +171,23 @@ class WatchWhiteListUnapprove(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = "WhiteListUnapprove"
             notification.priority = 0
+            notification.address = entry["args"]["account_address"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = {}
+            db_session.merge(notification)
+
+# イベント：決済用口座アカウント停止
+class WatchWhiteListBan(Watcher):
+    def __init__(self):
+        super().__init__(white_list_contract, "Ban", {})
+
+    def watch(self, entries):
+        for entry in entries:
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "WhiteListBan"
+            notification.priority = 2
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -458,6 +475,7 @@ def main():
         WatchWhiteListApprove(),
         WatchWhiteListWarn(),
         WatchWhiteListUnapprove(),
+        WatchWhiteListBan(),
         WatchExchangeNewOrder(),
         WatchExchangeCancelOrder(),
         WatchExchangeBuyAgreement(),
