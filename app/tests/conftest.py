@@ -36,6 +36,16 @@ def whitelist_contract():
     contract_address, abi = Contract.deploy_contract(
         'WhiteList', [], deployer['account_address'])
 
+    agent = eth_account['agent']
+    web3.eth.defaultAccount = agent['account_address']
+    web3.personal.unlockAccount(agent['account_address'],agent['password'])
+
+    contract = Contract.get_contract('WhiteList', contract_address)
+    tx_hash = contract.functions.register_terms('書面サンプル').transact(
+        {'from':agent['account_address'], 'gas':4000000}
+    )
+    tx = wait_transaction_receipt(tx_hash)
+
     return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
@@ -110,3 +120,22 @@ def session(request, db):
 
     request.addfinalizer(teardown)
     return session
+
+# トランザクションがブロックに取り込まれるまで待つ
+# インターバルで10回以上経過した場合は失敗とみなす（Falseを返す）
+def wait_transaction_receipt(tx_hash):
+    count = 0
+    tx = None
+    while True:
+        time.sleep(float(config.TEST_INTARVAL))
+        try:
+            tx = web3.eth.getTransactionReceipt(tx_hash)
+        except:
+            continue
+        count += 1
+        if tx is not None:
+            break
+        elif count > 120:
+            raise Exception
+
+    return tx
