@@ -38,7 +38,14 @@ class PaymentAccount(BaseResource):
         WhiteListContract = Contract.get_contract(
             'WhiteList', os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'))
 
+        # 口座登録・承認状況を参照
         account_info = WhiteListContract.functions.payment_accounts(
+            to_checksum_address(request_json['account_address']),
+            to_checksum_address(request_json['agent_address'])
+        ).call()
+
+        # 最新版の利用規約の同意ステータスを参照
+        agreement_status = WhiteListContract.functions.isAgreed(
             to_checksum_address(request_json['account_address']),
             to_checksum_address(request_json['agent_address'])
         ).call()
@@ -47,13 +54,15 @@ class PaymentAccount(BaseResource):
             response_json = {
                 'account_address': request_json['account_address'],
                 'agent_address': request_json['agent_address'],
-                'approval_status': 0
+                'approval_status': 0,
+                'agreement_status': agreement_status
             }
         else:
             response_json = {
                 'account_address': account_info[0],
                 'agent_address': account_info[1],
-                'approval_status': account_info[3]
+                'approval_status': account_info[3],
+                'agreement_status': agreement_status
             }
 
         self.on_success(res, response_json)
