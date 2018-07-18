@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import os
+from eth_utils import to_checksum_address
 from .account_config import eth_account
 
 '''
@@ -23,7 +24,7 @@ class TestV1CompanyPaymentAgentInfo():
 
         resp = client.simulate_get(apiurl)
         assumed_body = {
-            "address": eth_address,
+            "address": to_checksum_address(eth_address),
             "corporate_name": "株式会社１",
             "enode": "d27f4b9e02e8482aece2ebcec72acc739d80e99ffdcae6bdc224ce309d23c23fccd09970aca5ba91304b4fea986d808bf018b8a4aada960f3e10be9b741b8cb1",
             "ip_address": "XXX.XXX.XXX.XXX",
