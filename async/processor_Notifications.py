@@ -109,23 +109,6 @@ class WatchWhiteListRegister(Watcher):
             notification.metainfo = {}
             db_session.merge(notification)
 
-# イベント：決済用口座情報更新
-class WatchWhiteListChangeInfo(Watcher):
-    def __init__(self):
-        super().__init__(white_list_contract, "ChangeInfo", {})
-
-    def watch(self, entries):
-        for entry in entries:
-            notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "WhiteListChangeInfo"
-            notification.priority = 0
-            notification.address = entry["args"]["account_address"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
-            notification.args = dict(entry["args"])
-            notification.metainfo = {}
-            db_session.merge(notification)
-
 # イベント：決済用口座承認
 class WatchWhiteListApprove(Watcher):
     def __init__(self):
@@ -471,7 +454,6 @@ class WatchExchangeSellSettlementNG(Watcher):
 def main():
     watchers = [
         WatchWhiteListRegister(),
-        WatchWhiteListChangeInfo(),
         WatchWhiteListApprove(),
         WatchWhiteListWarn(),
         WatchWhiteListUnapprove(),
