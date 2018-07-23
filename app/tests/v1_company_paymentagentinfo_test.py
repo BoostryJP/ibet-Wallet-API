@@ -51,3 +51,17 @@ class TestV1CompanyPaymentAgentInfo():
             "message": "Data Not Exists",
             "description": "eth_address: " + eth_address
         }
+
+    # エラー系2-1： 無効なアドレス
+    def test_error_2_1(self, client):
+        eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf' # アドレスが短い
+        apiurl = self.apiurl_base + eth_address
+
+        resp = client.simulate_get(apiurl)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": "invalid eth_address"
+        }

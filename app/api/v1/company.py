@@ -28,6 +28,10 @@ class CompanyInfo(BaseResource):
     def on_get(self, req, res, eth_address):
         LOG.info('v1.Company.CompanyInfo')
 
+        if not Web3.isAddress(eth_address):
+            description = 'invalid eth_address'
+            raise InvalidParameterError(description=description)
+
         company_list = []
         isExist = False
 
@@ -57,10 +61,11 @@ class PaymentAgentInfo(BaseResource):
     def on_get(self, req, res, eth_address):
         LOG.info('v1.Company.PaymentAgent')
 
-        agent_address = to_checksum_address(eth_address)
+        if not Web3.isAddress(eth_address):
+            description = 'invalid eth_address'
+            raise InvalidParameterError(description=description)
 
-        if not Web3.isAddress(agent_address):
-            raise InvalidParameterError
+        agent_address = to_checksum_address(eth_address)
 
         company_list = []
         isExist = False
