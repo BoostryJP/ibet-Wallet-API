@@ -20,7 +20,7 @@ from app.contracts import Contract
 LOG = log.get_logger()
 
 # ------------------------------
-# トークン一覧
+# 公開中銘柄一覧
 # ------------------------------
 class Contracts(BaseResource):
     def __init__(self):

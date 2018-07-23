@@ -41,7 +41,7 @@ class App(falcon.API):
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
         self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
-        # 公開中トークン一覧
+        # 公開中銘柄一覧
         self.add_route('/v1/Contracts', contracts.Contracts())
 
         # 板情報
