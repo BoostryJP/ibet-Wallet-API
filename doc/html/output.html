@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ibet_node</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.4/semantic.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/themes/prism-okaidia.min.css" />
+    <style>
+      blockquote {
+        border-left: solid 4px #eee;
+        padding-left: 8px;
+        font-style: italic;
+        margin-left: 0;
+        padding: 8px;
+      }
+
+      .ui.micro.label {
+        font-size: .25rem;
+      }
+
+      .ui.transaction.accordion .title {
+        text-align: center;
+      }
+
+      .ui.transaction.accordion .content {
+        border-top: solid 1px #ddd !important;
+        border-bottom: solid 1px #ddd !important;
+        background-color: rgba(0,0,0,.03);
+        padding: 0.5em 1em !important;
+      }
+
+      .ui.transaction.accordion .content.active {
+        margin-top: 0.5em;
+      }
+
+      .ui.basic.label {
+        text-align: left;
+        overflow: auto;
+      }
+
+      .resource .ui.sub.header {
+        text-transform: none;
+      }
+
+      @media only screen and (min-width: 768px) {
+        .sidewrap {
+          margin-right: 2rem;
+        }
+
+        .sidenav {
+          left: 0;
+          top: 0;
+          width: inherit;
+          position: fixed !important;
+          height: 100% !important;
+          overflow-y: auto !important;
+          padding-left: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ui padded grid">
+      <div class="sidewrap four wide computer five wide tablet sixteen wide mobile column">
+        <div class="sidenav">
+          
+<div class="ui horizontal divider">
+  <a href="#introduction">Introduction</a>
+</div>
+<div class="ui fluid secondary vertical menu">
+  <a class="item" href="#introduction">ibet_node</a>
+</div>
+
+
+<div class="ui accordion fluid">
+  
+    
+    <div class="title active">
+      <i class="dropdown icon"></i>
+      
+        <strong>nonce取得　/v1/Eth/TransactionCount/{eth_address}</strong>
+      
+    </div>
+    <div class="content active">
+      <div class="ui fluid secondary vertical menu">
+      
+        <a class="item green" href="#noncequ-de-v1-eth-transactioncount-eth_address-noncequ-de">
+          <i class="ui green empty circular label"></i>
+          
+            <span>nonce取得</span>
+          
+        </a>
+      
+      </div>
+    </div>
+    
+  
+    
+    <div class="title ">
+      <i class="dropdown icon"></i>
+      
+        <strong>RawTransaction送信　/v1/Eth/SendRawTransaction</strong>
+      
+    </div>
+    <div class="content ">
+      <div class="ui fluid secondary vertical menu">
+      
+        <a class="item blue" href="#rawtransactionsong-xin-v1-eth-sendrawtransaction-rawtransactionsong-xin">
+          <i class="ui blue empty circular label"></i>
+          
+            <span>RawTransaction送信</span>
+          
+        </a>
+      
+      </div>
+    </div>
+    
+  
+    
+    <div class="title ">
+      <i class="dropdown icon"></i>
+      
+        <strong>発行会社情報参照　/v1/Company/{eth_address}</strong>
+      
+    </div>
+    <div class="content ">
+      <div class="ui fluid secondary vertical menu">
+      
+        <a class="item green" href="#fa-xing-hui-she-qing-bao-can-zhao-v1-company-eth_address-fa-xing-hui-she-qing-bao-can-zhao">
+          <i class="ui green empty circular label"></i>
+          
+            <span>発行会社情報参照</span>
+          
+        </a>
+      
+      </div>
+    </div>
+    
+  
+    
+    <div class="title ">
+      <i class="dropdown icon"></i>
+      
+        <strong>決済代行業者情報参照　/v1/PaymentAgent/{eth_address}</strong>
+      
+    </div>
+    <div class="content ">
+      <div class="ui fluid secondary vertical menu">
+      
+        <a class="item green" href="#jue-ji-dai-xing-ye-zhe-qing-bao-can-zhao-v1-paymentagent-eth_address-jue-ji-dai-xing-ye-zhe-qing-bao-can-zhao">
+          <i class="ui green empty circular label"></i>
+          
+            <span>決済代行業者情報参照</span>
+          
+        </a>
+      
+      </div>
+    </div>
+    
+  
+    
+    <div class="title ">
+      <i class="dropdown icon"></i>
+      
+        <strong>公開中債券一覧　/v1/Contracts</strong>
+      
+    </div>
+    <div class="content ">
+      <div class="ui fluid secondary vertical menu">
+      
+        <a class="item green" href="#gong-kai-zhong-zhai-quan-lan-v1-contracts-gong-kai-zhong-zhai-quan-lan">
+          <i class="ui green empty circular label"></i>
+          
+            <span>公開中債券一覧</span>
+          
+        </a>
+      
+      </div>
+    </div>
+    
+  
+</div>
+
+
+        </div>
+      </div>
+      <div class="eleven wide computer ten wide tablet sixteen wide mobile column">
+        
+<div class="ui hidden divider header"></div>
+<h1 class="ui huge header" id="introduction">ibet_node</h1>
+<hr class="ui divider">
+<div class="description">
+  
+</div>
+
+        <div class="ui hidden divider"></div>
+        
+
+  <div class="ui horizontal divider" >
+    
+  </div>
+  <div class="ui header center aligned">
+    <div class="ui header">
+      <div class="sub header">
+        
+      </div>
+    </div>
+  </div>
+  
+    
+      <div class="ui stacked segments">
+        <div class="ui basic segment resource">
+          <div class="ui purple huge ribbon label">
+            nonce取得　/v1/Eth/TransactionCount/{eth_address}
+          </div>
+          <div class="ui header">
+            <div class="ui sub header">
+              
+            </div>
+          </div>
+        </div>
+
+        
+          
+<div class="ui grey horizontal small divider header">
+  <i class="ui grey micro circular label"></i>
+  <i class="ui pink micro circular label"></i>
+  <i class="ui grey micro circular label"></i>
+</div>
+
+          <div class="ui basic segment">
+            <h3 class="ui block center aligned header" id="noncequ-de-v1-eth-transactioncount-eth_address-noncequ-de">
+              nonce取得
+            </h3>
+            <div class="description"></div>
+
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/Eth/TransactionCount/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>アカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked blue segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui blue circular label">
+                      200
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+&#34;meta&#34;: {
+    &#34;code&#34;: 200,
+    &#34;message&#34;: &#34;OK&#34;
+},
+&#34;data&#34;: {
+    &#34;nonce&#34;: 0,
+    &#34;gasprice&#34;: 0,
+    &#34;chainid&#34;: &#34;2017&#34;
+}
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/Eth/TransactionCount/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>アカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked  segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui  circular label">
+                      400
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+&#34;meta&#34;: {
+    &#34;code&#34;: 88,
+    &#34;message&#34;: &#34;Invalid Parameter&#34;
+}
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        
+        </div>
+      <div class="ui hidden divider"></div>
+    
+  
+    
+      <div class="ui stacked segments">
+        <div class="ui basic segment resource">
+          <div class="ui purple huge ribbon label">
+            RawTransaction送信　/v1/Eth/SendRawTransaction
+          </div>
+          <div class="ui header">
+            <div class="ui sub header">
+              
+            </div>
+          </div>
+        </div>
+
+        
+          
+<div class="ui grey horizontal small divider header">
+  <i class="ui grey micro circular label"></i>
+  <i class="ui pink micro circular label"></i>
+  <i class="ui grey micro circular label"></i>
+</div>
+
+          <div class="ui basic segment">
+            <h3 class="ui block center aligned header" id="rawtransactionsong-xin-v1-eth-sendrawtransaction-rawtransactionsong-xin">
+              RawTransaction送信
+            </h3>
+            <div class="description"></div>
+
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui blue large button">
+                  <h3>POST</h3>
+                </div>
+                <a class="ui basic fluid blue label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/Eth/SendRawTransaction</code>
+                </a>
+              </div>
+              
+              
+                
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              
+              
+                <div class="ui stacked segment">
+                  <div class="ui fluid transaction accordion">
+                    <div class="title">
+                      <code>application/json</code>
+                    </div>
+                    <div class="content tabbed">
+                      <div class="ui top attached tabular menu">
+                        <a data-tab="body" class="active item">BODY</a>
+                        <a data-tab="schema" class="item">SCHEMA</a>
+                      </div>
+                      <div class="ui bottom attached active tab segment" data-tab="body">
+                        <pre style="white-space: inherit">
+                          <code class="language-json">{
+&#34;raw_tx_hex_list&#34;:[&#34;0xabcd&#34;,&#34;0x1234&#34;] # Rawトランザクションのリスト
+}
+</code>
+                        </pre>
+                      </div>
+                      <div class="ui bottom attached tab segment" data-tab="schema">
+                        <pre style="white-space: inherit">
+                          <code class="language-json"></code>
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked blue segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui blue circular label">
+                      200
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+  &#34;meta&#34;: {
+      &#34;code&#34;: 200,
+      &#34;message&#34;: &#34;OK&#34;
+  },
+  &#34;data&#34;: [
+      {
+          &#34;id&#34;: 1, # トランザクション処理順（インプットリストの順）
+          &#34;status&#34;: 0 # 処理結果（エラー：0、正常：1）
+      },
+      {
+          &#34;id&#34;: 2,
+          &#34;status&#34;: 1
+      }
+  ]
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        
+        </div>
+      <div class="ui hidden divider"></div>
+    
+  
+    
+      <div class="ui stacked segments">
+        <div class="ui basic segment resource">
+          <div class="ui purple huge ribbon label">
+            発行会社情報参照　/v1/Company/{eth_address}
+          </div>
+          <div class="ui header">
+            <div class="ui sub header">
+              
+            </div>
+          </div>
+        </div>
+
+        
+          
+<div class="ui grey horizontal small divider header">
+  <i class="ui grey micro circular label"></i>
+  <i class="ui pink micro circular label"></i>
+  <i class="ui grey micro circular label"></i>
+</div>
+
+          <div class="ui basic segment">
+            <h3 class="ui block center aligned header" id="fa-xing-hui-she-qing-bao-can-zhao-v1-company-eth_address-fa-xing-hui-she-qing-bao-can-zhao">
+              発行会社情報参照
+            </h3>
+            <div class="description"></div>
+
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/Company/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>発行会社のアカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked blue segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui blue circular label">
+                      200
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+&#34;meta&#34;: {
+    &#34;code&#34;: 200,
+    &#34;message&#34;: &#34;OK&#34;
+},
+&#34;data&#34;: {
+    &#34;address&#34;: &#34;0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd&#34;, # 発行会社のアカウントアドレス
+    &#34;corporate_name&#34;: &#34;株式会社DEMO&#34;, # 会社名
+    &#34;enode&#34;: &#34;abcd1234&#34;, # enode id
+    &#34;ip_address&#34;: &#34;XXX.XXX.XXX.XXX&#34;, # 代表ノードのIPアドレス
+    &#34;rsa_publickey&#34;: &#34;-----BEGIN PUBLIC KEY-----\nXXXXX\n-----END PUBLIC KEY-----&#34;, # 発行会社のRSA公開鍵
+    &#34;homepage&#34;: &#34;https://www.aaaa.com/jp/&#34; # 会社ホームページ
+}
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/Company/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>発行会社のアカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked  segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui  circular label">
+                      400
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+&#34;meta&#34;: {
+    &#34;code&#34;: 88,
+    &#34;message&#34;: &#34;Invalid Parameter&#34;
+}
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/Company/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>発行会社のアカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked orange segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui orange circular label">
+                      404
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+  &#34;meta&#34;: {
+      &#34;code&#34;: 30,
+      &#34;message&#34;: &#34;Data Not Exists&#34;,
+      &#34;description&#34;: &#34;eth_address: 0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0&#34;
+  }
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        
+        </div>
+      <div class="ui hidden divider"></div>
+    
+  
+    
+      <div class="ui stacked segments">
+        <div class="ui basic segment resource">
+          <div class="ui purple huge ribbon label">
+            決済代行業者情報参照　/v1/PaymentAgent/{eth_address}
+          </div>
+          <div class="ui header">
+            <div class="ui sub header">
+              
+            </div>
+          </div>
+        </div>
+
+        
+          
+<div class="ui grey horizontal small divider header">
+  <i class="ui grey micro circular label"></i>
+  <i class="ui pink micro circular label"></i>
+  <i class="ui grey micro circular label"></i>
+</div>
+
+          <div class="ui basic segment">
+            <h3 class="ui block center aligned header" id="jue-ji-dai-xing-ye-zhe-qing-bao-can-zhao-v1-paymentagent-eth_address-jue-ji-dai-xing-ye-zhe-qing-bao-can-zhao">
+              決済代行業者情報参照
+            </h3>
+            <div class="description"></div>
+
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/PaymentAgent/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>決済代行業者のアカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked blue segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui blue circular label">
+                      200
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+&#34;meta&#34;: {
+    &#34;code&#34;: 200,
+    &#34;message&#34;: &#34;OK&#34;
+},
+&#34;data&#34;: {
+    &#34;address&#34;: &#34;0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd&#34;, # 発行会社のアカウントアドレス
+    &#34;corporate_name&#34;: &#34;株式会社DEMO&#34;, # 会社名
+    &#34;enode&#34;: &#34;abcd1234&#34;, # enode id
+    &#34;ip_address&#34;: &#34;XXX.XXX.XXX.XXX&#34;, # 代表ノードのIPアドレス
+    &#34;rsa_publickey&#34;: &#34;-----BEGIN PUBLIC KEY-----\nXXXXX\n-----END PUBLIC KEY-----&#34;, # 発行会社のRSA公開鍵
+    &#34;homepage&#34;: &#34;https://www.aaaa.com/jp/&#34;, # 会社ホームページ
+    &#34;terms&#34;: &#34;利用規約サンプル&#34; # 利用規約本文
+}
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/PaymentAgent/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>決済代行業者のアカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked  segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui  circular label">
+                      400
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+&#34;meta&#34;: {
+    &#34;code&#34;: 88,
+    &#34;message&#34;: &#34;Invalid Parameter&#34;
+}
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/PaymentAgent/{eth_address}</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>eth_address</code></td>
+      <td class="center aligned">
+        <code>string</code>
+        <code class="ui label">0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>決済代行業者のアカウントアドレス</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked orange segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui orange circular label">
+                      404
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+  &#34;meta&#34;: {
+      &#34;code&#34;: 30,
+      &#34;message&#34;: &#34;Data Not Exists&#34;,
+      &#34;description&#34;: &#34;eth_address: 0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0&#34;
+  }
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        
+        </div>
+      <div class="ui hidden divider"></div>
+    
+  
+    
+      <div class="ui stacked segments">
+        <div class="ui basic segment resource">
+          <div class="ui purple huge ribbon label">
+            公開中債券一覧　/v1/Contracts
+          </div>
+          <div class="ui header">
+            <div class="ui sub header">
+              
+            </div>
+          </div>
+        </div>
+
+        
+          
+<div class="ui grey horizontal small divider header">
+  <i class="ui grey micro circular label"></i>
+  <i class="ui pink micro circular label"></i>
+  <i class="ui grey micro circular label"></i>
+</div>
+
+          <div class="ui basic segment">
+            <h3 class="ui block center aligned header" id="gong-kai-zhong-zhai-quan-lan-v1-contracts-gong-kai-zhong-zhai-quan-lan">
+              公開中債券一覧
+            </h3>
+            <div class="description"><ul>
+<li><p>公開中の債券を登録の新しい順にリストを返す。</p></li>
+
+<li><p>cursor（デフォルト値：リスト最大長）, limit（デフォルト値：10） を指定して、リストを部分的に取得することが可能。</p></li>
+</ul>
+</div>
+
+            
+              <h4 class="ui horizontal divider">
+                REQUEST
+              </h4>
+              <div class="description"></div>
+              <div class="fluid ui large labeled button">
+                <div class="ui green large button">
+                  <h3>GET</h3>
+                </div>
+                <a class="ui basic fluid green label">
+                  <code>http://XXX.XXX.XXX.XXX/v1/Contracts</code>
+                </a>
+              </div>
+              
+                <table class="ui celled definition table">
+                  <thead>
+                    <tr>
+                      <th colspan="4">Parameters</th>
+                    </tr>
+                  <thead>
+                  <tbody>
+                    
+                      
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>cursor</code></td>
+      <td class="center aligned">
+        <code>number</code>
+        <code class="ui label">10</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>リスト抽出用のカーソル。0以上の整数で指定する。登録されている債券リストの長さを超える指定はできない。</p>
+
+        
+      </td>
+    </tr>
+  
+    <tr>
+      <td class="center aligned one wide">
+        <i class="ui empty circular label black" data-content="required" data-position="top center"></i>
+      </td>
+      <td><code>limit</code></td>
+      <td class="center aligned">
+        <code>number</code>
+        <code class="ui label">5</code>
+        
+      </td>
+      <td class="eight wide">
+        <p>返却したいリストの長さ。0以上の整数で指定する。</p>
+
+        
+      </td>
+    </tr>
+  
+
+                    
+                    
+                  </tbody>
+                </table>
+              
+              
+              
+
+              <h4 class="ui horizontal divider">RESPONSE</h4>
+              <div class="description"></div>
+              
+<table class="ui celled definition table">
+  <thead>
+    <tr>
+      <th colspan="2">Headers</th>
+    </tr>
+  </thead>
+  <tbody>
+  
+    <tr>
+      <td class="four wide">Content-Type</td>
+      <td><code>application/json</code></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+              <div class="ui stacked blue segment">
+                <div class="ui fluid transaction accordion">
+                  <div class="title center aligned">
+                    <a class="ui blue circular label">
+                      200
+                    </a>
+                    <code>application/json</code>
+                  </div>
+                  <div class="content tabbed">
+                    <div class="ui top attached tabular menu">
+                      <a data-tab="body" class="active item">BODY</a>
+                      <a data-tab="schema" class="item">SCHEMA</a>
+                    </div>
+                    <div class="ui bottom attached active tab segment" data-tab="body">
+                      <pre style="white-space: inherit">
+                        <code class="language-json">{
+ &#34;meta&#34;:{
+    &#34;code&#34;:200,
+    &#34;message&#34;:&#34;OK&#34;
+ },
+ &#34;data&#34;:[
+    {
+       &#34;id&#34;:4,
+       &#34;token_address&#34;:&#34;0x4Cb49d8895793B772f66023DcA11c9c44cd2D8db&#34;,
+       &#34;token_template&#34;:&#34;IbetStraightBond&#34;,
+       &#34;owner_address&#34;:&#34;0x46BF21eC207ff8e5Fc7F330f4d8b2C9c3D90c887&#34;,
+       &#34;company_name&#34;:&#34;&#34;,
+       &#34;rsa_publickey&#34;:&#34;&#34;,
+       &#34;name&#34;:&#34;2&#34;,
+       &#34;symbol&#34;:&#34;aaaa&#34;,
+       &#34;totalSupply&#34;:123,
+       &#34;faceValue&#34;:1234,
+       &#34;interestRate&#34;:1234,
+       &#34;interestPaymentDate1&#34;:&#34;123&#34;,
+       &#34;interestPaymentDate2&#34;:&#34;123&#34;,
+       &#34;redemptionDate&#34;:&#34;20180414&#34;,
+       &#34;redemptionAmount&#34;:121,
+       &#34;returnDate&#34;:&#34;20180417&#34;,
+       &#34;returnAmount&#34;:&#34;21&#34;,
+       &#34;purpose&#34;:&#34;3321&#34;,
+       &#34;image_url&#34;:[
+          {
+             &#34;type&#34;:&#34;small&#34;,
+             &#34;url&#34;:&#34;&#34;
+          },
+          {
+             &#34;type&#34;:&#34;medium&#34;,
+             &#34;url&#34;:&#34;&#34;
+          },
+          {
+             &#34;type&#34;:&#34;large&#34;,
+             &#34;url&#34;:&#34;&#34;
+          }
+       ],
+       &#34;certification&#34;:[
+       ]
+    }
+ ]
+}
+</code>
+                      </pre>
+                    </div>
+                    <div class="ui bottom attached tab segment" data-tab="schema">
+                      <pre style="white-space: inherit">
+                        <code class="language-json"></code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            
+          </div>
+        
+        </div>
+      <div class="ui hidden divider"></div>
+    
+  
+
+
+      </div>
+    </div>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/components/accordion.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/components/tab.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/components/transition.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/components/popup.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.13.0/prism.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.13.0/components/prism-json.min.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        $('.ui.accordion').accordion({ animateChildren: false, duration: 0 });
+        $('.content.tabbed').each(function(index) {
+          $('.ui.tabular .item', $(this)).tab({ context: $(this) });
+        });
+        $('.ui.vertical.menu').on('click', '.item', function() {
+          $('.ui.vertical.menu .item').removeClass('active');
+          $(this).addClass('active');
+        });
+        $('.ui.empty.circular.label').popup();
+      });
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
