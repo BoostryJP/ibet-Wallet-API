@@ -1,0 +1,85 @@
+## 発行会社情報参照　/v1/Company/{eth_address} [/v1/Company/{eth_address}]
+### 発行会社情報参照 [GET]
+
++ Parameters
+  + eth_address: 0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0 (string, required) - 発行会社のアカウントアドレス
+
++ Response 200 (application/json)
+
+  {
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": {
+        "address": "0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd", # 発行会社のアカウントアドレス
+        "corporate_name": "株式会社DEMO", # 会社名
+        "enode": "abcd1234", # enode id
+        "ip_address": "XXX.XXX.XXX.XXX", # 代表ノードのIPアドレス
+        "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nXXXXX\n-----END PUBLIC KEY-----", # 発行会社のRSA公開鍵
+        "homepage": "https://www.aaaa.com/jp/" # 会社ホームページ
+    }
+  }
+
++ Response 400 (application/json)
+
+  {
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter"
+    }
+  }
+
++ Response 404 (application/json)
+
+  {
+      "meta": {
+          "code": 30,
+          "message": "Data Not Exists",
+          "description": "eth_address: 0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0"
+      }
+  }
+
+
+## 決済代行業者情報参照　/v1/PaymentAgent/{eth_address} [/v1/PaymentAgent/{eth_address}]
+### 決済代行業者情報参照 [GET]
+
++ Parameters
+  + eth_address: 0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0 (string, required) - 決済代行業者のアカウントアドレス
+
++ Response 200 (application/json)
+
+  {
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": {
+        "address": "0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd", # 発行会社のアカウントアドレス
+        "corporate_name": "株式会社DEMO", # 会社名
+        "enode": "abcd1234", # enode id
+        "ip_address": "XXX.XXX.XXX.XXX", # 代表ノードのIPアドレス
+        "rsa_publickey": "-----BEGIN PUBLIC KEY-----\nXXXXX\n-----END PUBLIC KEY-----", # 発行会社のRSA公開鍵
+        "homepage": "https://www.aaaa.com/jp/", # 会社ホームページ
+        "terms": "利用規約サンプル" # 利用規約本文
+    }
+  }
+
++ Response 400 (application/json)
+
+  {
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter"
+    }
+  }
+
++ Response 404 (application/json)
+
+  {
+      "meta": {
+          "code": 30,
+          "message": "Data Not Exists",
+          "description": "eth_address: 0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0"
+      }
+  }

@@ -1,0 +1,61 @@
+## nonce取得　/v1/Eth/TransactionCount/{eth_address} [/v1/Eth/TransactionCount/{eth_address}]
+### nonce取得 [GET]
+
++ Parameters
+  + eth_address: 0x1e770b6e52ddbee99209db0ef73fe7c18a119ed0 (string, required) - アカウントアドレス
+
++ Response 200 (application/json)
+
+  {
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": {
+        "nonce": 0,
+        "gasprice": 0,
+        "chainid": "2017"
+    }
+  }
+
++ Response 400 (application/json)
+
+  {
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter"
+    }
+  }
+
+
+## RawTransaction送信　/v1/Eth/SendRawTransaction [/v1/Eth/SendRawTransaction]
+### RawTransaction送信 [POST]
+
++ Request
+
+  + Headers
+    Content-Type: application/json
+
+  + Body
+    {
+      "raw_tx_hex_list":["0xabcd","0x1234"] # Rawトランザクションのリスト
+    }
+
++ Response 200 (application/json)
+
+  {
+      "meta": {
+          "code": 200,
+          "message": "OK"
+      },
+      "data": [
+          {
+              "id": 1, # トランザクション処理順（インプットリストの順）
+              "status": 0 # 処理結果（エラー：0、正常：1）
+          },
+          {
+              "id": 2,
+              "status": 1
+          }
+      ]
+  }
