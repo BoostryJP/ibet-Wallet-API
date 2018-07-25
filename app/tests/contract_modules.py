@@ -27,7 +27,7 @@ def register_personalinfo(invoker, personal_info):
     tx_hash = PersonalInfoContract.functions.register(
         issuer['account_address'], encrypted_info).\
         transact({'from':invoker['account_address'], 'gas':4000000})
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 決済用銀行口座情報登録
@@ -44,7 +44,7 @@ def register_whitelist(invoker, white_list):
     tx_hash = WhiteListContract.functions.register(
         agent['account_address'], encrypted_info).\
         transact({'from':invoker['account_address'], 'gas':4000000})
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
     # 2) 認可 from Agent
     web3.eth.defaultAccount = agent['account_address']
@@ -52,7 +52,7 @@ def register_whitelist(invoker, white_list):
 
     tx_hash = WhiteListContract.functions.approve(invoker['account_address']).\
         transact({'from':agent['account_address'], 'gas':4000000})
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 債券トークンの発行
@@ -100,7 +100,7 @@ def register_bond_list(invoker, bond_token, token_list):
     tx_hash = TokenListContract.functions.register(
         bond_token['address'], 'IbetStraightBond').\
         transact({'from':invoker['account_address'], 'gas':4000000})
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 債券トークンの募集
@@ -119,7 +119,7 @@ def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
 
     tx_hash = TokenContract.functions.transfer(bond_exchange['address'], amount).\
         transact({'from':invoker['account_address'], 'gas':4000000})
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 債券トークンの売りMake注文
@@ -137,7 +137,7 @@ def make_sell_bond_token(invoker, bond_exchange, bond_token, amount, price):
     tx_hash = ExchangeContract.functions.\
         createOrder(bond_token['address'], amount, price, False, agent['account_address']).\
         transact({'from':invoker['account_address'], 'gas':gas})
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 債券トークンの買いTake注文
@@ -151,7 +151,7 @@ def take_buy_bond_token(invoker, bond_exchange, order_id, amount):
     tx_hash = ExchangeContract.functions.\
         executeOrder(order_id, amount, True).\
         transact({'from':invoker['account_address'], 'gas':4000000})
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 直近注文IDを取得
@@ -183,24 +183,4 @@ def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
     tx_hash = ExchangeContract.functions.\
         confirmAgreement(order_id, agreement_id).\
         transact({'from':invoker['account_address'], 'gas':4000000})
-    tx = wait_transaction_receipt(tx_hash)
-
-
-# トランザクションがブロックに取り込まれるまで待つ
-# インターバルで10回以上経過した場合は失敗とみなす（Falseを返す）
-def wait_transaction_receipt(tx_hash):
-    count = 0
-    tx = None
-    while True:
-        time.sleep(float(config.TEST_INTARVAL))
-        try:
-            tx = web3.eth.getTransactionReceipt(tx_hash)
-        except:
-            continue
-        count += 1
-        if tx is not None:
-            break
-        elif count > 120:
-            raise Exception
-
-    return tx
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
