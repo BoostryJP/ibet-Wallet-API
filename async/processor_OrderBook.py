@@ -100,7 +100,8 @@ class DBSink:
 
     def on_cancel_order(self, order_id):
         order = self.__get_order(order_id)
-        order.is_cancelled = True
+        if order is not None:
+            order.is_cancelled = True
 
     def on_agree(self, order_id, agreement_id, counterpart_address, amount):
         agreement = Agreement()
@@ -113,11 +114,13 @@ class DBSink:
 
     def on_settlement_ok(self, order_id, agreement_id):
         agreement = self.__get_agreement(order_id, agreement_id)
-        agreement.status = AgreementStatus.DONE.value
+        if agreement is not None:
+            agreement.status = AgreementStatus.DONE.value
 
     def on_settlement_ng(self, order_id, agreement_id):
         agreement = self.__get_agreement(order_id, agreement_id)
-        agreement.status = AgreementStatus.CANCELED.value
+        if agreement is not None:
+            agreement.status = AgreementStatus.CANCELED.value
 
     def flush(self):
         self.db.commit()
@@ -172,15 +175,19 @@ class Processor:
         )
         for event in event_filter.get_all_entries():
             args = event['args']
-            self.sink.on_new_order(
-                token_address = args['tokenAddress'],
-                order_id = args['orderId'],
-                account_address = args['accountAddress'],
-                is_buy = args['isBuy'],
-                price = args['price'],
-                amount = args['amount'],
-                agent_address = args['agentAddress'],
-            )
+            if args['price'] > sys.maxint or args['amount'] > sys.maxint:
+                pass
+            else:
+                self.sink.on_new_order(
+                    token_address = args['tokenAddress'],
+                    order_id = args['orderId'],
+                    account_address = args['accountAddress'],
+                    is_buy = args['isBuy'],
+                    price = args['price'],
+                    amount = args['amount'],
+                    agent_address = args['agentAddress'],
+                )
+
         self.web3.eth.uninstallFilter(event_filter.filter_id)
 
     def __sync_cancel_order(self, block_from, block_to):
@@ -205,22 +212,26 @@ class Processor:
             }
         )
         for event in event_filter.get_all_entries():
-            args = event['args']
-            order_id = args['orderId']
+            if args['amount'] > sys.maxint:
+                pass
+            else:
+                args = event['args']
+                order_id = args['orderId']
 
-            orderbook = self.exchange_contract.functions.orderBook(order_id).call()
-            is_buy = orderbook[4]
+                orderbook = self.exchange_contract.functions.orderBook(order_id).call()
+                is_buy = orderbook[4]
 
-            counterpart_address = args['buyAddress']
-            if is_buy:
-                counterpart_address = args['sellAddress']
+                counterpart_address = args['buyAddress']
+                if is_buy:
+                    counterpart_address = args['sellAddress']
 
-            self.sink.on_agree(
-                order_id = args['orderId'],
-                agreement_id = args['agreementId'],
-                counterpart_address = counterpart_address,
-                amount = args['amount'],
-            )
+                self.sink.on_agree(
+                    order_id = args['orderId'],
+                    agreement_id = args['agreementId'],
+                    counterpart_address = counterpart_address,
+                    amount = args['amount'],
+                )
+
         self.web3.eth.uninstallFilter(event_filter.filter_id)
 
     def __sync_settlement_ok(self, block_from, block_to):
