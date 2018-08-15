@@ -33,6 +33,3 @@ if APP_ENV == 'live':
     PAYMENT_AGENT_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list/payment_agent_list.json'
 else:
     PAYMENT_AGENT_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list-dev/payment_agent_list.json'
-
-# テスト実行時のコントラクト実行完了待ちインターバル
-TEST_INTARVAL = os.environ.get('NODE_TEST_INTERVAL') or 0.5

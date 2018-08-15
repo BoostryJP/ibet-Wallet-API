@@ -44,7 +44,7 @@ def whitelist_contract():
     tx_hash = contract.functions.register_terms('書面サンプル').transact(
         {'from':agent['account_address'], 'gas':4000000}
     )
-    tx = wait_transaction_receipt(tx_hash)
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
     return {'address':contract_address, 'abi':abi}
 
@@ -120,19 +120,3 @@ def session(request, db):
 
     request.addfinalizer(teardown)
     return session
-
-def wait_transaction_receipt(tx_hash):
-    count = 0
-    tx = None
-    while True:
-        time.sleep(float(config.TEST_INTARVAL))
-        try:
-            tx = web3.eth.getTransactionReceipt(tx_hash)
-        except:
-            continue
-        count += 1
-        if tx is not None:
-            break
-        elif count > 120:
-            raise Exception
-    return tx
