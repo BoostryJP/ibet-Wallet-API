@@ -68,16 +68,6 @@ COPY app/tests/requirements.txt /app/requirements2.txt
 RUN . ~/.bash_profile \
  && pip install -r /app/requirements2.txt
 
-# pyethereum
-USER root
-RUN git clone https://github.com/ethereum/pyethereum/ \
-    && rm pyethereum/.python-version
-RUN chown -R apl:apl pyethereum
-USER apl
-RUN . ~/.bash_profile \
- && cd pyethereum \
- && python setup.py install
-
 # app
 USER root
 COPY . /app/tmr-node/
