@@ -212,12 +212,11 @@ class Processor:
             }
         )
         for event in event_filter.get_all_entries():
+            args = event['args']
             if args['amount'] > sys.maxsize:
                 pass
             else:
-                args = event['args']
                 order_id = args['orderId']
-
                 orderbook = self.exchange_contract.functions.orderBook(order_id).call()
                 is_buy = orderbook[4]
 
