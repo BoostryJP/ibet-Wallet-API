@@ -175,7 +175,7 @@ class Processor:
         )
         for event in event_filter.get_all_entries():
             args = event['args']
-            if args['price'] > sys.maxint or args['amount'] > sys.maxint:
+            if args['price'] > sys.maxsize or args['amount'] > sys.maxsize:
                 pass
             else:
                 self.sink.on_new_order(
@@ -212,7 +212,7 @@ class Processor:
             }
         )
         for event in event_filter.get_all_entries():
-            if args['amount'] > sys.maxint:
+            if args['amount'] > sys.maxsize:
                 pass
             else:
                 args = event['args']
