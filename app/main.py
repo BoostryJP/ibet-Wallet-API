@@ -34,8 +34,9 @@ class App(falcon.API):
         self.add_route('/v1/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
         self.add_route('/v1/Eth/SendRawTransaction', eth.SendRawTransaction())
 
-        # トークンテンプレート登録・参照
+        # トークンテンプレート参照
         self.add_route('/v1/StraightBondABI/', tokenTemplates.GetStraightBondABI())
+        self.add_route('/v1/CouponABI/', tokenTemplates.GetCouponABI())
 
         # 会社情報参照
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
