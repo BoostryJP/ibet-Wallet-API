@@ -2,6 +2,8 @@
 import json
 import requests
 import os
+from datetime import datetime, timezone, timedelta
+JST = timezone(timedelta(hours=+9), 'JST')
 
 from sqlalchemy.orm.exc import NoResultFound
 from cerberus import Validator, ValidationError
@@ -344,6 +346,87 @@ class MyTokens(BaseResource):
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
+
+# ------------------------------
+# クーポン消費履歴
+# ------------------------------
+class CouponConsumptions(BaseResource):
+
+    '''
+    Handle for endpoint: /v1/CouponConsumptions/
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.Position.CouponConsumptions')
+        request_json = CouponConsumptions.validate(req)
+
+        # Coupon Exchange Contract
+        _coupon_address = to_checksum_address(request_json['token_address'])
+        CouponContract = Contract.get_contract('IbetCoupon', _coupon_address)
+
+        # クーポン消費履歴のリストを作成
+        coupon_consumptions = []
+        for _account_address in request_json['account_address_list']:
+
+            # イベント抽出：IbetCoupon（トークン消費イベント）
+            # _account_address と consumer が一致するイベントを抽出する。
+            try:
+                event_filter = CouponContract.events.Consume.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'consumer': _account_address}
+                )
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+                for entry in entries:
+                    coupon_consumptions.append({
+                        'account_address': _account_address,
+                        'block_timestamp': datetime.fromtimestamp(
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
+                            strftime("%Y/%m/%d %H:%M:%S"),
+                        'value': entry['args']['value']
+                    })
+            except:
+                pass
+
+        # block_timestampの昇順にソートする
+        # Note: もともとのリストはaccountのリストでループして作成したリストなので、古い順になっていないため
+        coupon_consumptions = sorted(
+            coupon_consumptions,
+            key=lambda x:x['block_timestamp']
+        )
+        self.on_success(res, coupon_consumptions)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'token_address': {
+                'type': 'string',
+                'empty': False,
+                'required': True
+            },
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(request_json['token_address']):
+            raise InvalidParameterError
 
         for account_address in request_json['account_address_list']:
             if not Web3.isAddress(account_address):
