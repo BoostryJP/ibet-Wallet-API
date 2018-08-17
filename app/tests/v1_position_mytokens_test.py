@@ -148,6 +148,7 @@ class TestV1MyTokens():
 
         print("-- contract_address --")
         print(bond_exchange['address'])
+        print(coupon_exchange['address'])
         print(personal_info['address'])
         print(white_list['address'])
 
