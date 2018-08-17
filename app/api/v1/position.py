@@ -141,45 +141,48 @@ class MyTokens(BaseResource):
                 #    → 債券トークンの詳細情報を取得する
                 if token_template[0] == '0x0000000000000000000000000000000000000000': # 未登録の場合
                     CouponTokenContract = Contract.get_contract('IbetCoupon', token_address)
-                    isValid = CouponTokenContract.functions.isValid().call()
-                    if isValid == False:
+                    try:
+                        isValid = CouponTokenContract.functions.isValid().call()
+                        if isValid == False:
+                            continue
+                        else:
+                            owner_address = CouponTokenContract.functions.owner().call()
+                            company_name = MyTokens.get_company_name(company_list, owner_address)
+                            name = CouponTokenContract.functions.name().call()
+                            symbol = CouponTokenContract.functions.symbol().call()
+                            totalSupply = CouponTokenContract.functions.totalSupply().call()
+                            details = CouponTokenContract.functions.details().call()
+                            memo = CouponTokenContract.functions.memo().call()
+                            expirationDate = CouponTokenContract.functions.expirationDate().call()
+                            transferable = CouponTokenContract.functions.transferable().call()
+                            image_url_small = CouponTokenContract.functions.getImageURL(0).call()
+                            image_url_medium = CouponTokenContract.functions.getImageURL(1).call()
+                            image_url_large = CouponTokenContract.functions.getImageURL(2).call()
+                            balance = CouponTokenContract.functions.balanceOf(owner).call()
+                            used = CouponTokenContract.functions.usedOf(owner).call()
+                            position_list.append({
+                                'token': {
+                                    'token_address': token_address,
+                                    'token_template': 'IbetCoupon',
+                                    'company_name': company_name,
+                                    'name': name,
+                                    'symbol': symbol,
+                                    'totalSupply': totalSupply,
+                                    'details': details,
+                                    'memo': memo,
+                                    'expirationDate': expirationDate,
+                                    'transferable': transferable,
+                                    'image_url': [
+                                        {'type': 'small', 'url': image_url_small},
+                                        {'type': 'medium', 'url': image_url_medium},
+                                        {'type': "large", 'url': image_url_large}
+                                    ],
+                                },
+                                'balance': balance,
+                                'used': used
+                            })
+                    except:
                         continue
-                    else:
-                        owner_address = CouponTokenContract.functions.owner().call()
-                        company_name = MyTokens.get_company_name(company_list, owner_address)
-                        name = CouponTokenContract.functions.name().call()
-                        symbol = CouponTokenContract.functions.symbol().call()
-                        totalSupply = CouponTokenContract.functions.totalSupply().call()
-                        details = CouponTokenContract.functions.details().call()
-                        memo = CouponTokenContract.functions.memo().call()
-                        expirationDate = CouponTokenContract.functions.expirationDate().call()
-                        transferable = CouponTokenContract.functions.transferable().call()
-                        image_url_small = CouponTokenContract.functions.getImageURL(0).call()
-                        image_url_medium = CouponTokenContract.functions.getImageURL(1).call()
-                        image_url_large = CouponTokenContract.functions.getImageURL(2).call()
-                        balance = CouponTokenContract.functions.balanceOf(owner).call()
-                        used = CouponTokenContract.functions.usedOf(owner).call()
-                        position_list.append({
-                            'token': {
-                                'token_address': token_address,
-                                'token_template': 'IbetCoupon',
-                                'company_name': company_name,
-                                'name': name,
-                                'symbol': symbol,
-                                'totalSupply': totalSupply,
-                                'details': details,
-                                'memo': memo,
-                                'expirationDate': expirationDate,
-                                'transferable': transferable,
-                                'image_url': [
-                                    {'type': 'small', 'url': image_url_small},
-                                    {'type': 'medium', 'url': image_url_medium},
-                                    {'type': "large", 'url': image_url_large}
-                                ],
-                            },
-                            'balance': balance,
-                            'used': used
-                        })
                 else: # 登録済みの場合
                     if token_template[1] == 'IbetStraightBond':
                         BondTokenContract = Contract.\

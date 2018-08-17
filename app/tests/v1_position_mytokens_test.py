@@ -293,6 +293,7 @@ class TestV1MyTokens():
 
         coupon_token = TestV1MyTokens.\
             generate_coupon_position_invalid(coupon_exchange)
+        coupon_address = coupon_token['address']
 
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
         os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
@@ -304,11 +305,11 @@ class TestV1MyTokens():
         resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = []
-        print(resp.json['data'])
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        for token in resp.json['data']:
+            assert token['token']['token_address'] != coupon_address
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_position_error_1(self, client):
