@@ -240,3 +240,16 @@ def invalidate_coupon_token(invoker, coupon_token):
         updateStatus(False).\
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+# クーポントークンの消費
+def consume_coupon_token(invoker, coupon_token, value):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+
+    CouponTokenContract = Contract.get_contract(
+        'IbetCoupon', coupon_token['address'])
+
+    tx_hash = CouponTokenContract.functions.\
+        consume(value).\
+        transact({'from':invoker['account_address'], 'gas':4000000})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
