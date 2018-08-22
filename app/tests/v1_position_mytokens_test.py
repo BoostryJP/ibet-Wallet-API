@@ -250,6 +250,7 @@ class TestV1MyTokens():
             'token': {
                 'token_address': coupon_address,
                 'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',

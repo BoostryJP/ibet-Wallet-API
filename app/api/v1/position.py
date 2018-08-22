@@ -166,6 +166,7 @@ class MyTokens(BaseResource):
                                 'token': {
                                     'token_address': token_address,
                                     'token_template': 'IbetCoupon',
+                                    'owner_address': owner_address,
                                     'company_name': company_name,
                                     'name': name,
                                     'symbol': symbol,
