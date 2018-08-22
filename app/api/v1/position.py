@@ -376,24 +376,24 @@ class CouponConsumptions(BaseResource):
 
             # イベント抽出：IbetCoupon（トークン消費イベント）
             # _account_address と consumer が一致するイベントを抽出する。
-            try:
-                event_filter = CouponContract.events.Consume.createFilter(
-                    fromBlock='earliest',
-                    argument_filters={'consumer': _account_address}
-                )
-                entries = event_filter.get_all_entries()
-                web3.eth.uninstallFilter(event_filter.filter_id)
+            #try:
+            event_filter = CouponContract.events.Consume.createFilter(
+                fromBlock='earliest',
+                argument_filters={'consumer': _account_address}
+            )
+            entries = event_filter.get_all_entries()
+            web3.eth.uninstallFilter(event_filter.filter_id)
 
-                for entry in entries:
-                    coupon_consumptions.append({
-                        'account_address': _account_address,
-                        'block_timestamp': datetime.fromtimestamp(
-                            web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
-                            strftime("%Y/%m/%d %H:%M:%S"),
-                        'value': entry['args']['value']
-                    })
-            except:
-                pass
+            for entry in entries:
+                coupon_consumptions.append({
+                    'account_address': _account_address,
+                    'block_timestamp': datetime.fromtimestamp(
+                        web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
+                        strftime("%Y/%m/%d %H:%M:%S"),
+                    'value': entry['args']['value']
+                })
+            #except:
+            #    pass
 
         # block_timestampの昇順にソートする
         # Note: もともとのリストはaccountのリストでループして作成したリストなので、古い順になっていないため
