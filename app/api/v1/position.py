@@ -379,7 +379,9 @@ class CouponConsumptions(BaseResource):
             #try:
             event_filter = CouponContract.events.Consume.createFilter(
                 fromBlock='earliest',
-                argument_filters={'consumer': _account_address}
+                argument_filters={
+                    'consumer': to_checksum_address(_account_address)
+                }
             )
             entries = event_filter.get_all_entries()
             web3.eth.uninstallFilter(event_filter.filter_id)
