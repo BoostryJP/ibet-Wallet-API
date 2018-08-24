@@ -33,7 +33,8 @@ WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or "http://localhost:8
 URI = os.environ.get("DATABASE_URL") or "postgresql://ethuser:ethpass@localhost:5432/ethcache"
 WORKER_COUNT = int(os.environ.get("WORKER_COUNT") or 8)
 SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL") or 3)
-IBET_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
+IBET_SB_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
+IBET_CP_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_CP_EXCHANGE_CONTRACT_ADDRESS")
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
@@ -45,14 +46,15 @@ token_factory = TokenFactory(web3)
 company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 
 # コントラクトの生成
-exchange_contract = Contract.get_contract(
+sb_exchange_contract = Contract.get_contract(
     'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+cp_exchange_contract = Contract.get_contract(
+    'IbetCouponExchange', os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 white_list_contract = Contract.get_contract(
     'WhiteList', os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'))
 list_contract = Contract.get_contract(
     'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
-#
 token_list = TokenList(list_contract)
 
 class Watcher:
@@ -180,7 +182,7 @@ class WatchWhiteListBan(Watcher):
 # イベント：注文
 class WatchExchangeNewOrder(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "NewOrder", {})
+        super().__init__(sb_exchange_contract, "NewOrder", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -198,7 +200,7 @@ class WatchExchangeNewOrder(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -214,7 +216,7 @@ class WatchExchangeNewOrder(Watcher):
 # イベント：注文取消
 class WatchExchangeCancelOrder(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "CancelOrder", {})
+        super().__init__(sb_exchange_contract, "CancelOrder", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -232,7 +234,7 @@ class WatchExchangeCancelOrder(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -248,7 +250,7 @@ class WatchExchangeCancelOrder(Watcher):
 # イベント：約定（買）
 class WatchExchangeBuyAgreement(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "Agree", {})
+        super().__init__(sb_exchange_contract, "Agree", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -266,7 +268,7 @@ class WatchExchangeBuyAgreement(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -282,7 +284,7 @@ class WatchExchangeBuyAgreement(Watcher):
 # イベント：約定（売）
 class WatchExchangeSellAgreement(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "Agree", {})
+        super().__init__(sb_exchange_contract, "Agree", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -300,7 +302,7 @@ class WatchExchangeSellAgreement(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -316,7 +318,7 @@ class WatchExchangeSellAgreement(Watcher):
 # イベント：決済OK（買）
 class WatchExchangeBuySettlementOK(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "SettlementOK", {})
+        super().__init__(sb_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -334,7 +336,7 @@ class WatchExchangeBuySettlementOK(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -350,7 +352,7 @@ class WatchExchangeBuySettlementOK(Watcher):
 # イベント：決済OK（売）
 class WatchExchangeSellSettlementOK(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "SettlementOK", {})
+        super().__init__(sb_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -368,7 +370,7 @@ class WatchExchangeSellSettlementOK(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -381,11 +383,10 @@ class WatchExchangeSellSettlementOK(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
-
 # イベント：決済NG（買）
 class WatchExchangeBuySettlementNG(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "SettlementNG", {})
+        super().__init__(sb_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -403,7 +404,7 @@ class WatchExchangeBuySettlementNG(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -419,7 +420,7 @@ class WatchExchangeBuySettlementNG(Watcher):
 # イベント：決済NG（売）
 class WatchExchangeSellSettlementNG(Watcher):
     def __init__(self):
-        super().__init__(exchange_contract, "SettlementNG", {})
+        super().__init__(sb_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -437,7 +438,7 @@ class WatchExchangeSellSettlementNG(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
-                "exchange_address": IBET_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
             }
 
             notification = Notification()
@@ -450,6 +451,35 @@ class WatchExchangeSellSettlementNG(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
+# イベント：クーポン割当・譲渡
+class WatchCouponTransfer(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "Transfer", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+            token = token_factory.get_coupon(token_address)
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "from": entry["args"]["from"],
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "CouponTransfer"
+            notification.priority = 0
+            notification.address = entry["args"]["to"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
 
 def main():
     watchers = [
@@ -466,6 +496,7 @@ def main():
         WatchExchangeSellSettlementOK(),
         WatchExchangeBuySettlementNG(),
         WatchExchangeSellSettlementNG(),
+        WatchCouponTransfer(),
     ]
 
     e = ThreadPoolExecutor(max_workers = WORKER_COUNT)
