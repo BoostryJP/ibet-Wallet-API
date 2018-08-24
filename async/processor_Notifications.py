@@ -469,6 +469,7 @@ class WatchCouponTransfer(Watcher):
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "from": entry["args"]["from"],
+                "value": entry["args"]["value"],
             }
 
             notification = Notification()
