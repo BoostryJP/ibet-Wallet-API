@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import sys
 
 import app.model
 from app.model import Order, Agreement, AgreementStatus
@@ -15,8 +16,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 売り注文と同一トークンアドレス
     #   2) 買い注文
-    #   3) 指値：売り注文の単価以上を指定
-    #   4) 売り注文とは異なるアカウントアドレス
+    #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
     def test_orderbook_normal_1_1(self, client, session):
@@ -40,13 +40,18 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 1000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = [{"order_id": 1, "price": 1000, "amount": 100}]
+        assumed_body = [
+            {
+                "order_id": 1,
+                "price": 1000,
+                "amount": 100,
+                "account_address": account_address,
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -57,8 +62,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 売り注文と異なるトークンアドレス　※
     #   2) 買い注文
-    #   3) 指値：売り注文の単価以上を指定
-    #   4) 売り注文とは異なるアカウントアドレス
+    #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
     def test_orderbook_normal_1_2(self, client, session):
@@ -82,8 +86,6 @@ class TestV1OrderBook():
         request_body = {
             "token_address": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",
             "order_type": "buy",
-            "price": 10000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
@@ -99,8 +101,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 売り注文と同一トークンアドレス
     #   2) 売り注文　※
-    #   3) 指値：売り注文の単価以上を指定
-    #   4) 売り注文とは異なるアカウントアドレス
+    #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
     def test_orderbook_normal_1_3(self, client, session):
@@ -124,8 +125,6 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "sell",
-            "price": 1000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
@@ -141,8 +140,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 売り注文と同一トークンアドレス
     #   2) 買い注文
-    #   3) 指値：売り注文の単価未満　※
-    #   4) 売り注文とは異なるアカウントアドレス
+    #   3) 売り注文と同一のアカウントアドレス　※
     #
     # -> ゼロ件リストが返却
     def test_orderbook_normal_1_4(self, client, session):
@@ -165,10 +163,8 @@ class TestV1OrderBook():
         # リクエスト情報
         request_body = {
             "token_address": token_address,
-            "order_type": "sell",
-            "price": 999,
-            "amount": 1000,
-            "account_address": agent_address,
+            "order_type": "buy",
+            "account_address": account_address,
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
@@ -180,13 +176,7 @@ class TestV1OrderBook():
 
     # ＜正常系1-5＞
     # 未約定＆未キャンセルの売り注文が1件存在
-    # 以下の条件でリクエスト
-    #   1) 売り注文と同一トークンアドレス
-    #   2) 買い注文
-    #   3) 指値：売り注文の単価以上を指定
-    #   4) 売り注文と同一のアカウントアドレス　※
-    #
-    # -> ゼロ件リストが返却
+    # 限界値
     def test_orderbook_normal_1_5(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -194,12 +184,12 @@ class TestV1OrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
+        order.id = sys.maxsize
         order.token_address = token_address
         order.account_address = account_address
         order.is_buy = False
-        order.price = 1000
-        order.amount = 100
+        order.price = sys.maxsize
+        order.amount = sys.maxsize
         order.agent_address = agent_address
         order.is_cancelled = False
         session.add(order)
@@ -208,13 +198,18 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 10000,
-            "amount": 1000,
-            "account_address": account_address,
+            "account_address": agent_address,
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = []
+        assumed_body = [
+            {
+                "order_id": sys.maxsize,
+                "price": sys.maxsize,
+                "amount": sys.maxsize,
+                "account_address": account_address,
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -225,8 +220,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 買い注文と同一トークンアドレス
     #   2) 売り注文
-    #   3) 指値：買い注文の単価以下を指定
-    #   4) 買い注文とは異なるアカウントアドレス
+    #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
     def test_orderbook_normal_2_1(self, client, session):
@@ -250,13 +244,18 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "sell",
-            "price": 1000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = [{"order_id": 1, "price": 1000, "amount": 100}]
+        assumed_body = [
+            {
+                "order_id": 1,
+                "price": 1000,
+                "amount": 100,
+                "account_address": account_address,
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -267,8 +266,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 買い注文と異なるトークンアドレス　※
     #   2) 売り注文
-    #   3) 指値：買い注文の単価以下を指定
-    #   4) 買い注文とは異なるアカウントアドレス
+    #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
     def test_orderbook_normal_2_2(self, client, session):
@@ -292,8 +290,6 @@ class TestV1OrderBook():
         request_body = {
             "token_address": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",
             "order_type": "sell",
-            "price": 1000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
@@ -309,8 +305,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 買い注文と同一トークンアドレス
     #   2) 買い注文　※
-    #   3) 指値：買い注文の単価以下を指定
-    #   4) 買い注文とは異なるアカウントアドレス
+    #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
     def test_orderbook_normal_2_3(self, client, session):
@@ -334,8 +329,6 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 1000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
@@ -351,8 +344,7 @@ class TestV1OrderBook():
     # 以下の条件でリクエスト
     #   1) 買い注文と同一トークンアドレス
     #   2) 売り注文
-    #   3) 指値：買い注文の単価より大きい単価を指定　※
-    #   4) 買い注文とは異なるアカウントアドレス
+    #   3) 買い注文と同一のアカウントアドレス　※
     #
     # -> ゼロ件リストが返却
     def test_orderbook_normal_2_4(self, client, session):
@@ -376,9 +368,7 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "sell",
-            "price": 1001,
-            "amount": 1000,
-            "account_address": agent_address,
+            "account_address": account_address,
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
@@ -390,13 +380,7 @@ class TestV1OrderBook():
 
     # ＜正常系2-5＞
     # 未約定＆未キャンセルの買い注文が1件存在
-    # 以下の条件でリクエスト
-    #   1) 買い注文と同一トークンアドレス
-    #   2) 売り注文
-    #   3) 指値：買い注文の単価以下を指定
-    #   4) 買い注文と同一のアカウントアドレス　※
-    #
-    # -> ゼロ件リストが返却
+    # 限界値
     def test_orderbook_normal_2_5(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -404,12 +388,12 @@ class TestV1OrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
+        order.id = sys.maxsize
         order.token_address = token_address
         order.account_address = account_address
         order.is_buy = True
-        order.price = 1000
-        order.amount = 100
+        order.price = sys.maxsize
+        order.amount = sys.maxsize
         order.agent_address = agent_address
         order.is_cancelled = False
         session.add(order)
@@ -418,13 +402,18 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "sell",
-            "price": 1000,
-            "amount": 1000,
-            "account_address": account_address,
+            "account_address": agent_address,
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = []
+        assumed_body = [
+            {
+                "order_id": sys.maxsize,
+                "price": sys.maxsize,
+                "amount": sys.maxsize,
+                "account_address": account_address,
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -465,8 +454,6 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 1000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
@@ -474,11 +461,13 @@ class TestV1OrderBook():
         assumed_body = [{
             'order_id': 2,
             'price': 999,
-            'amount': 100
+            'amount': 100,
+            'account_address': account_address,
         }, {
             'order_id': 1,
             'price': 1000,
-            'amount': 100
+            'amount': 100,
+            'account_address': account_address,
         }]
 
         assert resp.status_code == 200
@@ -520,8 +509,6 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "sell",
-            "price": 1000,
-            "amount": 1000,
             "account_address": agent_address,
         }
 
@@ -529,11 +516,13 @@ class TestV1OrderBook():
         assumed_body = [{
             'order_id': 2,
             'price': 1001,
-            'amount': 100
+            'amount': 100,
+            'account_address': account_address,
         }, {
             'order_id': 1,
             'price': 1000,
-            'amount': 100
+            'amount': 100,
+            'account_address': account_address,
         }]
 
         assert resp.status_code == 200
@@ -617,8 +606,6 @@ class TestV1OrderBook():
         request_body = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 5000,
-            "amount": 200,
             "account_address": account_addresses[0],
         }
 
@@ -626,11 +613,18 @@ class TestV1OrderBook():
         assumed_body = [{
             "order_id": 0,
             "price": 1000,
-            "amount": 100
+            "amount": 100,
+            "account_address": account_addresses[1],
         }, {
             "order_id": 2,
             "price": 3000,
-            "amount": 50
+            "amount": 50,
+            "account_address": account_addresses[2],
+        }, {
+            "order_id": 3,
+            "price": 6000,
+            "amount": 100,
+            "account_address": account_addresses[2],
         }]
 
         assert resp.status_code == 200
@@ -651,9 +645,7 @@ class TestV1OrderBook():
             'message': 'Invalid Parameter',
             'description': {
                 'token_address': 'required field',
-                'amount': 'required field',
                 'order_type': 'required field',
-                'price': 'required field'
             }
         }
 
@@ -665,8 +657,6 @@ class TestV1OrderBook():
         request_params = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 5000,
-            "amount": 200,
             "account_address": account_address,
         }
 
@@ -690,8 +680,6 @@ class TestV1OrderBook():
         request_params = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 5000,
-            "amount": 200,
             "account_address": account_address,
         }
 
@@ -715,8 +703,6 @@ class TestV1OrderBook():
         request_params = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 5000,
-            "amount": 200,
             "account_address": account_address,
         }
 
@@ -743,8 +729,6 @@ class TestV1OrderBook():
         request_params = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 5000,
-            "amount": 200,
             "account_address": account_address,
         }
 
@@ -768,8 +752,6 @@ class TestV1OrderBook():
         request_params = {
             "token_address": token_address,
             "order_type": "buy",
-            "price": 5000,
-            "amount": 200,
             "account_address": account_address,
         }
 
@@ -796,8 +778,6 @@ class TestV1OrderBook():
         request_params = {
             "token_address": token_address,
             "order_type": "buyyyyy",
-            "price": 5000,
-            "amount": 200,
             "account_address": account_address,
         }
 
@@ -816,172 +796,8 @@ class TestV1OrderBook():
             }
         }
 
-    # エラー系6-1：入力値エラー（priceがString）
-    def test_orderbook_error_6_1(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "price": "5000",
-            "amount": 200,
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'price': 'must be of integer type'
-            }
-        }
-
-    # エラー系6-2：入力値エラー（priceが小数）
-    def test_orderbook_error_6_2(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "price": 5000.0,
-            "amount": 200,
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'price': 'must be of integer type'
-            }
-        }
-
-    # エラー系6-3：入力値エラー（priceがマイナス）
-    def test_orderbook_error_6_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "price": -5000,
-            "amount": 200,
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'price': 'min value is 0'}
-        }
-
-    # エラー系7-1：入力値エラー（amountがString）
-    def test_orderbook_error_7_1(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "price": 5000,
-            "amount": "200",
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'amount': 'must be of integer type'
-            }
-        }
-
-    # エラー系7-2：入力値エラー（amountが小数）
-    def test_orderbook_error_7_2(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "price": 5000,
-            "amount": 200.0,
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'amount': 'must be of integer type'
-            }
-        }
-
-    # エラー系7-3：入力値エラー（amountがマイナス）
-    def test_orderbook_error_7_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "price": 5000,
-            "amount": -200,
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'amount': 'min value is 0'},
-        }
-
-    # エラー系8：HTTPメソッドが不正
-    def test_orderbook_error_8(self, client):
+    # エラー系6：HTTPメソッドが不正
+    def test_orderbook_error_6(self, client):
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404

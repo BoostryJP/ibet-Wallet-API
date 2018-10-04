@@ -64,7 +64,6 @@ class OrderBook(BaseResource):
                          filter(Order.token_address == token_address).\
                          filter(Order.is_buy == False).\
                          filter(Order.is_cancelled == False).\
-                         filter(Order.price <= request_json['price']).\
                          filter(Order.account_address != account_address).\
                          all()
             else:  # 売注文
@@ -81,7 +80,6 @@ class OrderBook(BaseResource):
                          filter(Order.token_address == token_address).\
                          filter(Order.is_buy == True).\
                          filter(Order.is_cancelled == False).\
-                         filter(Order.price >= request_json['price']).\
                          filter(Order.account_address != account_address).\
                          all()
 
@@ -99,7 +97,6 @@ class OrderBook(BaseResource):
                          filter(Order.token_address == token_address).\
                          filter(Order.is_buy == False).\
                          filter(Order.is_cancelled == False).\
-                         filter(Order.price <= request_json['price']).\
                          all()
 
             else:  # 売注文
@@ -115,7 +112,6 @@ class OrderBook(BaseResource):
                          filter(Order.token_address == token_address).\
                          filter(Order.is_buy == True).\
                          filter(Order.is_cancelled == False).\
-                         filter(Order.price >= request_json['price']).\
                          all()
 
         # レスポンス用の注文一覧を構築
@@ -134,6 +130,7 @@ class OrderBook(BaseResource):
                 'order_id': order.id,
                 'price': order.price,
                 'amount': amount,
+                'account_address': order.account_address,
             })
 
         # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
@@ -164,18 +161,6 @@ class OrderBook(BaseResource):
                 'empty': False,
                 'required': True,
                 'allowed': ['buy', 'sell']
-            },
-            'price': {
-                'type': 'integer',
-                'min': 0,
-                'empty': False,
-                'required': True
-            },
-            'amount': {
-                'type': 'integer',
-                'min': 0,
-                'empty': False,
-                'required': True
             },
         })
 
