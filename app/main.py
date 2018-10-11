@@ -18,6 +18,7 @@ from app.api.v1 import position
 from app.api.v1 import orderList
 from app.api.v1 import notification
 from app.api.v1 import nodeInfo
+from app.api.v1 import omise
 
 from app.errors import AppError
 
@@ -73,6 +74,9 @@ class App(falcon.API):
 
         # ノード情報
         self.add_route('/v1/NodeInfo', nodeInfo.NodeInfo())
+
+        # Omise決済
+        self.add_route('/v1/Omise/Customers', omise.CreateCustomer())
 
         self.add_error_handler(AppError, AppError.handle)
 

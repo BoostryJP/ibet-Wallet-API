@@ -33,3 +33,6 @@ if APP_ENV == 'live':
     PAYMENT_AGENT_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list/payment_agent_list.json'
 else:
     PAYMENT_AGENT_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list-dev/payment_agent_list.json'
+
+OMISE_SECRET = os.environ.get('OMISE_SECRET')
+OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
