@@ -25,9 +25,7 @@ class CreateCustomer(BaseResource):
     '''
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Omise.Customers')
-
-        session = req.context['session']
+        LOG.info('v1.Omise.CreateCustomer')
 
         # 入力値チェック
         request_json = CreateCustomer.validate(req)
@@ -73,8 +71,65 @@ class CreateCustomer(BaseResource):
         return validator.document
 
 # ------------------------------
-# [Omise]顧客情報更新
+# [Omise]カード情報更新
 # ------------------------------
+class UpdateCustomer(BaseResource):
+    '''
+    Handle for endpoint: /v1/Omise/Customers/{CUSTOMER_ID}
+    '''
+    @falcon.before(VerifySignature())
+    def on_post(self, req, res, customer_id):
+        LOG.info('v1.Omise.UpdateCustomer')
+
+        # 入力値チェック
+        request_json = UpdateCustomer.validate(req)
+
+        # リクエストから情報を抽出
+        address = to_checksum_address(req.context['address'])
+
+        # Card情報を取得
+        try:
+            customer = omise.Customer.retrieve(customer_id)
+        except omise.errors.NotFoundError:
+            raise InvalidParameterError(description='customer was not found')
+
+        # 更新権限のチェック
+        if address != customer.description:
+            raise InvalidParameterError(description='update is not allowed')
+
+        # 顧客にCard情報を紐付ける
+        try:
+            customer.update(
+                card = request_json['token_id']
+            )
+        except omise.errors.UsedTokenError:
+            raise InvalidParameterError(description='token was already used')
+        except omise.errors.NotFoundError:
+            raise InvalidParameterError(description='token was not found')
+
+        self.on_success(res)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'token_id': {
+                'type': 'string',
+                'required': True,
+                'empty': False,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(req.context['address']):
+            raise InvalidParameterError
+
+        return validator.document
 
 # ------------------------------
 # [Omise]課金
