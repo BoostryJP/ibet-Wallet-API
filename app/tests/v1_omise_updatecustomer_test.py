@@ -1,8 +1,4 @@
 from falcon.util import json as util_json
-from app import config
-import omise
-omise.api_secret = config.OMISE_SECRET
-omise.api_public = config.OMISE_PUBLIC
 
 class TestV1OmiseUpdateCustomer():
     # テスト対象API
