@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import falcon
 from cerberus import Validator
+from web3 import Web3
+from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
@@ -69,8 +71,6 @@ class CreateCustomer(BaseResource):
             raise InvalidParameterError
 
         return validator.document
-
-
 
 # ------------------------------
 # [Omise]顧客情報更新
