@@ -78,6 +78,7 @@ class App(falcon.API):
         # Omise決済
         self.add_route('/v1/Omise/CreateCustomer', omise.CreateCustomer())
         self.add_route('/v1/Omise/UpdateCustomer', omise.UpdateCustomer())
+        self.add_route('/v1/Omise/Charge', omise.Charge())
 
         self.add_error_handler(AppError, AppError.handle)
 
