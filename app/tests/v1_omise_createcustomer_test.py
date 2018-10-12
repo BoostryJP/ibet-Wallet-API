@@ -1,3 +1,4 @@
+from falcon.util import json as util_json
 from app import config
 import omise
 omise.api_secret = config.OMISE_SECRET
@@ -5,10 +6,27 @@ omise.api_public = config.OMISE_PUBLIC
 
 class TestV1OmiseCreateCustomer():
     # テスト対象API
-    apiurl = "/v1/Omise/Customers"
+    apiurl = "/v1/Omise/CreateCustomer"
 
     private_key_1 = "0000000000000000000000000000000000000000000000000000000000000001"
     address_1 = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+
+    # ※テストではない
+    # ヘッダー（Signature）作成
+    def test_generate_signature(self, client, session):
+        json = {
+            "token_id": "tokn_test_5dkiydzhyzw8iejfo1j" # クライアントで生成したtokenを指定する
+        }
+        canonical_body = util_json.dumps(json, ensure_ascii=False)
+        signature = client._generate_signature(
+            TestV1OmiseCreateCustomer.private_key_1,
+            method = "POST",
+            path = self.apiurl,
+            request_body = canonical_body,
+            query_string=""
+        )
+        print("---- signature ----")
+        print(signature)
 
     # ＜エラー系1＞
     # ヘッダー（Signature）なし
