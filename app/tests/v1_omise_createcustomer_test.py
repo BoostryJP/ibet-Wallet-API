@@ -15,9 +15,12 @@ class TestV1OmiseCreateCustomer():
     # ヘッダー（Signature）作成
     def test_generate_signature(self, client, session):
         json = {
-            "token_id": "tokn_test_5dkiydzhyzw8iejfo1j" # クライアントで生成したtokenを指定する
+            "token_id": "tokn_test_5dkkcg3nu30ztjrc8by" # クライアントで生成したtokenを指定する
         }
         canonical_body = util_json.dumps(json, ensure_ascii=False)
+        print("---- canonical_body ----")
+        print(canonical_body)
+
         signature = client._generate_signature(
             TestV1OmiseCreateCustomer.private_key_1,
             method = "POST",
