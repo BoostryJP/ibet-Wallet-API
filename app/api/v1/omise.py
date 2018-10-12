@@ -21,7 +21,7 @@ LOG = log.get_logger()
 # ------------------------------
 class CreateCustomer(BaseResource):
     '''
-    Handle for endpoint: /v1/Omise/Customers
+    Handle for endpoint: /v1/Omise/CreateCustomer
     '''
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
@@ -75,10 +75,10 @@ class CreateCustomer(BaseResource):
 # ------------------------------
 class UpdateCustomer(BaseResource):
     '''
-    Handle for endpoint: /v1/Omise/Customers/{CUSTOMER_ID}
+    Handle for endpoint: /v1/Omise/UpdateCustomer
     '''
     @falcon.before(VerifySignature())
-    def on_post(self, req, res, customer_id):
+    def on_post(self, req, res):
         LOG.info('v1.Omise.UpdateCustomer')
 
         # 入力値チェック
@@ -89,7 +89,7 @@ class UpdateCustomer(BaseResource):
 
         # Card情報を取得
         try:
-            customer = omise.Customer.retrieve(customer_id)
+            customer = omise.Customer.retrieve(request_json['customer_id'])
         except omise.errors.NotFoundError:
             raise InvalidParameterError(description='customer was not found')
 
@@ -117,6 +117,11 @@ class UpdateCustomer(BaseResource):
 
         validator = Validator({
             'token_id': {
+                'type': 'string',
+                'required': True,
+                'empty': False,
+            },
+            'customer_id': {
                 'type': 'string',
                 'required': True,
                 'empty': False,
