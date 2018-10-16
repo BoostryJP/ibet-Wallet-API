@@ -37,6 +37,7 @@ class App(falcon.API):
 
         # トークンテンプレート参照
         self.add_route('/v1/StraightBondABI/', tokenTemplates.GetStraightBondABI())
+        self.add_route('/v1/MembershipABI/', tokenTemplates.GetMembershipABI())
         self.add_route('/v1/CouponABI/', tokenTemplates.GetCouponABI())
 
         # 会社情報参照
