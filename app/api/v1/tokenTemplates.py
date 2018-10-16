@@ -21,6 +21,19 @@ class GetStraightBondABI(BaseResource):
         self.on_success(res, abi)
 
 # ------------------------------
+# 会員権ABI参照
+# ------------------------------
+class GetMembershipABI(BaseResource):
+    '''
+    Handle for endpoint: /v1/MembershipABI/
+    '''
+    def on_get(self, req, res):
+        LOG.info('v1.tokenTemplates.MembershipABI')
+        contracts = json.load(open('data/contracts.json' , 'r'))
+        abi = contracts['IbetMembership']['abi']
+        self.on_success(res, abi)
+
+# ------------------------------
 # クーポンABI参照
 # ------------------------------
 class GetCouponABI(BaseResource):
