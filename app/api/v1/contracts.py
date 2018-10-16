@@ -20,7 +20,7 @@ from app.contracts import Contract
 LOG = log.get_logger()
 
 # ------------------------------
-# 公開中銘柄一覧
+# 公開中普通社債一覧
 # ------------------------------
 class Contracts(BaseResource):
     def __init__(self):
@@ -227,6 +227,166 @@ class Contracts(BaseResource):
                         {'type':'large', 'url':image_url_l},
                     ],
                     'certification':certification
+                }
+            except Exception as e:
+                return None
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min':0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min':0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+# ------------------------------
+# 公開中会員権一覧
+# ------------------------------
+class MembershipContracts(BaseResource):
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    '''
+    Handle for endpoint: /v1/Membership/Contracts
+    '''
+    def on_get(self, req, res):
+        LOG.info('v1.contracts.MembershipContracts')
+
+        # Validation
+        request_json = MembershipContracts.validate(req)
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        list_length = ListContract.functions.getListLength().call()
+
+        if request_json['cursor'] != None and request_json['cursor'] > list_length:
+            raise InvalidParameterError("cursor parameter must be less than token list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        if cursor is None:
+            cursor = list_length
+        limit = request_json['limit']
+        if limit is None:
+            limit = 10
+
+        # 企業リストの情報を取得する
+        company_list = []
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json' , 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL).json()
+        except:
+            pass
+
+        token_list = []
+        # TokenListを降順に調べる(登録が新しい順)
+        for i in reversed(range(0, cursor)):
+            if len(token_list) >= limit:
+                break
+
+            # TokenList-Contractからトークンの情報を取得する
+            token = ListContract.functions.getTokenByNum(i).call()
+
+            token_detail = self.get_token_detail(token_id = i,
+                                                 company_list = company_list,
+                                                 token_address = token[0],
+                                                 token_template = token[1],
+                                                 owner_address = token[2])
+            if token_detail != None:
+                token_list.append(token_detail)
+
+        self.on_success(res, token_list)
+
+
+    def get_token_detail(self, token_id, token_address, token_template, owner_address, company_list):
+        """
+        トークン詳細を取得する。
+        取得に失敗した場合はNoneを返す。
+        """
+
+        if token_template == 'IbetMembership':
+            try:
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract(
+                    'IbetMembership',
+                    to_checksum_address(token_address)
+                )
+
+                # 取扱停止銘柄はリストに返さない
+                if TokenContract.functions.status().call() == False:
+                    return None
+
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                returnDetails = TokenContract.functions.returnDetails().call()
+                expirationDate = TokenContract.functions.expirationDate().call()
+                memo = TokenContract.functions.memo().call()
+                transferable = TokenContract.functions.transferable().call()
+                status = TokenContract.functions.status().call()
+
+                image_url_s = TokenContract.functions.image_urls(0).call()
+                image_url_m = TokenContract.functions.image_urls(1).call()
+                image_url_l = TokenContract.functions.image_urls(2).call()
+
+                # 企業リストから、企業名とRSA鍵を取得する
+                company_name = ''
+                rsa_publickey = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+                        rsa_publickey = company['rsa_publickey']
+
+                return {
+                    'id': token_id,
+                    'token_address':token_address,
+                    'token_template':token_template,
+                    'owner_address': owner_address,
+                    'company_name':company_name,
+                    'rsa_publickey':rsa_publickey,
+                    'name':name,
+                    'symbol':symbol,
+                    'total_supply':totalSupply,
+                    'details':details,
+                    'return_details':returnDetails,
+                    'expiration_date':expirationDate,
+                    'memo':memo,
+                    'transferable':transferable,
+                    'status':status,
+                    'image_url':[
+                        {'type':'small', 'url':image_url_s},
+                        {'type':'medium', 'url':image_url_m},
+                        {'type':'large', 'url':image_url_l},
+                    ],
                 }
             except Exception as e:
                 return None

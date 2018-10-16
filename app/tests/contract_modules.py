@@ -54,7 +54,9 @@ def register_whitelist(invoker, white_list):
         transact({'from':agent['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
-
+'''
+Straight Bond Token （普通社債）
+'''
 # 債券トークンの発行
 def issue_bond_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
@@ -185,7 +187,9 @@ def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
-
+'''
+Coupon Token （クーポン）
+'''
 # クーポントークンの発行
 def issue_coupon_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
@@ -251,5 +255,50 @@ def consume_coupon_token(invoker, coupon_token, value):
 
     tx_hash = CouponTokenContract.functions.\
         consume(value).\
+        transact({'from':invoker['account_address'], 'gas':4000000})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+'''
+Membership Token （会員権）
+'''
+# 会員権Tokenの発行
+def membership_issue(invoker, attribute):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+
+    arguments = [
+        attribute['name'], attribute['symbol'], attribute['initialSupply'],
+        attribute['details'], attribute['returnDetails'],
+        attribute['expirationDate'], attribute['memo'],
+        attribute['transferable']
+    ]
+
+    contract_address, abi = Contract.\
+        deploy_contract('IbetMembership', arguments, invoker['account_address'])
+
+    return {'address': contract_address, 'abi': abi}
+
+# 会員権Tokenの公開リスト登録
+def membership_register_list(invoker, token, token_list):
+    TokenListContract = Contract.\
+        get_contract('TokenList', token_list['address'])
+
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+
+    tx_hash = TokenListContract.functions.\
+        register(token['address'], 'IbetMembership').\
+        transact({'from':invoker['account_address'], 'gas':4000000})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+# 会員権Tokenの無効化
+def membership_invalidate(invoker, token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+    TokenContract = Contract.\
+        get_contract('IbetMembership', token['address'])
+
+    tx_hash = TokenContract.functions.\
+        setStatus(False).\
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
