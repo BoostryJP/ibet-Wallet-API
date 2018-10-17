@@ -13,7 +13,8 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list
+from .contract_modules import issue_bond_token, register_bond_list,\
+    membership_issue, membership_register_list, membership_invalidate
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -601,6 +602,496 @@ class TestV1Contracts():
     # limitが小数
     # -> 入力エラー
     def test_contracts_error_3_3(self, client):
+        query_string = 'cursor=1&limit=0.1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+# トークン一覧参照API
+# /v1/Membership/Contracts
+class TestV1MembershipContracts():
+
+    # テスト対象API
+    apiurl = '/v1/Membership/Contracts/'
+
+    def token_attribute():
+        attribute = {
+            'name': 'テスト会員権',
+            'symbol': 'MEMBERSHIP',
+            'initialSupply': 1000000,
+            'details': '詳細',
+            'returnDetails': 'リターン詳細',
+            'expirationDate': '20191231',
+            'memo': 'メモ',
+            'transferable': True
+        }
+        return attribute
+
+    def tokenlist_contract():
+        deployer = eth_account['deployer']
+        web3.eth.defaultAccount = deployer['account_address']
+        web3.personal.\
+            unlockAccount(deployer['account_address'],deployer['password'])
+        contract_address, abi = Contract.\
+            deploy_contract('TokenList', [], deployer['account_address'])
+        return {'address':contract_address, 'abi':abi}
+
+    # ＜正常系1＞
+    # 発行済会員権あり（1件）
+    # cursor=設定なし、 limit=設定なし
+    # -> 1件返却
+    def test_membershiplist_normal_1(self, client, session):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV1MembershipContracts.tokenlist_contract()
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+
+        # データ準備：会員権新規発行
+        attribute = TestV1MembershipContracts.token_attribute()
+        token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, token, token_list)
+
+        query_string = ''
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [
+            {
+                'id': 0,
+                'token_address': token['address'],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium','url': ''},
+                    {'type': 'large','url': ''}
+                ]
+            }
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系2＞
+    # 発行済会員権あり（2件）
+    # cursor=設定なし、 limit=設定なし
+    # -> 登録が新しい順にリストが返却
+    def test_membershiplist_normal_2(self, client, session):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV1MembershipContracts.tokenlist_contract()
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+
+        # データ準備：会員権新規発行
+        issued_list = []
+        for i in range(0, 2):
+            attribute = TestV1MembershipContracts.token_attribute()
+            token = membership_issue(issuer, attribute)
+            membership_register_list(issuer, token, token_list)
+            issued_list.append(token)
+
+        query_string = ''
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [
+            {
+                'id': 1,
+                'token_address': issued_list[1]['address'],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium','url': ''},
+                    {'type': 'large','url': ''}
+                ]
+            }, {
+                'id': 0,
+                'token_address': issued_list[0]['address'],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium','url': ''},
+                    {'type': 'large','url': ''}
+                ]
+            }
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系3＞
+    # 発行済会員権あり（2件）
+    # cursor=2、 limit=2
+    # -> 登録が新しい順にリストが返却（2件）
+    def test_membershiplist_normal_3(self, client, session):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV1MembershipContracts.tokenlist_contract()
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+
+        # データ準備：会員権新規発行
+        issued_list = []
+        for i in range(0, 2):
+            attribute = TestV1MembershipContracts.token_attribute()
+            token = membership_issue(issuer, attribute)
+            membership_register_list(issuer, token, token_list)
+            issued_list.append(token)
+
+        query_string = 'cursor=2&limit=2'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [
+            {
+                'id': 1,
+                'token_address': issued_list[1]['address'],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium','url': ''},
+                    {'type': 'large','url': ''}
+                ]
+            }, {
+                'id': 0,
+                'token_address': issued_list[0]['address'],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium','url': ''},
+                    {'type': 'large','url': ''}
+                ]
+            }
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系4＞
+    # 発行済会員権あり（2件）
+    # cursor=1、 limit=1
+    # -> 登録が新しい順にリストが返却（1件）
+    def test_membershiplist_normal_4(self, client, session):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV1MembershipContracts.tokenlist_contract()
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+
+        # データ準備：会員権新規発行
+        issued_list = []
+        for i in range(0, 2):
+            attribute = TestV1MembershipContracts.token_attribute()
+            token = membership_issue(issuer, attribute)
+            membership_register_list(issuer, token, token_list)
+            issued_list.append(token)
+
+        query_string = 'cursor=1&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [{
+            'id': 0,
+            'token_address': issued_list[0]['address'],
+            'token_template': 'IbetMembership',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト会員権',
+            'symbol': 'MEMBERSHIP',
+            'total_supply': 1000000,
+            'details': '詳細',
+            'return_details': 'リターン詳細',
+            'expiration_date': '20191231',
+            'memo': 'メモ',
+            'transferable': True,
+            'status': True,
+            'image_url': [
+                {'type': 'small', 'url': ''},
+                {'type': 'medium','url': ''},
+                {'type': 'large','url': ''}
+            ]
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系5＞
+    # 発行済会員権あり（2件）
+    # cursor=1、 limit=2
+    # -> 登録が新しい順にリストが返却（1件）
+    def test_membershiplist_normal_5(self, client, session):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV1MembershipContracts.tokenlist_contract()
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+
+        # データ準備：会員権新規発行
+        issued_list = []
+        for i in range(0, 2):
+            attribute = TestV1MembershipContracts.token_attribute()
+            token = membership_issue(issuer, attribute)
+            membership_register_list(issuer, token, token_list)
+            issued_list.append(token)
+
+        query_string = 'cursor=1&limit=2'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [{
+            'id': 0,
+            'token_address': issued_list[0]['address'],
+            'token_template': 'IbetMembership',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト会員権',
+            'symbol': 'MEMBERSHIP',
+            'total_supply': 1000000,
+            'details': '詳細',
+            'return_details': 'リターン詳細',
+            'expiration_date': '20191231',
+            'memo': 'メモ',
+            'transferable': True,
+            'status': True,
+            'image_url': [
+                {'type': 'small', 'url': ''},
+                {'type': 'medium','url': ''},
+                {'type': 'large','url': ''}
+            ]
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系6＞
+    # 会員権発行（1件）　→　無効化
+    # cursor=設定なし、 limit=設定なし
+    # -> 0件返却
+    def test_membershiplist_normal_6(self, client, session):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV1MembershipContracts.tokenlist_contract()
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+
+        # データ準備：会員権新規発行
+        attribute = TestV1MembershipContracts.token_attribute()
+        token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, token, token_list)
+
+        # Tokenの無効化
+        membership_invalidate(issuer, token)
+
+        query_string = ''
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+
+    # ＜エラー系1＞
+    # HTTPメソッド不正
+    # -> 404エラー
+    def test_membershiplist_error_1(self, client):
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps({})
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v1/Membership/Contracts'
+        }
+
+    # ＜エラー系2-1＞
+    # cursorに文字が含まれる
+    # -> 入力エラー
+    def test_membershiplist_error_2_1(self, client):
+        query_string = 'cursor=a&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'cursor': [
+                    "field 'cursor' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # ＜エラー系2-2＞
+    # cursorが負値
+    # -> 入力エラー
+    def test_membershiplist_error_2_2(self, client):
+        query_string = 'cursor=-1&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'cursor': 'min value is 0'}
+        }
+
+    # ＜エラー系2-3＞
+    # cursorが小数
+    # -> 入力エラー
+    def test_membershiplist_error_2_3(self, client):
+        query_string = 'cursor=0.1&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'cursor': [
+                    "field 'cursor' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # ＜エラー系2-4＞
+    # cursorがint最大値
+    # -> 入力エラー
+    def test_membershiplist_error_2_4(self, client):
+        max_value = str(sys.maxsize)
+        query_string = 'cursor=' + max_value + '&limit=1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': 'cursor parameter must be less than token list num'
+        }
+
+    # ＜エラー系3-1＞
+    # limitに文字が含まれる
+    # -> 入力エラー
+    def test_membershiplist_error_3_1(self, client):
+        query_string = 'cursor=1&limit=a'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # ＜エラー系3-2＞
+    # limitが負値
+    # -> 入力エラー
+    def test_membershiplist_error_3_2(self, client):
+        query_string = 'cursor=1&limit=-1'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'limit': 'min value is 0'}
+        }
+
+    # ＜エラー系3-3＞
+    # limitが小数
+    # -> 入力エラー
+    def test_membershiplist_error_3_3(self, client):
         query_string = 'cursor=1&limit=0.1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
