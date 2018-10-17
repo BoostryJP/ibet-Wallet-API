@@ -53,6 +53,7 @@ class App(falcon.API):
 
         # 現在値
         self.add_route('/v1/LastPrice', marketInformation.LastPrice())
+        self.add_route('/v1/Membership/LastPrice', marketInformation.MembershipLastPrice())
 
         # 歩み値
         self.add_route('/v1/Tick', marketInformation.Tick())

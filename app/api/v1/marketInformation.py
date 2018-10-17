@@ -26,8 +26,11 @@ LOG = log.get_logger()
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
+'''
+Straight Bond Token （普通社債）
+'''
 # ------------------------------
-# 板情報取得
+# [普通社債]板情報取得
 # ------------------------------
 class OrderBook(BaseResource):
 
@@ -177,7 +180,7 @@ class OrderBook(BaseResource):
 
 
 # ------------------------------
-# 現在値取得
+# [普通社債]現在値取得
 # ------------------------------
 class LastPrice(BaseResource):
     '''
@@ -238,7 +241,7 @@ class LastPrice(BaseResource):
 
 
 # ------------------------------
-# 歩み値取得
+# [普通社債]歩み値取得
 # ------------------------------
 class Tick(BaseResource):
     '''
@@ -286,6 +289,71 @@ class Tick(BaseResource):
                 tick_list = []
 
         self.on_success(res, tick_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'address_list': {
+                'type': 'list',
+                'empty': False,
+                'required': True,
+                'schema': {
+                    'type': 'string',
+                    'required': True,
+                    'empty': False,
+                }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for token_address in request_json['address_list']:
+            if not Web3.isAddress(token_address):
+                raise InvalidParameterError
+
+        return request_json
+
+
+'''
+Membership Token （会員権）
+'''
+# ------------------------------
+# [会員権]現在値取得
+# ------------------------------
+class MembershipLastPrice(BaseResource):
+    '''
+    Handle for endpoint: /v1/Membership/LastPrice
+    '''
+
+    def on_post(self, req, res):
+        LOG.info('v1.marketInformation.MembershipLastPrice')
+
+        request_json = MembershipLastPrice.validate(req)
+
+        ExchangeContract = Contract.get_contract(
+            'IbetMembershipExchange',
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        price_list = []
+        for token_address in request_json['address_list']:
+            try:
+                last_price = ExchangeContract.functions.\
+                    lastPrice(to_checksum_address(token_address)).call()
+            except:
+                last_price = 0
+
+            price_list.append({
+                'token_address': token_address,
+                'last_price': last_price
+            })
+
+        self.on_success(res, price_list)
 
     @staticmethod
     def validate(req):
