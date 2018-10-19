@@ -217,6 +217,9 @@ class OrderList(BaseResource):
         # 2) 決済中一覧
         settlement_list = []
         for account_address in request_json['account_address_list']:
+            '''
+            買注文の決済中明細の抽出
+            '''
             try:
                 # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
                 event_filter = ExchangeContract.events.Agree.createFilter(
@@ -373,6 +376,13 @@ class OrderList(BaseResource):
                             }
                         })
 
+            except:
+                continue
+
+            '''
+            売注文の決済中明細の抽出
+            '''
+            try:
                 # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
                 event_filter = ExchangeContract.events.Agree.createFilter(
                     fromBlock='earliest',
@@ -519,6 +529,8 @@ class OrderList(BaseResource):
                                 'certification':certification
                             },
                             'agreement':{
+                                'order_id':order_id,
+                                'agreementId':agreement_id,
                                 'amount':agreement[1],
                                 'price':agreement[2],
                                 'isBuy':False,
