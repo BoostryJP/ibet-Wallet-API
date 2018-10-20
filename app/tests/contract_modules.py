@@ -339,9 +339,11 @@ def membership_take_buy(invoker, exchange, order_id, amount):
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
     ExchangeContract = Contract.\
         get_contract('IbetMembershipExchange', exchange['address'])
+    gas = ExchangeContract.estimateGas().\
+        executeOrder(order_id, amount, True)
     tx_hash = ExchangeContract.functions.\
         executeOrder(order_id, amount, True).\
-        transact({'from':invoker['account_address'], 'gas':4000000})
+        transact({'from':invoker['account_address'], 'gas':gas})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 # 直近注文IDを取得
@@ -350,3 +352,24 @@ def membership_get_latest_orderid(exchange):
         get_contract('IbetMembershipExchange', exchange['address'])
     latest_orderid = ExchangeContract.functions.latestOrderId().call()
     return latest_orderid
+
+# 直近約定IDを取得
+def membership_get_latest_agreementid(exchange, order_id):
+    ExchangeContract = Contract.\
+        get_contract('IbetMembershipExchange', exchange['address'])
+    latest_agreementid = \
+        ExchangeContract.functions.latestAgreementIds(order_id).call()
+    return latest_agreementid
+
+# 会員権約定の資金決済
+def membership_confirm_agreement(invoker, exchange, order_id, agreement_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+    ExchangeContract = Contract.\
+        get_contract('IbetMembershipExchange', exchange['address'])
+    gas = ExchangeContract.estimateGas().\
+        confirmAgreement(order_id, agreement_id)
+    tx_hash = ExchangeContract.functions.\
+        confirmAgreement(order_id, agreement_id).\
+        transact({'from':invoker['account_address'], 'gas':gas})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
