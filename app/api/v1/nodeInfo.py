@@ -28,6 +28,12 @@ class NodeInfo(BaseResource):
             'ibet_exchange_address': os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'),
             'ibet_exchange_abi': contracts['IbetStraightBondExchange']['abi'],
 
+            'ibet_membership_exchange_address': os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'),
+            'ibet_membership_exchange_abi': contracts['IbetMembershipExchange']['abi'],
+
+            'ibet_coupon_exchange_address': os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'),
+            'ibet_coupon_exchange_abi': contracts['IbetCouponExchange']['abi'],
+
             'agent_address': os.environ.get('AGENT_ADDRESS'),
         }
 
