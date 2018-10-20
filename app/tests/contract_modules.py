@@ -206,6 +206,19 @@ def issue_coupon_token(invoker, attribute):
 
     return {'address': contract_address, 'abi': abi}
 
+# クーポンTokenの公開リスト登録
+def coupon_register_list(invoker, token, token_list):
+    TokenListContract = Contract.\
+        get_contract('TokenList', token_list['address'])
+
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+
+    tx_hash = TokenListContract.functions.\
+        register(token['address'], 'IbetCoupon').\
+        transact({'from':invoker['account_address'], 'gas':4000000})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
 # クーポントークンのデポジット
 def deposit_coupon_token(invoker, coupon_token, coupon_exchange, value):
     web3.eth.defaultAccount = invoker['account_address']
