@@ -25,8 +25,17 @@ class TestV1NodeInfo():
         personalinfo_address = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
         personalinfo_abi = contracts['PersonalInfo']['abi']
 
-        exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
-        exchange_abi = contracts['IbetStraightBondExchange']['abi']
+        bond_exchange_address = \
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        bond_exchange_abi = contracts['IbetStraightBondExchange']['abi']
+
+        membership_exchange_address = \
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        membership_exchange_abi = contracts['IbetMembershipExchange']['abi']
+
+        coupon_exchange_address = \
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        coupon_exchange_abi = contracts['IbetCouponExchange']['abi']
 
         agent_address = os.environ.get('AGENT_ADDRESS')
 
@@ -35,8 +44,12 @@ class TestV1NodeInfo():
             'white_list_abi': whitelist_abi,
             'personal_info_address': personalinfo_address,
             'personal_info_abi': personalinfo_abi,
-            'ibet_exchange_address': exchange_address,
-            'ibet_exchange_abi': exchange_abi,
+            'ibet_exchange_address': bond_exchange_address,
+            'ibet_exchange_abi': bond_exchange_abi,
+            'ibet_membership_exchange_address': membership_exchange_address,
+            'ibet_membership_exchange_abi': membership_exchange_abi,
+            'ibet_coupon_exchange_address': coupon_exchange_address,
+            'ibet_coupon_exchange_abi': coupon_exchange_abi,
             'agent_address': agent_address
         }
 
