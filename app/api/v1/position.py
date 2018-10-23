@@ -24,7 +24,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # ------------------------------
-# 保有トークン一覧
+# [普通社債]保有トークン一覧
 # ------------------------------
 class MyTokens(BaseResource):
 
@@ -51,10 +51,6 @@ class MyTokens(BaseResource):
         # Bond Exchange Contract
         BondExchangeContract = Contract.get_contract(
             'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
-
-        # Coupon Exchange Contract
-        CouponExchangeContract = Contract.get_contract(
-            'IbetCouponExchange', os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -98,25 +94,6 @@ class MyTokens(BaseResource):
             except:
                 pass
 
-            # イベント抽出
-            #  IbetCoupon（トークン送信イベント）
-            #  _account_addressと『送信先アドレス』が一致するイベントを抽出する。
-            try:
-                event_filter = CouponExchangeContract.events.Transfer.createFilter(
-                    fromBlock='earliest',
-                    argument_filters={'to': to_checksum_address(_account_address)}
-                )
-                entries = event_filter.get_all_entries()
-                web3.eth.uninstallFilter(event_filter.filter_id)
-
-                for entry in entries:
-                    portfolio_list.append({
-                        'account': entry['args']['to'],
-                        'token_address': entry['args']['tokenAddress'],
-                    })
-            except:
-                pass
-
             # リストをユニークにして、保有候補リストを取得する
             # Note: ここで取得されたリストのトークンを全て保有しているとは限らない。
             #       例えば、既に売却済みのトークンも保有候補リストには含まれている。
@@ -137,59 +114,10 @@ class MyTokens(BaseResource):
                 token_address = to_checksum_address(item['token_address'])
                 token_template = ListContract.functions.getTokenByAddress(token_address).call()
 
-                # 1) TokenListに未登録の場合
-                #    → クーポントークンの詳細情報を取得する
-                # 2) TokenListに登録済の場合
-                #    → 債券トークンの詳細情報を取得する
-                if token_template[0] == '0x0000000000000000000000000000000000000000': # 未登録の場合
-                    CouponTokenContract = Contract.get_contract('IbetCoupon', token_address)
+                if token_template[1] == 'IbetStraightBond':
+                    BondTokenContract = Contract.\
+                        get_contract('IbetStraightBond', token_address)
                     try:
-                        isValid = CouponTokenContract.functions.isValid().call()
-                        if isValid == False:
-                            continue
-                        else:
-                            owner_address = CouponTokenContract.functions.owner().call()
-                            company_name = MyTokens.get_company_name(company_list, owner_address)
-                            name = CouponTokenContract.functions.name().call()
-                            symbol = CouponTokenContract.functions.symbol().call()
-                            totalSupply = CouponTokenContract.functions.totalSupply().call()
-                            details = CouponTokenContract.functions.details().call()
-                            memo = CouponTokenContract.functions.memo().call()
-                            expirationDate = CouponTokenContract.functions.expirationDate().call()
-                            transferable = CouponTokenContract.functions.transferable().call()
-                            image_url_small = CouponTokenContract.functions.getImageURL(0).call()
-                            image_url_medium = CouponTokenContract.functions.getImageURL(1).call()
-                            image_url_large = CouponTokenContract.functions.getImageURL(2).call()
-                            balance = CouponTokenContract.functions.balanceOf(owner).call()
-                            used = CouponTokenContract.functions.usedOf(owner).call()
-                            position_list.append({
-                                'token': {
-                                    'token_address': token_address,
-                                    'token_template': 'IbetCoupon',
-                                    'owner_address': owner_address,
-                                    'company_name': company_name,
-                                    'name': name,
-                                    'symbol': symbol,
-                                    'totalSupply': totalSupply,
-                                    'details': details,
-                                    'memo': memo,
-                                    'expirationDate': expirationDate,
-                                    'transferable': transferable,
-                                    'image_url': [
-                                        {'type': 'small', 'url': image_url_small},
-                                        {'type': 'medium', 'url': image_url_medium},
-                                        {'type': "large", 'url': image_url_large}
-                                    ],
-                                },
-                                'balance': balance,
-                                'used': used
-                            })
-                    except:
-                        continue
-                else: # 登録済みの場合
-                    if token_template[1] == 'IbetStraightBond':
-                        BondTokenContract = Contract.\
-                            get_contract('IbetStraightBond', token_address)
                         balance = BondTokenContract.functions.balanceOf(owner).call()
                         commitment = BondExchangeContract.functions.\
                             commitments(owner, token_address).call()
@@ -206,8 +134,8 @@ class MyTokens(BaseResource):
                             faceValue = BondTokenContract.functions.faceValue().call()
                             interestRate = BondTokenContract.functions.interestRate().call()
 
-                            interestPaymentDate_string = BondTokenContract.functions.\
-                                interestPaymentDate().call()
+                            interestPaymentDate_string = \
+                                BondTokenContract.functions.interestPaymentDate().call()
                             interestPaymentDate1 = ''
                             interestPaymentDate2 = ''
                             interestPaymentDate3 = ''
@@ -319,6 +247,350 @@ class MyTokens(BaseResource):
                                 'balance': balance,
                                 'commitment': commitment
                             })
+                    except:
+                        continue
+
+        self.on_success(res, position_list)
+
+    @staticmethod
+    def get_company_name(company_list, owner_address):
+        company_name = ''
+        for company in company_list:
+            if to_checksum_address(company['address']) == owner_address:
+                company_name = company['corporate_name']
+        return company_name
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
+
+# ------------------------------
+# [会員権]保有トークン一覧
+# ------------------------------
+class MembershipMyTokens(BaseResource):
+
+    '''
+    Handle for endpoint: /v1/Membership/MyTokens/
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.Position.MembershipMyTokens')
+
+        request_json = MembershipMyTokens.validate(req)
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json' , 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL).json()
+        except:
+            company_list = []
+
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract(
+            'IbetMembershipExchange',
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        position_list = []
+        for _account_address in request_json['account_address_list']:
+            portfolio_list = []
+
+            # イベント抽出
+            #  IbetMembership（約定イベント）
+            #  _account_addressと『買注文アドレス』が一致するイベントを抽出する。
+            try:
+                event_filter = ExchangeContract.events.Agree.\
+                    createFilter(
+                        fromBlock='earliest',
+                        argument_filters={
+                            'buyAddress': to_checksum_address(_account_address)
+                        }
+                    )
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+                for entry in entries:
+                    portfolio_list.append({
+                        'account': entry['args']['buyAddress'],
+                        'token_address': entry['args']['tokenAddress'],
+                    })
+            except:
+                pass
+
+            # イベント抽出
+            #  IbetMembership（トークン送信イベント）
+            #  _account_addressと『送信先アドレス』が一致するイベントを抽出する。
+            try:
+                event_filter = ExchangeContract.events.Transfer.\
+                    createFilter(
+                        fromBlock='earliest',
+                        argument_filters={
+                            'to': to_checksum_address(_account_address)
+                        }
+                    )
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+                for entry in entries:
+                    portfolio_list.append({
+                        'account': entry['args']['to'],
+                        'token_address': entry['args']['tokenAddress'],
+                    })
+            except:
+                pass
+
+            # リストをユニークにして、保有候補リストを取得する
+            # Note: ここで取得されたリストのトークンを全て保有しているとは限らない。
+            #       例えば、既に売却済みのトークンも保有候補リストには含まれている。
+            portfolio_list_uniq = []
+            for portfolio in portfolio_list:
+                if portfolio not in portfolio_list_uniq:
+                    portfolio_list_uniq.append(portfolio)
+
+            # token_addressの昇順にソートする
+            portfolio_list_uniq = sorted(
+                portfolio_list_uniq,
+                key=lambda x:x['token_address']
+            )
+
+            # 保有候補リストに対して1件ずつトークンの詳細情報を取得していく
+            for item in portfolio_list_uniq:
+                owner = to_checksum_address(item['account'])
+                token_address = to_checksum_address(item['token_address'])
+                token_template = ListContract.functions.\
+                    getTokenByAddress(token_address).call()
+
+                if token_template[1] == 'IbetMembership':
+                    TokenContract = Contract.\
+                        get_contract('IbetMembership', token_address)
+                    try:
+                        balance = TokenContract.functions.balanceOf(owner).call()
+                        commitment = ExchangeContract.functions.\
+                            commitments(owner, token_address).call()
+
+                        # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
+                        # Note: 現状は、債券トークンの場合、残高・残注文ゼロの場合は詳細情報を
+                        #       返さない仕様としている。
+                        if balance == 0 and commitment == 0:
+                            continue
+                        else:
+                            name = TokenContract.functions.name().call()
+                            symbol = TokenContract.functions.symbol().call()
+                            total_supply = TokenContract.functions.totalSupply().call()
+                            details = TokenContract.functions.details().call()
+                            return_details = TokenContract.functions.returnDetails().call()
+                            expiration_date = TokenContract.functions.expirationDate().call()
+                            memo = TokenContract.functions.memo().call()
+                            transferable = TokenContract.functions.transferable().call()
+                            status = TokenContract.functions.status().call()
+                            image_url_small = TokenContract.functions.getImageURL(0).call()
+                            image_url_medium = TokenContract.functions.getImageURL(1).call()
+                            image_url_large = TokenContract.functions.getImageURL(2).call()
+                            owner_address = TokenContract.functions.owner().call()
+                            company_name = MembershipMyTokens.\
+                                get_company_name(company_list, owner_address)
+
+                            position_list.append({
+                                'token': {
+                                    'token_address': token_address,
+                                    'token_template': token_template[1],
+                                    'company_name': company_name,
+                                    'name': name,
+                                    'symbol': symbol,
+                                    'total_supply': total_supply,
+                                    'details': details,
+                                    'return_details': return_details,
+                                    'expiration_date': expiration_date,
+                                    'memo': memo,
+                                    'transferable': transferable,
+                                    'status': status,
+                                    'image_url': [
+                                        {'type': 'small', 'url': image_url_small},
+                                        {'type': 'medium', 'url': image_url_medium},
+                                        {'type': "large", 'url': image_url_large}
+                                    ],
+                                },
+                                'balance': balance,
+                                'commitment': commitment
+                            })
+                    except:
+                        continue
+
+        self.on_success(res, position_list)
+
+    @staticmethod
+    def get_company_name(company_list, owner_address):
+        company_name = ''
+        for company in company_list:
+            if to_checksum_address(company['address']) == owner_address:
+                company_name = company['corporate_name']
+        return company_name
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
+
+# ------------------------------
+# [クーポン]保有トークン一覧
+# ------------------------------
+class CouponMyTokens(BaseResource):
+
+    '''
+    Handle for endpoint: /v1/Coupon/MyTokens/
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.Position.MyTokens')
+
+        request_json = MyTokens.validate(req)
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json' , 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL).json()
+        except:
+            company_list = []
+
+        # Coupon Exchange Contract
+        CouponExchangeContract = Contract.get_contract(
+            'IbetCouponExchange', os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
+
+        position_list = []
+        for _account_address in request_json['account_address_list']:
+            portfolio_list = []
+
+            # イベント抽出
+            #  IbetCoupon（トークン送信イベント）
+            #  _account_addressと『送信先アドレス』が一致するイベントを抽出する。
+            try:
+                event_filter = CouponExchangeContract.events.Transfer.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'to': to_checksum_address(_account_address)}
+                )
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+                for entry in entries:
+                    portfolio_list.append({
+                        'account': entry['args']['to'],
+                        'token_address': entry['args']['tokenAddress'],
+                    })
+            except:
+                pass
+
+            # リストをユニークにして、保有候補リストを取得する
+            # Note: ここで取得されたリストのトークンを全て保有しているとは限らない。
+            #       例えば、既に売却済みのトークンも保有候補リストには含まれている。
+            portfolio_list_uniq = []
+            for portfolio in portfolio_list:
+                if portfolio not in portfolio_list_uniq:
+                    portfolio_list_uniq.append(portfolio)
+
+            # token_addressの昇順にソートする
+            portfolio_list_uniq = sorted(
+                portfolio_list_uniq,
+                key=lambda x:x['token_address']
+            )
+
+            # 保有候補リストに対して1件ずつトークンの詳細情報を取得していく
+            for item in portfolio_list_uniq:
+                owner = to_checksum_address(item['account'])
+                token_address = to_checksum_address(item['token_address'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+
+                if token_template[1] == 'IbetCoupon':
+                    CouponTokenContract = Contract.get_contract('IbetCoupon', token_address)
+                    try:
+                        isValid = CouponTokenContract.functions.isValid().call()
+                        if isValid == False:
+                            continue
+                        else:
+                            owner_address = CouponTokenContract.functions.owner().call()
+                            company_name = MyTokens.get_company_name(company_list, owner_address)
+                            name = CouponTokenContract.functions.name().call()
+                            symbol = CouponTokenContract.functions.symbol().call()
+                            totalSupply = CouponTokenContract.functions.totalSupply().call()
+                            details = CouponTokenContract.functions.details().call()
+                            memo = CouponTokenContract.functions.memo().call()
+                            expirationDate = CouponTokenContract.functions.expirationDate().call()
+                            transferable = CouponTokenContract.functions.transferable().call()
+                            image_url_small = CouponTokenContract.functions.getImageURL(0).call()
+                            image_url_medium = CouponTokenContract.functions.getImageURL(1).call()
+                            image_url_large = CouponTokenContract.functions.getImageURL(2).call()
+                            balance = CouponTokenContract.functions.balanceOf(owner).call()
+                            used = CouponTokenContract.functions.usedOf(owner).call()
+                            position_list.append({
+                                'token': {
+                                    'token_address': token_address,
+                                    'token_template': 'IbetCoupon',
+                                    'owner_address': owner_address,
+                                    'company_name': company_name,
+                                    'name': name,
+                                    'symbol': symbol,
+                                    'totalSupply': totalSupply,
+                                    'details': details,
+                                    'memo': memo,
+                                    'expirationDate': expirationDate,
+                                    'transferable': transferable,
+                                    'image_url': [
+                                        {'type': 'small', 'url': image_url_small},
+                                        {'type': 'medium', 'url': image_url_medium},
+                                        {'type': "large", 'url': image_url_large}
+                                    ],
+                                },
+                                'balance': balance,
+                                'used': used
+                            })
+                    except:
+                        continue
 
         self.on_success(res, position_list)
 

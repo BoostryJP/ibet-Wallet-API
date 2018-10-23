@@ -8,12 +8,9 @@ import app.model
 from .account_config import eth_account
 from .contract_modules import issue_bond_token, offer_bond_token, \
     register_personalinfo, register_whitelist, take_buy_bond_token, get_latest_orderid, \
-    register_bond_list, get_latest_agreementid, bond_confirm_agreement, \
-    issue_coupon_token, deposit_coupon_token, transfer_coupon_token, \
-    invalidate_coupon_token
+    register_bond_list, get_latest_agreementid, bond_confirm_agreement
 
-
-# 保有トークン一覧API
+# [普通社債]保有トークン一覧API
 # /v1/MyTokens/
 class TestV1MyTokens():
 
@@ -83,88 +80,24 @@ class TestV1MyTokens():
 
         return bond_token
 
-    # クーポントークンの保有状態を作成
-    @staticmethod
-    def generate_coupon_position(coupon_exchange):
-        issuer = eth_account['issuer']
-        trader = eth_account['trader']
-        attribute = {
-            'name': 'テストクーポン',
-            'symbol': 'COUPON',
-            'totalSupply': 10000,
-            'details': 'クーポン詳細',
-            'memo': 'クーポンメモ欄',
-            'expirationDate': '20191231',
-            'transferable': True
-        }
-
-        # ＜発行体オペレーション＞
-        #   1) クーポントークン発行
-        #   2) Exchangeにデポジット（10トークン）
-        #   3) 投資家に付与（10トークン）
-        coupon_token = issue_coupon_token(issuer, attribute)
-        deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-            trader['account_address'], 10)
-        return coupon_token
-
-    # 無効化クーポントークンの保有状態を作成
-    @staticmethod
-    def generate_coupon_position_invalid(coupon_exchange):
-        issuer = eth_account['issuer']
-        trader = eth_account['trader']
-        attribute = {
-            'name': 'テストクーポン',
-            'symbol': 'COUPON',
-            'totalSupply': 10000,
-            'details': 'クーポン詳細',
-            'memo': 'クーポンメモ欄',
-            'expirationDate': '20191231',
-            'transferable': True
-        }
-
-        # ＜発行体オペレーション＞
-        #   1) クーポントークン発行
-        #   2) Exchangeにデポジット（10トークン）
-        #   3) 投資家に付与（10トークン）
-        #   4) クーポントークンを無効化
-        coupon_token = issue_coupon_token(issuer, attribute)
-        deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-            trader['account_address'], 10)
-        invalidate_coupon_token(issuer, coupon_token)
-        return coupon_token
-
     # ＜正常系1＞
     # 債券トークン保有
     #  債券新規発行 -> 約定（1件）
     #   -> 該当債券の預かりが返却
     def test_position_normal_1(self, client, session, shared_contract):
         bond_exchange = shared_contract['IbetStraightBondExchange']
-        coupon_exchange = shared_contract['IbetCouponExchange']
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']
         token_list = shared_contract['TokenList']
-
-        print("-- contract_address --")
-        print(bond_exchange['address'])
-        print(coupon_exchange['address'])
-        print(personal_info['address'])
-        print(white_list['address'])
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
         bond_token = TestV1MyTokens.generate_bond_position(
             bond_exchange, personal_info, white_list, token_list)
-
         token_address = bond_token['address']
 
-        print("-- token_address --")
-        print(token_address)
-
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         headers = {'Content-Type': 'application/json'}
@@ -218,99 +151,12 @@ class TestV1MyTokens():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
 
+        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
+                count = 1
                 assert token == assumed_body
-
-    # ＜正常系2-1＞
-    # クーポントークン保有
-    #  クーポン新規発行 -> 投資家割当
-    #   -> 該当クーポンの保有情報が返却
-    def test_position_normal_2_1(self, client, session, shared_contract):
-        bond_exchange = shared_contract['IbetStraightBondExchange']
-        coupon_exchange = shared_contract['IbetCouponExchange']
-        token_list = shared_contract['TokenList']
-
-        account = eth_account['trader']
-        request_params = {"account_address_list": [account['account_address']]}
-
-        coupon_token = TestV1MyTokens.\
-            generate_coupon_position(coupon_exchange)
-        coupon_address = coupon_token['address']
-
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
-
-        assumed_body = {
-            'token': {
-                'token_address': coupon_address,
-                'token_template': 'IbetCoupon',
-                'owner_address': eth_account['issuer']['account_address'],
-                'company_name': '',
-                'name': 'テストクーポン',
-                'symbol': 'COUPON',
-                'totalSupply': 10000,
-                'details': 'クーポン詳細',
-                'memo': 'クーポンメモ欄',
-                'expirationDate': '20191231',
-                'transferable': True,
-                'image_url': [{
-                    'type': 'small',
-                    'url': ''
-                }, {
-                    'type': 'medium',
-                    'url': ''
-                }, {
-                    'type': 'large',
-                    'url': ''
-                }]
-            },
-            'balance': 10,
-            'used': 0
-        }
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        for token in resp.json['data']:
-            if token['token']['token_address'] == coupon_address:
-                assert token == assumed_body
-
-    # ＜正常系2-2＞
-    # クーポントークン保有（無効化済）
-    #  クーポン新規発行 -> 投資家割当 -> クーポン無効化
-    #   -> 該当クーポンの保有情報が返却されない
-    def test_position_normal_2_2(self, client, session, shared_contract):
-        bond_exchange = shared_contract['IbetStraightBondExchange']
-        coupon_exchange = shared_contract['IbetCouponExchange']
-        token_list = shared_contract['TokenList']
-
-        account = eth_account['trader']
-        request_params = {"account_address_list": [account['account_address']]}
-
-        coupon_token = TestV1MyTokens.\
-            generate_coupon_position_invalid(coupon_exchange)
-        coupon_address = coupon_token['address']
-
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
-
-        assumed_body = []
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        for token in resp.json['data']:
-            assert token['token']['token_address'] != coupon_address
+        assert count == 1
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_position_error_1(self, client):
