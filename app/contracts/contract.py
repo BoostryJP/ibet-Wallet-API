@@ -16,7 +16,7 @@ class Contract:
     def get_contract(contract_name, address):
         contracts = json.load(open('data/contracts.json' , 'r'))
         contract = web3.eth.contract(
-            address = to_checksum_address(address),
+            address = address,
             abi = contracts[contract_name]['abi'],
         )
         return contract
