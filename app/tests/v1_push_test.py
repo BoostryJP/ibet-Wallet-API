@@ -121,7 +121,7 @@ class TestV1Push():
         assert tmpdata is None
 
         # SNS確認
-        flag = Flase
+        flag = False
         client = boto3.client('sns')
         try:
             response = client.get_endpoint_attributes(
