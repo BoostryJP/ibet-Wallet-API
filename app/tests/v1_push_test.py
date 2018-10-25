@@ -25,7 +25,7 @@ class TestV1Push():
         resp = client.simulate_auth_post(self.apiurl,
             json={
                 "device_id": "aiueoaiui",
-                "device_token": "aiueo",
+                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c29",
             },
             private_key=self.private_key)
         LOG.debug(resp.json)
