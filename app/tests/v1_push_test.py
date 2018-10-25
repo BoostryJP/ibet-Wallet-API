@@ -26,7 +26,6 @@ class TestV1Push():
             json={
                 "device_id": "aiueoaiui",
                 "device_token": "aiueo",
-                "address": self.address,
             },
             private_key=self.private_key)
         LOG.debug(resp.json)
