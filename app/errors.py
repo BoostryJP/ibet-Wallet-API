@@ -149,4 +149,4 @@ class EthValueError(AppError):
 class SNSNotFoundError(AppError):
     def __init__(self, code=None, message=None):
         super().__init__(ERR_SNS_NOTFOUND_ERROR)
-        self.error['description'] = 'code: %i, message: %s' % (code, message)
+        self.error['description'] = description
