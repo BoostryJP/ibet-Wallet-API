@@ -6,29 +6,64 @@ LOG = log.get_logger()
 
 class TestV1Push():
     # テスト対象API
-    apiurl = "/v1/Push/UpdateDevice"
+    url_UpdateDevice = "/v1/Push/UpdateDevice"
+    url_DeleteDevice = "/v1/Push/DeleteDevice"
 
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
 
-    def _insert_test_data(self, session):
-        p = Push()
-        p.device_id = "tanmatukoyuuid"
-        p.account_address = self.address
-        p.device_token = "aaa"
-        p.device_endpoint_arn = "aaa"
-        session.add(p)
+    upd_data_1 = {
+        "device_id": "aiueoaiui",
+        "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+    }
+    upd_data_2 = {
+        "device_id": "aiueoaiui",
+        "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c29",
+    }
+    del_data_1 = {
+        "device_id": "aiueoaiui"
+    }
 
     # ＜正常系1_1＞
     # device token新規登録
     def test_normal_1_1(self, client, session):
-        resp = client.simulate_auth_post(self.apiurl,
-            json={
-                "device_id": "aiueoaiui",
-                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c29",
-            },
+        resp = client.simulate_auth_post(self.url_UpdateDevice,
+            json=self.upd_data_1,
             private_key=self.private_key)
-        LOG.debug(resp.json)
+
+        query = session.query(Push). \
+            filter(Push.device_id == self.upd_data_1['device_id'])
+        tmpdata = query.first()
 
         assert resp.status_code == 200
+        assert tmpdata.device_id == self.upd_data_1['device_id']
+        assert tmpdata.device_token == self.upd_data_1['device_token']
 
+    # ＜正常系1_2＞
+    # device token更新登録
+    def test_normal_1_2(self, client, session):
+        resp = client.simulate_auth_post(self.url_UpdateDevice,
+            json=self.upd_data_2,
+            private_key=self.private_key)
+
+        query = session.query(Push). \
+            filter(Push.device_id == self.upd_data_2['device_id'])
+        tmpdata = query.first()
+
+        assert resp.status_code == 200
+        assert tmpdata.device_id == self.upd_data_2['device_id']
+        assert tmpdata.device_token == self.upd_data_2['device_token']
+
+    # ＜正常系2_1＞
+    # device token削除
+    def test_normal_2_1(self, client, session):
+        resp = client.simulate_auth_post(self.url_DeleteDevice,
+            json=self.del_data_1,
+            private_key=self.private_key)
+
+        query = session.query(Push). \
+            filter(Push.device_id == del_data_1['device_id'])
+        tmpdata = query.first()
+
+        assert resp.status_code == 200
+        assert tmpdata is None

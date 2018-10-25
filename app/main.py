@@ -89,6 +89,7 @@ class App(falcon.API):
 
         # push通知デバイス登録
         self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
+        self.add_route('/v1/Push/DeleteDevice', push.DeleteDevice())
 
         self.add_error_handler(AppError, AppError.handle)
 

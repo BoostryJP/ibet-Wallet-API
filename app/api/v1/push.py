@@ -26,18 +26,17 @@ class UpdateDevice(BaseResource):
     def on_post(self, req, res):
         LOG.info('v1.Push.UpdateDevice')
 
-        session = req.context["session"]
-
         # 入力値チェック
         request_json = UpdateDevice.validate(req)
 
-        # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
         # DBに登録
+        session = req.context["session"]
         # クエリを設定
         query = session.query(Push). \
             filter(Push.device_id == request_json['device_id'])
         device_data = query.first()
+        # eth address
+        address = to_checksum_address(req.context['address'])
         # device idがある場合（既存デバイス）
         if device_data is not None:
             update_flag = False
@@ -86,6 +85,55 @@ class UpdateDevice(BaseResource):
                 'required': True,
                 'empty': False,
             },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(req.context['address']):
+            raise InvalidParameterError
+
+        return validator.document
+
+# ------------------------------
+# [Push]device tokenの削除
+# ------------------------------
+class DeleteDevice(BaseResource):
+    '''
+    Handle for endpoint: /v1/Push/DeleteDevice
+    '''
+    @falcon.before(VerifySignature())
+    def on_post(self, req, res):
+        LOG.info('v1.Push.DeleteDevice')
+
+        # 入力値チェック
+        request_json = DeleteDevice.validate(req)
+
+        # クエリを設定
+        session = req.context["session"]
+        query = session.query(Push). \
+            filter(Push.device_id == request_json['device_id'])
+        device_data = query.first()
+        if device_data is not None:
+            # SNSのendpoint ARNを削除
+            delete_endpoint(device_data.endpoint_arn)
+            # テーブルの行を削除
+            session.delete(device_data)
+
+        self.on_success(res, None)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'device_id': {
+                'type': 'string',
+                'required': True,
+                'empty': False,
+            }
         })
 
         if not validator.validate(request_json):
