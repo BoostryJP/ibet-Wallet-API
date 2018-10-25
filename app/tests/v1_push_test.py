@@ -27,6 +27,5 @@ class TestV1Push():
             },
             private_key=self.private_key)
 
-        
         assert resp.status_code == 200
 
