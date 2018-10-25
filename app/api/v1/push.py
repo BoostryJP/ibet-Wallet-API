@@ -2,6 +2,7 @@
 import json
 import falcon
 import boto3
+from botocore.exceptions import ClientError
 from cerberus import Validator
 from web3 import Web3
 from eth_utils import to_checksum_address
@@ -146,16 +147,22 @@ class DeleteDevice(BaseResource):
 
 # device tokenをapplication arnに登録
 def add_endpoint(device_token):
-    client = boto3.client('sns')
-    endpoint = client.create_platform_endpoint(
-        PlatformApplicationArn=config.SNS_APPLICATION_ARN,
-        Token=device_token
-    )
+    try:
+        client = boto3.client('sns')
+        endpoint = client.create_platform_endpoint(
+            PlatformApplicationArn=config.SNS_APPLICATION_ARN,
+            Token=device_token
+        )
+    except ClientError:
+        raise ClientError
     return endpoint['EndpointArn']
 
 # 古いdevice tokenのarnを削除
 def delete_endpoint(endpoint_arn):
-    client = boto3.client('sns')
-    client.delete_endpoint(
-        EndpointArn=endpoint_arn
-    )
+    try:
+        client = boto3.client('sns')
+        client.delete_endpoint(
+            EndpointArn=endpoint_arn
+        )
+    except ClientError:
+        raise ClientError

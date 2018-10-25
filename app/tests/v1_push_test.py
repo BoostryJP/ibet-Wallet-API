@@ -19,15 +19,15 @@ class TestV1Push():
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
     upd_data_1 = {
-        "device_id": "aiueoaiui",
+        "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
         "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
     }
     upd_data_2 = {
-        "device_id": "aiueoaiui",
+        "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
         "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c29",
     }
     del_data_1 = {
-        "device_id": "aiueoaiui"
+        "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F"
     }
 
     # ＜正常系1_1＞
@@ -124,9 +124,33 @@ class TestV1Push():
         flag = False
         client = boto3.client('sns')
         try:
-            response = client.get_endpoint_attributes(
+            client.get_endpoint_attributes(
                 EndpointArn=device_endpoint_arn
             )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NotFound':
+                flag = True
+        assert flag
+
+    # ＜エラー系1_1＞
+    # 存在しないdevice tokenを削除
+    # DBには存在するが、SNSには存在しない
+    def test_error_1_1(self, client, session):
+        # 存在しないデータを登録
+        device_data = Push()
+        device_data.device_id = self.del_data_1['device_id']
+        device_data.account_address = self.address
+        device_data.device_token = self.upd_data_1['device_token']
+        device_data.device_endpoint_arn = 'arn:aws:sns:ap-northeast-1:241627671680:endpoint/APNS_SANDBOX/ionpush/50847470-27dd-3bc7-9768-fb31c1ff93b4'
+        session.add(device_data)
+        session.commit()
+
+        # 削除リクエスト
+        flag = False
+        try:
+            resp = client.simulate_auth_post(self.url_DeleteDevice,
+            json=self.del_data_1,
+            private_key=self.private_key)
         except ClientError as e:
             if e.response['Error']['Code'] == 'NotFound':
                 flag = True
