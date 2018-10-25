@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import falcon
+import boto3
 from cerberus import Validator
 from web3 import Web3
 from eth_utils import to_checksum_address
@@ -37,7 +38,7 @@ class UpdateDevice(BaseResource):
         query = session.query(Push). \
             filter(Push.device_id == request_json['device_id'])
         device_data = query.first()
-        # device idがある場合
+        # device idがある場合（既存デバイス）
         if device_data is not None:
             update_flag = False
             if device_data.account_address != address:
@@ -46,14 +47,27 @@ class UpdateDevice(BaseResource):
             if device_data.device_token != request_json['device_token']:
                 device_data.device_token = request_json['device_token']
                 update_flag = True
-                # AWS SNSのendpointを更新
+                # 古いdevice tokenを削除
+                delete_endpoint(device_data.endpoint_arn)
+                # AWS SNSのendpointを登録
+                endpoint = add_endpoint(request_json['device_token'])
+                device_data.endpoint_arn = endpoint
             if update_flag:
-                self.db.merge(device_data)
+                session.merge(device_data)
+        # device idがない（新規デバイス）
         else:
-            # insert
-                        
+            # AWS SNSのendpointを登録
+            endpoint = add_endpoint(request_json['device_token'])
+            # DBへinsert
+            device_data = Push()
+            device_data.device_id = request_json['device_id']
+            device_data.account_address = address
+            device_data.device_token = request_json['device_token']
+            device_data.device_token = request_json['device_token']
+            device_data.device_endpoint_arn = endpoint
+            session.add(device_data)
 
-        self.on_success(res, customer_id)
+        self.on_success(res, None)
 
     @staticmethod
     def validate(req):
@@ -81,3 +95,19 @@ class UpdateDevice(BaseResource):
             raise InvalidParameterError
 
         return validator.document
+
+# device tokenをapplication arnに登録
+def add_endpoint(device_token):
+    client = boto3.client('sns')
+    endpoint = client.create_platform_endpoint(
+        PlatformApplicationArn=config.SNS_APPLICATION_ARN,
+        Token=device_token
+    )
+    return endpoint['EndpointArn']
+
+# 古いdevice tokenのarnを削除
+def delete_endpoint(endpoint_arn):
+    client = boto3.client('sns')
+    client.delete_endpoint(
+        EndpointArn=endpoint_arn
+    )

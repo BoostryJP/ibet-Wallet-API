@@ -36,3 +36,6 @@ else:
 
 OMISE_SECRET = os.environ.get('OMISE_SECRET')
 OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
+
+SNS_REGION = 'ap-northeast-1'
+SNS_APPLICATION_ARN = os.environ.get('SNS_APPLICATION_ARN')
