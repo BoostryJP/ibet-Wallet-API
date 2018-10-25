@@ -1,6 +1,9 @@
 from app.model import Push
 from datetime import datetime
 
+from app import log
+LOG = log.get_logger()
+
 class TestV1Push():
     # テスト対象API
     apiurl = "/v1/Push/UpdateDevice"
