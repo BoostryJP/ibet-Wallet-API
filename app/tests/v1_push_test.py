@@ -146,12 +146,13 @@ class TestV1Push():
         session.commit()
 
         # 削除リクエスト
-        flag = False
-        try:
-            resp = client.simulate_auth_post(self.url_DeleteDevice,
+        resp = client.simulate_auth_post(self.url_DeleteDevice,
             json=self.del_data_1,
             private_key=self.private_key)
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'NotFound':
-                flag = True
-        assert flag
+
+        assert resp.status_code == 404
+        assert resp.json["meta"] ==  {
+            'code': 50,
+            'message': 'SNS NotFoundError'
+        }
+ 

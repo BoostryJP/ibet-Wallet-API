@@ -63,6 +63,13 @@ ERR_ETH_VALUE_ERROR = {
     'title': 'Eth ValueError'
 }
 
+ERR_SNS_NOTFOUND_ERROR = {
+    'status': falcon.HTTP_404,
+    'code': 50,
+    'title': 'SNS NotFoundError'
+}
+
+
 class AppError(Exception):
     def __init__(self, error=ERR_UNKNOWN, description=None):
         self.error = error
@@ -137,4 +144,9 @@ class DataNotExistsError(AppError):
 class EthValueError(AppError):
     def __init__(self, code=None, message=None):
         super().__init__(ERR_ETH_VALUE_ERROR)
+        self.error['description'] = 'code: %i, message: %s' % (code, message)
+
+class SNSNotFoundError(AppError):
+    def __init__(self, code=None, message=None):
+        super().__init__(ERR_SNS_NOTFOUND_ERROR)
         self.error['description'] = 'code: %i, message: %s' % (code, message)

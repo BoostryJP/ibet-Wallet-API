@@ -9,7 +9,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError
+from app.errors import InvalidParameterError, SNSNotFoundError
 from app.utils.hooks import VerifySignature
 from app import config
 from app.model import Push
@@ -154,7 +154,7 @@ def add_endpoint(device_token):
             Token=device_token
         )
     except ClientError:
-        raise ClientError
+        raise SNSNotFoundError
     return endpoint['EndpointArn']
 
 # 古いdevice tokenのarnを削除
@@ -165,4 +165,4 @@ def delete_endpoint(endpoint_arn):
             EndpointArn=endpoint_arn
         )
     except ClientError:
-        raise ClientError
+        raise SNSNotFoundError
