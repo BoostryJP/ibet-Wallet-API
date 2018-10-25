@@ -128,7 +128,6 @@ class TestV1Push():
                 EndpointArn=device_endpoint_arn
             )
         except ClientError as e:
-            LOG.info(e.response['Error']['Code'])
-            if e.response['Error']['Code'] == 'NotFoundException':
+            if e.response['Error']['Code'] == 'NotFound':
                 flag = True
         assert flag
