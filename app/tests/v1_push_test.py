@@ -47,10 +47,10 @@ class TestV1Push():
 
         # SNS確認
         client = boto3.client('sns')
-        response = client.list_endpoints_by_platform_application(
-            PlatformApplicationArn=config.SNS_APPLICATION_ARN
+        response = client.get_endpoint_attributes(
+            EndpointArn=tmpdata.device_endpoint_arn
         )
-        assert response['Endpoints'][0]['EndpointArn'] == tmpdata.device_endpoint_arn
+        assert response is not None
 
     # ＜正常系1_2＞
     # device token更新登録(トークン変更))
@@ -70,11 +70,10 @@ class TestV1Push():
 
         # SNS確認
         client = boto3.client('sns')
-        response = client.list_endpoints_by_platform_application(
-            PlatformApplicationArn=config.SNS_APPLICATION_ARN
+        response = client.get_endpoint_attributes(
+            EndpointArn=tmpdata.device_endpoint_arn
         )
-        assert response['Endpoints'][0]['EndpointArn'] == tmpdata.device_endpoint_arn
-
+        assert response is not None
 
     # ＜正常系1_3＞
     # device token更新登録(eth address変更)))
@@ -94,11 +93,10 @@ class TestV1Push():
 
         # SNS確認
         client = boto3.client('sns')
-        response = client.list_endpoints_by_platform_application(
-            PlatformApplicationArn=config.SNS_APPLICATION_ARN
+        response = client.get_endpoint_attributes(
+            EndpointArn=tmpdata.device_endpoint_arn
         )
-        assert response['Endpoints'][0]['EndpointArn'] == tmpdata.device_endpoint_arn
-        assert len(response['Endpoints']) == 1
+        assert response is not None
 
     # ＜正常系2_1＞
     # device token削除
@@ -116,7 +114,7 @@ class TestV1Push():
 
         # SNS確認
         client = boto3.client('sns')
-        response = client.list_endpoints_by_platform_application(
-            PlatformApplicationArn=config.SNS_APPLICATION_ARN
+        response = client.get_endpoint_attributes(
+            EndpointArn=tmpdata.device_endpoint_arn
         )
-        assert len(response['Endpoints']) == 0
+        assert response is None
