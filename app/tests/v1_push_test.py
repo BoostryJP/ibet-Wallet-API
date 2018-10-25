@@ -26,6 +26,7 @@ class TestV1Push():
                 "address": self.address,
             },
             private_key=self.private_key)
+        LOG.debug(resp.json)
 
         assert resp.status_code == 200
 
