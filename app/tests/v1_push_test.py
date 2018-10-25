@@ -62,7 +62,7 @@ class TestV1Push():
             private_key=self.private_key)
 
         query = session.query(Push). \
-            filter(Push.device_id == del_data_1['device_id'])
+            filter(Push.device_id == self.del_data_1['device_id'])
         tmpdata = query.first()
 
         assert resp.status_code == 200
