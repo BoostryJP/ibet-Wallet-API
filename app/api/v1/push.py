@@ -53,6 +53,7 @@ class UpdateDevice(BaseResource):
                 device_data.endpoint_arn = endpoint
             if update_flag:
                 session.merge(device_data)
+                session.commit()
         # device idがない（新規デバイス）
         else:
             # AWS SNSのendpointを登録
@@ -62,10 +63,9 @@ class UpdateDevice(BaseResource):
             device_data.device_id = request_json['device_id']
             device_data.account_address = address
             device_data.device_token = request_json['device_token']
-            device_data.device_token = request_json['device_token']
             device_data.device_endpoint_arn = endpoint
             session.add(device_data)
-
+            session.commit()
         self.on_success(res, None)
 
     @staticmethod
@@ -119,7 +119,7 @@ class DeleteDevice(BaseResource):
             delete_endpoint(device_data.endpoint_arn)
             # テーブルの行を削除
             session.delete(device_data)
-
+            session.commit()
         self.on_success(res, None)
 
     @staticmethod
