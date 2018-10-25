@@ -57,12 +57,25 @@ class TestV1Push():
     # ＜正常系2_1＞
     # device token削除
     def test_normal_2_1(self, client, session):
+        # 1件目削除
         resp = client.simulate_auth_post(self.url_DeleteDevice,
             json=self.del_data_1,
             private_key=self.private_key)
 
         query = session.query(Push). \
             filter(Push.device_id == self.del_data_1['device_id'])
+        tmpdata = query.first()
+
+        assert resp.status_code == 200
+        assert tmpdata is None
+
+        # 2件目削除
+        resp = client.simulate_auth_post(self.url_DeleteDevice,
+            json=self.del_data_2,
+            private_key=self.private_key)
+
+        query = session.query(Push). \
+            filter(Push.device_id == self.del_data_2['device_id'])
         tmpdata = query.first()
 
         assert resp.status_code == 200
