@@ -1,4 +1,5 @@
 import boto3
+from botocore.errorfactory import NotFoundException
 
 from app.model import Push
 from datetime import datetime
@@ -121,7 +122,9 @@ class TestV1Push():
 
         # SNS確認
         client = boto3.client('sns')
-        response = client.get_endpoint_attributes(
-            EndpointArn=device_endpoint_arn
-        )
-        assert response is None
+        try:
+            response = client.get_endpoint_attributes(
+                EndpointArn=device_endpoint_arn
+            )
+        except NotFoundException as e:
+            assert True
