@@ -1,5 +1,5 @@
 import boto3
-from botocore.errorfactory import NotFoundException
+from botocore.exceptions import ClientError
 
 from app.model import Push
 from datetime import datetime
@@ -121,10 +121,13 @@ class TestV1Push():
         assert tmpdata is None
 
         # SNS確認
+        flag = Flase
         client = boto3.client('sns')
         try:
             response = client.get_endpoint_attributes(
                 EndpointArn=device_endpoint_arn
             )
-        except NotFoundException as e:
-            assert True
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NotFoundException':
+                flag = True
+        assert flag
