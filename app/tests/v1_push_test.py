@@ -30,10 +30,14 @@ class TestV1Push():
         resp = client.simulate_auth_post(self.url_UpdateDevice,
             json=self.upd_data_1,
             private_key=self.private_key)
+        
+        LOG.info(resp.json)
 
         query = session.query(Push). \
             filter(Push.device_id == self.upd_data_1['device_id'])
         tmpdata = query.first()
+
+        LOG.info(tmpdata)
 
         assert resp.status_code == 200
         assert tmpdata.device_id == self.upd_data_1['device_id']
@@ -46,9 +50,15 @@ class TestV1Push():
             json=self.upd_data_2,
             private_key=self.private_key)
 
+        LOG.info(resp.json)
+
+
         query = session.query(Push). \
             filter(Push.device_id == self.upd_data_2['device_id'])
         tmpdata = query.first()
+
+        LOG.info(tmpdata)
+
 
         assert resp.status_code == 200
         assert tmpdata.device_id == self.upd_data_2['device_id']
