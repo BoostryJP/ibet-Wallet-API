@@ -101,9 +101,16 @@ class TestV1Push():
     # ＜正常系2_1＞
     # device token削除
     def test_normal_2_1(self, client, session):
+        # 削除するARNの取得
+        query = session.query(Push). \
+            filter(Push.device_id == self.del_data_1['device_id'])
+        tmpdata = query.first()
+        device_endpoint_arn = tmpdata.device_endpoint_arn
+
+        # 削除リクエスト
         resp = client.simulate_auth_post(self.url_DeleteDevice,
-            json=self.del_data_1,
-            private_key=self.private_key)
+        json=self.del_data_1,
+        private_key=self.private_key)
 
         # DB確認
         query = session.query(Push). \
@@ -115,6 +122,6 @@ class TestV1Push():
         # SNS確認
         client = boto3.client('sns')
         response = client.get_endpoint_attributes(
-            EndpointArn=tmpdata.device_endpoint_arn
+            EndpointArn=device_endpoint_arn
         )
         assert response is None
