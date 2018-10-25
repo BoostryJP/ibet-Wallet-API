@@ -7,8 +7,11 @@ from app.model import Base
 
 class Order(Base):
     __tablename__ = 'order'
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)
+    exchange_address = Column(String(256), index=True)
+    order_id = Column(BigInteger, index=True)
+    unique_order_id = Column(String(256), index=True)
     account_address = Column(String(256))
     is_buy = Column(Boolean)
     price = Column(BigInteger)
@@ -23,6 +26,8 @@ class Order(Base):
     FIELDS = {
         'id': int,
         'token_address': str,
+        'exchange_address': str,
+        'order_id': int,
         'account_address': str,
         'is_buy': bool,
         'price': int,

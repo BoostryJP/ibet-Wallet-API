@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
 import sys
+import os
+
+from eth_utils import to_checksum_address
 
 import app.model
 from app.model import Order, Agreement, AgreementStatus
@@ -21,13 +24,18 @@ class TestV1OrderBook():
     # -> リスト1件が返却
     def test_orderbook_normal_1_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = False
         order.price = 1000
@@ -67,6 +75,9 @@ class TestV1OrderBook():
     # -> ゼロ件リストが返却
     def test_orderbook_normal_1_2(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -74,6 +85,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = False
         order.price = 1000
@@ -106,6 +120,9 @@ class TestV1OrderBook():
     # -> ゼロ件リストが返却
     def test_orderbook_normal_1_3(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -113,6 +130,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = False
         order.price = 1000
@@ -145,6 +165,9 @@ class TestV1OrderBook():
     # -> ゼロ件リストが返却
     def test_orderbook_normal_1_4(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -152,6 +175,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = False
         order.price = 1000
@@ -179,6 +205,9 @@ class TestV1OrderBook():
     # 限界値
     def test_orderbook_normal_1_5(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -186,6 +215,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = sys.maxsize
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = sys.maxsize
+        order.unique_order_id = exchange_address + '_' + str(sys.maxsize)
         order.account_address = account_address
         order.is_buy = False
         order.price = sys.maxsize
@@ -215,6 +247,52 @@ class TestV1OrderBook():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+    # ＜正常系1-6＞
+    # 未約定＆未キャンセルの売り注文が1件存在（ただし、他のExchangeのデータ）
+    # 以下の条件でリクエスト
+    #   1) 売り注文と同一トークンアドレス
+    #   2) 買い注文
+    #   3) 売り注文とは異なるアカウントアドレス
+    #
+    # -> ゼロ件リストが返却
+    def test_orderbook_normal_1_6(self, client, session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+        account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
+        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+
+        # テストデータを挿入
+        order = Order()
+        order.id = 1
+        order.token_address = token_address
+        order.exchange_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        order.order_id = 1
+        order.unique_order_id = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43" + '_' + str(1)
+        order.account_address = account_address
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        # リクエスト情報
+        request_body = {
+            "token_address": token_address,
+            "order_type": "buy",
+            "account_address": agent_address,
+        }
+
+        resp = client.simulate_post(self.apiurl, json=request_body)
+        assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+
     # ＜正常系2-1＞
     # 未約定＆未キャンセルの買い注文が1件存在
     # 以下の条件でリクエスト
@@ -225,6 +303,9 @@ class TestV1OrderBook():
     # -> リスト1件が返却
     def test_orderbook_normal_2_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -232,6 +313,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = True
         order.price = 1000
@@ -271,6 +355,9 @@ class TestV1OrderBook():
     # -> ゼロ件リストが返却
     def test_orderbook_normal_2_2(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -278,6 +365,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = True
         order.price = 1000
@@ -310,6 +400,9 @@ class TestV1OrderBook():
     # -> ゼロ件リストが返却
     def test_orderbook_normal_2_3(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -317,6 +410,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = True
         order.price = 1000
@@ -349,6 +445,9 @@ class TestV1OrderBook():
     # -> ゼロ件リストが返却
     def test_orderbook_normal_2_4(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -356,6 +455,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = True
         order.price = 1000
@@ -383,6 +485,9 @@ class TestV1OrderBook():
     # 限界値
     def test_orderbook_normal_2_5(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -390,6 +495,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = sys.maxsize
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = sys.maxsize
+        order.unique_order_id = exchange_address + '_' + str(sys.maxsize)
         order.account_address = account_address
         order.is_buy = True
         order.price = sys.maxsize
@@ -419,11 +527,19 @@ class TestV1OrderBook():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-    # ＜正常系3-1＞
-    # 未約定＆未キャンセルの売り注文が複数件存在
-    # -> リストのソート順が価格の昇順
-    def test_orderbook_normal_3_1(self, client, session):
+    # ＜正常系2-6＞
+    # 未約定＆未キャンセルの買い注文が1件存在（ただし、他のExchangeのデータ）
+    # 以下の条件でリクエスト
+    #   1) 買い注文と同一トークンアドレス
+    #   2) 売り注文
+    #   3) 買い注文とは異なるアカウントアドレス
+    #
+    # -> ゼロ件リストが返却
+    def test_orderbook_normal_2_6(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -431,6 +547,49 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        order.order_id = 1
+        order.unique_order_id = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43" + '_' + str(1)
+        order.account_address = account_address
+        order.is_buy = True
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        # リクエスト情報
+        request_body = {
+            "token_address": token_address,
+            "order_type": "sell",
+            "account_address": agent_address,
+        }
+
+        resp = client.simulate_post(self.apiurl, json=request_body)
+        assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系3-1＞
+    # 未約定＆未キャンセルの売り注文が複数件存在
+    # -> リストのソート順が価格の昇順
+    def test_orderbook_normal_3_1(self, client, session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+        account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
+        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+
+        # テストデータを挿入
+        order = Order()
+        order.id = 1
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = False
         order.price = 1000
@@ -442,6 +601,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 2
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 2
+        order.unique_order_id = exchange_address + '_' + str(2)
         order.account_address = account_address
         order.is_buy = False
         order.price = 999
@@ -479,6 +641,9 @@ class TestV1OrderBook():
     # -> リストのソート順が価格の降順
     def test_orderbook_normal_3_2(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -486,6 +651,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
         order.is_buy = True
         order.price = 1000
@@ -497,6 +665,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 2
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 2
+        order.unique_order_id = exchange_address + '_' + str(2)
         order.account_address = account_address
         order.is_buy = True
         order.price = 1001
@@ -534,6 +705,9 @@ class TestV1OrderBook():
     #  -> 未約定のOrderBookリストが返却される
     def test_orderbook_normal_4(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
@@ -545,6 +719,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 0
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 0
+        order.unique_order_id = exchange_address + '_' + str(0)
         order.account_address = account_addresses[1]
         order.is_buy = False
         order.price = 1000
@@ -556,6 +733,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 1
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_addresses[1]
         order.is_buy = False
         order.price = 2000
@@ -567,6 +747,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 2
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 2
+        order.unique_order_id = exchange_address + '_' + str(2)
         order.account_address = account_addresses[2]
         order.is_buy = False
         order.price = 3000
@@ -578,6 +761,9 @@ class TestV1OrderBook():
         order = Order()
         order.id = 3
         order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 3
+        order.unique_order_id = exchange_address + '_' + str(3)
         order.account_address = account_addresses[2]
         order.is_buy = False
         order.price = 6000
@@ -590,6 +776,8 @@ class TestV1OrderBook():
         agreement = Agreement()
         agreement.order_id = 1
         agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(1)
         agreement.counterpart_address = account_addresses[2]
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
@@ -598,6 +786,8 @@ class TestV1OrderBook():
         agreement = Agreement()
         agreement.order_id = 2
         agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(2)
         agreement.counterpart_address = account_addresses[1]
         agreement.amount = 50
         agreement.status = AgreementStatus.DONE.value
@@ -633,6 +823,9 @@ class TestV1OrderBook():
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_orderbook_error_1(self, client):
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -652,6 +845,9 @@ class TestV1OrderBook():
     # エラー系2：入力値エラー（headersなし）
     def test_orderbook_error_2(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -675,6 +871,9 @@ class TestV1OrderBook():
     # エラー系3-1：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_orderbook_error_3_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  #アドレスが短い
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -698,6 +897,9 @@ class TestV1OrderBook():
     # エラー系3-2：入力値エラー（token_addressがstring以外）
     def test_orderbook_error_3_2(self, client):
         token_address = 123456789123456789123456789123456789
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -724,6 +926,9 @@ class TestV1OrderBook():
     # エラー系4-1：入力値エラー（account_addressがアドレスフォーマットではない）
     def test_orderbook_error_4_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
 
         request_params = {
@@ -747,6 +952,9 @@ class TestV1OrderBook():
     # エラー系4-2：入力値エラー（account_addressがstring以外）
     def test_orderbook_error_4_2(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = 123456789123456789123456789123456789
 
         request_params = {
@@ -773,6 +981,9 @@ class TestV1OrderBook():
     # エラー系5：入力値エラー（order_typeがbuy/sell以外）
     def test_orderbook_error_5(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {

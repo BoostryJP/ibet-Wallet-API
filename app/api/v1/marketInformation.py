@@ -49,7 +49,9 @@ class OrderBook(BaseResource):
 
         # 注文を抽出
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
-
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
         if 'account_address' in request_json:
             account_address = to_checksum_address(request_json['account_address'])
 
@@ -61,14 +63,23 @@ class OrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(Order, func.sum(Agreement.amount)).\
-                         outerjoin(Agreement, Order.id == Agreement.order_id).\
-                         group_by(Order.id).\
-                         filter(Order.token_address == token_address).\
-                         filter(Order.is_buy == False).\
-                         filter(Order.is_cancelled == False).\
-                         filter(Order.account_address != account_address).\
-                         all()
+                orders = session.query(
+                    Order.order_id, Order.amount, Order.price, \
+                    Order.exchange_address, Order.account_address, \
+                    func.sum(Agreement.amount)).\
+                    outerjoin(
+                        Agreement,
+                        Order.unique_order_id == Agreement.unique_order_id).\
+                    group_by(
+                        Order.order_id, Order.amount,
+                        Order.price, Order.exchange_address,
+                        Order.account_address).\
+                    filter(Order.exchange_address == exchange_address).\
+                    filter(Order.token_address == token_address).\
+                    filter(Order.is_buy == False).\
+                    filter(Order.is_cancelled == False).\
+                    filter(Order.account_address != account_address).\
+                    all()
             else:  # 売注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -77,15 +88,23 @@ class OrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(Order, func.sum(Agreement.amount)).\
-                         outerjoin(Agreement, Order.id == Agreement.order_id).\
-                         group_by(Order.id).\
-                         filter(Order.token_address == token_address).\
-                         filter(Order.is_buy == True).\
-                         filter(Order.is_cancelled == False).\
-                         filter(Order.account_address != account_address).\
-                         all()
-
+                orders = session.query(
+                    Order.order_id, Order.amount, Order.price, \
+                    Order.exchange_address, Order.account_address, \
+                    func.sum(Agreement.amount)).\
+                    outerjoin(
+                        Agreement,
+                        Order.unique_order_id == Agreement.unique_order_id).\
+                    group_by(
+                        Order.order_id, Order.amount,
+                        Order.price, Order.exchange_address,
+                        Order.account_address).\
+                    filter(Order.exchange_address == exchange_address).\
+                    filter(Order.token_address == token_address).\
+                    filter(Order.is_buy == True).\
+                    filter(Order.is_cancelled == False).\
+                    filter(Order.account_address != account_address).\
+                    all()
         else:
             if is_buy == True:  # 買注文
                 # ＜抽出条件＞
@@ -95,8 +114,12 @@ class OrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 orders = session.query(Order, func.sum(Agreement.amount)).\
-                         outerjoin(Agreement, Order.id == Agreement.order_id).\
-                         group_by(Order.id).\
+                         outerjoin(
+                            Agreement,
+                            Order.exchange_address == Agreement.exchange_address,
+                            Order.order_id == Agreement.order_id).\
+                         group_by(Order.exchange_address, Order.order_id).\
+                         filter(Order.exchange_address == exchange_address).\
                          filter(Order.token_address == token_address).\
                          filter(Order.is_buy == False).\
                          filter(Order.is_cancelled == False).\
@@ -110,8 +133,12 @@ class OrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 orders = session.query(Order, func.sum(Agreement.amount)).\
-                         outerjoin(Agreement, Order.id == Agreement.order_id).\
-                         group_by(Order.id).\
+                         outerjoin(
+                            Agreement,
+                            Order.exchange_address == Agreement.exchange_address,
+                            Order.order_id == Agreement.order_id).\
+                         group_by(Order.exchange_address, Order.order_id).\
+                         filter(Order.exchange_address == exchange_address).\
                          filter(Order.token_address == token_address).\
                          filter(Order.is_buy == True).\
                          filter(Order.is_cancelled == False).\
@@ -119,9 +146,9 @@ class OrderBook(BaseResource):
 
         # レスポンス用の注文一覧を構築
         order_list_tmp = []
-        for (order, agreement_amount) in orders:
+        for (order_id, amount, price, exchange_address,
+            account_address, agreement_amount) in orders:
             # 残存注文数量 = 発注数量 - 約定済み数量
-            amount = order.amount
             if not (agreement_amount is None):
                 amount -= int(agreement_amount)
 
@@ -130,10 +157,10 @@ class OrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
-                'order_id': order.id,
-                'price': order.price,
+                'order_id': order_id,
+                'price': price,
                 'amount': amount,
-                'account_address': order.account_address,
+                'account_address': account_address,
             })
 
         # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
