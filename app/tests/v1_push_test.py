@@ -156,3 +156,203 @@ class TestV1Push():
             'message': 'SNS NotFoundError'
         }
  
+     # ＜エラー系1＞
+    
+    # ＜エラー系2-1＞
+    # 【UpdateDevice】ヘッダー（Signature）なし
+    def test_error_2_1(self, client, session):
+        resp = client.simulate_post(
+            self.url_UpdateDevice
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': 'signature is empty'
+        }
+
+    # ＜エラー系2-2＞
+    # 【DeleteDevice】ヘッダー（Signature）なし
+    def test_error_2_2(self, client, session):
+        resp = client.simulate_post(
+            self.url_DeleteDevice
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': 'signature is empty'
+        }
+
+    # ＜エラー系3-1＞
+    # 【UpdateDevice】必須項目なし：device_id
+    def test_error_3_1(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json={
+                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+            },
+            private_key=self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_id': 'required field'
+            }
+        }
+
+    # ＜エラー系3-2＞
+    # 【UpdateDevice】必須項目なし：device_token
+    def test_error_3_2(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json={
+                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F"
+            },
+            private_key=self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_token': 'required field'
+            }
+        }
+
+    # ＜エラー系3-3＞
+    # 【DeleteDevice】必須項目なし：device_id
+    def test_error_3_3(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_DeleteDevice,
+            json={},
+            private_key=self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_id': 'required field'
+            }
+        }
+
+    # ＜エラー系3-4＞
+    # 【UpdateDevice】空白：device_id
+    def test_error_3_4(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json = {
+                "device_id": "",
+                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_id': 'empty values not allowed'
+            }
+        }
+
+    # ＜エラー系3-5＞
+    # 【UpdateDevice】空白：device_token
+    def test_error_3_5(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json = {
+                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
+                "device_token": "",
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_token': 'empty values not allowed'
+            }
+        }
+
+    # ＜エラー系3-6＞
+    # 【DeleteDevice】空白：device_id
+    def test_error_3_6(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_DeleteDevice,
+            json = {
+                "device_id": ""
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_id': 'empty values not allowed'
+            }
+        }
+
+    # ＜エラー系3-7＞
+    # 【UpdateDevice】数字：device_id
+    def test_error_3_7(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json = {
+                "device_id": 1234,
+                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_id': 'must be of string type'
+            }
+        }
+
+    # ＜エラー系3-8＞
+    # 【UpdateDevice】数字：device_token
+    def test_error_3_8(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json = {
+                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
+                "device_token": 1234,
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_token': 'must be of string type'
+            }
+        }
+
+    # ＜エラー系3-9＞
+    # 【DeleteDevice】数字：device_id
+    def test_error_3_9(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_DeleteDevice,
+            json = {
+                "device_id": 1234,
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'device_id': 'must be of string type'
+            }
+        }
