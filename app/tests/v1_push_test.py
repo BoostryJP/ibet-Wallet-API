@@ -31,13 +31,13 @@ class TestV1Push():
     }
 
     @classmethod
-    def setUpClass(cls):
-        print('setUpClass')
+    def setup_class(cls):
+        print('classic xunit style - setup > {}'.format(sys._getframe().f_code.co_name))
         config.DB_AUTOCOMMIT = True
 
     @classmethod
-    def tearDownClass(cls):
-        print('tearDownClass')
+    def teardown_class(cls):
+        print('classic xunit style - teardown > {}'.format(sys._getframe().f_code.co_name))
         config.DB_AUTOCOMMIT = False
 
     # ＜正常系1_1＞
