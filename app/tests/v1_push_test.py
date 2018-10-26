@@ -7,12 +7,6 @@ from app import config
 from app import log
 LOG = log.get_logger()
 
-def setup_module(module): 
-    config.DB_AUTOCOMMIT = True
-
-def teardown_module(module): 
-    config.DB_AUTOCOMMIT = False
-
 class TestV1Push():
     # テスト対象API
     url_UpdateDevice = "/v1/Push/UpdateDevice"
@@ -35,6 +29,14 @@ class TestV1Push():
     del_data_1 = {
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F"
     }
+
+    @classmethod
+    def setUpClass(cls):
+        config.DB_AUTOCOMMIT = True
+
+    @classmethod
+    def tearDownClass(cls):
+        config.DB_AUTOCOMMIT = False
 
     # ＜正常系1_1＞
     # device token新規登録
