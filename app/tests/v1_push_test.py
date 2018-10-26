@@ -30,17 +30,15 @@ class TestV1Push():
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F"
     }
 
-    @classmethod
-    def setup_class(cls):
+    # 最初のケースだけ設定変更
+    def test_setup(self, client):
         config.DB_AUTOCOMMIT = True
-
-    @classmethod
-    def teardown_class(cls):
-        config.DB_AUTOCOMMIT = False
+        assert True
 
     # ＜正常系1_1＞
     # device token新規登録
     def test_normal_1_1(self, client, session):
+
         resp = client.simulate_auth_post(self.url_UpdateDevice,
             json=self.upd_data_1,
             private_key=self.private_key)
@@ -392,3 +390,8 @@ class TestV1Push():
                 'device_id': 'must be of string type'
             }
         }
+
+    # 最後のケース　設定変更
+    def test_teardown(self, client):
+        config.DB_AUTOCOMMIT = False
+        assert True
