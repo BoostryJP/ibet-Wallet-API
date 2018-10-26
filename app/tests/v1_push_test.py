@@ -172,42 +172,9 @@ class TestV1Push():
         session.commit()
 
     # ＜エラー系1_2＞
-    # 【UpdateDevice】
-    # すでにSNS上に存在するdevice tokenに対して再度登録を行う。
-    def test_error_1_2(self, client, session):
-        # 登録リクエスト
-        resp = client.simulate_auth_post(self.url_UpdateDevice,
-            json=self.upd_data_1,
-            private_key=self.private_key)
-
-        # 削除
-        query = session.query(Push). \
-            filter(Push.device_id == self.upd_data_1['device_id'])
-        tmpdata = query.first()
-        session.delete(tmpdata)
-        session.commit()
-
-        # 登録リクエスト
-        resp = client.simulate_auth_post(self.url_UpdateDevice,
-            json=self.upd_data_1,
-            private_key=self.private_key)
-        assert resp.status_code == 404
-        assert resp.json["meta"] ==  {
-            'code': 50,
-            'message': 'SNS NotFoundError'
-        }
-
-        # 削除
-        query = session.query(Push). \
-            filter(Push.device_id == self.upd_data_1['device_id'])
-        tmpdata = query.first()
-        session.delete(tmpdata)
-        session.commit()
-
-    # ＜エラー系1_3＞
     # 【DeleteDevice】存在しないdevice tokenを削除
     # DBには存在するが、SNSには存在しない
-    def test_error_1_3(self, client, session):
+    def test_error_1_2(self, client, session):
         # 存在しないデータを登録
         device_data = Push()
         device_data.device_id = self.del_data_1['device_id']
