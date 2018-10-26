@@ -19,6 +19,7 @@ from app.api.v1 import orderList
 from app.api.v1 import notification
 from app.api.v1 import nodeInfo
 from app.api.v1 import omise
+from app.api.v1 import push
 
 from app.errors import AppError
 
@@ -85,6 +86,10 @@ class App(falcon.API):
         self.add_route('/v1/Omise/CreateCustomer', omise.CreateCustomer())
         self.add_route('/v1/Omise/UpdateCustomer', omise.UpdateCustomer())
         self.add_route('/v1/Omise/Charge', omise.Charge())
+
+        # push通知デバイス登録
+        self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
+        self.add_route('/v1/Push/DeleteDevice', push.DeleteDevice())
 
         self.add_error_handler(AppError, AppError.handle)
 
