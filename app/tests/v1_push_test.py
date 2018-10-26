@@ -32,10 +32,12 @@ class TestV1Push():
 
     @classmethod
     def setUpClass(cls):
+        print('setUpClass')
         config.DB_AUTOCOMMIT = True
 
     @classmethod
     def tearDownClass(cls):
+        print('tearDownClass')
         config.DB_AUTOCOMMIT = False
 
     # ＜正常系1_1＞
