@@ -133,9 +133,39 @@ class TestV1Push():
         assert flag
 
     # ＜エラー系1_1＞
-    # 存在しないdevice tokenを削除
+    # 【UpdateDevice】存在しないdevice tokenを削除
     # DBには存在するが、SNSには存在しない
     def test_error_1_1(self, client, session):
+        # 存在しないデータを登録
+        device_data = Push()
+        device_data.device_id = self.del_data_1['device_id']
+        device_data.account_address = self.address
+        device_data.device_token = self.upd_data_1['device_token']
+        device_data.device_endpoint_arn = 'arn:aws:sns:ap-northeast-1:241627671680:endpoint/APNS_SANDBOX/ionpush/50847470-27dd-3bc7-9768-fb31c1ff93b4'
+        session.add(device_data)
+        session.commit()
+
+        # 更新リクエスト
+        resp = client.simulate_auth_post(self.upd_data_2,
+            json=self.del_data_1,
+            private_key=self.private_key)
+
+        assert resp.status_code == 404
+        assert resp.json["meta"] ==  {
+            'code': 50,
+            'message': 'SNS NotFoundError'
+        }
+
+        # DBが更新されていないことを確認
+        query = session.query(Push). \
+            filter(Push.device_id == self.del_data_1['device_id'])
+        tmpdata = query.first()
+        assert tmpdata.device_token != self.upd_data_2['device_token']
+ 
+    # ＜エラー系1_3＞
+    # 【DeleteDevice】存在しないdevice tokenを削除
+    # DBには存在するが、SNSには存在しない
+    def test_error_1_3(self, client, session):
         # 存在しないデータを登録
         device_data = Push()
         device_data.device_id = self.del_data_1['device_id']
@@ -155,8 +185,6 @@ class TestV1Push():
             'code': 50,
             'message': 'SNS NotFoundError'
         }
- 
-     # ＜エラー系1＞
     
     # ＜エラー系2-1＞
     # 【UpdateDevice】ヘッダー（Signature）なし
