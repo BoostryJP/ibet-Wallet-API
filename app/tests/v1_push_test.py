@@ -38,7 +38,6 @@ class TestV1Push():
     # ＜正常系1_1＞
     # device token新規登録
     def test_normal_1_1(self, client, session):
-
         resp = client.simulate_auth_post(self.url_UpdateDevice,
             json=self.upd_data_1,
             private_key=self.private_key)
@@ -152,8 +151,8 @@ class TestV1Push():
         session.commit()
 
         # 更新リクエスト
-        resp = client.simulate_auth_post(self.upd_data_2,
-            json=self.del_data_1,
+        resp = client.simulate_auth_post(self.url_UpdateDevice,
+            json=self.upd_data_2,
             private_key=self.private_key)
 
         assert resp.status_code == 404
