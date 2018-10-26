@@ -7,6 +7,12 @@ from app import config
 from app import log
 LOG = log.get_logger()
 
+def setup_module(module): 
+    config.DB_AUTOCOMMIT = True
+
+def teardown_module(module): 
+    config.DB_AUTOCOMMIT = False
+
 class TestV1Push():
     # テスト対象API
     url_UpdateDevice = "/v1/Push/UpdateDevice"
