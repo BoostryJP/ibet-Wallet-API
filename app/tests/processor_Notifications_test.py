@@ -26,6 +26,7 @@ class TestProcessorNotifications():
     # Push通知確認
     def test_normal_1_1(self, client, session, shared_contract):
         config.DB_AUTOCOMMIT = True
+        config.WHITE_LIST_CONTRACT_ADDRESS = shared_contract['WhiteList']['address']
         trader = eth_account['trader']
         white_list = shared_contract['WhiteList']
 
