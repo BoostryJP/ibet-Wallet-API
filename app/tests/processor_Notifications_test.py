@@ -51,3 +51,5 @@ class TestProcessorNotifications():
         wwr = WatchWhiteListRegister()
         wwr.loop()
 
+        config.DB_AUTOCOMMIT = False
+        
