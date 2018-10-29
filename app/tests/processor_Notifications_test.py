@@ -39,7 +39,7 @@ class TestProcessorNotifications():
         query = session.query(Push). \
             filter(Push.device_id == self.upd_data_1['device_id'])
         tmpdata = query.first()
-        tmpdata.account_address = trader
+        tmpdata.account_address = trader['account_address']
         session.merge(tmpdata)
         session.commit()
 
