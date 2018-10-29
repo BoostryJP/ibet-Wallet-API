@@ -57,7 +57,7 @@ class TestProcessorNotifications():
 
         # sns endpointの削除
         resp = client.simulate_auth_post(self.url_DeleteDevice,
-        json=self.upd_data_1,
-        private_key=self.private_key)
+            json=self.del_data_1,
+            private_key=self.private_key)
 
         config.DB_AUTOCOMMIT = False
