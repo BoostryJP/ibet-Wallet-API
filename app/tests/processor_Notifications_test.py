@@ -9,7 +9,7 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
     membership_issue, membership_offer, membership_get_latest_orderid, \
     membership_take_buy
 from app import log
-from sync.processor_Notifications import WatchWhiteListRegister
+from async.processor_Notifications import WatchWhiteListRegister
 LOG = log.get_logger()
 
 class TestProcessorNotifications():
