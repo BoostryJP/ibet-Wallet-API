@@ -47,6 +47,6 @@ class TestProcessorNotifications():
         register_whitelist(trader, white_list)
 
         # push検知
-        WatchWhiteListRegister()
-
+        wwr = WatchWhiteListRegister()
+        wwr.loop()
 
