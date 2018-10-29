@@ -61,3 +61,4 @@ class TestProcessorNotifications():
             private_key=self.private_key)
 
         config.DB_AUTOCOMMIT = False
+        assert False
