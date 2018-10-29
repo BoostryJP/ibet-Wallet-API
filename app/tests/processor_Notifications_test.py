@@ -9,7 +9,7 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
     membership_issue, membership_offer, membership_get_latest_orderid, \
     membership_take_buy
 from app import log
-#from async.processor_Notifications import WatchWhiteListRegister
+from async.processor_Notifications import WatchWhiteListRegister
 LOG = log.get_logger()
 
 class TestProcessorNotifications():
@@ -52,8 +52,8 @@ class TestProcessorNotifications():
         register_whitelist(trader, white_list)
 
         # # push検知
-        # wwr = WatchWhiteListRegister()
-        # wwr.loop()
+        wwr = WatchWhiteListRegister()
+        wwr.loop()
 
         # sns endpointの削除
         resp = client.simulate_auth_post(self.url_DeleteDevice,
