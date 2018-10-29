@@ -60,22 +60,20 @@ list_contract = Contract.get_contract(
 
 token_list = TokenList(list_contract)
 
-def push_publish(entries, subject, message):
-    for entry in entries:
-        address = entry["args"]["account_address"]
-        query = db_session.query(Push). \
-            filter(Push.account_address == address)
-        devices = query.all()
-        for device_data in devices:
-            try:
-                client = boto3.client('sns', 'ap-northeast-1')
-                response = client.publish(
-                    TargetArn=device_data.device_endpoint_arn,
-                    Message=message,
-                    Subject=subject
-                )
-            except ClientError:
-                LOG.error('[ERROR]device_endpoint_arn not found.')
+def push_publish(entries, subject, message, address):
+    query = db_session.query(Push). \
+        filter(Push.account_address == address)
+    devices = query.all()
+    for device_data in devices:
+        try:
+            client = boto3.client('sns', 'ap-northeast-1')
+            response = client.publish(
+                TargetArn=device_data.device_endpoint_arn,
+                Message=message,
+                Subject=subject
+            )
+        except ClientError:
+            LOG.error('device_endpoint_arn does not found.')
 
 
 class Watcher:
@@ -135,8 +133,10 @@ class WatchWhiteListRegister(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済用口座情報登録完了', 
-            '決済用口座情報登録が完了しました。指定口座まで振り込みを実施してください。')
+        for entry in entries:
+            push_publish(entries, '決済用口座情報登録完了', 
+                '決済用口座情報登録が完了しました。指定口座まで振り込みを実施してください。',
+                entry["args"]["account_address"])
 
 # イベント：決済用口座承認
 class WatchWhiteListApprove(Watcher):
@@ -156,8 +156,10 @@ class WatchWhiteListApprove(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済用口座情報承認完了', 
-            '決済用の口座が承認されました。取引を始めることができます。')
+        for entry in entries:
+            push_publish(entries, '決済用口座情報承認完了', 
+                '決済用の口座が承認されました。取引を始めることができます。',
+                entry["args"]["account_address"])
 
 # イベント：決済用口座警告
 class WatchWhiteListWarn(Watcher):
@@ -177,8 +179,10 @@ class WatchWhiteListWarn(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済用口座の確認', 
-            '決済用の口座の情報が確認できませんでした。')
+        for entry in entries:
+            push_publish(entries, '決済用口座の確認', 
+                '決済用の口座の情報が確認できませんでした。',
+                entry["args"]["account_address"])
 
 # イベント：決済用口座非承認
 class WatchWhiteListUnapprove(Watcher):
@@ -198,8 +202,10 @@ class WatchWhiteListUnapprove(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済用口座情報再登録', 
-            '決済用口座情報が変更されました。指定口座まで振り込みを実施してください。')
+        for entry in entries:
+            push_publish(entries, '決済用口座情報再登録', 
+                '決済用口座情報が変更されました。指定口座まで振り込みを実施してください。',
+                entry["args"]["account_address"])
 
 # イベント：決済用口座アカウント停止
 class WatchWhiteListBan(Watcher):
@@ -219,8 +225,10 @@ class WatchWhiteListBan(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済用口座の認証取消', 
-            '決済用の口座の認証が取り消されました。')
+        for entry in entries:
+            push_publish(entries, '決済用口座の認証取消', 
+                '決済用の口座の認証が取り消されました。',
+                entry["args"]["account_address"])
 
 
 # イベント：注文
@@ -258,8 +266,10 @@ class WatchExchangeNewOrder(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '新規注文完了', 
-            '新規注文が完了しました。')
+        for entry in entries:
+            push_publish(entries, '新規注文完了', 
+                '新規注文が完了しました。',
+                entry["args"]["accountAddress"])
 
 
 # イベント：注文取消
@@ -297,8 +307,10 @@ class WatchExchangeCancelOrder(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '注文キャンセル完了', 
-            '注文のキャンセルが完了しました。')
+        for entry in entries:
+            push_publish(entries, '注文キャンセル完了', 
+                '注文のキャンセルが完了しました。',
+                entry["args"]["accountAddress"])
 
 
 # イベント：約定（買）
@@ -336,8 +348,10 @@ class WatchExchangeBuyAgreement(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '約定完了', 
-            '買い注文が約定しました。指定口座へ振り込みを実施してください。')
+        for entry in entries:
+            push_publish(entries, '約定完了', 
+                '買い注文が約定しました。指定口座へ振り込みを実施してください。',
+                entry["args"]["buyAddress"])
 
 # イベント：約定（売）
 class WatchExchangeSellAgreement(Watcher):
@@ -374,8 +388,10 @@ class WatchExchangeSellAgreement(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '約定完了', 
-            '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。')
+        for entry in entries:
+            push_publish(entries, '約定完了', 
+                '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
+                entry["args"]["sellAddress"])
 
 # イベント：決済OK（買）
 class WatchExchangeBuySettlementOK(Watcher):
@@ -412,8 +428,10 @@ class WatchExchangeBuySettlementOK(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済完了', 
-            '注文の決済が完了しました。')
+        for entry in entries:
+            push_publish(entries, '決済完了', 
+                '注文の決済が完了しました。',
+                entry["args"]["buyAddress"])
 
 # イベント：決済OK（売）
 class WatchExchangeSellSettlementOK(Watcher):
@@ -450,8 +468,10 @@ class WatchExchangeSellSettlementOK(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済完了', 
-            '注文の決済が完了しました。')
+        for entry in entries:
+            push_publish(entries, '決済完了', 
+                '注文の決済が完了しました。',
+                entry["args"]["sellAddress"])
 
 # イベント：決済NG（買）
 class WatchExchangeBuySettlementNG(Watcher):
@@ -488,8 +508,10 @@ class WatchExchangeBuySettlementNG(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済失敗', 
-            '注文の決済が失敗しました。再度振り込み内容をご確認ください。')
+        for entry in entries:
+            push_publish(entries, '決済失敗', 
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                entry["args"]["buyAddress"])
 
 # イベント：決済NG（売）
 class WatchExchangeSellSettlementNG(Watcher):
@@ -526,8 +548,10 @@ class WatchExchangeSellSettlementNG(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, '決済失敗', 
-            '注文の決済が失敗しました。再度振り込み内容をご確認ください。')
+        for entry in entries:
+            push_publish(entries, '決済失敗', 
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                entry["args"]["sellAddress"])
 
 # イベント：クーポン割当・譲渡
 class WatchCouponTransfer(Watcher):
@@ -561,8 +585,10 @@ class WatchCouponTransfer(Watcher):
             db_session.merge(notification)
 
     def push(self, entries):
-        push_publish(entries, 'クーポン発行完了', 
-            'クーポンが発行されました。保有トークンの一覧からご確認ください。')
+        for entry in entries:
+            push_publish(entries, 'クーポン発行完了', 
+                'クーポンが発行されました。保有トークンの一覧からご確認ください。',
+                entry["args"]["to"])
 
 def main():
     watchers = [
