@@ -52,8 +52,8 @@ class TestProcessorNotifications():
         register_whitelist(trader, white_list)
 
         # push検知
-        # wwr = WatchWhiteListRegister()
-        # wwr.loop()
+        wwr = WatchWhiteListRegister()
+        wwr.loop()
 
         # sns endpointの削除
         resp = client.simulate_auth_post(self.url_DeleteDevice,
