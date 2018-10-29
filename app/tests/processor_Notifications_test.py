@@ -14,9 +14,13 @@ LOG = log.get_logger()
 
 class TestProcessorNotifications():
     url_UpdateDevice = "/v1/Push/UpdateDevice"
+    url_DeleteDevice = "/v1/Push/DeleteDevice"
     upd_data_1 = {
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D123",
         "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+    }
+    del_data_1 = {
+        "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D123",
     }
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
@@ -47,9 +51,13 @@ class TestProcessorNotifications():
         # whitelistの登録
         register_whitelist(trader, white_list)
 
-        # push検知
-        wwr = WatchWhiteListRegister()
-        wwr.loop()
+        # # push検知
+        # wwr = WatchWhiteListRegister()
+        # wwr.loop()
+
+        # sns endpointの削除
+        resp = client.simulate_auth_post(self.url_DeleteDevice,
+        json=self.upd_data_1,
+        private_key=self.private_key)
 
         config.DB_AUTOCOMMIT = False
-        
