@@ -28,36 +28,36 @@ class TestProcessorNotifications():
 
     # ＜正常系1_1＞
     # Push通知確認
-    def test_normal_1_1(self, client, session, shared_contract):
-        config.DB_AUTOCOMMIT = True
-        config.WHITE_LIST_CONTRACT_ADDRESS = shared_contract['WhiteList']['address']
-        trader = eth_account['trader']
-        white_list = shared_contract['WhiteList']
+    # def test_normal_1_1(self, client, session, shared_contract):
+        # config.DB_AUTOCOMMIT = True
+        # config.WHITE_LIST_CONTRACT_ADDRESS = shared_contract['WhiteList']['address']
+        # trader = eth_account['trader']
+        # white_list = shared_contract['WhiteList']
 
-        # push用デバイス登録
-        resp = client.simulate_auth_post(self.url_UpdateDevice,
-            json=self.upd_data_1,
-            private_key=self.private_key)
-        assert resp.status_code == 200
+        # # push用デバイス登録
+        # resp = client.simulate_auth_post(self.url_UpdateDevice,
+        #     json=self.upd_data_1,
+        #     private_key=self.private_key)
+        # assert resp.status_code == 200
 
-        # DBのaddressを書き換え
-        query = session.query(Push). \
-            filter(Push.device_id == self.upd_data_1['device_id'])
-        tmpdata = query.first()
-        tmpdata.account_address = trader['account_address']
-        session.merge(tmpdata)
-        session.commit()
+        # # DBのaddressを書き換え
+        # query = session.query(Push). \
+        #     filter(Push.device_id == self.upd_data_1['device_id'])
+        # tmpdata = query.first()
+        # tmpdata.account_address = trader['account_address']
+        # session.merge(tmpdata)
+        # session.commit()
 
-        # whitelistの登録
-        register_whitelist(trader, white_list)
+        # # whitelistの登録
+        # register_whitelist(trader, white_list)
 
-        # push検知
-        wwr = WatchWhiteListRegister()
-        wwr.loop()
+        # # push検知
+        # wwr = WatchWhiteListRegister()
+        # wwr.loop()
 
-        # sns endpointの削除
-        resp = client.simulate_auth_post(self.url_DeleteDevice,
-            json=self.del_data_1,
-            private_key=self.private_key)
+        # # sns endpointの削除
+        # resp = client.simulate_auth_post(self.url_DeleteDevice,
+        #     json=self.del_data_1,
+        #     private_key=self.private_key)
 
-        config.DB_AUTOCOMMIT = False
+        # config.DB_AUTOCOMMIT = False
