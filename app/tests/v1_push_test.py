@@ -52,7 +52,7 @@ class TestV1Push():
         assert tmpdata.account_address == self.address
 
         # SNS確認
-        client = boto3.resource('sns', 'ap-northeast-1')
+        client = boto3.client('sns', 'ap-northeast-1')
         response = client.get_endpoint_attributes(
             EndpointArn=tmpdata.device_endpoint_arn
         )
@@ -75,7 +75,7 @@ class TestV1Push():
         assert tmpdata.account_address == self.address
 
         # SNS確認
-        client = boto3.resource('sns', 'ap-northeast-1')
+        client = boto3.client('sns', 'ap-northeast-1')
         response = client.get_endpoint_attributes(
             EndpointArn=tmpdata.device_endpoint_arn
         )
@@ -98,7 +98,7 @@ class TestV1Push():
         assert tmpdata.account_address == self.address_2
 
         # SNS確認
-        client = boto3.resource('sns', 'ap-northeast-1')
+        client = boto3.client('sns', 'ap-northeast-1')
         response = client.get_endpoint_attributes(
             EndpointArn=tmpdata.device_endpoint_arn
         )
@@ -127,7 +127,7 @@ class TestV1Push():
 
         # SNS確認
         flag = False
-        client = boto3.resource('sns', 'ap-northeast-1')
+        client = boto3.client('sns', 'ap-northeast-1')
         try:
             client.get_endpoint_attributes(
                 EndpointArn=device_endpoint_arn

@@ -146,7 +146,7 @@ class DeleteDevice(BaseResource):
 # device tokenをapplication arnに登録
 def add_endpoint(device_token):
     try:
-        client = boto3.resource('sns', 'ap-northeast-1')
+        client = boto3.client('sns', 'ap-northeast-1')
         endpoint = client.create_platform_endpoint(
             PlatformApplicationArn=config.SNS_APPLICATION_ARN,
             Token=device_token
@@ -158,7 +158,7 @@ def add_endpoint(device_token):
 # 古いdevice tokenのarnを削除
 def delete_endpoint(endpoint_arn):
     try:
-        client = boto3.resource('sns', 'ap-northeast-1')
+        client = boto3.client('sns', 'ap-northeast-1')
         client.delete_endpoint(
             EndpointArn=endpoint_arn
         )

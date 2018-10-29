@@ -68,7 +68,7 @@ def push_publish(entries, subject, message):
         devices = query.all()
         for device_data in devices:
             try:
-                client = boto3.resource('sns', 'ap-northeast-1')
+                client = boto3.client('sns', 'ap-northeast-1')
                 response = client.publish(
                     TargetArn=device_data.device_endpoint_arn,
                     Message=message,
