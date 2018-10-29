@@ -18,10 +18,10 @@ from app import config
 from app.model import Notification, Push
 from app.contracts import Contract
 import json
-from async.lib.token import TokenFactory
-from async.lib.company_list import CompanyListFactory
-from async.lib.token_list import TokenList
-from async.lib.misc import wait_all_futures
+from sync.lib.token import TokenFactory
+from sync.lib.company_list import CompanyListFactory
+from sync.lib.token_list import TokenList
+from sync.lib.misc import wait_all_futures
 from concurrent.futures import ThreadPoolExecutor
 import time
 from datetime import datetime, timezone, timedelta
