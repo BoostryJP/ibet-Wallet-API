@@ -51,6 +51,7 @@ class App(falcon.API):
 
         # 板情報
         self.add_route('/v1/OrderBook', marketInformation.OrderBook())
+        self.add_route('/v1/Membership/OrderBook', marketInformation.MembershipOrderBook())
 
         # 現在値
         self.add_route('/v1/LastPrice', marketInformation.LastPrice())
