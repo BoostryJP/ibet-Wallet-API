@@ -38,4 +38,4 @@ OMISE_SECRET = os.environ.get('OMISE_SECRET')
 OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
 
 SNS_APPLICATION_ARN = os.environ.get('SNS_APPLICATION_ARN')
-PUSH_PRIORITY = os.environ.get('PUSH_PRIORITY')
+PUSH_PRIORITY = os.environ.get('PUSH_PRIORITY') or 0
