@@ -49,6 +49,9 @@ db_session.configure(bind=engine)
 token_factory = TokenFactory(web3)
 company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 
+# 起動時のblockNumberを取得
+NOW_BLOCKNUMBER = web3.eth.blockNumber
+
 # コントラクトの生成
 sb_exchange_contract = Contract.get_contract(
     'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
@@ -61,8 +64,10 @@ list_contract = Contract.get_contract(
 
 token_list = TokenList(list_contract)
 
-def push_publish(entries, address, priority, subject, message):
-    if priority >= config.PUSH_PRIORITY:
+def push_publish(entries, address, priority, blocknumber,subject, message):
+    # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
+    # 「対象のblockNumer」が起動時のblockNumer以上の場合は送信
+    if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
         query = db_session.query(Push). \
             filter(Push.account_address == address)
         devices = query.all()
@@ -136,7 +141,7 @@ class WatchWhiteListRegister(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["account_address"], 2,
+            push_publish(entries, entry["args"]["account_address"], 2, entry["blockNumber"],
                 '決済用口座情報登録完了', 
                 '決済用口座情報登録が完了しました。指定口座まで振り込みを実施してください。',
                 )
@@ -160,7 +165,7 @@ class WatchWhiteListApprove(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["account_address"], 0,
+            push_publish(entries, entry["args"]["account_address"], 0, entry["blockNumber"],
                 '決済用口座情報承認完了', 
                 '決済用の口座が承認されました。取引を始めることができます。',
                 )
@@ -184,7 +189,7 @@ class WatchWhiteListWarn(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["account_address"], 0,
+            push_publish(entries, entry["args"]["account_address"], 0, entry["blockNumber"],
                 '決済用口座の確認', 
                 '決済用の口座の情報が確認できませんでした。',
                 )
@@ -208,7 +213,7 @@ class WatchWhiteListUnapprove(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["account_address"], 0,
+            push_publish(entries, entry["args"]["account_address"], 0, entry["blockNumber"],
                 '決済用口座情報再登録', 
                 '決済用口座情報が変更されました。指定口座まで振り込みを実施してください。',
                 )
@@ -232,7 +237,7 @@ class WatchWhiteListBan(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["account_address"], 2,
+            push_publish(entries, entry["args"]["account_address"], 2, entry["blockNumber"],
                 '決済用口座の認証取消', 
                 '決済用の口座の認証が取り消されました。',
                 )
@@ -274,7 +279,7 @@ class WatchExchangeNewOrder(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["accountAddress"], 0
+            push_publish(entries, entry["args"]["accountAddress"], 0, entry["blockNumber"],
                 '新規注文完了', 
                 '新規注文が完了しました。',
                 )
@@ -316,7 +321,7 @@ class WatchExchangeCancelOrder(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["accountAddress"], 0,
+            push_publish(entries, entry["args"]["accountAddress"], 0, entry["blockNumber"],
                 '注文キャンセル完了', 
                 '注文のキャンセルが完了しました。',
                 )
@@ -358,7 +363,7 @@ class WatchExchangeBuyAgreement(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["buyAddress"], 1,
+            push_publish(entries, entry["args"]["buyAddress"], 1, entry["blockNumber"],
                 '約定完了', 
                 '買い注文が約定しました。指定口座へ振り込みを実施してください。',
                 )
@@ -399,7 +404,7 @@ class WatchExchangeSellAgreement(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["sellAddress"], 2,
+            push_publish(entries, entry["args"]["sellAddress"], 2, entry["blockNumber"],
                 '約定完了', 
                 '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
                 )
@@ -440,7 +445,7 @@ class WatchExchangeBuySettlementOK(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["buyAddress"], 1,
+            push_publish(entries, entry["args"]["buyAddress"], 1, entry["blockNumber"],
                 '決済完了', 
                 '注文の決済が完了しました。',
                 )
@@ -481,7 +486,7 @@ class WatchExchangeSellSettlementOK(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["sellAddress"], 1,
+            push_publish(entries, entry["args"]["sellAddress"], 1, entry["blockNumber"],
                 '決済完了', 
                 '注文の決済が完了しました。',
                 )
@@ -522,7 +527,7 @@ class WatchExchangeBuySettlementNG(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["buyAddress"], 2,
+            push_publish(entries, entry["args"]["buyAddress"], 2, entry["blockNumber"],
                 '決済失敗', 
                 '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
                 )
@@ -563,7 +568,7 @@ class WatchExchangeSellSettlementNG(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["sellAddress"], 2,
+            push_publish(entries, entry["args"]["sellAddress"], 2, entry["blockNumber"],
                 '決済失敗', 
                 '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
                 )
@@ -601,7 +606,7 @@ class WatchCouponTransfer(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(entries, entry["args"]["to"], 0,
+            push_publish(entries, entry["args"]["to"], 0, entry["blockNumber"],
                 'クーポン発行完了', 
                 'クーポンが発行されました。保有トークンの一覧からご確認ください。',
                 )
