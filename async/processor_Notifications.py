@@ -2,6 +2,8 @@
 
 import os
 import sys
+import boto3
+from botocore.exceptions import ClientError
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -12,8 +14,9 @@ from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from eth_utils import to_checksum_address
+from app import log
 from app import config
-from app.model import Notification
+from app.model import Notification, Push
 from app.contracts import Contract
 import json
 from async.lib.token import TokenFactory
@@ -27,6 +30,7 @@ JST = timezone(timedelta(hours=+9), "JST")
 
 #logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+LOG = log.get_logger()
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or "http://localhost:8545"
@@ -45,6 +49,9 @@ db_session.configure(bind=engine)
 token_factory = TokenFactory(web3)
 company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 
+# 起動時のblockNumberを取得
+NOW_BLOCKNUMBER = web3.eth.blockNumber
+
 # コントラクトの生成
 sb_exchange_contract = Contract.get_contract(
     'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
@@ -56,6 +63,25 @@ list_contract = Contract.get_contract(
     'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
 token_list = TokenList(list_contract)
+
+def push_publish(entries, address, priority, blocknumber,subject, message):
+    # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
+    # 「対象のblockNumer」が起動時のblockNumer以上の場合は送信
+    if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
+        query = db_session.query(Push). \
+            filter(Push.account_address == address)
+        devices = query.all()
+        for device_data in devices:
+            try:
+                client = boto3.client('sns', 'ap-northeast-1')
+                response = client.publish(
+                    TargetArn=device_data.device_endpoint_arn,
+                    Message=message,
+                    Subject=subject
+                )
+            except ClientError:
+                LOG.error('device_endpoint_arn does not found.')
+
 
 class Watcher:
     def __init__(self, contract, filter_name, filter_params):
@@ -86,10 +112,12 @@ class Watcher:
             web3.eth.uninstallFilter(event_filter.filter_id)
             if len(entries) == 0:
                 return
-
+            # DB登録
             self.watch(entries)
             self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
             db_session.commit()
+            # Push通知
+            self.push(entries)
         finally:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
@@ -111,6 +139,13 @@ class WatchWhiteListRegister(Watcher):
             notification.metainfo = {}
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["account_address"], 2, entry["blockNumber"],
+                '決済用口座情報登録完了', 
+                '決済用口座情報登録が完了しました。指定口座まで振り込みを実施してください。',
+                )
+
 # イベント：決済用口座承認
 class WatchWhiteListApprove(Watcher):
     def __init__(self):
@@ -127,6 +162,13 @@ class WatchWhiteListApprove(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["account_address"], 0, entry["blockNumber"],
+                '決済用口座情報承認完了', 
+                '決済用の口座が承認されました。取引を始めることができます。',
+                )
 
 # イベント：決済用口座警告
 class WatchWhiteListWarn(Watcher):
@@ -145,6 +187,13 @@ class WatchWhiteListWarn(Watcher):
             notification.metainfo = {}
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["account_address"], 0, entry["blockNumber"],
+                '決済用口座の確認', 
+                '決済用の口座の情報が確認できませんでした。',
+                )
+
 # イベント：決済用口座非承認
 class WatchWhiteListUnapprove(Watcher):
     def __init__(self):
@@ -162,6 +211,13 @@ class WatchWhiteListUnapprove(Watcher):
             notification.metainfo = {}
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["account_address"], 0, entry["blockNumber"],
+                '決済用口座情報再登録', 
+                '決済用口座情報が変更されました。指定口座まで振り込みを実施してください。',
+                )
+
 # イベント：決済用口座アカウント停止
 class WatchWhiteListBan(Watcher):
     def __init__(self):
@@ -178,6 +234,14 @@ class WatchWhiteListBan(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = {}
             db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["account_address"], 2, entry["blockNumber"],
+                '決済用口座の認証取消', 
+                '決済用の口座の認証が取り消されました。',
+                )
+
 
 # イベント：注文
 class WatchExchangeNewOrder(Watcher):
@@ -213,6 +277,14 @@ class WatchExchangeNewOrder(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["accountAddress"], 0, entry["blockNumber"],
+                '新規注文完了', 
+                '新規注文が完了しました。',
+                )
+
+
 # イベント：注文取消
 class WatchExchangeCancelOrder(Watcher):
     def __init__(self):
@@ -246,6 +318,14 @@ class WatchExchangeCancelOrder(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["accountAddress"], 0, entry["blockNumber"],
+                '注文キャンセル完了', 
+                '注文のキャンセルが完了しました。',
+                )
+
 
 # イベント：約定（買）
 class WatchExchangeBuyAgreement(Watcher):
@@ -281,6 +361,13 @@ class WatchExchangeBuyAgreement(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["buyAddress"], 1, entry["blockNumber"],
+                '約定完了', 
+                '買い注文が約定しました。指定口座へ振り込みを実施してください。',
+                )
+
 # イベント：約定（売）
 class WatchExchangeSellAgreement(Watcher):
     def __init__(self):
@@ -314,6 +401,13 @@ class WatchExchangeSellAgreement(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["sellAddress"], 2, entry["blockNumber"],
+                '約定完了', 
+                '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
+                )
 
 # イベント：決済OK（買）
 class WatchExchangeBuySettlementOK(Watcher):
@@ -349,6 +443,13 @@ class WatchExchangeBuySettlementOK(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["buyAddress"], 1, entry["blockNumber"],
+                '決済完了', 
+                '注文の決済が完了しました。',
+                )
+
 # イベント：決済OK（売）
 class WatchExchangeSellSettlementOK(Watcher):
     def __init__(self):
@@ -382,6 +483,13 @@ class WatchExchangeSellSettlementOK(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["sellAddress"], 1, entry["blockNumber"],
+                '決済完了', 
+                '注文の決済が完了しました。',
+                )
 
 # イベント：決済NG（買）
 class WatchExchangeBuySettlementNG(Watcher):
@@ -417,6 +525,13 @@ class WatchExchangeBuySettlementNG(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["buyAddress"], 2, entry["blockNumber"],
+                '決済失敗', 
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                )
+
 # イベント：決済NG（売）
 class WatchExchangeSellSettlementNG(Watcher):
     def __init__(self):
@@ -451,6 +566,13 @@ class WatchExchangeSellSettlementNG(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["sellAddress"], 2, entry["blockNumber"],
+                '決済失敗', 
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                )
+
 # イベント：クーポン割当・譲渡
 class WatchCouponTransfer(Watcher):
     def __init__(self):
@@ -481,6 +603,13 @@ class WatchCouponTransfer(Watcher):
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(entries, entry["args"]["to"], 0, entry["blockNumber"],
+                'クーポン発行完了', 
+                'クーポンが発行されました。保有トークンの一覧からご確認ください。',
+                )
 
 def main():
     watchers = [
