@@ -70,7 +70,7 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
     if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
         # 通知tableの情報取得
         query_notification = db_session.query(Notification). \
-            filter(Notification.notification_id == self._gen_notification_id(entry))
+            filter(Notification.notification_id == notification_id)
         notification = query_notification.first()
         # 通知json作成
         message_dict = {
