@@ -83,6 +83,7 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
             send_data = json.dumps({"APNS": message_dict})
         else:
             send_data = json.dumps({"APNS_SANDBOX": message_dict})
+        print(send_data)
         # pushの情報取得
         query = db_session.query(Push). \
             filter(Push.account_address == address)
