@@ -80,7 +80,6 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
         }
         message_dict['data'] = [{
             "notification_type": notification.notification_type,
-            "id": notification.id,
             "priority": notification.priority,
             "block_timestamp": notification.block_timestamp,
             "is_read": notification.is_read,
