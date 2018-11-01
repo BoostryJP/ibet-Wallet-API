@@ -79,16 +79,16 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
             }
         }
         message_dict['data'] = [{
-            "notification_type": notification["notification_type"],
-            "id": notification["id"], 
-            "priority": notification["priority"],
-            "block_timestamp": notification["block_timestamp"], 
-            "is_read": notification["is_read"], 
-            "is_flagged": notification["is_flagged"], 
-            "is_deleted": notification["is_deleted"], 
-            "deleted_at": notification["deleted_at"], 
-            "args": notification["args"], 
-            "metainfo": notification["metainfo"]
+            "notification_type": notification.notification_type,
+            "id": notification.id,
+            "priority": notification.priority,
+            "block_timestamp": notification.block_timestamp,
+            "is_read": notification.is_read,
+            "is_flagged": notification.is_flagged, 
+            "is_deleted": notification.is_deleted,
+            "deleted_at": notification.deleted_at,
+            "args": notification.args,
+            "metainfo": notification.metainfo
         }]
         print(message_dict)
         if config.APP_ENV == 'live':
