@@ -75,10 +75,10 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
         # 通知json作成
         message_dict = {
             "aps":{ 
-                "alert":message
+                "alert":message,
+                "notification_id":notification.notification_id
             }
         }
-        message_dict['notification_id'] = notification.notification_id
         print(message_dict)
         if config.APP_ENV == 'live':
             send_data = json.dumps({"APNS": json.dumps(message_dict)})
