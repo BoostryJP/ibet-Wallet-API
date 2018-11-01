@@ -88,8 +88,7 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
             "is_deleted": notification["is_deleted"], 
             "deleted_at": notification["deleted_at"], 
             "args": notification["args"], 
-            "metainfo": notification["metainfo"], 
-            "sort_id": null
+            "metainfo": notification["metainfo"]
         }]
         print(message_dict)
         if config.APP_ENV == 'live':
