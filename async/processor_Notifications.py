@@ -95,7 +95,7 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
                 response = client.publish(
                     TargetArn=device_data.device_endpoint_arn,
                     Message=send_data,
-                    message_structure='json'
+                    MessageStructure='json'
                 )
             except ClientError:
                 LOG.error('device_endpoint_arn does not found.')
