@@ -81,9 +81,9 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
         message_dict['notification_id'] = notification.notification_id
         print(message_dict)
         if config.APP_ENV == 'live':
-            send_data = json.dumps({"APNS": json.dumps(message_dict}))
+            send_data = json.dumps({"APNS": json.dumps(message_dict)})
         else:
-            send_data = json.dumps({"APNS_SANDBOX": json.dumps(message_dict}))
+            send_data = json.dumps({"APNS_SANDBOX": json.dumps(message_dict)})
         print(send_data)
         # pushの情報取得
         query = db_session.query(Push). \
