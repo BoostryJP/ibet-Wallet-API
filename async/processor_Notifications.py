@@ -78,7 +78,8 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
                 "alert":message
             }
         }
-        message_dict['data'] = notification.json
+        message_dict['data'] = [notification.json]
+        print(message_dict)
         if config.APP_ENV == 'live':
             send_data = json.dumps({"APNS": message_dict})
         else:
