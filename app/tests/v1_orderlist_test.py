@@ -224,7 +224,8 @@ class TestV1OrderList_Bond():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         for order in resp.json['data']['order_list']:
             if order['token']['token_address'] == bond_token['address']:
-                assert order == assumed_body
+                assert order['token'] == assumed_body['token']
+                assert order['order'] == assumed_body['order']
 
     # ＜正常系2＞
     # 注文中なし、決済中あり（1件）、約定済なし
@@ -299,7 +300,8 @@ class TestV1OrderList_Bond():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         for order in resp.json['data']['settlement_list']:
             if order['token']['token_address'] == bond_token['address']:
-                assert order == assumed_body
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
 
     # ＜正常系3＞
     # 注文中なし、決済中なし、約定済あり（1件）
@@ -376,8 +378,8 @@ class TestV1OrderList_Bond():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         for order in resp.json['data']['complete_list']:
             if order['token']['token_address'] == bond_token['address']:
-                assert order == assumed_body
-
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
     # ＜エラー系1＞
     # request-bodyなし
     # -> 入力値エラー
@@ -628,7 +630,8 @@ class TestV1OrderList_Membership():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         for order in resp.json['data']['order_list']:
             if order['token']['token_address'] == token['address']:
-                assert order == assumed_body
+                assert order['token'] == assumed_body['token']
+                assert order['order'] == assumed_body['order']
 
     # ＜正常系2＞
     # 注文中なし、決済中あり（1件）、約定済なし
@@ -689,7 +692,8 @@ class TestV1OrderList_Membership():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         for order in resp.json['data']['settlement_list']:
             if order['token']['token_address'] == token['address']:
-                assert order == assumed_body
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
 
     # ＜正常系3＞
     # 注文中なし、決済中なし、約定済あり（1件）
@@ -743,7 +747,8 @@ class TestV1OrderList_Membership():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         for order in resp.json['data']['complete_list']:
             if order['token']['token_address'] == token['address']:
-                assert order == assumed_body
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
 
     # ＜エラー系1＞
     # request-bodyなし

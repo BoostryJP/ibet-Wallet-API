@@ -57,6 +57,11 @@ class OrderList(BaseResource):
             order_list.extend(
                 OrderList.get_Membership_OrderList(account_address, company_list))
 
+            order_list = sorted(
+                order_list,
+                key=lambda x:x['block_number']
+            )
+
         '''
         2) 決済中一覧（settlement_list）
         '''
@@ -78,6 +83,11 @@ class OrderList(BaseResource):
             settlement_list.extend(
                 OrderList.get_Membership_SettlementList_Sell(account_address, company_list))
 
+            settlement_list = sorted(
+                settlement_list,
+                key=lambda x:x['block_number']
+            )
+
         '''
         3) 約定済一覧（complete_list）
         '''
@@ -98,6 +108,11 @@ class OrderList(BaseResource):
             # 会員権トークン（売）
             complete_list.extend(
                 OrderList.get_Membership_CompleteList_Sell(account_address, company_list))
+
+            complete_list = sorted(
+                complete_list,
+                key=lambda x:x['block_number']
+            )
 
         response_json = {
             'order_list': order_list,
@@ -151,7 +166,6 @@ class OrderList(BaseResource):
         )
         entries = event_filter.get_all_entries()
         web3.eth.uninstallFilter(event_filter.filter_id)
-        print(entries)
 
         order_list = []
         for entry in entries:
@@ -280,7 +294,8 @@ class OrderList(BaseResource):
                         'price':orderBook[3],
                         'isBuy':orderBook[4],
                         'canceled':orderBook[6]
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return order_list
@@ -369,7 +384,8 @@ class OrderList(BaseResource):
                         'price':orderBook[3],
                         'isBuy':orderBook[4],
                         'canceled':orderBook[6]
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return order_list
@@ -524,7 +540,8 @@ class OrderList(BaseResource):
                         'price':agreement[2],
                         'isBuy':True,
                         'canceled':agreement[3]
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return settlement_list
@@ -679,7 +696,8 @@ class OrderList(BaseResource):
                         'price':agreement[2],
                         'isBuy':False,
                         'canceled':agreement[3]
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return settlement_list
@@ -770,7 +788,8 @@ class OrderList(BaseResource):
                         'price':agreement[2],
                         'isBuy':True,
                         'canceled':agreement[3]
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return settlement_list
@@ -861,7 +880,8 @@ class OrderList(BaseResource):
                         'price':agreement[2],
                         'isBuy':False,
                         'canceled':agreement[3]
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return settlement_list
@@ -1015,7 +1035,8 @@ class OrderList(BaseResource):
                         'amount':agreement[1],
                         'price':agreement[2],
                         'isBuy':True
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return complete_list
@@ -1169,7 +1190,8 @@ class OrderList(BaseResource):
                         'amount':agreement[1],
                         'price':agreement[2],
                         'isBuy':False
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return complete_list
@@ -1259,7 +1281,8 @@ class OrderList(BaseResource):
                         'amount':agreement[1],
                         'price':agreement[2],
                         'isBuy':True
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return complete_list
@@ -1349,7 +1372,8 @@ class OrderList(BaseResource):
                         'amount':agreement[1],
                         'price':agreement[2],
                         'isBuy':False
-                    }
+                    },
+                    'block_number': entry['blockNumber']
                 })
 
         return complete_list
