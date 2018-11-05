@@ -191,24 +191,8 @@ class MyTokens(BaseResource):
                             company_name = MyTokens.get_company_name(company_list, owner_address)
 
                             # 第三者認定（Sign）のイベント情報を検索する
-                            event_filter = BondTokenContract.events.Sign.createFilter(fromBlock='earliest')
-                            try:
-                                entries = event_filter.get_all_entries()
-                            except:
-                                entries = []
-                            web3.eth.uninstallFilter(event_filter.filter_id)
-
+                            # NOTE:現状項目未使用であるため空のリストを返す
                             certification = []
-                            for entry in entries:
-                                isSigned = False
-                                if BondTokenContract.functions.\
-                                    signatures(to_checksum_address(entry['args']['signer'])).call() == 2:
-                                    isSigned = True
-
-                                certification.append({
-                                    'signer':entry['args']['signer'],
-                                    'is_signed':isSigned
-                                })
 
                             position_list.append({
                                 'token': {

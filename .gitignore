@@ -8,3 +8,6 @@ __pycache__/
 # Intellij
 .idea
 /*.iml
+
+# PyEnv
+.python-version
