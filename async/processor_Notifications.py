@@ -77,6 +77,7 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
             "aps":{ 
                 "alert":message
             },
+            "URL": "ibet://notifications/" + notification.notification_id
             "data": {
                 "notification_id":notification.notification_id
             }
