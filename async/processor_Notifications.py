@@ -75,9 +75,9 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
         # 通知json作成
         message_dict = {
             "aps":{ 
-                "alert":message
+                "alert":message,
+                "URL": "ibet://notifications/" + notification.notification_id,
             },
-            "URL": "ibet://notifications/" + notification.notification_id,
             "data": {
                 "notification_id":notification.notification_id
             }
