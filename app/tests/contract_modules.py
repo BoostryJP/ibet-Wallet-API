@@ -273,6 +273,77 @@ def consume_coupon_token(invoker, coupon_token, value):
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
+# クーポントークンの売出
+def coupon_offer(invoker, exchange, token, amount, price):
+    coupon_transfer_to_exchange(invoker, exchange, token, amount)
+    coupon_make_sell(invoker, exchange, token, amount, price)
+
+# クーポンDEXコントラクトにクーポントークンをデポジット
+def coupon_transfer_to_exchange(invoker, exchange, token, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+    TokenContract = Contract.\
+        get_contract('IbetCoupon', token['address'])
+    tx_hash = TokenContract.functions.\
+        transfer(exchange['address'], amount).\
+        transact({'from':invoker['account_address'], 'gas':4000000})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+# クーポントークンの売りMake注文
+def coupon_make_sell(invoker, exchange, token, amount, price):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+    ExchangeContract = Contract.\
+        get_contract('IbetCouponExchange', exchange['address'])
+    agent = eth_account['agent']
+    gas = ExchangeContract.estimateGas().\
+        createOrder(token['address'], amount, price, False, agent['account_address'])
+    tx_hash = ExchangeContract.functions.\
+        createOrder(token['address'], amount, price, False, agent['account_address']).\
+        transact({'from':invoker['account_address'], 'gas':gas})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+# クーポントークンの買いTake注文
+def coupon_take_buy(invoker, exchange, order_id, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+    ExchangeContract = Contract.\
+        get_contract('IbetCouponExchange', exchange['address'])
+    gas = ExchangeContract.estimateGas().\
+        executeOrder(order_id, amount, True)
+    tx_hash = ExchangeContract.functions.\
+        executeOrder(order_id, amount, True).\
+        transact({'from':invoker['account_address'], 'gas':gas})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+# 直近注文IDを取得
+def coupon_get_latest_orderid(exchange):
+    ExchangeContract = Contract.\
+        get_contract('IbetCouponExchange', exchange['address'])
+    latest_orderid = ExchangeContract.functions.latestOrderId().call()
+    return latest_orderid
+
+# 直近約定IDを取得
+def coupon_get_latest_agreementid(exchange, order_id):
+    ExchangeContract = Contract.\
+        get_contract('IbetCouponExchange', exchange['address'])
+    latest_agreementid = \
+        ExchangeContract.functions.latestAgreementIds(order_id).call()
+    return latest_agreementid
+
+# 決済承認
+def coupon_confirm_agreement(invoker, exchange, order_id, agreement_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
+    ExchangeContract = Contract.\
+        get_contract('IbetCouponExchange', exchange['address'])
+    gas = ExchangeContract.estimateGas().\
+        confirmAgreement(order_id, agreement_id)
+    tx_hash = ExchangeContract.functions.\
+        confirmAgreement(order_id, agreement_id).\
+        transact({'from':invoker['account_address'], 'gas':gas})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
 '''
 Membership Token （会員権）
 '''
