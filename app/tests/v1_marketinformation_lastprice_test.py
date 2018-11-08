@@ -27,6 +27,7 @@ class TestV1LastPrice():
             'name': 'テスト債券',
             'symbol': 'BOND',
             'totalSupply': 1000000,
+            'tradableExchange': bond_exchange['address'],
             'faceValue': 10000,
             'interestRate': 1000,
             'interestPaymentDate1': '0101',
@@ -119,19 +120,11 @@ class TestV1LastPrice():
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']
 
-        print("-- contract_address --")
-        print(bond_exchange['address'])
-        print(personal_info['address'])
-        print(white_list['address'])
-
-        bond_token = TestV1LastPrice.generate_agree_event(bond_exchange,
-                                                     personal_info, white_list)
+        bond_token = TestV1LastPrice.\
+            generate_agree_event(bond_exchange, personal_info, white_list)
 
         token_address = bond_token['address']
         request_params = {"address_list": [token_address]}
-
-        print("-- token_address --")
-        print(token_address)
 
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
 
@@ -229,6 +222,7 @@ class TestV1MembershipLastPrice():
             'name': 'テスト会員権',
             'symbol': 'MEMBERSHIP',
             'initialSupply': 1000000,
+            'tradableExchange': exchange['address'],
             'details': '詳細',
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',

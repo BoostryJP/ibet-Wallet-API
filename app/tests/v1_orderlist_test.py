@@ -16,11 +16,12 @@ class TestV1OrderList_Bond():
     # テスト対象API
     apiurl = '/v1/OrderList/'
 
-    def bond_token_attribute():
+    def bond_token_attribute(exchange):
         attribute = {
             'name': 'テスト債券',
             'symbol': 'BOND',
             'totalSupply': 1000000,
+            'tradableExchange': exchange['address'],
             'faceValue': 10000,
             'interestRate': 1000,
             'interestPaymentDate1': '0101',
@@ -49,7 +50,7 @@ class TestV1OrderList_Bond():
     def order_event(bond_exchange, personal_info, white_list, token_list):
         issuer = eth_account['issuer']
 
-        attribute = TestV1OrderList_Bond.bond_token_attribute()
+        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange)
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -75,7 +76,7 @@ class TestV1OrderList_Bond():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = TestV1OrderList_Bond.bond_token_attribute()
+        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange)
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -108,7 +109,7 @@ class TestV1OrderList_Bond():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = TestV1OrderList_Bond.bond_token_attribute()
+        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange)
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -480,11 +481,12 @@ class TestV1OrderList_Membership():
     # テスト対象API
     apiurl = '/v1/OrderList/'
 
-    def membership_token_attribute():
+    def membership_token_attribute(exchange):
         attribute = {
             'name': 'テスト会員権',
             'symbol': 'MEMBERSHIP',
             'initialSupply': 1000000,
+            'tradableExchange': exchange['address'],
             'details': '詳細',
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
@@ -498,7 +500,8 @@ class TestV1OrderList_Membership():
     def order_event(exchange, token_list):
         issuer = eth_account['issuer']
 
-        attribute = TestV1OrderList_Membership.membership_token_attribute()
+        attribute = TestV1OrderList_Membership.\
+            membership_token_attribute(exchange)
 
         # ＜発行体オペレーション＞
         #   1) トークン発行
@@ -520,7 +523,8 @@ class TestV1OrderList_Membership():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = TestV1OrderList_Membership.membership_token_attribute()
+        attribute = TestV1OrderList_Membership.\
+            membership_token_attribute(exchange)
 
         # ＜発行体オペレーション＞
         #   1) トークン発行
@@ -545,7 +549,8 @@ class TestV1OrderList_Membership():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = TestV1OrderList_Membership.membership_token_attribute()
+        attribute = TestV1OrderList_Membership.\
+            membership_token_attribute(exchange)
 
         # ＜発行体オペレーション＞
         #   1) トークン発行

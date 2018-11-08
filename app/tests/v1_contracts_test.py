@@ -19,18 +19,19 @@ from .contract_modules import issue_bond_token, register_bond_list,\
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
-# トークン一覧参照API
+# [普通社債]トークン一覧参照API
 # /v1/Contracts
 class TestV1Contracts():
 
     # テスト対象API
     apiurl = '/v1/Contracts/'
 
-    def bond_token_attribute():
+    def bond_token_attribute(exchange_address):
         attribute = {
             'name': 'テスト債券',
             'symbol': 'BOND',
             'totalSupply': 1000000,
+            'tradableExchange': exchange_address,
             'faceValue': 10000,
             'interestRate': 1000,
             'interestPaymentDate1': '0101',
@@ -68,7 +69,7 @@ class TestV1Contracts():
     # 発行済債券あり（1件）
     # cursor=設定なし、 limit=設定なし
     # -> 1件返却
-    def test_contracts_normal_1(self, client, session):
+    def test_contracts_normal_1(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -77,7 +78,10 @@ class TestV1Contracts():
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：債券新規発行
-        attribute = TestV1Contracts.bond_token_attribute()
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetStraightBondExchange']['address'])
+        attribute = TestV1Contracts.bond_token_attribute(exchange_address)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
 
@@ -129,7 +133,7 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=設定なし、 limit=設定なし
     # -> 登録が新しい順にリストが返却
-    def test_contracts_normal_2(self, client, session):
+    def test_contracts_normal_2(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -139,8 +143,11 @@ class TestV1Contracts():
 
         # データ準備：債券新規発行
         bond_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute()
+            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -238,7 +245,7 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=2、 limit=2
     # -> 登録が新しい順にリストが返却（2件）
-    def test_contracts_normal_3(self, client, session):
+    def test_contracts_normal_3(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -248,8 +255,11 @@ class TestV1Contracts():
 
         # データ準備：債券新規発行
         bond_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute()
+            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -347,7 +357,7 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=1、 limit=1
     # -> 登録が新しい順にリストが返却（1件）
-    def test_contracts_normal_4(self, client, session):
+    def test_contracts_normal_4(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -357,8 +367,11 @@ class TestV1Contracts():
 
         # データ準備：債券新規発行
         bond_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute()
+            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -416,7 +429,7 @@ class TestV1Contracts():
     # 発行済債券あり（2件）
     # cursor=1、 limit=2
     # -> 登録が新しい順にリストが返却（1件）
-    def test_contracts_normal_5(self, client, session):
+    def test_contracts_normal_5(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -426,8 +439,11 @@ class TestV1Contracts():
 
         # データ準備：債券新規発行
         bond_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute()
+            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -617,18 +633,19 @@ class TestV1Contracts():
             }
         }
 
-# トークン一覧参照API
+# [会員権]トークン一覧参照API
 # /v1/Membership/Contracts
 class TestV1MembershipContracts():
 
     # テスト対象API
     apiurl = '/v1/Membership/Contracts/'
 
-    def token_attribute():
+    def token_attribute(exchange_address):
         attribute = {
             'name': 'テスト会員権',
             'symbol': 'MEMBERSHIP',
             'initialSupply': 1000000,
+            'tradableExchange': exchange_address,
             'details': '詳細',
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
@@ -650,7 +667,7 @@ class TestV1MembershipContracts():
     # 発行済会員権あり（1件）
     # cursor=設定なし、 limit=設定なし
     # -> 1件返却
-    def test_membershiplist_normal_1(self, client, session):
+    def test_membershiplist_normal_1(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -659,7 +676,10 @@ class TestV1MembershipContracts():
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：会員権新規発行
-        attribute = TestV1MembershipContracts.token_attribute()
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
+        attribute = TestV1MembershipContracts.token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 
@@ -699,7 +719,7 @@ class TestV1MembershipContracts():
     # 発行済会員権あり（2件）
     # cursor=設定なし、 limit=設定なし
     # -> 登録が新しい順にリストが返却
-    def test_membershiplist_normal_2(self, client, session):
+    def test_membershiplist_normal_2(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -709,8 +729,12 @@ class TestV1MembershipContracts():
 
         # データ準備：会員権新規発行
         issued_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.token_attribute()
+            attribute = TestV1MembershipContracts.\
+                token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
@@ -772,7 +796,7 @@ class TestV1MembershipContracts():
     # 発行済会員権あり（2件）
     # cursor=2、 limit=2
     # -> 登録が新しい順にリストが返却（2件）
-    def test_membershiplist_normal_3(self, client, session):
+    def test_membershiplist_normal_3(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -782,8 +806,12 @@ class TestV1MembershipContracts():
 
         # データ準備：会員権新規発行
         issued_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.token_attribute()
+            attribute = TestV1MembershipContracts.\
+                token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
@@ -845,7 +873,7 @@ class TestV1MembershipContracts():
     # 発行済会員権あり（2件）
     # cursor=1、 limit=1
     # -> 登録が新しい順にリストが返却（1件）
-    def test_membershiplist_normal_4(self, client, session):
+    def test_membershiplist_normal_4(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -855,8 +883,12 @@ class TestV1MembershipContracts():
 
         # データ準備：会員権新規発行
         issued_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.token_attribute()
+            attribute = TestV1MembershipContracts.\
+                token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
@@ -895,7 +927,7 @@ class TestV1MembershipContracts():
     # 発行済会員権あり（2件）
     # cursor=1、 limit=2
     # -> 登録が新しい順にリストが返却（1件）
-    def test_membershiplist_normal_5(self, client, session):
+    def test_membershiplist_normal_5(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -905,8 +937,12 @@ class TestV1MembershipContracts():
 
         # データ準備：会員権新規発行
         issued_list = []
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.token_attribute()
+            attribute = TestV1MembershipContracts.\
+                token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
@@ -945,7 +981,7 @@ class TestV1MembershipContracts():
     # 会員権発行（1件）　→　無効化
     # cursor=設定なし、 limit=設定なし
     # -> 0件返却
-    def test_membershiplist_normal_6(self, client, session):
+    def test_membershiplist_normal_6(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -954,7 +990,11 @@ class TestV1MembershipContracts():
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：会員権新規発行
-        attribute = TestV1MembershipContracts.token_attribute()
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
+        attribute = TestV1MembershipContracts.\
+            token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 

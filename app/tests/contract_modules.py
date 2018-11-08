@@ -79,6 +79,7 @@ def issue_bond_token(invoker, attribute):
 
     arguments = [
     attribute['name'], attribute['symbol'], attribute['totalSupply'],
+    attribute['tradableExchange'],
     attribute['faceValue'], attribute['interestRate'], interestPaymentDate,
     attribute['redemptionDate'], attribute['redemptionAmount'],
     attribute['returnDate'], attribute['returnAmount'],
@@ -197,6 +198,7 @@ def issue_coupon_token(invoker, attribute):
 
     arguments = [
         attribute['name'], attribute['symbol'], attribute['totalSupply'],
+        attribute['tradableExchange'],
         attribute['details'], attribute['memo'],
         attribute['expirationDate'], attribute['transferable']
     ]
@@ -254,7 +256,7 @@ def invalidate_coupon_token(invoker, coupon_token):
         'IbetCoupon', coupon_token['address'])
 
     tx_hash = CouponTokenContract.functions.\
-        updateStatus(False).\
+        setStatus(False).\
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -281,6 +283,7 @@ def membership_issue(invoker, attribute):
 
     arguments = [
         attribute['name'], attribute['symbol'], attribute['initialSupply'],
+        attribute['tradableExchange'],
         attribute['details'], attribute['returnDetails'],
         attribute['expirationDate'], attribute['memo'],
         attribute['transferable']
