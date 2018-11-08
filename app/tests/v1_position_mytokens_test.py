@@ -19,8 +19,8 @@ class TestV1MyTokens():
 
     # 債券トークンの保有状態（約定イベント）を作成
     @staticmethod
-    def generate_bond_position(bond_exchange, personal_info, white_list,
-                             token_list):
+    def generate_bond_position(bond_exchange, personal_info,
+        white_list, token_list):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -29,6 +29,7 @@ class TestV1MyTokens():
             'name': 'テスト債券',
             'symbol': 'BOND',
             'totalSupply': 1000000,
+            'tradableExchange': bond_exchange['address'],
             'faceValue': 10000,
             'interestRate': 1000,
             'interestPaymentDate1': '0101',
