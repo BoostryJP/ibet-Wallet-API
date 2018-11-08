@@ -664,3 +664,68 @@ class MembershipTick(BaseResource):
                 raise InvalidParameterError
 
         return request_json
+
+
+'''
+Coupon Token （クーポン）
+'''
+# ------------------------------
+# [クーポン]現在値取得
+# ------------------------------
+class CouponLastPrice(BaseResource):
+    '''
+    Handle for endpoint: /v1/Coupon/LastPrice
+    '''
+
+    def on_post(self, req, res):
+        LOG.info('v1.marketInformation.CouponLastPrice')
+
+        request_json = CouponLastPrice.validate(req)
+
+        ExchangeContract = Contract.get_contract(
+            'IbetCouponExchange',
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        price_list = []
+        for token_address in request_json['address_list']:
+            try:
+                last_price = ExchangeContract.functions.\
+                    lastPrice(to_checksum_address(token_address)).call()
+            except:
+                last_price = 0
+
+            price_list.append({
+                'token_address': token_address,
+                'last_price': last_price
+            })
+
+        self.on_success(res, price_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'address_list': {
+                'type': 'list',
+                'empty': False,
+                'required': True,
+                'schema': {
+                    'type': 'string',
+                    'required': True,
+                    'empty': False,
+                }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for token_address in request_json['address_list']:
+            if not Web3.isAddress(token_address):
+                raise InvalidParameterError
+
+        return request_json
