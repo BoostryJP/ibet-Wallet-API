@@ -48,6 +48,7 @@ class App(falcon.API):
         # 公開中銘柄一覧
         self.add_route('/v1/Contracts', contracts.Contracts())
         self.add_route('/v1/Membership/Contracts', contracts.MembershipContracts())
+        self.add_route('/v1/Coupon/Contracts', contracts.CouponContracts())
 
         # 板情報
         self.add_route('/v1/OrderBook', marketInformation.OrderBook())
