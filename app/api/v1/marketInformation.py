@@ -670,6 +670,182 @@ class MembershipTick(BaseResource):
 Coupon Token （クーポン）
 '''
 # ------------------------------
+# [クーポン]板情報取得
+# ------------------------------
+class CouponOrderBook(BaseResource):
+
+    '''
+    Handle for endpoint: /v1/Coupon/OrderBook
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.marketInformation.CouponOrderBook')
+        session = req.context['session']
+
+        # 入力値チェック
+        request_json = MembershipOrderBook.validate(req)
+
+        # 入力値を抽出
+        token_address = to_checksum_address(request_json['token_address'])
+
+        # 注文を抽出
+        is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
+        exchange_address = \
+            to_checksum_address(
+                os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
+        if 'account_address' in request_json:
+            account_address = to_checksum_address(request_json['account_address'])
+
+            if is_buy == True:  # 買注文
+                # ＜抽出条件＞
+                #  1) Token Addressが指定したものと同じ
+                #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
+                #               売り注文をしたい場合 => 買い注文を抽出
+                #  3) 未キャンセル
+                #  4) 指値以下
+                #  5) 指定したアカウントアドレス以外
+                orders = session.query(
+                    Order.order_id, Order.amount, Order.price, \
+                    Order.exchange_address, Order.account_address, \
+                    func.sum(Agreement.amount)).\
+                    outerjoin(
+                        Agreement,
+                        Order.unique_order_id == Agreement.unique_order_id).\
+                    group_by(
+                        Order.order_id, Order.amount,
+                        Order.price, Order.exchange_address,
+                        Order.account_address).\
+                    filter(Order.exchange_address == exchange_address).\
+                    filter(Order.token_address == token_address).\
+                    filter(Order.is_buy == False).\
+                    filter(Order.is_cancelled == False).\
+                    filter(Order.account_address != account_address).\
+                    all()
+            else:  # 売注文
+                # ＜抽出条件＞
+                #  1) Token Addressが指定したものと同じ
+                #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
+                #               売り注文をしたい場合 => 買い注文を抽出
+                #  3) 未キャンセル
+                #  4) 指値以上
+                #  5) 指定したアカウントアドレス以外
+                orders = session.query(
+                    Order.order_id, Order.amount, Order.price, \
+                    Order.exchange_address, Order.account_address, \
+                    func.sum(Agreement.amount)).\
+                    outerjoin(
+                        Agreement,
+                        Order.unique_order_id == Agreement.unique_order_id).\
+                    group_by(
+                        Order.order_id, Order.amount,
+                        Order.price, Order.exchange_address,
+                        Order.account_address).\
+                    filter(Order.exchange_address == exchange_address).\
+                    filter(Order.token_address == token_address).\
+                    filter(Order.is_buy == True).\
+                    filter(Order.is_cancelled == False).\
+                    filter(Order.account_address != account_address).\
+                    all()
+        else:
+            if is_buy == True:  # 買注文
+                # ＜抽出条件＞
+                #  1) Token Addressが指定したものと同じ
+                #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
+                #               売り注文をしたい場合 => 買い注文を抽出
+                #  3) 未キャンセル
+                #  4) 指値以下
+                orders = session.query(Order, func.sum(Agreement.amount)).\
+                         outerjoin(
+                            Agreement,
+                            Order.exchange_address == Agreement.exchange_address,
+                            Order.order_id == Agreement.order_id).\
+                         group_by(Order.exchange_address, Order.order_id).\
+                         filter(Order.exchange_address == exchange_address).\
+                         filter(Order.token_address == token_address).\
+                         filter(Order.is_buy == False).\
+                         filter(Order.is_cancelled == False).\
+                         all()
+
+            else:  # 売注文
+                # ＜抽出条件＞
+                #  1) Token Addressが指定したものと同じ
+                #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
+                #               売り注文をしたい場合 => 買い注文を抽出
+                #  3) 未キャンセル
+                #  4) 指値以上
+                orders = session.query(Order, func.sum(Agreement.amount)).\
+                         outerjoin(
+                            Agreement,
+                            Order.exchange_address == Agreement.exchange_address,
+                            Order.order_id == Agreement.order_id).\
+                         group_by(Order.exchange_address, Order.order_id).\
+                         filter(Order.exchange_address == exchange_address).\
+                         filter(Order.token_address == token_address).\
+                         filter(Order.is_buy == True).\
+                         filter(Order.is_cancelled == False).\
+                         all()
+
+        # レスポンス用の注文一覧を構築
+        order_list_tmp = []
+        for (order_id, amount, price, exchange_address,
+            account_address, agreement_amount) in orders:
+            # 残存注文数量 = 発注数量 - 約定済み数量
+            if not (agreement_amount is None):
+                amount -= int(agreement_amount)
+
+            # 残注文ありの注文のみを抽出する
+            if amount <= 0:
+                continue
+
+            order_list_tmp.append({
+                'order_id': order_id,
+                'price': price,
+                'amount': amount,
+                'account_address': account_address,
+            })
+
+        # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
+        if request_json['order_type'] == 'buy':
+            order_list = sorted(order_list_tmp, key=lambda x: x['price'])
+        else:
+            order_list = sorted(order_list_tmp, key=lambda x: -x['price'])
+
+        self.on_success(res, order_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'account_address': {
+                'type': 'string'
+            },
+            'token_address': {
+                'type': 'string',
+                'empty': False,
+                'required': True
+            },
+            'order_type': {
+                'type': 'string',
+                'empty': False,
+                'required': True,
+                'allowed': ['buy', 'sell']
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(request_json['token_address']):
+            raise InvalidParameterError
+
+        if not Web3.isAddress(request_json['account_address']):
+            raise InvalidParameterError
+
+        return request_json
+
+# ------------------------------
 # [クーポン]現在値取得
 # ------------------------------
 class CouponLastPrice(BaseResource):
