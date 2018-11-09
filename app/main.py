@@ -62,6 +62,7 @@ class App(falcon.API):
         # 歩み値
         self.add_route('/v1/Tick', marketInformation.Tick())
         self.add_route('/v1/Membership/Tick', marketInformation.MembershipTick())
+        self.add_route('/v1/Coupon/Tick', marketInformation.CouponTick())
 
         # 保有トークン一覧
         self.add_route('/v1/MyTokens', position.MyTokens())
