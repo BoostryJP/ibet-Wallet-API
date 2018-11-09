@@ -74,11 +74,9 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
         notification = query_notification.first()
         # 通知json作成
         message_dict = {
-            "aps":{ 
-                "alert":message,
-                "URL": "ibet://notifications/" + notification.notification_id,
+            "aps":{
+                "alert":message
             },
-            "URL": "ibet://notifications/" + notification.notification_id,
             "data": {
                 "notification_id":notification.notification_id
             }
@@ -162,7 +160,7 @@ class WatchWhiteListRegister(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 2, entry["blockNumber"],
-                '決済用口座情報登録完了', 
+                '決済用口座情報登録完了',
                 '決済用口座情報登録が完了しました。指定口座まで振り込みを実施してください。',
                 )
 
@@ -186,7 +184,7 @@ class WatchWhiteListApprove(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                '決済用口座情報承認完了', 
+                '決済用口座情報承認完了',
                 '決済用の口座が承認されました。取引を始めることができます。',
                 )
 
@@ -210,7 +208,7 @@ class WatchWhiteListWarn(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                '決済用口座の確認', 
+                '決済用口座の確認',
                 '決済用の口座の情報が確認できませんでした。',
                 )
 
@@ -234,7 +232,7 @@ class WatchWhiteListUnapprove(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                '決済用口座情報再登録', 
+                '決済用口座情報再登録',
                 '決済用口座情報が変更されました。指定口座まで振り込みを実施してください。',
                 )
 
@@ -258,7 +256,7 @@ class WatchWhiteListBan(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 2, entry["blockNumber"],
-                '決済用口座の認証取消', 
+                '決済用口座の認証取消',
                 '決済用の口座の認証が取り消されました。',
                 )
 
@@ -300,7 +298,7 @@ class WatchExchangeNewOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '新規注文完了', 
+                '新規注文完了',
                 '新規注文が完了しました。',
                 )
 
@@ -342,7 +340,7 @@ class WatchExchangeCancelOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '注文キャンセル完了', 
+                '注文キャンセル完了',
                 '注文のキャンセルが完了しました。',
                 )
 
@@ -384,7 +382,7 @@ class WatchExchangeBuyAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '約定完了', 
+                '約定完了',
                 '買い注文が約定しました。指定口座へ振り込みを実施してください。',
                 )
 
@@ -425,7 +423,7 @@ class WatchExchangeSellAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '約定完了', 
+                '約定完了',
                 '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
                 )
 
@@ -466,7 +464,7 @@ class WatchExchangeBuySettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '決済完了', 
+                '決済完了',
                 '注文の決済が完了しました。',
                 )
 
@@ -507,7 +505,7 @@ class WatchExchangeSellSettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 1, entry["blockNumber"],
-                '決済完了', 
+                '決済完了',
                 '注文の決済が完了しました。',
                 )
 
@@ -548,7 +546,7 @@ class WatchExchangeBuySettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
-                '決済失敗', 
+                '決済失敗',
                 '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
                 )
 
@@ -589,7 +587,7 @@ class WatchExchangeSellSettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '決済失敗', 
+                '決済失敗',
                 '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
                 )
 
@@ -627,7 +625,7 @@ class WatchCouponTransfer(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["to"], 0, entry["blockNumber"],
-                'クーポン発行完了', 
+                'クーポン発行完了',
                 'クーポンが発行されました。保有トークンの一覧からご確認ください。',
                 )
 
