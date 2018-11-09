@@ -57,6 +57,10 @@ class OrderList(BaseResource):
             order_list.extend(
                 OrderList.get_Membership_OrderList(account_address, company_list))
 
+            # クーポントークン
+            order_list.extend(
+                OrderList.get_Coupon_OrderList(account_address, company_list))
+
             order_list = sorted(
                 order_list,
                 key=lambda x:x['block_number']
@@ -83,6 +87,14 @@ class OrderList(BaseResource):
             settlement_list.extend(
                 OrderList.get_Membership_SettlementList_Sell(account_address, company_list))
 
+            # クーポントークン（買）
+            settlement_list.extend(
+                OrderList.get_Coupon_SettlementList_Buy(account_address, company_list))
+
+            # クーポントークン（売）
+            settlement_list.extend(
+                OrderList.get_Coupon_SettlementList_Sell(account_address, company_list))
+
             settlement_list = sorted(
                 settlement_list,
                 key=lambda x:x['block_number']
@@ -108,6 +120,14 @@ class OrderList(BaseResource):
             # 会員権トークン（売）
             complete_list.extend(
                 OrderList.get_Membership_CompleteList_Sell(account_address, company_list))
+
+            # クーポントークン（買）
+            complete_list.extend(
+                OrderList.get_Coupon_CompleteList_Buy(account_address, company_list))
+
+            # クーポントークン（売）
+            complete_list.extend(
+                OrderList.get_Coupon_CompleteList_Sell(account_address, company_list))
 
             complete_list = sorted(
                 complete_list,
@@ -372,6 +392,94 @@ class OrderList(BaseResource):
                         'memo':memo,
                         'transferable':transferable,
                         'status':status,
+                        'image_url': [
+                            {'type': 'small', 'url': image_url_s},
+                            {'type': 'medium', 'url': image_url_m},
+                            {'type': "large", 'url': image_url_l}
+                        ],
+                    },
+                    'order':{
+                        'order_id':order_id,
+                        'amount':orderBook[2],
+                        'price':orderBook[3],
+                        'isBuy':orderBook[4],
+                        'canceled':orderBook[6]
+                    },
+                    'block_number': entry['blockNumber']
+                })
+
+        return order_list
+
+    # 注文一覧：クーポントークン
+    @staticmethod
+    def get_Coupon_OrderList(account_address, company_list):
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract(
+            'IbetCouponExchange',
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        # 指定したアカウントアドレスから発生している注文イベントを抽出する
+        event_filter = ExchangeContract.events.NewOrder.createFilter(
+            fromBlock='earliest',
+            argument_filters={'accountAddress': to_checksum_address(account_address)}
+        )
+        entries = event_filter.get_all_entries()
+        web3.eth.uninstallFilter(event_filter.filter_id)
+
+        order_list = []
+        for entry in entries:
+            order_id = entry['args']['orderId']
+            orderBook = ExchangeContract.functions.orderBook(order_id).call()
+            # 残注文ゼロの場合は以下の処理をSKIP
+            if orderBook[2] != 0:
+                token_address = to_checksum_address(orderBook[1])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract('IbetCoupon', token_address)
+
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                expirationDate = TokenContract.functions.expirationDate().call()
+                memo = TokenContract.functions.memo().call()
+                transferable = TokenContract.functions.transferable().call()
+                isValid = TokenContract.functions.isValid().call()
+
+                image_url_s = TokenContract.functions.image_urls(0).call()
+                image_url_m = TokenContract.functions.image_urls(1).call()
+                image_url_l = TokenContract.functions.image_urls(2).call()
+
+                owner_address = TokenContract.functions.owner().call()
+
+                # 企業リストから、企業名を取得する
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
+                order_list.append({
+                    'token':{
+                        'token_address': token_address,
+                        'token_template': token_template[1],
+                        'company_name': company_name,
+                        'name':name,
+                        'symbol':symbol,
+                        'total_supply':totalSupply,
+                        'details':details,
+                        'expiration_date':expirationDate,
+                        'memo':memo,
+                        'transferable':transferable,
+                        'is_valid':isValid,
                         'image_url': [
                             {'type': 'small', 'url': image_url_s},
                             {'type': 'medium', 'url': image_url_m},
@@ -886,6 +994,186 @@ class OrderList(BaseResource):
 
         return settlement_list
 
+    # 決済中一覧：クーポントークン（買）
+    @staticmethod
+    def get_Coupon_SettlementList_Buy(account_address, company_list):
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract(
+            'IbetCouponExchange',
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
+        event_filter = ExchangeContract.events.Agree.createFilter(
+            fromBlock='earliest',
+            argument_filters={'buyAddress': to_checksum_address(account_address)}
+        )
+        entries = event_filter.get_all_entries()
+        web3.eth.uninstallFilter(event_filter.filter_id)
+
+        settlement_list = []
+        for entry in entries:
+            order_id = entry['args']['orderId']
+            agreement_id = entry['args']['agreementId']
+            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            # 未決済状態のもののみ以降の処理を実施
+            if agreement[4] == False:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract('IbetCoupon', token_address)
+
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                expirationDate = TokenContract.functions.expirationDate().call()
+                memo = TokenContract.functions.memo().call()
+                transferable = TokenContract.functions.transferable().call()
+                isValid = TokenContract.functions.isValid().call()
+
+                image_url_s = TokenContract.functions.image_urls(0).call()
+                image_url_m = TokenContract.functions.image_urls(1).call()
+                image_url_l = TokenContract.functions.image_urls(2).call()
+
+                owner_address = TokenContract.functions.owner().call()
+
+                # 企業リストから、企業名を取得する
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
+                settlement_list.append({
+                    'token':{
+                        'token_address': token_address,
+                        'token_template': token_template[1],
+                        'company_name': company_name,
+                        'name':name,
+                        'symbol':symbol,
+                        'total_supply':totalSupply,
+                        'details':details,
+                        'expiration_date':expirationDate,
+                        'memo':memo,
+                        'transferable':transferable,
+                        'is_valid':isValid,
+                        'image_url': [
+                            {'type': 'small', 'url': image_url_s},
+                            {'type': 'medium', 'url': image_url_m},
+                            {'type': "large", 'url': image_url_l}
+                        ],
+                    },
+                    'agreement':{
+                        'order_id':order_id,
+                        'agreementId':agreement_id,
+                        'amount':agreement[1],
+                        'price':agreement[2],
+                        'isBuy':True,
+                        'canceled':agreement[3]
+                    },
+                    'block_number': entry['blockNumber']
+                })
+
+        return settlement_list
+
+    # 決済中一覧：クーポントークン（売）
+    @staticmethod
+    def get_Coupon_SettlementList_Sell(account_address, company_list):
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract(
+            'IbetCouponExchange',
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
+        event_filter = ExchangeContract.events.Agree.createFilter(
+            fromBlock='earliest',
+            argument_filters={'sellAddress': to_checksum_address(account_address)}
+        )
+        entries = event_filter.get_all_entries()
+        web3.eth.uninstallFilter(event_filter.filter_id)
+
+        settlement_list = []
+        for entry in entries:
+            order_id = entry['args']['orderId']
+            agreement_id = entry['args']['agreementId']
+            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            # 未決済状態のもののみ以降の処理を実施
+            if agreement[4] == False:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract('IbetCoupon', token_address)
+
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                expirationDate = TokenContract.functions.expirationDate().call()
+                memo = TokenContract.functions.memo().call()
+                transferable = TokenContract.functions.transferable().call()
+                isValid = TokenContract.functions.isValid().call()
+
+                image_url_s = TokenContract.functions.image_urls(0).call()
+                image_url_m = TokenContract.functions.image_urls(1).call()
+                image_url_l = TokenContract.functions.image_urls(2).call()
+
+                owner_address = TokenContract.functions.owner().call()
+
+                # 企業リストから、企業名を取得する
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
+                settlement_list.append({
+                    'token':{
+                        'token_address': token_address,
+                        'token_template': token_template[1],
+                        'company_name': company_name,
+                        'name':name,
+                        'symbol':symbol,
+                        'total_supply':totalSupply,
+                        'details':details,
+                        'expiration_date':expirationDate,
+                        'memo':memo,
+                        'transferable':transferable,
+                        'is_valid':isValid,
+                        'image_url': [
+                            {'type': 'small', 'url': image_url_s},
+                            {'type': 'medium', 'url': image_url_m},
+                            {'type': "large", 'url': image_url_l}
+                        ],
+                    },
+                    'agreement':{
+                        'order_id':order_id,
+                        'agreementId':agreement_id,
+                        'amount':agreement[1],
+                        'price':agreement[2],
+                        'isBuy':False,
+                        'canceled':agreement[3]
+                    },
+                    'block_number': entry['blockNumber']
+                })
+
+        return settlement_list
+
     # 約定済一覧：普通社債トークン（買）
     @staticmethod
     def get_StraightBond_CompleteList_Buy(account_address, company_list):
@@ -1360,6 +1648,184 @@ class OrderList(BaseResource):
                         'memo':memo,
                         'transferable':transferable,
                         'status':status,
+                        'image_url': [
+                            {'type': 'small', 'url': image_url_s},
+                            {'type': 'medium', 'url': image_url_m},
+                            {'type': "large", 'url': image_url_l}
+                        ],
+                    },
+                    'agreement':{
+                        'order_id':order_id,
+                        'agreementId':agreement_id,
+                        'amount':agreement[1],
+                        'price':agreement[2],
+                        'isBuy':False
+                    },
+                    'block_number': entry['blockNumber']
+                })
+
+        return complete_list
+
+    # 約定済一覧：クーポントークン（買）
+    @staticmethod
+    def get_Coupon_CompleteList_Buy(account_address, company_list):
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract(
+            'IbetCouponExchange',
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
+        event_filter = ExchangeContract.events.SettlementOK.createFilter(
+            fromBlock='earliest',
+            argument_filters={'buyAddress': to_checksum_address(account_address)}
+        )
+        entries = event_filter.get_all_entries()
+        web3.eth.uninstallFilter(event_filter.filter_id)
+
+        complete_list = []
+        for entry in entries:
+            order_id = entry['args']['orderId']
+            agreement_id = entry['args']['agreementId']
+            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            # 決済済状態のもののみ以降の処理を実施
+            if agreement[4] == True:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract('IbetCoupon', token_address)
+
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                expirationDate = TokenContract.functions.expirationDate().call()
+                memo = TokenContract.functions.memo().call()
+                transferable = TokenContract.functions.transferable().call()
+                isValid = TokenContract.functions.isValid().call()
+
+                image_url_s = TokenContract.functions.image_urls(0).call()
+                image_url_m = TokenContract.functions.image_urls(1).call()
+                image_url_l = TokenContract.functions.image_urls(2).call()
+
+                owner_address = TokenContract.functions.owner().call()
+
+                # 企業リストから、企業名を取得する
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
+                complete_list.append({
+                    'token':{
+                        'token_address': token_address,
+                        'token_template': token_template[1],
+                        'company_name': company_name,
+                        'name':name,
+                        'symbol':symbol,
+                        'total_supply':totalSupply,
+                        'details':details,
+                        'expiration_date':expirationDate,
+                        'memo':memo,
+                        'transferable':transferable,
+                        'is_valid':isValid,
+                        'image_url': [
+                            {'type': 'small', 'url': image_url_s},
+                            {'type': 'medium', 'url': image_url_m},
+                            {'type': "large", 'url': image_url_l}
+                        ],
+                    },
+                    'agreement':{
+                        'order_id':order_id,
+                        'agreementId':agreement_id,
+                        'amount':agreement[1],
+                        'price':agreement[2],
+                        'isBuy':True
+                    },
+                    'block_number': entry['blockNumber']
+                })
+
+        return complete_list
+
+    # 約定済一覧：クーポントークン（売）
+    @staticmethod
+    def get_Coupon_CompleteList_Sell(account_address, company_list):
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract(
+            'IbetCouponExchange',
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        )
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+
+        # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
+        event_filter = ExchangeContract.events.SettlementOK.createFilter(
+            fromBlock='earliest',
+            argument_filters={'sellAddress': to_checksum_address(account_address)}
+        )
+        entries = event_filter.get_all_entries()
+        web3.eth.uninstallFilter(event_filter.filter_id)
+
+        complete_list = []
+        for entry in entries:
+            order_id = entry['args']['orderId']
+            agreement_id = entry['args']['agreementId']
+            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            # 決済済状態のもののみ以降の処理を実施
+            if agreement[4] == True:
+                token_address = to_checksum_address(entry['args']['tokenAddress'])
+                token_template = ListContract.functions.getTokenByAddress(token_address).call()
+                if token_template[0] == '0x0000000000000000000000000000000000000000':
+                    continue
+
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract('IbetCoupon', token_address)
+
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                totalSupply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                expirationDate = TokenContract.functions.expirationDate().call()
+                memo = TokenContract.functions.memo().call()
+                transferable = TokenContract.functions.transferable().call()
+                isValid = TokenContract.functions.isValid().call()
+
+                image_url_s = TokenContract.functions.image_urls(0).call()
+                image_url_m = TokenContract.functions.image_urls(1).call()
+                image_url_l = TokenContract.functions.image_urls(2).call()
+
+                owner_address = TokenContract.functions.owner().call()
+
+                # 企業リストから、企業名を取得する
+                company_name = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+
+                complete_list.append({
+                    'token':{
+                        'token_address': token_address,
+                        'token_template': token_template[1],
+                        'company_name': company_name,
+                        'name':name,
+                        'symbol':symbol,
+                        'total_supply':totalSupply,
+                        'details':details,
+                        'expiration_date':expirationDate,
+                        'memo':memo,
+                        'transferable':transferable,
+                        'is_valid':isValid,
                         'image_url': [
                             {'type': 'small', 'url': image_url_s},
                             {'type': 'medium', 'url': image_url_m},

@@ -142,6 +142,7 @@ class TestV1OrderList_Bond():
     def set_env(shared_contract):
         bond_exchange = shared_contract['IbetStraightBondExchange']
         membership_exchange = shared_contract['IbetMembershipExchange']
+        coupon_exchange = shared_contract['IbetCouponExchange']
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']
         token_list = shared_contract['TokenList']
@@ -149,15 +150,17 @@ class TestV1OrderList_Bond():
             bond_exchange['address']
         os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
             membership_exchange['address']
+        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
+            coupon_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-        return bond_exchange, membership_exchange, \
+        return bond_exchange, membership_exchange, coupon_exchange, \
             personal_info, white_list, token_list
 
     # ＜正常系1＞
     # 注文中あり（1件）、決済中なし、約定済なし
     #  -> order_listが1件返却
     def test_orderlist_normal_1(self, client, session, shared_contract):
-        bond_exchange, membership_exchange, \
+        bond_exchange, membership_exchange, coupon_exchange, \
             personal_info, white_list, token_list = \
                 TestV1OrderList_Bond.set_env(shared_contract)
 
@@ -232,7 +235,7 @@ class TestV1OrderList_Bond():
     # 注文中なし、決済中あり（1件）、約定済なし
     #  -> settlement_listが1件返却
     def test_orderlist_normal_2(self, client, session, shared_contract):
-        bond_exchange, membership_exchange, \
+        bond_exchange, membership_exchange, coupon_exchange, \
             personal_info, white_list, token_list = \
                 TestV1OrderList_Bond.set_env(shared_contract)
 
@@ -308,7 +311,7 @@ class TestV1OrderList_Bond():
     # 注文中なし、決済中なし、約定済あり（1件）
     #  -> complete_listが1件返却
     def test_orderlist_normal_3(self, client, session, shared_contract):
-        bond_exchange, membership_exchange, \
+        bond_exchange, membership_exchange, coupon_exchange, \
             personal_info, white_list, token_list = \
                 TestV1OrderList_Bond.set_env(shared_contract)
 
@@ -575,19 +578,22 @@ class TestV1OrderList_Membership():
     def set_env(shared_contract):
         bond_exchange = shared_contract['IbetStraightBondExchange']
         membership_exchange = shared_contract['IbetMembershipExchange']
+        coupon_exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = \
             bond_exchange['address']
         os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
             membership_exchange['address']
+        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
+            coupon_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
-        return bond_exchange, membership_exchange, token_list
+        return bond_exchange, membership_exchange, coupon_exchange, token_list
 
     # ＜正常系1＞
     # 注文中あり（1件）、決済中なし、約定済なし
     #  -> order_listが1件返却
     def test_membership_orderlist_normal_1(self, client, session, shared_contract):
-        bond_exchange, membership_exchange, token_list = \
+        bond_exchange, membership_exchange, coupon_exchange, token_list = \
             TestV1OrderList_Membership.set_env(shared_contract)
 
         token, order_id, agreement_id = \
@@ -642,7 +648,7 @@ class TestV1OrderList_Membership():
     # 注文中なし、決済中あり（1件）、約定済なし
     #  -> settlement_listが1件返却
     def test_membership_orderlist_normal_2(self, client, session, shared_contract):
-        bond_exchange, membership_exchange, token_list = \
+        bond_exchange, membership_exchange, coupon_exchange, token_list = \
             TestV1OrderList_Membership.set_env(shared_contract)
 
         token, order_id, agreement_id = \
@@ -704,7 +710,7 @@ class TestV1OrderList_Membership():
     # 注文中なし、決済中なし、約定済あり（1件）
     #  -> complete_listが1件返却
     def test_membership_orderlist_normal_3(self, client, session, shared_contract):
-        bond_exchange, membership_exchange, token_list = \
+        bond_exchange, membership_exchange, coupon_exchange, token_list = \
             TestV1OrderList_Membership.set_env(shared_contract)
 
         token, order_id, agreement_id = \
@@ -758,7 +764,7 @@ class TestV1OrderList_Membership():
     # ＜エラー系1＞
     # request-bodyなし
     # -> 入力値エラー
-    def test_orderlist_error_1(self, client):
+    def test_membership_orderlist_error_1(self, client):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -777,7 +783,7 @@ class TestV1OrderList_Membership():
     # ＜エラー系2＞
     # headersなし
     # -> 入力値エラー
-    def test_orderlist_error_2(self, client):
+    def test_membership_orderlist_error_2(self, client):
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
@@ -796,7 +802,7 @@ class TestV1OrderList_Membership():
     # ＜エラー系3-1＞
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
-    def test_orderlist_error_3_1(self, client):
+    def test_membership_orderlist_error_3_1(self, client):
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
@@ -815,7 +821,7 @@ class TestV1OrderList_Membership():
     # ＜エラー系3-2＞
     # account_addressがstring以外
     # -> 入力エラー
-    def test_orderlist_error_3_2(self, client):
+    def test_membership_orderlist_error_3_2(self, client):
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
 
@@ -838,7 +844,371 @@ class TestV1OrderList_Membership():
 
     # ＜エラー系4＞
     # HTTPメソッドが不正
-    def test_orderlist_error_4(self, client):
+    def test_membership_orderlist_error_4(self, client):
+        resp = client.simulate_get(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v1/OrderList'
+        }
+
+# 注文一覧・約定一覧API（クーポン）
+# /v1/OrderList/
+class TestV1OrderList_Coupon():
+
+    # テスト対象API
+    apiurl = '/v1/OrderList/'
+
+    def coupon_token_attribute(exchange):
+        attribute = {
+            'name': 'テストクーポン',
+            'symbol': 'COUPON',
+            'totalSupply': 1000000,
+            'tradableExchange': exchange['address'],
+            'details': 'クーポン詳細',
+            'memo': 'クーポンメモ欄',
+            'expirationDate': '20191231',
+            'transferable': True
+        }
+        return attribute
+
+    # 注文中明細の作成：発行体
+    @staticmethod
+    def order_event(exchange, token_list):
+        issuer = eth_account['issuer']
+
+        attribute = TestV1OrderList_Coupon.coupon_token_attribute(exchange)
+
+        # ＜発行体オペレーション＞
+        #   1) トークン発行
+        #   2) トークンをトークンリストに登録
+        #   3) 募集
+        token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, token, token_list)
+        coupon_offer(issuer, exchange, token, 1000000, 1000)
+
+        order_id = coupon_get_latest_orderid(exchange) - 1
+        agreement_id = coupon_get_latest_agreementid(exchange, order_id)
+
+        return token, order_id, agreement_id
+
+    # 約定明細（決済中）の作成：投資家
+    @staticmethod
+    def agreement_event(exchange, token_list):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+        agent = eth_account['agent']
+
+        attribute = TestV1OrderList_Coupon.coupon_token_attribute(exchange)
+
+        # ＜発行体オペレーション＞
+        #   1) トークン発行
+        #   2) トークンをトークンリストに登録
+        #   3) 募集
+        token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, token, token_list)
+        coupon_offer(issuer, exchange, token, 1000000, 1000)
+
+        # ＜投資家オペレーション＞
+        #   1) 買い注文
+        order_id = coupon_get_latest_orderid(exchange) - 1
+        coupon_take_buy(trader, exchange, order_id, 100)
+        agreement_id = coupon_get_latest_agreementid(exchange, order_id) - 1
+
+        return token, order_id, agreement_id
+
+    # 決済済明細の作成：決済業者
+    @staticmethod
+    def settlement_event(exchange, token_list):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+        agent = eth_account['agent']
+
+        attribute = TestV1OrderList_Coupon.coupon_token_attribute(exchange)
+
+        # ＜発行体オペレーション＞
+        #   1) トークン発行
+        #   2) トークンをトークンリストに登録
+        #   3) 募集
+        token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, token, token_list)
+        coupon_offer(issuer, exchange, token, 1000000, 1000)
+
+        # ＜投資家オペレーション＞
+        #   1) 買い注文
+        order_id = coupon_get_latest_orderid(exchange) - 1
+        coupon_take_buy(trader, exchange, order_id, 100)
+
+        # ＜決済業者オペレーション＞
+        agreement_id = coupon_get_latest_agreementid(exchange, order_id) - 1
+        coupon_confirm_agreement(agent, exchange, order_id, agreement_id)
+
+        return token, order_id, agreement_id
+
+    @staticmethod
+    def set_env(shared_contract):
+        bond_exchange = shared_contract['IbetStraightBondExchange']
+        membership_exchange = shared_contract['IbetMembershipExchange']
+        coupon_exchange = shared_contract['IbetCouponExchange']
+        token_list = shared_contract['TokenList']
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = \
+            bond_exchange['address']
+        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
+            membership_exchange['address']
+        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
+            coupon_exchange['address']
+        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        return bond_exchange, membership_exchange, coupon_exchange, token_list
+
+    # ＜正常系1＞
+    # 注文中あり（1件）、決済中なし、約定済なし
+    #  -> order_listが1件返却
+    def test_coupon_orderlist_normal_1(self, client, session, shared_contract):
+        bond_exchange, membership_exchange, coupon_exchange, token_list = \
+            TestV1OrderList_Coupon.set_env(shared_contract)
+
+        token, order_id, agreement_id = \
+            TestV1OrderList_Coupon.order_event(coupon_exchange, token_list)
+
+        account = eth_account['issuer']
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token['address'],
+                'token_template': 'IbetCoupon',
+                'company_name': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 1000000,
+                'details': 'クーポン詳細',
+                'expiration_date': '20191231',
+                'memo': 'クーポンメモ欄',
+                'transferable': True,
+                'is_valid': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium', 'url': ''},
+                    {'type': 'large', 'url': ''}
+                ]
+            },
+            'order': {
+                'order_id': order_id,
+                'amount': 1000000,
+                'price': 1000,
+                'isBuy': False,
+                'canceled': False
+            }
+        }
+
+        # NOTE: 他のテストで注文を出している可能性があるので、order_listは１件ではない場合がある。
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        for order in resp.json['data']['order_list']:
+            if order['token']['token_address'] == token['address']:
+                assert order['token'] == assumed_body['token']
+                assert order['order'] == assumed_body['order']
+
+    # ＜正常系2＞
+    # 注文中なし、決済中あり（1件）、約定済なし
+    #  -> settlement_listが1件返却
+    def test_coupon_orderlist_normal_2(self, client, session, shared_contract):
+        bond_exchange, membership_exchange, coupon_exchange, token_list = \
+            TestV1OrderList_Membership.set_env(shared_contract)
+
+        token, order_id, agreement_id = \
+            TestV1OrderList_Coupon.agreement_event(coupon_exchange, token_list)
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token['address'],
+                'token_template': 'IbetCoupon',
+                'company_name': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 1000000,
+                'details': 'クーポン詳細',
+                'expiration_date': '20191231',
+                'memo': 'クーポンメモ欄',
+                'transferable': True,
+                'is_valid': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium', 'url': ''},
+                    {'type': 'large', 'url': ''}
+                ]
+            },
+            'agreement': {
+                'order_id': order_id,
+                'agreementId': agreement_id,
+                'amount': 100,
+                'price': 1000,
+                'isBuy': True,
+                'canceled': False
+            }
+        }
+
+        # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        for order in resp.json['data']['settlement_list']:
+            if order['token']['token_address'] == token['address']:
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
+
+    # ＜正常系3＞
+    # 注文中なし、決済中なし、約定済あり（1件）
+    #  -> complete_listが1件返却
+    def test_coupon_orderlist_normal_3(self, client, session, shared_contract):
+        bond_exchange, membership_exchange, coupon_exchange, token_list = \
+            TestV1OrderList_Coupon.set_env(shared_contract)
+
+        token, order_id, agreement_id = \
+            TestV1OrderList_Coupon.settlement_event(coupon_exchange, token_list)
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token['address'],
+                'token_template': 'IbetCoupon',
+                'company_name': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 1000000,
+                'details': 'クーポン詳細',
+                'expiration_date': '20191231',
+                'memo': 'クーポンメモ欄',
+                'transferable': True,
+                'is_valid': True,
+                'image_url': [
+                    {'type': 'small', 'url': ''},
+                    {'type': 'medium', 'url': ''},
+                    {'type': 'large', 'url': ''}
+                ]
+            },
+            'agreement': {
+                'order_id': order_id,
+                'agreementId': agreement_id,
+                'amount': 100,
+                'price': 1000,
+                'isBuy': True
+            }
+        }
+
+        # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        for order in resp.json['data']['complete_list']:
+            if order['token']['token_address'] == token['address']:
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
+
+    # ＜エラー系1＞
+    # request-bodyなし
+    # -> 入力値エラー
+    def test_coupon_orderlist_error_1(self, client):
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps({})
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': 'required field'
+            }
+        }
+
+    # ＜エラー系2＞
+    # headersなし
+    # -> 入力値エラー
+    def test_coupon_orderlist_error_2(self, client):
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # ＜エラー系3-1＞
+    # account_addressがアドレスフォーマットではない
+    # -> 入力値エラー
+    def test_coupon_orderlist_error_3_1(self, client):
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
+        request_params = {"account_address_list": [account_address]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # ＜エラー系3-2＞
+    # account_addressがstring以外
+    # -> 入力エラー
+    def test_coupon_orderlist_error_3_2(self, client):
+        account_address = 123456789123456789123456789123456789
+        request_params = {"account_address_list": [account_address]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': {
+                    '0': 'must be of string type'
+                }
+            }
+        }
+
+    # ＜エラー系4＞
+    # HTTPメソッドが不正
+    def test_coupon_orderlist_error_4(self, client):
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
