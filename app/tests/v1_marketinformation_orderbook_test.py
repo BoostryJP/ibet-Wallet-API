@@ -25,8 +25,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_1_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -76,8 +76,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_1_2(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -121,8 +121,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_1_3(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -166,8 +166,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_1_4(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -206,8 +206,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_1_5(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -258,8 +258,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_1_6(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -304,8 +304,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_2_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -356,8 +356,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_2_2(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -401,8 +401,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_2_3(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -446,8 +446,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_2_4(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -486,8 +486,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_2_5(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -538,8 +538,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_2_6(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -578,8 +578,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_3_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -642,8 +642,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_3_2(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
@@ -706,8 +706,8 @@ class TestV1OrderBook():
     def test_orderbook_normal_4(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
@@ -824,8 +824,8 @@ class TestV1OrderBook():
     # エラー系1：入力値エラー（request-bodyなし）
     def test_orderbook_error_1(self, client):
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -846,8 +846,8 @@ class TestV1OrderBook():
     def test_orderbook_error_2(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -872,8 +872,8 @@ class TestV1OrderBook():
     def test_orderbook_error_3_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  #アドレスが短い
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -898,8 +898,8 @@ class TestV1OrderBook():
     def test_orderbook_error_3_2(self, client):
         token_address = 123456789123456789123456789123456789
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -927,8 +927,8 @@ class TestV1OrderBook():
     def test_orderbook_error_4_1(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
 
         request_params = {
@@ -953,8 +953,8 @@ class TestV1OrderBook():
     def test_orderbook_error_4_2(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = 123456789123456789123456789123456789
 
         request_params = {
@@ -982,8 +982,8 @@ class TestV1OrderBook():
     def test_orderbook_error_5(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
-            to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
