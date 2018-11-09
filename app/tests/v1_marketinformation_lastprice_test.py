@@ -378,7 +378,7 @@ class TestV1MembershipLastPrice():
             'description': 'method: GET, url: /v1/Membership/LastPrice'
         }
 
-# [会員権]現在値取得API
+# [クーポン]現在値取得API
 # /v1/Coupon/LastPrice/
 class TestV1CouponLastPrice():
 
