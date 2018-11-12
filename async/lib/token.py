@@ -9,6 +9,10 @@ class TokenFactory:
         contract = Contract.get_contract('IbetStraightBond', address)
         return Token(contract)
 
+    def get_membership(self, address):
+        contract = Contract.get_contract('IbetMembership', address)
+        return Token(contract)
+
     def get_coupon(self, address):
         contract = Contract.get_contract('IbetCoupon', address)
         return Token(contract)
