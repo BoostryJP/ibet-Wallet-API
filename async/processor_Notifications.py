@@ -39,6 +39,7 @@ WORKER_COUNT = int(os.environ.get("WORKER_COUNT") or 8)
 SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL") or 3)
 IBET_SB_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
 IBET_CP_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_CP_EXCHANGE_CONTRACT_ADDRESS")
+IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS")
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
@@ -54,9 +55,14 @@ NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
 sb_exchange_contract = Contract.get_contract(
-    'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+    'IbetStraightBondExchange',
+    os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 cp_exchange_contract = Contract.get_contract(
-    'IbetCouponExchange', os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
+    'IbetCouponExchange',
+    os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
+membership_exchange_contract = Contract.get_contract(
+    'IbetMembershipExchange',
+    os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 white_list_contract = Contract.get_contract(
     'WhiteList', os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'))
 list_contract = Contract.get_contract(
@@ -140,6 +146,9 @@ class Watcher:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
+'''
+決済用口座認可関連（WhiteList）
+'''
 # イベント：決済用口座登録
 class WatchWhiteListRegister(Watcher):
     def __init__(self):
@@ -260,9 +269,11 @@ class WatchWhiteListBan(Watcher):
                 '決済用の口座の認証が取り消されました。',
                 )
 
-
+'''
+普通社債取引関連（IbetStraightBond）
+'''
 # イベント：注文
-class WatchExchangeNewOrder(Watcher):
+class WatchBondExchangeNewOrder(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "NewOrder", {})
 
@@ -283,6 +294,7 @@ class WatchExchangeNewOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -302,9 +314,8 @@ class WatchExchangeNewOrder(Watcher):
                 '新規注文が完了しました。',
                 )
 
-
 # イベント：注文取消
-class WatchExchangeCancelOrder(Watcher):
+class WatchBondExchangeCancelOrder(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "CancelOrder", {})
 
@@ -325,6 +336,7 @@ class WatchExchangeCancelOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -344,9 +356,8 @@ class WatchExchangeCancelOrder(Watcher):
                 '注文のキャンセルが完了しました。',
                 )
 
-
 # イベント：約定（買）
-class WatchExchangeBuyAgreement(Watcher):
+class WatchBondExchangeBuyAgreement(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "Agree", {})
 
@@ -367,6 +378,7 @@ class WatchExchangeBuyAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -387,7 +399,7 @@ class WatchExchangeBuyAgreement(Watcher):
                 )
 
 # イベント：約定（売）
-class WatchExchangeSellAgreement(Watcher):
+class WatchBondExchangeSellAgreement(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "Agree", {})
 
@@ -408,6 +420,7 @@ class WatchExchangeSellAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -428,7 +441,7 @@ class WatchExchangeSellAgreement(Watcher):
                 )
 
 # イベント：決済OK（買）
-class WatchExchangeBuySettlementOK(Watcher):
+class WatchBondExchangeBuySettlementOK(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementOK", {})
 
@@ -449,6 +462,7 @@ class WatchExchangeBuySettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -469,7 +483,7 @@ class WatchExchangeBuySettlementOK(Watcher):
                 )
 
 # イベント：決済OK（売）
-class WatchExchangeSellSettlementOK(Watcher):
+class WatchBondExchangeSellSettlementOK(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementOK", {})
 
@@ -490,6 +504,7 @@ class WatchExchangeSellSettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -510,7 +525,7 @@ class WatchExchangeSellSettlementOK(Watcher):
                 )
 
 # イベント：決済NG（買）
-class WatchExchangeBuySettlementNG(Watcher):
+class WatchBondExchangeBuySettlementNG(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementNG", {})
 
@@ -531,6 +546,7 @@ class WatchExchangeBuySettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -551,7 +567,7 @@ class WatchExchangeBuySettlementNG(Watcher):
                 )
 
 # イベント：決済NG（売）
-class WatchExchangeSellSettlementNG(Watcher):
+class WatchBondExchangeSellSettlementNG(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementNG", {})
 
@@ -572,6 +588,7 @@ class WatchExchangeSellSettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetStraightBond"
             }
 
             notification = Notification()
@@ -591,6 +608,348 @@ class WatchExchangeSellSettlementNG(Watcher):
                 '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
                 )
 
+'''
+会員権取引関連（IbetMembership）
+'''
+# イベント：注文
+class WatchMembershipExchangeNewOrder(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "NewOrder", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "NewOrder"
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
+                '新規注文完了',
+                '新規注文が完了しました。',
+                )
+
+# イベント：注文取消
+class WatchMembershipExchangeCancelOrder(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "CancelOrder", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "CancelOrder"
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
+                '注文キャンセル完了',
+                '注文のキャンセルが完了しました。',
+                )
+
+# イベント：約定（買）
+class WatchMembershipExchangeBuyAgreement(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "Agree", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 1)
+            notification.notification_type = "BuyAgreement"
+            notification.priority = 1
+            notification.address = entry["args"]["buyAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
+                '約定完了',
+                '買い注文が約定しました。指定口座へ振り込みを実施してください。',
+                )
+
+# イベント：約定（売）
+class WatchMembershipExchangeSellAgreement(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "Agree", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 2)
+            notification.notification_type = "SellAgreement"
+            notification.priority = 2
+            notification.address = entry["args"]["sellAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
+                '約定完了',
+                '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
+                )
+
+# イベント：決済OK（買）
+class WatchMembershipExchangeBuySettlementOK(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "SettlementOK", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 1)
+            notification.notification_type = "BuySettlementOK"
+            notification.priority = 1
+            notification.address = entry["args"]["buyAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
+                '決済完了',
+                '注文の決済が完了しました。',
+                )
+
+# イベント：決済OK（売）
+class WatchMembershipExchangeSellSettlementOK(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "SettlementOK", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 2)
+            notification.notification_type = "SellSettlementOK"
+            notification.priority = 1
+            notification.address = entry["args"]["sellAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 1, entry["blockNumber"],
+                '決済完了',
+                '注文の決済が完了しました。',
+                )
+
+# イベント：決済NG（買）
+class WatchMembershipExchangeBuySettlementNG(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "SettlementNG", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 1)
+            notification.notification_type = "BuySettlementNG"
+            notification.priority = 2
+            notification.address = entry["args"]["buyAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
+                '決済失敗',
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                )
+
+# イベント：決済NG（売）
+class WatchMembershipExchangeSellSettlementNG(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "SettlementNG", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 2)
+            notification.notification_type = "SellSettlementNG"
+            notification.priority = 2
+            notification.address = entry["args"]["sellAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
+                '決済失敗',
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                )
+
+'''
+クーポン取引関連（IbetCoupon）
+'''
 # イベント：クーポン割当・譲渡
 class WatchCouponTransfer(Watcher):
     def __init__(self):
@@ -629,6 +988,342 @@ class WatchCouponTransfer(Watcher):
                 'クーポンが発行されました。保有トークンの一覧からご確認ください。',
                 )
 
+# イベント：注文
+class WatchCouponExchangeNewOrder(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "NewOrder", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "NewOrder"
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
+                '新規注文完了',
+                '新規注文が完了しました。',
+                )
+
+# イベント：注文取消
+class WatchCouponExchangeCancelOrder(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "CancelOrder", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "CancelOrder"
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
+                '注文キャンセル完了',
+                '注文のキャンセルが完了しました。',
+                )
+
+# イベント：約定（買）
+class WatchCouponExchangeBuyAgreement(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "Agree", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 1)
+            notification.notification_type = "BuyAgreement"
+            notification.priority = 1
+            notification.address = entry["args"]["buyAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
+                '約定完了',
+                '買い注文が約定しました。指定口座へ振り込みを実施してください。',
+                )
+
+# イベント：約定（売）
+class WatchCouponExchangeSellAgreement(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "Agree", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 2)
+            notification.notification_type = "SellAgreement"
+            notification.priority = 2
+            notification.address = entry["args"]["sellAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
+                '約定完了',
+                '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
+                )
+
+# イベント：決済OK（買）
+class WatchCouponExchangeBuySettlementOK(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "SettlementOK", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 1)
+            notification.notification_type = "BuySettlementOK"
+            notification.priority = 1
+            notification.address = entry["args"]["buyAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
+                '決済完了',
+                '注文の決済が完了しました。',
+                )
+
+# イベント：決済OK（売）
+class WatchCouponExchangeSellSettlementOK(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "SettlementOK", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 2)
+            notification.notification_type = "SellSettlementOK"
+            notification.priority = 1
+            notification.address = entry["args"]["sellAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 1, entry["blockNumber"],
+                '決済完了',
+                '注文の決済が完了しました。',
+                )
+
+# イベント：決済NG（買）
+class WatchCouponExchangeBuySettlementNG(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "SettlementNG", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 1)
+            notification.notification_type = "BuySettlementNG"
+            notification.priority = 2
+            notification.address = entry["args"]["buyAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
+                '決済失敗',
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                )
+
+# イベント：決済NG（売）
+class WatchCouponExchangeSellSettlementNG(Watcher):
+    def __init__(self):
+        super().__init__(cp_exchange_contract, "SettlementNG", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_coupon(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry, 2)
+            notification.notification_type = "SellSettlementNG"
+            notification.priority = 2
+            notification.address = entry["args"]["sellAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
+                '決済失敗',
+                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                )
+
 def main():
     watchers = [
         WatchWhiteListRegister(),
@@ -636,14 +1331,22 @@ def main():
         WatchWhiteListWarn(),
         WatchWhiteListUnapprove(),
         WatchWhiteListBan(),
-        WatchExchangeNewOrder(),
-        WatchExchangeCancelOrder(),
-        WatchExchangeBuyAgreement(),
-        WatchExchangeSellAgreement(),
-        WatchExchangeBuySettlementOK(),
-        WatchExchangeSellSettlementOK(),
-        WatchExchangeBuySettlementNG(),
-        WatchExchangeSellSettlementNG(),
+        WatchBondExchangeNewOrder(),
+        WatchBondExchangeCancelOrder(),
+        WatchBondExchangeBuyAgreement(),
+        WatchBondExchangeSellAgreement(),
+        WatchBondExchangeBuySettlementOK(),
+        WatchBondExchangeSellSettlementOK(),
+        WatchBondExchangeBuySettlementNG(),
+        WatchBondExchangeSellSettlementNG(),
+        WatchMembershipExchangeNewOrder(),
+        WatchMembershipExchangeCancelOrder(),
+        WatchMembershipExchangeBuyAgreement(),
+        WatchMembershipExchangeSellAgreement(),
+        WatchMembershipExchangeBuySettlementOK(),
+        WatchMembershipExchangeSellSettlementOK(),
+        WatchMembershipExchangeBuySettlementNG(),
+        WatchMembershipExchangeSellSettlementNG(),
         WatchCouponTransfer(),
     ]
 
