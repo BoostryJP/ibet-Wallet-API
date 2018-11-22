@@ -13,15 +13,24 @@ class CompanyList:
     def get(self, url):
         json = requests.get(url).json()
         return CompanyList(json)
-    
+
     def __init__(self, json):
         self.json = json
 
     def find(self, address):
+        company_default = {
+            "address": "",
+            "corporate_name": "",
+            "enode": "",
+            "ip_address": "",
+            "rsa_publickey": "",
+            "homepage": ""
+        }
+
         for company in self.json:
             if to_checksum_address(company["address"]) == address:
                 return Company(company)
-        return None
+        return Company(company_default)
 
 class Company:
     def __init__(self, obj):
