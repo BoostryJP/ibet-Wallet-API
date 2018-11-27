@@ -119,6 +119,7 @@ class TestV1CouponMyTokens():
                 }]
             },
             'balance': 10,
+            'commitment': 0,
             'used': 0
         }
 
