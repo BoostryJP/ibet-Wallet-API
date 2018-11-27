@@ -213,6 +213,7 @@ class Contracts(BaseResource):
                     'certification':certification
                 }
             except Exception as e:
+                LOG.error(e)
                 return None
 
     @staticmethod
