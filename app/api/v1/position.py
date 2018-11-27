@@ -551,7 +551,7 @@ class CouponMyTokens(BaseResource):
                             image_url_large = CouponTokenContract.functions.getImageURL(2).call()
                             balance = CouponTokenContract.functions.balanceOf(owner).call()
                             commitment = CouponExchangeContract.functions.\
-                                commitments(owner_address, token_address).call()
+                                commitments(owner, token_address).call()
                             used = CouponTokenContract.functions.usedOf(owner).call()
                             position_list.append({
                                 'token': {
