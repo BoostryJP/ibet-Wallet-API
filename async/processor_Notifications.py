@@ -1348,6 +1348,14 @@ def main():
         WatchMembershipExchangeBuySettlementNG(),
         WatchMembershipExchangeSellSettlementNG(),
         WatchCouponTransfer(),
+        WatchCouponExchangeNewOrder(),
+        WatchCouponExchangeCancelOrder(),
+        WatchCouponExchangeBuyAgreement(),
+        WatchCouponExchangeSellAgreement(),
+        WatchCouponExchangeBuySettlementOK(),
+        WatchCouponExchangeSellSettlementOK(),
+        WatchCouponExchangeBuySettlementNG(),
+        WatchCouponExchangeSellSettlementNG(),        
     ]
 
     e = ThreadPoolExecutor(max_workers = WORKER_COUNT)
