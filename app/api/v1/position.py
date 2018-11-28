@@ -143,7 +143,7 @@ class MyTokens(BaseResource):
                             interestPaymentDate5 = ''
                             interestPaymentDate6 = ''
                             interestPaymentDate7 = ''
-                            interestPaymentDate7 = ''
+                            interestPaymentDate8 = ''
                             interestPaymentDate9 = ''
                             interestPaymentDate10 = ''
                             interestPaymentDate11 = ''
