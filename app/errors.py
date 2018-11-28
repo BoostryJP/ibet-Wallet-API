@@ -69,6 +69,12 @@ ERR_SNS_NOTFOUND_ERROR = {
     'title': 'SNS NotFoundError'
 }
 
+ERR_INVALID_CARD_ERROR = {
+    'status': falcon.HTTP_404,
+    'code': 60,
+    'title': 'Invalid Credit Card'
+}
+
 
 class AppError(Exception):
     def __init__(self, error=ERR_UNKNOWN, description=None):
@@ -149,4 +155,9 @@ class EthValueError(AppError):
 class SNSNotFoundError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_SNS_NOTFOUND_ERROR)
+        self.error['description'] = description
+
+class InvalidCardError(AppError):
+    def __init__(self, description=None):
+        super().__init__(ERR_INVALID_CARD_ERROR)
         self.error['description'] = description

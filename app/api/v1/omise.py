@@ -7,7 +7,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError
+from app.errors import AppError, InvalidParameterError, InvalidCardError
 from app.utils.hooks import VerifySignature
 from app import config
 
@@ -44,6 +44,8 @@ class CreateCustomer(BaseResource):
             raise InvalidParameterError(description='token was already used')
         except omise.errors.NotFoundError:
             raise InvalidParameterError(description='token was not found')
+        except:
+            raise AppError
 
         customer_id = {'customer_id': customer.id}
 
@@ -100,6 +102,11 @@ class UpdateCustomer(BaseResource):
 
         # 顧客にCard情報を紐付ける
         try:
+            # 登録されているCard情報を削除する
+            for card in customer.cards:
+                card = customer.cards.retrieve(card.id)
+                card.destroy()
+            # 新しいCard情報を紐づける
             customer.update(
                 card = request_json['token_id']
             )
@@ -107,6 +114,8 @@ class UpdateCustomer(BaseResource):
             raise InvalidParameterError(description='token was already used')
         except omise.errors.NotFoundError:
             raise InvalidParameterError(description='token was not found')
+        except:
+            raise AppError
 
         self.on_success(res)
 
@@ -172,12 +181,20 @@ class Charge(BaseResource):
         })
 
         # 課金
-        charge = omise.Charge.create(
-            amount = 100000,
-            currency = 'jpy',
-            customer = request_json['customer_id'],
-            description = description_agreement
-        )
+        try:
+            charge = omise.Charge.create(
+                amount = request_json['amount'],
+                currency = 'jpy',
+                customer = request_json['customer_id'],
+                description = description_agreement
+            )
+        except omise.errors.InvalidChargeError as e:
+            raise InvalidParameterError(description=str(e))
+        except:
+            raise AppError
+
+        if charge.status != 'successful':
+            raise InvalidCardError
 
         self.on_success(res)
 
@@ -196,7 +213,8 @@ class Charge(BaseResource):
             'amount': {
                 'type': 'integer',
                 'coerce': int,
-                'min':0,
+                'min':100,
+                'max':6000000,
                 'required': True,
                 'nullable': False,
             },
