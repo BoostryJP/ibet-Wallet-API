@@ -972,7 +972,7 @@ class OrderList(BaseResource):
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
 
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract(ç, token_address)
+                TokenContract = Contract.get_contract('IbetCoupon', token_address)
 
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
