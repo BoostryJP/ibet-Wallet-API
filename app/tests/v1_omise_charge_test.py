@@ -187,7 +187,7 @@ class TestV1OmiseCharge():
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'amount': 'min value is 0'
+                'amount': 'min value is 100'
             }
         }
 
