@@ -175,10 +175,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
         event_filter = ExchangeContract.events.NewOrder.createFilter(
             fromBlock='earliest',
@@ -194,9 +190,6 @@ class OrderList(BaseResource):
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
                 token_address = to_checksum_address(orderBook[1])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetStraightBond', token_address)
@@ -277,7 +270,7 @@ class OrderList(BaseResource):
                 order_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetStraightBond',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -329,10 +322,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
         event_filter = ExchangeContract.events.NewOrder.createFilter(
             fromBlock='earliest',
@@ -348,9 +337,6 @@ class OrderList(BaseResource):
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
                 token_address = to_checksum_address(orderBook[1])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetMembership', token_address)
@@ -381,7 +367,7 @@ class OrderList(BaseResource):
                 order_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetMembership',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -419,10 +405,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
         event_filter = ExchangeContract.events.NewOrder.createFilter(
             fromBlock='earliest',
@@ -438,9 +420,6 @@ class OrderList(BaseResource):
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
                 token_address = to_checksum_address(orderBook[1])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetCoupon', token_address)
@@ -470,7 +449,7 @@ class OrderList(BaseResource):
                 order_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetCoupon',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -507,10 +486,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
         event_filter = ExchangeContract.events.Agree.createFilter(
             fromBlock='earliest',
@@ -527,9 +502,6 @@ class OrderList(BaseResource):
             # 未決済状態のもののみ以降の処理を実施
             if agreement[4] == False:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetStraightBond', token_address)
@@ -610,7 +582,7 @@ class OrderList(BaseResource):
                 settlement_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetStraightBond',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -663,10 +635,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
         event_filter = ExchangeContract.events.Agree.createFilter(
             fromBlock='earliest',
@@ -683,9 +651,6 @@ class OrderList(BaseResource):
             # 未決済状態のもののみ以降の処理を実施
             if agreement[4] == False:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetStraightBond', token_address)
@@ -766,7 +731,7 @@ class OrderList(BaseResource):
                 settlement_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetStraightBond',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -819,10 +784,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
         event_filter = ExchangeContract.events.Agree.createFilter(
             fromBlock='earliest',
@@ -839,9 +800,6 @@ class OrderList(BaseResource):
             # 未決済状態のもののみ以降の処理を実施
             if agreement[4] == False:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetMembership', token_address)
@@ -872,7 +830,7 @@ class OrderList(BaseResource):
                 settlement_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetMembership',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -911,10 +869,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
         event_filter = ExchangeContract.events.Agree.createFilter(
             fromBlock='earliest',
@@ -931,9 +885,6 @@ class OrderList(BaseResource):
             # 未決済状態のもののみ以降の処理を実施
             if agreement[4] == False:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetMembership', token_address)
@@ -964,7 +915,7 @@ class OrderList(BaseResource):
                 settlement_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetMembership',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1003,10 +954,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
         event_filter = ExchangeContract.events.Agree.createFilter(
             fromBlock='earliest',
@@ -1023,12 +970,9 @@ class OrderList(BaseResource):
             # 未決済状態のもののみ以降の処理を実施
             if agreement[4] == False:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract('IbetCoupon', token_address)
+                TokenContract = Contract.get_contract(ç, token_address)
 
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
@@ -1055,7 +999,7 @@ class OrderList(BaseResource):
                 settlement_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetCoupon',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1093,10 +1037,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
         event_filter = ExchangeContract.events.Agree.createFilter(
             fromBlock='earliest',
@@ -1113,9 +1053,6 @@ class OrderList(BaseResource):
             # 未決済状態のもののみ以降の処理を実施
             if agreement[4] == False:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetCoupon', token_address)
@@ -1145,7 +1082,7 @@ class OrderList(BaseResource):
                 settlement_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetCoupon',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1183,10 +1120,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
         event_filter = ExchangeContract.events.SettlementOK.createFilter(
             fromBlock='earliest',
@@ -1203,9 +1136,6 @@ class OrderList(BaseResource):
             # 決済済状態のもののみ以降の処理を実施
             if agreement[4] == True:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetStraightBond', token_address)
@@ -1286,7 +1216,7 @@ class OrderList(BaseResource):
                 complete_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetStraightBond',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1338,10 +1268,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
         event_filter = ExchangeContract.events.Agree.createFilter(
             fromBlock='earliest',
@@ -1358,9 +1284,6 @@ class OrderList(BaseResource):
             # 未決済状態のもののみ以降の処理を実施
             if agreement[4] == True:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetStraightBond', token_address)
@@ -1441,7 +1364,7 @@ class OrderList(BaseResource):
                 complete_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetStraightBond',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1493,10 +1416,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
         event_filter = ExchangeContract.events.SettlementOK.createFilter(
             fromBlock='earliest',
@@ -1513,9 +1432,6 @@ class OrderList(BaseResource):
             # 決済済状態のもののみ以降の処理を実施
             if agreement[4] == True:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetMembership', token_address)
@@ -1546,7 +1462,7 @@ class OrderList(BaseResource):
                 complete_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetMembership',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1584,10 +1500,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
         event_filter = ExchangeContract.events.SettlementOK.createFilter(
             fromBlock='earliest',
@@ -1604,9 +1516,6 @@ class OrderList(BaseResource):
             # 決済済状態のもののみ以降の処理を実施
             if agreement[4] == True:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetMembership', token_address)
@@ -1637,7 +1546,7 @@ class OrderList(BaseResource):
                 complete_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetMembership',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1675,10 +1584,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（買）を抽出する
         event_filter = ExchangeContract.events.SettlementOK.createFilter(
             fromBlock='earliest',
@@ -1695,9 +1600,6 @@ class OrderList(BaseResource):
             # 決済済状態のもののみ以降の処理を実施
             if agreement[4] == True:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetCoupon', token_address)
@@ -1727,7 +1629,7 @@ class OrderList(BaseResource):
                 complete_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetCoupon',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
@@ -1764,10 +1666,6 @@ class OrderList(BaseResource):
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
         )
 
-        # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
-
         # 指定したアカウントアドレスから発生している約定イベント（売）を抽出する
         event_filter = ExchangeContract.events.SettlementOK.createFilter(
             fromBlock='earliest',
@@ -1784,9 +1682,6 @@ class OrderList(BaseResource):
             # 決済済状態のもののみ以降の処理を実施
             if agreement[4] == True:
                 token_address = to_checksum_address(entry['args']['tokenAddress'])
-                token_template = ListContract.functions.getTokenByAddress(token_address).call()
-                if token_template[0] == '0x0000000000000000000000000000000000000000':
-                    continue
 
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract('IbetCoupon', token_address)
@@ -1816,7 +1711,7 @@ class OrderList(BaseResource):
                 complete_list.append({
                     'token':{
                         'token_address': token_address,
-                        'token_template': token_template[1],
+                        'token_template': 'IbetCoupon',
                         'company_name': company_name,
                         'name':name,
                         'symbol':symbol,
