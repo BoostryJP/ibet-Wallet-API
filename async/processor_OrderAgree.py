@@ -106,18 +106,20 @@ class DBSink:
     def on_new_order(self, token_address, exchange_address,
         order_id, account_address, is_buy,
         price, amount, agent_address):
-        order = Order()
-        order.token_address = token_address
-        order.exchange_address = exchange_address
-        order.order_id = order_id
-        order.unique_order_id = exchange_address + '_' + str(order_id)
-        order.account_address = account_address
-        order.is_buy = is_buy
-        order.price = price
-        order.amount = amount
-        order.agent_address = agent_address
-        order.is_cancelled = False
-        self.db.merge(order)
+        order = self.__get_order(exchange_address, order_id)
+        if order is not None:
+            order = Order()
+            order.token_address = token_address
+            order.exchange_address = exchange_address
+            order.order_id = order_id
+            order.unique_order_id = exchange_address + '_' + str(order_id)
+            order.account_address = account_address
+            order.is_buy = is_buy
+            order.price = price
+            order.amount = amount
+            order.agent_address = agent_address
+            order.is_cancelled = False
+            self.db.merge(order)
 
     def on_cancel_order(self, exchange_address, order_id):
         order = self.__get_order(exchange_address, order_id)
@@ -126,17 +128,20 @@ class DBSink:
 
     def on_agree(self, exchange_address, order_id, agreement_id,
         buyer_address, seller_address, counterpart_address, amount):
-        agreement = Agreement()
-        agreement.exchange_address = exchange_address
-        agreement.order_id = order_id
-        agreement.agreement_id = agreement_id
-        agreement.unique_order_id = exchange_address + '_' + str(order_id)
-        agreement.buyer_address = buyer_address
-        agreement.seller_address = seller_address
-        agreement.counterpart_address = counterpart_address
-        agreement.amount = amount
-        agreement.status = AgreementStatus.PENDING.value
-        self.db.merge(agreement)
+        agreement = self.__get_agreement(
+            exchange_address, order_id, agreement_id)
+        if agreement is not None:
+            agreement = Agreement()
+            agreement.exchange_address = exchange_address
+            agreement.order_id = order_id
+            agreement.agreement_id = agreement_id
+            agreement.unique_order_id = exchange_address + '_' + str(order_id)
+            agreement.buyer_address = buyer_address
+            agreement.seller_address = seller_address
+            agreement.counterpart_address = counterpart_address
+            agreement.amount = amount
+            agreement.status = AgreementStatus.PENDING.value
+            self.db.merge(agreement)
 
     def on_settlement_ok(self, exchange_address, order_id, agreement_id):
         agreement = self.__get_agreement(
