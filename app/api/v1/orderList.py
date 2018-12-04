@@ -186,7 +186,8 @@ class OrderList(BaseResource):
     # 注文一覧：普通社債トークン
     @staticmethod
     def get_StraightBond_OrderList(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -332,7 +333,8 @@ class OrderList(BaseResource):
     # 注文一覧：会員権トークン
     @staticmethod
     def get_Membership_OrderList(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -414,7 +416,8 @@ class OrderList(BaseResource):
     # 注文一覧：クーポントークン
     @staticmethod
     def get_Coupon_OrderList(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -494,7 +497,8 @@ class OrderList(BaseResource):
     # 決済中一覧：普通社債トークン（買）
     @staticmethod
     def get_StraightBond_SettlementList_Buy(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -639,7 +643,8 @@ class OrderList(BaseResource):
     # 決済中一覧：普通社債トークン（売）
     @staticmethod
     def get_StraightBond_SettlementList_Sell(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -784,7 +789,8 @@ class OrderList(BaseResource):
     # 決済中一覧：会員権トークン（買）
     @staticmethod
     def get_Membership_SettlementList_Buy(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -865,7 +871,8 @@ class OrderList(BaseResource):
     # 決済中一覧：会員権トークン（売）
     @staticmethod
     def get_Membership_SettlementList_Sell(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -946,7 +953,8 @@ class OrderList(BaseResource):
     # 決済中一覧：クーポントークン（買）
     @staticmethod
     def get_Coupon_SettlementList_Buy(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -1025,7 +1033,8 @@ class OrderList(BaseResource):
     # 決済中一覧：クーポントークン（売）
     @staticmethod
     def get_Coupon_SettlementList_Sell(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -1104,7 +1113,8 @@ class OrderList(BaseResource):
     # 約定済一覧：普通社債トークン（買）
     @staticmethod
     def get_StraightBond_CompleteList_Buy(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -1248,7 +1258,8 @@ class OrderList(BaseResource):
     # 約定済一覧：普通社債トークン（売）
     @staticmethod
     def get_StraightBond_CompleteList_Sell(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -1392,7 +1403,8 @@ class OrderList(BaseResource):
     # 約定済一覧：会員権トークン（買）
     @staticmethod
     def get_Membership_CompleteList_Buy(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -1472,7 +1484,8 @@ class OrderList(BaseResource):
     # 約定済一覧：会員権トークン（売）
     @staticmethod
     def get_Membership_CompleteList_Sell(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -1552,7 +1565,8 @@ class OrderList(BaseResource):
     # 約定済一覧：クーポントークン（買）
     @staticmethod
     def get_Coupon_CompleteList_Buy(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -1630,7 +1644,8 @@ class OrderList(BaseResource):
     # 約定済一覧：クーポントークン（売）
     @staticmethod
     def get_Coupon_CompleteList_Sell(session, account_address, company_list):
-        exchange_address = os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+        exchange_address = to_checksum_address(
+            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
