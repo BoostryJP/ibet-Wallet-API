@@ -9,7 +9,7 @@ from app.model import Base
 
 class Agreement(Base):
     __tablename__ = 'agreement'
-    id = Column(BigInteger, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     exchange_address = Column(String(256), primary_key=True)
     order_id = Column(BigInteger, primary_key=True)
     agreement_id = Column(BigInteger, primary_key=True)
@@ -25,7 +25,7 @@ class Agreement(Base):
             (self.exchange_address, self.order_id, self.agreement_id)
 
     FIELDS = {
-        'id': int,    
+        'id': int,
         'exchange_address': str,
         'order_id': int,
         'agreement_id': int,
