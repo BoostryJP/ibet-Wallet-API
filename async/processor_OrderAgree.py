@@ -260,37 +260,37 @@ class Processor:
 
     def __sync_agree(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
-            try:
-                event_filter = exchange_contract.eventFilter(
-                    'Agree', {
-                        'fromBlock': block_from,
-                        'toBlock': block_to,
-                    }
-                )
-                for event in event_filter.get_all_entries():
-                    args = event['args']
-                    if args['amount'] > sys.maxsize:
-                        pass
-                    else:
-                        order_id = args['orderId']
-                        orderbook = exchange_contract.functions.\
-                            orderBook(order_id).call()
-                        is_buy = orderbook[4]
-                        counterpart_address = args['buyAddress']
-                        if is_buy:
-                            counterpart_address = args['sellAddress']
+            #try:
+            event_filter = exchange_contract.eventFilter(
+                'Agree', {
+                    'fromBlock': block_from,
+                    'toBlock': block_to,
+                }
+            )
+            for event in event_filter.get_all_entries():
+                args = event['args']
+                if args['amount'] > sys.maxsize:
+                    pass
+                else:
+                    order_id = args['orderId']
+                    orderbook = exchange_contract.functions.\
+                        orderBook(order_id).call()
+                    is_buy = orderbook[4]
+                    counterpart_address = args['buyAddress']
+                    if is_buy:
+                        counterpart_address = args['sellAddress']
 
-                        self.sink.on_agree(
-                            exchange_address = exchange_contract.address,
-                            order_id = args['orderId'],
-                            agreement_id = args['agreementId'],
-                            buyer_address = args['buyAddress'],
-                            seller_address = args['sellAddress'],
-                            counterpart_address = counterpart_address,
-                            amount = args['amount'],
-                        )
-            except:
-                pass
+                    self.sink.on_agree(
+                        exchange_address = exchange_contract.address,
+                        order_id = args['orderId'],
+                        agreement_id = args['agreementId'],
+                        buyer_address = args['buyAddress'],
+                        seller_address = args['sellAddress'],
+                        counterpart_address = counterpart_address,
+                        amount = args['amount'],
+                    )
+            #except:
+            #    pass
 
             self.web3.eth.uninstallFilter(event_filter.filter_id)
 
