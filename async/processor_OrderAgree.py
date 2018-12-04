@@ -164,7 +164,7 @@ class DBSink:
             filter(Order.order_id==order_id).\
             first()
 
-    def __get_agreement(self, order_id, agreement_id):
+    def __get_agreement(self, exchange_address, order_id, agreement_id):
         return self.db.query(Agreement).\
             filter(Agreement.exchange_address==exchange_address).\
             filter(Agreement.order_id==order_id).\
