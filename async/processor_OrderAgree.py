@@ -78,7 +78,7 @@ class ConsoleSink:
         )
 
     def on_agree(self, exchange_address, order_id, agreement_id,
-        counterpart_address, amount):
+        buyer_address, seller_address, counterpart_address, amount):
         logging.info(
             "Agree: exchange_address={}, orderId={}, agreementId={}".\
             format(exchange_address, order_id, agreement_id)
