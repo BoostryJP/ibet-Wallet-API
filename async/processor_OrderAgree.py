@@ -107,7 +107,7 @@ class DBSink:
         order_id, account_address, is_buy,
         price, amount, agent_address):
         order = self.__get_order(exchange_address, order_id)
-        if order is not None:
+        if order is None:
             order = Order()
             order.token_address = token_address
             order.exchange_address = exchange_address
@@ -130,7 +130,7 @@ class DBSink:
         buyer_address, seller_address, counterpart_address, amount):
         agreement = self.__get_agreement(
             exchange_address, order_id, agreement_id)
-        if agreement is not None:
+        if agreement is None:
             agreement = Agreement()
             agreement.exchange_address = exchange_address
             agreement.order_id = order_id
