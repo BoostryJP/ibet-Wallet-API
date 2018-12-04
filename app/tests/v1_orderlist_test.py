@@ -3,7 +3,7 @@ import pytest
 import json
 import os
 
-import app.model
+from app.model import Order, Agreement, AgreementStatus
 
 from .account_config import eth_account
 from .contract_modules import *
@@ -172,6 +172,21 @@ class TestV1OrderList_Bond():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        # Orderイベント情報を挿入
+        order = Order()
+        order.id = 1
+        order.token_address = bond_token['address']
+        order.exchange_address = bond_exchange['address']
+        order.order_id = order_id
+        order.unique_order_id = bond_exchange['address'] + '_' + str(1)
+        order.account_address = account['account_address']
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = eth_account['agent']['account_address']
+        order.is_cancelled = False
+        session.add(order)
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -246,6 +261,20 @@ class TestV1OrderList_Bond():
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = bond_exchange['address']
+        agreement.unique_order_id = bond_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -326,6 +355,20 @@ class TestV1OrderList_Bond():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = bond_exchange['address']
+        agreement.unique_order_id = bond_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -384,6 +427,7 @@ class TestV1OrderList_Bond():
             if order['token']['token_address'] == bond_token['address']:
                 assert order['token'] == assumed_body['token']
                 assert order['agreement'] == assumed_body['agreement']
+
     # ＜エラー系1＞
     # request-bodyなし
     # -> 入力値エラー
@@ -604,6 +648,21 @@ class TestV1OrderList_Membership():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        # Orderイベント情報を挿入
+        order = Order()
+        order.id = 1
+        order.token_address = token['address']
+        order.exchange_address = membership_exchange['address']
+        order.order_id = 1
+        order.unique_order_id = membership_exchange['address'] + '_' + str(1)
+        order.account_address = account['account_address']
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = eth_account['agent']['account_address']
+        order.is_cancelled = False
+        session.add(order)
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -659,6 +718,20 @@ class TestV1OrderList_Membership():
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = membership_exchange['address']
+        agreement.unique_order_id = membership_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -720,6 +793,20 @@ class TestV1OrderList_Membership():
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = membership_exchange['address']
+        agreement.unique_order_id = membership_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -977,6 +1064,21 @@ class TestV1OrderList_Coupon():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        # Orderイベント情報を挿入
+        order = Order()
+        order.id = 1
+        order.token_address = token['address']
+        order.exchange_address = coupon_exchange['address']
+        order.order_id = 1
+        order.unique_order_id = coupon_exchange['address'] + '_' + str(1)
+        order.account_address = account['account_address']
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = eth_account['agent']['account_address']
+        order.is_cancelled = False
+        session.add(order)
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -1030,6 +1132,20 @@ class TestV1OrderList_Coupon():
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = coupon_exchange['address']
+        agreement.unique_order_id = coupon_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -1085,6 +1201,20 @@ class TestV1OrderList_Coupon():
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = coupon_exchange['address']
+        agreement.unique_order_id = coupon_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)

@@ -13,11 +13,13 @@ import time
 from web3 import Web3
 from eth_utils import to_checksum_address
 from app import config
+from app import log
 from app.model import Agreement, AgreementStatus, Order
 from app.contracts import Contract
 from web3.middleware import geth_poa_middleware
 
-logging.basicConfig(level=logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+LOG = log.get_logger()
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
@@ -123,12 +125,14 @@ class DBSink:
             order.is_cancelled = True
 
     def on_agree(self, exchange_address, order_id, agreement_id,
-        counterpart_address, amount):
+        buyer_address, seller_address, counterpart_address, amount):
         agreement = Agreement()
         agreement.exchange_address = exchange_address
         agreement.order_id = order_id
         agreement.agreement_id = agreement_id
         agreement.unique_order_id = exchange_address + '_' + str(order_id)
+        agreement.buyer_address = buyer_address
+        agreement.seller_address = seller_address
         agreement.counterpart_address = counterpart_address
         agreement.amount = amount
         agreement.status = AgreementStatus.PENDING.value
@@ -280,6 +284,8 @@ class Processor:
                             exchange_address = exchange_contract.address,
                             order_id = args['orderId'],
                             agreement_id = args['agreementId'],
+                            buyer_address = args['buyAddress'],
+                            seller_address = args['sellAddress'],
                             counterpart_address = counterpart_address,
                             amount = args['amount'],
                         )
