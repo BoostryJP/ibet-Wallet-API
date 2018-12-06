@@ -91,6 +91,7 @@ class App(falcon.API):
         self.add_route('/v1/Omise/CreateCustomer', omise.CreateCustomer())
         self.add_route('/v1/Omise/UpdateCustomer', omise.UpdateCustomer())
         self.add_route('/v1/Omise/Charge', omise.Charge())
+        self.add_route('/v1/Omise/ChargeStatus', omise.ChargeStatus())
 
         # push通知デバイス登録
         self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
