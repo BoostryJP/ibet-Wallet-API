@@ -70,7 +70,7 @@ ERR_SNS_NOTFOUND_ERROR = {
 }
 
 ERR_INVALID_CARD_ERROR = {
-    'status': falcon.HTTP_404,
+    'status': falcon.HTTP_400,
     'code': 60,
     'title': 'Invalid Credit Card'
 }
