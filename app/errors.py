@@ -38,7 +38,6 @@ ERR_NOT_SUPPORTED = {
     'title': 'Not Supported'
 }
 
-
 ERR_USER_NOT_EXISTS = {
     'status': falcon.HTTP_404,
     'code': 21,
@@ -75,6 +74,11 @@ ERR_INVALID_CARD_ERROR = {
     'title': 'Invalid Credit Card'
 }
 
+ERR_DOUBLE_CHARGE_ERROR = {
+    'status': falcon.HTTP_403,
+    'code': 70,
+    'title': 'Double Charge'
+}
 
 class AppError(Exception):
     def __init__(self, error=ERR_UNKNOWN, description=None):
@@ -107,12 +111,10 @@ class AppError(Exception):
             meta['description'] = exception.description
         res.body = json.dumps({'meta': meta})
 
-
 class InvalidParameterError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_INVALID_PARAMETER)
         self.error['description'] = description
-
 
 class DatabaseError(AppError):
     def __init__(self, error, args=None, params=None):
@@ -122,25 +124,21 @@ class DatabaseError(AppError):
         obj['params'] = str(params)
         self.error['description'] = obj
 
-
 class NotSupportedError(AppError):
     def __init__(self, method=None, url=None):
         super().__init__(ERR_NOT_SUPPORTED)
         if method and url:
             self.error['description'] = 'method: %s, url: %s' % (method, url)
 
-
 class UserNotExistsError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_USER_NOT_EXISTS)
         self.error['description'] = description
 
-
 class PasswordNotMatch(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_PASSWORD_NOT_MATCH)
         self.error['description'] = description
-
 
 class DataNotExistsError(AppError):
     def __init__(self, description=None):
@@ -160,4 +158,9 @@ class SNSNotFoundError(AppError):
 class InvalidCardError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_INVALID_CARD_ERROR)
+        self.error['description'] = description
+
+class DoubleChargeError(AppError):
+    def __init__(self, description=None):
+        super().__init__(ERR_DOUBLE_CHARGE_ERROR)
         self.error['description'] = description
