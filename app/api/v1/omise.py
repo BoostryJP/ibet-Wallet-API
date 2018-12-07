@@ -2,6 +2,7 @@
 import json
 import falcon
 from cerberus import Validator
+import sqlalchemy
 from web3 import Web3
 from eth_utils import to_checksum_address
 
@@ -199,14 +200,18 @@ class Charge(BaseResource):
                 omise_charge.status = OmiseChargeStatus.PROCESSING.value
                 session.commit()
         else: # オペレーション未実施の場合
-            # Charge状態が[PROCESSING]のレコードを作成（この時点でcommitする）
-            omise_charge = OmiseCharge()
-            omise_charge.exchange_address = exchange_address
-            omise_charge.order_id = order_id
-            omise_charge.agreement_id = agreement_id
-            omise_charge.status = OmiseChargeStatus.PROCESSING.value
-            session.add(omise_charge)
-            session.commit()
+            try:
+                # Charge状態が[PROCESSING]のレコードを作成（この時点でcommitする）
+                omise_charge = OmiseCharge()
+                omise_charge.exchange_address = exchange_address
+                omise_charge.order_id = order_id
+                omise_charge.agreement_id = agreement_id
+                omise_charge.status = OmiseChargeStatus.PROCESSING.value
+                session.add(omise_charge)
+                session.commit()
+            except: # 一意制約違反の場合
+                session.rollback()
+                raise DoubleChargeError(description='double charge')
 
         # 決済対象約定情報
         description_agreement = json.dumps({
