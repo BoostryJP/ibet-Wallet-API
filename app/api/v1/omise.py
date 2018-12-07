@@ -2,13 +2,16 @@
 import json
 import falcon
 from cerberus import Validator
+import sqlalchemy
 from web3 import Web3
 from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import AppError, InvalidParameterError, InvalidCardError
+from app.errors import AppError, InvalidParameterError, InvalidCardError, \
+    DoubleChargeError
 from app.utils.hooks import VerifySignature
+from app.model import OmiseCharge, OmiseChargeStatus
 from app import config
 
 import omise
@@ -156,16 +159,22 @@ class Charge(BaseResource):
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Omise.Charge')
+        session = req.context["session"]
 
         # 入力値チェック
         request_json = Charge.validate(req)
 
         # リクエストから情報を抽出
         address = to_checksum_address(req.context['address'])
+        exchange_address = to_checksum_address(request_json['exchange_address'])
+        order_id = request_json['order_id']
+        agreement_id = request_json['agreement_id']
+        customer_id = request_json['customer_id']
+        amount = request_json['amount']
 
         # Card情報を取得
         try:
-            customer = omise.Customer.retrieve(request_json['customer_id'])
+            customer = omise.Customer.retrieve(customer_id)
         except omise.errors.NotFoundError:
             raise InvalidParameterError(description='customer was not found')
 
@@ -173,28 +182,68 @@ class Charge(BaseResource):
         if address != customer.description:
             raise InvalidParameterError(description='update is not allowed')
 
+        # Charge（課金）状態の取得
+        omise_charge = session.query(OmiseCharge).\
+            filter(OmiseCharge.exchange_address == exchange_address).\
+            filter(OmiseCharge.order_id == order_id).\
+            filter(OmiseCharge.agreement_id == agreement_id).\
+            first()
+
+        if omise_charge is not None: # 既にオペレーションを1回以上実施している場合
+            # 二重課金のチェック
+            #  - Charge状態が[PROCESSING]、[SUCCESS]の場合はエラー
+            #  - Charge状態が[ERROR]の場合は[PROCESSING]に更新（この時点でcommitする）
+            if omise_charge.status == OmiseChargeStatus.PROCESSING.value or \
+                omise_charge.status == OmiseChargeStatus.SUCCESS.value:
+                raise DoubleChargeError(description='double charge')
+            elif omise_charge.status == OmiseChargeStatus.ERROR.value:
+                omise_charge.status = OmiseChargeStatus.PROCESSING.value
+                session.commit()
+        else: # オペレーション未実施の場合
+            try:
+                # Charge状態が[PROCESSING]のレコードを作成（この時点でcommitする）
+                omise_charge = OmiseCharge()
+                omise_charge.exchange_address = exchange_address
+                omise_charge.order_id = order_id
+                omise_charge.agreement_id = agreement_id
+                omise_charge.status = OmiseChargeStatus.PROCESSING.value
+                session.add(omise_charge)
+                session.commit()
+            except: # 一意制約違反の場合
+                session.rollback()
+                raise DoubleChargeError(description='double charge')
+
         # 決済対象約定情報
         description_agreement = json.dumps({
-            'exchange_address': request_json['exchange_address'],
-            'order_id': request_json['order_id'],
-            'agreement_id': request_json['agreement_id']
+            'exchange_address': exchange_address,
+            'order_id': order_id,
+            'agreement_id': agreement_id
         })
 
         # 課金
         try:
             charge = omise.Charge.create(
-                amount = request_json['amount'],
+                amount = amount,
                 currency = 'jpy',
-                customer = request_json['customer_id'],
+                customer = customer_id,
                 description = description_agreement
             )
         except omise.errors.InvalidChargeError as e:
+            # Charge状態を[ERROR]ステータスに更新する
+            omise_charge.status = OmiseChargeStatus.ERROR.value
             raise InvalidParameterError(description=str(e))
         except:
+            # Charge状態を[ERROR]ステータスに更新する
+            omise_charge.status = OmiseChargeStatus.ERROR.value
             raise AppError
 
         if charge.status != 'successful':
+            # Charge状態を[ERROR]ステータスに更新する
+            omise_charge.status = OmiseChargeStatus.ERROR.value
             raise InvalidCardError
+
+        # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
+        omise_charge.status = OmiseChargeStatus.SUCCESS.value
 
         self.on_success(res)
 
@@ -247,5 +296,86 @@ class Charge(BaseResource):
 
         if not Web3.isAddress(request_json['exchange_address']):
             raise InvalidParameterError
+
+        return validator.document
+
+# ------------------------------
+# [Omise]課金状態取得
+# ------------------------------
+class ChargeStatus(BaseResource):
+    '''
+    Handle for endpoint: /v1/Omise/ChargeStatus
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.Omise.ChargeStatus')
+        session = req.context["session"]
+
+        # 入力値チェック
+        request_json = ChargeStatus.validate(req)
+
+        # リクエストから情報を抽出
+        exchange_address = to_checksum_address(request_json['exchange_address'])
+        order_id = request_json['order_id']
+        agreement_id = request_json['agreement_id']
+
+        # Charge（課金）状態の取得
+        omise_charge = session.query(OmiseCharge).\
+            filter(OmiseCharge.exchange_address == exchange_address).\
+            filter(OmiseCharge.order_id == order_id).\
+            filter(OmiseCharge.agreement_id == agreement_id).\
+            first()
+
+        if omise_charge is None:
+            status = 'NONE'
+        else:
+            if omise_charge.status == OmiseChargeStatus.PROCESSING.value:
+                status = 'PROCESSING'
+            elif omise_charge.status == OmiseChargeStatus.SUCCESS.value:
+                status = 'SUCCESS'
+            elif omise_charge.status == OmiseChargeStatus.ERROR.value:
+                status = 'ERROR'
+
+        response_json = {
+            'exchange_address': exchange_address,
+            'order_id': order_id,
+            'agreement_id': agreement_id,
+            'status': status
+        }
+
+        self.on_success(res, response_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'exchange_address': {
+                'type': 'string',
+                'required': True,
+                'empty': False,
+            },
+            'order_id': {
+                'type': 'integer',
+                'coerce': int,
+                'min':0,
+                'required': True,
+                'nullable': False,
+            },
+            'agreement_id': {
+                'type': 'integer',
+                'coerce': int,
+                'min':0,
+                'required': True,
+                'nullable': False,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(request_json['exchange_address']):
+            raise InvalidParameterError(description='invalid exchange address')
 
         return validator.document
