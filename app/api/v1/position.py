@@ -492,6 +492,28 @@ class CouponMyTokens(BaseResource):
             portfolio_list = []
 
             # イベント抽出
+            #  IbetCoupon（約定イベント）
+            #  _account_addressと『買注文アドレス』が一致するイベントを抽出する。
+            try:
+                event_filter = CouponExchangeContract.events.Agree.\
+                    createFilter(
+                        fromBlock='earliest',
+                        argument_filters={
+                            'buyAddress': to_checksum_address(_account_address)
+                        }
+                    )
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+                for entry in entries:
+                    portfolio_list.append({
+                        'account': entry['args']['buyAddress'],
+                        'token_address': entry['args']['tokenAddress'],
+                    })
+            except:
+                pass
+
+            # イベント抽出
             #  IbetCoupon（トークン送信イベント）
             #  _account_addressと『送信先アドレス』が一致するイベントを抽出する。
             try:
