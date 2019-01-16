@@ -1,0 +1,221 @@
+from app.model import Notification
+from datetime import datetime, timedelta, timezone
+
+JST = timezone(timedelta(hours=+9), "JST")
+
+class TestV1NotificationRead():
+    # テスト対象API
+    apiurl = "/v1/Notifications/Read"
+
+    private_key_1 = "0000000000000000000000000000000000000000000000000000000000000001"
+    address_1 = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+
+    private_key_2 = "0000000000000000000000000000000000000000000000000000000000000002"
+    address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
+
+    private_key_3 = "0000000000000000000000000000000000000000000000000000000000000003"
+
+    # HACK: updateでcommitされてしまう対策
+    def teardown_method(self, method):
+        self.session.query(Notification).delete()
+        self.session.commit()
+
+    def _insert_test_data(self, session):
+        self.session = session # HACK: updateでcommitされてしまう対策
+
+        n = Notification()
+        n.notification_id = "0x00000021034300000000000000"
+        n.notification_type = "SampleNotification1"
+        n.priority = 1
+        n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+        n.is_read = True
+        n.is_flagged = False
+        n.is_deleted = False
+        n.deleted_at = None
+        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(tzinfo=JST) # JST時間として保存する
+        n.args = {
+            "hoge": "fuga",
+        }
+        n.metainfo = {
+            "aaa": "bbb",
+        }
+        session.add(n)
+
+        n = Notification()
+        n.notification_id = "0x00000021034000000000000000"
+        n.notification_type = "SampleNotification2"
+        n.priority = 1
+        n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+        n.is_read = False
+        n.is_flagged = False
+        n.is_deleted = True
+        n.deleted_at = None
+        n.block_timestamp = datetime(2017, 5, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.args = {
+            "hoge": "fuga",
+        }
+        n.metainfo = {}
+        session.add(n)
+
+        n = Notification()
+        n.notification_id = "0x00000011034000000000000000"
+        n.notification_type = "SampleNotification3"
+        n.priority = 2
+        n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+        n.is_read = False
+        n.is_flagged = True
+        n.is_deleted = False
+        n.deleted_at = None
+        n.block_timestamp = datetime(2017, 4, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.args = {
+            "hoge": "fuga",
+        }
+        n.metainfo = {}
+        session.add(n)
+
+        n = Notification()
+        n.notification_id = "0x00000011032000000000000000"
+        n.notification_type = "SampleNotification4"
+        n.priority = 1
+        n.address = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
+        n.is_read = False
+        n.is_flagged = False
+        n.is_deleted = False
+        n.deleted_at = None
+        n.block_timestamp = datetime(2017, 3, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.args = {
+            "hoge": "fuga",
+        }
+        n.metainfo = {}
+        session.add(n)
+
+        n = Notification()
+        n.notification_id = "0x00000001034000000000000000"
+        n.notification_type = "SampleNotification5"
+        n.priority = 0
+        n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+        n.is_read = False
+        n.is_flagged = False
+        n.is_deleted = False
+        n.deleted_at = None
+        n.block_timestamp = datetime(2017, 2, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.args = {
+            "hoge": "fuga",
+        }
+        n.metainfo = {}
+        session.add(n)
+
+        session.commit()
+
+    # ＜正常系1＞
+    #   全件既読化
+    def test_post_notification_read_normal_1(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json = {
+                "is_read": True,
+            },
+            private_key = TestV1NotificationRead.private_key_1
+        )
+
+        notification_1_list = \
+            session.query(Notification).\
+            filter(Notification.address == TestV1NotificationRead.address_1).\
+            all()
+
+        notification_2_list = \
+            session.query(Notification).\
+            filter(Notification.address == TestV1NotificationRead.address_2).\
+            all()
+
+        assert resp.status_code == 200
+        assert len(notification_1_list) == 4
+        assert len(notification_2_list) == 1
+
+        for notification_1 in notification_1_list:
+            assert notification_1.is_read == True
+
+        for notification_2 in notification_2_list:
+            assert notification_2.is_read == False
+
+    # ＜正常系2＞
+    #   全件未読化
+    def test_post_notification_read_normal_2(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json = {
+                "is_read": False,
+            },
+            private_key = TestV1NotificationRead.private_key_1
+        )
+
+        notification_list = session.query(Notification).all()
+
+        assert resp.status_code == 200
+        assert len(notification_list) == 5
+
+        for notification in notification_list:
+            assert notification.is_read == False
+
+    # ＜正常系3＞
+    #   存在しないアドレスの既読化
+    def test_post_notification_read_normal_3(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json = {
+                "is_read": True,
+            },
+            private_key = TestV1NotificationRead.private_key_3
+        )
+
+        assert resp.status_code == 200
+
+    # ＜エラー系1＞
+    #   入力値エラー：型誤り
+    def test_post_notification_read_error_1(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json = {
+                "is_read": "True",
+            },
+            private_key = TestV1NotificationRead.private_key_1
+        )
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'is_read': 'must be of boolean type'
+            }
+        }
+
+    # ＜エラー系2＞
+    #   入力値エラー：必須入力値
+    def test_post_notification_read_error_2(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json = {
+                "is_read": None,
+            },
+            private_key = TestV1NotificationRead.private_key_1
+        )
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'is_read': ['null value not allowed', 'must be of boolean type']
+            }
+        }
