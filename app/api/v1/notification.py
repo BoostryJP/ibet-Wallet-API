@@ -191,6 +191,55 @@ class Notifications(BaseResource):
         return validator.document
 
 # ------------------------------
+# 通知全件既読
+# ------------------------------
+class NotificationsRead(BaseResource):
+    '''
+    Handle for endpoint: /v1/Notifications/Read/
+    '''
+
+    @falcon.before(VerifySignature())
+    def on_post(self, req, res):
+        LOG.info('v1.Notification.Read')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        request_json = NotificationsRead.validate_post(req)
+
+        # リクエストから情報を抽出
+        address = to_checksum_address(req.context["address"])
+
+        # データを更新
+        session.query(Notification).\
+            filter(Notification.address == address).\
+            update({'is_read': request_json["is_read"]})
+        session.commit()
+
+        self.on_success(res)
+
+    @staticmethod
+    def validate_post(req):
+        request_json = req.context["data"]
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "is_read": {
+                "type": "boolean",
+                "required": True,
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(req.context["address"]):
+            raise InvalidParameterError
+
+        return validator.document
+
+# ------------------------------
 # 通知一覧
 # ------------------------------
 class NotificationCount(BaseResource):

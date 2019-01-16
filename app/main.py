@@ -76,6 +76,7 @@ class App(falcon.API):
 
         # 通知一覧
         self.add_route('/v1/Notifications', notification.Notifications())
+        self.add_route('/v1/Notifications/Read', notification.NotificationsRead())
         self.add_route('/v1/NotificationCount', notification.NotificationCount())
 
         # 決済用口座登録状況参照
