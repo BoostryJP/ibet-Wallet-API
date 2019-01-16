@@ -188,7 +188,8 @@ class MyTokens(BaseResource):
                             image_url_medium = BondTokenContract.functions.getImageURL(1).call()
                             image_url_large = BondTokenContract.functions.getImageURL(2).call()
                             owner_address = BondTokenContract.functions.owner().call()
-                            company_name = MyTokens.get_company_name(company_list, owner_address)
+                            company_name, rsa_publickey = \
+                                MyTokens.get_company_name(company_list, owner_address)
 
                             # 第三者認定（Sign）のイベント情報を検索する
                             # NOTE:現状項目未使用であるため空のリストを返す
@@ -199,6 +200,7 @@ class MyTokens(BaseResource):
                                     'token_address': token_address,
                                     'token_template': token_template[1],
                                     'company_name': company_name,
+                                    'rsa_publickey': rsa_publickey,
                                     'name': name,
                                     'symbol': symbol,
                                     'totalSupply': totalSupply,
@@ -239,10 +241,12 @@ class MyTokens(BaseResource):
     @staticmethod
     def get_company_name(company_list, owner_address):
         company_name = ''
+        rsa_publickey = ''
         for company in company_list:
             if to_checksum_address(company['address']) == owner_address:
                 company_name = company['corporate_name']
-        return company_name
+                rsa_publickey = company['rsa_publickey']
+        return company_name, rsa_publickey
 
     @staticmethod
     def validate(req):
@@ -395,7 +399,7 @@ class MembershipMyTokens(BaseResource):
                             image_url_medium = TokenContract.functions.getImageURL(1).call()
                             image_url_large = TokenContract.functions.getImageURL(2).call()
                             owner_address = TokenContract.functions.owner().call()
-                            company_name = MembershipMyTokens.\
+                            company_name, rsa_publickey = MembershipMyTokens.\
                                 get_company_name(company_list, owner_address)
 
                             position_list.append({
@@ -403,6 +407,7 @@ class MembershipMyTokens(BaseResource):
                                     'token_address': token_address,
                                     'token_template': token_template[1],
                                     'company_name': company_name,
+                                    'rsa_publickey': rsa_publickey,
                                     'name': name,
                                     'symbol': symbol,
                                     'total_supply': total_supply,
@@ -429,10 +434,12 @@ class MembershipMyTokens(BaseResource):
     @staticmethod
     def get_company_name(company_list, owner_address):
         company_name = ''
+        rsa_publickey = ''
         for company in company_list:
             if to_checksum_address(company['address']) == owner_address:
                 company_name = company['corporate_name']
-        return company_name
+                rsa_publickey = company['rsa_publickey']
+        return company_name, rsa_publickey
 
     @staticmethod
     def validate(req):
@@ -552,7 +559,8 @@ class CouponMyTokens(BaseResource):
                         continue
                     else:
                         owner_address = CouponTokenContract.functions.owner().call()
-                        company_name = MyTokens.get_company_name(company_list, owner_address)
+                        company_name, rsa_publickey = \
+                            MyTokens.get_company_name(company_list, owner_address)
                         name = CouponTokenContract.functions.name().call()
                         symbol = CouponTokenContract.functions.symbol().call()
                         totalSupply = CouponTokenContract.functions.totalSupply().call()
@@ -573,6 +581,7 @@ class CouponMyTokens(BaseResource):
                                 'token_template': 'IbetCoupon',
                                 'owner_address': owner_address,
                                 'company_name': company_name,
+                                'rsa_publickey': rsa_publickey,
                                 'name': name,
                                 'symbol': symbol,
                                 'totalSupply': totalSupply,
@@ -598,10 +607,12 @@ class CouponMyTokens(BaseResource):
     @staticmethod
     def get_company_name(company_list, owner_address):
         company_name = ''
+        rsa_publickey = ''
         for company in company_list:
             if to_checksum_address(company['address']) == owner_address:
                 company_name = company['corporate_name']
-        return company_name
+                rsa_publickey = company['rsa_publickey']
+        return company_name, rsa_publickey
 
     @staticmethod
     def validate(req):
