@@ -111,6 +111,7 @@ class TestV1MyTokens():
                 'token_address': token_address,
                 'token_template': 'IbetStraightBond',
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
                 'totalSupply': 1000000,
