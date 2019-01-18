@@ -554,51 +554,51 @@ class CouponMyTokens(BaseResource):
                 token_address = to_checksum_address(item['token_address'])
                 CouponTokenContract = Contract.get_contract('IbetCoupon', token_address)
                 try:
-                    isValid = CouponTokenContract.functions.isValid().call()
-                    if isValid == False:
-                        continue
-                    else:
-                        owner_address = CouponTokenContract.functions.owner().call()
-                        company_name, rsa_publickey = \
-                            MyTokens.get_company_name(company_list, owner_address)
-                        name = CouponTokenContract.functions.name().call()
-                        symbol = CouponTokenContract.functions.symbol().call()
-                        totalSupply = CouponTokenContract.functions.totalSupply().call()
-                        details = CouponTokenContract.functions.details().call()
-                        memo = CouponTokenContract.functions.memo().call()
-                        expirationDate = CouponTokenContract.functions.expirationDate().call()
-                        transferable = CouponTokenContract.functions.transferable().call()
-                        image_url_small = CouponTokenContract.functions.getImageURL(0).call()
-                        image_url_medium = CouponTokenContract.functions.getImageURL(1).call()
-                        image_url_large = CouponTokenContract.functions.getImageURL(2).call()
-                        balance = CouponTokenContract.functions.balanceOf(owner).call()
-                        commitment = CouponExchangeContract.functions.\
-                            commitments(owner, token_address).call()
-                        used = CouponTokenContract.functions.usedOf(owner).call()
-                        position_list.append({
-                            'token': {
-                                'token_address': token_address,
-                                'token_template': 'IbetCoupon',
-                                'owner_address': owner_address,
-                                'company_name': company_name,
-                                'rsa_publickey': rsa_publickey,
-                                'name': name,
-                                'symbol': symbol,
-                                'totalSupply': totalSupply,
-                                'details': details,
-                                'memo': memo,
-                                'expirationDate': expirationDate,
-                                'transferable': transferable,
-                                'image_url': [
-                                    {'type': 'small', 'url': image_url_small},
-                                    {'type': 'medium', 'url': image_url_medium},
-                                    {'type': "large", 'url': image_url_large}
-                                ],
-                            },
-                            'balance': balance,
-                            'commitment': commitment,
-                            'used': used
-                        })
+                    owner_address = CouponTokenContract.functions.owner().call()
+                    company_name, rsa_publickey = \
+                        MyTokens.get_company_name(company_list, owner_address)
+                    name = CouponTokenContract.functions.name().call()
+                    symbol = CouponTokenContract.functions.symbol().call()
+                    totalSupply = CouponTokenContract.functions.totalSupply().call()
+                    details = CouponTokenContract.functions.details().call()
+                    memo = CouponTokenContract.functions.memo().call()
+                    expirationDate = CouponTokenContract.functions.expirationDate().call()
+                    transferable = CouponTokenContract.functions.transferable().call()
+                    image_url_small = CouponTokenContract.functions.getImageURL(0).call()
+                    image_url_medium = CouponTokenContract.functions.getImageURL(1).call()
+                    image_url_large = CouponTokenContract.functions.getImageURL(2).call()
+                    balance = CouponTokenContract.functions.balanceOf(owner).call()
+                    commitment = CouponExchangeContract.functions.\
+                        commitments(owner, token_address).call()
+                    used = CouponTokenContract.functions.usedOf(owner).call()
+                    status = CouponTokenContract.functions.isValid().call()
+
+                    position_list.append({
+                        'token': {
+                            'token_address': token_address,
+                            'token_template': 'IbetCoupon',
+                            'owner_address': owner_address,
+                            'company_name': company_name,
+                            'rsa_publickey': rsa_publickey,
+                            'name': name,
+                            'symbol': symbol,
+                            'totalSupply': totalSupply,
+                            'details': details,
+                            'memo': memo,
+                            'expirationDate': expirationDate,
+                            'transferable': transferable,
+                            'image_url': [
+                                {'type': 'small', 'url': image_url_small},
+                                {'type': 'medium', 'url': image_url_medium},
+                                {'type': "large", 'url': image_url_large}
+                            ],
+                            'status': status,
+                        },
+                        'balance': balance,
+                        'commitment': commitment,
+                        'used': used
+                    })
+
                 except:
                     continue
 
