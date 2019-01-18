@@ -256,7 +256,8 @@ class TestV1CouponMyTokens():
                 }, {
                     'type': 'large',
                     'url': ''
-                }]
+                }],
+                'status': True
             },
             'balance': 10,
             'commitment': 0,
@@ -275,7 +276,7 @@ class TestV1CouponMyTokens():
     # ＜正常系1-2＞
     # クーポントークン保有（無効化済）
     #  クーポン新規発行 -> 投資家割当 -> クーポン無効化
-    #   -> 該当クーポンの保有情報が返却されない
+    #   -> 該当クーポンの保有情報が返却される（status:False）
     def test_coupon_position_normal_1_2(self, client, session, shared_contract):
         coupon_exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
@@ -295,12 +296,45 @@ class TestV1CouponMyTokens():
 
         resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
-        assumed_body = []
+        assumed_body = {
+            'token': {
+                'token_address': coupon_address,
+                'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'totalSupply': 10000,
+                'details': 'クーポン詳細',
+                'memo': 'クーポンメモ欄',
+                'expirationDate': '20191231',
+                'transferable': True,
+                'image_url': [{
+                    'type': 'small',
+                    'url': ''
+                }, {
+                    'type': 'medium',
+                    'url': ''
+                }, {
+                    'type': 'large',
+                    'url': ''
+                }],
+                'status': False
+            },
+            'balance': 10,
+            'commitment': 0,
+            'used': 0
+        }
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        count = 0
         for token in resp.json['data']:
-            assert token['token']['token_address'] != coupon_address
+            if token['token']['token_address'] == coupon_address:
+                count = 1
+                assert token == assumed_body
+        assert count == 1
 
     # ＜正常系2-1＞
     # 残高あり、売注文中なし
@@ -347,7 +381,8 @@ class TestV1CouponMyTokens():
                 }, {
                     'type': 'large',
                     'url': ''
-                }]
+                }],
+                'status': True
             },
             'balance': 100,
             'commitment': 0,
@@ -407,7 +442,8 @@ class TestV1CouponMyTokens():
                 }, {
                     'type': 'large',
                     'url': ''
-                }]
+                }],
+                'status': True
             },
             'balance': 50,
             'commitment': 50,
@@ -468,7 +504,8 @@ class TestV1CouponMyTokens():
                 }, {
                     'type': 'large',
                     'url': ''
-                }]
+                }],
+                'status': True
             },
             'balance': 0,
             'commitment': 0,
