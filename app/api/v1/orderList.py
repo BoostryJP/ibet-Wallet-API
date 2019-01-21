@@ -628,6 +628,7 @@ class OrderList(BaseResource):
                     'certification':certification
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -774,6 +775,7 @@ class OrderList(BaseResource):
                     'certification':certification
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -856,6 +858,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -938,6 +941,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1018,6 +1022,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1098,6 +1103,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1244,6 +1250,7 @@ class OrderList(BaseResource):
                     'certification':certification
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1389,6 +1396,7 @@ class OrderList(BaseResource):
                     'certification':certification
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1470,6 +1478,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1551,6 +1560,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1630,6 +1640,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],
@@ -1709,6 +1720,7 @@ class OrderList(BaseResource):
                     ],
                 },
                 'agreement':{
+                    'exchange_address': exchange_address,
                     'order_id':order_id,
                     'agreementId':agreement_id,
                     'amount':agreement[1],

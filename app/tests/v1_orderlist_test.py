@@ -319,6 +319,7 @@ class TestV1OrderList_Bond():
                 'certification': []
             },
             'agreement': {
+                'exchange_address': bond_exchange['address'],
                 'order_id': order_id,
                 'agreementId': agreement_id,
                 'amount': 100,
@@ -412,6 +413,7 @@ class TestV1OrderList_Bond():
                 'certification': []
             },
             'agreement': {
+                'exchange_address': bond_exchange['address'],
                 'order_id': order_id,
                 'agreementId': agreement_id,
                 'amount': 100,
@@ -762,6 +764,7 @@ class TestV1OrderList_Membership():
                 }]
             },
             'agreement': {
+                'exchange_address': membership_exchange['address'],
                 'order_id': order_id,
                 'agreementId': agreement_id,
                 'amount': 100,
@@ -832,6 +835,7 @@ class TestV1OrderList_Membership():
                 ]
             },
             'agreement': {
+                'exchange_address': membership_exchange['address'],
                 'order_id': order_id,
                 'agreementId': agreement_id,
                 'amount': 100,
@@ -1170,6 +1174,7 @@ class TestV1OrderList_Coupon():
                 ]
             },
             'agreement': {
+                'exchange_address': coupon_exchange['address'],
                 'order_id': order_id,
                 'agreementId': agreement_id,
                 'amount': 100,
@@ -1239,6 +1244,7 @@ class TestV1OrderList_Coupon():
                 ]
             },
             'agreement': {
+                'exchange_address': coupon_exchange['address'],
                 'order_id': order_id,
                 'agreementId': agreement_id,
                 'amount': 100,
