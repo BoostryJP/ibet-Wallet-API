@@ -8,7 +8,7 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-import app.model
+from app.model import Listing
 from app import config
 from app.contracts import Contract
 
@@ -66,6 +66,13 @@ class TestV1Contracts():
 
         return {'address':contract_address, 'abi':abi}
 
+    def list_token(session, token):
+        listed_token = Listing()
+        listed_token.token_address = token['address']
+        listed_token.credit_card_availability = True
+        listed_token.bank_payment_availability = True
+        session.add(listed_token)
+
     # ＜正常系1＞
     # 発行済債券あり（1件）
     # cursor=設定なし、 limit=設定なし
@@ -85,6 +92,9 @@ class TestV1Contracts():
         attribute = TestV1Contracts.bond_token_attribute(exchange_address)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV1Contracts.list_token(session, bond_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -152,6 +162,8 @@ class TestV1Contracts():
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, bond_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -264,6 +276,8 @@ class TestV1Contracts():
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, bond_token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -376,6 +390,8 @@ class TestV1Contracts():
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, bond_token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -448,6 +464,8 @@ class TestV1Contracts():
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, bond_token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -664,6 +682,13 @@ class TestV1MembershipContracts():
             deploy_contract('TokenList', [], deployer['account_address'])
         return {'address':contract_address, 'abi':abi}
 
+    def list_token(session, token):
+        listed_token = Listing()
+        listed_token.token_address = token['address']
+        listed_token.credit_card_availability = True
+        listed_token.bank_payment_availability = True
+        session.add(listed_token)
+
     # ＜正常系1＞
     # 発行済会員権あり（1件）
     # cursor=設定なし、 limit=設定なし
@@ -683,6 +708,9 @@ class TestV1MembershipContracts():
         attribute = TestV1MembershipContracts.token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV1Contracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -739,6 +767,8 @@ class TestV1MembershipContracts():
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -816,6 +846,8 @@ class TestV1MembershipContracts():
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -893,6 +925,8 @@ class TestV1MembershipContracts():
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -947,6 +981,8 @@ class TestV1MembershipContracts():
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -998,6 +1034,8 @@ class TestV1MembershipContracts():
             token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
+        # 取扱トークンデータ挿入
+        TestV1Contracts.list_token(session, token)
 
         # Tokenの無効化
         membership_invalidate(issuer, token)
@@ -1177,6 +1215,13 @@ class TestV1CouponContracts():
             deploy_contract('TokenList', [], deployer['account_address'])
         return {'address':contract_address, 'abi':abi}
 
+    def list_token(session, token):
+        listed_token = Listing()
+        listed_token.token_address = token['address']
+        listed_token.credit_card_availability = True
+        listed_token.bank_payment_availability = True
+        session.add(listed_token)
+
     # ＜正常系1＞
     # 発行済クーポンあり（1件）
     # cursor=設定なし、 limit=設定なし
@@ -1196,6 +1241,9 @@ class TestV1CouponContracts():
         attribute = TestV1CouponContracts.token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV1Contracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1251,6 +1299,8 @@ class TestV1CouponContracts():
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1326,6 +1376,8 @@ class TestV1CouponContracts():
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1401,6 +1453,8 @@ class TestV1CouponContracts():
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1454,6 +1508,8 @@ class TestV1CouponContracts():
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
+            # 取扱トークンデータ挿入
+            TestV1Contracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1504,6 +1560,9 @@ class TestV1CouponContracts():
             token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV1Contracts.list_token(session, token)
 
         # Tokenの無効化
         invalidate_coupon_token(issuer, token)
