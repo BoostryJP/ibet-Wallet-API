@@ -5,7 +5,7 @@ from sqlalchemy import String, Integer, BigInteger, Boolean
 
 from app.model import Base
 
-class listing(Base):
+class Listing(Base):
     __tablename__ = 'listing'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)
@@ -14,7 +14,7 @@ class listing(Base):
     bank_payment_availability = Column(Boolean)
 
     def __repr__(self):
-        return "<Order id='%d'>" % \
+        return "<Listing id='%d'>" % \
             (self.id)
 
     FIELDS = {
