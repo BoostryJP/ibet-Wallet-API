@@ -16,6 +16,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
+from app.model import Listing
 
 LOG = log.get_logger()
 
@@ -34,6 +35,8 @@ class Contracts(BaseResource):
     def on_get(self, req, res):
         LOG.info('v1.contracts.Contracts')
 
+        session = req.context["session"]
+
         # Validation
         request_json = Contracts.validate(req)
 
@@ -41,7 +44,9 @@ class Contracts(BaseResource):
         ListContract = Contract.get_contract(
             'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
-        list_length = ListContract.functions.getListLength().call()
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
 
         if request_json['cursor'] != None and request_json['cursor'] > list_length:
             raise InvalidParameterError("cursor parameter must be less than token list num")
@@ -71,7 +76,9 @@ class Contracts(BaseResource):
                 break
 
             # TokenList-Contractからトークンの情報を取得する
-            token = ListContract.functions.getTokenByNum(i).call()
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions.\
+                getTokenByAddress(token_address).call()
 
             token_detail = self.get_token_detail(token_id = i,
                                                  company_list = company_list,
@@ -260,6 +267,8 @@ class MembershipContracts(BaseResource):
     def on_get(self, req, res):
         LOG.info('v1.contracts.MembershipContracts')
 
+        session = req.context["session"]
+
         # Validation
         request_json = MembershipContracts.validate(req)
 
@@ -267,7 +276,9 @@ class MembershipContracts(BaseResource):
         ListContract = Contract.get_contract(
             'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
-        list_length = ListContract.functions.getListLength().call()
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
 
         if request_json['cursor'] != None and request_json['cursor'] > list_length:
             raise InvalidParameterError("cursor parameter must be less than token list num")
@@ -297,7 +308,9 @@ class MembershipContracts(BaseResource):
                 break
 
             # TokenList-Contractからトークンの情報を取得する
-            token = ListContract.functions.getTokenByNum(i).call()
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions.\
+                getTokenByAddress(token_address).call()
 
             token_detail = self.get_token_detail(token_id = i,
                                                  company_list = company_list,
@@ -420,6 +433,8 @@ class CouponContracts(BaseResource):
     def on_get(self, req, res):
         LOG.info('v1.contracts.CouponContracts')
 
+        session = req.context["session"]
+
         # Validation
         request_json = CouponContracts.validate(req)
 
@@ -427,7 +442,9 @@ class CouponContracts(BaseResource):
         ListContract = Contract.get_contract(
             'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
-        list_length = ListContract.functions.getListLength().call()
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
 
         if request_json['cursor'] != None and request_json['cursor'] > list_length:
             raise InvalidParameterError(
@@ -458,7 +475,9 @@ class CouponContracts(BaseResource):
                 break
 
             # TokenList-Contractからトークンの情報を取得する
-            token = ListContract.functions.getTokenByNum(i).call()
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions.\
+                getTokenByAddress(token_address).call()
 
             token_detail = self.get_token_detail(
                 token_id = i,

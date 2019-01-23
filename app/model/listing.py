@@ -9,7 +9,6 @@ class Listing(Base):
     __tablename__ = 'listing'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)
-    exchange_address = Column(String(256), index=True)
     credit_card_availability = Column(Boolean)
     bank_payment_availability = Column(Boolean)
 
