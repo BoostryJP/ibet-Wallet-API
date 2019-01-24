@@ -3,7 +3,7 @@ import pytest
 import json
 import os
 
-import app.model
+from app.model import Listing
 
 from .account_config import eth_account
 from .contract_modules import issue_bond_token, offer_bond_token, \
@@ -81,6 +81,14 @@ class TestV1MyTokens():
 
         return bond_token
 
+    @staticmethod
+    def list_token(session, token):
+        listed_token = Listing()
+        listed_token.token_address = token['address']
+        listed_token.credit_card_availability = True
+        listed_token.bank_payment_availability = True
+        session.add(listed_token)
+
     # ＜正常系1＞
     # 債券トークン保有
     #  債券新規発行 -> 約定（1件）
@@ -97,6 +105,9 @@ class TestV1MyTokens():
         bond_token = TestV1MyTokens.generate_bond_position(
             bond_exchange, personal_info, white_list, token_list)
         token_address = bond_token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1MyTokens.list_token(session, bond_token)
 
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']

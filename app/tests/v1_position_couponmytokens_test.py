@@ -3,7 +3,7 @@ import pytest
 import json
 import os
 
-import app.model
+from app.model import Listing
 
 from .account_config import eth_account
 from .contract_modules import *
@@ -211,6 +211,14 @@ class TestV1CouponMyTokens():
 
         return token
 
+    @staticmethod
+    def list_token(session, token):
+        listed_token = Listing()
+        listed_token.token_address = token['address']
+        listed_token.credit_card_availability = True
+        listed_token.bank_payment_availability = True
+        session.add(listed_token)
+
     # ＜正常系1-1＞
     # クーポントークン保有
     #  クーポン新規発行 -> 投資家割当
@@ -225,6 +233,9 @@ class TestV1CouponMyTokens():
         coupon_token = TestV1CouponMyTokens.\
             transfer_coupon(coupon_exchange, token_list)
         coupon_address = coupon_token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1CouponMyTokens.list_token(session, coupon_token)
 
         os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
@@ -288,6 +299,9 @@ class TestV1CouponMyTokens():
             transfer_coupon_invalid(coupon_exchange, token_list)
         coupon_address = coupon_token['address']
 
+        # 取扱トークンデータ挿入
+        TestV1CouponMyTokens.list_token(session, coupon_token)
+
         os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
@@ -339,13 +353,16 @@ class TestV1CouponMyTokens():
     # ＜正常系2-1＞
     # 残高あり、売注文中なし
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買 →　決済業者：決済
-    def test_coupon_position_normal_2_1(self, client, shared_contract):
+    def test_coupon_position_normal_2_1(self, client, session, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
         account = eth_account['trader']
 
         token = TestV1CouponMyTokens.create_balance(exchange, token_list)
         token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1CouponMyTokens.list_token(session, token)
 
         os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
             exchange['address']
@@ -400,13 +417,16 @@ class TestV1CouponMyTokens():
     # 残高あり、売注文中あり
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
     #   →　決済代行：決済　→　投資家：Make売
-    def test_coupon_position_normal_2_2(self, client, shared_contract):
+    def test_coupon_position_normal_2_2(self, client, session, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
         account = eth_account['trader']
 
         token = TestV1CouponMyTokens.create_commitment(exchange, token_list)
         token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1CouponMyTokens.list_token(session, token)
 
         os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
             exchange['address']
@@ -463,13 +483,16 @@ class TestV1CouponMyTokens():
     #   →　決済代行：決済①
     #       →　投資家：Make売　→　発行体：Take買
     #           →　決済代行：決済②
-    def test_coupon_position_normal_2_3(self, client, shared_contract):
+    def test_coupon_position_normal_2_3(self, client, session, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
         account = eth_account['trader']
 
         token = TestV1CouponMyTokens.create_zero(exchange, token_list)
         token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1CouponMyTokens.list_token(session, token)
 
         os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
@@ -481,43 +504,15 @@ class TestV1CouponMyTokens():
         resp = client.\
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
-        assumed_body = {
-            'token': {
-                'token_address': token_address,
-                'token_template': 'IbetCoupon',
-                'owner_address': eth_account['issuer']['account_address'],
-                'company_name': '',
-                'rsa_publickey': '',
-                'name': 'テストクーポン',
-                'symbol': 'COUPON',
-                'totalSupply': 1000000,
-                'details': 'クーポン詳細',
-                'memo': 'クーポンメモ欄',
-                'expirationDate': '20191231',
-                'transferable': True,
-                'image_url': [{
-                    'type': 'small',
-                    'url': ''
-                }, {
-                    'type': 'medium',
-                    'url': ''
-                }, {
-                    'type': 'large',
-                    'url': ''
-                }],
-                'status': True
-            },
-            'balance': 0,
-            'commitment': 0,
-            'used': 0
-        }
-
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
 
+        # リスト0件の確認
+        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
-                assert token == assumed_body
+                count = 1
+        assert count == 0
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_coupon_position_error_1(self, client):
