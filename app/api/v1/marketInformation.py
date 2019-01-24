@@ -104,6 +104,7 @@ class OrderBook(BaseResource):
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
+                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
                     all()
         else:
             if is_buy == True:  # 買注文
