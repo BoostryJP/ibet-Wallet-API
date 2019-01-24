@@ -14,7 +14,7 @@ from web3 import Web3
 from eth_utils import to_checksum_address
 from app import config
 from app import log
-from app.model import Agreement, AgreementStatus, Order
+from app.model import Agreement, AgreementStatus, Order, Listing
 from app.contracts import Contract
 from web3.middleware import geth_poa_middleware
 
