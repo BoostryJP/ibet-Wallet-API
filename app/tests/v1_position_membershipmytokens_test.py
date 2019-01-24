@@ -3,6 +3,8 @@ import pytest
 import json
 import os
 
+from app.model import Listing
+
 from .account_config import eth_account
 from .contract_modules import membership_issue, membership_register_list, \
     membership_offer, membership_get_latest_orderid, \
@@ -159,16 +161,27 @@ class TestV1MembershipMyTokens():
 
         return token
 
+    @staticmethod
+    def list_token(session, token):
+        listed_token = Listing()
+        listed_token.token_address = token['address']
+        listed_token.credit_card_availability = True
+        listed_token.bank_payment_availability = True
+        session.add(listed_token)
+
     # 正常系1
     # 残高あり、売注文中なし
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買 →　決済業者：決済
-    def test_membership_position_normal_1(self, client, shared_contract):
+    def test_membership_position_normal_1(self, client, session, shared_contract):
         exchange = shared_contract['IbetMembershipExchange']
         token_list = shared_contract['TokenList']
         account = eth_account['trader']
 
         token = TestV1MembershipMyTokens.create_balance(exchange, token_list)
         token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1MembershipMyTokens.list_token(session, token)
 
         os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
             exchange['address']
@@ -214,21 +227,27 @@ class TestV1MembershipMyTokens():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
 
+        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
+                count = 1
                 assert token == assumed_body
+        assert count == 1
 
     # 正常系2
     # 残高あり、売注文中あり
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
     #   →　決済代行：決済　→　投資家：Make売
-    def test_membership_position_normal_2(self, client, shared_contract):
+    def test_membership_position_normal_2(self, client, session, shared_contract):
         exchange = shared_contract['IbetMembershipExchange']
         token_list = shared_contract['TokenList']
         account = eth_account['trader']
 
         token = TestV1MembershipMyTokens.create_commitment(exchange, token_list)
         token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1MembershipMyTokens.list_token(session, token)
 
         os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
             exchange['address']
@@ -274,9 +293,12 @@ class TestV1MembershipMyTokens():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
 
+        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
+                count = 1
                 assert token == assumed_body
+        assert count == 1
 
     # 正常系3
     # 残高なし、売注文中なし
@@ -284,13 +306,16 @@ class TestV1MembershipMyTokens():
     #   →　決済代行：決済①
     #       →　投資家：Make売　→　発行体：Take買
     #           →　決済代行：決済②
-    def test_membership_position_normal_3(self, client, shared_contract):
+    def test_membership_position_normal_3(self, client, session, shared_contract):
         exchange = shared_contract['IbetMembershipExchange']
         token_list = shared_contract['TokenList']
         account = eth_account['trader']
 
         token = TestV1MembershipMyTokens.create_zero(exchange, token_list)
         token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1MembershipMyTokens.list_token(session, token)
 
         os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
             exchange['address']
@@ -307,11 +332,13 @@ class TestV1MembershipMyTokens():
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        print(resp.json['data'])
 
+        # リストが返却されないことを確認
+        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
-                assert token == assumed_body
+                count = 1
+        assert count == 0
 
     # エラー系1
     # 入力値エラー（request-bodyなし）
