@@ -172,7 +172,7 @@ class DBSink:
             first()
 
 class Processor:
-    def __init__(self, web3, sink):
+    def __init__(self, web3, sink, db):
         self.web3 = web3
         self.bond_exchange_contract = Contract.get_contract(
             'IbetStraightBondExchange',
@@ -193,6 +193,7 @@ class Processor:
         ]
         self.sink = sink
         self.latest_block = web3.eth.blockNumber
+        self.db = db
 
     def initial_sync(self):
         self.__sync_all(0, self.latest_block)
