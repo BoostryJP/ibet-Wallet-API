@@ -5,6 +5,7 @@ from cerberus import Validator
 import sqlalchemy
 from web3 import Web3
 from eth_utils import to_checksum_address
+import boto3
 
 from app import log
 from app.api.common import BaseResource
@@ -242,6 +243,15 @@ class Charge(BaseResource):
             omise_charge.status = OmiseChargeStatus.ERROR.value
             raise InvalidCardError
 
+        sqs_msg = {
+            'exchange_address': exchange_address,
+            'order_id': order_id,
+            'agreement_id': agreement_id,
+            'amount': amount
+        }
+
+        Charge.send_sqs_msg(sqs_msg)
+
         # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
         omise_charge.status = OmiseChargeStatus.SUCCESS.value
 
@@ -298,6 +308,31 @@ class Charge(BaseResource):
             raise InvalidParameterError
 
         return validator.document
+
+    @staticmethod
+    def send_sqs_msg(msg):
+        name = config.AGENT_SQS_QUEUE_NAME
+        sqs = boto3.resource(
+            'sqs',
+            endpoint_url = config.AGENT_SQS_URL,
+            region_name='ap-northeast-1'
+        )
+
+        try:
+            # キューの名前を指定してインスタンスを取得
+            queue = sqs.get_queue_by_name(QueueName=name)
+        except:
+            # 指定したキューがない場合はキューを作成
+            queue = sqs.create_queue(QueueName=name)
+
+        response = queue.send_message(
+            DelaySeconds=0,
+            MessageBody=(
+                json.dumps(msg)
+            )
+        )
+
+        return response
 
 # ------------------------------
 # [Omise]課金状態取得
