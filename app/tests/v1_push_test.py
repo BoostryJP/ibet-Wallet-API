@@ -1,5 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
+from falcon.util import json as util_json
 
 from app.model import Push
 from datetime import datetime
@@ -34,6 +35,24 @@ class TestV1Push():
     def test_setup(self, client):
         config.DB_AUTOCOMMIT = True
         assert True
+
+    # ※テストではない
+    # ヘッダー（Signature）作成
+    def test_generate_signature(self, client, session):
+        json = self.upd_data_1
+        canonical_body = util_json.dumps(json, ensure_ascii=False)
+        print("---- canonical_body ----")
+        print(canonical_body)
+
+        signature = client._generate_signature(
+            self.private_key,
+            method = "POST",
+            path = self.url_UpdateDevice,
+            request_body = canonical_body,
+            query_string=""
+        )
+        print("---- signature ----")
+        print(signature)
 
     # ＜正常系1_1＞
     # device token新規登録
@@ -194,7 +213,7 @@ class TestV1Push():
             'code': 50,
             'message': 'SNS NotFoundError'
         }
-    
+
     # ＜エラー系2-1＞
     # 【UpdateDevice】ヘッダー（Signature）なし
     def test_error_2_1(self, client, session):
