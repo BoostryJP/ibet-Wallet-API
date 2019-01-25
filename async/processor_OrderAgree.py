@@ -348,7 +348,7 @@ class Processor:
 sink = Sinks()
 sink.register(ConsoleSink())
 sink.register(DBSink(db_session))
-processor = Processor(web3, sink)
+processor = Processor(web3, sink, db_session)
 
 processor.initial_sync()
 while True:
