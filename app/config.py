@@ -39,3 +39,6 @@ OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
 
 SNS_APPLICATION_ARN = os.environ.get('SNS_APPLICATION_ARN')
 PUSH_PRIORITY = os.environ.get('PUSH_PRIORITY') or 0
+
+AGENT_SQS_URL = os.environ.get('AGENT_SQS_URL') or 'http://localhost:9324'
+AGENT_SQS_QUEUE_NAME = os.environ.get('AGENT_SQS_QUEUE_NAME') or 'charge_message'
