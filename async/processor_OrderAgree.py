@@ -216,33 +216,33 @@ class Processor:
 
     def __sync_new_order(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
-            try:
-                event_filter = exchange_contract.eventFilter(
-                    'NewOrder', {
-                        'fromBlock': block_from,
-                        'toBlock': block_to,
-                    }
-                )
-                for event in event_filter.get_all_entries():
-                    args = event['args']
-                    if args['price'] > sys.maxsize or args['amount'] > sys.maxsize:
-                        pass
-                    else:
-                        available_token = self.db.query(Listing).\
-                            filter(Listing.token_address == args['tokenAddress'])
-                        if available_token is not None:
-                            self.sink.on_new_order(
-                                token_address = args['tokenAddress'],
-                                exchange_address = exchange_contract.address,
-                                order_id = args['orderId'],
-                                account_address = args['accountAddress'],
-                                is_buy = args['isBuy'],
-                                price = args['price'],
-                                amount = args['amount'],
-                                agent_address = args['agentAddress'],
-                            )
-            except:
-                pass
+            #try:
+            event_filter = exchange_contract.eventFilter(
+                'NewOrder', {
+                    'fromBlock': block_from,
+                    'toBlock': block_to,
+                }
+            )
+            for event in event_filter.get_all_entries():
+                args = event['args']
+                if args['price'] > sys.maxsize or args['amount'] > sys.maxsize:
+                    pass
+                else:
+                    available_token = self.db.query(Listing).\
+                        filter(Listing.token_address == args['tokenAddress'])
+                    if available_token is not None:
+                        self.sink.on_new_order(
+                            token_address = args['tokenAddress'],
+                            exchange_address = exchange_contract.address,
+                            order_id = args['orderId'],
+                            account_address = args['accountAddress'],
+                            is_buy = args['isBuy'],
+                            price = args['price'],
+                            amount = args['amount'],
+                            agent_address = args['agentAddress'],
+                        )
+            #except:
+            #    pass
 
             self.web3.eth.uninstallFilter(event_filter.filter_id)
 
