@@ -2,6 +2,7 @@
 import json
 import requests
 import os
+import pdb
 from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
 
@@ -62,7 +63,7 @@ class OrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以下
-                #  5) 指定したアカウントアドレス以外
+                #  5) 指定したアカウントアドレス以外            
                 orders = session.query(
                     Order.order_id, Order.amount, Order.price, \
                     Order.exchange_address, Order.account_address, \

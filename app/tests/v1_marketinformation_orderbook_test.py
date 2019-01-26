@@ -713,7 +713,7 @@ class TestV1OrderBook():
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
-        agent_address = "0x4cc120790781c9b61bb8d9893d439efdf02e2d30"
+        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
 
         # Orderの情報を挿入
         order = Order()
