@@ -173,6 +173,7 @@ class Charge(BaseResource):
         customer_id = request_json['customer_id']
         amount = request_json['amount']
 
+        '''
         # Card情報を取得
         try:
             customer = omise.Customer.retrieve(customer_id)
@@ -242,6 +243,7 @@ class Charge(BaseResource):
             # Charge状態を[ERROR]ステータスに更新する
             omise_charge.status = OmiseChargeStatus.ERROR.value
             raise InvalidCardError
+        '''
 
         sqs_msg = {
             'exchange_address': exchange_address,
@@ -257,7 +259,7 @@ class Charge(BaseResource):
             raise AppError
 
         # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
-        omise_charge.status = OmiseChargeStatus.SUCCESS.value
+        #omise_charge.status = OmiseChargeStatus.SUCCESS.value
 
         self.on_success(res)
 
