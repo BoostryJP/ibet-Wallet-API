@@ -173,6 +173,7 @@ class Charge(BaseResource):
         customer_id = request_json['customer_id']
         amount = request_json['amount']
 
+        '''
         # Card情報を取得
         try:
             customer = omise.Customer.retrieve(customer_id)
@@ -242,6 +243,7 @@ class Charge(BaseResource):
             # Charge状態を[ERROR]ステータスに更新する
             omise_charge.status = OmiseChargeStatus.ERROR.value
             raise InvalidCardError
+        '''
 
         sqs_msg = {
             'exchange_address': exchange_address,
@@ -250,10 +252,14 @@ class Charge(BaseResource):
             'amount': amount
         }
 
-        Charge.send_sqs_msg(sqs_msg)
+        try:
+            Charge.send_sqs_msg(sqs_msg)
+        except Exception as err:
+            LOG.error('SQS Error: %s', err)
+            raise AppError
 
         # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
-        omise_charge.status = OmiseChargeStatus.SUCCESS.value
+        #omise_charge.status = OmiseChargeStatus.SUCCESS.value
 
         self.on_success(res)
 
@@ -325,14 +331,23 @@ class Charge(BaseResource):
             # 指定したキューがない場合はキューを作成
             queue = sqs.create_queue(QueueName=name)
 
-        response = queue.send_message(
-            DelaySeconds=0,
-            MessageBody=(
-                json.dumps(msg)
-            ),
-            MessageDeduplicationId='string',
-            MessageGroupId='string'
-        )
+        # NOTE:Local開発環境では、ElasticMQに接続する
+        if config.APP_ENV != 'local':
+            response = queue.send_message(
+                DelaySeconds=0,
+                MessageBody=(
+                    json.dumps(msg)
+                ),
+                MessageDeduplicationId='string',
+                MessageGroupId='string'
+            )
+        else:
+            response = queue.send_message(
+                DelaySeconds=0,
+                MessageBody=(
+                    json.dumps(msg)
+                )
+            )
 
         return response
 
