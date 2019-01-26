@@ -329,7 +329,9 @@ class Charge(BaseResource):
             DelaySeconds=0,
             MessageBody=(
                 json.dumps(msg)
-            )
+            ),
+            MessageDeduplicationId='string',
+            MessageGroupId='string'
         )
 
         return response
