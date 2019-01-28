@@ -14,7 +14,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import AppError, InvalidParameterError, DataNotExistsError
+from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
 from app.model import Listing

@@ -48,7 +48,8 @@ class CreateCustomer(BaseResource):
             raise InvalidParameterError(description='token was already used')
         except omise.errors.NotFoundError:
             raise InvalidParameterError(description='token was not found')
-        except:
+        except Exception as err:
+            LOG.error('Error: %s', err)
             raise AppError
 
         customer_id = {'customer_id': customer.id}
@@ -118,7 +119,8 @@ class UpdateCustomer(BaseResource):
             raise InvalidParameterError(description='token was already used')
         except omise.errors.NotFoundError:
             raise InvalidParameterError(description='token was not found')
-        except:
+        except Exception as err:
+            LOG.error('Error: %s', err)
             raise AppError
 
         self.on_success(res)
@@ -233,9 +235,10 @@ class Charge(BaseResource):
             # Charge状態を[ERROR]ステータスに更新する
             omise_charge.status = OmiseChargeStatus.ERROR.value
             raise InvalidParameterError(description=str(e))
-        except:
+        except Exception as err:
             # Charge状態を[ERROR]ステータスに更新する
             omise_charge.status = OmiseChargeStatus.ERROR.value
+            LOG.error('Error: %s', err)
             raise AppError
 
         if charge.status != 'successful':
