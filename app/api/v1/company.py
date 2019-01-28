@@ -40,7 +40,8 @@ class CompanyInfo(BaseResource):
                 company_list = json.load(open('data/company_list.json' , 'r'))
             else:
                 company_list = requests.get(config.COMPANY_LIST_URL).json()
-        except:
+        except Exception as err:
+            LOG.error('Failed To Get Data: %s', err)
             raise AppError
 
         for company_info in company_list:
@@ -75,7 +76,8 @@ class PaymentAgentInfo(BaseResource):
                 company_list = json.load(open('data/payment_agent_list.json' , 'r'))
             else:
                 company_list = requests.get(config.PAYMENT_AGENT_LIST_URL).json()
-        except:
+        except Exception as err:
+            LOG.error('Failed To Get Data: %s', err)
             raise AppError
 
         WhiteListContract = Contract.get_contract(
