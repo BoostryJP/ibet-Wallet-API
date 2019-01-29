@@ -4,6 +4,7 @@ import sys
 import os
 
 from eth_utils import to_checksum_address
+from .account_config import eth_account
 
 import app.model
 from app.model import Order, Agreement, AgreementStatus
@@ -13,6 +14,7 @@ class TestV1OrderBook():
 
     # テスト対象API
     apiurl = '/v1/OrderBook'
+    os.environ["AGENT_ADDRESS"] = eth_account['agent']['account_address']
 
     # ＜正常系1-1＞
     # 未約定＆未キャンセルの売り注文が1件存在
@@ -28,7 +30,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -79,7 +81,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -124,7 +126,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -169,7 +171,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -209,7 +211,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -261,7 +263,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -307,7 +309,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -359,7 +361,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -404,7 +406,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -449,7 +451,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -489,7 +491,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -541,7 +543,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -581,7 +583,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -645,7 +647,7 @@ class TestV1OrderBook():
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = eth_account['agent']['account_address']
 
         # テストデータを挿入
         order = Order()
@@ -708,12 +710,13 @@ class TestV1OrderBook():
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        agent_address = eth_account['agent']['account_address']
+
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
-        agent_address = "0x4cc120790781c9b61bb8d9893d439efdf02e2d30"
 
         # Orderの情報を挿入
         order = Order()

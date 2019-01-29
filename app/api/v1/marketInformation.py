@@ -62,7 +62,7 @@ class OrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以下
-                #  5) 指定したアカウントアドレス以外
+                #  5) 指定したアカウントアドレス以外            
                 orders = session.query(
                     Order.order_id, Order.amount, Order.price, \
                     Order.exchange_address, Order.account_address, \
@@ -79,6 +79,7 @@ class OrderBook(BaseResource):
                     filter(Order.is_buy == False).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
+                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
                     all()
             else:  # 売注文
                 # ＜抽出条件＞
@@ -104,6 +105,7 @@ class OrderBook(BaseResource):
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
+                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
                     all()
         else:
             if is_buy == True:  # 買注文
