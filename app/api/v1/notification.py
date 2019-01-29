@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 import falcon
 from cerberus import Validator
 from eth_utils import to_checksum_address
-from sqlalchemy import desc
+from sqlalchemy import asc
 from web3 import Web3
 
 from app import log
@@ -49,9 +49,11 @@ class Notifications(BaseResource):
             query = query.filter(Notification.is_deleted == False)
 
         if request_json["sort"] == "priority":
-            query = query.order_by(desc(Notification.priority), desc(Notification.notification_id))
+            # 優先度の昇順＞通知の古い順（notification_idの昇順）にソート
+            query = query.order_by(asc(Notification.priority), asc(Notification.notification_id))
         else:
-            query = query.order_by(desc(Notification.notification_id))
+            # 通知の古い順（notification_idの昇順）にソート
+            query = query.order_by(asc(Notification.notification_id))
 
         query = query.offset(request_json["cursor"]).\
             limit(request_json["limit"])

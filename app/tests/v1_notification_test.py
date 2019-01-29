@@ -118,12 +118,12 @@ class TestV1Notification():
 
         assumed_body = [
             {
-                "notification_type": "SampleNotification1",
-                "id": "0x00000021034300000000000000",
+                "notification_type": "SampleNotification5",
+                "id": "0x00000001034000000000000000",
                 "sort_id": 1,
-                "priority": 1,
-                "block_timestamp": "2017/06/10 10:00:00",
-                "is_read": True,
+                "priority": 0,
+                "block_timestamp": "2017/02/10 10:00:00",
+                "is_read": False,
                 "is_flagged": False,
                 "is_deleted": False,
                 "deleted_at": None,
@@ -131,7 +131,6 @@ class TestV1Notification():
                     "hoge": "fuga",
                 },
                 "metainfo": {
-                    "aaa": "bbb"
                 },
             },
             {
@@ -151,12 +150,12 @@ class TestV1Notification():
                 },
             },
             {
-                "notification_type": "SampleNotification5",
-                "id": "0x00000001034000000000000000",
+                "notification_type": "SampleNotification1",
+                "id": "0x00000021034300000000000000",
                 "sort_id": 3,
-                "priority": 0,
-                "block_timestamp": "2017/02/10 10:00:00",
-                "is_read": False,
+                "priority": 1,
+                "block_timestamp": "2017/06/10 10:00:00",
+                "is_read": True,
                 "is_flagged": False,
                 "is_deleted": False,
                 "deleted_at": None,
@@ -164,6 +163,7 @@ class TestV1Notification():
                     "hoge": "fuga",
                 },
                 "metainfo": {
+                    "aaa": "bbb"
                 },
             },
         ]
@@ -250,13 +250,13 @@ class TestV1Notification():
 
         assumed_body = [
             {
-                "notification_type": "SampleNotification3",
-                "id": "0x00000011034000000000000000",
+                "notification_type": "SampleNotification5",
+                "id": "0x00000001034000000000000000",
                 "sort_id": 1,
-                "priority": 2,
-                "block_timestamp": "2017/04/10 10:00:00",
+                "priority": 0,
+                "block_timestamp": "2017/02/10 10:00:00",
                 "is_read": False,
-                "is_flagged": True,
+                "is_flagged": False,
                 "is_deleted": False,
                 "deleted_at": None,
                 "args": {
@@ -283,13 +283,13 @@ class TestV1Notification():
                 },
             },
             {
-                "notification_type": "SampleNotification5",
-                "id": "0x00000001034000000000000000",
+                "notification_type": "SampleNotification3",
+                "id": "0x00000011034000000000000000",
                 "sort_id": 3,
-                "priority": 0,
-                "block_timestamp": "2017/02/10 10:00:00",
+                "priority": 2,
+                "block_timestamp": "2017/04/10 10:00:00",
                 "is_read": False,
-                "is_flagged": False,
+                "is_flagged": True,
                 "is_deleted": False,
                 "deleted_at": None,
                 "args": {
@@ -332,12 +332,12 @@ class TestV1Notification():
                 },
             },
             {
-                "notification_type": "SampleNotification5",
-                "id": "0x00000001034000000000000000",
+                "notification_type": "SampleNotification1",
+                "id": "0x00000021034300000000000000",
                 "sort_id": 3,
-                "priority": 0,
-                "block_timestamp": "2017/02/10 10:00:00",
-                "is_read": False,
+                "priority": 1,
+                "block_timestamp": "2017/06/10 10:00:00",
+                "is_read": True,
                 "is_flagged": False,
                 "is_deleted": False,
                 "deleted_at": None,
@@ -345,6 +345,7 @@ class TestV1Notification():
                     "hoge": "fuga",
                 },
                 "metainfo": {
+                    "aaa": "bbb"
                 },
             },
         ]
