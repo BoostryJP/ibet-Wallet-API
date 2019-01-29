@@ -2,8 +2,10 @@
 import json
 import sys
 import os
+import pdb
 
 from eth_utils import to_checksum_address
+from .account_config import eth_account
 
 import app.model
 from app.model import Order, Agreement, AgreementStatus
@@ -713,7 +715,9 @@ class TestV1OrderBook():
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
             "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
         ]
-        agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        # agent_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
+        agent_address = os.environ.get('AGENT_ADDRESS')
+        pdb.set_trace()
 
         # Orderの情報を挿入
         order = Order()

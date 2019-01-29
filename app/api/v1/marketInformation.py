@@ -2,7 +2,6 @@
 import json
 import requests
 import os
-import pdb
 from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
 
