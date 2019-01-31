@@ -7,10 +7,10 @@ Welcome to tmr-node-doc's documentation!
 ========================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
-
+   api_v1_doc/eth.md
 
 Indices and tables
 ==================
