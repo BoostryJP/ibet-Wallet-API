@@ -1,6 +1,12 @@
 # tmr-node
 
-# ローカル開発環境構築（Ubuntu）
+# ローカル開発環境構築（Mac）
+
+## 前提条件
+
+* 以下の tmr-sc の Readme に従い、環境構築を行なっていること。
+* （Pythonなどの環境構築、呼び出し先のQuorumの環境構築が事前に必要なため）
+* https://github.com/N-Village/tmr-sc/blob/master/README.md
 
 ## 1. PostgreSQLインストール&設定
 ### 1-1. PostgreSQLインストール
@@ -94,24 +100,43 @@ listen_addresses = '*'
 $ psql --username=ethuser --password --dbname=ethcache
 ```
 
-## 2. 開発環境用の Quorum(Ethereum) の構築
-* Dockerコンテナを利用して、ローカルの開発環境にQuorumクラスタを構築する。
-* https://github.com/N-Village/tmr-docker の、`quorum-dev`を利用する。
-
-  1. docker-ceのインストール
-  2. docker-composeのインストール
-  3. tmr-dockerリポジトリをチェックアウト
-  4. ./quorum-dev/ に移動
-  5. docker-compose up -d でクラスタが起動する。
-  6. 起動後の状態は以下のような状態になる（※ContainerID等は異なる）
-  7. `geth attach http://localhost:8545` で`quorum-dev_validator-0_1`に接続できる。
-  8. テスト用アカウントして、新規のアカウントを4つ（deployer, issuer, agent, trader）作成する。 `personal.newAccount("password")` で作成する。
+## 2. 依存パッケージのインストール
+* 依存パッケージをpipでインストールする。
 
 ```
-CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                                                                         NAMES
-1f51a0df93dc        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8547->8545/tcp, 0.0.0.0:30305->30303/tcp   quorum-dev_validator-2_1
-9c5d149dd582        quay.io/amis/ethstats:latest   "npm start"              2 weeks ago         Up 2 days           0.0.0.0:3000->3000/tcp                                                        quorum-dev_eth-stats_1
-56fc9f3a0d72        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8548->8545/tcp, 0.0.0.0:30306->30303/tcp   quorum-dev_validator-3_1
-a4cfd7c80e14        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           0.0.0.0:8545->8545/tcp, 0.0.0.0:30303->30303/tcp, 8546/tcp, 30303-30304/udp   quorum-dev_validator-0_1
-a3b215425e01        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8546->8545/tcp, 0.0.0.0:30304->30303/tcp   quorum-dev_validator-1_1
+$ cd tmr-node
+$ pip install -r requirements.txt
 ```
+
+* 動作確認
+* 必要なパッケージが指定したバージョンで入っていることを確認
+
+```
+$ pip list
+
+$ pip list
+Package           Version  
+----------------- ---------
+asn1crypto        0.24.0   
+astroid           2.1.0    
+atomicwrites      1.2.1    
+attrdict          2.0.0    
+attrs             18.2.0   
+** 省略　**
+eth-abi           1.1.1    
+eth-account       0.2.2    
+eth-hash          0.1.0    
+eth-keyfile       0.5.0    
+eth-keys          0.2.0b3  
+eth-rlp           0.1.2    
+eth-tester        0.1.0b11 
+eth-utils         1.0.1    
+ethereum          2.3.0    
+falcon            1.4.1    
+future            0.16.0   
+gunicorn          19.7.1   
+** 省略　**
+wrapt             1.11.1
+```
+
+
