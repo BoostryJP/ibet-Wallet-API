@@ -3,7 +3,7 @@ __pycache__/
 .venv/
 .pytest_cache/
 .vscode
-
+.project
 
 # Intellij
 .idea
