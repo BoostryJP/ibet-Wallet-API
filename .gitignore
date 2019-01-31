@@ -11,3 +11,6 @@ __pycache__/
 
 # PyEnv
 .python-version
+
+# Sphinx
+doc/build/*
