@@ -11,11 +11,9 @@ Welcome to tmr-node-doc's documentation!
    :caption: Contents:
 
    api_v1_doc/eth.md
-   api_v1_doc/straightbond_abi.md
-   api_v1_doc/membership_abi.md
-   api_v1_doc/coupon_abi.md
+   api_v1_doc/abi.md
    api_v1_doc/company.md
-   api_v1_doc/payment_agent.md
+   api_v1_doc/tokens.md
 
 Indices and tables
 ==================
