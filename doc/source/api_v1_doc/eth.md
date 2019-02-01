@@ -1,4 +1,4 @@
-# /v1/Eth/
+# トランザクション
 
 ## GET: /v1/Eth/TransactionCount/{eth_address}
 * transaction生成に必要な情報を返すAPI。
