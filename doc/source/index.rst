@@ -14,6 +14,8 @@ Welcome to tmr-node-doc's documentation!
    api_v1_doc/straightbond_abi.md
    api_v1_doc/membership_abi.md
    api_v1_doc/coupon_abi.md
+   api_v1_doc/company.md
+   api_v1_doc/payment_agent.md
 
 Indices and tables
 ==================
