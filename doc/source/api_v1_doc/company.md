@@ -4,10 +4,21 @@
 * 発行体情報を返すAPI。
 * ibetネットワーク運営主体（開発コミュニティ）によって登録認可された発行体情報を返す。
 
+### Sample
+```sh
+curl -X GET \
+  http://localhost:5000/v1/Company/0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd \
+  -H 'cache-control: no-cache'
+```
+
 ### In
 なし
 
 ### Out
+
+#### Status: 200 OK
+* 正常時
+
 ```json
 {
     "meta": {
@@ -31,22 +42,63 @@
 * `rsa_publickey` : 発行会社にのみ通知する暗号化情報を登録するためのRSA公開鍵。
 * `homepage` : （任意設定）企業HPのURL
 
-### Sample
-```sh
-curl -X GET \
-  http://localhost:5000/v1/Company/0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd \
-  -H 'cache-control: no-cache'
+#### Status: 400 Bad Request
+* `{eth_address}`のアドレスフォーマットが不正な場合。
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "invalid eth_address"
+    }
+}
 ```
 
+#### Status: 404 Not Found
+* 指定した`{eth_address}`のデータが存在しない場合。
+
+```json
+{
+    "meta": {
+        "code": 30,
+        "message": "Data Not Exists",
+        "description": "eth_address: 0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfe"
+    }
+}
+```
+
+#### Status: 500 Bad Request
+* サーバーエラー
+
+```json
+{
+    "meta": {
+        "code": 500,
+        "message": "Unknown Error"
+    }
+}
+```
 
 ## GET: /v1/PaymentAgent/{eth_address}
 * 収納代行業者情報を返すAPI。
 * ibetネットワーク運営主体（開発コミュニティ）によって登録認可された収納代行業者情報を返す。
 
+### Sample
+```sh
+curl -X GET \
+  http://localhost:5000/v1/PaymentAgent/0xf2AAce6dDCa4161ccc061C1e0562a8CAF2FB1867 \
+  -H 'cache-control: no-cache'
+```
+
 ### In
 なし
 
 ### Out
+
+#### Status: 200 OK
+* 正常時
+
 ```json
 {
     "meta": {
@@ -72,9 +124,40 @@ curl -X GET \
 * `homepage` : （任意設定）企業HPのURL
 * `terms` : 収納代行業者のサービス利用規約本文。収納代行業者がWhiteListコントラクトに登録したもの。
 
-### Sample
-```sh
-curl -X GET \
-  http://localhost:5000/v1/PaymentAgent/0xf2AAce6dDCa4161ccc061C1e0562a8CAF2FB1867 \
-  -H 'cache-control: no-cache'
+#### Status: 400 Bad Request
+* `{eth_address}`のアドレスフォーマットが不正な場合。
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "invalid eth_address"
+    }
+}
+```
+
+#### Status: 404 Not Found
+* 指定した`{eth_address}`のデータが存在しない場合。
+
+```json
+{
+    "meta": {
+        "code": 30,
+        "message": "Data Not Exists",
+        "description": "eth_address: 0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfe"
+    }
+}
+```
+
+#### Status: 500 Bad Request
+* サーバーエラー
+
+```json
+{
+    "meta": {
+        "code": 500,
+        "message": "Unknown Error"
+    }
+}
 ```

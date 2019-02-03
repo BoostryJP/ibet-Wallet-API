@@ -1,13 +1,46 @@
-# トークン一覧
+# マーケット情報：トークン一覧
 
 ## GET: /v1/Contracts
 * 公開中の債券トークンの一覧を返すAPI。
 * 公開済み、かつ償還されていないものが一覧で返される。
+* 出力リストは登録の新しい順。
+
+### Sample
+```sh
+curl -X GET \
+  'http://localhost:5000/v1/Contracts/?cursor=3&limit=1' \
+  -H 'cache-control: no-cache'
+```
 
 ### In
-なし
+* `cursor` : 検索用のカーソルナンバー
+* `limit` :　検索上限
+
+#### validation
+```py
+{
+        'cursor': {
+            'type': 'integer',
+            'coerce': int,
+            'min':0,
+            'required': False,
+            'nullable': True,
+        },
+        'limit': {
+            'type': 'integer',
+            'coerce': int,
+            'min':0,
+            'required': False,
+            'nullable': True,
+        },
+    }
+```
 
 ### Out
+
+#### Status: 200 OK
+* 正常時
+
 ```json
 {
     "meta": {
@@ -95,21 +128,69 @@
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
 * `certification` : 第三者認定済アドレス
 
-### Sample
-```sh
-curl -X GET \
-  http://localhost:5000/v1/Contracts/ \
-  -H 'cache-control: no-cache'
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": {
+            "cursor": [
+                "field 'cursor' could not be coerced",
+                "must be of integer type"
+            ],
+            "limit": [
+                "field 'limit' could not be coerced",
+                "must be of integer type"
+            ]
+        }
+    }
+}
 ```
+* `description` : エラーになっている内容
 
 ## GET: /v1/Membership/Contracts
 * 公開中の会員権トークンの一覧を返すAPI。
 * 公開済み、かつ取扱ステータスが有効のものが一覧で返される。
 
+### Sample
+```sh
+curl -X GET \
+  'http://localhost:5000/v1/Membership/Contracts/?cursor=3&limit=1' \
+  -H 'cache-control: no-cache'
+```
+
 ### In
-なし
+* `cursor` : 検索用のカーソルナンバー
+* `limit` :　検索上限
+
+#### validation
+```py
+{
+        'cursor': {
+            'type': 'integer',
+            'coerce': int,
+            'min':0,
+            'required': False,
+            'nullable': True,
+        },
+        'limit': {
+            'type': 'integer',
+            'coerce': int,
+            'min':0,
+            'required': False,
+            'nullable': True,
+        },
+    }
+```
 
 ### Out
+
+#### Status: 200 OK
+* 正常時
+
 ```json
 {
     "meta": {
@@ -169,21 +250,69 @@ curl -X GET \
 * `status` : 有効/無効
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
 
-### Sample
-```sh
-curl -X GET \
-  http://localhost:5000/v1/Membership/Contracts/ \
-  -H 'cache-control: no-cache'
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": {
+            "cursor": [
+                "field 'cursor' could not be coerced",
+                "must be of integer type"
+            ],
+            "limit": [
+                "field 'limit' could not be coerced",
+                "must be of integer type"
+            ]
+        }
+    }
+}
 ```
+* `description` : エラーになっている内容
 
 ## GET: /v1/Coupon/Contracts
 * 公開中のクーポントークンの一覧を返すAPI。
 * 公開済み、かつ取扱ステータスが有効のものが一覧で返される。
 
+### Sample
+```sh
+curl -X GET \
+  'http://localhost:5000/v1/Coupon/Contracts?cursor=3&limit=1' \
+  -H 'cache-control: no-cache'
+```
+
 ### In
-なし
+* `cursor` : 検索用のカーソルナンバー
+* `limit` :　検索上限
+
+#### validation
+```py
+{
+        'cursor': {
+            'type': 'integer',
+            'coerce': int,
+            'min':0,
+            'required': False,
+            'nullable': True,
+        },
+        'limit': {
+            'type': 'integer',
+            'coerce': int,
+            'min':0,
+            'required': False,
+            'nullable': True,
+        },
+    }
+```
 
 ### Out
+
+#### Status: 200 OK
+* 正常時
+
 ```json
 {
     "meta": {
@@ -241,9 +370,25 @@ curl -X GET \
 * `status` : 有効/無効
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
 
-### Sample
-```sh
-curl -X GET \
-  http://localhost:5000/v1/Coupon/Contracts/ \
-  -H 'cache-control: no-cache'
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": {
+            "cursor": [
+                "field 'cursor' could not be coerced",
+                "must be of integer type"
+            ],
+            "limit": [
+                "field 'limit' could not be coerced",
+                "must be of integer type"
+            ]
+        }
+    }
+}
 ```
+* `description` : エラーになっている内容

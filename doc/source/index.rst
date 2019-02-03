@@ -10,10 +10,13 @@ Welcome to tmr-node-doc's documentation!
    :maxdepth: 1
    :caption: Contents:
 
-   api_v1_doc/eth.md
-   api_v1_doc/abi.md
    api_v1_doc/company.md
-   api_v1_doc/tokens.md
+   api_v1_doc/eth.md
+   api_v1_doc/token_templates.md
+   api_v1_doc/contracts.md
+   api_v1_doc/market_information_orderbook.md
+   api_v1_doc/market_information_lastprice.md
+   api_v1_doc/market_information_tick.md
 
 Indices and tables
 ==================

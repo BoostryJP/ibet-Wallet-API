@@ -1,4 +1,4 @@
-# トークンテンプレート（ABI）
+# トークンテンプレート
 
 ## GET: /v1/StraightBondABI/
 * 普通社債トークン（ibetStraightBond）のABIを返却する。

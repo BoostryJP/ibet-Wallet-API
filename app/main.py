@@ -32,35 +32,35 @@ class App(falcon.API):
 
         self.add_route('/', base.BaseResource())
 
-        # Ethereum
+        # トランザクション
         self.add_route('/v1/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
         self.add_route('/v1/Eth/SendRawTransaction', eth.SendRawTransaction())
 
-        # トークンテンプレート参照
+        # トークンテンプレート
         self.add_route('/v1/StraightBondABI/', tokenTemplates.GetStraightBondABI())
         self.add_route('/v1/MembershipABI/', tokenTemplates.GetMembershipABI())
         self.add_route('/v1/CouponABI/', tokenTemplates.GetCouponABI())
 
-        # 会社情報参照
+        # 会社情報
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
         self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
-        # 公開中銘柄一覧
+        # マーケット情報：トークン一覧
         self.add_route('/v1/Contracts', contracts.Contracts())
         self.add_route('/v1/Membership/Contracts', contracts.MembershipContracts())
         self.add_route('/v1/Coupon/Contracts', contracts.CouponContracts())
 
-        # 板情報
+        # マーケット情報：オーダーブック
         self.add_route('/v1/OrderBook', marketInformation.OrderBook())
         self.add_route('/v1/Membership/OrderBook', marketInformation.MembershipOrderBook())
         self.add_route('/v1/Coupon/OrderBook', marketInformation.CouponOrderBook())
 
-        # 現在値
+        # マーケット情報：現在値
         self.add_route('/v1/LastPrice', marketInformation.LastPrice())
         self.add_route('/v1/Membership/LastPrice', marketInformation.MembershipLastPrice())
         self.add_route('/v1/Coupon/LastPrice', marketInformation.CouponLastPrice())
 
-        # 歩み値
+        # マーケット情報：歩み値
         self.add_route('/v1/Tick', marketInformation.Tick())
         self.add_route('/v1/Membership/Tick', marketInformation.MembershipTick())
         self.add_route('/v1/Coupon/Tick', marketInformation.CouponTick())
