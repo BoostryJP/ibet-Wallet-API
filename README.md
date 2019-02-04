@@ -1,31 +1,100 @@
-# tmr-node
+# ローカル開発環境構築（Mac）
 
-# ローカル開発環境構築（Ubuntu）
+## 前提条件
+
+* OS:　OSX
+* 以下の tmr-sc の Readme に従い、環境構築を行なっていること。
+* （Pythonなどの環境構築、呼び出し先のQuorumの環境構築が事前に必要なため）
+* https://github.com/N-Village/tmr-sc/blob/master/README.md
 
 ## 1. PostgreSQLインストール&設定
 ### 1-1. PostgreSQLインストール
-* 参考：https://qiita.com/eighty8/items/82063beab09ab9e41692
+* 参考：https://qiita.com/_daisuke/items/13996621cf51f835494b
+* Homebrewを使用してインストール
 
 ```
-$ sudo sh -c "echo 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main' > /etc/apt/sources.list.d/pgdg.list"
-$ wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
+$ brew install postgresql
+:
+:
+==> /usr/local/Cellar/postgresql/9.3.4/bin/initdb /usr/local/var/postgres
+==> Summary
+?  /usr/local/Cellar/postgresql/9.3.4: 2921 files, 38M
 ```
 
-* パッケージをアップデートしてインストール。
+###1-2. 文字コードをUTF-8でデータベースの初期化
 
 ```
-$ sudo apt-get update
-$ sudo apt-get install postgresql-9.6
+$ initdb /usr/local/var/postgres -E utf8
+The files belonging to this database system will be owned by user "dai".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "ja_JP.UTF-8".
+initdb: could not find suitable text search configuration for locale "ja_JP.UTF-8"
+The default text search configuration will be set to "simple".
+
+Data page checksums are disabled.
+
+initdb: directory "/usr/local/var/postgres" exists but is not empty
+If you want to create a new database system, either remove or empty
+the directory "/usr/local/var/postgres" or run initdb
+with an argument other than "/usr/local/var/postgres".
 ```
 
-* インストール後の確認
+### 1-3. インストール後の確認
+
+* PATHの確認
 
 ```
 $ which psql
-/usr/bin/psql
+/usr/bin/local/psql
 ```
 
-### 1-2. Roleの作成
+* バージョンの確認
+
+```
+$ postgres --version
+postgres (PostgreSQL) 9.3.4
+```
+
+### 1-4. PostgreSQLサーバの起動
+```
+$ postgres -D /usr/local/var/postgres
+
+LOG:  listening on IPv4 address "127.0.0.1", port 5432
+LOG:  listening on IPv6 address "::1", port 5432
+LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+LOG:  database system was shut down at 2019-01-31 10:23:23 JST
+LOG:  database system is ready to accept connections
+```
+
+### 1-5. psql -lでデータベース一覧を取得
+
+* データベースの一覧が取得できたら完了。
+
+```
+$ psql -l
+                               List of databases
+   Name    |  Owner  | Encoding |   Collate   |    Ctype    | Access privileges 
+-----------+---------+----------+-------------+-------------+-------------------
+ ethcache  | ethuser | UTF8     | ja_JP.UTF-8 | ja_JP.UTF-8 | 
+ postgres  | [user]  | UTF8     | ja_JP.UTF-8 | ja_JP.UTF-8 | 
+ template0 | [user]  | UTF8     | ja_JP.UTF-8 | ja_JP.UTF-8 | =c/[user] + [user] =CTc/[user] 
+ template1 | [user]  | UTF8     | ja_JP.UTF-8 | ja_JP.UTF-8 | =c/[user] + [user] =CTc/[user] 
+(4 rows)
+```
+
+### 1-6. DBの置き場所を環境変数の設定
+
+* .bash_profileに以下の記述を追加
+
+```:.bash_profile
+# PostgreSQL設定（DBの置き場所）
+export PGDATA=/usr/local/var/postgres
+```
+
+
+
+### 1-7. Roleの作成
 * データベースのユーザ（Role）を作成する。
 
 ```
@@ -35,7 +104,7 @@ postgres=# CREATE ROLE ethuser LOGIN CREATEDB PASSWORD 'ethpass';
 CREATE ROLE
 ```
 
-### 1-3. Databaseの作成
+### 1-8. Databaseの作成
 * データベースを作成する。データベースのオーナーは先程作ったロールを設定する。
 
 ```
@@ -43,7 +112,7 @@ postgres=# CREATE DATABASE ethcache OWNER ethuser;
 CREATE DATABASE
 ```
 
-### 1-4. クライアント認証の設定
+### 1-9. クライアント認証の設定
 * postgresユーザで以下のように設定を変更する。
 
 ```
@@ -75,7 +144,7 @@ $ /etc/init.d/postgresql restart
 ```
 
 
-### 1-5. リモート接続の設定
+### 1-10. リモート接続の設定
 * postgresユーザで以下のように設定変更する。
 
 ```
@@ -87,31 +156,81 @@ listen_addresses = '*'
 ...
 ```
 
-### 1-6. ユーザログイン疎通
+### 1-11. ユーザログイン疎通
 * postgresユーザ（※OSユーザ）以外でDBにログインしてみる。ログアウトはCtl+zなど。
 
 ```
 $ psql --username=ethuser --password --dbname=ethcache
 ```
 
-## 2. 開発環境用の Quorum(Ethereum) の構築
-* Dockerコンテナを利用して、ローカルの開発環境にQuorumクラスタを構築する。
-* https://github.com/N-Village/tmr-docker の、`quorum-dev`を利用する。
-
-  1. docker-ceのインストール
-  2. docker-composeのインストール
-  3. tmr-dockerリポジトリをチェックアウト
-  4. ./quorum-dev/ に移動
-  5. docker-compose up -d でクラスタが起動する。
-  6. 起動後の状態は以下のような状態になる（※ContainerID等は異なる）
-  7. `geth attach http://localhost:8545` で`quorum-dev_validator-0_1`に接続できる。
-  8. テスト用アカウントして、新規のアカウントを4つ（deployer, issuer, agent, trader）作成する。 `personal.newAccount("password")` で作成する。
+## 2. 依存パッケージのインストール
+* 依存パッケージをpipでインストールする。
 
 ```
-CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                                                                         NAMES
-1f51a0df93dc        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8547->8545/tcp, 0.0.0.0:30305->30303/tcp   quorum-dev_validator-2_1
-9c5d149dd582        quay.io/amis/ethstats:latest   "npm start"              2 weeks ago         Up 2 days           0.0.0.0:3000->3000/tcp                                                        quorum-dev_eth-stats_1
-56fc9f3a0d72        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8548->8545/tcp, 0.0.0.0:30306->30303/tcp   quorum-dev_validator-3_1
-a4cfd7c80e14        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           0.0.0.0:8545->8545/tcp, 0.0.0.0:30303->30303/tcp, 8546/tcp, 30303-30304/udp   quorum-dev_validator-0_1
-a3b215425e01        quorum-dev                     "/bin/sh -c 'mkdir -…"   2 weeks ago         Up 2 days           8546/tcp, 30303-30304/udp, 0.0.0.0:8546->8545/tcp, 0.0.0.0:30304->30303/tcp   quorum-dev_validator-1_1
+$ cd tmr-node
+$ pip install -r requirements.txt
 ```
+
+* 動作確認
+* 必要なパッケージが指定されたバージョンで入っていることを確認するためには、以下のコマンドを用いる
+
+```
+$ pip list
+```
+
+## 3. アプリケーションの実行
+
+* PostgreSQLサーバが起動している状態で、以下のコマンドを実行する
+* API Server is starting というメッセージが表示されたら、起動成功
+
+```
+$ cd tmr-node
+$ ./bin/run.sh start
+
+ [73139] [INFO] API Server is starting [in / * /tmr-node/app/main.py:31]
+```
+
+## 4. アプリケーションのテスト
+
+* テスト実行はpytestで実行する。
+
+### 4-1. 全体テストの実施
+* テストコードを `tests/` の中に格納して、`tests`が存在するディレクトリで以下を実行する。
+* 以下は、ディレクトリ配下のテストを全て実行するコマンド。
+
+```
+$ py.test tests/
+```
+
+* Warningの出力をさせたくない場合は、以下のオプションをつける。
+
+```
+$ py.test tests/ --disable-pytest-warnings
+```
+
+### 4-2. 部分テストの実施
+
+* モジュールを指定したい場合、以下のようなコマンドで実行
+* `--pdb`は、デバックを呼び出すオプション
+* `-v`はテスト詳細を表示するオプション
+
+```
+$ py.test tests/[テストするモジュール名].py  [-—pdb] [-v] 
+```
+
+* メソッドまで指定したい場合、以下のようなコマンドで実行
+
+```
+$ pytest tests/[テストするモジュール名].py -k [テストするメソッド名]  [-—pdb] [-v] 
+```
+
+### 4-3. （参考）pdbを用いたデバッグ
+
+* pdbを用いたデバッグを行う際は、以下のページを参考
+* https://docs.python.jp/3/library/pdb.html
+
+### 4-4. (参考)postmanを用いたREST APIの動作確認
+
+* ダウンロード　→　https://www.getpostman.com/
+* 参考　→　https://www.webprofessional.jp/master-api-workflow-postman/
+
