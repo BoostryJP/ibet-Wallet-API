@@ -62,7 +62,7 @@ class OrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以下
-                #  5) 指定したアカウントアドレス以外            
+                #  5) 指定したアカウントアドレス以外
                 orders = session.query(
                     Order.order_id, Order.amount, Order.price, \
                     Order.exchange_address, Order.account_address, \
@@ -115,17 +115,23 @@ class OrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以下
-                orders = session.query(Order, func.sum(Agreement.amount)).\
-                         outerjoin(
-                            Agreement,
-                            Order.exchange_address == Agreement.exchange_address,
-                            Order.order_id == Agreement.order_id).\
-                         group_by(Order.exchange_address, Order.order_id).\
-                         filter(Order.exchange_address == exchange_address).\
-                         filter(Order.token_address == token_address).\
-                         filter(Order.is_buy == False).\
-                         filter(Order.is_cancelled == False).\
-                         all()
+                orders = session.query(
+                    Order.order_id, Order.amount, Order.price, \
+                    Order.exchange_address, Order.account_address, \
+                    func.sum(Agreement.amount)).\
+                    outerjoin(
+                        Agreement,
+                        Order.unique_order_id == Agreement.unique_order_id).\
+                    group_by(
+                        Order.order_id, Order.amount,
+                        Order.price, Order.exchange_address,
+                        Order.account_address).\
+                    filter(Order.exchange_address == exchange_address).\
+                    filter(Order.token_address == token_address).\
+                    filter(Order.is_buy == False).\
+                    filter(Order.is_cancelled == False).\
+                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    all()
 
             else:  # 売注文
                 # ＜抽出条件＞
@@ -134,17 +140,23 @@ class OrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以上
-                orders = session.query(Order, func.sum(Agreement.amount)).\
-                         outerjoin(
-                            Agreement,
-                            Order.exchange_address == Agreement.exchange_address,
-                            Order.order_id == Agreement.order_id).\
-                         group_by(Order.exchange_address, Order.order_id).\
-                         filter(Order.exchange_address == exchange_address).\
-                         filter(Order.token_address == token_address).\
-                         filter(Order.is_buy == True).\
-                         filter(Order.is_cancelled == False).\
-                         all()
+                orders = session.query(
+                    Order.order_id, Order.amount, Order.price, \
+                    Order.exchange_address, Order.account_address, \
+                    func.sum(Agreement.amount)).\
+                    outerjoin(
+                        Agreement,
+                        Order.unique_order_id == Agreement.unique_order_id).\
+                    group_by(
+                        Order.order_id, Order.amount,
+                        Order.price, Order.exchange_address,
+                        Order.account_address).\
+                    filter(Order.exchange_address == exchange_address).\
+                    filter(Order.token_address == token_address).\
+                    filter(Order.is_buy == True).\
+                    filter(Order.is_cancelled == False).\
+                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    all()
 
         # レスポンス用の注文一覧を構築
         order_list_tmp = []
@@ -202,8 +214,9 @@ class OrderBook(BaseResource):
         if not Web3.isAddress(request_json['token_address']):
             raise InvalidParameterError
 
-        if not Web3.isAddress(request_json['account_address']):
-            raise InvalidParameterError
+        if 'account_address' in request_json:
+            if not Web3.isAddress(request_json['account_address']):
+                raise InvalidParameterError
 
         return request_json
 
