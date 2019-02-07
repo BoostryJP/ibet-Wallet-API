@@ -732,6 +732,7 @@ class TestV1MembershipContracts():
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -790,6 +791,7 @@ class TestV1MembershipContracts():
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -811,6 +813,7 @@ class TestV1MembershipContracts():
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -869,6 +872,7 @@ class TestV1MembershipContracts():
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -890,6 +894,7 @@ class TestV1MembershipContracts():
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -947,6 +952,7 @@ class TestV1MembershipContracts():
             'memo': 'メモ',
             'transferable': True,
             'status': True,
+            'initial_offering_status': False,
             'image_url': [
                 {'type': 'small', 'url': ''},
                 {'type': 'medium','url': ''},
@@ -1003,6 +1009,7 @@ class TestV1MembershipContracts():
             'memo': 'メモ',
             'transferable': True,
             'status': True,
+            'initial_offering_status': False,
             'image_url': [
                 {'type': 'small', 'url': ''},
                 {'type': 'medium','url': ''},
@@ -1264,6 +1271,7 @@ class TestV1CouponContracts():
                 'expiration_date': '20191231',
                 'transferable': True,
                 'is_valid': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -1321,6 +1329,7 @@ class TestV1CouponContracts():
                 'expiration_date': '20191231',
                 'transferable': True,
                 'is_valid': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -1341,6 +1350,7 @@ class TestV1CouponContracts():
                 'expiration_date': '20191231',
                 'transferable': True,
                 'is_valid': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -1398,6 +1408,7 @@ class TestV1CouponContracts():
                 'expiration_date': '20191231',
                 'transferable': True,
                 'is_valid': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -1418,6 +1429,7 @@ class TestV1CouponContracts():
                 'expiration_date': '20191231',
                 'transferable': True,
                 'is_valid': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'type': 'small', 'url': ''},
                     {'type': 'medium','url': ''},
@@ -1474,6 +1486,7 @@ class TestV1CouponContracts():
             'expiration_date': '20191231',
             'transferable': True,
             'is_valid': True,
+            'initial_offering_status': False,
             'image_url': [
                 {'type': 'small', 'url': ''},
                 {'type': 'medium','url': ''},
@@ -1529,6 +1542,7 @@ class TestV1CouponContracts():
             'expiration_date': '20191231',
             'transferable': True,
             'is_valid': True,
+            'initial_offering_status': False,
             'image_url': [
                 {'type': 'small', 'url': ''},
                 {'type': 'medium','url': ''},

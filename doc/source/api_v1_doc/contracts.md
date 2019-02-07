@@ -214,6 +214,7 @@ curl -X GET \
             "memo": "メモ欄",
             "transferable": true,
             "status": true,
+            "initial_offering_status": false,
             "image_url": [
                 {
                     "type": "small",
@@ -248,6 +249,7 @@ curl -X GET \
 * `memo` : メモ欄
 * `transferable` : 譲渡可能
 * `status` : 有効/無効
+* `initial_offering_status` : 新規募集ステータス
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
 
 #### Status: 400 Bad Request
@@ -335,6 +337,7 @@ curl -X GET \
             "expiration_date": "20190331",
             "transferable": true,
             "is_valid": true,
+            "initial_offering_status": false,
             "image_url": [
                 {
                     "type": "small",
@@ -368,6 +371,7 @@ curl -X GET \
 * `expiration_date` : 有効期限
 * `transferable` : 譲渡可能
 * `status` : 有効/無効
+* `initial_offering_status` : 新規募集ステータス
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
 
 #### Status: 400 Bad Request

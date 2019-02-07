@@ -356,6 +356,9 @@ class MembershipContracts(BaseResource):
                 image_url_m = TokenContract.functions.image_urls(1).call()
                 image_url_l = TokenContract.functions.image_urls(2).call()
 
+                initial_offering_status = \
+                    TokenContract.functions.initialOfferingStatus().call()
+
                 # 企業リストから、企業名とRSA鍵を取得する
                 company_name = ''
                 rsa_publickey = ''
@@ -380,6 +383,7 @@ class MembershipContracts(BaseResource):
                     'memo':memo,
                     'transferable':transferable,
                     'status':status,
+                    'initial_offering_status':initial_offering_status,
                     'image_url':[
                         {'type':'small', 'url':image_url_s},
                         {'type':'medium', 'url':image_url_m},
@@ -524,6 +528,9 @@ class CouponContracts(BaseResource):
                 image_url_m = TokenContract.functions.image_urls(1).call()
                 image_url_l = TokenContract.functions.image_urls(2).call()
 
+                initial_offering_status = \
+                    TokenContract.functions.initialOfferingStatus().call()
+
                 # 企業リストから、企業名とRSA鍵を取得する
                 company_name = ''
                 rsa_publickey = ''
@@ -547,6 +554,7 @@ class CouponContracts(BaseResource):
                     'expiration_date':expirationDate,
                     'transferable':transferable,
                     'is_valid':isValid,
+                    'initial_offering_status':initial_offering_status,
                     'image_url':[
                         {'type':'small', 'url':image_url_s},
                         {'type':'medium', 'url':image_url_m},
