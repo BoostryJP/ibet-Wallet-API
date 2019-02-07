@@ -16,7 +16,7 @@ class TestV1OrderBook():
     apiurl = '/v1/OrderBook'
     os.environ["AGENT_ADDRESS"] = eth_account['agent']['account_address']
 
-    # ＜正常系1-1＞
+    # ＜正常系1-1-1＞
     # 未約定＆未キャンセルの売り注文が1件存在
     # 以下の条件でリクエスト
     #   1) 売り注文と同一トークンアドレス
@@ -24,7 +24,7 @@ class TestV1OrderBook():
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
-    def test_orderbook_normal_1_1(self, client, session):
+    def test_orderbook_normal_1_1_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -51,6 +51,56 @@ class TestV1OrderBook():
             "token_address": token_address,
             "order_type": "buy",
             "account_address": agent_address,
+        }
+
+        resp = client.simulate_post(self.apiurl, json=request_body)
+        assumed_body = [
+            {
+                "order_id": 1,
+                "price": 1000,
+                "amount": 100,
+                "account_address": account_address,
+            }
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系1-1-2＞
+    # 未約定＆未キャンセルの売り注文が1件存在
+    # 以下の条件でリクエスト
+    #   1) 売り注文と同一トークンアドレス
+    #   2) 買い注文
+    #   3) アカウントアドレスの指定なし
+    #
+    # -> リスト1件が返却
+    def test_orderbook_normal_1_1_2(self, client, session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
+        agent_address = eth_account['agent']['account_address']
+
+        # テストデータを挿入
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
+        order.account_address = account_address
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        # リクエスト情報
+        request_body = {
+            "token_address": token_address,
+            "order_type": "buy"
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
@@ -295,7 +345,7 @@ class TestV1OrderBook():
         assert resp.json['data'] == assumed_body
 
 
-    # ＜正常系2-1＞
+    # ＜正常系2-1-1＞
     # 未約定＆未キャンセルの買い注文が1件存在
     # 以下の条件でリクエスト
     #   1) 買い注文と同一トークンアドレス
@@ -303,7 +353,7 @@ class TestV1OrderBook():
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
-    def test_orderbook_normal_2_1(self, client, session):
+    def test_orderbook_normal_2_1_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -331,6 +381,57 @@ class TestV1OrderBook():
             "token_address": token_address,
             "order_type": "sell",
             "account_address": agent_address,
+        }
+
+        resp = client.simulate_post(self.apiurl, json=request_body)
+        assumed_body = [
+            {
+                "order_id": 1,
+                "price": 1000,
+                "amount": 100,
+                "account_address": account_address,
+            }
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系2-1-2＞
+    # 未約定＆未キャンセルの買い注文が1件存在
+    # 以下の条件でリクエスト
+    #   1) 買い注文と同一トークンアドレス
+    #   2) 売り注文
+    #   3) アカウントアドレスの指定なし
+    #
+    # -> リスト1件が返却
+    def test_orderbook_normal_2_1_2(self, client, session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
+        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
+        agent_address = eth_account['agent']['account_address']
+
+        # テストデータを挿入
+        order = Order()
+        order.id = 1
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
+        order.account_address = account_address
+        order.is_buy = True
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        # リクエスト情報
+        request_body = {
+            "token_address": token_address,
+            "order_type": "sell"
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
