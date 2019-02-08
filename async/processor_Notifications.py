@@ -106,7 +106,7 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
             except ClientError:
                 LOG.error('device_endpoint_arn does not found.')
 
-
+# Watcher
 class Watcher:
     def __init__(self, contract, filter_name, filter_params):
         self.contract = contract
@@ -170,7 +170,7 @@ class WatchWhiteListRegister(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 2, entry["blockNumber"],
                 '決済用口座情報登録完了',
-                '決済用口座情報登録が完了しました。指定口座まで振り込みを実施してください。',
+                '決済用口座情報登録が完了しました。',
                 )
 
 # イベント：決済用口座承認
@@ -194,7 +194,7 @@ class WatchWhiteListApprove(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
                 '決済用口座情報承認完了',
-                '決済用の口座が承認されました。取引を始めることができます。',
+                '決済用口座が承認されました。',
                 )
 
 # イベント：決済用口座警告
@@ -218,7 +218,7 @@ class WatchWhiteListWarn(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
                 '決済用口座の確認',
-                '決済用の口座の情報が確認できませんでした。',
+                '決済用口座の情報が確認できませんでした。',
                 )
 
 # イベント：決済用口座非承認
@@ -242,7 +242,7 @@ class WatchWhiteListUnapprove(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
                 '決済用口座情報再登録',
-                '決済用口座情報が変更されました。指定口座まで振り込みを実施してください。',
+                '決済用口座の承認ステータスが変更されました。',
                 )
 
 # イベント：決済用口座アカウント停止
@@ -611,6 +611,44 @@ class WatchBondExchangeSellSettlementNG(Watcher):
 '''
 会員権取引関連（IbetMembership）
 '''
+# イベント：会員権割当・譲渡
+class WatchMembershipTransfer(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "Transfer", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+            token = token_factory.get_membership(token_address)
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "from": entry["args"]["from"],
+                "value": entry["args"]["value"],
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "MembershipTransfer"
+            notification.priority = 0
+            notification.address = entry["args"]["to"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(self._gen_notification_id(entry), entry["args"]["to"], 0, entry["blockNumber"],
+                '会員権発行完了',
+                '会員権が発行されました。保有トークンの一覧からご確認ください。',
+                )
+
 # イベント：注文
 class WatchMembershipExchangeNewOrder(Watcher):
     def __init__(self):
@@ -1339,6 +1377,7 @@ def main():
         WatchBondExchangeSellSettlementOK(),
         WatchBondExchangeBuySettlementNG(),
         WatchBondExchangeSellSettlementNG(),
+        WatchMembershipTransfer(),
         WatchMembershipExchangeNewOrder(),
         WatchMembershipExchangeCancelOrder(),
         WatchMembershipExchangeBuyAgreement(),
@@ -1355,7 +1394,7 @@ def main():
         WatchCouponExchangeBuySettlementOK(),
         WatchCouponExchangeSellSettlementOK(),
         WatchCouponExchangeBuySettlementNG(),
-        WatchCouponExchangeSellSettlementNG(),        
+        WatchCouponExchangeSellSettlementNG(),
     ]
 
     e = ThreadPoolExecutor(max_workers = WORKER_COUNT)
