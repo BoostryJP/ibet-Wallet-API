@@ -150,6 +150,7 @@ curl -X GET \
   * `WhiteListApprove` : 決済用口座承認
   * `WhiteListWarn` : 決済用口座警告
   * `WhiteListUnapprove` : 決済用口座非承認
+  * `WhiteListBan` : 決済用口座アカウント停止
   * `NewOrder` : 新規注文
   * `CancelOrder` : 注文取消
   * `BuyAgreement` : 買約定
@@ -158,6 +159,8 @@ curl -X GET \
   * `SellSettlementOK` : 決済承認（売）
   * `SettlementNG` : 決済非承認（買）
   * `SellSettlementNG` : 決済非承認（売）
+  * `MembershipTransfer` : 会員権割当・譲渡
+  * `CouponTransfer` : クーポン割当・譲渡
 * `id` : 通知ID
   * 0x | `<blockNumber>` | `<transactionIndex>` | `<logIndex>` | `<optionType>`
   * ( | は文字列連結 )
