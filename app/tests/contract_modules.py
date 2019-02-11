@@ -14,7 +14,8 @@ from .account_config import eth_account
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
-# 株主名簿用個人情報登録
+# 名簿用個人情報登録
+# NOTE: issuer address に対する情報の公開を行う
 def register_personalinfo(invoker, personal_info):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'],invoker['password'])
