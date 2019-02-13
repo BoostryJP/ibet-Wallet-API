@@ -21,7 +21,7 @@ $ brew install postgresql
 ?  /usr/local/Cellar/postgresql/9.3.4: 2921 files, 38M
 ```
 
-###1-2. 文字コードをUTF-8でデータベースの初期化
+### 1-2. 文字コードをUTF-8でデータベースの初期化
 
 ```
 $ initdb /usr/local/var/postgres -E utf8
