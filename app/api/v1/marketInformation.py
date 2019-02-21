@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import requests
 import os
 from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
