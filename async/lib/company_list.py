@@ -1,6 +1,11 @@
 import requests
 from eth_utils import to_checksum_address
 
+import logging
+from app import log
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+LOG = log.get_logger()
+
 class CompanyListFactory:
     def __init__(self, url):
         self.url = url
@@ -11,7 +16,11 @@ class CompanyListFactory:
 class CompanyList:
     @classmethod
     def get(self, url):
-        json = requests.get(url).json()
+        try:
+            json = requests.get(url, timeout=(3.0, 7.5)).json()
+        except Exception as err:
+            json = '{}'
+            LOG.error(err)
         return CompanyList(json)
 
     def __init__(self, json):
@@ -28,8 +37,10 @@ class CompanyList:
         }
 
         for company in self.json:
-            if to_checksum_address(company["address"]) == address:
-                return Company(company)
+            if "address" in company:
+                if to_checksum_address(company["address"]) == address:
+                    return Company(company)
+
         return Company(company_default)
 
 class Company:

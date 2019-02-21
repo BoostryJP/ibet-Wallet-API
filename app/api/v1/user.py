@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import requests
 import os
 
 from sqlalchemy.orm.exc import NoResultFound

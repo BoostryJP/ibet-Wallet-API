@@ -39,7 +39,7 @@ class CompanyInfo(BaseResource):
             if config.APP_ENV == 'local':
                 company_list = json.load(open('data/company_list.json' , 'r'))
             else:
-                company_list = requests.get(config.COMPANY_LIST_URL).json()
+                company_list = requests.get(config.COMPANY_LIST_URL, timeout=(3.0, 7.5)).json()
         except Exception as err:
             LOG.error('Failed To Get Data: %s', err)
             raise AppError
@@ -75,7 +75,7 @@ class PaymentAgentInfo(BaseResource):
             if config.APP_ENV == 'local':
                 company_list = json.load(open('data/payment_agent_list.json' , 'r'))
             else:
-                company_list = requests.get(config.PAYMENT_AGENT_LIST_URL).json()
+                company_list = requests.get(config.PAYMENT_AGENT_LIST_URL, timeout=(3.0, 7.5)).json()
         except Exception as err:
             LOG.error('Failed To Get Data: %s', err)
             raise AppError
