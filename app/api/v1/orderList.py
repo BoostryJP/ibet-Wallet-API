@@ -42,7 +42,8 @@ class OrderList(BaseResource):
             company_list = json.load(open('data/company_list.json' , 'r'))
         else:
             try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=(3.0, 7.5)).json()
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except:
                 pass
 

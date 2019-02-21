@@ -65,7 +65,8 @@ class Contracts(BaseResource):
             if config.APP_ENV == 'local':
                 company_list = json.load(open('data/company_list.json' , 'r'))
             else:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=(3.0, 7.5)).json()
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
         except:
             pass
 
@@ -297,7 +298,8 @@ class MembershipContracts(BaseResource):
             if config.APP_ENV == 'local':
                 company_list = json.load(open('data/company_list.json' , 'r'))
             else:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=(3.0, 7.5)).json()
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
         except:
             pass
 
@@ -468,7 +470,8 @@ class CouponContracts(BaseResource):
             if config.APP_ENV == 'local':
                 company_list = json.load(open('data/company_list.json' , 'r'))
             else:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=(3.0, 7.5)).json()
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
         except:
             pass
 

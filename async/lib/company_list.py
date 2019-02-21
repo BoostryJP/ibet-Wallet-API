@@ -5,6 +5,7 @@ import logging
 from app import log
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 LOG = log.get_logger()
+from app import config
 
 class CompanyListFactory:
     def __init__(self, url):
@@ -17,9 +18,9 @@ class CompanyList:
     @classmethod
     def get(self, url):
         try:
-            json = requests.get(url, timeout=(3.0, 7.5)).json()
+            json = requests.get(url, timeout=config.REQUEST_TIMEOUT).json()
         except Exception as err:
-            json = '{}'
+            json = {}
             LOG.error(err)
         return CompanyList(json)
 
