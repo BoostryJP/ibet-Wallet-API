@@ -8,11 +8,14 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from eth_utils import to_checksum_address
+from rlp import decode
+from hexbytes import HexBytes
 
 from app import log
 from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
+from app.model import ExecutableContract
 
 LOG = log.get_logger()
 
@@ -51,12 +54,33 @@ class SendRawTransaction(BaseResource):
     def on_post(self, req, res):
         LOG.info('v1.Eth.SendRawTransaction')
 
+        session = req.context["session"]
+
         request_json = SendRawTransaction.validate(req)
         raw_tx_hex_list = request_json['raw_tx_hex_list']
 
         result = []
 
         for i, raw_tx_hex in enumerate(raw_tx_hex_list):
+            # 実行コントラクトのアドレスを取得
+            try:
+                raw_tx = decode(HexBytes(raw_tx_hex))
+                to_contract_address = to_checksum_address('0x' + raw_tx[3].hex())
+            except Exception:
+                result.append({'id': i+1, 'status': 0})
+                LOG.info('RLP decoding failed')
+                continue
+
+            # 実行可能コントラクトであることをチェック
+            executable_contract = session.query(ExecutableContract).\
+                filter(to_contract_address == ExecutableContract.contract_address).\
+                first()
+            if executable_contract is None:
+                result.append({'id': i+1, 'status': 0})
+                LOG.info('Not executable')
+                continue
+
+            # ブロックチェーンノードに送信
             try:
                 tx_hash = web3.eth.sendRawTransaction(raw_tx_hex)
             except ValueError as e:
@@ -66,6 +90,7 @@ class SendRawTransaction(BaseResource):
                 })
                 continue
 
+            # 実行結果を確認
             try:
                 tx = web3.eth.waitForTransactionReceipt(tx_hash, 30)
             except:
