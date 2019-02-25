@@ -4,16 +4,18 @@ import sys
 import os
 
 from eth_utils import to_checksum_address
-from .account_config import eth_account
 
 import app.model
 from app.model import Order, Agreement, AgreementStatus
 
+from .account_config import eth_account
 
 class TestV1OrderBook():
 
     # テスト対象API
     apiurl = '/v1/OrderBook'
+
+    # 環境変数設定
     os.environ["AGENT_ADDRESS"] = eth_account['agent']['account_address']
 
     # ＜正常系1-1-1＞
