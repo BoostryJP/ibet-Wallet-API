@@ -395,7 +395,7 @@ class WatchBondExchangeBuyAgreement(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
                 '約定完了',
-                '買い注文が約定しました。指定口座へ振り込みを実施してください。',
+                '買い注文が約定しました。代金の支払いを実施してください。',
                 )
 
 # イベント：約定（売）
@@ -563,7 +563,7 @@ class WatchBondExchangeBuySettlementNG(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
                 '決済失敗',
-                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                '注文の決済が失敗しました。内容をご確認ください。',
                 )
 
 # イベント：決済NG（売）
@@ -605,7 +605,7 @@ class WatchBondExchangeSellSettlementNG(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
                 '決済失敗',
-                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                '注文の決済が失敗しました。内容をご確認ください。',
                 )
 
 '''
@@ -772,7 +772,7 @@ class WatchMembershipExchangeBuyAgreement(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
                 '約定完了',
-                '買い注文が約定しました。指定口座へ振り込みを実施してください。',
+                '買い注文が約定しました。代金の支払いを実施してください。',
                 )
 
 # イベント：約定（売）
@@ -940,7 +940,7 @@ class WatchMembershipExchangeBuySettlementNG(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
                 '決済失敗',
-                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                '注文の決済が失敗しました。内容をご確認ください。',
                 )
 
 # イベント：決済NG（売）
@@ -982,7 +982,7 @@ class WatchMembershipExchangeSellSettlementNG(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
                 '決済失敗',
-                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                '注文の決済が失敗しました。内容をご確認ください。',
                 )
 
 '''
@@ -1149,7 +1149,7 @@ class WatchCouponExchangeBuyAgreement(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
                 '約定完了',
-                '買い注文が約定しました。指定口座へ振り込みを実施してください。',
+                '買い注文が約定しました。代金の支払いを実施してください。',
                 )
 
 # イベント：約定（売）
@@ -1317,7 +1317,7 @@ class WatchCouponExchangeBuySettlementNG(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
                 '決済失敗',
-                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                '注文の決済が失敗しました。内容をご確認ください。',
                 )
 
 # イベント：決済NG（売）
@@ -1359,7 +1359,7 @@ class WatchCouponExchangeSellSettlementNG(Watcher):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
                 '決済失敗',
-                '注文の決済が失敗しました。再度振り込み内容をご確認ください。',
+                '注文の決済が失敗しました。内容をご確認ください。',
                 )
 
 def main():
