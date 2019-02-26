@@ -12,11 +12,11 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
 
 
 # [普通社債]歩み値参照API
-# /v1/Tick/
-class TestV1Tick():
+# /v1/StraightBond/Tick/
+class TestV1StraightBondTick():
 
     # テスト対象API
-    apiurl = '/v1/Tick/'
+    apiurl = '/v1/StraightBond/Tick/'
 
     @staticmethod
     def generate_agree_event(bond_exchange, personal_info, white_list):
@@ -112,7 +112,7 @@ class TestV1Tick():
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']
 
-        bond_token = TestV1Tick.\
+        bond_token = TestV1StraightBondTick.\
             generate_agree_event(bond_exchange, personal_info, white_list)
 
         token_address = bond_token['address']
@@ -197,7 +197,7 @@ class TestV1Tick():
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v1/Tick'
+            'description': 'method: GET, url: /v1/StraightBond/Tick'
         }
 
 # [会員権]歩み値参照API

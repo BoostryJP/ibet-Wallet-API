@@ -21,11 +21,11 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # [普通社債]トークン一覧参照API
-# /v1/Contracts
-class TestV1Contracts():
+# /v1/StraightBond/Contracts
+class TestV1StraightBondContracts():
 
     # テスト対象API
-    apiurl = '/v1/Contracts/'
+    apiurl = '/v1/StraightBond/Contracts/'
 
     def bond_token_attribute(exchange_address):
         attribute = {
@@ -82,19 +82,19 @@ class TestV1Contracts():
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV1Contracts.tokenlist_contract()
+        token_list = TestV1StraightBondContracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：債券新規発行
         exchange_address = \
             to_checksum_address(
                 shared_contract['IbetStraightBondExchange']['address'])
-        attribute = TestV1Contracts.bond_token_attribute(exchange_address)
+        attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV1Contracts.list_token(session, bond_token)
+        TestV1StraightBondContracts.list_token(session, bond_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -149,7 +149,7 @@ class TestV1Contracts():
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV1Contracts.tokenlist_contract()
+        token_list = TestV1StraightBondContracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：債券新規発行
@@ -158,12 +158,12 @@ class TestV1Contracts():
             to_checksum_address(
                 shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, bond_token)
+            TestV1StraightBondContracts.list_token(session, bond_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -263,7 +263,7 @@ class TestV1Contracts():
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV1Contracts.tokenlist_contract()
+        token_list = TestV1StraightBondContracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：債券新規発行
@@ -272,12 +272,12 @@ class TestV1Contracts():
             to_checksum_address(
                 shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, bond_token)
+            TestV1StraightBondContracts.list_token(session, bond_token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -377,7 +377,7 @@ class TestV1Contracts():
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV1Contracts.tokenlist_contract()
+        token_list = TestV1StraightBondContracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：債券新規発行
@@ -386,12 +386,12 @@ class TestV1Contracts():
             to_checksum_address(
                 shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, bond_token)
+            TestV1StraightBondContracts.list_token(session, bond_token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -451,7 +451,7 @@ class TestV1Contracts():
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV1Contracts.tokenlist_contract()
+        token_list = TestV1StraightBondContracts.tokenlist_contract()
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
 
         # データ準備：債券新規発行
@@ -460,12 +460,12 @@ class TestV1Contracts():
             to_checksum_address(
                 shared_contract['IbetStraightBondExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1Contracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, bond_token)
+            TestV1StraightBondContracts.list_token(session, bond_token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -530,7 +530,7 @@ class TestV1Contracts():
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: POST, url: /v1/Contracts'
+            'description': 'method: POST, url: /v1/StraightBond/Contracts'
         }
 
     # ＜エラー系2-1＞
@@ -710,7 +710,7 @@ class TestV1MembershipContracts():
         membership_register_list(issuer, token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV1Contracts.list_token(session, token)
+        TestV1StraightBondContracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -769,7 +769,7 @@ class TestV1MembershipContracts():
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -850,7 +850,7 @@ class TestV1MembershipContracts():
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -931,7 +931,7 @@ class TestV1MembershipContracts():
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -988,7 +988,7 @@ class TestV1MembershipContracts():
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1042,7 +1042,7 @@ class TestV1MembershipContracts():
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
         # 取扱トークンデータ挿入
-        TestV1Contracts.list_token(session, token)
+        TestV1StraightBondContracts.list_token(session, token)
 
         # Tokenの無効化
         membership_invalidate(issuer, token)
@@ -1250,7 +1250,7 @@ class TestV1CouponContracts():
         coupon_register_list(issuer, token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV1Contracts.list_token(session, token)
+        TestV1StraightBondContracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1308,7 +1308,7 @@ class TestV1CouponContracts():
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1387,7 +1387,7 @@ class TestV1CouponContracts():
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1466,7 +1466,7 @@ class TestV1CouponContracts():
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1522,7 +1522,7 @@ class TestV1CouponContracts():
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV1Contracts.list_token(session, token)
+            TestV1StraightBondContracts.list_token(session, token)
 
         query_string = 'cursor=1&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -1576,7 +1576,7 @@ class TestV1CouponContracts():
         coupon_register_list(issuer, token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV1Contracts.list_token(session, token)
+        TestV1StraightBondContracts.list_token(session, token)
 
         # Tokenの無効化
         invalidate_coupon_token(issuer, token)

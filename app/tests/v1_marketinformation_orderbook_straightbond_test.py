@@ -10,10 +10,10 @@ from app.model import Order, Agreement, AgreementStatus
 
 from .account_config import eth_account
 
-class TestV1OrderBook():
+class TestV1StraightBondOrderBook():
 
     # テスト対象API
-    apiurl = '/v1/OrderBook'
+    apiurl = '/v1/StraightBond/OrderBook'
 
     # 環境変数設定
     os.environ["AGENT_ADDRESS"] = eth_account['agent']['account_address']
@@ -1121,5 +1121,5 @@ class TestV1OrderBook():
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v1/OrderBook'
+            'description': 'method: GET, url: /v1/StraightBond/OrderBook'
         }

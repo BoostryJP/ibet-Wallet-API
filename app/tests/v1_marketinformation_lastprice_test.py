@@ -12,11 +12,11 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
 
 
 # [普通社債]現在値取得API
-# /v1/LastPrice/
-class TestV1LastPrice():
+# /v1/StraightBond/LastPrice/
+class TestV1StraightBondLastPrice():
 
     # テスト対象API
-    apiurl = '/v1/LastPrice/'
+    apiurl = '/v1/StraightBond/LastPrice/'
 
     # 約定イベントの作成
     @staticmethod
@@ -121,7 +121,7 @@ class TestV1LastPrice():
         personal_info = shared_contract['PersonalInfo']
         white_list = shared_contract['WhiteList']
 
-        bond_token = TestV1LastPrice.\
+        bond_token = TestV1StraightBondLastPrice.\
             generate_agree_event(bond_exchange, personal_info, white_list)
 
         token_address = bond_token['address']
@@ -203,7 +203,7 @@ class TestV1LastPrice():
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v1/LastPrice'
+            'description': 'method: GET, url: /v1/StraightBond/LastPrice'
         }
 
 # [会員権]現在値取得API

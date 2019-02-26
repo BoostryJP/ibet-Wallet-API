@@ -11,11 +11,11 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
     register_bond_list, get_latest_agreementid, bond_confirm_agreement
 
 # [普通社債]保有トークン一覧API
-# /v1/MyTokens/
-class TestV1MyTokens():
+# /v1/StraightBond/MyTokens/
+class TestV1StraightBondMyTokens():
 
     # テスト対象API
-    apiurl = '/v1/MyTokens/'
+    apiurl = '/v1/StraightBond/MyTokens/'
 
     # 債券トークンの保有状態（約定イベント）を作成
     @staticmethod
@@ -102,12 +102,12 @@ class TestV1MyTokens():
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
-        bond_token = TestV1MyTokens.generate_bond_position(
+        bond_token = TestV1StraightBondMyTokens.generate_bond_position(
             bond_exchange, personal_info, white_list, token_list)
         token_address = bond_token['address']
 
         # 取扱トークンデータ挿入
-        TestV1MyTokens.list_token(session, bond_token)
+        TestV1StraightBondMyTokens.list_token(session, bond_token)
 
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
