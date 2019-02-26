@@ -1,6 +1,6 @@
 # マーケット情報：トークン一覧
 
-## GET: /v1/Contracts
+## GET: /v1/StraightBond/Contracts
 * 公開中の債券トークンの一覧を返すAPI。
 * 公開済み、かつ償還されていないものが一覧で返される。
 * 出力リストは登録の新しい順。
@@ -8,7 +8,7 @@
 ### Sample
 ```sh
 curl -X GET \
-  'http://localhost:5000/v1/Contracts/?cursor=3&limit=1' \
+  'http://localhost:5000/v1/StraightBond/Contracts/?cursor=3&limit=1' \
   -H 'cache-control: no-cache'
 ```
 

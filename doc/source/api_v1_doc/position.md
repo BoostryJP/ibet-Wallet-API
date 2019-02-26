@@ -1,12 +1,12 @@
 # 保有トークン一覧
 
-## POST: /v1/MyTokens/
+## POST: /v1/StraightBond/MyTokens/
 * 普通社債トークンの保有一覧を返却するAPI。
 
 ### Sample
 ```sh
 curl -X POST \
-  http://localhost:5000/v1/MyTokens/ \
+  http://localhost:5000/v1/StraightBond/MyTokens/ \
   -H 'Content-Type: application/json' \
   -H 'cache-control: no-cache' \
   -d '{

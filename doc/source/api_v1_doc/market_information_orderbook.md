@@ -1,12 +1,12 @@
 # マーケット情報：オーダーブック
 
-## POST: /v1/OrderBook
+## POST: /v1/StraightBond/OrderBook
 * 普通社債トークンのオーダーブックを返却するAPI。
 
 ### Sample
 ```sh
 curl -X POST \
-  http://localhost:5000/v1/OrderBook \
+  http://localhost:5000/v1/StraightBond/OrderBook \
   -H 'Content-Type: application/json' \
   -H 'cache-control: no-cache' \
   -d '{

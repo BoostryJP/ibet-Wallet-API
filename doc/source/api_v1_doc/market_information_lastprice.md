@@ -1,12 +1,12 @@
 # マーケット情報：現在値
 
-## POST: /v1/LastPrice
+## POST: /v1/StraightBond/LastPrice
 * 普通社債トークンの現在値を返却するAPI。
 
 ### Sample
 ```sh
 curl -X POST \
-  http://localhost:5000/v1/LastPrice \
+  http://localhost:5000/v1/StraightBond/LastPrice \
   -H 'Content-Type: application/json' \
   -H 'cache-control: no-cache' \
   -d '{  
