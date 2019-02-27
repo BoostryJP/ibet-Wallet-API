@@ -37,7 +37,8 @@ else:
 OMISE_SECRET = os.environ.get('OMISE_SECRET')
 OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
 
-SNS_APPLICATION_ARN = os.environ.get('SNS_APPLICATION_ARN')
+SNS_APPLICATION_ARN_IOS = os.environ.get('SNS_APPLICATION_ARN_IOS')
+SNS_APPLICATION_ARN_ANDROID = os.environ.get('SNS_APPLICATION_ARN_ANDROID')
 PUSH_PRIORITY = os.environ.get('PUSH_PRIORITY') or 0
 
 AGENT_SQS_URL = os.environ.get('AGENT_SQS_URL') or 'http://localhost:9324'

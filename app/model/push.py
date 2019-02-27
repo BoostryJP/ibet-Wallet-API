@@ -12,6 +12,7 @@ class Push(Base):
     account_address = Column(String(256))
     device_token = Column(String(256))
     device_endpoint_arn = Column(String(256))
+    platform = Column(String(32))
     
     def __repr__(self):
         return "<Push id='%d'>" % \
@@ -22,7 +23,8 @@ class Push(Base):
         'device_id': str,
         'account_address': str,
         'device_token': str,
-        'device_endpoint_arn': str
+        'device_endpoint_arn': str,
+        'platform':str
     }
 
     FIELDS.update(Base.FIELDS)
