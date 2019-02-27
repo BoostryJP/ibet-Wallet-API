@@ -99,9 +99,6 @@ class UpdateDevice(BaseResource):
 
         if not Web3.isAddress(req.context['address']):
             raise InvalidParameterError
-        
-        if request_json['platform'] is not 'ios' and request_json['platform'] is not 'android':
-            raise InvalidParameterError('\'platform\' parameter should be \'ios\' or \'android\'')
 
         return validator.document
 
