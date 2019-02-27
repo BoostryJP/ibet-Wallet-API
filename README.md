@@ -199,13 +199,13 @@ $ ./bin/run.sh start
 * 以下は、ディレクトリ配下のテストを全て実行するコマンド。
 
 ```
-$ py.test tests/
+$ py.test app/tests/
 ```
 
 * Warningの出力をさせたくない場合は、以下のオプションをつける。
 
 ```
-$ py.test tests/ --disable-pytest-warnings
+$ py.test app/tests/ --disable-pytest-warnings
 ```
 
 ### 4-2. 部分テストの実施

@@ -48,23 +48,25 @@ class UpdateDevice(BaseResource):
                 # 古いdevice tokenを削除
                 delete_endpoint(device_data.device_endpoint_arn)
                 # AWS SNSのendpointを登録
-                endpoint = add_endpoint(request_json['device_token'])
+                endpoint = add_endpoint(request_json['device_token'], request_json['platform'])
                 # DB更新用の項目設定
                 update_flag = True
                 device_data.device_token = request_json['device_token']
                 device_data.device_endpoint_arn = endpoint
+                device_data.platform = request_json['platform']
             if update_flag:
                 session.merge(device_data)
         # device idがない（新規デバイス）
         else:
             # AWS SNSのendpointを登録
-            endpoint = add_endpoint(request_json['device_token'])
+            endpoint = add_endpoint(request_json['device_token'], request_json['platform'])
             # DBへinsert
             device_data = Push()
             device_data.device_id = request_json['device_id']
             device_data.account_address = address
             device_data.device_token = request_json['device_token']
             device_data.device_endpoint_arn = endpoint
+            device_data.platform = request_json['platform']
             session.add(device_data)
         self.on_success(res, None)
 
@@ -85,6 +87,11 @@ class UpdateDevice(BaseResource):
                 'required': True,
                 'empty': False,
             },
+            'platform': {
+                'type': 'string',
+                'required': True,
+                'empty': False,
+            }
         })
 
         if not validator.validate(request_json):
@@ -144,11 +151,16 @@ class DeleteDevice(BaseResource):
         return validator.document
 
 # device tokenをapplication arnに登録
-def add_endpoint(device_token):
+def add_endpoint(device_token, platform):
+    if platform == "ios":
+        application_arn = config.SNS_APPLICATION_ARN_IOS
+    elif platform == "android":
+        application_arn = config.SNS_APPLICATION_ARN_ANDROID
+
     try:
         client = boto3.client('sns', 'ap-northeast-1')
         endpoint = client.create_platform_endpoint(
-            PlatformApplicationArn=config.SNS_APPLICATION_ARN,
+            PlatformApplicationArn=application_arn,
             Token=device_token
         )
     except ClientError:

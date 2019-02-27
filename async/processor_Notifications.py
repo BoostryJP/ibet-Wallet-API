@@ -70,7 +70,7 @@ list_contract = Contract.get_contract(
 
 token_list = TokenList(list_contract)
 
-def push_publish(notification_id, address, priority, blocknumber,subject, message):
+def push_publish(notification_id, address, priority, blocknumber, subject, message):
     # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
     # 「対象のblockNumer」が起動時のblockNumer以上の場合は送信
     if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
@@ -78,24 +78,33 @@ def push_publish(notification_id, address, priority, blocknumber,subject, messag
         query_notification = db_session.query(Notification). \
             filter(Notification.notification_id == notification_id)
         notification = query_notification.first()
-        # 通知json作成
-        message_dict = {
-            "aps":{
-                "alert":message
-            },
-            "data": {
-                "notification_id":notification.notification_id
-            }
-        }
-        if config.APP_ENV == 'live':
-            send_data = json.dumps({"APNS": json.dumps(message_dict)})
-        else:
-            send_data = json.dumps({"APNS_SANDBOX": json.dumps(message_dict)})
         # pushの情報取得
         query = db_session.query(Push). \
             filter(Push.account_address == address)
         devices = query.all()
         for device_data in devices:
+            # 通知json作成。iosとandroidでjsonの構造を変更。
+            if device_data.platform == 'ios':
+                message_dict = {
+                    "aps":{
+                        "alert":message
+                    },
+                    "data": {
+                        "notification_id":notification.notification_id
+                    }
+                }
+                if config.APP_ENV == 'live':
+                    send_data = json.dumps({"APNS": json.dumps(message_dict)})
+                else:
+                    send_data = json.dumps({"APNS_SANDBOX": json.dumps(message_dict)})
+            elif device_data.platform == 'android':
+                send_data = json.dumps({
+                    "GCM": {
+                        "data": {
+                            "message": message, "notification_id": notification.notification_id
+                        }
+                    }
+                })
             try:
                 client = boto3.client('sns', 'ap-northeast-1')
                 response = client.publish(

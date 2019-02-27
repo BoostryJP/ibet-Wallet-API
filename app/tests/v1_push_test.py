@@ -22,10 +22,12 @@ class TestV1Push():
     upd_data_1 = {
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
         "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+        "platform":"ios"
     }
     upd_data_2 = {
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
         "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c29",
+        "platform":"android"
     }
     del_data_1 = {
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F"
@@ -69,6 +71,7 @@ class TestV1Push():
         assert tmpdata.device_id == self.upd_data_1['device_id']
         assert tmpdata.device_token == self.upd_data_1['device_token']
         assert tmpdata.account_address == self.address
+        assert tmpdata.platform == self.upd_data_1['platform']
 
         # SNS確認
         client = boto3.client('sns', 'ap-northeast-1')
@@ -92,6 +95,7 @@ class TestV1Push():
         assert tmpdata.device_id == self.upd_data_2['device_id']
         assert tmpdata.device_token == self.upd_data_2['device_token']
         assert tmpdata.account_address == self.address
+        assert tmpdata.platform == self.upd_data_2['platform']
 
         # SNS確認
         client = boto3.client('sns', 'ap-northeast-1')
@@ -115,6 +119,7 @@ class TestV1Push():
         assert tmpdata.device_id == self.upd_data_2['device_id']
         assert tmpdata.device_token == self.upd_data_2['device_token']
         assert tmpdata.account_address == self.address_2
+        assert tmpdata.platform == self.upd_data_2['platform']
 
         # SNS確認
         client = boto3.client('sns', 'ap-northeast-1')
@@ -166,6 +171,7 @@ class TestV1Push():
         device_data.account_address = self.address
         device_data.device_token = self.upd_data_1['device_token']
         device_data.device_endpoint_arn = 'arn:aws:sns:ap-northeast-1:241627671680:endpoint/APNS_SANDBOX/ionpush/50847470-27dd-3bc7-9768-fb31c1ff93b4'
+        device_data.platform = 'ios'
         session.add(device_data)
         session.commit()
 
@@ -185,6 +191,7 @@ class TestV1Push():
             filter(Push.device_id == self.del_data_1['device_id'])
         tmpdata = query.first()
         assert tmpdata.device_token != self.upd_data_2['device_token']
+        assert tmpdata.platform != self.upd_data_2['platform']
 
         # 削除
         session.delete(tmpdata)
@@ -200,6 +207,7 @@ class TestV1Push():
         device_data.account_address = self.address
         device_data.device_token = self.upd_data_1['device_token']
         device_data.device_endpoint_arn = 'arn:aws:sns:ap-northeast-1:241627671680:endpoint/APNS_SANDBOX/ionpush/50847470-27dd-3bc7-9768-fb31c1ff93b4'
+        device_data.platform = 'ios'
         session.add(device_data)
         session.commit()
 
@@ -247,6 +255,7 @@ class TestV1Push():
             self.url_UpdateDevice,
             json={
                 "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+                "platform": "ios"
             },
             private_key=self.private_key
         )
@@ -265,7 +274,8 @@ class TestV1Push():
         resp = client.simulate_auth_post(
             self.url_UpdateDevice,
             json={
-                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F"
+                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
+                "platform": "ios",
             },
             private_key=self.private_key
         )
@@ -279,8 +289,28 @@ class TestV1Push():
         }
 
     # ＜エラー系3-3＞
-    # 【DeleteDevice】必須項目なし：device_id
+    # 【UpdateDevice】必須項目なし：platform
     def test_error_3_3(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json={
+                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
+                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+            },
+            private_key=self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'platform': 'required field'
+            }
+        }
+
+    # ＜エラー系3-4＞
+    # 【UpdateDevice】空白：device_id
+    def test_error_3_4(self, client, session):
         resp = client.simulate_auth_post(
             self.url_DeleteDevice,
             json={},
@@ -295,14 +325,15 @@ class TestV1Push():
             }
         }
 
-    # ＜エラー系3-4＞
+    # ＜エラー系3-5＞
     # 【UpdateDevice】空白：device_id
-    def test_error_3_4(self, client, session):
+    def test_error_3_5(self, client, session):
         resp = client.simulate_auth_post(
             self.url_UpdateDevice,
             json = {
                 "device_id": "",
                 "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+                "platform":"ios",
             },
             private_key = self.private_key
         )
@@ -315,14 +346,15 @@ class TestV1Push():
             }
         }
 
-    # ＜エラー系3-5＞
+    # ＜エラー系3-6＞
     # 【UpdateDevice】空白：device_token
-    def test_error_3_5(self, client, session):
+    def test_error_3_6(self, client, session):
         resp = client.simulate_auth_post(
             self.url_UpdateDevice,
             json = {
                 "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
                 "device_token": "",
+                "platform":"ios",
             },
             private_key = self.private_key
         )
@@ -335,9 +367,30 @@ class TestV1Push():
             }
         }
 
-    # ＜エラー系3-6＞
+    # ＜エラー系3-7＞
+    # 【UpdateDevice】空白：platform
+    def test_error_3_7(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json = {
+                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
+                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+                "platform":"",
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'platform': 'empty values not allowed'
+            }
+        }
+
+    # ＜エラー系3-8＞
     # 【DeleteDevice】空白：device_id
-    def test_error_3_6(self, client, session):
+    def test_error_3_8(self, client, session):
         resp = client.simulate_auth_post(
             self.url_DeleteDevice,
             json = {
@@ -354,14 +407,15 @@ class TestV1Push():
             }
         }
 
-    # ＜エラー系3-7＞
+    # ＜エラー系3-9＞
     # 【UpdateDevice】数字：device_id
-    def test_error_3_7(self, client, session):
+    def test_error_3_9(self, client, session):
         resp = client.simulate_auth_post(
             self.url_UpdateDevice,
             json = {
                 "device_id": 1234,
                 "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+                "platform": "ios",
             },
             private_key = self.private_key
         )
@@ -374,14 +428,15 @@ class TestV1Push():
             }
         }
 
-    # ＜エラー系3-8＞
+    # ＜エラー系3-10＞
     # 【UpdateDevice】数字：device_token
-    def test_error_3_8(self, client, session):
+    def test_error_3_10(self, client, session):
         resp = client.simulate_auth_post(
             self.url_UpdateDevice,
             json = {
                 "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
                 "device_token": 1234,
+                "platform": "ios",
             },
             private_key = self.private_key
         )
@@ -394,9 +449,30 @@ class TestV1Push():
             }
         }
 
-    # ＜エラー系3-9＞
+    # ＜エラー系3-11＞
+    # 【UpdateDevice】数字：platform
+    def test_error_3_11(self, client, session):
+        resp = client.simulate_auth_post(
+            self.url_UpdateDevice,
+            json = {
+                "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
+                "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c28",
+                "platform": 1234,
+            },
+            private_key = self.private_key
+        )
+        assert resp.status_code == 400
+        assert resp.json["meta"] ==  {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'platform': 'must be of string type'
+            }
+        }
+
+    # ＜エラー系3-12＞
     # 【DeleteDevice】数字：device_id
-    def test_error_3_9(self, client, session):
+    def test_error_3_12(self, client, session):
         resp = client.simulate_auth_post(
             self.url_DeleteDevice,
             json = {
