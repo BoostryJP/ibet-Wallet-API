@@ -100,7 +100,7 @@ class App(falcon.API):
         self.add_route('/v1/Push/DeleteDevice', push.DeleteDevice())
 
         # アプリケーション最新バージョン情報取得
-        self.add_route('/v1/Latest', latestVersion.Latest())
+        self.add_route('/v1/LatestVersion', latestVersion.LatestVersion())
 
         self.add_error_handler(AppError, AppError.handle)
 
