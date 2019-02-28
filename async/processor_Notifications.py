@@ -98,13 +98,12 @@ def push_publish(notification_id, address, priority, blocknumber, subject, messa
                 else:
                     send_data = json.dumps({"APNS_SANDBOX": json.dumps(message_dict)})
             elif device_data.platform == 'android':
-                send_data = json.dumps({
-                    "GCM": {
-                        "data": {
-                            "message": message, "notification_id": notification.notification_id
-                        }
+                message_dict = {
+                    "data": {
+                        "message": message, "notification_id": notification.notification_id
                     }
-                })
+                }
+                send_data = json.dumps({"GCM": json.dumps(message_dict)})
             try:
                 client = boto3.client('sns', 'ap-northeast-1')
                 response = client.publish(
