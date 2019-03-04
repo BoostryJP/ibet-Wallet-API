@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 
 from cerberus import Validator, ValidationError
 
@@ -22,13 +23,30 @@ class RequiredVersion(BaseResource):
         LOG.info('v1.Version.RequiredVersion')
 
         request_json = RequiredVersion.validate(req)
+
+        # 環境変数の読み込み（iOS）
+        required_version_ios = os.environ.get('TMRAPP_REQUIRED_VERSION_IOS')
+        force_ios = os.environ.get('TMRAPP_FORCE_UPDATE_IOS')
+        url_ios = os.environ.get('TMRAPP_UPDATE_URL_IOS')
+        print(url_ios)
+
+        # 環境変数の読み込み（Android）
+        required_version_android = os.environ.get('TMRAPP_REQUIRED_VERSION_ANDROID')
+        force_android = os.environ.get('TMRAPP_FORCE_UPDATE_ANDROID')
+        url_android = os.environ.get('TMRAPP_UPDATE_URL_ANDROID')
         
         if request_json['platform'] == "ios":
-            requiredVersion = {"required_version":"2.0.0","type":"force","update_url":"https://itunes.apple.com/jp/app/mdaq/id489127768?mt=8"}
+            required_version = {
+                "required_version": required_version_ios, 
+                "force": force_ios, 
+                "update_url": url_ios}
         else:
-            requiredVersion = {"required_version":"2.0.0","type":"force","update_url":"https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock"}
+            required_version = {
+                "required_version": required_version_android, 
+                "force": force_android, 
+                "update_url": url_android}
 
-        self.on_success(res, requiredVersion)
+        self.on_success(res, required_version)
     
     @staticmethod
     def validate(req):
@@ -38,7 +56,7 @@ class RequiredVersion(BaseResource):
                 'type': 'string', 
                 'empty': False, 
                 'required': True,
-                'allowed' : ['ios', 'android']
+                'allowed': ['ios', 'android'],
             }
         })
 
