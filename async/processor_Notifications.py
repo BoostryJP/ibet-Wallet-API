@@ -13,7 +13,6 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from eth_utils import to_checksum_address
 from app import log
 from app import config
 from app.model import Notification, Push
@@ -26,9 +25,10 @@ from async.lib.misc import wait_all_futures
 from concurrent.futures import ThreadPoolExecutor
 import time
 from datetime import datetime, timezone, timedelta
+
 JST = timezone(timedelta(hours=+9), "JST")
 
-#logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 LOG = log.get_logger()
 
@@ -70,6 +70,7 @@ list_contract = Contract.get_contract(
 
 token_list = TokenList(list_contract)
 
+
 def push_publish(notification_id, address, priority, blocknumber, subject, message):
     # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
     # 「対象のblockNumer」が起動時のblockNumer以上の場合は送信
@@ -86,11 +87,11 @@ def push_publish(notification_id, address, priority, blocknumber, subject, messa
             # 通知json作成。iosとandroidでjsonの構造を変更。
             if device_data.platform == 'ios':
                 message_dict = {
-                    "aps":{
-                        "alert":message
+                    "aps": {
+                        "alert": message
                     },
                     "data": {
-                        "notification_id":notification.notification_id
+                        "notification_id": notification.notification_id
                     }
                 }
                 if config.APP_ENV == 'live':
@@ -114,6 +115,7 @@ def push_publish(notification_id, address, priority, blocknumber, subject, messa
             except ClientError:
                 LOG.error('device_endpoint_arn does not found.')
 
+
 # Watcher
 class Watcher:
     def __init__(self, contract, filter_name, filter_params):
@@ -122,7 +124,7 @@ class Watcher:
         self.filter_params = filter_params
         self.from_block = 0
 
-    def _gen_notification_id(self, entry, option_type = 0):
+    def _gen_notification_id(self, entry, option_type=0):
         return "0x{:012x}{:06x}{:06x}{:02x}".format(
             entry["blockNumber"],
             entry["transactionIndex"],
@@ -154,9 +156,12 @@ class Watcher:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
+
 '''
 決済用口座認可関連（WhiteList）
 '''
+
+
 # イベント：決済用口座登録
 class WatchWhiteListRegister(Watcher):
     def __init__(self):
@@ -177,9 +182,10 @@ class WatchWhiteListRegister(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 2, entry["blockNumber"],
-                '決済用口座情報登録完了',
-                '決済用口座情報登録が完了しました。',
-                )
+                         '決済用口座情報登録完了',
+                         '決済用口座情報登録が完了しました。',
+                         )
+
 
 # イベント：決済用口座承認
 class WatchWhiteListApprove(Watcher):
@@ -201,9 +207,10 @@ class WatchWhiteListApprove(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                '決済用口座情報承認完了',
-                '決済用口座が承認されました。',
-                )
+                         '決済用口座情報承認完了',
+                         '決済用口座が承認されました。',
+                         )
+
 
 # イベント：決済用口座警告
 class WatchWhiteListWarn(Watcher):
@@ -225,9 +232,10 @@ class WatchWhiteListWarn(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                '決済用口座の確認',
-                '決済用口座の情報が確認できませんでした。',
-                )
+                         '決済用口座の確認',
+                         '決済用口座の情報が確認できませんでした。',
+                         )
+
 
 # イベント：決済用口座非承認
 class WatchWhiteListUnapprove(Watcher):
@@ -249,9 +257,10 @@ class WatchWhiteListUnapprove(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                '決済用口座情報再登録',
-                '決済用口座の承認ステータスが変更されました。',
-                )
+                         '決済用口座情報再登録',
+                         '決済用口座の承認ステータスが変更されました。',
+                         )
+
 
 # イベント：決済用口座アカウント停止
 class WatchWhiteListBan(Watcher):
@@ -273,13 +282,16 @@ class WatchWhiteListBan(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 2, entry["blockNumber"],
-                '決済用口座の認証取消',
-                '決済用の口座の認証が取り消されました。',
-                )
+                         '決済用口座の認証取消',
+                         '決済用の口座の認証が取り消されました。',
+                         )
+
 
 '''
 普通社債取引関連（IbetStraightBond）
 '''
+
+
 # イベント：注文
 class WatchBondExchangeNewOrder(Watcher):
     def __init__(self):
@@ -318,9 +330,10 @@ class WatchBondExchangeNewOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '新規注文完了',
-                '新規注文が完了しました。',
-                )
+                         '新規注文完了',
+                         '新規注文が完了しました。',
+                         )
+
 
 # イベント：注文取消
 class WatchBondExchangeCancelOrder(Watcher):
@@ -360,9 +373,10 @@ class WatchBondExchangeCancelOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '注文キャンセル完了',
-                '注文のキャンセルが完了しました。',
-                )
+                         '注文キャンセル完了',
+                         '注文のキャンセルが完了しました。',
+                         )
+
 
 # イベント：約定（買）
 class WatchBondExchangeBuyAgreement(Watcher):
@@ -402,9 +416,10 @@ class WatchBondExchangeBuyAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '約定完了',
-                '買い注文が約定しました。代金の支払いを実施してください。',
-                )
+                         '約定完了',
+                         '買い注文が約定しました。代金の支払いを実施してください。',
+                         )
+
 
 # イベント：約定（売）
 class WatchBondExchangeSellAgreement(Watcher):
@@ -444,9 +459,10 @@ class WatchBondExchangeSellAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '約定完了',
-                '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
-                )
+                         '約定完了',
+                         '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
+                         )
+
 
 # イベント：決済OK（買）
 class WatchBondExchangeBuySettlementOK(Watcher):
@@ -486,9 +502,10 @@ class WatchBondExchangeBuySettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '決済完了',
-                '注文の決済が完了しました。',
-                )
+                         '決済完了',
+                         '注文の決済が完了しました。',
+                         )
+
 
 # イベント：決済OK（売）
 class WatchBondExchangeSellSettlementOK(Watcher):
@@ -528,9 +545,10 @@ class WatchBondExchangeSellSettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 1, entry["blockNumber"],
-                '決済完了',
-                '注文の決済が完了しました。',
-                )
+                         '決済完了',
+                         '注文の決済が完了しました。',
+                         )
+
 
 # イベント：決済NG（買）
 class WatchBondExchangeBuySettlementNG(Watcher):
@@ -570,9 +588,10 @@ class WatchBondExchangeBuySettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
-                '決済失敗',
-                '注文の決済が失敗しました。内容をご確認ください。',
-                )
+                         '決済失敗',
+                         '注文の決済が失敗しました。内容をご確認ください。',
+                         )
+
 
 # イベント：決済NG（売）
 class WatchBondExchangeSellSettlementNG(Watcher):
@@ -612,13 +631,16 @@ class WatchBondExchangeSellSettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '決済失敗',
-                '注文の決済が失敗しました。内容をご確認ください。',
-                )
+                         '決済失敗',
+                         '注文の決済が失敗しました。内容をご確認ください。',
+                         )
+
 
 '''
 会員権取引関連（IbetMembership）
 '''
+
+
 # イベント：会員権割当・譲渡
 class WatchMembershipTransfer(Watcher):
     def __init__(self):
@@ -653,9 +675,10 @@ class WatchMembershipTransfer(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["to"], 0, entry["blockNumber"],
-                '会員権発行完了',
-                '会員権が発行されました。保有トークンの一覧からご確認ください。',
-                )
+                         '会員権発行完了',
+                         '会員権が発行されました。保有トークンの一覧からご確認ください。',
+                         )
+
 
 # イベント：注文
 class WatchMembershipExchangeNewOrder(Watcher):
@@ -695,9 +718,10 @@ class WatchMembershipExchangeNewOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '新規注文完了',
-                '新規注文が完了しました。',
-                )
+                         '新規注文完了',
+                         '新規注文が完了しました。',
+                         )
+
 
 # イベント：注文取消
 class WatchMembershipExchangeCancelOrder(Watcher):
@@ -737,9 +761,10 @@ class WatchMembershipExchangeCancelOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '注文キャンセル完了',
-                '注文のキャンセルが完了しました。',
-                )
+                         '注文キャンセル完了',
+                         '注文のキャンセルが完了しました。',
+                         )
+
 
 # イベント：約定（買）
 class WatchMembershipExchangeBuyAgreement(Watcher):
@@ -779,9 +804,10 @@ class WatchMembershipExchangeBuyAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '約定完了',
-                '買い注文が約定しました。代金の支払いを実施してください。',
-                )
+                         '約定完了',
+                         '買い注文が約定しました。代金の支払いを実施してください。',
+                         )
+
 
 # イベント：約定（売）
 class WatchMembershipExchangeSellAgreement(Watcher):
@@ -821,9 +847,10 @@ class WatchMembershipExchangeSellAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '約定完了',
-                '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
-                )
+                         '約定完了',
+                         '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
+                         )
+
 
 # イベント：決済OK（買）
 class WatchMembershipExchangeBuySettlementOK(Watcher):
@@ -863,9 +890,10 @@ class WatchMembershipExchangeBuySettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '決済完了',
-                '注文の決済が完了しました。',
-                )
+                         '決済完了',
+                         '注文の決済が完了しました。',
+                         )
+
 
 # イベント：決済OK（売）
 class WatchMembershipExchangeSellSettlementOK(Watcher):
@@ -905,9 +933,10 @@ class WatchMembershipExchangeSellSettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 1, entry["blockNumber"],
-                '決済完了',
-                '注文の決済が完了しました。',
-                )
+                         '決済完了',
+                         '注文の決済が完了しました。',
+                         )
+
 
 # イベント：決済NG（買）
 class WatchMembershipExchangeBuySettlementNG(Watcher):
@@ -947,9 +976,10 @@ class WatchMembershipExchangeBuySettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
-                '決済失敗',
-                '注文の決済が失敗しました。内容をご確認ください。',
-                )
+                         '決済失敗',
+                         '注文の決済が失敗しました。内容をご確認ください。',
+                         )
+
 
 # イベント：決済NG（売）
 class WatchMembershipExchangeSellSettlementNG(Watcher):
@@ -989,13 +1019,16 @@ class WatchMembershipExchangeSellSettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '決済失敗',
-                '注文の決済が失敗しました。内容をご確認ください。',
-                )
+                         '決済失敗',
+                         '注文の決済が失敗しました。内容をご確認ください。',
+                         )
+
 
 '''
 クーポン取引関連（IbetCoupon）
 '''
+
+
 # イベント：クーポン割当・譲渡
 class WatchCouponTransfer(Watcher):
     def __init__(self):
@@ -1030,9 +1063,10 @@ class WatchCouponTransfer(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["to"], 0, entry["blockNumber"],
-                'クーポン発行完了',
-                'クーポンが発行されました。保有トークンの一覧からご確認ください。',
-                )
+                         'クーポン発行完了',
+                         'クーポンが発行されました。保有トークンの一覧からご確認ください。',
+                         )
+
 
 # イベント：注文
 class WatchCouponExchangeNewOrder(Watcher):
@@ -1072,9 +1106,10 @@ class WatchCouponExchangeNewOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '新規注文完了',
-                '新規注文が完了しました。',
-                )
+                         '新規注文完了',
+                         '新規注文が完了しました。',
+                         )
+
 
 # イベント：注文取消
 class WatchCouponExchangeCancelOrder(Watcher):
@@ -1114,9 +1149,10 @@ class WatchCouponExchangeCancelOrder(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["accountAddress"], 0, entry["blockNumber"],
-                '注文キャンセル完了',
-                '注文のキャンセルが完了しました。',
-                )
+                         '注文キャンセル完了',
+                         '注文のキャンセルが完了しました。',
+                         )
+
 
 # イベント：約定（買）
 class WatchCouponExchangeBuyAgreement(Watcher):
@@ -1156,9 +1192,10 @@ class WatchCouponExchangeBuyAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '約定完了',
-                '買い注文が約定しました。代金の支払いを実施してください。',
-                )
+                         '約定完了',
+                         '買い注文が約定しました。代金の支払いを実施してください。',
+                         )
+
 
 # イベント：約定（売）
 class WatchCouponExchangeSellAgreement(Watcher):
@@ -1198,9 +1235,10 @@ class WatchCouponExchangeSellAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '約定完了',
-                '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
-                )
+                         '約定完了',
+                         '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
+                         )
+
 
 # イベント：決済OK（買）
 class WatchCouponExchangeBuySettlementOK(Watcher):
@@ -1240,9 +1278,10 @@ class WatchCouponExchangeBuySettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 1, entry["blockNumber"],
-                '決済完了',
-                '注文の決済が完了しました。',
-                )
+                         '決済完了',
+                         '注文の決済が完了しました。',
+                         )
+
 
 # イベント：決済OK（売）
 class WatchCouponExchangeSellSettlementOK(Watcher):
@@ -1282,9 +1321,10 @@ class WatchCouponExchangeSellSettlementOK(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 1, entry["blockNumber"],
-                '決済完了',
-                '注文の決済が完了しました。',
-                )
+                         '決済完了',
+                         '注文の決済が完了しました。',
+                         )
+
 
 # イベント：決済NG（買）
 class WatchCouponExchangeBuySettlementNG(Watcher):
@@ -1324,9 +1364,10 @@ class WatchCouponExchangeBuySettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 1), entry["args"]["buyAddress"], 2, entry["blockNumber"],
-                '決済失敗',
-                '注文の決済が失敗しました。内容をご確認ください。',
-                )
+                         '決済失敗',
+                         '注文の決済が失敗しました。内容をご確認ください。',
+                         )
+
 
 # イベント：決済NG（売）
 class WatchCouponExchangeSellSettlementNG(Watcher):
@@ -1366,9 +1407,10 @@ class WatchCouponExchangeSellSettlementNG(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry, 2), entry["args"]["sellAddress"], 2, entry["blockNumber"],
-                '決済失敗',
-                '注文の決済が失敗しました。内容をご確認ください。',
-                )
+                         '決済失敗',
+                         '注文の決済が失敗しました。内容をご確認ください。',
+                         )
+
 
 def main():
     watchers = [
@@ -1405,7 +1447,7 @@ def main():
         WatchCouponExchangeSellSettlementNG(),
     ]
 
-    e = ThreadPoolExecutor(max_workers = WORKER_COUNT)
+    e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
     while True:
         start_time = time.time()
 
@@ -1420,6 +1462,7 @@ def main():
         time.sleep(max(SLEEP_INTERVAL - elapsed_time, 0))
 
     print("OK")
+
 
 if __name__ == "__main__":
     main()
