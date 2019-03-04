@@ -2,14 +2,14 @@ import json
 
 from falcon.util import json as util_json
 
-class TestV1LatestVersion():
+class TestV1RequiredVersion():
     # テスト対象API
-    apiurl = "/v1/LatestVersion"
+    apiurl = "/v1/RequiredVersion"
     request_body = json.dumps({})
     
     # ＜正常系1＞
     # iOSの場合
-    def test_latest_version_1(self, client):
+    def test_required_version_1(self, client):
         query_string = "platform=ios"
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -26,7 +26,7 @@ class TestV1LatestVersion():
 
     # ＜正常系2＞
     # Androidの場合
-    def test_latest_version_2(self, client):
+    def test_required_version_2(self, client):
         query_string = "platform=android"
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -43,7 +43,7 @@ class TestV1LatestVersion():
 
     #＜異常系1＞
     # iOS, Android以外の場合
-    def test_latest_version_error1(self, client):
+    def test_required_version_error_1(self, client):
         query_string = "platform=XXX"
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)

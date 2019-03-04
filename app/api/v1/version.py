@@ -12,23 +12,23 @@ from app.errors import InvalidParameterError
 LOG = log.get_logger()
 
 # ------------------------------
-# アプリケーションの最新バージョン取得
+# 動作保証アプリバーションの取得
 # ------------------------------
-class LatestVersion(BaseResource):
+class RequiredVersion(BaseResource):
     '''
-    Handle for endpoint: /v1/LatestVersion
+    Handle for endpoint: /v1/RequiredVersion
     '''
     def on_get(self, req, res):
-        LOG.info('v1.LatestVersion.Latest')
+        LOG.info('v1.Version.RequiredVersion')
 
-        request_json = LatestVersion.validate(req)
+        request_json = RequiredVersion.validate(req)
         
         if request_json['platform'] == "ios":
-            latestVersion = {"required_version":"2.0.0","type":"force","update_url":"https://itunes.apple.com/jp/app/mdaq/id489127768?mt=8"}
+            requiredVersion = {"required_version":"2.0.0","type":"force","update_url":"https://itunes.apple.com/jp/app/mdaq/id489127768?mt=8"}
         else:
-            latestVersion = {"required_version":"2.0.0","type":"force","update_url":"https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock"}
+            requiredVersion = {"required_version":"2.0.0","type":"force","update_url":"https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock"}
 
-        self.on_success(res, latestVersion)
+        self.on_success(res, requiredVersion)
     
     @staticmethod
     def validate(req):
