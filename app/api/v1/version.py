@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 
 from cerberus import Validator, ValidationError
 
 from app import log
 from app.api.common import BaseResource
-from app.utils.hooks import VerifySignature
 from app.errors import InvalidParameterError
 
 
@@ -28,7 +26,6 @@ class RequiredVersion(BaseResource):
         required_version_ios = os.environ.get('TMRAPP_REQUIRED_VERSION_IOS')
         force_ios = os.environ.get('TMRAPP_FORCE_UPDATE_IOS')
         url_ios = os.environ.get('TMRAPP_UPDATE_URL_IOS')
-        print(url_ios)
 
         # 環境変数の読み込み（Android）
         required_version_android = os.environ.get('TMRAPP_REQUIRED_VERSION_ANDROID')
@@ -38,12 +35,12 @@ class RequiredVersion(BaseResource):
         if request_json['platform'] == "ios":
             required_version = {
                 "required_version": required_version_ios, 
-                "force": force_ios, 
+                "type": force_ios,
                 "update_url": url_ios}
         else:
             required_version = {
                 "required_version": required_version_android, 
-                "force": force_android, 
+                "type": force_android,
                 "update_url": url_android}
 
         self.on_success(res, required_version)

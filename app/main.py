@@ -99,7 +99,7 @@ class App(falcon.API):
         self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
         self.add_route('/v1/Push/DeleteDevice', push.DeleteDevice())
 
-        # アプリケーション最新バージョン情報取得
+        # 動作保証アプリバーションの取得
         self.add_route('/v1/RequiredVersion', version.RequiredVersion())
 
         self.add_error_handler(AppError, AppError.handle)

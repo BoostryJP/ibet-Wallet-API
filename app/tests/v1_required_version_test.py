@@ -7,15 +7,14 @@ from falcon.util import json as util_json
 class TestV1RequiredVersion():
     # テスト対象API
     apiurl = "/v1/RequiredVersion"
-    request_body = json.dumps({})
 
     @staticmethod
     def set_env():
         os.environ["TMRAPP_REQUIRED_VERSION_IOS"] = '1.0.0'
-        os.environ["TMRAPP_FORCE_UPDATE_IOS"] = 'true'
+        os.environ["TMRAPP_FORCE_UPDATE_IOS"] = 'force'
         os.environ["TMRAPP_UPDATE_URL_IOS"] = 'https://itunes.apple.com/jp/app/mdaq/id489127768?mt=8'
         os.environ["TMRAPP_REQUIRED_VERSION_ANDROID"] = '1.0.0'
-        os.environ["TMRAPP_FORCE_UPDATE_ANDROID"] ='true'
+        os.environ["TMRAPP_FORCE_UPDATE_ANDROID"] = 'optional'
         os.environ["TMRAPP_UPDATE_URL_ANDROID"] = 'https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock'
         return
     
@@ -29,7 +28,7 @@ class TestV1RequiredVersion():
 
         assumed_body = {
             "required_version": "1.0.0",
-            "force": "true",
+            "type": "force",
             "update_url": "https://itunes.apple.com/jp/app/mdaq/id489127768?mt=8"
         }
 
@@ -47,7 +46,7 @@ class TestV1RequiredVersion():
 
         assumed_body = {
             "required_version": "1.0.0",
-            "force": "true",
+            "type": "optional",
             "update_url": "https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock"
         }
 
