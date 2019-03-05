@@ -11,10 +11,10 @@ class TestV1RequiredVersion():
     @staticmethod
     def set_env():
         os.environ["TMRAPP_REQUIRED_VERSION_IOS"] = '1.0.0'
-        os.environ["TMRAPP_FORCE_UPDATE_IOS"] = 'force'
+        os.environ["TMRAPP_FORCE_UPDATE_IOS"] = 'True'
         os.environ["TMRAPP_UPDATE_URL_IOS"] = 'https://itunes.apple.com/jp/app/mdaq/id489127768?mt=8'
         os.environ["TMRAPP_REQUIRED_VERSION_ANDROID"] = '1.0.0'
-        os.environ["TMRAPP_FORCE_UPDATE_ANDROID"] = 'optional'
+        os.environ["TMRAPP_FORCE_UPDATE_ANDROID"] = 'True'
         os.environ["TMRAPP_UPDATE_URL_ANDROID"] = 'https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock'
         return
     
@@ -28,7 +28,7 @@ class TestV1RequiredVersion():
 
         assumed_body = {
             "required_version": "1.0.0",
-            "type": "force",
+            "force": True,
             "update_url": "https://itunes.apple.com/jp/app/mdaq/id489127768?mt=8"
         }
 
@@ -46,7 +46,7 @@ class TestV1RequiredVersion():
 
         assumed_body = {
             "required_version": "1.0.0",
-            "type": "optional",
+            "force": True,
             "update_url": "https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock"
         }
 
