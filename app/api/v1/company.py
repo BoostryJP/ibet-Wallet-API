@@ -86,18 +86,18 @@ class PaymentAgentInfo(BaseResource):
             LOG.error('Failed To Get Data: %s', err)
             raise AppError
 
-        WhiteListContract = Contract.get_contract(
-            'WhiteList',
-            os.environ.get('WHITE_LIST_CONTRACT_ADDRESS')
+        PaymentGatewayContract = Contract.get_contract(
+            'PaymentGateway',
+            os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS')
         )
 
-        latest_terms_version = WhiteListContract.functions. \
+        latest_terms_version = PaymentGatewayContract.functions. \
             latest_terms_version(agent_address).call()
         if latest_terms_version == 0:
             raise DataNotExistsError('eth_address: %s' % eth_address)
         else:
             terms_version = latest_terms_version - 1
-            terms = WhiteListContract.functions.terms(agent_address, terms_version).call()
+            terms = PaymentGatewayContract.functions.terms(agent_address, terms_version).call()
             if not terms[1]:
                 raise DataNotExistsError('eth_address: %s' % eth_address)
 

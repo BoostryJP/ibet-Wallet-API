@@ -19,8 +19,8 @@ class NodeInfo(BaseResource):
         contracts = json.load(open('data/contracts.json' , 'r'))
 
         nodeInfo = {
-            'white_list_address': os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'),
-            'white_list_abi': contracts['WhiteList']['abi'],
+            'payment_gateway_address': os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS'),
+            'payment_gateway_abi': contracts['PaymentGateway']['abi'],
 
             'personal_info_address': os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS'),
             'personal_info_abi': contracts['PersonalInfo']['abi'],

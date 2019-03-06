@@ -28,23 +28,30 @@ def client():
     return TestAuthClient(App(middleware=middleware))
 
 @pytest.fixture(scope = 'session')
-def whitelist_contract():
+def payment_gateway_contract():
     deployer = eth_account['deployer']
+    agent = eth_account['agent']
+
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
 
     contract_address, abi = Contract.deploy_contract(
-        'WhiteList', [], deployer['account_address'])
+        'PaymentGateway', [], deployer['account_address'])
 
-    agent = eth_account['agent']
+    contract = Contract.get_contract('PaymentGateway', contract_address)
+    tx_hash = contract.functions.addAgent(0, agent['account_address']).transact(
+        {'from':deployer['account_address'], 'gas':4000000}
+    )
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
     web3.eth.defaultAccount = agent['account_address']
     web3.personal.unlockAccount(agent['account_address'],agent['password'])
 
-    contract = Contract.get_contract('WhiteList', contract_address)
-    tx_hash = contract.functions.register_terms('書面サンプル').transact(
+    contract = Contract.get_contract('PaymentGateway', contract_address)
+    tx_hash = contract.functions.addTerms('書面サンプル').transact(
         {'from':agent['account_address'], 'gas':4000000}
     )
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
     return {'address':contract_address, 'abi':abi}
 
@@ -60,12 +67,12 @@ def personalinfo_contract():
     return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
-def bond_exchange_contract(whitelist_address, personalinfo_address):
+def bond_exchange_contract(payment_gateway_address, personalinfo_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
 
-    args = [whitelist_address, personalinfo_address]
+    args = [payment_gateway_address, personalinfo_address]
 
     contract_address, abi = Contract.deploy_contract(
         'IbetStraightBondExchange', args, deployer['account_address'])
@@ -73,24 +80,28 @@ def bond_exchange_contract(whitelist_address, personalinfo_address):
     return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
-def membership_exchange_contract():
+def membership_exchange_contract(payment_gateway_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
 
+    args = [payment_gateway_address]
+
     contract_address, abi = Contract.deploy_contract(
-        'IbetMembershipExchange', [], deployer['account_address'])
+        'IbetMembershipExchange', args, deployer['account_address'])
 
     return {'address':contract_address, 'abi':abi}
 
 @pytest.fixture(scope = 'session')
-def coupon_exchange_contract():
+def coupon_exchange_contract(payment_gateway_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
     web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
 
+    args = [payment_gateway_address]
+
     contract_address, abi = Contract.deploy_contract(
-        'IbetCouponExchange', [], deployer['account_address'])
+        'IbetCouponExchange', args, deployer['account_address'])
 
     return {'address':contract_address, 'abi':abi}
 
@@ -107,14 +118,14 @@ def tokenlist_contract():
 
 @pytest.fixture(scope = 'session')
 def shared_contract():
-    white_list = whitelist_contract()
+    payment_gateway = payment_gateway_contract()
     personal_info = personalinfo_contract()
-    bond_exchange = bond_exchange_contract(white_list['address'], personal_info['address'])
-    membership_exchange = membership_exchange_contract()
-    coupon_exchange = coupon_exchange_contract()
+    bond_exchange = bond_exchange_contract(payment_gateway['address'], personal_info['address'])
+    membership_exchange = membership_exchange_contract(payment_gateway['address'])
+    coupon_exchange = coupon_exchange_contract(payment_gateway['address'])
     token_list = tokenlist_contract()
     contracts = {
-        'WhiteList': white_list,
+        'PaymentGateway': payment_gateway,
         'PersonalInfo': personal_info,
         'IbetStraightBondExchange': bond_exchange,
         'IbetMembershipExchange': membership_exchange,

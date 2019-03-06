@@ -47,7 +47,7 @@ class TestV1OrderList_Bond():
 
     # 注文中明細の作成：発行体
     @staticmethod
-    def order_event(bond_exchange, personal_info, white_list, token_list):
+    def order_event(bond_exchange, personal_info, payment_gateway, token_list):
         issuer = eth_account['issuer']
 
         attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange)
@@ -56,12 +56,12 @@ class TestV1OrderList_Bond():
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
         #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 決済用口座情報コントラクト（WhiteList）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
         #   5) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
         register_personalinfo(issuer, personal_info)
-        register_whitelist(issuer, white_list)
+        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         order_id = get_latest_orderid(bond_exchange) - 1
@@ -71,7 +71,7 @@ class TestV1OrderList_Bond():
 
     # 約定明細（決済中）の作成：投資家
     @staticmethod
-    def agreement_event(bond_exchange, personal_info, white_list, token_list):
+    def agreement_event(bond_exchange, personal_info, payment_gateway, token_list):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -82,20 +82,20 @@ class TestV1OrderList_Bond():
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
         #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 決済用口座情報コントラクト（WhiteList）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
         #   5) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
         register_personalinfo(issuer, personal_info)
-        register_whitelist(issuer, white_list)
+        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
         #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 決済用口座情報コントラクト（WhiteList）に投資家の情報を登録
+        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
         #   3) 買い注文
         register_personalinfo(trader, personal_info)
-        register_whitelist(trader, white_list)
+        register_payment_gateway(trader, payment_gateway)
         order_id = get_latest_orderid(bond_exchange) - 1
         take_buy_bond_token(trader, bond_exchange, order_id, 100)
         agreement_id = get_latest_agreementid(bond_exchange, order_id) - 1
@@ -104,7 +104,7 @@ class TestV1OrderList_Bond():
 
     # 決済済明細の作成：決済業者
     @staticmethod
-    def settlement_event(bond_exchange, personal_info, white_list, token_list):
+    def settlement_event(bond_exchange, personal_info, payment_gateway, token_list):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -115,20 +115,20 @@ class TestV1OrderList_Bond():
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
         #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 決済用口座情報コントラクト（WhiteList）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
         #   5) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
         register_personalinfo(issuer, personal_info)
-        register_whitelist(issuer, white_list)
+        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
         #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 決済用口座情報コントラクト（WhiteList）に投資家の情報を登録
+        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
         #   3) 買い注文
         register_personalinfo(trader, personal_info)
-        register_whitelist(trader, white_list)
+        register_payment_gateway(trader, payment_gateway)
         order_id = get_latest_orderid(bond_exchange) - 1
         take_buy_bond_token(trader, bond_exchange, order_id, 100)
 
@@ -144,7 +144,7 @@ class TestV1OrderList_Bond():
         membership_exchange = shared_contract['IbetMembershipExchange']
         coupon_exchange = shared_contract['IbetCouponExchange']
         personal_info = shared_contract['PersonalInfo']
-        white_list = shared_contract['WhiteList']
+        payment_gateway = shared_contract['PaymentGateway']
         token_list = shared_contract['TokenList']
         os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = \
             bond_exchange['address']
@@ -154,18 +154,18 @@ class TestV1OrderList_Bond():
             coupon_exchange['address']
         os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
         return bond_exchange, membership_exchange, coupon_exchange, \
-            personal_info, white_list, token_list
+            personal_info, payment_gateway, token_list
 
     # ＜正常系1＞
     # 注文中あり（1件）、決済中なし、約定済なし
     #  -> order_listが1件返却
     def test_orderlist_normal_1(self, client, session, shared_contract):
         bond_exchange, membership_exchange, coupon_exchange, \
-            personal_info, white_list, token_list = \
+            personal_info, payment_gateway, token_list = \
                 TestV1OrderList_Bond.set_env(shared_contract)
 
         bond_token, order_id, agreement_id = TestV1OrderList_Bond.order_event(
-            bond_exchange, personal_info, white_list, token_list)
+            bond_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['issuer']
         request_params = {"account_address_list": [account['account_address']]}
@@ -251,11 +251,11 @@ class TestV1OrderList_Bond():
     #  -> settlement_listが1件返却
     def test_orderlist_normal_2(self, client, session, shared_contract):
         bond_exchange, membership_exchange, coupon_exchange, \
-            personal_info, white_list, token_list = \
+            personal_info, payment_gateway, token_list = \
                 TestV1OrderList_Bond.set_env(shared_contract)
 
         bond_token, order_id, agreement_id = TestV1OrderList_Bond.agreement_event(
-            bond_exchange, personal_info, white_list, token_list)
+            bond_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
@@ -342,12 +342,12 @@ class TestV1OrderList_Bond():
     #  -> complete_listが1件返却
     def test_orderlist_normal_3(self, client, session, shared_contract):
         bond_exchange, membership_exchange, coupon_exchange, \
-            personal_info, white_list, token_list = \
+            personal_info, payment_gateway, token_list = \
                 TestV1OrderList_Bond.set_env(shared_contract)
 
         bond_token, order_id, agreement_id = \
             TestV1OrderList_Bond.settlement_event(
-                bond_exchange, personal_info, white_list, token_list)
+                bond_exchange, personal_info, payment_gateway, token_list)
 
         token_address = bond_token['address']
 

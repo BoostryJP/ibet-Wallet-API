@@ -19,8 +19,8 @@ class TestV1NodeInfo():
 
         contracts = json.load(open('data/contracts.json' , 'r'))
 
-        whitelist_address = os.environ.get('WHITE_LIST_CONTRACT_ADDRESS')
-        whitelist_abi = contracts['WhiteList']['abi']
+        payment_gateway_address = os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS')
+        payment_gateway_abi = contracts['PaymentGateway']['abi']
 
         personalinfo_address = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
         personalinfo_abi = contracts['PersonalInfo']['abi']
@@ -40,8 +40,8 @@ class TestV1NodeInfo():
         agent_address = os.environ.get('AGENT_ADDRESS')
 
         assumed_body = {
-            'white_list_address': whitelist_address,
-            'white_list_abi': whitelist_abi,
+            'payment_gateway_address': payment_gateway_address,
+            'payment_gateway_abi': payment_gateway_abi,
             'personal_info_address': personalinfo_address,
             'personal_info_abi': personalinfo_abi,
             'ibet_exchange_address': bond_exchange_address,

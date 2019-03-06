@@ -122,7 +122,7 @@ curl -X GET \
 * `ip_address` : （任意設定）発行会社のノードのパブリックIP
 * `rsa_publickey` : 発行会社にのみ通知する暗号化情報を登録するためのRSA公開鍵。
 * `homepage` : （任意設定）企業HPのURL
-* `terms` : 収納代行業者のサービス利用規約本文。収納代行業者がWhiteListコントラクトに登録したもの。
+* `terms` : 収納代行業者のサービス利用規約本文。収納代行業者がPaymentGatewayコントラクトに登録したもの。
 
 #### Status: 400 Bad Request
 * `{eth_address}`のアドレスフォーマットが不正な場合。

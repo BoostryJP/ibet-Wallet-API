@@ -63,8 +63,8 @@ cp_exchange_contract = Contract.get_contract(
 membership_exchange_contract = Contract.get_contract(
     'IbetMembershipExchange',
     os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
-white_list_contract = Contract.get_contract(
-    'WhiteList', os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'))
+payment_gateway_contract = Contract.get_contract(
+    'PaymentGateway', os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS'))
 list_contract = Contract.get_contract(
     'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
 
@@ -73,7 +73,7 @@ token_list = TokenList(list_contract)
 
 def push_publish(notification_id, address, priority, blocknumber, subject, message):
     # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
-    # 「対象のblockNumer」が起動時のblockNumer以上の場合は送信
+    # 「対象のblockNumber」が起動時のblockNumber以上の場合は送信
     if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
         # 通知tableの情報取得
         query_notification = db_session.query(Notification). \
@@ -156,22 +156,19 @@ class Watcher:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
-
 '''
-決済用口座認可関連（WhiteList）
+決済用口座認可関連（PaymentGateway）
 '''
-
-
 # イベント：決済用口座登録
-class WatchWhiteListRegister(Watcher):
+class WatchPaymentAccountRegister(Watcher):
     def __init__(self):
-        super().__init__(white_list_contract, "Register", {})
+        super().__init__(payment_gateway_contract, "Register", {})
 
     def watch(self, entries):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "WhiteListRegister"
+            notification.notification_type = "PaymentAccountRegister"
             notification.priority = 2
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -186,17 +183,16 @@ class WatchWhiteListRegister(Watcher):
                          '決済用口座情報登録が完了しました。',
                          )
 
-
 # イベント：決済用口座承認
-class WatchWhiteListApprove(Watcher):
+class WatchPaymentAccountApprove(Watcher):
     def __init__(self):
-        super().__init__(white_list_contract, "Approve", {})
+        super().__init__(payment_gateway_contract, "Approve", {})
 
     def watch(self, entries):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "WhiteListApprove"
+            notification.notification_type = "PaymentAccountApprove"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -211,17 +207,16 @@ class WatchWhiteListApprove(Watcher):
                          '決済用口座が承認されました。',
                          )
 
-
 # イベント：決済用口座警告
-class WatchWhiteListWarn(Watcher):
+class WatchPaymentAccountWarn(Watcher):
     def __init__(self):
-        super().__init__(white_list_contract, "Warn", {})
+        super().__init__(payment_gateway_contract, "Warn", {})
 
     def watch(self, entries):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "WhiteListWarn"
+            notification.notification_type = "PaymentAccountWarn"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -236,17 +231,16 @@ class WatchWhiteListWarn(Watcher):
                          '決済用口座の情報が確認できませんでした。',
                          )
 
-
 # イベント：決済用口座非承認
-class WatchWhiteListUnapprove(Watcher):
+class WatchPaymentAccountUnapprove(Watcher):
     def __init__(self):
-        super().__init__(white_list_contract, "Unapprove", {})
+        super().__init__(payment_gateway_contract, "Unapprove", {})
 
     def watch(self, entries):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "WhiteListUnapprove"
+            notification.notification_type = "PaymentAccountUnapprove"
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -261,17 +255,16 @@ class WatchWhiteListUnapprove(Watcher):
                          '決済用口座の承認ステータスが変更されました。',
                          )
 
-
 # イベント：決済用口座アカウント停止
-class WatchWhiteListBan(Watcher):
+class WatchPaymentAccountBan(Watcher):
     def __init__(self):
-        super().__init__(white_list_contract, "Ban", {})
+        super().__init__(payment_gateway_contract, "Ban", {})
 
     def watch(self, entries):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "WhiteListBan"
+            notification.notification_type = "PaymentAccountBan"
             notification.priority = 2
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -286,14 +279,11 @@ class WatchWhiteListBan(Watcher):
                          '決済用の口座の認証が取り消されました。',
                          )
 
-
 '''
-普通社債取引関連（IbetStraightBond）
+普通社債取引関連（IbetStraightBondExchange）
 '''
-
-
 # イベント：注文
-class WatchBondExchangeNewOrder(Watcher):
+class WatchBondNewOrder(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "NewOrder", {})
 
@@ -334,9 +324,8 @@ class WatchBondExchangeNewOrder(Watcher):
                          '新規注文が完了しました。',
                          )
 
-
 # イベント：注文取消
-class WatchBondExchangeCancelOrder(Watcher):
+class WatchBondCancelOrder(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "CancelOrder", {})
 
@@ -377,9 +366,8 @@ class WatchBondExchangeCancelOrder(Watcher):
                          '注文のキャンセルが完了しました。',
                          )
 
-
 # イベント：約定（買）
-class WatchBondExchangeBuyAgreement(Watcher):
+class WatchBondBuyAgreement(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "Agree", {})
 
@@ -420,9 +408,8 @@ class WatchBondExchangeBuyAgreement(Watcher):
                          '買い注文が約定しました。代金の支払いを実施してください。',
                          )
 
-
 # イベント：約定（売）
-class WatchBondExchangeSellAgreement(Watcher):
+class WatchBondSellAgreement(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "Agree", {})
 
@@ -463,9 +450,8 @@ class WatchBondExchangeSellAgreement(Watcher):
                          '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
                          )
 
-
 # イベント：決済OK（買）
-class WatchBondExchangeBuySettlementOK(Watcher):
+class WatchBondBuySettlementOK(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementOK", {})
 
@@ -506,9 +492,8 @@ class WatchBondExchangeBuySettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
-
 # イベント：決済OK（売）
-class WatchBondExchangeSellSettlementOK(Watcher):
+class WatchBondSellSettlementOK(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementOK", {})
 
@@ -549,9 +534,8 @@ class WatchBondExchangeSellSettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
-
 # イベント：決済NG（買）
-class WatchBondExchangeBuySettlementNG(Watcher):
+class WatchBondBuySettlementNG(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementNG", {})
 
@@ -592,9 +576,8 @@ class WatchBondExchangeBuySettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
-
 # イベント：決済NG（売）
-class WatchBondExchangeSellSettlementNG(Watcher):
+class WatchBondSellSettlementNG(Watcher):
     def __init__(self):
         super().__init__(sb_exchange_contract, "SettlementNG", {})
 
@@ -635,12 +618,9 @@ class WatchBondExchangeSellSettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
-
 '''
-会員権取引関連（IbetMembership）
+会員権取引関連（IbetMembershipExchange）
 '''
-
-
 # イベント：会員権割当・譲渡
 class WatchMembershipTransfer(Watcher):
     def __init__(self):
@@ -679,9 +659,8 @@ class WatchMembershipTransfer(Watcher):
                          '会員権が発行されました。保有トークンの一覧からご確認ください。',
                          )
 
-
 # イベント：注文
-class WatchMembershipExchangeNewOrder(Watcher):
+class WatchMembershipNewOrder(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "NewOrder", {})
 
@@ -722,9 +701,8 @@ class WatchMembershipExchangeNewOrder(Watcher):
                          '新規注文が完了しました。',
                          )
 
-
 # イベント：注文取消
-class WatchMembershipExchangeCancelOrder(Watcher):
+class WatchMembershipCancelOrder(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "CancelOrder", {})
 
@@ -765,9 +743,8 @@ class WatchMembershipExchangeCancelOrder(Watcher):
                          '注文のキャンセルが完了しました。',
                          )
 
-
 # イベント：約定（買）
-class WatchMembershipExchangeBuyAgreement(Watcher):
+class WatchMembershipBuyAgreement(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "Agree", {})
 
@@ -808,9 +785,8 @@ class WatchMembershipExchangeBuyAgreement(Watcher):
                          '買い注文が約定しました。代金の支払いを実施してください。',
                          )
 
-
 # イベント：約定（売）
-class WatchMembershipExchangeSellAgreement(Watcher):
+class WatchMembershipSellAgreement(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "Agree", {})
 
@@ -851,9 +827,8 @@ class WatchMembershipExchangeSellAgreement(Watcher):
                          '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
                          )
 
-
 # イベント：決済OK（買）
-class WatchMembershipExchangeBuySettlementOK(Watcher):
+class WatchMembershipBuySettlementOK(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementOK", {})
 
@@ -894,9 +869,8 @@ class WatchMembershipExchangeBuySettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
-
 # イベント：決済OK（売）
-class WatchMembershipExchangeSellSettlementOK(Watcher):
+class WatchMembershipSellSettlementOK(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementOK", {})
 
@@ -937,9 +911,8 @@ class WatchMembershipExchangeSellSettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
-
 # イベント：決済NG（買）
-class WatchMembershipExchangeBuySettlementNG(Watcher):
+class WatchMembershipBuySettlementNG(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementNG", {})
 
@@ -980,9 +953,8 @@ class WatchMembershipExchangeBuySettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
-
 # イベント：決済NG（売）
-class WatchMembershipExchangeSellSettlementNG(Watcher):
+class WatchMembershipSellSettlementNG(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementNG", {})
 
@@ -1023,12 +995,9 @@ class WatchMembershipExchangeSellSettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
-
 '''
-クーポン取引関連（IbetCoupon）
+クーポン取引関連（IbetCouponExchange）
 '''
-
-
 # イベント：クーポン割当・譲渡
 class WatchCouponTransfer(Watcher):
     def __init__(self):
@@ -1067,9 +1036,8 @@ class WatchCouponTransfer(Watcher):
                          'クーポンが発行されました。保有トークンの一覧からご確認ください。',
                          )
 
-
 # イベント：注文
-class WatchCouponExchangeNewOrder(Watcher):
+class WatchCouponNewOrder(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "NewOrder", {})
 
@@ -1110,9 +1078,8 @@ class WatchCouponExchangeNewOrder(Watcher):
                          '新規注文が完了しました。',
                          )
 
-
 # イベント：注文取消
-class WatchCouponExchangeCancelOrder(Watcher):
+class WatchCouponCancelOrder(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "CancelOrder", {})
 
@@ -1153,9 +1120,8 @@ class WatchCouponExchangeCancelOrder(Watcher):
                          '注文のキャンセルが完了しました。',
                          )
 
-
 # イベント：約定（買）
-class WatchCouponExchangeBuyAgreement(Watcher):
+class WatchCouponBuyAgreement(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "Agree", {})
 
@@ -1196,9 +1162,8 @@ class WatchCouponExchangeBuyAgreement(Watcher):
                          '買い注文が約定しました。代金の支払いを実施してください。',
                          )
 
-
 # イベント：約定（売）
-class WatchCouponExchangeSellAgreement(Watcher):
+class WatchCouponSellAgreement(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "Agree", {})
 
@@ -1239,9 +1204,8 @@ class WatchCouponExchangeSellAgreement(Watcher):
                          '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
                          )
 
-
 # イベント：決済OK（買）
-class WatchCouponExchangeBuySettlementOK(Watcher):
+class WatchCouponBuySettlementOK(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementOK", {})
 
@@ -1282,9 +1246,8 @@ class WatchCouponExchangeBuySettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
-
 # イベント：決済OK（売）
-class WatchCouponExchangeSellSettlementOK(Watcher):
+class WatchCouponSellSettlementOK(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementOK", {})
 
@@ -1325,9 +1288,8 @@ class WatchCouponExchangeSellSettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
-
 # イベント：決済NG（買）
-class WatchCouponExchangeBuySettlementNG(Watcher):
+class WatchCouponBuySettlementNG(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementNG", {})
 
@@ -1368,9 +1330,8 @@ class WatchCouponExchangeBuySettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
-
 # イベント：決済NG（売）
-class WatchCouponExchangeSellSettlementNG(Watcher):
+class WatchCouponSellSettlementNG(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementNG", {})
 
@@ -1411,40 +1372,39 @@ class WatchCouponExchangeSellSettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
-
 def main():
     watchers = [
-        WatchWhiteListRegister(),
-        WatchWhiteListApprove(),
-        WatchWhiteListWarn(),
-        WatchWhiteListUnapprove(),
-        WatchWhiteListBan(),
-        WatchBondExchangeNewOrder(),
-        WatchBondExchangeCancelOrder(),
-        WatchBondExchangeBuyAgreement(),
-        WatchBondExchangeSellAgreement(),
-        WatchBondExchangeBuySettlementOK(),
-        WatchBondExchangeSellSettlementOK(),
-        WatchBondExchangeBuySettlementNG(),
-        WatchBondExchangeSellSettlementNG(),
+        WatchPaymentAccountRegister(),
+        WatchPaymentAccountApprove(),
+        WatchPaymentAccountWarn(),
+        WatchPaymentAccountUnapprove(),
+        WatchPaymentAccountBan(),
+        WatchBondNewOrder(),
+        WatchBondCancelOrder(),
+        WatchBondBuyAgreement(),
+        WatchBondSellAgreement(),
+        WatchBondBuySettlementOK(),
+        WatchBondSellSettlementOK(),
+        WatchBondBuySettlementNG(),
+        WatchBondSellSettlementNG(),
         WatchMembershipTransfer(),
-        WatchMembershipExchangeNewOrder(),
-        WatchMembershipExchangeCancelOrder(),
-        WatchMembershipExchangeBuyAgreement(),
-        WatchMembershipExchangeSellAgreement(),
-        WatchMembershipExchangeBuySettlementOK(),
-        WatchMembershipExchangeSellSettlementOK(),
-        WatchMembershipExchangeBuySettlementNG(),
-        WatchMembershipExchangeSellSettlementNG(),
+        WatchMembershipNewOrder(),
+        WatchMembershipCancelOrder(),
+        WatchMembershipBuyAgreement(),
+        WatchMembershipSellAgreement(),
+        WatchMembershipBuySettlementOK(),
+        WatchMembershipSellSettlementOK(),
+        WatchMembershipBuySettlementNG(),
+        WatchMembershipSellSettlementNG(),
         WatchCouponTransfer(),
-        WatchCouponExchangeNewOrder(),
-        WatchCouponExchangeCancelOrder(),
-        WatchCouponExchangeBuyAgreement(),
-        WatchCouponExchangeSellAgreement(),
-        WatchCouponExchangeBuySettlementOK(),
-        WatchCouponExchangeSellSettlementOK(),
-        WatchCouponExchangeBuySettlementNG(),
-        WatchCouponExchangeSellSettlementNG(),
+        WatchCouponNewOrder(),
+        WatchCouponCancelOrder(),
+        WatchCouponBuyAgreement(),
+        WatchCouponSellAgreement(),
+        WatchCouponBuySettlementOK(),
+        WatchCouponSellSettlementOK(),
+        WatchCouponBuySettlementNG(),
+        WatchCouponSellSettlementNG(),
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)

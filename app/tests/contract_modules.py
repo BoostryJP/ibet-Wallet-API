@@ -32,9 +32,9 @@ def register_personalinfo(invoker, personal_info):
 
 
 # 決済用銀行口座情報登録
-def register_whitelist(invoker, white_list):
-    WhiteListContract = Contract.get_contract(
-        'WhiteList', white_list['address'])
+def register_payment_gateway(invoker, payment_gateway):
+    PaymentGatewayContract = Contract.get_contract(
+        'PaymentGateway', payment_gateway['address'])
 
     # 1) 登録 from Invoker
     web3.eth.defaultAccount = invoker['account_address']
@@ -42,7 +42,7 @@ def register_whitelist(invoker, white_list):
 
     agent = eth_account['agent']
     encrypted_info = 'some_encrypted_info'
-    tx_hash = WhiteListContract.functions.register(
+    tx_hash = PaymentGatewayContract.functions.register(
         agent['account_address'], encrypted_info).\
         transact({'from':invoker['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
@@ -51,7 +51,7 @@ def register_whitelist(invoker, white_list):
     web3.eth.defaultAccount = agent['account_address']
     web3.personal.unlockAccount(agent['account_address'], agent['password'])
 
-    tx_hash = WhiteListContract.functions.approve(invoker['account_address']).\
+    tx_hash = PaymentGatewayContract.functions.approve(invoker['account_address']).\
         transact({'from':agent['account_address'], 'gas':4000000})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
