@@ -180,6 +180,12 @@ $ pip list
 
 ## 3. アプリケーションの実行
 
+* 環境変数の設定
+
+```~/.bash_profile
+export $WORKER_COUNT=8
+```
+
 * PostgreSQLサーバが起動している状態で、以下のコマンドを実行する
 * API Server is starting というメッセージが表示されたら、起動成功
 
