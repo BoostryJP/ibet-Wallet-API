@@ -28,12 +28,30 @@ curl -X GET　\
     },
     "data": {
         "required_version": "1.0.0",
-        "force": True,
+        "force": true,
         "update_url": "https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock"
     }
 }
 ```
 
 * `required_version` : 動作保証しているアプリケーションバージョン（iOS/Androidで異なる）
-* `force` : 強制アップデートの要否（`True` or `False`）
+* `force` : 強制アップデートの要否（`true` or `false`）
 * `update_url` : アップデートさせるアプリケーションのダウンロードURL
+
+
+#### Status: 400 Bad Request
+* 入力値エラー
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": {
+            "platform": "unallowed value "
+        }
+    }
+}
+```
+* `description` : エラー内容
+
