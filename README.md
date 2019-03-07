@@ -99,7 +99,7 @@ export PGDATA=/usr/local/var/postgres
 
 ```
 $ sudo su - postgres
-$ psql
+$ psql -d postgres
 postgres=# CREATE ROLE ethuser LOGIN CREATEDB PASSWORD 'ethpass';
 CREATE ROLE
 ```
