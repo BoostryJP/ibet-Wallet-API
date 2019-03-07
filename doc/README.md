@@ -9,7 +9,7 @@
 
 ```sh
 $ cd ./tmr-node/doc/
-$ pip install -r requirements.text
+$ pip install -r requirements.txt
 ```
 
 ## ドキュメントの作成
