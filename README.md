@@ -182,8 +182,9 @@ $ pip list
 
 * 環境変数の設定
 
-```~/.bash_profile
-export $WORKER_COUNT=8
+`~/.bash_profile`
+```
+export WORKER_COUNT=8
 ```
 
 * PostgreSQLサーバが起動している状態で、以下のコマンドを実行する
