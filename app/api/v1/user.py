@@ -33,18 +33,17 @@ class PaymentAccount(BaseResource):
 
         request_json = PaymentAccount.validate(req)
 
-        # WhiteList Contract
-        WhiteListContract = Contract.get_contract(
-            'WhiteList', os.environ.get('WHITE_LIST_CONTRACT_ADDRESS'))
+        PaymentGatewayContract = Contract.get_contract(
+            'PaymentGateway', os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS'))
 
         # 口座登録・承認状況を参照
-        account_info = WhiteListContract.functions.payment_accounts(
+        account_info = PaymentGatewayContract.functions.payment_accounts(
             to_checksum_address(request_json['account_address']),
             to_checksum_address(request_json['agent_address'])
         ).call()
 
         # 最新版の利用規約の同意ステータスを参照
-        agreement_status = WhiteListContract.functions.isAgreed(
+        agreement_status = PaymentGatewayContract.functions.termAgreementStatus(
             to_checksum_address(request_json['account_address']),
             to_checksum_address(request_json['agent_address'])
         ).call()

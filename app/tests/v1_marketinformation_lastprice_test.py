@@ -5,7 +5,7 @@ import os
 
 from .account_config import eth_account
 from .contract_modules import issue_bond_token, offer_bond_token, \
-    register_personalinfo, register_whitelist, take_buy_bond_token, get_latest_orderid, \
+    register_personalinfo, register_payment_gateway, take_buy_bond_token, get_latest_orderid, \
     membership_issue, membership_offer, membership_get_latest_orderid, \
     membership_take_buy, issue_coupon_token, coupon_offer, \
     coupon_get_latest_orderid, coupon_take_buy
@@ -20,7 +20,7 @@ class TestV1StraightBondLastPrice():
 
     # 約定イベントの作成
     @staticmethod
-    def generate_agree_event(bond_exchange, personal_info, white_list):
+    def generate_agree_event(bond_exchange, personal_info, payment_gateway):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
 
@@ -54,12 +54,12 @@ class TestV1StraightBondLastPrice():
         # 発行体オペレーション
         bond_token = issue_bond_token(issuer, attribute)
         register_personalinfo(issuer, personal_info)
-        register_whitelist(issuer, white_list)
+        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # 投資家オペレーション
         register_personalinfo(trader, personal_info)
-        register_whitelist(trader, white_list)
+        register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
         take_buy_bond_token(trader, bond_exchange, latest_orderid - 1, 100)
 
@@ -119,10 +119,10 @@ class TestV1StraightBondLastPrice():
     def test_lastprice_normal_3(self, client, shared_contract):
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
-        white_list = shared_contract['WhiteList']
+        payment_gateway = shared_contract['PaymentGateway']
 
         bond_token = TestV1StraightBondLastPrice.\
-            generate_agree_event(bond_exchange, personal_info, white_list)
+            generate_agree_event(bond_exchange, personal_info, payment_gateway)
 
         token_address = bond_token['address']
         request_params = {"address_list": [token_address]}

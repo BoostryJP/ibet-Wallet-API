@@ -119,11 +119,11 @@ curl -X GET \
               "is_deleted": false,
               "deleted_at": null,
               "args": {
-                  "hoge": "fuga",
+                  "hoge": "fuga"
               },
               "metainfo": {
                   "aaa": "bbb"
-              },
+              }
           },
           {
               "notification_type": "SampleNotification3",
@@ -136,21 +136,21 @@ curl -X GET \
               "is_deleted": false,
               "deleted_at": null,
               "args": {
-                  "hoge": "fuga",
+                  "hoge": "fuga"
               },
               "metainfo": {
-              },
-          },
+              }
+          }
         ]
     }
 }
 ```
 * `notification_type` : 通知タイプ
-  * `WhiteListRegister` : 決済用口座登録
-  * `WhiteListApprove` : 決済用口座承認
-  * `WhiteListWarn` : 決済用口座警告
-  * `WhiteListUnapprove` : 決済用口座非承認
-  * `WhiteListBan` : 決済用口座アカウント停止
+  * `PaymentAccountRegister` : 決済用口座登録
+  * `PaymentAccountApprove` : 決済用口座承認
+  * `PaymentAccountWarn` : 決済用口座警告
+  * `PaymentAccountUnapprove` : 決済用口座非承認
+  * `PaymentAccountBan` : 決済用口座アカウント停止
   * `NewOrder` : 新規注文
   * `CancelOrder` : 注文取消
   * `BuyAgreement` : 買約定
@@ -286,11 +286,11 @@ curl -X POST \
               "is_deleted": false,
               "deleted_at": null,
               "args": {
-                  "hoge": "fuga",
+                  "hoge": "fuga"
               },
               "metainfo": {
                   "aaa": "bbb"
-              },
+              }
           },
           {
               "notification_type": "SampleNotification3",
@@ -303,11 +303,11 @@ curl -X POST \
               "is_deleted": false,
               "deleted_at": null,
               "args": {
-                  "hoge": "fuga",
+                  "hoge": "fuga"
               },
               "metainfo": {
-              },
-          },
+              }
+          }
         ]
     }
 }

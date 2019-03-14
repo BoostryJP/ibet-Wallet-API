@@ -6,7 +6,7 @@ from .account_config import eth_account
 
 '''
 決済代行業者情報参照API
-/v1/Company/{eth_address}
+/v1/PaymentAgent/{eth_address}
 '''
 class TestV1CompanyPaymentAgentInfo():
 
@@ -18,9 +18,8 @@ class TestV1CompanyPaymentAgentInfo():
         eth_address = eth_account['agent']['account_address']
         apiurl = self.apiurl_base + eth_address
 
-        # 決済用口座認可コントラクト（WhiteList）
-        white_list = shared_contract['WhiteList']
-        os.environ["WHITE_LIST_CONTRACT_ADDRESS"] = white_list['address']
+        payment_gateway = shared_contract['PaymentGateway']
+        os.environ["PAYMENT_GATEWAY_CONTRACT_ADDRESS"] = payment_gateway['address']
 
         resp = client.simulate_get(apiurl)
         assumed_body = {

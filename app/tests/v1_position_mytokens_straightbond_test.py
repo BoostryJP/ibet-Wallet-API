@@ -7,7 +7,7 @@ from app.model import Listing
 
 from .account_config import eth_account
 from .contract_modules import issue_bond_token, offer_bond_token, \
-    register_personalinfo, register_whitelist, take_buy_bond_token, get_latest_orderid, \
+    register_personalinfo, register_payment_gateway, take_buy_bond_token, get_latest_orderid, \
     register_bond_list, get_latest_agreementid, bond_confirm_agreement
 
 # [普通社債]保有トークン一覧API
@@ -20,7 +20,7 @@ class TestV1StraightBondMyTokens():
     # 債券トークンの保有状態（約定イベント）を作成
     @staticmethod
     def generate_bond_position(bond_exchange, personal_info,
-        white_list, token_list):
+        payment_gateway, token_list):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -56,20 +56,20 @@ class TestV1StraightBondMyTokens():
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
         #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 決済用口座情報コントラクト（WhiteList）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
         #   5) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
         register_personalinfo(issuer, personal_info)
-        register_whitelist(issuer, white_list)
+        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
         #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 決済用口座情報コントラクト（WhiteList）に投資家の情報を登録
+        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
         #   3) 買い注文
         register_personalinfo(trader, personal_info)
-        register_whitelist(trader, white_list)
+        register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
         take_buy_bond_token(trader, bond_exchange, latest_orderid - 1, 100)
 
@@ -96,14 +96,14 @@ class TestV1StraightBondMyTokens():
     def test_position_normal_1(self, client, session, shared_contract):
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
-        white_list = shared_contract['WhiteList']
+        payment_gateway = shared_contract['PaymentGateway']
         token_list = shared_contract['TokenList']
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
         bond_token = TestV1StraightBondMyTokens.generate_bond_position(
-            bond_exchange, personal_info, white_list, token_list)
+            bond_exchange, personal_info, payment_gateway, token_list)
         token_address = bond_token['address']
 
         # 取扱トークンデータ挿入

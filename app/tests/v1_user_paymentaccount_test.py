@@ -3,7 +3,7 @@ import json
 import os
 
 from .account_config import eth_account
-from .contract_modules import register_whitelist
+from .contract_modules import register_payment_gateway
 
 
 # 決済用口座登録状況参照API
@@ -20,12 +20,12 @@ class TestV1PaymentAccount():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        # 決済用口座認可コントラクト（WhiteList）
-        white_list = shared_contract['WhiteList']
-        os.environ["WHITE_LIST_CONTRACT_ADDRESS"] = white_list['address']
+        # 収納代行コントラクト（PaymentGateway）
+        payment_gateway = shared_contract['PaymentGateway']
+        os.environ["PAYMENT_GATEWAY_CONTRACT_ADDRESS"] = payment_gateway['address']
 
         # データ準備：決済用口座情報登録->認可
-        register_whitelist(trader, white_list)
+        register_payment_gateway(trader, payment_gateway)
 
         query_string = 'account_address=' + trader['account_address'] + \
             '&agent_address=' + agent['account_address']
@@ -50,9 +50,9 @@ class TestV1PaymentAccount():
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent = eth_account['agent']
 
-        # 決済用口座認可コントラクト（WhiteList）
-        white_list = shared_contract['WhiteList']
-        os.environ["WHITE_LIST_CONTRACT_ADDRESS"] = white_list['address']
+        # 収納代行コントラクト（PaymentGateway）
+        payment_gateway = shared_contract['PaymentGateway']
+        os.environ["PAYMENT_GATEWAY_CONTRACT_ADDRESS"] = payment_gateway['address']
 
         query_string = 'account_address=' + trader + \
             '&agent_address=' + agent['account_address']
