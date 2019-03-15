@@ -259,13 +259,13 @@ class TestV1CouponMyTokens():
                 'expirationDate': '20191231',
                 'transferable': True,
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }],
                 'status': True
@@ -325,13 +325,13 @@ class TestV1CouponMyTokens():
                 'expirationDate': '20191231',
                 'transferable': True,
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }],
                 'status': False
@@ -390,13 +390,13 @@ class TestV1CouponMyTokens():
                 'expirationDate': '20191231',
                 'transferable': True,
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }],
                 'status': True
@@ -454,13 +454,13 @@ class TestV1CouponMyTokens():
                 'expirationDate': '20191231',
                 'transferable': True,
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }],
                 'status': True

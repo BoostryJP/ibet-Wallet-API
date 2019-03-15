@@ -141,9 +141,9 @@ class MyTokens(BaseResource):
                             returnDate = BondTokenContract.functions.returnDate().call()
                             returnAmount = BondTokenContract.functions.returnAmount().call()
                             purpose = BondTokenContract.functions.purpose().call()
-                            image_url_small = BondTokenContract.functions.getImageURL(0).call()
-                            image_url_medium = BondTokenContract.functions.getImageURL(1).call()
-                            image_url_large = BondTokenContract.functions.getImageURL(2).call()
+                            image_url_1 = BondTokenContract.functions.getImageURL(0).call()
+                            image_url_2 = BondTokenContract.functions.getImageURL(1).call()
+                            image_url_3 = BondTokenContract.functions.getImageURL(2).call()
                             owner_address = BondTokenContract.functions.owner().call()
                             company_name, rsa_publickey = \
                                 MyTokens.get_company_name(company_list, owner_address)
@@ -181,9 +181,9 @@ class MyTokens(BaseResource):
                                     'returnAmount': returnAmount,
                                     'purpose': purpose,
                                     'image_url': [
-                                        {'type': 'small', 'url': image_url_small},
-                                        {'type': 'medium', 'url': image_url_medium},
-                                        {'type': "large", 'url': image_url_large}
+                                        {'id': 1, 'url': image_url_1},
+                                        {'id': 2, 'url': image_url_2},
+                                        {'id': 3, 'url': image_url_3}
                                     ],
                                     'certification': certification
                                 },
@@ -301,9 +301,9 @@ class MembershipMyTokens(BaseResource):
                             memo = TokenContract.functions.memo().call()
                             transferable = TokenContract.functions.transferable().call()
                             status = TokenContract.functions.status().call()
-                            image_url_small = TokenContract.functions.getImageURL(0).call()
-                            image_url_medium = TokenContract.functions.getImageURL(1).call()
-                            image_url_large = TokenContract.functions.getImageURL(2).call()
+                            image_url_1 = TokenContract.functions.getImageURL(0).call()
+                            image_url_2 = TokenContract.functions.getImageURL(1).call()
+                            image_url_3 = TokenContract.functions.getImageURL(2).call()
                             owner_address = TokenContract.functions.owner().call()
                             company_name, rsa_publickey = MembershipMyTokens.\
                                 get_company_name(company_list, owner_address)
@@ -324,9 +324,9 @@ class MembershipMyTokens(BaseResource):
                                     'transferable': transferable,
                                     'status': status,
                                     'image_url': [
-                                        {'type': 'small', 'url': image_url_small},
-                                        {'type': 'medium', 'url': image_url_medium},
-                                        {'type': "large", 'url': image_url_large}
+                                        {'id': 1, 'url': image_url_1},
+                                        {'id': 2, 'url': image_url_2},
+                                        {'id': 3, 'url': image_url_3}
                                     ],
                                 },
                                 'balance': balance,
@@ -441,9 +441,9 @@ class CouponMyTokens(BaseResource):
                             memo = CouponTokenContract.functions.memo().call()
                             expirationDate = CouponTokenContract.functions.expirationDate().call()
                             transferable = CouponTokenContract.functions.transferable().call()
-                            image_url_small = CouponTokenContract.functions.getImageURL(0).call()
-                            image_url_medium = CouponTokenContract.functions.getImageURL(1).call()
-                            image_url_large = CouponTokenContract.functions.getImageURL(2).call()
+                            image_url_1 = CouponTokenContract.functions.getImageURL(0).call()
+                            image_url_2 = CouponTokenContract.functions.getImageURL(1).call()
+                            image_url_3 = CouponTokenContract.functions.getImageURL(2).call()
                             status = CouponTokenContract.functions.isValid().call()
 
                             position_list.append({
@@ -461,9 +461,9 @@ class CouponMyTokens(BaseResource):
                                     'expirationDate': expirationDate,
                                     'transferable': transferable,
                                     'image_url': [
-                                        {'type': 'small', 'url': image_url_small},
-                                        {'type': 'medium', 'url': image_url_medium},
-                                        {'type': "large", 'url': image_url_large}
+                                        {'id': 1, 'url': image_url_1},
+                                        {'id': 2, 'url': image_url_2},
+                                        {'id': 3, 'url': image_url_3}
                                     ],
                                     'status': status,
                                 },

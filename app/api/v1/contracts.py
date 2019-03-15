@@ -168,9 +168,9 @@ class Contracts(BaseResource):
                 returnDate = TokenContract.functions.returnDate().call()
                 returnAmount = TokenContract.functions.returnAmount().call()
                 purpose = TokenContract.functions.purpose().call()
-                image_url_s = TokenContract.functions.image_urls(0).call()
-                image_url_m = TokenContract.functions.image_urls(1).call()
-                image_url_l = TokenContract.functions.image_urls(2).call()
+                image_url_1 = TokenContract.functions.image_urls(0).call()
+                image_url_2 = TokenContract.functions.image_urls(1).call()
+                image_url_3 = TokenContract.functions.image_urls(2).call()
 
                 # 企業リストから、企業名とRSA鍵を取得する
                 company_name = ''
@@ -214,9 +214,9 @@ class Contracts(BaseResource):
                     'returnAmount':returnAmount,
                     'purpose':purpose,
                     'image_url':[
-                        {'type':'small', 'url':image_url_s},
-                        {'type':'medium', 'url':image_url_m},
-                        {'type':'large', 'url':image_url_l},
+                        {'id':1, 'url':image_url_1},
+                        {'id':2, 'url':image_url_2},
+                        {'id':3, 'url':image_url_3},
                     ],
                     'certification':certification
                 }
@@ -354,9 +354,9 @@ class MembershipContracts(BaseResource):
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
 
-                image_url_s = TokenContract.functions.image_urls(0).call()
-                image_url_m = TokenContract.functions.image_urls(1).call()
-                image_url_l = TokenContract.functions.image_urls(2).call()
+                image_url_1 = TokenContract.functions.image_urls(0).call()
+                image_url_2 = TokenContract.functions.image_urls(1).call()
+                image_url_3 = TokenContract.functions.image_urls(2).call()
 
                 initial_offering_status = \
                     TokenContract.functions.initialOfferingStatus().call()
@@ -387,9 +387,9 @@ class MembershipContracts(BaseResource):
                     'status':status,
                     'initial_offering_status':initial_offering_status,
                     'image_url':[
-                        {'type':'small', 'url':image_url_s},
-                        {'type':'medium', 'url':image_url_m},
-                        {'type':'large', 'url':image_url_l},
+                        {'id':1, 'url':image_url_1},
+                        {'id':2, 'url':image_url_2},
+                        {'id':3, 'url':image_url_3},
                     ],
                 }
             except Exception as e:
@@ -527,9 +527,9 @@ class CouponContracts(BaseResource):
                 transferable = TokenContract.functions.transferable().call()
                 isValid = TokenContract.functions.isValid().call()
 
-                image_url_s = TokenContract.functions.image_urls(0).call()
-                image_url_m = TokenContract.functions.image_urls(1).call()
-                image_url_l = TokenContract.functions.image_urls(2).call()
+                image_url_1 = TokenContract.functions.image_urls(0).call()
+                image_url_2 = TokenContract.functions.image_urls(1).call()
+                image_url_3 = TokenContract.functions.image_urls(2).call()
 
                 initial_offering_status = \
                     TokenContract.functions.initialOfferingStatus().call()
@@ -559,9 +559,9 @@ class CouponContracts(BaseResource):
                     'is_valid':isValid,
                     'initial_offering_status':initial_offering_status,
                     'image_url':[
-                        {'type':'small', 'url':image_url_s},
-                        {'type':'medium', 'url':image_url_m},
-                        {'type':'large', 'url':image_url_l},
+                        {'id':1, 'url':image_url_1},
+                        {'id':2, 'url':image_url_2},
+                        {'id':3, 'url':image_url_3},
                     ],
                 }
             except Exception as e:
