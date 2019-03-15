@@ -210,13 +210,13 @@ class TestV1MembershipMyTokens():
                 'transferable': True,
                 'status': True,
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }]
             },
@@ -276,13 +276,13 @@ class TestV1MembershipMyTokens():
                 'transferable': True,
                 'status': True,
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }]
             },

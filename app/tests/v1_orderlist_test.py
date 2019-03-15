@@ -218,13 +218,13 @@ class TestV1OrderList_Bond():
                 'returnAmount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }],
                 'certification': []
@@ -307,13 +307,13 @@ class TestV1OrderList_Bond():
                 'returnAmount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }],
                 'certification': []
@@ -401,13 +401,13 @@ class TestV1OrderList_Bond():
                 'returnAmount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }],
                 'certification': []
@@ -683,9 +683,9 @@ class TestV1OrderList_Membership():
                 'transferable': True,
                 'status': True,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium', 'url': ''},
-                    {'type': 'large', 'url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             },
             'order': {
@@ -753,13 +753,13 @@ class TestV1OrderList_Membership():
                 'transferable': True,
                 'status': True,
                 'image_url': [{
-                    'type': 'small',
+                    'id': 1,
                     'url': ''
                 }, {
-                    'type': 'medium',
+                    'id': 2,
                     'url': ''
                 }, {
-                    'type': 'large',
+                    'id': 3,
                     'url': ''
                 }]
             },
@@ -829,9 +829,9 @@ class TestV1OrderList_Membership():
                 'transferable': True,
                 'status': True,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium', 'url': ''},
-                    {'type': 'large', 'url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             },
             'agreement': {
@@ -1100,9 +1100,9 @@ class TestV1OrderList_Coupon():
                 'transferable': True,
                 'is_valid': True,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium', 'url': ''},
-                    {'type': 'large', 'url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             },
             'order': {
@@ -1168,9 +1168,9 @@ class TestV1OrderList_Coupon():
                 'transferable': True,
                 'is_valid': True,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium', 'url': ''},
-                    {'type': 'large', 'url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             },
             'agreement': {
@@ -1238,9 +1238,9 @@ class TestV1OrderList_Coupon():
                 'transferable': True,
                 'is_valid': True,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium', 'url': ''},
-                    {'type': 'large', 'url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             },
             'agreement': {

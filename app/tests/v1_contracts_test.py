@@ -129,9 +129,9 @@ class TestV1StraightBondContracts():
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [
-                {'type': 'small', 'url': ''},
-                {'type': 'medium','url': ''},
-                {'type': 'large','url': ''}
+                {'id': 1, 'url': ''},
+                {'id': 2, 'url': ''},
+                {'id': 3, 'url': ''}
             ],
             'certification': []
         }]
@@ -198,13 +198,13 @@ class TestV1StraightBondContracts():
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
-                'type': 'small',
+                'id': 1,
                 'url': ''
             }, {
-                'type': 'medium',
+                'id': 2,
                 'url': ''
             }, {
-                'type': 'large',
+                'id': 3,
                 'url': ''
             }],
             'certification': []
@@ -238,13 +238,13 @@ class TestV1StraightBondContracts():
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
-                'type': 'small',
+                'id': 1,
                 'url': ''
             }, {
-                'type': 'medium',
+                'id': 2,
                 'url': ''
             }, {
-                'type': 'large',
+                'id': 3,
                 'url': ''
             }],
             'certification': []
@@ -312,13 +312,13 @@ class TestV1StraightBondContracts():
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
-                'type': 'small',
+                'id': 1,
                 'url': ''
             }, {
-                'type': 'medium',
+                'id': 2,
                 'url': ''
             }, {
-                'type': 'large',
+                'id': 3,
                 'url': ''
             }],
             'certification': []
@@ -352,13 +352,13 @@ class TestV1StraightBondContracts():
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
-                'type': 'small',
+                'id': 1,
                 'url': ''
             }, {
-                'type': 'medium',
+                'id': 2,
                 'url': ''
             }, {
-                'type': 'large',
+                'id': 3,
                 'url': ''
             }],
             'certification': []
@@ -426,13 +426,13 @@ class TestV1StraightBondContracts():
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
-                'type': 'small',
+                'id': 1,
                 'url': ''
             }, {
-                'type': 'medium',
+                'id': 2,
                 'url': ''
             }, {
-                'type': 'large',
+                'id': 3,
                 'url': ''
             }],
             'certification': []
@@ -500,13 +500,13 @@ class TestV1StraightBondContracts():
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
-                'type': 'small',
+                'id': 1,
                 'url': ''
             }, {
-                'type': 'medium',
+                'id': 2,
                 'url': ''
             }, {
-                'type': 'large',
+                'id': 3,
                 'url': ''
             }],
             'certification': []
@@ -734,9 +734,9 @@ class TestV1MembershipContracts():
                 'status': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }
         ]
@@ -793,9 +793,9 @@ class TestV1MembershipContracts():
                 'status': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }, {
                 'id': 0,
@@ -815,9 +815,9 @@ class TestV1MembershipContracts():
                 'status': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }
         ]
@@ -874,9 +874,9 @@ class TestV1MembershipContracts():
                 'status': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }, {
                 'id': 0,
@@ -896,9 +896,9 @@ class TestV1MembershipContracts():
                 'status': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }
         ]
@@ -954,9 +954,9 @@ class TestV1MembershipContracts():
             'status': True,
             'initial_offering_status': False,
             'image_url': [
-                {'type': 'small', 'url': ''},
-                {'type': 'medium','url': ''},
-                {'type': 'large','url': ''}
+                {'id': 1, 'url': ''},
+                {'id': 2, 'url': ''},
+                {'id': 3, 'url': ''}
             ]
         }]
 
@@ -1011,9 +1011,9 @@ class TestV1MembershipContracts():
             'status': True,
             'initial_offering_status': False,
             'image_url': [
-                {'type': 'small', 'url': ''},
-                {'type': 'medium','url': ''},
-                {'type': 'large','url': ''}
+                {'id': 1, 'url': ''},
+                {'id': 2, 'url': ''},
+                {'id': 3, 'url': ''}
             ]
         }]
 
@@ -1273,9 +1273,9 @@ class TestV1CouponContracts():
                 'is_valid': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }
         ]
@@ -1331,9 +1331,9 @@ class TestV1CouponContracts():
                 'is_valid': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }, {
                 'id': 0,
@@ -1352,9 +1352,9 @@ class TestV1CouponContracts():
                 'is_valid': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }
         ]
@@ -1410,9 +1410,9 @@ class TestV1CouponContracts():
                 'is_valid': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }, {
                 'id': 0,
@@ -1431,9 +1431,9 @@ class TestV1CouponContracts():
                 'is_valid': True,
                 'initial_offering_status': False,
                 'image_url': [
-                    {'type': 'small', 'url': ''},
-                    {'type': 'medium','url': ''},
-                    {'type': 'large','url': ''}
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
                 ]
             }
         ]
@@ -1488,9 +1488,9 @@ class TestV1CouponContracts():
             'is_valid': True,
             'initial_offering_status': False,
             'image_url': [
-                {'type': 'small', 'url': ''},
-                {'type': 'medium','url': ''},
-                {'type': 'large','url': ''}
+                {'id': 1, 'url': ''},
+                {'id': 2, 'url': ''},
+                {'id': 3, 'url': ''}
             ]
         }]
 
@@ -1544,9 +1544,9 @@ class TestV1CouponContracts():
             'is_valid': True,
             'initial_offering_status': False,
             'image_url': [
-                {'type': 'small', 'url': ''},
-                {'type': 'medium','url': ''},
-                {'type': 'large','url': ''}
+                {'id': 1, 'url': ''},
+                {'id': 2, 'url': ''},
+                {'id': 3, 'url': ''}
             ]
         }]
 

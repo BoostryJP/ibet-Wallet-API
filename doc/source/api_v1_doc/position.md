@@ -80,15 +80,15 @@ curl -X POST \
                 "purpose": "プロファイ",
                 "image_url": [
                     {
-                        "type": "small",
+                        "id": 1,
                         "url": ""
                     },
                     {
-                        "type": "medium",
+                        "id": 2,
                         "url": ""
                     },
                     {
-                        "type": "large",
+                        "id": 3,
                         "url": ""
                     }
                 ],
@@ -128,7 +128,7 @@ curl -X POST \
   * `returnDate` : リターン実施日
   * `returnAmount` : リターン内容
   * `purpose` : 発行目的
-  * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
+  * `image_url` : 画像URL（`id` : 1/2/3, `url` : URL）
   * `certification` : 第三者認定済アドレス
 * `balance` : 残高数量
 * `commitment` : 売注文中数量
@@ -214,15 +214,15 @@ curl -X POST \
                 "status": true,
                 "image_url": [
                     {
-                        "type": "small",
+                        "id": 1,
                         "url": ""
                     },
                     {
-                        "type": "medium",
+                        "id": 2,
                         "url": "https://xxx.co.jp"
                     },
                     {
-                        "type": "large",
+                        "id": 3,
                         "url": ""
                     }
                 ]
@@ -248,7 +248,7 @@ curl -X POST \
   * `memo` : メモ欄
   * `transferable` : 譲渡可能
   * `status` : 有効/無効
-  * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
+  * `image_url` : 画像URL（`id` : 1/2/3, `url` : URL）
 * `balance` : 残高数量
 * `commitment` : 売注文中数量
 
@@ -333,15 +333,15 @@ curl -X POST \
                 "transferable": true,
                 "image_url": [
                     {
-                        "type": "small",
+                        "id": 1,
                         "url": ""
                     },
                     {
-                        "type": "medium",
+                        "id": 2,
                         "url": "https://hoge.hoge.co.jp"
                     },
                     {
-                        "type": "large",
+                        "id": 3,
                         "url": ""
                     }
                 ],
@@ -368,7 +368,7 @@ curl -X POST \
   * `expiration_date` : 有効期限
   * `transferable` : 譲渡可能
   * `status` : 有効/無効
-  * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
+  * `image_url` : 画像URL（`id` : 1/2/3, `url` : URL）
 * `balance` : 残高数量
 * `commitment` : 売注文中数量
 * `used` : 利用済数量

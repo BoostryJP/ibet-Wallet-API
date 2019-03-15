@@ -270,9 +270,9 @@ class OrderList(BaseResource):
                 returnDate = TokenContract.functions.returnDate().call()
                 returnAmount = TokenContract.functions.returnAmount().call()
                 purpose = TokenContract.functions.purpose().call()
-                image_url_small = TokenContract.functions.getImageURL(0).call()
-                image_url_medium = TokenContract.functions.getImageURL(1).call()
-                image_url_large = TokenContract.functions.getImageURL(2).call()
+                image_url_1 = TokenContract.functions.getImageURL(0).call()
+                image_url_2 = TokenContract.functions.getImageURL(1).call()
+                image_url_3 = TokenContract.functions.getImageURL(2).call()
                 owner_address = TokenContract.functions.owner().call()
 
                 # 企業リストから、企業名を取得する
@@ -313,9 +313,9 @@ class OrderList(BaseResource):
                         'returnAmount':returnAmount,
                         'purpose':purpose,
                         'image_url': [
-                            {'type': 'small', 'url': image_url_small},
-                            {'type': 'medium', 'url': image_url_medium},
-                            {'type': "large", 'url': image_url_large}
+                            {'id': 1, 'url': image_url_1},
+                            {'id': 2, 'url': image_url_2},
+                            {'id': 3, 'url': image_url_3}
                         ],
                         'certification':certification
                     },
@@ -370,9 +370,9 @@ class OrderList(BaseResource):
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
 
-                image_url_s = TokenContract.functions.image_urls(0).call()
-                image_url_m = TokenContract.functions.image_urls(1).call()
-                image_url_l = TokenContract.functions.image_urls(2).call()
+                image_url_1 = TokenContract.functions.image_urls(0).call()
+                image_url_2 = TokenContract.functions.image_urls(1).call()
+                image_url_3 = TokenContract.functions.image_urls(2).call()
 
                 owner_address = TokenContract.functions.owner().call()
 
@@ -397,9 +397,9 @@ class OrderList(BaseResource):
                         'transferable':transferable,
                         'status':status,
                         'image_url': [
-                            {'type': 'small', 'url': image_url_s},
-                            {'type': 'medium', 'url': image_url_m},
-                            {'type': "large", 'url': image_url_l}
+                            {'id': 1, 'url': image_url_1},
+                            {'id': 2, 'url': image_url_2},
+                            {'id': 3, 'url': image_url_3}
                         ],
                     },
                     'order':{
@@ -452,9 +452,9 @@ class OrderList(BaseResource):
                 transferable = TokenContract.functions.transferable().call()
                 isValid = TokenContract.functions.isValid().call()
 
-                image_url_s = TokenContract.functions.image_urls(0).call()
-                image_url_m = TokenContract.functions.image_urls(1).call()
-                image_url_l = TokenContract.functions.image_urls(2).call()
+                image_url_1 = TokenContract.functions.image_urls(0).call()
+                image_url_2 = TokenContract.functions.image_urls(1).call()
+                image_url_3 = TokenContract.functions.image_urls(2).call()
 
                 owner_address = TokenContract.functions.owner().call()
 
@@ -478,9 +478,9 @@ class OrderList(BaseResource):
                         'transferable':transferable,
                         'is_valid':isValid,
                         'image_url': [
-                            {'type': 'small', 'url': image_url_s},
-                            {'type': 'medium', 'url': image_url_m},
-                            {'type': "large", 'url': image_url_l}
+                            {'id': 1, 'url': image_url_1},
+                            {'id': 2, 'url': image_url_2},
+                            {'id': 3, 'url': image_url_3}
                         ],
                     },
                     'order':{
@@ -579,9 +579,9 @@ class OrderList(BaseResource):
             returnDate = TokenContract.functions.returnDate().call()
             returnAmount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
-            image_url_small = TokenContract.functions.getImageURL(0).call()
-            image_url_medium = TokenContract.functions.getImageURL(1).call()
-            image_url_large = TokenContract.functions.getImageURL(2).call()
+            image_url_1 = TokenContract.functions.getImageURL(0).call()
+            image_url_2 = TokenContract.functions.getImageURL(1).call()
+            image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
 
             # 企業リストから、企業名を取得する
@@ -622,9 +622,9 @@ class OrderList(BaseResource):
                     'returnAmount':returnAmount,
                     'purpose':purpose,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_small},
-                        {'type': 'medium', 'url': image_url_medium},
-                        {'type': "large", 'url': image_url_large}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                     'certification':certification
                 },
@@ -726,9 +726,9 @@ class OrderList(BaseResource):
             returnDate = TokenContract.functions.returnDate().call()
             returnAmount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
-            image_url_small = TokenContract.functions.getImageURL(0).call()
-            image_url_medium = TokenContract.functions.getImageURL(1).call()
-            image_url_large = TokenContract.functions.getImageURL(2).call()
+            image_url_1 = TokenContract.functions.getImageURL(0).call()
+            image_url_2 = TokenContract.functions.getImageURL(1).call()
+            image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
 
             # 企業リストから、企業名を取得する
@@ -769,9 +769,9 @@ class OrderList(BaseResource):
                     'returnAmount':returnAmount,
                     'purpose':purpose,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_small},
-                        {'type': 'medium', 'url': image_url_medium},
-                        {'type': "large", 'url': image_url_large}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                     'certification':certification
                 },
@@ -826,9 +826,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -853,9 +853,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'status':status,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
@@ -909,9 +909,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -936,9 +936,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'status':status,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
@@ -991,9 +991,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             isValid = TokenContract.functions.isValid().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -1017,9 +1017,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'is_valid':isValid,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
@@ -1072,9 +1072,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             isValid = TokenContract.functions.isValid().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -1098,9 +1098,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'is_valid':isValid,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
@@ -1201,9 +1201,9 @@ class OrderList(BaseResource):
             returnDate = TokenContract.functions.returnDate().call()
             returnAmount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
-            image_url_small = TokenContract.functions.getImageURL(0).call()
-            image_url_medium = TokenContract.functions.getImageURL(1).call()
-            image_url_large = TokenContract.functions.getImageURL(2).call()
+            image_url_1 = TokenContract.functions.getImageURL(0).call()
+            image_url_2 = TokenContract.functions.getImageURL(1).call()
+            image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
 
             # 企業リストから、企業名を取得する
@@ -1244,9 +1244,9 @@ class OrderList(BaseResource):
                     'returnAmount':returnAmount,
                     'purpose':purpose,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_small},
-                        {'type': 'medium', 'url': image_url_medium},
-                        {'type': "large", 'url': image_url_large}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                     'certification':certification
                 },
@@ -1347,9 +1347,9 @@ class OrderList(BaseResource):
             returnDate = TokenContract.functions.returnDate().call()
             returnAmount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
-            image_url_small = TokenContract.functions.getImageURL(0).call()
-            image_url_medium = TokenContract.functions.getImageURL(1).call()
-            image_url_large = TokenContract.functions.getImageURL(2).call()
+            image_url_1 = TokenContract.functions.getImageURL(0).call()
+            image_url_2 = TokenContract.functions.getImageURL(1).call()
+            image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
 
             # 企業リストから、企業名を取得する
@@ -1390,9 +1390,9 @@ class OrderList(BaseResource):
                     'returnAmount':returnAmount,
                     'purpose':purpose,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_small},
-                        {'type': 'medium', 'url': image_url_medium},
-                        {'type': "large", 'url': image_url_large}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                     'certification':certification
                 },
@@ -1446,9 +1446,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -1473,9 +1473,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'status':status,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
@@ -1528,9 +1528,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -1555,9 +1555,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'status':status,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
@@ -1609,9 +1609,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             isValid = TokenContract.functions.isValid().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -1635,9 +1635,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'is_valid':isValid,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
@@ -1689,9 +1689,9 @@ class OrderList(BaseResource):
             transferable = TokenContract.functions.transferable().call()
             isValid = TokenContract.functions.isValid().call()
 
-            image_url_s = TokenContract.functions.image_urls(0).call()
-            image_url_m = TokenContract.functions.image_urls(1).call()
-            image_url_l = TokenContract.functions.image_urls(2).call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
 
             owner_address = TokenContract.functions.owner().call()
 
@@ -1715,9 +1715,9 @@ class OrderList(BaseResource):
                     'transferable':transferable,
                     'is_valid':isValid,
                     'image_url': [
-                        {'type': 'small', 'url': image_url_s},
-                        {'type': 'medium', 'url': image_url_m},
-                        {'type': "large", 'url': image_url_l}
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
                     ],
                 },
                 'agreement':{
