@@ -94,10 +94,7 @@ def push_publish(notification_id, address, priority, blocknumber, subject, messa
                         "notification_id": notification.notification_id
                     }
                 }
-                if config.APP_ENV == 'live':
-                    send_data = json.dumps({"APNS": json.dumps(message_dict)})
-                else:
-                    send_data = json.dumps({"APNS_SANDBOX": json.dumps(message_dict)})
+                send_data = json.dumps({"APNS": json.dumps(message_dict)})
             elif device_data.platform == 'android':
                 message_dict = {
                     "data": {
