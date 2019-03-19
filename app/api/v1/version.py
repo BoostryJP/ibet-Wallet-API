@@ -25,23 +25,29 @@ class RequiredVersion(BaseResource):
         # 環境変数の読み込み（iOS）
         required_version_ios = os.environ.get('TMRAPP_REQUIRED_VERSION_IOS')
         force_ios = bool(os.environ.get('TMRAPP_FORCE_UPDATE_IOS'))
-        url_ios = os.environ.get('TMRAPP_UPDATE_URL_IOS')
+        update_url_scheme_ios = os.environ.get('TMRAPP_UPDATE_URL_SCHEME_IOS')
+        update_url_ios = os.environ.get('TMRAPP_UPDATE_URL_IOS')
 
         # 環境変数の読み込み（Android）
         required_version_android = os.environ.get('TMRAPP_REQUIRED_VERSION_ANDROID')
         force_android = bool(os.environ.get('TMRAPP_FORCE_UPDATE_ANDROID'))
-        url_android = os.environ.get('TMRAPP_UPDATE_URL_ANDROID')
+        update_url_scheme_android = os.environ.get('TMRAPP_UPDATE_URL_SCHEME_ANDROID')
+        update_url_android = os.environ.get('TMRAPP_UPDATE_URL_ANDROID')
         
         if request_json['platform'] == "ios":
             required_version = {
                 "required_version": required_version_ios, 
                 "force": force_ios,
-                "update_url": url_ios}
+                "update_url_scheme": update_url_scheme_ios,
+                "update_url": update_url_ios,
+            }
         else:
             required_version = {
                 "required_version": required_version_android, 
                 "force": force_android,
-                "update_url": url_android}
+                "update_url_scheme": update_url_scheme_android,
+                "update_url": update_url_android,
+            }
 
         self.on_success(res, required_version)
     
