@@ -336,7 +336,7 @@ curl -X GET \
             "memo": "メモ欄",
             "expiration_date": "20190331",
             "transferable": true,
-            "is_valid": true,
+            "status": true,
             "initial_offering_status": false,
             "image_url": [
                 {

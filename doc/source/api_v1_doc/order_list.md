@@ -102,7 +102,7 @@ curl -X POST \
                     "expiration_date": "20190331",
                     "memo": "メモ欄",
                     "transferable": true,
-                    "is_valid": true,
+                    "status": true,
                     "image_url": [
                         {
                             "type": "small",
@@ -141,7 +141,7 @@ curl -X POST \
                     "expiration_date": "20181010",
                     "memo": "memo",
                     "transferable": true,
-                    "is_valid": true,
+                    "status": true,
                     "image_url": [
                         {
                             "type": "small",
@@ -182,7 +182,7 @@ curl -X POST \
                     "expiration_date": "20181010",
                     "memo": "memo",
                     "transferable": true,
-                    "is_valid": true,
+                    "status": true,
                     "image_url": [
                         {
                             "type": "small",

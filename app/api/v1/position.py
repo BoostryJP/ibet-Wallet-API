@@ -444,7 +444,7 @@ class CouponMyTokens(BaseResource):
                             image_url_1 = CouponTokenContract.functions.getImageURL(0).call()
                             image_url_2 = CouponTokenContract.functions.getImageURL(1).call()
                             image_url_3 = CouponTokenContract.functions.getImageURL(2).call()
-                            status = CouponTokenContract.functions.isValid().call()
+                            status = CouponTokenContract.functions.status().call()
 
                             position_list.append({
                                 'token': {

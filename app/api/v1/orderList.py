@@ -450,7 +450,7 @@ class OrderList(BaseResource):
                 expirationDate = TokenContract.functions.expirationDate().call()
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
-                isValid = TokenContract.functions.isValid().call()
+                status = TokenContract.functions.status().call()
 
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
@@ -476,7 +476,7 @@ class OrderList(BaseResource):
                         'expiration_date':expirationDate,
                         'memo':memo,
                         'transferable':transferable,
-                        'is_valid':isValid,
+                        'status':status,
                         'image_url': [
                             {'id': 1, 'url': image_url_1},
                             {'id': 2, 'url': image_url_2},
@@ -989,7 +989,7 @@ class OrderList(BaseResource):
             expirationDate = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
-            isValid = TokenContract.functions.isValid().call()
+            status = TokenContract.functions.status().call()
 
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
@@ -1015,7 +1015,7 @@ class OrderList(BaseResource):
                     'expiration_date':expirationDate,
                     'memo':memo,
                     'transferable':transferable,
-                    'is_valid':isValid,
+                    'status':status,
                     'image_url': [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
@@ -1070,7 +1070,7 @@ class OrderList(BaseResource):
             expirationDate = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
-            isValid = TokenContract.functions.isValid().call()
+            status = TokenContract.functions.status().call()
 
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
@@ -1096,7 +1096,7 @@ class OrderList(BaseResource):
                     'expiration_date':expirationDate,
                     'memo':memo,
                     'transferable':transferable,
-                    'is_valid':isValid,
+                    'status':status,
                     'image_url': [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
@@ -1607,7 +1607,7 @@ class OrderList(BaseResource):
             expirationDate = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
-            isValid = TokenContract.functions.isValid().call()
+            status = TokenContract.functions.status().call()
 
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
@@ -1633,7 +1633,7 @@ class OrderList(BaseResource):
                     'expiration_date':expirationDate,
                     'memo':memo,
                     'transferable':transferable,
-                    'is_valid':isValid,
+                    'status':status,
                     'image_url': [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
@@ -1687,7 +1687,7 @@ class OrderList(BaseResource):
             expirationDate = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
-            isValid = TokenContract.functions.isValid().call()
+            status = TokenContract.functions.status().call()
 
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
@@ -1713,7 +1713,7 @@ class OrderList(BaseResource):
                     'expiration_date':expirationDate,
                     'memo':memo,
                     'transferable':transferable,
-                    'is_valid':isValid,
+                    'status':status,
                     'image_url': [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},

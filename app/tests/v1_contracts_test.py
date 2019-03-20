@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-import time
 import sys
 
 from eth_utils import to_checksum_address
@@ -1270,7 +1269,7 @@ class TestV1CouponContracts():
                 'memo': 'クーポンメモ欄',
                 'expiration_date': '20191231',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
@@ -1328,7 +1327,7 @@ class TestV1CouponContracts():
                 'memo': 'クーポンメモ欄',
                 'expiration_date': '20191231',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
@@ -1349,7 +1348,7 @@ class TestV1CouponContracts():
                 'memo': 'クーポンメモ欄',
                 'expiration_date': '20191231',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
@@ -1407,7 +1406,7 @@ class TestV1CouponContracts():
                 'memo': 'クーポンメモ欄',
                 'expiration_date': '20191231',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
@@ -1428,7 +1427,7 @@ class TestV1CouponContracts():
                 'memo': 'クーポンメモ欄',
                 'expiration_date': '20191231',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
@@ -1485,7 +1484,7 @@ class TestV1CouponContracts():
             'memo': 'クーポンメモ欄',
             'expiration_date': '20191231',
             'transferable': True,
-            'is_valid': True,
+            'status': True,
             'initial_offering_status': False,
             'image_url': [
                 {'id': 1, 'url': ''},
@@ -1541,7 +1540,7 @@ class TestV1CouponContracts():
             'memo': 'クーポンメモ欄',
             'expiration_date': '20191231',
             'transferable': True,
-            'is_valid': True,
+            'status': True,
             'initial_offering_status': False,
             'image_url': [
                 {'id': 1, 'url': ''},
