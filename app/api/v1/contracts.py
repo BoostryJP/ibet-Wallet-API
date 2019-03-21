@@ -514,7 +514,7 @@ class CouponContracts(BaseResource):
                 )
 
                 # 取扱停止銘柄はリストに返さない
-                if TokenContract.functions.isValid().call() == False:
+                if TokenContract.functions.status().call() == False:
                     return None
 
                 # Token-Contractから情報を取得する
@@ -525,7 +525,7 @@ class CouponContracts(BaseResource):
                 expirationDate = TokenContract.functions.expirationDate().call()
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
-                isValid = TokenContract.functions.isValid().call()
+                status = TokenContract.functions.status().call()
 
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
@@ -556,7 +556,7 @@ class CouponContracts(BaseResource):
                     'memo':memo,
                     'expiration_date':expirationDate,
                     'transferable':transferable,
-                    'is_valid':isValid,
+                    'status':status,
                     'initial_offering_status':initial_offering_status,
                     'image_url':[
                         {'id':1, 'url':image_url_1},

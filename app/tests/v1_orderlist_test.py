@@ -1098,7 +1098,7 @@ class TestV1OrderList_Coupon():
                 'expiration_date': '20191231',
                 'memo': 'クーポンメモ欄',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
@@ -1166,7 +1166,7 @@ class TestV1OrderList_Coupon():
                 'expiration_date': '20191231',
                 'memo': 'クーポンメモ欄',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
@@ -1236,7 +1236,7 @@ class TestV1OrderList_Coupon():
                 'expiration_date': '20191231',
                 'memo': 'クーポンメモ欄',
                 'transferable': True,
-                'is_valid': True,
+                'status': True,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
