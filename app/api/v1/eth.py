@@ -92,6 +92,8 @@ class SendRawTransaction(BaseResource):
 
             # 実行結果を確認
             try:
+                LOG.info('----------- tx_hash -----------')
+                LOG.info(tx_hash)
                 tx = web3.eth.waitForTransactionReceipt(tx_hash, 30)
             except:
                 # NOTE: eth.waitForTransactionReceiptは本来はExceptionではなくNoneを返す仕様だが、
