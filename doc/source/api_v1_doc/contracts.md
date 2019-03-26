@@ -333,6 +333,7 @@ curl -X GET \
             "symbol": "TESTCP1",
             "total_supply": 1000000,
             "details": "クーポンの詳細内容",
+            "return_details": "リターンの詳細内容",
             "memo": "メモ欄",
             "expiration_date": "20190331",
             "transferable": true,
@@ -366,7 +367,8 @@ curl -X GET \
 * `name` : トークン名称
 * `symbol` : トークン略称
 * `total_supply` : トークン総発行数量
-* `details` : 会員権詳細
+* `details` : クーポン詳細
+* `return_details` : リターン詳細
 * `memo` : メモ欄
 * `expiration_date` : 有効期限
 * `transferable` : 譲渡可能

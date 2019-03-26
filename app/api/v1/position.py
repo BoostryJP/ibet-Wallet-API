@@ -5,8 +5,7 @@ import os
 from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
 
-from sqlalchemy.orm.exc import NoResultFound
-from cerberus import Validator, ValidationError
+from cerberus import Validator
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -438,6 +437,7 @@ class CouponMyTokens(BaseResource):
                             symbol = CouponTokenContract.functions.symbol().call()
                             totalSupply = CouponTokenContract.functions.totalSupply().call()
                             details = CouponTokenContract.functions.details().call()
+                            return_details = CouponTokenContract.functions.returnDetails().call()
                             memo = CouponTokenContract.functions.memo().call()
                             expirationDate = CouponTokenContract.functions.expirationDate().call()
                             transferable = CouponTokenContract.functions.transferable().call()
@@ -457,6 +457,7 @@ class CouponMyTokens(BaseResource):
                                     'symbol': symbol,
                                     'totalSupply': totalSupply,
                                     'details': details,
+                                    'return_details': return_details,
                                     'memo': memo,
                                     'expirationDate': expirationDate,
                                     'transferable': transferable,
