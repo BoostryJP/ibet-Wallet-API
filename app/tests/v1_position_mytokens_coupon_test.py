@@ -26,6 +26,7 @@ class TestV1CouponMyTokens():
             'totalSupply': 10000,
             'tradableExchange': coupon_exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -53,6 +54,7 @@ class TestV1CouponMyTokens():
             'totalSupply': 10000,
             'tradableExchange': coupon_exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -84,6 +86,7 @@ class TestV1CouponMyTokens():
             'totalSupply': 1000000,
             'tradableExchange': exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -124,6 +127,7 @@ class TestV1CouponMyTokens():
             'totalSupply': 1000000,
             'tradableExchange': exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -168,6 +172,7 @@ class TestV1CouponMyTokens():
             'totalSupply': 1000000,
             'tradableExchange': exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -255,6 +260,7 @@ class TestV1CouponMyTokens():
                 'symbol': 'COUPON',
                 'totalSupply': 10000,
                 'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
                 'expirationDate': '20191231',
                 'transferable': True,
@@ -321,6 +327,7 @@ class TestV1CouponMyTokens():
                 'symbol': 'COUPON',
                 'totalSupply': 10000,
                 'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
                 'expirationDate': '20191231',
                 'transferable': True,
@@ -386,6 +393,7 @@ class TestV1CouponMyTokens():
                 'symbol': 'COUPON',
                 'totalSupply': 1000000,
                 'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
                 'expirationDate': '20191231',
                 'transferable': True,
@@ -450,6 +458,7 @@ class TestV1CouponMyTokens():
                 'symbol': 'COUPON',
                 'totalSupply': 1000000,
                 'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
                 'expirationDate': '20191231',
                 'transferable': True,

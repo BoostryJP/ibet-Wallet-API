@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-import time
 import json
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-from eth_utils import to_checksum_address
 
 from app import config
 from app.contracts import Contract
@@ -200,7 +198,7 @@ def issue_coupon_token(invoker, attribute):
     arguments = [
         attribute['name'], attribute['symbol'], attribute['totalSupply'],
         attribute['tradableExchange'],
-        attribute['details'], attribute['memo'],
+        attribute['details'], attribute['returnDetails'], attribute['memo'],
         attribute['expirationDate'], attribute['transferable']
     ]
 

@@ -3,8 +3,7 @@ import os
 import json
 import requests
 
-from sqlalchemy.orm.exc import NoResultFound
-from cerberus import Validator, ValidationError
+from cerberus import Validator
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -522,6 +521,7 @@ class CouponContracts(BaseResource):
                 symbol = TokenContract.functions.symbol().call()
                 totalSupply = TokenContract.functions.totalSupply().call()
                 details = TokenContract.functions.details().call()
+                return_details = TokenContract.functions.returnDetails().call()
                 expirationDate = TokenContract.functions.expirationDate().call()
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
@@ -553,6 +553,7 @@ class CouponContracts(BaseResource):
                     'symbol':symbol,
                     'total_supply':totalSupply,
                     'details':details,
+                    'return_details':return_details,
                     'memo':memo,
                     'expiration_date':expirationDate,
                     'transferable':transferable,
