@@ -218,7 +218,9 @@ class TestV1MembershipMyTokens():
                 }, {
                     'id': 3,
                     'url': ''
-                }]
+                }],
+                'credit_card_availability': True,
+                'bank_payment_availability': True
             },
             'balance': 100,
             'commitment': 0
@@ -284,7 +286,9 @@ class TestV1MembershipMyTokens():
                 }, {
                     'id': 3,
                     'url': ''
-                }]
+                }],
+                'credit_card_availability': True,
+                'bank_payment_availability': True
             },
             'balance': 50,
             'commitment': 50

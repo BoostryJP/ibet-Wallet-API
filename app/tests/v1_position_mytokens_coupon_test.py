@@ -258,11 +258,11 @@ class TestV1CouponMyTokens():
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
-                'totalSupply': 10000,
+                'total_supply': 10000,
                 'details': 'クーポン詳細',
                 'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
-                'expirationDate': '20191231',
+                'expiration_date': '20191231',
                 'transferable': True,
                 'image_url': [{
                     'id': 1,
@@ -274,7 +274,9 @@ class TestV1CouponMyTokens():
                     'id': 3,
                     'url': ''
                 }],
-                'status': True
+                'status': True,
+                'credit_card_availability': True,
+                'bank_payment_availability': True
             },
             'balance': 10,
             'commitment': 0,
@@ -325,11 +327,11 @@ class TestV1CouponMyTokens():
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
-                'totalSupply': 10000,
+                'total_supply': 10000,
                 'details': 'クーポン詳細',
                 'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
-                'expirationDate': '20191231',
+                'expiration_date': '20191231',
                 'transferable': True,
                 'image_url': [{
                     'id': 1,
@@ -341,7 +343,9 @@ class TestV1CouponMyTokens():
                     'id': 3,
                     'url': ''
                 }],
-                'status': False
+                'status': False,
+                'credit_card_availability': True,
+                'bank_payment_availability': True
             },
             'balance': 10,
             'commitment': 0,
@@ -391,11 +395,11 @@ class TestV1CouponMyTokens():
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
-                'totalSupply': 1000000,
+                'total_supply': 1000000,
                 'details': 'クーポン詳細',
                 'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
-                'expirationDate': '20191231',
+                'expiration_date': '20191231',
                 'transferable': True,
                 'image_url': [{
                     'id': 1,
@@ -407,7 +411,9 @@ class TestV1CouponMyTokens():
                     'id': 3,
                     'url': ''
                 }],
-                'status': True
+                'status': True,
+                'credit_card_availability': True,
+                'bank_payment_availability': True
             },
             'balance': 100,
             'commitment': 0,
@@ -456,11 +462,11 @@ class TestV1CouponMyTokens():
                 'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
-                'totalSupply': 1000000,
+                'total_supply': 1000000,
                 'details': 'クーポン詳細',
                 'return_details': 'リターン詳細',
                 'memo': 'クーポンメモ欄',
-                'expirationDate': '20191231',
+                'expiration_date': '20191231',
                 'transferable': True,
                 'image_url': [{
                     'id': 1,
@@ -472,7 +478,9 @@ class TestV1CouponMyTokens():
                     'id': 3,
                     'url': ''
                 }],
-                'status': True
+                'status': True,
+                'credit_card_availability': True,
+                'bank_payment_availability': True
             },
             'balance': 50,
             'commitment': 50,

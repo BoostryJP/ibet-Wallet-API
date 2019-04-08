@@ -1,54 +1,54 @@
 # -*- coding: utf-8 -*-
 
 class TokenBase():
-    tokenAddress: str
-    tokenTemplate: str
-    ownerAddress: str
-    companyName: str
-    rsaPublickey: str
+    token_address: str
+    token_template: str
+    owner_address: str
+    company_name: str
+    rsa_publickey: str
     name: str
     symbol: str
-    totalSupply: str
-    imageUrl: object
-    creditCardAvailability: bool
-    bankPaymentAvailability: bool
+    total_supply: int
+    image_url: object
+    credit_card_availability: bool
+    bank_payment_availability: bool
 
 class BondToken(TokenBase):
-    faceValue: str
-    interestRate: str
-    interestPaymentDate1: str
-    interestPaymentDate2: str
-    interestPaymentDate3: str
-    interestPaymentDate4: str
-    interestPaymentDate5: str
-    interestPaymentDate6: str
-    interestPaymentDate7: str
-    interestPaymentDate8: str
-    interestPaymentDate9: str
-    interestPaymentDate10: str
-    interestPaymentDate11: str
-    interestPaymentDate12: str
-    redemptionDate: str
-    redemptionAmount: str
-    returnDate: str
-    returnAmount: str
+    face_value: int
+    interest_rate: int
+    interest_payment_date1: str
+    interest_payment_date2: str
+    interest_payment_date3: str
+    interest_payment_date4: str
+    interest_payment_date5: str
+    interest_payment_date6: str
+    interest_payment_date7: str
+    interest_payment_date8: str
+    interest_payment_date9: str
+    interest_payment_date10: str
+    interest_payment_date11: str
+    interest_payment_date12: str
+    redemption_date: str
+    redemption_amount: int
+    return_date: str
+    return_amount: str
     purpose: str
     certification: str
 
 class MembershipToken(TokenBase):
     details: str
-    returnDetails: str
-    expirationDate: str
+    return_details: str
+    expiration_date: str
     memo: str
     transferable: str
     status: str
-    initialOfferingStatus: str
+    initial_offering_status: str
 
 class CouponToken(TokenBase):
     details: str
-    returnDetails: str
-    expirationDate: str
+    return_details: str
+    expiration_date: str
     memo: str
     transferable: str
     status: str
-    initialOfferingStatus: str
+    initial_offering_status: str

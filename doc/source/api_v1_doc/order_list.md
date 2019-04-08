@@ -85,7 +85,7 @@ curl -X POST \
                     "order_id": 1,
                     "amount": 1000000,
                     "price": 1000,
-                    "isBuy": false,
+                    "is_buy": false,
                     "canceled": false
                 },
                 "sort_id": 2
@@ -117,13 +117,15 @@ curl -X POST \
                             "type": "large",
                             "url": ""
                         }
-                    ]
+                    ],
+                    "credit_card_availability": True,
+                    "bank_payment_availability": True
                 },
                 "order": {
                     "order_id": 1,
                     "amount": 1000000,
                     "price": 1000,
-                    "isBuy": false,
+                    "is_buy": false,
                     "canceled": false
                 },
                 "sort_id": 4
@@ -157,15 +159,17 @@ curl -X POST \
                             "type": "large",
                             "url": ""
                         }
-                    ]
+                    ],
+                    "credit_card_availability": True,
+                    "bank_payment_availability": True
                 },
                 "agreement": {
                     "exchange_address": "0xd32dBF7bE973B860A9EFc33764fE40bd113C4807",
                     "order_id": 0,
-                    "agreementId": 0,
+                    "agreement_id": 0,
                     "amount": 1,
                     "price": 100,
-                    "isBuy": true,
+                    "is_buy": true,
                     "canceled": false
                 },
                 "sort_id": 3
@@ -199,15 +203,17 @@ curl -X POST \
                             "type": "large",
                             "url": ""
                         }
-                    ]
+                    ],
+                    "credit_card_availability": True,
+                    "bank_payment_availability": True
                 },
                 "agreement": {
                     "exchange_address": "0xd32dBF7bE973B860A9EFc33764fE40bd113C4807",
                     "order_id": 0,
-                    "agreementId": 1,
+                    "agreement_id": 1,
                     "amount": 1,
                     "price": 100,
-                    "isBuy": true
+                    "is_buy": true
                 },
                 "sort_id": 4
             }
@@ -220,16 +226,16 @@ curl -X POST \
     * `order_id` : 注文ID
     * `amount` : 注文数量
     * `price` : 注文単価
-    * `isBuy` : 売買区分（`true`:買い、`false`:売り）
+    * `is_buy` : 売買区分（`true`:買い、`false`:売り）
     * `canceled` : 取消済（`true`:取消済、`false`:未取消）
 * `settlement_list` : 決済中一覧。約定済、決済承認待ち（約定代金の入金待ち）の状態。
   * `agreement` : 約定情報
     * `exchange_address` : DEXアドレス
     * `order_id` : 注文ID
-    * `agreementId` : 約定ID
+    * `agreement_id` : 約定ID
     * `amount` : 注文数量
     * `price` : 注文単価
-    * `isBuy` : 売買区分（`true`:買い、`false`:売り）
+    * `is_buy` : 売買区分（`true`:買い、`false`:売り）
 * `complete_list` : 決済済一覧
   * `agreement` : ※`settlement_list`と同じ
 * `token` : トークンの属性情報

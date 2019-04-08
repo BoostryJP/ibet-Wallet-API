@@ -197,25 +197,25 @@ class TestV1OrderList_Bond():
                 'company_name': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
-                'totalSupply': 1000000,
-                'faceValue': 10000,
-                'interestRate': 1000,
-                'interestPaymentDate1': '0101',
-                'interestPaymentDate2': '0201',
-                'interestPaymentDate3': '0301',
-                'interestPaymentDate4': '0401',
-                'interestPaymentDate5': '0501',
-                'interestPaymentDate6': '0601',
-                'interestPaymentDate7': '0701',
-                'interestPaymentDate8': '0801',
-                'interestPaymentDate9': '0901',
-                'interestPaymentDate10': '1001',
-                'interestPaymentDate11': '1101',
-                'interestPaymentDate12': '1201',
-                'redemptionDate': '20191231',
-                'redemptionAmount': 10000,
-                'returnDate': '20191231',
-                'returnAmount': '商品券をプレゼント',
+                'total_supply': 1000000,
+                'face_value': 10000,
+                'interest_rate': 1000,
+                'interest_payment_date1': '0101',
+                'interest_payment_date2': '0201',
+                'interest_payment_date3': '0301',
+                'interest_payment_date4': '0401',
+                'interest_payment_date5': '0501',
+                'interest_payment_date6': '0601',
+                'interest_payment_date7': '0701',
+                'interest_payment_date8': '0801',
+                'interest_payment_date9': '0901',
+                'interest_payment_date10': '1001',
+                'interest_payment_date11': '1101',
+                'interest_payment_date12': '1201',
+                'redemption_date': '20191231',
+                'redemption_amount': 10000,
+                'return_date': '20191231',
+                'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
                     'id': 1,
@@ -227,13 +227,15 @@ class TestV1OrderList_Bond():
                     'id': 3,
                     'url': ''
                 }],
-                'certification': []
+                'certification': [],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'order': {
                 'order_id': order_id,
                 'amount': 1000000,
                 'price': 1000,
-                'isBuy': False,
+                'is_buy': False,
                 'canceled': False
             }
         }
@@ -286,25 +288,25 @@ class TestV1OrderList_Bond():
                 'company_name': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
-                'totalSupply': 1000000,
-                'faceValue': 10000,
-                'interestRate': 1000,
-                'interestPaymentDate1': '0101',
-                'interestPaymentDate2': '0201',
-                'interestPaymentDate3': '0301',
-                'interestPaymentDate4': '0401',
-                'interestPaymentDate5': '0501',
-                'interestPaymentDate6': '0601',
-                'interestPaymentDate7': '0701',
-                'interestPaymentDate8': '0801',
-                'interestPaymentDate9': '0901',
-                'interestPaymentDate10': '1001',
-                'interestPaymentDate11': '1101',
-                'interestPaymentDate12': '1201',
-                'redemptionDate': '20191231',
-                'redemptionAmount': 10000,
-                'returnDate': '20191231',
-                'returnAmount': '商品券をプレゼント',
+                'total_supply': 1000000,
+                'face_value': 10000,
+                'interest_rate': 1000,
+                'interest_payment_date1': '0101',
+                'interest_payment_date2': '0201',
+                'interest_payment_date3': '0301',
+                'interest_payment_date4': '0401',
+                'interest_payment_date5': '0501',
+                'interest_payment_date6': '0601',
+                'interest_payment_date7': '0701',
+                'interest_payment_date8': '0801',
+                'interest_payment_date9': '0901',
+                'interest_payment_date10': '1001',
+                'interest_payment_date11': '1101',
+                'interest_payment_date12': '1201',
+                'redemption_date': '20191231',
+                'redemption_amount': 10000,
+                'return_date': '20191231',
+                'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
                     'id': 1,
@@ -316,15 +318,17 @@ class TestV1OrderList_Bond():
                     'id': 3,
                     'url': ''
                 }],
-                'certification': []
+                'certification': [],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'agreement': {
                 'exchange_address': bond_exchange['address'],
                 'order_id': order_id,
-                'agreementId': agreement_id,
+                'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'isBuy': True,
+                'is_buy': True,
                 'canceled': False
             }
         }
@@ -380,25 +384,25 @@ class TestV1OrderList_Bond():
                 'company_name': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
-                'totalSupply': 1000000,
-                'faceValue': 10000,
-                'interestRate': 1000,
-                'interestPaymentDate1': '0101',
-                'interestPaymentDate2': '0201',
-                'interestPaymentDate3': '0301',
-                'interestPaymentDate4': '0401',
-                'interestPaymentDate5': '0501',
-                'interestPaymentDate6': '0601',
-                'interestPaymentDate7': '0701',
-                'interestPaymentDate8': '0801',
-                'interestPaymentDate9': '0901',
-                'interestPaymentDate10': '1001',
-                'interestPaymentDate11': '1101',
-                'interestPaymentDate12': '1201',
-                'redemptionDate': '20191231',
-                'redemptionAmount': 10000,
-                'returnDate': '20191231',
-                'returnAmount': '商品券をプレゼント',
+                'total_supply': 1000000,
+                'face_value': 10000,
+                'interest_rate': 1000,
+                'interest_payment_date1': '0101',
+                'interest_payment_date2': '0201',
+                'interest_payment_date3': '0301',
+                'interest_payment_date4': '0401',
+                'interest_payment_date5': '0501',
+                'interest_payment_date6': '0601',
+                'interest_payment_date7': '0701',
+                'interest_payment_date8': '0801',
+                'interest_payment_date9': '0901',
+                'interest_payment_date10': '1001',
+                'interest_payment_date11': '1101',
+                'interest_payment_date12': '1201',
+                'redemption_date': '20191231',
+                'redemption_amount': 10000,
+                'return_date': '20191231',
+                'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
                 'image_url': [{
                     'id': 1,
@@ -410,15 +414,17 @@ class TestV1OrderList_Bond():
                     'id': 3,
                     'url': ''
                 }],
-                'certification': []
+                'certification': [],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'agreement': {
                 'exchange_address': bond_exchange['address'],
                 'order_id': order_id,
-                'agreementId': agreement_id,
+                'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'isBuy': True
+                'is_buy': True
             }
         }
 
@@ -686,13 +692,15 @@ class TestV1OrderList_Membership():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'order': {
                 'order_id': order_id,
                 'amount': 1000000,
                 'price': 1000,
-                'isBuy': False,
+                'is_buy': False,
                 'canceled': False
             }
         }
@@ -761,15 +769,17 @@ class TestV1OrderList_Membership():
                 }, {
                     'id': 3,
                     'url': ''
-                }]
+                }],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'agreement': {
                 'exchange_address': membership_exchange['address'],
                 'order_id': order_id,
-                'agreementId': agreement_id,
+                'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'isBuy': True,
+                'is_buy': True,
                 'canceled': False
             }
         }
@@ -832,15 +842,17 @@ class TestV1OrderList_Membership():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'agreement': {
                 'exchange_address': membership_exchange['address'],
                 'order_id': order_id,
-                'agreementId': agreement_id,
+                'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'isBuy': True
+                'is_buy': True
             }
         }
 
@@ -1105,13 +1117,15 @@ class TestV1OrderList_Coupon():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'order': {
                 'order_id': order_id,
                 'amount': 1000000,
                 'price': 1000,
-                'isBuy': False,
+                'is_buy': False,
                 'canceled': False
             }
         }
@@ -1174,15 +1188,17 @@ class TestV1OrderList_Coupon():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'agreement': {
                 'exchange_address': coupon_exchange['address'],
                 'order_id': order_id,
-                'agreementId': agreement_id,
+                'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'isBuy': True,
+                'is_buy': True,
                 'canceled': False
             }
         }
@@ -1245,15 +1261,17 @@ class TestV1OrderList_Coupon():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'credit_card_availability': False,
+                'bank_payment_availability': False
             },
             'agreement': {
                 'exchange_address': coupon_exchange['address'],
                 'order_id': order_id,
-                'agreementId': agreement_id,
+                'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'isBuy': True
+                'is_buy': True
             }
         }
 

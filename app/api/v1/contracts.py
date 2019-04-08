@@ -85,7 +85,7 @@ class Contracts(BaseResource):
                                                  token_address = token[0],
                                                  token_template = token[1],
                                                  owner_address = token[2],
-                                                 available_tokens = available_tokens[i]
+                                                 available_token = available_tokens[i]
                                                  )
             if token_detail != None:
                 token_list.append(token_detail)
@@ -93,7 +93,7 @@ class Contracts(BaseResource):
         self.on_success(res, token_list)
 
 
-    def get_token_detail(self, token_id, token_address, token_template, owner_address, company_list, available_tokens):
+    def get_token_detail(self, token_id, token_address, token_template, owner_address, company_list, available_token):
         """
         トークン詳細を取得する。
         取得に失敗した場合はNoneを返す。
@@ -114,9 +114,9 @@ class Contracts(BaseResource):
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
                 symbol = TokenContract.functions.symbol().call()
-                totalSupply = TokenContract.functions.totalSupply().call()
-                faceValue = TokenContract.functions.faceValue().call()
-                interestRate = TokenContract.functions.interestRate().call()
+                total_supply = TokenContract.functions.totalSupply().call()
+                face_value = TokenContract.functions.faceValue().call()
+                interest_rate = TokenContract.functions.interestRate().call()
 
                 interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
 
@@ -138,36 +138,36 @@ class Contracts(BaseResource):
                         interestPaymentDate_string.replace("'", '"').\
                         replace('True', 'true').replace('False', 'false'))
                     if 'interestPaymentDate1' in interestPaymentDate:
-                        interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
+                        interest_payment_date1 = interestPaymentDate['interestPaymentDate1']
                     if 'interestPaymentDate2' in interestPaymentDate:
-                        interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
+                        interest_payment_date2 = interestPaymentDate['interestPaymentDate2']
                     if 'interestPaymentDate3' in interestPaymentDate:
-                        interestPaymentDate3 = interestPaymentDate['interestPaymentDate3']
+                        interest_payment_date3 = interestPaymentDate['interestPaymentDate3']
                     if 'interestPaymentDate4' in interestPaymentDate:
-                        interestPaymentDate4 = interestPaymentDate['interestPaymentDate4']
+                        interest_payment_date4 = interestPaymentDate['interestPaymentDate4']
                     if 'interestPaymentDate5' in interestPaymentDate:
-                        interestPaymentDate5 = interestPaymentDate['interestPaymentDate5']
+                        interest_payment_date5 = interestPaymentDate['interestPaymentDate5']
                     if 'interestPaymentDate6' in interestPaymentDate:
-                        interestPaymentDate6 = interestPaymentDate['interestPaymentDate6']
+                        interest_payment_date6 = interestPaymentDate['interestPaymentDate6']
                     if 'interestPaymentDate7' in interestPaymentDate:
-                        interestPaymentDate7 = interestPaymentDate['interestPaymentDate7']
+                        interest_payment_date7 = interestPaymentDate['interestPaymentDate7']
                     if 'interestPaymentDate8' in interestPaymentDate:
-                        interestPaymentDate8 = interestPaymentDate['interestPaymentDate8']
+                        interest_payment_date8 = interestPaymentDate['interestPaymentDate8']
                     if 'interestPaymentDate9' in interestPaymentDate:
-                        interestPaymentDate9 = interestPaymentDate['interestPaymentDate9']
+                        interest_payment_date9 = interestPaymentDate['interestPaymentDate9']
                     if 'interestPaymentDate10' in interestPaymentDate:
-                        interestPaymentDate10 = interestPaymentDate['interestPaymentDate10']
+                        interest_payment_date10 = interestPaymentDate['interestPaymentDate10']
                     if 'interestPaymentDate11' in interestPaymentDate:
-                        interestPaymentDate11 = interestPaymentDate['interestPaymentDate11']
+                        interest_payment_date11 = interestPaymentDate['interestPaymentDate11']
                     if 'interestPaymentDate12' in interestPaymentDate:
-                        interestPaymentDate12 = interestPaymentDate['interestPaymentDate12']
+                        interest_payment_date12 = interestPaymentDate['interestPaymentDate12']
                 except:
                     pass
 
-                redemptionDate = TokenContract.functions.redemptionDate().call()
-                redemptionAmount = TokenContract.functions.redemptionAmount().call()
-                returnDate = TokenContract.functions.returnDate().call()
-                returnAmount = TokenContract.functions.returnAmount().call()
+                redemption_date = TokenContract.functions.redemptionDate().call()
+                redemption_amount = TokenContract.functions.redemptionAmount().call()
+                return_date = TokenContract.functions.returnDate().call()
+                return_amount = TokenContract.functions.returnAmount().call()
                 purpose = TokenContract.functions.purpose().call()
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
@@ -186,42 +186,43 @@ class Contracts(BaseResource):
                 certification = []
 
                 bondtoken = BondToken()
-                bondtoken['id'] = token_id
-                bondtoken.tokenAddress = token_address
-                bondtoken.tokenTemplate = token_template
-                bondtoken.ownerAddress = owner_address
-                bondtoken.companyName = company_name
-                bondtoken.rsaPublickey = rsa_publickey
+                bondtoken.token_address = token_address
+                bondtoken.token_template = token_template
+                bondtoken.owner_address = owner_address
+                bondtoken.company_name = company_name
+                bondtoken.rsa_publickey = rsa_publickey
                 bondtoken.name = name
                 bondtoken.symbol = symbol
-                bondtoken.totalSupply = totalSupply
-                bondtoken.faceValue = faceValue
-                bondtoken.interestRate = interestRate
-                bondtoken.interestPaymentDate1 = interestPaymentDate1
-                bondtoken.interestPaymentDate2 = interestPaymentDate2
-                bondtoken.interestPaymentDate3 = interestPaymentDate3
-                bondtoken.interestPaymentDate4 = interestPaymentDate4
-                bondtoken.interestPaymentDate5 = interestPaymentDate5
-                bondtoken.interestPaymentDate6 = interestPaymentDate6
-                bondtoken.interestPaymentDate7 = interestPaymentDate7
-                bondtoken.interestPaymentDate8 = interestPaymentDate8
-                bondtoken.interestPaymentDate9 = interestPaymentDate9
-                bondtoken.interestPaymentDate10 = interestPaymentDate10
-                bondtoken.interestPaymentDate11 = interestPaymentDate11
-                bondtoken.interestPaymentDate12 = interestPaymentDate12
-                bondtoken.redemptionDate = redemptionDate
-                bondtoken.redemptionAmount = redemptionAmount
-                bondtoken.returnDate = returnDate
-                bondtoken.returnAmount = returnAmount
+                bondtoken.total_supply = total_supply
+                bondtoken.face_value = face_value
+                bondtoken.interest_rate = interest_rate
+                bondtoken.interest_payment_date1 = interest_payment_date1
+                bondtoken.interest_payment_date2 = interest_payment_date2
+                bondtoken.interest_payment_date3 = interest_payment_date3
+                bondtoken.interest_payment_date4 = interest_payment_date4
+                bondtoken.interest_payment_date5 = interest_payment_date5
+                bondtoken.interest_payment_date6 = interest_payment_date6
+                bondtoken.interest_payment_date7 = interest_payment_date7
+                bondtoken.interest_payment_date8 = interest_payment_date8
+                bondtoken.interest_payment_date9 = interest_payment_date9
+                bondtoken.interest_payment_date10 = interest_payment_date10
+                bondtoken.interest_payment_date11 = interest_payment_date11
+                bondtoken.interest_payment_date12 = interest_payment_date12
+                bondtoken.redemption_date = redemption_date
+                bondtoken.redemption_amount = redemption_amount
+                bondtoken.return_date = return_date
+                bondtoken.return_amount = return_amount
                 bondtoken.purpose = purpose
-                bondtoken.imageUrl = [
+                bondtoken.image_url = [
                         {'id':1, 'url':image_url_1},
                         {'id':2, 'url':image_url_2},
                         {'id':3, 'url':image_url_3},
                     ]
                 bondtoken.certification = certification
-                bondtoken.creditCardAvailability = available_tokens.credit_card_availability
-                bondtoken.bankPaymentAvailability = available_tokens.bank_payment_availability
+                bondtoken.credit_card_availability = available_token.credit_card_availability
+                bondtoken.bank_payment_availability = available_token.bank_payment_availability
+                bondtoken = bondtoken.__dict__
+                bondtoken['id'] = token_id
 
                 return bondtoken
             except Exception as e:
@@ -323,14 +324,14 @@ class MembershipContracts(BaseResource):
                                                  token_address = token[0],
                                                  token_template = token[1],
                                                  owner_address = token[2],
-                                                 available_tokens = available_tokens[i])
+                                                 available_token = available_tokens[i])
             if token_detail != None:
                 token_list.append(token_detail)
 
         self.on_success(res, token_list)
 
 
-    def get_token_detail(self, token_id, token_address, token_template, owner_address, company_list, available_tokens):
+    def get_token_detail(self, token_id, token_address, token_template, owner_address, company_list, available_token):
         """
         トークン詳細を取得する。
         取得に失敗した場合はNoneを返す。
@@ -351,10 +352,10 @@ class MembershipContracts(BaseResource):
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
                 symbol = TokenContract.functions.symbol().call()
-                totalSupply = TokenContract.functions.totalSupply().call()
+                total_supply = TokenContract.functions.totalSupply().call()
                 details = TokenContract.functions.details().call()
-                returnDetails = TokenContract.functions.returnDetails().call()
-                expirationDate = TokenContract.functions.expirationDate().call()
+                return_details = TokenContract.functions.returnDetails().call()
+                expiration_date = TokenContract.functions.expirationDate().call()
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
@@ -375,32 +376,34 @@ class MembershipContracts(BaseResource):
                         rsa_publickey = company['rsa_publickey']
                 
                 membershiptoken = MembershipToken()
-                membershiptoken['id'] = token_id
-                membershiptoken.tokenAddress = token_address
-                membershiptoken.tokenTemplate = token_template
-                membershiptoken.ownerAddress = owner_address
-                membershiptoken.companyName = company_name
-                membershiptoken.rsaPublickey = rsa_publickey
+                membershiptoken.token_address = token_address
+                membershiptoken.token_template = token_template
+                membershiptoken.owner_address = owner_address
+                membershiptoken.company_name = company_name
+                membershiptoken.rsa_publickey = rsa_publickey
                 membershiptoken.name = name
                 membershiptoken.symbol = symbol
-                membershiptoken.totalSupply = totalSupply
+                membershiptoken.total_supply = total_supply
                 membershiptoken.details = details
-                membershiptoken.returnDetails = returnDetails
-                membershiptoken.expirationDate = expirationDate
+                membershiptoken.return_details = return_details
+                membershiptoken.expiration_date = expiration_date
                 membershiptoken.memo = memo
                 membershiptoken.transferable = transferable
                 membershiptoken.status = status
-                membershiptoken.initialOfferingStatus = initialOfferingStatus
-                membershiptoken.imageUrl = [
+                membershiptoken.initial_offering_status = initial_offering_status
+                membershiptoken.image_url = [
                         {'id':1, 'url':image_url_1},
                         {'id':2, 'url':image_url_2},
                         {'id':3, 'url':image_url_3},
                     ]
-                membershiptoken.creditCardAvailability = available_tokens.credit_card_availability
-                membershiptoken.bankPaymentAvailability = available_tokens.bank_payment_availability
+                membershiptoken.credit_card_availability = available_token.credit_card_availability
+                membershiptoken.bank_payment_availability = available_token.bank_payment_availability
+                membershiptoken = membershiptoken.__dict__
+                membershiptoken['id'] = token_id
 
                 return membershiptoken
             except Exception as e:
+                LOG.error(e)
                 return None
 
     @staticmethod
@@ -499,20 +502,22 @@ class CouponContracts(BaseResource):
                 company_list = company_list,
                 token_address = token[0],
                 token_template = token[1],
-                owner_address = token[2]
+                owner_address = token[2],
+                available_token = available_tokens[i]
             )
+            print(token_detail)
             if token_detail != None:
                 token_list.append(token_detail)
 
         self.on_success(res, token_list)
 
     def get_token_detail(self, token_id, token_address, token_template,
-        owner_address, company_list):
+        owner_address, company_list, available_token):
         """
         トークン詳細を取得する。
         取得に失敗した場合はNoneを返す。
         """
-
+        
         if token_template == 'IbetCoupon':
             try:
                 # Token-Contractへの接続
@@ -528,10 +533,10 @@ class CouponContracts(BaseResource):
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
                 symbol = TokenContract.functions.symbol().call()
-                totalSupply = TokenContract.functions.totalSupply().call()
+                total_supply = TokenContract.functions.totalSupply().call()
                 details = TokenContract.functions.details().call()
                 return_details = TokenContract.functions.returnDetails().call()
-                expirationDate = TokenContract.functions.expirationDate().call()
+                expiration_date = TokenContract.functions.expirationDate().call()
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
@@ -551,32 +556,34 @@ class CouponContracts(BaseResource):
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
                 coupontoken = CouponToken()
-                coupontoken['id'] = token_id
-                coupontoken.tokenAddress = token_address
-                coupontoken.tokenTemplate = token_template
-                coupontoken.ownerAddress = owner_address
-                coupontoken.companyName = company_name
-                coupontoken.rsaPublickey = rsa_publickey
+                coupontoken.token_address = token_address
+                coupontoken.token_template = token_template
+                coupontoken.owner_address = owner_address
+                coupontoken.company_name = company_name
+                coupontoken.rsa_publickey = rsa_publickey
                 coupontoken.name = name
                 coupontoken.symbol = symbol
-                coupontoken.totalSupply = totalSupply
+                coupontoken.total_supply = total_supply
                 coupontoken.details = details
-                coupontoken.returnDetails = returnDetails
-                coupontoken.expirationDate = expirationDate
+                coupontoken.return_details = return_details
+                coupontoken.expiration_date = expiration_date
                 coupontoken.memo = memo
                 coupontoken.transferable = transferable
                 coupontoken.status = status
-                coupontoken.initialOfferingStatus = initialOfferingStatus
-                coupontoken.imageUrl = [
+                coupontoken.initial_offering_status = initial_offering_status
+                coupontoken.image_url = [
                         {'id':1, 'url':image_url_1},
                         {'id':2, 'url':image_url_2},
                         {'id':3, 'url':image_url_3},
                     ]
-                coupontoken.creditCardAvailability = available_tokens.credit_card_availability
-                coupontoken.bankPaymentAvailability = available_tokens.bank_payment_availability
+                coupontoken.credit_card_availability = available_token.credit_card_availability
+                coupontoken.bank_payment_availability = available_token.bank_payment_availability
+                coupontoken = coupontoken.__dict__
+                coupontoken['id'] = token_id
 
                 return coupontoken
             except Exception as e:
+                LOG.error(e)
                 return None
 
     @staticmethod
