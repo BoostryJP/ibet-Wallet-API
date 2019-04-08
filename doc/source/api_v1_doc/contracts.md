@@ -92,8 +92,8 @@ curl -X GET \
                 }
             ],
             "certification": [],
-            "credit_card_availability": True,
-            "bank_payment_availability": True
+            "credit_card_availability": true,
+            "bank_payment_availability": true
         }
     ]
 }
@@ -233,8 +233,8 @@ curl -X GET \
                     "url": ""
                 }
             ],
-            "credit_card_availability": True,
-            "bank_payment_availability": True
+            "credit_card_availability": true,
+            "bank_payment_availability": true
         }
     ]
 }
@@ -361,8 +361,8 @@ curl -X GET \
                     "url": ""
                 }
             ],
-            "credit_card_availability": True,
-            "bank_payment_availability": True
+            "credit_card_availability": true,
+            "bank_payment_availability": true
         }
     ]
 }

@@ -93,8 +93,8 @@ curl -X POST \
                     }
                 ],
                 "certification": [],
-                "credit_card_availability": True,
-                "bank_payment_availability": True
+                "credit_card_availability": true,
+                "bank_payment_availability": true
             },
             "balance": 1000000,
             "commitment": 0
@@ -230,8 +230,8 @@ curl -X POST \
                         "url": ""
                     }
                 ],
-                "credit_card_availability": True,
-                "bank_payment_availability": True
+                "credit_card_availability": true,
+                "bank_payment_availability": true
             },
             "balance": 0,
             "commitment": 1000000
@@ -355,8 +355,8 @@ curl -X POST \
                     }
                 ],
                 "status": true,
-                "credit_card_availability": True,
-                "bank_payment_availability": True
+                "credit_card_availability": true,
+                "bank_payment_availability": true
             },
             "balance": 0,
             "commitment": 1000000,
