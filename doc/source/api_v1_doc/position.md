@@ -93,8 +93,8 @@ curl -X POST \
                     }
                 ],
                 "certification": [],
-                "credit_card_availability": true,
-                "bank_payment_availability": true
+                "payment_method_credit_card": true,
+                "payment_method_bank": true
             },
             "balance": 1000000,
             "commitment": 0
@@ -132,8 +132,8 @@ curl -X POST \
   * `purpose` : 発行目的
   * `image_url` : 画像URL（`id` : 1/2/3, `url` : URL）
   * `certification` : 第三者認定済アドレス
-  * `credit_card_availability` : クレジットカード決済可能フラグ
-  * `bank_payment_availability` : 銀行決済可能フラグ
+  * `payment_method_credit_card` : クレジットカード決済可能フラグ
+  * `payment_method_bank` : 銀行決済可能フラグ
 * `balance` : 残高数量
 * `commitment` : 売注文中数量
 
@@ -230,8 +230,8 @@ curl -X POST \
                         "url": ""
                     }
                 ],
-                "credit_card_availability": true,
-                "bank_payment_availability": true
+                "payment_method_credit_card": true,
+                "payment_method_bank": true
             },
             "balance": 0,
             "commitment": 1000000
@@ -255,8 +255,8 @@ curl -X POST \
   * `transferable` : 譲渡可能
   * `status` : 有効/無効
   * `image_url` : 画像URL（`id` : 1/2/3, `url` : URL）
-  * `credit_card_availability` : クレジットカード決済可能フラグ
-  * `bank_payment_availability` : 銀行決済可能フラグ
+  * `payment_method_credit_card` : クレジットカード決済可能フラグ
+  * `payment_method_bank` : 銀行決済可能フラグ
 * `balance` : 残高数量
 * `commitment` : 売注文中数量
 
@@ -355,8 +355,8 @@ curl -X POST \
                     }
                 ],
                 "status": true,
-                "credit_card_availability": true,
-                "bank_payment_availability": true
+                "payment_method_credit_card": true,
+                "payment_method_bank": true
             },
             "balance": 0,
             "commitment": 1000000,
@@ -381,8 +381,8 @@ curl -X POST \
   * `transferable` : 譲渡可能
   * `status` : 有効/無効
   * `image_url` : 画像URL（`id` : 1/2/3, `url` : URL）
-  * `credit_card_availability` : クレジットカード決済可能フラグ
-  * `bank_payment_availability` : 銀行決済可能フラグ
+  * `payment_method_credit_card` : クレジットカード決済可能フラグ
+  * `payment_method_bank` : 銀行決済可能フラグ
 * `balance` : 残高数量
 * `commitment` : 売注文中数量
 * `used` : 利用済数量

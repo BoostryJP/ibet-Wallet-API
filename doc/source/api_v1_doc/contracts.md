@@ -92,8 +92,8 @@ curl -X GET \
                 }
             ],
             "certification": [],
-            "credit_card_availability": true,
-            "bank_payment_availability": true
+            "payment_method_credit_card": true,
+            "payment_method_bank": true
         }
     ]
 }
@@ -129,8 +129,8 @@ curl -X GET \
 * `purpose` : 発行目的
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
 * `certification` : 第三者認定済アドレス
-* `credit_card_availability` : クレジットカード決済可能フラグ
-* `bank_payment_availability` : 銀行決済可能フラグ
+* `payment_method_credit_card` : クレジットカード決済可能フラグ
+* `payment_method_bank` : 銀行決済可能フラグ
 
 #### Status: 400 Bad Request
 * 入力値エラー時
@@ -233,8 +233,8 @@ curl -X GET \
                     "url": ""
                 }
             ],
-            "credit_card_availability": true,
-            "bank_payment_availability": true
+            "payment_method_credit_card": true,
+            "payment_method_bank": true
         }
     ]
 }
@@ -257,8 +257,8 @@ curl -X GET \
 * `status` : 有効/無効
 * `initial_offering_status` : 新規募集ステータス
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
-* `credit_card_availability` : クレジットカード決済可能フラグ
-* `bank_payment_availability` : 銀行決済可能フラグ
+* `payment_method_credit_card` : クレジットカード決済可能フラグ
+* `payment_method_bank` : 銀行決済可能フラグ
 
 #### Status: 400 Bad Request
 * 入力値エラー時
@@ -361,8 +361,8 @@ curl -X GET \
                     "url": ""
                 }
             ],
-            "credit_card_availability": true,
-            "bank_payment_availability": true
+            "payment_method_credit_card": true,
+            "payment_method_bank": true
         }
     ]
 }
@@ -385,8 +385,8 @@ curl -X GET \
 * `status` : 有効/無効
 * `initial_offering_status` : 新規募集ステータス
 * `image_url` : 画像URL（`type` : 小/中/大, `url` : URL）
-* `credit_card_availability` : クレジットカード決済可能フラグ
-* `bank_payment_availability` : 銀行決済可能フラグ
+* `payment_method_credit_card` : クレジットカード決済可能フラグ
+* `payment_method_bank` : 銀行決済可能フラグ
 
 #### Status: 400 Bad Request
 * 入力値エラー時

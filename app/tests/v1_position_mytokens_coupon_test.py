@@ -220,8 +220,8 @@ class TestV1CouponMyTokens():
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
-        listed_token.credit_card_availability = True
-        listed_token.bank_payment_availability = True
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1-1＞
@@ -275,8 +275,8 @@ class TestV1CouponMyTokens():
                     'url': ''
                 }],
                 'status': True,
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             },
             'balance': 10,
             'commitment': 0,
@@ -344,8 +344,8 @@ class TestV1CouponMyTokens():
                     'url': ''
                 }],
                 'status': False,
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             },
             'balance': 10,
             'commitment': 0,
@@ -412,8 +412,8 @@ class TestV1CouponMyTokens():
                     'url': ''
                 }],
                 'status': True,
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             },
             'balance': 100,
             'commitment': 0,
@@ -479,8 +479,8 @@ class TestV1CouponMyTokens():
                     'url': ''
                 }],
                 'status': True,
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             },
             'balance': 50,
             'commitment': 50,

@@ -228,8 +228,8 @@ class TestV1OrderList_Bond():
                     'url': ''
                 }],
                 'certification': [],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'order': {
                 'order_id': order_id,
@@ -319,8 +319,8 @@ class TestV1OrderList_Bond():
                     'url': ''
                 }],
                 'certification': [],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'agreement': {
                 'exchange_address': bond_exchange['address'],
@@ -415,8 +415,8 @@ class TestV1OrderList_Bond():
                     'url': ''
                 }],
                 'certification': [],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'agreement': {
                 'exchange_address': bond_exchange['address'],
@@ -693,8 +693,8 @@ class TestV1OrderList_Membership():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'order': {
                 'order_id': order_id,
@@ -770,8 +770,8 @@ class TestV1OrderList_Membership():
                     'id': 3,
                     'url': ''
                 }],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'agreement': {
                 'exchange_address': membership_exchange['address'],
@@ -843,8 +843,8 @@ class TestV1OrderList_Membership():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'agreement': {
                 'exchange_address': membership_exchange['address'],
@@ -1118,8 +1118,8 @@ class TestV1OrderList_Coupon():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'order': {
                 'order_id': order_id,
@@ -1189,8 +1189,8 @@ class TestV1OrderList_Coupon():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'agreement': {
                 'exchange_address': coupon_exchange['address'],
@@ -1262,8 +1262,8 @@ class TestV1OrderList_Coupon():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': False,
-                'bank_payment_availability': False
+                'payment_method_credit_card': False,
+                'payment_method_bank': False
             },
             'agreement': {
                 'exchange_address': coupon_exchange['address'],

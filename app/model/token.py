@@ -10,8 +10,8 @@ class TokenBase():
     symbol: str
     total_supply: int
     image_url: object
-    credit_card_availability: bool
-    bank_payment_availability: bool
+    payment_method_credit_card: bool
+    payment_method_bank: bool
 
 class BondToken(TokenBase):
     face_value: int

@@ -219,8 +219,8 @@ class Contracts(BaseResource):
                         {'id':3, 'url':image_url_3},
                     ]
                 bondtoken.certification = certification
-                bondtoken.credit_card_availability = available_token.credit_card_availability
-                bondtoken.bank_payment_availability = available_token.bank_payment_availability
+                bondtoken.payment_method_credit_card = available_token.payment_method_credit_card
+                bondtoken.payment_method_bank = available_token.payment_method_bank
                 bondtoken = bondtoken.__dict__
                 bondtoken['id'] = token_id
 
@@ -396,8 +396,8 @@ class MembershipContracts(BaseResource):
                         {'id':2, 'url':image_url_2},
                         {'id':3, 'url':image_url_3},
                     ]
-                membershiptoken.credit_card_availability = available_token.credit_card_availability
-                membershiptoken.bank_payment_availability = available_token.bank_payment_availability
+                membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card
+                membershiptoken.payment_method_bank = available_token.payment_method_bank
                 membershiptoken = membershiptoken.__dict__
                 membershiptoken['id'] = token_id
 
@@ -576,8 +576,8 @@ class CouponContracts(BaseResource):
                         {'id':2, 'url':image_url_2},
                         {'id':3, 'url':image_url_3},
                     ]
-                coupontoken.credit_card_availability = available_token.credit_card_availability
-                coupontoken.bank_payment_availability = available_token.bank_payment_availability
+                coupontoken.payment_method_credit_card = available_token.payment_method_credit_card
+                coupontoken.payment_method_bank = available_token.payment_method_bank
                 coupontoken = coupontoken.__dict__
                 coupontoken['id'] = token_id
 

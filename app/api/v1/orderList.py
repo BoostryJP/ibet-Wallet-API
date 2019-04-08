@@ -324,8 +324,8 @@ class OrderList(BaseResource):
                         ]
                 bondtoken.certification = certification
                 # 許可済みトークンに存在しない場合は、決済手段はFalseとする
-                bondtoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-                bondtoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+                bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+                bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
 
                 order_list.append({
                     'token':bondtoken.__dict__,
@@ -416,8 +416,8 @@ class OrderList(BaseResource):
                             {'id': 2, 'url': image_url_2},
                             {'id': 3, 'url': image_url_3}
                         ]
-                membershiptoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-                membershiptoken.bank_payment_availability = available_token.bank_payment_availability if  hasattr( available_token, "bank_payment_availability" )  else False
+                membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+                membershiptoken.payment_method_bank = available_token.payment_method_bank if  hasattr( available_token, "payment_method_bank" )  else False
                 order_list.append({
                     'token': membershiptoken.__dict__,
                     'order':{
@@ -507,8 +507,8 @@ class OrderList(BaseResource):
                             {'id': 2, 'url': image_url_2},
                             {'id': 3, 'url': image_url_3}
                         ]
-                coupontoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-                coupontoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+                coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+                coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
                 order_list.append({
                     'token':coupontoken.__dict__,
                     'order':{
@@ -661,8 +661,8 @@ class OrderList(BaseResource):
                     ]
             bondtoken.certification = certification
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
-            bondtoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            bondtoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
 
             settlement_list.append({
                 'token':bondtoken.__dict__,
@@ -817,8 +817,8 @@ class OrderList(BaseResource):
                     ]
             bondtoken.certification = certification
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
-            bondtoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            bondtoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
 
             settlement_list.append({
                 'token':bondtoken.__dict__,
@@ -908,8 +908,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            membershiptoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            membershiptoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             settlement_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -998,8 +998,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            membershiptoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            membershiptoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             settlement_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -1089,8 +1089,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            coupontoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            coupontoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             settlement_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{
@@ -1180,8 +1180,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            coupontoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            coupontoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             settlement_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{
@@ -1336,8 +1336,8 @@ class OrderList(BaseResource):
                     ]
             bondtoken.certification = certification
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
-            bondtoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            bondtoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
 
             complete_list.append({
                 'token':bondtoken.__dict__,
@@ -1492,8 +1492,8 @@ class OrderList(BaseResource):
                     ]
             bondtoken.certification = certification
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
-            bondtoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            bondtoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
 
             complete_list.append({
                 'token':bondtoken.__dict__,
@@ -1582,8 +1582,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            membershiptoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            membershiptoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             complete_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -1671,8 +1671,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            membershiptoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            membershiptoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             complete_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -1761,8 +1761,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            coupontoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            coupontoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             complete_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{
@@ -1851,8 +1851,8 @@ class OrderList(BaseResource):
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-            coupontoken.credit_card_availability = available_token.credit_card_availability if hasattr( available_token, "credit_card_availability" ) else False
-            coupontoken.bank_payment_availability = available_token.bank_payment_availability if hasattr( available_token, "bank_payment_availability" ) else False
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
             complete_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{

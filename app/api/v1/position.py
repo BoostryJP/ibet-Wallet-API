@@ -184,8 +184,8 @@ class MyTokens(BaseResource):
                                         {'id': 3, 'url': image_url_3}
                                     ]
                             bondtoken.certification = certification
-                            bondtoken.credit_card_availability = token.credit_card_availability
-                            bondtoken.bank_payment_availability = token.bank_payment_availability
+                            bondtoken.payment_method_credit_card = token.payment_method_credit_card
+                            bondtoken.payment_method_bank = token.payment_method_bank
                             position_list.append({
                                 'token': bondtoken.__dict__,
                                 'balance': balance,
@@ -328,8 +328,8 @@ class MembershipMyTokens(BaseResource):
                                         {'id': 2, 'url': image_url_2},
                                         {'id': 3, 'url': image_url_3}
                                     ]
-                            membershiptoken.credit_card_availability = token.credit_card_availability
-                            membershiptoken.bank_payment_availability = token.bank_payment_availability
+                            membershiptoken.payment_method_credit_card = token.payment_method_credit_card
+                            membershiptoken.payment_method_bank = token.payment_method_bank
                             position_list.append({
                                 'token': membershiptoken.__dict__,
                                 'balance': balance,
@@ -470,8 +470,8 @@ class CouponMyTokens(BaseResource):
                                         {'id': 3, 'url': image_url_3}
                                     ]
                             coupontoken.status = status
-                            coupontoken.credit_card_availability = token.credit_card_availability
-                            coupontoken.bank_payment_availability = token.bank_payment_availability
+                            coupontoken.payment_method_credit_card = token.payment_method_credit_card
+                            coupontoken.payment_method_bank = token.payment_method_bank
                             position_list.append({
                                 'token': coupontoken.__dict__,
                                 'balance': balance,

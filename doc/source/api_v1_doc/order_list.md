@@ -118,8 +118,8 @@ curl -X POST \
                             "url": ""
                         }
                     ],
-                    "credit_card_availability": true,
-                    "bank_payment_availability": true
+                    "payment_method_credit_card": true,
+                    "payment_method_bank": true
                 },
                 "order": {
                     "order_id": 1,
@@ -160,8 +160,8 @@ curl -X POST \
                             "url": ""
                         }
                     ],
-                    "credit_card_availability": true,
-                    "bank_payment_availability": true
+                    "payment_method_credit_card": true,
+                    "payment_method_bank": true
                 },
                 "agreement": {
                     "exchange_address": "0xd32dBF7bE973B860A9EFc33764fE40bd113C4807",
@@ -204,8 +204,8 @@ curl -X POST \
                             "url": ""
                         }
                     ],
-                    "credit_card_availability": true,
-                    "bank_payment_availability": true
+                    "payment_method_credit_card": true,
+                    "payment_method_bank": true
                 },
                 "agreement": {
                     "exchange_address": "0xd32dBF7bE973B860A9EFc33764fE40bd113C4807",

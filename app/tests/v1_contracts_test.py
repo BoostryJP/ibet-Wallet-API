@@ -68,8 +68,8 @@ class TestV1StraightBondContracts():
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
-        listed_token.credit_card_availability = True
-        listed_token.bank_payment_availability = True
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -133,8 +133,8 @@ class TestV1StraightBondContracts():
                 {'id': 3, 'url': ''}
             ],
             'certification': [],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -208,8 +208,8 @@ class TestV1StraightBondContracts():
                 'url': ''
             }],
             'certification': [],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -250,8 +250,8 @@ class TestV1StraightBondContracts():
                 'url': ''
             }],
             'certification': [],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -326,8 +326,8 @@ class TestV1StraightBondContracts():
                 'url': ''
             }],
             'certification': [],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -368,8 +368,8 @@ class TestV1StraightBondContracts():
                 'url': ''
             }],
             'certification': [],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -444,8 +444,8 @@ class TestV1StraightBondContracts():
                 'url': ''
             }],
             'certification': [],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -520,8 +520,8 @@ class TestV1StraightBondContracts():
                 'url': ''
             }],
             'certification': [],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -697,8 +697,8 @@ class TestV1MembershipContracts():
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
-        listed_token.credit_card_availability = True
-        listed_token.bank_payment_availability = True
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -750,8 +750,8 @@ class TestV1MembershipContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -811,8 +811,8 @@ class TestV1MembershipContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -835,8 +835,8 @@ class TestV1MembershipContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -896,8 +896,8 @@ class TestV1MembershipContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -920,8 +920,8 @@ class TestV1MembershipContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -980,8 +980,8 @@ class TestV1MembershipContracts():
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -1039,8 +1039,8 @@ class TestV1MembershipContracts():
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -1252,8 +1252,8 @@ class TestV1CouponContracts():
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
-        listed_token.credit_card_availability = True
-        listed_token.bank_payment_availability = True
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -1305,8 +1305,8 @@ class TestV1CouponContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -1366,8 +1366,8 @@ class TestV1CouponContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -1390,8 +1390,8 @@ class TestV1CouponContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -1451,8 +1451,8 @@ class TestV1CouponContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -1475,8 +1475,8 @@ class TestV1CouponContracts():
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
-                'credit_card_availability': True,
-                'bank_payment_availability': True
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -1535,8 +1535,8 @@ class TestV1CouponContracts():
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -1594,8 +1594,8 @@ class TestV1CouponContracts():
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
-            'credit_card_availability': True,
-            'bank_payment_availability': True
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200

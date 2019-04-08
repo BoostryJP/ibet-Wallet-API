@@ -27,6 +27,7 @@ def client():
     middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
     return TestAuthClient(App(middleware=middleware))
 
+@pytest.fixture(scope = 'session')
 def payment_gateway_contract():
     deployer = eth_account['deployer']
     agent = eth_account['agent']
@@ -54,6 +55,7 @@ def payment_gateway_contract():
 
     return {'address':contract_address, 'abi':abi}
 
+@pytest.fixture(scope = 'session')
 def personalinfo_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
@@ -64,6 +66,7 @@ def personalinfo_contract():
 
     return {'address':contract_address, 'abi':abi}
 
+@pytest.fixture(scope = 'session')
 def bond_exchange_contract(payment_gateway_address, personalinfo_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
@@ -76,6 +79,7 @@ def bond_exchange_contract(payment_gateway_address, personalinfo_address):
 
     return {'address':contract_address, 'abi':abi}
 
+@pytest.fixture(scope = 'session')
 def membership_exchange_contract(payment_gateway_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
@@ -88,6 +92,7 @@ def membership_exchange_contract(payment_gateway_address):
 
     return {'address':contract_address, 'abi':abi}
 
+@pytest.fixture(scope = 'session')
 def coupon_exchange_contract(payment_gateway_address):
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
@@ -100,6 +105,7 @@ def coupon_exchange_contract(payment_gateway_address):
 
     return {'address':contract_address, 'abi':abi}
 
+@pytest.fixture(scope = 'session')
 def tokenlist_contract():
     deployer = eth_account['deployer']
     web3.eth.defaultAccount = deployer['account_address']
