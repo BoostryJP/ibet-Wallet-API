@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
 import json
 import os
 
@@ -13,8 +12,7 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
 
 # [普通社債]現在値取得API
 # /v1/StraightBond/LastPrice/
-class TestV1StraightBondLastPrice():
-
+class TestV1StraightBondLastPrice:
     # テスト対象API
     apiurl = '/v1/StraightBond/LastPrice/'
 
@@ -61,7 +59,7 @@ class TestV1StraightBondLastPrice():
         register_personalinfo(trader, personal_info)
         register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, latest_orderid - 1, 100)
+        take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
 
         return bond_token
 
@@ -82,9 +80,9 @@ class TestV1StraightBondLastPrice():
 
         assumed_body = [{
             'token_address':
-            '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
+                '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
             'last_price':
-            0
+                0
         }]
 
         assert resp.status_code == 200
@@ -105,9 +103,9 @@ class TestV1StraightBondLastPrice():
 
         assumed_body = [{
             'token_address':
-            '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
+                '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
             'last_price':
-            0
+                0
         }]
 
         assert resp.status_code == 200
@@ -121,7 +119,7 @@ class TestV1StraightBondLastPrice():
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
 
-        bond_token = TestV1StraightBondLastPrice.\
+        bond_token = TestV1StraightBondLastPrice. \
             generate_agree_event(bond_exchange, personal_info, payment_gateway)
 
         token_address = bond_token['address']
@@ -136,8 +134,8 @@ class TestV1StraightBondLastPrice():
             self.apiurl, headers=headers, body=request_body)
 
         assumed_body = [{
-            'token_address':token_address,
-            'last_price':1000
+            'token_address': token_address,
+            'last_price': 1000
         }]
 
         assert resp.status_code == 200
@@ -180,7 +178,7 @@ class TestV1StraightBondLastPrice():
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_lastprice_error_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  #アドレス長が短い
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
         headers = {}
@@ -206,10 +204,10 @@ class TestV1StraightBondLastPrice():
             'description': 'method: GET, url: /v1/StraightBond/LastPrice'
         }
 
+
 # [会員権]現在値取得API
 # /v1/Membership/LastPrice/
-class TestV1MembershipLastPrice():
-
+class TestV1MembershipLastPrice:
     # テスト対象API
     apiurl = '/v1/Membership/LastPrice/'
 
@@ -237,7 +235,7 @@ class TestV1MembershipLastPrice():
 
         # 投資家オペレーション
         latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid - 1, 100)
+        membership_take_buy(trader, exchange, latest_orderid, 100)
 
         return token
 
@@ -250,16 +248,15 @@ class TestV1MembershipLastPrice():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        os.environ[
-            "IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
-                "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = [{
-            'token_address':'0xe883a6f441ad5682d37df31d34fc012bcb07a740',
-            'last_price':0
+            'token_address': '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
+            'last_price': 0
         }]
 
         assert resp.status_code == 200
@@ -279,12 +276,12 @@ class TestV1MembershipLastPrice():
         os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
             exchange['address']
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = [{
-            'token_address':'0xe883a6f441ad5682d37df31d34fc012bcb07a740',
-            'last_price':0
+            'token_address': '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
+            'last_price': 0
         }]
 
         assert resp.status_code == 200
@@ -308,8 +305,8 @@ class TestV1MembershipLastPrice():
             self.apiurl, headers=headers, body=request_body)
 
         assumed_body = [{
-            'token_address':token_address,
-            'last_price':1000
+            'token_address': token_address,
+            'last_price': 1000
         }]
 
         assert resp.status_code == 200
@@ -352,7 +349,7 @@ class TestV1MembershipLastPrice():
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_membership_lastprice_error_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  #アドレス長が短い
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
         headers = {}
@@ -378,10 +375,10 @@ class TestV1MembershipLastPrice():
             'description': 'method: GET, url: /v1/Membership/LastPrice'
         }
 
+
 # [クーポン]現在値取得API
 # /v1/Coupon/LastPrice/
-class TestV1CouponLastPrice():
-
+class TestV1CouponLastPrice:
     # テスト対象API
     apiurl = '/v1/Coupon/LastPrice/'
 
@@ -397,6 +394,7 @@ class TestV1CouponLastPrice():
             'totalSupply': 10000,
             'tradableExchange': exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -408,7 +406,7 @@ class TestV1CouponLastPrice():
 
         # 投資家オペレーション
         latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid - 1, 100)
+        coupon_take_buy(trader, exchange, latest_orderid, 100)
 
         return token
 
@@ -423,14 +421,14 @@ class TestV1CouponLastPrice():
 
         os.environ[
             "IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
-                "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = [{
-            'token_address':'0xe883a6f441ad5682d37df31d34fc012bcb07a740',
-            'last_price':0
+            'token_address': '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
+            'last_price': 0
         }]
 
         assert resp.status_code == 200
@@ -450,12 +448,12 @@ class TestV1CouponLastPrice():
         os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
             exchange['address']
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = [{
-            'token_address':'0xe883a6f441ad5682d37df31d34fc012bcb07a740',
-            'last_price':0
+            'token_address': '0xe883a6f441ad5682d37df31d34fc012bcb07a740',
+            'last_price': 0
         }]
 
         assert resp.status_code == 200
@@ -479,8 +477,8 @@ class TestV1CouponLastPrice():
             self.apiurl, headers=headers, body=request_body)
 
         assumed_body = [{
-            'token_address':token_address,
-            'last_price':1000
+            'token_address': token_address,
+            'last_price': 1000
         }]
 
         assert resp.status_code == 200
@@ -523,7 +521,7 @@ class TestV1CouponLastPrice():
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_coupon_lastprice_error_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  #アドレス長が短い
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
         headers = {}

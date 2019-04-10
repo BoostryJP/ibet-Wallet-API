@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-import pytest
 import json
 
 from .account_config import eth_account
 from .contract_modules import issue_coupon_token, deposit_coupon_token, \
     transfer_coupon_token, consume_coupon_token
 
+
 # クーポン消費履歴API
 # /v1/CouponConsumptions/
 class TestV1CouponConsumptions():
-
     # テスト対象API
     apiurl = '/v1/CouponConsumptions/'
 
@@ -25,6 +24,7 @@ class TestV1CouponConsumptions():
             'totalSupply': 10000,
             'tradableExchange': coupon_exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -37,7 +37,7 @@ class TestV1CouponConsumptions():
         coupon_token = issue_coupon_token(issuer, attribute)
         deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
         transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-            trader['account_address'], 10)
+                              trader['account_address'], 10)
 
         # ＜投資家オペレーション＞
         #   1) クーポン消費
@@ -57,6 +57,7 @@ class TestV1CouponConsumptions():
             'totalSupply': 10000,
             'tradableExchange': coupon_exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -68,8 +69,7 @@ class TestV1CouponConsumptions():
         #   3) 投資家に付与（10トークン）
         coupon_token = issue_coupon_token(issuer, attribute)
         deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-            trader['account_address'], 10)
+        transfer_coupon_token(issuer, coupon_token, coupon_exchange, trader['account_address'], 10)
 
         # ＜投資家オペレーション＞
         #   1) クーポン消費
@@ -84,7 +84,7 @@ class TestV1CouponConsumptions():
     def test_couponconsumptions_normal_1(self, client, session, shared_contract):
         coupon_exchange = shared_contract['IbetCouponExchange']
 
-        coupon_token = TestV1CouponConsumptions.\
+        coupon_token = TestV1CouponConsumptions. \
             generate_consumption_one(coupon_exchange)
 
         account = eth_account['trader']
@@ -108,7 +108,7 @@ class TestV1CouponConsumptions():
     def test_couponconsumptions_normal_2(self, client, session, shared_contract):
         coupon_exchange = shared_contract['IbetCouponExchange']
 
-        coupon_token = TestV1CouponConsumptions.\
+        coupon_token = TestV1CouponConsumptions. \
             generate_consumption_three(coupon_exchange)
 
         account = eth_account['trader']
@@ -151,7 +151,6 @@ class TestV1CouponConsumptions():
     #  入力値エラー
     #    headersなし
     def test_couponconsumptions_error_2(self, client):
-        account = eth_account['trader']
         request_params = {}
         headers = {}
         request_body = json.dumps(request_params)
@@ -168,7 +167,7 @@ class TestV1CouponConsumptions():
     #  入力値エラー
     #    token_addressがアドレスフォーマットではない
     def test_couponconsumptions_error_3_1(self, client):
-        token_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637" #アドレスが短い
+        token_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         account = eth_account['trader']
 
         request_params = {
@@ -216,7 +215,7 @@ class TestV1CouponConsumptions():
     #    account_addressがアドレスフォーマットではない
     def test_couponconsumptions_error_4_1(self, client):
         token_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637" # アドレスが短い
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
 
         request_params = {
             "token_address": token_address,

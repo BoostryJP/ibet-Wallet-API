@@ -1,10 +1,7 @@
-import json
 import os
 
-from falcon.util import json as util_json
 
-
-class TestV1RequiredVersion():
+class TestV1RequiredVersion:
     # テスト対象API
     apiurl = "/v1/RequiredVersion"
 
@@ -20,7 +17,7 @@ class TestV1RequiredVersion():
         os.environ[
             "TMRAPP_UPDATE_URL_ANDROID"] = 'https://play.google.com/store/apps/details?id=jp.co.nomura.nomurastock'
         return
-    
+
     # ＜正常系1＞
     # iOSの場合
     def test_required_version_1(self, client):
@@ -59,7 +56,7 @@ class TestV1RequiredVersion():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-    #＜異常系1＞
+    # ＜異常系1＞
     # iOS, Android以外の場合
     def test_required_version_error_1(self, client):
         TestV1RequiredVersion.set_env()
@@ -75,4 +72,3 @@ class TestV1RequiredVersion():
                 'platform': 'unallowed value XXX'
             }
         }
-

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
 import json
 import os
 
@@ -10,17 +9,17 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
     register_personalinfo, register_payment_gateway, take_buy_bond_token, get_latest_orderid, \
     register_bond_list, get_latest_agreementid, bond_confirm_agreement
 
+
 # [普通社債]保有トークン一覧API
 # /v1/StraightBond/MyTokens/
-class TestV1StraightBondMyTokens():
-
+class TestV1StraightBondMyTokens:
     # テスト対象API
     apiurl = '/v1/StraightBond/MyTokens/'
 
     # 債券トークンの保有状態（約定イベント）を作成
     @staticmethod
     def generate_bond_position(bond_exchange, personal_info,
-        payment_gateway, token_list):
+                               payment_gateway, token_list):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -71,13 +70,11 @@ class TestV1StraightBondMyTokens():
         register_personalinfo(trader, personal_info)
         register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, latest_orderid - 1, 100)
+        take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
-        latest_agreementid = get_latest_agreementid(bond_exchange,
-                                                    latest_orderid - 1)
-        bond_confirm_agreement(agent, bond_exchange, latest_orderid - 1,
-                               latest_agreementid - 1)
+        latest_agreementid = get_latest_agreementid(bond_exchange, latest_orderid)
+        bond_confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
 
         return bond_token
 
@@ -209,7 +206,7 @@ class TestV1StraightBondMyTokens():
 
     # エラー系3-1：入力値エラー（account_addressがアドレスフォーマットではない）
     def test_position_error_3_1(self, client):
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
         headers = {'Content-Type': 'application/json'}

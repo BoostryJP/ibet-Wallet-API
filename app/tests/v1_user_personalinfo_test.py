@@ -8,7 +8,7 @@ from .contract_modules import register_personalinfo
 
 # 名簿用個人情報参照API
 # /v1/User/PersonalInfo
-class TestV1PersonalInfo():
+class TestV1PersonalInfo:
 
     # テスト対象API
     apiurl = '/v1/User/PersonalInfo'

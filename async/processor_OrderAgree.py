@@ -282,8 +282,7 @@ class Processor:
                         pass
                     else:
                         order_id = args['orderId']
-                        orderbook = exchange_contract.functions.\
-                            orderBook(order_id).call()
+                        orderbook = exchange_contract.functions.getOrder(order_id).call()
                         is_buy = orderbook[4]
                         counterpart_address = args['buyAddress']
                         if is_buy:

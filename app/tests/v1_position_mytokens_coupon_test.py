@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
-import pytest
-import json
 import os
-
 from app.model import Listing
-
-from .account_config import eth_account
 from .contract_modules import *
+
 
 # [クーポン]保有トークン一覧API
 # /v1/Coupon/MyTokens/
-class TestV1CouponMyTokens():
-
+class TestV1CouponMyTokens:
     # テスト対象API
     apiurl = '/v1/Coupon/MyTokens/'
 
@@ -39,8 +34,7 @@ class TestV1CouponMyTokens():
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
         deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-            trader['account_address'], 10)
+        transfer_coupon_token(issuer, coupon_token, coupon_exchange, trader['account_address'], 10)
         return coupon_token
 
     # 無効化クーポントークンの保有状態を作成（譲渡イベント）
@@ -69,7 +63,7 @@ class TestV1CouponMyTokens():
         coupon_register_list(issuer, coupon_token, token_list)
         deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
         transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-            trader['account_address'], 10)
+                              trader['account_address'], 10)
         invalidate_coupon_token(issuer, coupon_token)
         return coupon_token
 
@@ -103,14 +97,14 @@ class TestV1CouponMyTokens():
         # ＜投資家オペレーション＞
         #   1) Take買
         latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid - 1, 100)
+        coupon_take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid - 1)
+            coupon_get_latest_agreementid(exchange, latest_orderid)
         coupon_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 
@@ -144,14 +138,14 @@ class TestV1CouponMyTokens():
         # ＜投資家オペレーション＞
         #   1) Take買
         latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid - 1, 100)
+        coupon_take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid - 1)
+            coupon_get_latest_agreementid(exchange, latest_orderid)
         coupon_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション＞
         #   1) Make売
@@ -189,14 +183,14 @@ class TestV1CouponMyTokens():
         # ＜投資家オペレーション①＞
         #   1) Take買
         latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid - 1, 100)
+        coupon_take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション①＞
         #   1）　決済
         latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid - 1)
+            coupon_get_latest_agreementid(exchange, latest_orderid)
         coupon_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション②＞
         #   1) Make売
@@ -205,14 +199,14 @@ class TestV1CouponMyTokens():
         # ＜発行体オペレーション②＞
         #   1) Take買
         latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(issuer, exchange, latest_orderid - 1, 100)
+        coupon_take_buy(issuer, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション②＞
         #   1）　決済
         latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid - 1)
+            coupon_get_latest_agreementid(exchange, latest_orderid)
         coupon_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 
@@ -235,7 +229,7 @@ class TestV1CouponMyTokens():
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
-        coupon_token = TestV1CouponMyTokens.\
+        coupon_token = TestV1CouponMyTokens. \
             transfer_coupon(coupon_exchange, token_list)
         coupon_address = coupon_token['address']
 
@@ -303,7 +297,7 @@ class TestV1CouponMyTokens():
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
-        coupon_token = TestV1CouponMyTokens.\
+        coupon_token = TestV1CouponMyTokens. \
             transfer_coupon_invalid(coupon_exchange, token_list)
         coupon_address = coupon_token['address']
 
@@ -383,7 +377,7 @@ class TestV1CouponMyTokens():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
@@ -450,7 +444,7 @@ class TestV1CouponMyTokens():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
@@ -518,7 +512,7 @@ class TestV1CouponMyTokens():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 200
@@ -567,7 +561,7 @@ class TestV1CouponMyTokens():
 
     # エラー系3-1：入力値エラー（account_addressがアドレスフォーマットではない）
     def test_coupon_position_error_3_1(self, client):
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
         headers = {'Content-Type': 'application/json'}

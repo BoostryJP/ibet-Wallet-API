@@ -204,7 +204,7 @@ class OrderList(BaseResource):
 
         order_list = []
         for (id, order_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
 
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
@@ -360,7 +360,7 @@ class OrderList(BaseResource):
 
         order_list = []
         for (id, order_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
 
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
@@ -451,7 +451,7 @@ class OrderList(BaseResource):
 
         order_list = []
         for (id, order_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
 
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
@@ -542,8 +542,8 @@ class OrderList(BaseResource):
 
         settlement_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -699,8 +699,8 @@ class OrderList(BaseResource):
 
         settlement_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -855,8 +855,8 @@ class OrderList(BaseResource):
 
         settlement_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -945,8 +945,8 @@ class OrderList(BaseResource):
 
         settlement_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1035,8 +1035,8 @@ class OrderList(BaseResource):
 
         settlement_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1126,8 +1126,8 @@ class OrderList(BaseResource):
 
         settlement_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1217,8 +1217,8 @@ class OrderList(BaseResource):
 
         complete_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1373,8 +1373,8 @@ class OrderList(BaseResource):
 
         complete_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1529,8 +1529,8 @@ class OrderList(BaseResource):
 
         complete_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1618,8 +1618,8 @@ class OrderList(BaseResource):
 
         complete_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1707,8 +1707,8 @@ class OrderList(BaseResource):
 
         complete_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
@@ -1797,8 +1797,8 @@ class OrderList(BaseResource):
 
         complete_list = []
         for (id, order_id, agreement_id) in entries:
-            orderBook = ExchangeContract.functions.orderBook(order_id).call()
-            agreement = ExchangeContract.functions.agreements(order_id, agreement_id).call()
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
             # Token-Contractへの接続
