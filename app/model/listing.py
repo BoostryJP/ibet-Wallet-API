@@ -9,8 +9,8 @@ class Listing(Base):
     __tablename__ = 'listing'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)
-    credit_card_availability = Column(Boolean)
-    bank_payment_availability = Column(Boolean)
+    payment_method_credit_card = Column(Boolean)
+    payment_method_bank = Column(Boolean)
 
     def __repr__(self):
         return "<Listing id='%d'>" % \
@@ -19,8 +19,8 @@ class Listing(Base):
     FIELDS = {
         'id': int,
         'token_address': str,
-        'credit_card_availability': bool,
-        'bank_payment_availability': bool,
+        'payment_method_credit_card': bool,
+        'payment_method_bank': bool,
     }
 
     FIELDS.update(Base.FIELDS)

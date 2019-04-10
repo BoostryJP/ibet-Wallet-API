@@ -68,8 +68,8 @@ class TestV1StraightBondContracts():
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
-        listed_token.credit_card_availability = True
-        listed_token.bank_payment_availability = True
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -107,32 +107,34 @@ class TestV1StraightBondContracts():
             'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_amount': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [
                 {'id': 1, 'url': ''},
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
-            'certification': []
+            'certification': [],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -166,7 +168,6 @@ class TestV1StraightBondContracts():
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
-
         assumed_body = [{
             'id': 1,
             'token_address': bond_list[1]['address'],
@@ -176,25 +177,25 @@ class TestV1StraightBondContracts():
             'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_amount': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'id': 1,
@@ -206,7 +207,9 @@ class TestV1StraightBondContracts():
                 'id': 3,
                 'url': ''
             }],
-            'certification': []
+            'certification': [],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -216,25 +219,25 @@ class TestV1StraightBondContracts():
             'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_amount': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'id': 1,
@@ -246,7 +249,9 @@ class TestV1StraightBondContracts():
                 'id': 3,
                 'url': ''
             }],
-            'certification': []
+            'certification': [],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -290,25 +295,25 @@ class TestV1StraightBondContracts():
             'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_amount': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'id': 1,
@@ -320,7 +325,9 @@ class TestV1StraightBondContracts():
                 'id': 3,
                 'url': ''
             }],
-            'certification': []
+            'certification': [],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -330,25 +337,25 @@ class TestV1StraightBondContracts():
             'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_amount': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'id': 1,
@@ -360,7 +367,9 @@ class TestV1StraightBondContracts():
                 'id': 3,
                 'url': ''
             }],
-            'certification': []
+            'certification': [],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -404,25 +413,25 @@ class TestV1StraightBondContracts():
             'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_amount': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'id': 1,
@@ -434,7 +443,9 @@ class TestV1StraightBondContracts():
                 'id': 3,
                 'url': ''
             }],
-            'certification': []
+            'certification': [],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -478,25 +489,25 @@ class TestV1StraightBondContracts():
             'rsa_publickey': '',
             'name': 'テスト債券',
             'symbol': 'BOND',
-            'totalSupply': 1000000,
-            'faceValue': 10000,
-            'interestRate': 1000,
-            'interestPaymentDate1': '0101',
-            'interestPaymentDate2': '0201',
-            'interestPaymentDate3': '0301',
-            'interestPaymentDate4': '0401',
-            'interestPaymentDate5': '0501',
-            'interestPaymentDate6': '0601',
-            'interestPaymentDate7': '0701',
-            'interestPaymentDate8': '0801',
-            'interestPaymentDate9': '0901',
-            'interestPaymentDate10': '1001',
-            'interestPaymentDate11': '1101',
-            'interestPaymentDate12': '1201',
-            'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
-            'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_amount': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'image_url': [{
                 'id': 1,
@@ -508,7 +519,9 @@ class TestV1StraightBondContracts():
                 'id': 3,
                 'url': ''
             }],
-            'certification': []
+            'certification': [],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -684,8 +697,8 @@ class TestV1MembershipContracts():
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
-        listed_token.credit_card_availability = True
-        listed_token.bank_payment_availability = True
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -736,7 +749,9 @@ class TestV1MembershipContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -795,7 +810,9 @@ class TestV1MembershipContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -817,7 +834,9 @@ class TestV1MembershipContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -876,7 +895,9 @@ class TestV1MembershipContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -898,7 +919,9 @@ class TestV1MembershipContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -956,7 +979,9 @@ class TestV1MembershipContracts():
                 {'id': 1, 'url': ''},
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
-            ]
+            ],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -1013,7 +1038,9 @@ class TestV1MembershipContracts():
                 {'id': 1, 'url': ''},
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
-            ]
+            ],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -1225,8 +1252,8 @@ class TestV1CouponContracts():
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
-        listed_token.credit_card_availability = True
-        listed_token.bank_payment_availability = True
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -1277,7 +1304,9 @@ class TestV1CouponContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -1336,7 +1365,9 @@ class TestV1CouponContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -1358,7 +1389,9 @@ class TestV1CouponContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -1417,7 +1450,9 @@ class TestV1CouponContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -1439,7 +1474,9 @@ class TestV1CouponContracts():
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
-                ]
+                ],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True
             }
         ]
 
@@ -1497,7 +1534,9 @@ class TestV1CouponContracts():
                 {'id': 1, 'url': ''},
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
-            ]
+            ],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200
@@ -1554,7 +1593,9 @@ class TestV1CouponContracts():
                 {'id': 1, 'url': ''},
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
-            ]
+            ],
+            'payment_method_credit_card': True,
+            'payment_method_bank': True
         }]
 
         assert resp.status_code == 200

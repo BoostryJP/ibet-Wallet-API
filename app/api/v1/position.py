@@ -16,7 +16,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing
+from app.model import Listing, BondToken, MembershipToken, CouponToken
 
 LOG = log.get_logger()
 
@@ -86,59 +86,59 @@ class MyTokens(BaseResource):
                         else:
                             name = BondTokenContract.functions.name().call()
                             symbol = BondTokenContract.functions.symbol().call()
-                            totalSupply = BondTokenContract.functions.totalSupply().call()
-                            faceValue = BondTokenContract.functions.faceValue().call()
-                            interestRate = BondTokenContract.functions.interestRate().call()
+                            total_supply = BondTokenContract.functions.totalSupply().call()
+                            face_value = BondTokenContract.functions.faceValue().call()
+                            interest_rate = BondTokenContract.functions.interestRate().call()
 
-                            interestPaymentDate_string = \
+                            interest_payment_date_string = \
                                 BondTokenContract.functions.interestPaymentDate().call()
-                            interestPaymentDate1 = ''
-                            interestPaymentDate2 = ''
-                            interestPaymentDate3 = ''
-                            interestPaymentDate4 = ''
-                            interestPaymentDate5 = ''
-                            interestPaymentDate6 = ''
-                            interestPaymentDate7 = ''
-                            interestPaymentDate8 = ''
-                            interestPaymentDate9 = ''
-                            interestPaymentDate10 = ''
-                            interestPaymentDate11 = ''
-                            interestPaymentDate12 = ''
+                            interest_payment_date1 = ''
+                            interest_payment_date2 = ''
+                            interest_payment_date3 = ''
+                            interest_payment_date4 = ''
+                            interest_payment_date5 = ''
+                            interest_payment_date6 = ''
+                            interest_payment_date7 = ''
+                            interest_payment_date8 = ''
+                            interest_payment_date9 = ''
+                            interest_payment_date10 = ''
+                            interest_payment_date11 = ''
+                            interest_payment_date12 = ''
                             try:
-                                interestPaymentDate = json.loads(
-                                    interestPaymentDate_string.replace("'", '"').\
+                                interest_payment_date = json.loads(
+                                    interest_payment_date_string.replace("'", '"').\
                                     replace('True', 'true').replace('False', 'false'))
-                                if 'interestPaymentDate1' in interestPaymentDate:
-                                    interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
-                                if 'interestPaymentDate2' in interestPaymentDate:
-                                    interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
-                                if 'interestPaymentDate3' in interestPaymentDate:
-                                    interestPaymentDate3 = interestPaymentDate['interestPaymentDate3']
-                                if 'interestPaymentDate4' in interestPaymentDate:
-                                    interestPaymentDate4 = interestPaymentDate['interestPaymentDate4']
-                                if 'interestPaymentDate5' in interestPaymentDate:
-                                    interestPaymentDate5 = interestPaymentDate['interestPaymentDate5']
-                                if 'interestPaymentDate6' in interestPaymentDate:
-                                    interestPaymentDate6 = interestPaymentDate['interestPaymentDate6']
-                                if 'interestPaymentDate7' in interestPaymentDate:
-                                    interestPaymentDate7 = interestPaymentDate['interestPaymentDate7']
-                                if 'interestPaymentDate8' in interestPaymentDate:
-                                    interestPaymentDate8 = interestPaymentDate['interestPaymentDate8']
-                                if 'interestPaymentDate9' in interestPaymentDate:
-                                    interestPaymentDate9 = interestPaymentDate['interestPaymentDate9']
-                                if 'interestPaymentDate10' in interestPaymentDate:
-                                    interestPaymentDate10 = interestPaymentDate['interestPaymentDate10']
-                                if 'interestPaymentDate11' in interestPaymentDate:
-                                    interestPaymentDate11 = interestPaymentDate['interestPaymentDate11']
-                                if 'interestPaymentDate12' in interestPaymentDate:
-                                    interestPaymentDate12 = interestPaymentDate['interestPaymentDate12']
+                                if 'interestPaymentDate1' in interest_payment_date:
+                                    interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                                if 'interestPaymentDate2' in interest_payment_date:
+                                    interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                                if 'interestPaymentDate3' in interest_payment_date:
+                                    interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                                if 'interestPaymentDate4' in interest_payment_date:
+                                    interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                                if 'interestPaymentDate5' in interest_payment_date:
+                                    interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                                if 'interestPaymentDate6' in interest_payment_date:
+                                    interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                                if 'interestPaymentDate7' in interest_payment_date:
+                                    interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                                if 'interestPaymentDate8' in interest_payment_date:
+                                    interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                                if 'interestPaymentDate9' in interest_payment_date:
+                                    interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                                if 'interestPaymentDate10' in interest_payment_date:
+                                    interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                                if 'interestPaymentDate11' in interest_payment_date:
+                                    interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                                if 'interestPaymentDate12' in interest_payment_date:
+                                    interest_payment_date12 = interest_payment_date['interestPaymentDate12']
                             except:
                                 pass
 
-                            redemptionDate = BondTokenContract.functions.redemptionDate().call()
-                            redemptionAmount = BondTokenContract.functions.redemptionAmount().call()
-                            returnDate = BondTokenContract.functions.returnDate().call()
-                            returnAmount = BondTokenContract.functions.returnAmount().call()
+                            redemption_date = BondTokenContract.functions.redemptionDate().call()
+                            redemption_amount = BondTokenContract.functions.redemptionAmount().call()
+                            return_date = BondTokenContract.functions.returnDate().call()
+                            return_amount = BondTokenContract.functions.returnAmount().call()
                             purpose = BondTokenContract.functions.purpose().call()
                             image_url_1 = BondTokenContract.functions.getImageURL(0).call()
                             image_url_2 = BondTokenContract.functions.getImageURL(1).call()
@@ -151,41 +151,43 @@ class MyTokens(BaseResource):
                             # NOTE:現状項目未使用であるため空のリストを返す
                             certification = []
 
-                            position_list.append({
-                                'token': {
-                                    'token_address': token_address,
-                                    'token_template': token_template,
-                                    'company_name': company_name,
-                                    'rsa_publickey': rsa_publickey,
-                                    'name': name,
-                                    'symbol': symbol,
-                                    'totalSupply': totalSupply,
-                                    'faceValue': faceValue,
-                                    'interestRate': interestRate,
-                                    'interestPaymentDate1':interestPaymentDate1,
-                                    'interestPaymentDate2':interestPaymentDate2,
-                                    'interestPaymentDate3':interestPaymentDate3,
-                                    'interestPaymentDate4':interestPaymentDate4,
-                                    'interestPaymentDate5':interestPaymentDate5,
-                                    'interestPaymentDate6':interestPaymentDate6,
-                                    'interestPaymentDate7':interestPaymentDate7,
-                                    'interestPaymentDate8':interestPaymentDate8,
-                                    'interestPaymentDate9':interestPaymentDate9,
-                                    'interestPaymentDate10':interestPaymentDate10,
-                                    'interestPaymentDate11':interestPaymentDate11,
-                                    'interestPaymentDate12':interestPaymentDate12,
-                                    'redemptionDate': redemptionDate,
-                                    'redemptionAmount': redemptionAmount,
-                                    'returnDate': returnDate,
-                                    'returnAmount': returnAmount,
-                                    'purpose': purpose,
-                                    'image_url': [
+                            bondtoken = BondToken()
+                            bondtoken.token_address = token_address
+                            bondtoken.token_template = token_template
+                            bondtoken.company_name = company_name
+                            bondtoken.rsa_publickey = rsa_publickey
+                            bondtoken.name = name
+                            bondtoken.symbol = symbol
+                            bondtoken.total_supply = total_supply
+                            bondtoken.face_value = face_value
+                            bondtoken.interest_rate = interest_rate
+                            bondtoken.interest_payment_date1 = interest_payment_date1
+                            bondtoken.interest_payment_date2 = interest_payment_date2
+                            bondtoken.interest_payment_date3 = interest_payment_date3
+                            bondtoken.interest_payment_date4 = interest_payment_date4
+                            bondtoken.interest_payment_date5 = interest_payment_date5
+                            bondtoken.interest_payment_date6 = interest_payment_date6
+                            bondtoken.interest_payment_date7 = interest_payment_date7
+                            bondtoken.interest_payment_date8 = interest_payment_date8
+                            bondtoken.interest_payment_date9 = interest_payment_date9
+                            bondtoken.interest_payment_date10 = interest_payment_date10
+                            bondtoken.interest_payment_date11 = interest_payment_date11
+                            bondtoken.interest_payment_date12 = interest_payment_date12
+                            bondtoken.redemption_date = redemption_date
+                            bondtoken.redemption_amount = redemption_amount
+                            bondtoken.return_date = return_date
+                            bondtoken.return_amount = return_amount
+                            bondtoken.purpose = purpose
+                            bondtoken.image_url = [
                                         {'id': 1, 'url': image_url_1},
                                         {'id': 2, 'url': image_url_2},
                                         {'id': 3, 'url': image_url_3}
-                                    ],
-                                    'certification': certification
-                                },
+                                    ]
+                            bondtoken.certification = certification
+                            bondtoken.payment_method_credit_card = token.payment_method_credit_card
+                            bondtoken.payment_method_bank = token.payment_method_bank
+                            position_list.append({
+                                'token': bondtoken.__dict__,
                                 'balance': balance,
                                 'commitment': commitment
                             })
@@ -307,27 +309,29 @@ class MembershipMyTokens(BaseResource):
                             company_name, rsa_publickey = MembershipMyTokens.\
                                 get_company_name(company_list, owner_address)
 
-                            position_list.append({
-                                'token': {
-                                    'token_address': token_address,
-                                    'token_template': token_template,
-                                    'company_name': company_name,
-                                    'rsa_publickey': rsa_publickey,
-                                    'name': name,
-                                    'symbol': symbol,
-                                    'total_supply': total_supply,
-                                    'details': details,
-                                    'return_details': return_details,
-                                    'expiration_date': expiration_date,
-                                    'memo': memo,
-                                    'transferable': transferable,
-                                    'status': status,
-                                    'image_url': [
+                            membershiptoken = MembershipToken()
+                            membershiptoken.token_address = token_address
+                            membershiptoken.token_template = token_template
+                            membershiptoken.company_name = company_name
+                            membershiptoken.rsa_publickey = rsa_publickey
+                            membershiptoken.name = name
+                            membershiptoken.symbol = symbol
+                            membershiptoken.total_supply = total_supply
+                            membershiptoken.details = details
+                            membershiptoken.return_details = return_details
+                            membershiptoken.expiration_date = expiration_date
+                            membershiptoken.memo = memo
+                            membershiptoken.transferable = transferable
+                            membershiptoken.status = status
+                            membershiptoken.image_url = [
                                         {'id': 1, 'url': image_url_1},
                                         {'id': 2, 'url': image_url_2},
                                         {'id': 3, 'url': image_url_3}
-                                    ],
-                                },
+                                    ]
+                            membershiptoken.payment_method_credit_card = token.payment_method_credit_card
+                            membershiptoken.payment_method_bank = token.payment_method_bank
+                            position_list.append({
+                                'token': membershiptoken.__dict__,
                                 'balance': balance,
                                 'commitment': commitment
                             })
@@ -435,7 +439,7 @@ class CouponMyTokens(BaseResource):
                                 CouponMyTokens.get_company_name(company_list, owner_address)
                             name = CouponTokenContract.functions.name().call()
                             symbol = CouponTokenContract.functions.symbol().call()
-                            totalSupply = CouponTokenContract.functions.totalSupply().call()
+                            total_supply = CouponTokenContract.functions.totalSupply().call()
                             details = CouponTokenContract.functions.details().call()
                             return_details = CouponTokenContract.functions.returnDetails().call()
                             memo = CouponTokenContract.functions.memo().call()
@@ -446,28 +450,30 @@ class CouponMyTokens(BaseResource):
                             image_url_3 = CouponTokenContract.functions.getImageURL(2).call()
                             status = CouponTokenContract.functions.status().call()
 
-                            position_list.append({
-                                'token': {
-                                    'token_address': token_address,
-                                    'token_template': token_template,
-                                    'owner_address': owner_address,
-                                    'company_name': company_name,
-                                    'rsa_publickey': rsa_publickey,
-                                    'name': name,
-                                    'symbol': symbol,
-                                    'totalSupply': totalSupply,
-                                    'details': details,
-                                    'return_details': return_details,
-                                    'memo': memo,
-                                    'expirationDate': expirationDate,
-                                    'transferable': transferable,
-                                    'image_url': [
+                            coupontoken = CouponToken()
+                            coupontoken.token_address = token_address
+                            coupontoken.token_template = token_template
+                            coupontoken.owner_address = owner_address
+                            coupontoken.company_name = company_name
+                            coupontoken.rsa_publickey = rsa_publickey
+                            coupontoken.name = name
+                            coupontoken.symbol = symbol
+                            coupontoken.total_supply = total_supply
+                            coupontoken.details = details
+                            coupontoken.return_details = return_details
+                            coupontoken.memo = memo
+                            coupontoken.expiration_date = expirationDate
+                            coupontoken.transferable = transferable
+                            coupontoken.image_url = [
                                         {'id': 1, 'url': image_url_1},
                                         {'id': 2, 'url': image_url_2},
                                         {'id': 3, 'url': image_url_3}
-                                    ],
-                                    'status': status,
-                                },
+                                    ]
+                            coupontoken.status = status
+                            coupontoken.payment_method_credit_card = token.payment_method_credit_card
+                            coupontoken.payment_method_bank = token.payment_method_bank
+                            position_list.append({
+                                'token': coupontoken.__dict__,
                                 'balance': balance,
                                 'commitment': commitment,
                                 'used': used

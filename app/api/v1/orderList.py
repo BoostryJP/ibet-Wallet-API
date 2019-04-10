@@ -15,7 +15,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Order, Agreement, AgreementStatus
+from app.model import Order, Agreement, AgreementStatus, Listing, BondToken, MembershipToken, CouponToken
 
 LOG = log.get_logger()
 
@@ -45,6 +45,8 @@ class OrderList(BaseResource):
                     requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except:
                 pass
+        # Listingの情報を取得する
+        available_tokens = session.query(Listing).all()
 
         '''
         1) 注文一覧（order_list）
@@ -54,17 +56,17 @@ class OrderList(BaseResource):
             # 普通社債トークン
             order_list.extend(
                 OrderList.get_StraightBond_OrderList(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # 会員権トークン
             order_list.extend(
                 OrderList.get_Membership_OrderList(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # クーポントークン
             order_list.extend(
                 OrderList.get_Coupon_OrderList(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             order_list = sorted(
                 order_list,
@@ -79,32 +81,32 @@ class OrderList(BaseResource):
             # 普通社債トークン（買）
             settlement_list.extend(
                 OrderList.get_StraightBond_SettlementList_Buy(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # 普通社債トークン（売）
             settlement_list.extend(
                 OrderList.get_StraightBond_SettlementList_Sell(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # 会員権トークン（買）
             settlement_list.extend(
                 OrderList.get_Membership_SettlementList_Buy(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # 会員権トークン（売）
             settlement_list.extend(
                 OrderList.get_Membership_SettlementList_Sell(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # クーポントークン（買）
             settlement_list.extend(
                 OrderList.get_Coupon_SettlementList_Buy(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # クーポントークン（売）
             settlement_list.extend(
                 OrderList.get_Coupon_SettlementList_Sell(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             settlement_list = sorted(
                 settlement_list,
@@ -119,32 +121,32 @@ class OrderList(BaseResource):
             # 普通社債トークン（買）
             complete_list.extend(
                 OrderList.get_StraightBond_CompleteList_Buy(
-                    session, account_address, company_list))
+                    session, account_address, company_list,available_tokens))
 
             # 普通社債トークン（売）
             complete_list.extend(
                 OrderList.get_StraightBond_CompleteList_Sell(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # 会員権トークン（買）
             complete_list.extend(
                 OrderList.get_Membership_CompleteList_Buy(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # 会員権トークン（売）
             complete_list.extend(
                 OrderList.get_Membership_CompleteList_Sell(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # クーポントークン（買）
             complete_list.extend(
                 OrderList.get_Coupon_CompleteList_Buy(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             # クーポントークン（売）
             complete_list.extend(
                 OrderList.get_Coupon_CompleteList_Sell(
-                    session, account_address, company_list))
+                    session, account_address, company_list, available_tokens))
 
             complete_list = sorted(
                 complete_list,
@@ -185,7 +187,7 @@ class OrderList(BaseResource):
 
     # 注文一覧：普通社債トークン
     @staticmethod
-    def get_StraightBond_OrderList(session, account_address, company_list):
+    def get_StraightBond_OrderList(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -214,60 +216,60 @@ class OrderList(BaseResource):
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
                 symbol = TokenContract.functions.symbol().call()
-                totalSupply = TokenContract.functions.totalSupply().call()
-                faceValue = TokenContract.functions.faceValue().call()
-                interestRate = TokenContract.functions.interestRate().call()
+                total_supply = TokenContract.functions.totalSupply().call()
+                face_value = TokenContract.functions.faceValue().call()
+                interest_rate = TokenContract.functions.interestRate().call()
 
-                interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
+                interest_payment_date_string = TokenContract.functions.interestPaymentDate().call()
 
-                interestPaymentDate1 = ''
-                interestPaymentDate2 = ''
-                interestPaymentDate3 = ''
-                interestPaymentDate4 = ''
-                interestPaymentDate5 = ''
-                interestPaymentDate6 = ''
-                interestPaymentDate7 = ''
-                interestPaymentDate8 = ''
-                interestPaymentDate9 = ''
-                interestPaymentDate10 = ''
-                interestPaymentDate11 = ''
-                interestPaymentDate12 = ''
+                interest_payment_date1 = ''
+                interest_payment_date2 = ''
+                interest_payment_date3 = ''
+                interest_payment_date4 = ''
+                interest_payment_date5 = ''
+                interest_payment_date6 = ''
+                interest_payment_date7 = ''
+                interest_payment_date8 = ''
+                interest_payment_date9 = ''
+                interest_payment_date10 = ''
+                interest_payment_date11 = ''
+                interest_payment_date12 = ''
 
                 try:
-                    interestPaymentDate = json.loads(
-                        interestPaymentDate_string.replace("'", '"').\
+                    interest_payment_date = json.loads(
+                        interest_payment_date_string.replace("'", '"').\
                         replace('True', 'true').replace('False', 'false'))
-                    if 'interestPaymentDate1' in interestPaymentDate:
-                        interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
-                    if 'interestPaymentDate2' in interestPaymentDate:
-                        interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
-                    if 'interestPaymentDate3' in interestPaymentDate:
-                        interestPaymentDate3 = interestPaymentDate['interestPaymentDate3']
-                    if 'interestPaymentDate4' in interestPaymentDate:
-                        interestPaymentDate4 = interestPaymentDate['interestPaymentDate4']
-                    if 'interestPaymentDate5' in interestPaymentDate:
-                        interestPaymentDate5 = interestPaymentDate['interestPaymentDate5']
-                    if 'interestPaymentDate6' in interestPaymentDate:
-                        interestPaymentDate6 = interestPaymentDate['interestPaymentDate6']
-                    if 'interestPaymentDate7' in interestPaymentDate:
-                        interestPaymentDate7 = interestPaymentDate['interestPaymentDate7']
-                    if 'interestPaymentDate8' in interestPaymentDate:
-                        interestPaymentDate8 = interestPaymentDate['interestPaymentDate8']
-                    if 'interestPaymentDate9' in interestPaymentDate:
-                        interestPaymentDate9 = interestPaymentDate['interestPaymentDate9']
-                    if 'interestPaymentDate10' in interestPaymentDate:
-                        interestPaymentDate10 = interestPaymentDate['interestPaymentDate10']
-                    if 'interestPaymentDate11' in interestPaymentDate:
-                        interestPaymentDate11 = interestPaymentDate['interestPaymentDate11']
-                    if 'interestPaymentDate12' in interestPaymentDate:
-                        interestPaymentDate12 = interestPaymentDate['interestPaymentDate12']
+                    if 'interestPaymentDate1' in interest_payment_date:
+                        interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                    if 'interestPaymentDate2' in interest_payment_date:
+                        interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                    if 'interestPaymentDate3' in interest_payment_date:
+                        interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                    if 'interestPaymentDate4' in interest_payment_date:
+                        interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                    if 'interestPaymentDate5' in interest_payment_date:
+                        interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                    if 'interestPaymentDate6' in interest_payment_date:
+                        interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                    if 'interestPaymentDate7' in interest_payment_date:
+                        interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                    if 'interestPaymentDate8' in interest_payment_date:
+                        interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                    if 'interestPaymentDate9' in interest_payment_date:
+                        interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                    if 'interestPaymentDate10' in interest_payment_date:
+                        interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                    if 'interestPaymentDate11' in interest_payment_date:
+                        interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                    if 'interestPaymentDate12' in interest_payment_date:
+                        interest_payment_date12 = interest_payment_date['interestPaymentDate12']
                 except:
                     pass
 
-                redemptionDate = TokenContract.functions.redemptionDate().call()
-                redemptionAmount = TokenContract.functions.redemptionAmount().call()
-                returnDate = TokenContract.functions.returnDate().call()
-                returnAmount = TokenContract.functions.returnAmount().call()
+                redemption_date = TokenContract.functions.redemptionDate().call()
+                redemption_amount = TokenContract.functions.redemptionAmount().call()
+                return_date = TokenContract.functions.returnDate().call()
+                return_amount = TokenContract.functions.returnAmount().call()
                 purpose = TokenContract.functions.purpose().call()
                 image_url_1 = TokenContract.functions.getImageURL(0).call()
                 image_url_2 = TokenContract.functions.getImageURL(1).call()
@@ -280,49 +282,58 @@ class OrderList(BaseResource):
                     if to_checksum_address(company['address']) == owner_address:
                         company_name = company['corporate_name']
 
+                # 許可済みトークンリストから、token情報を取得する
+                available_token = {}
+                for available in available_tokens:
+                    if to_checksum_address(available.token_address) == token_address:
+                        available_token = available
+                        
                 # 第三者認定（Sign）のイベント情報を検索する
                 # NOTE:現状項目未使用であるため空のリストを返す
                 certification = []
-
-                order_list.append({
-                    'token':{
-                        'token_address': token_address,
-                        'token_template': 'IbetStraightBond',
-                        'company_name': company_name,
-                        'name':name,
-                        'symbol':symbol,
-                        'totalSupply':totalSupply,
-                        'faceValue':faceValue,
-                        'interestRate':interestRate,
-                        'interestPaymentDate1':interestPaymentDate1,
-                        'interestPaymentDate2':interestPaymentDate2,
-                        'interestPaymentDate3':interestPaymentDate3,
-                        'interestPaymentDate4':interestPaymentDate4,
-                        'interestPaymentDate5':interestPaymentDate5,
-                        'interestPaymentDate6':interestPaymentDate6,
-                        'interestPaymentDate7':interestPaymentDate7,
-                        'interestPaymentDate8':interestPaymentDate8,
-                        'interestPaymentDate9':interestPaymentDate9,
-                        'interestPaymentDate10':interestPaymentDate10,
-                        'interestPaymentDate11':interestPaymentDate11,
-                        'interestPaymentDate12':interestPaymentDate12,
-                        'redemptionDate':redemptionDate,
-                        'redemptionAmount':redemptionAmount,
-                        'returnDate':returnDate,
-                        'returnAmount':returnAmount,
-                        'purpose':purpose,
-                        'image_url': [
+                bondtoken = BondToken()
+                bondtoken.token_address = token_address
+                bondtoken.token_template = 'IbetStraightBond'
+                bondtoken.company_name = company_name
+                bondtoken.name = name
+                bondtoken.symbol = symbol
+                bondtoken.total_supply = total_supply
+                bondtoken.face_value = face_value
+                bondtoken.interest_rate = interest_rate
+                bondtoken.interest_payment_date1 = interest_payment_date1
+                bondtoken.interest_payment_date2 = interest_payment_date2
+                bondtoken.interest_payment_date3 = interest_payment_date3
+                bondtoken.interest_payment_date4 = interest_payment_date4
+                bondtoken.interest_payment_date5 = interest_payment_date5
+                bondtoken.interest_payment_date6 = interest_payment_date6
+                bondtoken.interest_payment_date7 = interest_payment_date7
+                bondtoken.interest_payment_date8 = interest_payment_date8
+                bondtoken.interest_payment_date9 = interest_payment_date9
+                bondtoken.interest_payment_date10 = interest_payment_date10
+                bondtoken.interest_payment_date11 = interest_payment_date11
+                bondtoken.interest_payment_date12 = interest_payment_date12
+                bondtoken.redemption_date = redemption_date
+                bondtoken.redemption_amount = redemption_amount
+                bondtoken.return_date = return_date
+                bondtoken.return_amount = return_amount
+                bondtoken.purpose = purpose
+                bondtoken.image_url = [
                             {'id': 1, 'url': image_url_1},
                             {'id': 2, 'url': image_url_2},
                             {'id': 3, 'url': image_url_3}
-                        ],
-                        'certification':certification
-                    },
+                        ]
+                bondtoken.certification = certification
+                # 許可済みトークンに存在しない場合は、決済手段はFalseとする
+                bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+                bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+
+                order_list.append({
+                    'token':bondtoken.__dict__,
                     'order':{
                         'order_id':order_id,
                         'amount':orderBook[2],
                         'price':orderBook[3],
-                        'isBuy':orderBook[4],
+                        'is_buy':orderBook[4],
                         'canceled':orderBook[6]
                     },
                     'sort_id': id
@@ -332,7 +343,7 @@ class OrderList(BaseResource):
 
     # 注文一覧：会員権トークン
     @staticmethod
-    def get_Membership_OrderList(session, account_address, company_list):
+    def get_Membership_OrderList(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -361,10 +372,10 @@ class OrderList(BaseResource):
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
                 symbol = TokenContract.functions.symbol().call()
-                totalSupply = TokenContract.functions.totalSupply().call()
+                total_supply = TokenContract.functions.totalSupply().call()
                 details = TokenContract.functions.details().call()
-                returnDetails = TokenContract.functions.returnDetails().call()
-                expirationDate = TokenContract.functions.expirationDate().call()
+                return_details = TokenContract.functions.returnDetails().call()
+                expiration_date = TokenContract.functions.expirationDate().call()
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
@@ -381,31 +392,39 @@ class OrderList(BaseResource):
                     if to_checksum_address(company['address']) == owner_address:
                         company_name = company['corporate_name']
 
-                order_list.append({
-                    'token':{
-                        'token_address': token_address,
-                        'token_template': 'IbetMembership',
-                        'company_name': company_name,
-                        'name':name,
-                        'symbol':symbol,
-                        'total_supply':totalSupply,
-                        'details':details,
-                        'return_details':returnDetails,
-                        'expiration_date':expirationDate,
-                        'memo':memo,
-                        'transferable':transferable,
-                        'status':status,
-                        'image_url': [
+                # 許可済みトークンリストから、token情報を取得する
+                available_token = {}
+                for available in available_tokens:
+                    if to_checksum_address(available.token_address) == token_address:
+                        available_token = available
+
+                membershiptoken = MembershipToken()
+                membershiptoken.token_address = token_address
+                membershiptoken.token_template = 'IbetMembership'
+                membershiptoken.company_name = company_name
+                membershiptoken.name = name
+                membershiptoken.symbol = symbol
+                membershiptoken.total_supply = total_supply
+                membershiptoken.details = details
+                membershiptoken.return_details = return_details
+                membershiptoken.expiration_date = expiration_date
+                membershiptoken.memo = memo
+                membershiptoken.transferable = transferable
+                membershiptoken.status = status
+                membershiptoken.image_url = [
                             {'id': 1, 'url': image_url_1},
                             {'id': 2, 'url': image_url_2},
                             {'id': 3, 'url': image_url_3}
-                        ],
-                    },
+                        ]
+                membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+                membershiptoken.payment_method_bank = available_token.payment_method_bank if  hasattr( available_token, "payment_method_bank" )  else False
+                order_list.append({
+                    'token': membershiptoken.__dict__,
                     'order':{
                         'order_id':order_id,
                         'amount':orderBook[2],
                         'price':orderBook[3],
-                        'isBuy':orderBook[4],
+                        'is_buy':orderBook[4],
                         'canceled':orderBook[6]
                     },
                     'sort_id': id
@@ -415,7 +434,7 @@ class OrderList(BaseResource):
 
     # 注文一覧：クーポントークン
     @staticmethod
-    def get_Coupon_OrderList(session, account_address, company_list):
+    def get_Coupon_OrderList(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -444,10 +463,10 @@ class OrderList(BaseResource):
                 # Token-Contractから情報を取得する
                 name = TokenContract.functions.name().call()
                 symbol = TokenContract.functions.symbol().call()
-                totalSupply = TokenContract.functions.totalSupply().call()
+                total_supply = TokenContract.functions.totalSupply().call()
                 details = TokenContract.functions.details().call()
                 return_details = TokenContract.functions.returnDetails().call()
-                expirationDate = TokenContract.functions.expirationDate().call()
+                expiration_date = TokenContract.functions.expirationDate().call()
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
@@ -464,31 +483,39 @@ class OrderList(BaseResource):
                     if to_checksum_address(company['address']) == owner_address:
                         company_name = company['corporate_name']
 
-                order_list.append({
-                    'token':{
-                        'token_address': token_address,
-                        'token_template': 'IbetCoupon',
-                        'company_name': company_name,
-                        'name':name,
-                        'symbol':symbol,
-                        'total_supply':totalSupply,
-                        'details':details,
-                        'return_details':return_details,
-                        'expiration_date':expirationDate,
-                        'memo':memo,
-                        'transferable':transferable,
-                        'status':status,
-                        'image_url': [
+                # 許可済みトークンリストから、token情報を取得する
+                available_token = {}
+                for available in available_tokens:
+                    if to_checksum_address(available.token_address) == token_address:
+                        available_token = available
+
+                coupontoken = CouponToken()
+                coupontoken.token_address = token_address
+                coupontoken.token_template = 'IbetCoupon'
+                coupontoken.company_name = company_name
+                coupontoken.name = name
+                coupontoken.symbol = symbol
+                coupontoken.total_supply = total_supply
+                coupontoken.details = details
+                coupontoken.return_details = return_details
+                coupontoken.expiration_date = expiration_date
+                coupontoken.memo = memo
+                coupontoken.transferable = transferable
+                coupontoken.status = status
+                coupontoken.image_url = [
                             {'id': 1, 'url': image_url_1},
                             {'id': 2, 'url': image_url_2},
                             {'id': 3, 'url': image_url_3}
-                        ],
-                    },
+                        ]
+                coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+                coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+                order_list.append({
+                    'token':coupontoken.__dict__,
                     'order':{
                         'order_id':order_id,
                         'amount':orderBook[2],
                         'price':orderBook[3],
-                        'isBuy':orderBook[4],
+                        'is_buy':orderBook[4],
                         'canceled':orderBook[6]
                     },
                     'sort_id': id
@@ -498,7 +525,7 @@ class OrderList(BaseResource):
 
     # 決済中一覧：普通社債トークン（買）
     @staticmethod
-    def get_StraightBond_SettlementList_Buy(session, account_address, company_list):
+    def get_StraightBond_SettlementList_Buy(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -525,60 +552,60 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
-            faceValue = TokenContract.functions.faceValue().call()
-            interestRate = TokenContract.functions.interestRate().call()
+            total_supply = TokenContract.functions.totalSupply().call()
+            face_value = TokenContract.functions.faceValue().call()
+            interest_rate = TokenContract.functions.interestRate().call()
 
-            interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
+            interest_payment_date_string = TokenContract.functions.interestPaymentDate().call()
 
-            interestPaymentDate1 = ''
-            interestPaymentDate2 = ''
-            interestPaymentDate3 = ''
-            interestPaymentDate4 = ''
-            interestPaymentDate5 = ''
-            interestPaymentDate6 = ''
-            interestPaymentDate7 = ''
-            interestPaymentDate8 = ''
-            interestPaymentDate9 = ''
-            interestPaymentDate10 = ''
-            interestPaymentDate11 = ''
-            interestPaymentDate12 = ''
+            interest_payment_date1 = ''
+            interest_payment_date2 = ''
+            interest_payment_date3 = ''
+            interest_payment_date4 = ''
+            interest_payment_date5 = ''
+            interest_payment_date6 = ''
+            interest_payment_date7 = ''
+            interest_payment_date8 = ''
+            interest_payment_date9 = ''
+            interest_payment_date10 = ''
+            interest_payment_date11 = ''
+            interest_payment_date12 = ''
 
             try:
-                interestPaymentDate = json.loads(
-                    interestPaymentDate_string.replace("'", '"').\
+                interest_payment_date = json.loads(
+                    interest_payment_date_string.replace("'", '"').\
                     replace('True', 'true').replace('False', 'false'))
-                if 'interestPaymentDate1' in interestPaymentDate:
-                    interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
-                if 'interestPaymentDate2' in interestPaymentDate:
-                    interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
-                if 'interestPaymentDate3' in interestPaymentDate:
-                    interestPaymentDate3 = interestPaymentDate['interestPaymentDate3']
-                if 'interestPaymentDate4' in interestPaymentDate:
-                    interestPaymentDate4 = interestPaymentDate['interestPaymentDate4']
-                if 'interestPaymentDate5' in interestPaymentDate:
-                    interestPaymentDate5 = interestPaymentDate['interestPaymentDate5']
-                if 'interestPaymentDate6' in interestPaymentDate:
-                    interestPaymentDate6 = interestPaymentDate['interestPaymentDate6']
-                if 'interestPaymentDate7' in interestPaymentDate:
-                    interestPaymentDate7 = interestPaymentDate['interestPaymentDate7']
-                if 'interestPaymentDate8' in interestPaymentDate:
-                    interestPaymentDate8 = interestPaymentDate['interestPaymentDate8']
-                if 'interestPaymentDate9' in interestPaymentDate:
-                    interestPaymentDate9 = interestPaymentDate['interestPaymentDate9']
-                if 'interestPaymentDate10' in interestPaymentDate:
-                    interestPaymentDate10 = interestPaymentDate['interestPaymentDate10']
-                if 'interestPaymentDate11' in interestPaymentDate:
-                    interestPaymentDate11 = interestPaymentDate['interestPaymentDate11']
-                if 'interestPaymentDate12' in interestPaymentDate:
-                    interestPaymentDate12 = interestPaymentDate['interestPaymentDate12']
+                if 'interestPaymentDate1' in interest_payment_date:
+                    interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                if 'interestPaymentDate2' in interest_payment_date:
+                    interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                if 'interestPaymentDate3' in interest_payment_date:
+                    interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                if 'interestPaymentDate4' in interest_payment_date:
+                    interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                if 'interestPaymentDate5' in interest_payment_date:
+                    interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                if 'interestPaymentDate6' in interest_payment_date:
+                    interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                if 'interestPaymentDate7' in interest_payment_date:
+                    interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                if 'interestPaymentDate8' in interest_payment_date:
+                    interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                if 'interestPaymentDate9' in interest_payment_date:
+                    interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                if 'interestPaymentDate10' in interest_payment_date:
+                    interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                if 'interestPaymentDate11' in interest_payment_date:
+                    interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                if 'interestPaymentDate12' in interest_payment_date:
+                    interest_payment_date12 = interest_payment_date['interestPaymentDate12']
             except:
                 pass
 
-            redemptionDate = TokenContract.functions.redemptionDate().call()
-            redemptionAmount = TokenContract.functions.redemptionAmount().call()
-            returnDate = TokenContract.functions.returnDate().call()
-            returnAmount = TokenContract.functions.returnAmount().call()
+            redemption_date = TokenContract.functions.redemptionDate().call()
+            redemption_amount = TokenContract.functions.redemptionAmount().call()
+            return_date = TokenContract.functions.returnDate().call()
+            return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
@@ -591,51 +618,61 @@ class OrderList(BaseResource):
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
 
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+                    
             # 第三者認定（Sign）のイベント情報を検索する
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            settlement_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetStraightBond',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'totalSupply':totalSupply,
-                    'faceValue':faceValue,
-                    'interestRate':interestRate,
-                    'interestPaymentDate1':interestPaymentDate1,
-                    'interestPaymentDate2':interestPaymentDate2,
-                    'interestPaymentDate3':interestPaymentDate3,
-                    'interestPaymentDate4':interestPaymentDate4,
-                    'interestPaymentDate5':interestPaymentDate5,
-                    'interestPaymentDate6':interestPaymentDate6,
-                    'interestPaymentDate7':interestPaymentDate7,
-                    'interestPaymentDate8':interestPaymentDate8,
-                    'interestPaymentDate9':interestPaymentDate9,
-                    'interestPaymentDate10':interestPaymentDate10,
-                    'interestPaymentDate11':interestPaymentDate11,
-                    'interestPaymentDate12':interestPaymentDate12,
-                    'redemptionDate':redemptionDate,
-                    'redemptionAmount':redemptionAmount,
-                    'returnDate':returnDate,
-                    'returnAmount':returnAmount,
-                    'purpose':purpose,
-                    'image_url': [
+            bondtoken = BondToken()
+            bondtoken.token_address = token_address
+            bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.company_name = company_name
+            bondtoken.name = name
+            bondtoken.symbol = symbol
+            bondtoken.total_supply = total_supply
+            bondtoken.face_value = face_value
+            bondtoken.interest_rate = interest_rate
+            bondtoken.interest_payment_date1 = interest_payment_date1
+            bondtoken.interest_payment_date2 = interest_payment_date2
+            bondtoken.interest_payment_date3 = interest_payment_date3
+            bondtoken.interest_payment_date4 = interest_payment_date4
+            bondtoken.interest_payment_date5 = interest_payment_date5
+            bondtoken.interest_payment_date6 = interest_payment_date6
+            bondtoken.interest_payment_date7 = interest_payment_date7
+            bondtoken.interest_payment_date8 = interest_payment_date8
+            bondtoken.interest_payment_date9 = interest_payment_date9
+            bondtoken.interest_payment_date10 = interest_payment_date10
+            bondtoken.interest_payment_date11 = interest_payment_date11
+            bondtoken.interest_payment_date12 = interest_payment_date12
+            bondtoken.redemption_date = redemption_date
+            bondtoken.redemption_amount = redemption_amount
+            bondtoken.return_date = return_date
+            bondtoken.return_amount = return_amount
+            bondtoken.purpose = purpose
+            bondtoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                    'certification':certification
-                },
+                    ]
+            bondtoken.certification = certification
+            # 許可済みトークンに存在しない場合は、決済手段はFalseとする
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+
+            settlement_list.append({
+                'token':bondtoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':True,
+                    'is_buy':True,
                     'canceled':agreement[3]
                 },
                 'sort_id': id
@@ -645,7 +682,7 @@ class OrderList(BaseResource):
 
     # 決済中一覧：普通社債トークン（売）
     @staticmethod
-    def get_StraightBond_SettlementList_Sell(session, account_address, company_list):
+    def get_StraightBond_SettlementList_Sell(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -672,60 +709,60 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
-            faceValue = TokenContract.functions.faceValue().call()
-            interestRate = TokenContract.functions.interestRate().call()
+            total_supply = TokenContract.functions.totalSupply().call()
+            face_value = TokenContract.functions.faceValue().call()
+            interest_rate = TokenContract.functions.interestRate().call()
 
-            interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
+            interest_payment_date_string = TokenContract.functions.interestPaymentDate().call()
 
-            interestPaymentDate1 = ''
-            interestPaymentDate2 = ''
-            interestPaymentDate3 = ''
-            interestPaymentDate4 = ''
-            interestPaymentDate5 = ''
-            interestPaymentDate6 = ''
-            interestPaymentDate7 = ''
-            interestPaymentDate8 = ''
-            interestPaymentDate9 = ''
-            interestPaymentDate10 = ''
-            interestPaymentDate11 = ''
-            interestPaymentDate12 = ''
+            interest_payment_date1 = ''
+            interest_payment_date2 = ''
+            interest_payment_date3 = ''
+            interest_payment_date4 = ''
+            interest_payment_date5 = ''
+            interest_payment_date6 = ''
+            interest_payment_date7 = ''
+            interest_payment_date8 = ''
+            interest_payment_date9 = ''
+            interest_payment_date10 = ''
+            interest_payment_date11 = ''
+            interest_payment_date12 = ''
 
             try:
-                interestPaymentDate = json.loads(
-                    interestPaymentDate_string.replace("'", '"').\
+                interest_payment_date = json.loads(
+                    interest_payment_date_string.replace("'", '"').\
                     replace('True', 'true').replace('False', 'false'))
-                if 'interestPaymentDate1' in interestPaymentDate:
-                    interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
-                if 'interestPaymentDate2' in interestPaymentDate:
-                    interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
-                if 'interestPaymentDate3' in interestPaymentDate:
-                    interestPaymentDate3 = interestPaymentDate['interestPaymentDate3']
-                if 'interestPaymentDate4' in interestPaymentDate:
-                    interestPaymentDate4 = interestPaymentDate['interestPaymentDate4']
-                if 'interestPaymentDate5' in interestPaymentDate:
-                    interestPaymentDate5 = interestPaymentDate['interestPaymentDate5']
-                if 'interestPaymentDate6' in interestPaymentDate:
-                    interestPaymentDate6 = interestPaymentDate['interestPaymentDate6']
-                if 'interestPaymentDate7' in interestPaymentDate:
-                    interestPaymentDate7 = interestPaymentDate['interestPaymentDate7']
-                if 'interestPaymentDate8' in interestPaymentDate:
-                    interestPaymentDate8 = interestPaymentDate['interestPaymentDate8']
-                if 'interestPaymentDate9' in interestPaymentDate:
-                    interestPaymentDate9 = interestPaymentDate['interestPaymentDate9']
-                if 'interestPaymentDate10' in interestPaymentDate:
-                    interestPaymentDate10 = interestPaymentDate['interestPaymentDate10']
-                if 'interestPaymentDate11' in interestPaymentDate:
-                    interestPaymentDate11 = interestPaymentDate['interestPaymentDate11']
-                if 'interestPaymentDate12' in interestPaymentDate:
-                    interestPaymentDate12 = interestPaymentDate['interestPaymentDate12']
+                if 'interestPaymentDate1' in interest_payment_date:
+                    interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                if 'interestPaymentDate2' in interest_payment_date:
+                    interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                if 'interestPaymentDate3' in interest_payment_date:
+                    interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                if 'interestPaymentDate4' in interest_payment_date:
+                    interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                if 'interestPaymentDate5' in interest_payment_date:
+                    interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                if 'interestPaymentDate6' in interest_payment_date:
+                    interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                if 'interestPaymentDate7' in interest_payment_date:
+                    interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                if 'interestPaymentDate8' in interest_payment_date:
+                    interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                if 'interestPaymentDate9' in interest_payment_date:
+                    interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                if 'interestPaymentDate10' in interest_payment_date:
+                    interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                if 'interestPaymentDate11' in interest_payment_date:
+                    interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                if 'interestPaymentDate12' in interest_payment_date:
+                    interest_payment_date12 = interest_payment_date['interestPaymentDate12']
             except:
                 pass
 
-            redemptionDate = TokenContract.functions.redemptionDate().call()
-            redemptionAmount = TokenContract.functions.redemptionAmount().call()
-            returnDate = TokenContract.functions.returnDate().call()
-            returnAmount = TokenContract.functions.returnAmount().call()
+            redemption_date = TokenContract.functions.redemptionDate().call()
+            redemption_amount = TokenContract.functions.redemptionAmount().call()
+            return_date = TokenContract.functions.returnDate().call()
+            return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
@@ -737,52 +774,61 @@ class OrderList(BaseResource):
             for company in company_list:
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
 
             # 第三者認定（Sign）のイベント情報を検索する
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            settlement_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetStraightBond',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'totalSupply':totalSupply,
-                    'faceValue':faceValue,
-                    'interestRate':interestRate,
-                    'interestPaymentDate1':interestPaymentDate1,
-                    'interestPaymentDate2':interestPaymentDate2,
-                    'interestPaymentDate3':interestPaymentDate3,
-                    'interestPaymentDate4':interestPaymentDate4,
-                    'interestPaymentDate5':interestPaymentDate5,
-                    'interestPaymentDate6':interestPaymentDate6,
-                    'interestPaymentDate7':interestPaymentDate7,
-                    'interestPaymentDate8':interestPaymentDate8,
-                    'interestPaymentDate9':interestPaymentDate9,
-                    'interestPaymentDate10':interestPaymentDate10,
-                    'interestPaymentDate11':interestPaymentDate11,
-                    'interestPaymentDate12':interestPaymentDate12,
-                    'redemptionDate':redemptionDate,
-                    'redemptionAmount':redemptionAmount,
-                    'returnDate':returnDate,
-                    'returnAmount':returnAmount,
-                    'purpose':purpose,
-                    'image_url': [
+            bondtoken = BondToken()
+            bondtoken.token_address = token_address
+            bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.company_name = company_name
+            bondtoken.name = name
+            bondtoken.symbol = symbol
+            bondtoken.total_supply = total_supply
+            bondtoken.face_value = face_value
+            bondtoken.interest_rate = interest_rate
+            bondtoken.interest_payment_date1 =interest_payment_date1
+            bondtoken.interest_payment_date2 =interest_payment_date2
+            bondtoken.interest_payment_date3 =interest_payment_date3
+            bondtoken.interest_payment_date4 =interest_payment_date4
+            bondtoken.interest_payment_date5 =interest_payment_date5
+            bondtoken.interest_payment_date6 =interest_payment_date6
+            bondtoken.interest_payment_date7 =interest_payment_date7
+            bondtoken.interest_payment_date8 =interest_payment_date8
+            bondtoken.interest_payment_date9 =interest_payment_date9
+            bondtoken.interest_payment_date10 =interest_payment_date10
+            bondtoken.interest_payment_date11 =interest_payment_date11
+            bondtoken.interest_payment_date12 =interest_payment_date12
+            bondtoken.redemption_date = redemption_date
+            bondtoken.redemption_amount = redemption_amount
+            bondtoken.return_date = return_date
+            bondtoken.return_amount = return_amount
+            bondtoken.purpose = purpose
+            bondtoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                    'certification':certification
-                },
+                    ]
+            bondtoken.certification = certification
+            # 許可済みトークンに存在しない場合は、決済手段はFalseとする
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+
+            settlement_list.append({
+                'token':bondtoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':False,
+                    'is_buy':False,
                     'canceled':agreement[3]
                 },
                 'sort_id': id
@@ -792,7 +838,7 @@ class OrderList(BaseResource):
 
     # 決済中一覧：会員権トークン（買）
     @staticmethod
-    def get_Membership_SettlementList_Buy(session, account_address, company_list):
+    def get_Membership_SettlementList_Buy(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -819,10 +865,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
-            returnDetails = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            return_details = TokenContract.functions.returnDetails().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -838,34 +884,41 @@ class OrderList(BaseResource):
             for company in company_list:
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
 
-            settlement_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetMembership',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details':returnDetails,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            membershiptoken = MembershipToken()
+            membershiptoken.token_address = token_address
+            membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.company_name = company_name
+            membershiptoken.name = name
+            membershiptoken.symbol = symbol
+            membershiptoken.total_supply = total_supply
+            membershiptoken.details = details
+            membershiptoken.return_details = return_details
+            membershiptoken.expiration_date = expiration_date
+            membershiptoken.memo = memo
+            membershiptoken.transferable = transferable
+            membershiptoken.status = status
+            membershiptoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            settlement_list.append({
+                'token':membershiptoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':True,
+                    'is_buy':True,
                     'canceled':agreement[3]
                 },
                 'sort_id': id
@@ -875,7 +928,7 @@ class OrderList(BaseResource):
 
     # 決済中一覧：会員権トークン（売）
     @staticmethod
-    def get_Membership_SettlementList_Sell(session, account_address, company_list):
+    def get_Membership_SettlementList_Sell(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -902,10 +955,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
-            returnDetails = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            return_details = TokenContract.functions.returnDetails().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -921,34 +974,41 @@ class OrderList(BaseResource):
             for company in company_list:
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
 
-            settlement_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetMembership',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details':returnDetails,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            membershiptoken = MembershipToken()
+            membershiptoken.token_address = token_address
+            membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.company_name = company_name
+            membershiptoken.name = name
+            membershiptoken.symbol = symbol
+            membershiptoken.total_supply = total_supply
+            membershiptoken.details = details
+            membershiptoken.return_details = return_details
+            membershiptoken.expiration_date = expiration_date
+            membershiptoken.memo = memo
+            membershiptoken.transferable = transferable
+            membershiptoken.status = status
+            membershiptoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            settlement_list.append({
+                'token':membershiptoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':False,
+                    'is_buy':False,
                     'canceled':agreement[3]
                 },
                 'sort_id': id
@@ -958,7 +1018,7 @@ class OrderList(BaseResource):
 
     # 決済中一覧：クーポントークン（買）
     @staticmethod
-    def get_Coupon_SettlementList_Buy(session, account_address, company_list):
+    def get_Coupon_SettlementList_Buy(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -985,10 +1045,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
             return_details = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -1005,33 +1065,41 @@ class OrderList(BaseResource):
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
 
-            settlement_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetCoupon',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details':return_details,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
+            coupontoken = CouponToken()
+            coupontoken.token_address = token_address
+            coupontoken.token_template = 'IbetCoupon'
+            coupontoken.company_name = company_name
+            coupontoken.name = name
+            coupontoken.symbol = symbol
+            coupontoken.total_supply = total_supply
+            coupontoken.details = details
+            coupontoken.return_details = return_details
+            coupontoken.expiration_date = expiration_date
+            coupontoken.memo = memo
+            coupontoken.transferable = transferable
+            coupontoken.status = status
+            coupontoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            settlement_list.append({
+                'token':coupontoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':True,
+                    'is_buy':True,
                     'canceled':agreement[3]
                 },
                 'sort_id': id
@@ -1041,7 +1109,7 @@ class OrderList(BaseResource):
 
     # 決済中一覧：クーポントークン（売）
     @staticmethod
-    def get_Coupon_SettlementList_Sell(session, account_address, company_list):
+    def get_Coupon_SettlementList_Sell(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -1068,10 +1136,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
             return_details = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -1088,33 +1156,41 @@ class OrderList(BaseResource):
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
 
-            settlement_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetCoupon',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details':return_details,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
+            coupontoken = CouponToken()
+            coupontoken.token_address = token_address
+            coupontoken.token_template = 'IbetCoupon'
+            coupontoken.company_name = company_name
+            coupontoken.name = name
+            coupontoken.symbol = symbol
+            coupontoken.total_supply = total_supply
+            coupontoken.details = details
+            coupontoken.return_details = return_details
+            coupontoken.expiration_date = expiration_date
+            coupontoken.memo = memo
+            coupontoken.transferable = transferable
+            coupontoken.status = status
+            coupontoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            settlement_list.append({
+                'token':coupontoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':False,
+                    'is_buy':False,
                     'canceled':agreement[3]
                 },
                 'sort_id': id
@@ -1124,7 +1200,7 @@ class OrderList(BaseResource):
 
     # 約定済一覧：普通社債トークン（買）
     @staticmethod
-    def get_StraightBond_CompleteList_Buy(session, account_address, company_list):
+    def get_StraightBond_CompleteList_Buy(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -1151,60 +1227,60 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
-            faceValue = TokenContract.functions.faceValue().call()
-            interestRate = TokenContract.functions.interestRate().call()
+            total_supply = TokenContract.functions.totalSupply().call()
+            face_value = TokenContract.functions.faceValue().call()
+            interest_rate = TokenContract.functions.interestRate().call()
 
-            interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
+            interest_payment_date_string = TokenContract.functions.interestPaymentDate().call()
 
-            interestPaymentDate1 = ''
-            interestPaymentDate2 = ''
-            interestPaymentDate3 = ''
-            interestPaymentDate4 = ''
-            interestPaymentDate5 = ''
-            interestPaymentDate6 = ''
-            interestPaymentDate7 = ''
-            interestPaymentDate8 = ''
-            interestPaymentDate9 = ''
-            interestPaymentDate10 = ''
-            interestPaymentDate11 = ''
-            interestPaymentDate12 = ''
+            interest_payment_date1 = ''
+            interest_payment_date2 = ''
+            interest_payment_date3 = ''
+            interest_payment_date4 = ''
+            interest_payment_date5 = ''
+            interest_payment_date6 = ''
+            interest_payment_date7 = ''
+            interest_payment_date8 = ''
+            interest_payment_date9 = ''
+            interest_payment_date10 = ''
+            interest_payment_date11 = ''
+            interest_payment_date12 = ''
 
             try:
-                interestPaymentDate = json.loads(
-                    interestPaymentDate_string.replace("'", '"').\
+                interest_payment_date = json.loads(
+                    interest_payment_date_string.replace("'", '"').\
                     replace('True', 'true').replace('False', 'false'))
-                if 'interestPaymentDate1' in interestPaymentDate:
-                    interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
-                if 'interestPaymentDate2' in interestPaymentDate:
-                    interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
-                if 'interestPaymentDate3' in interestPaymentDate:
-                    interestPaymentDate3 = interestPaymentDate['interestPaymentDate3']
-                if 'interestPaymentDate4' in interestPaymentDate:
-                    interestPaymentDate4 = interestPaymentDate['interestPaymentDate4']
-                if 'interestPaymentDate5' in interestPaymentDate:
-                    interestPaymentDate5 = interestPaymentDate['interestPaymentDate5']
-                if 'interestPaymentDate6' in interestPaymentDate:
-                    interestPaymentDate6 = interestPaymentDate['interestPaymentDate6']
-                if 'interestPaymentDate7' in interestPaymentDate:
-                    interestPaymentDate7 = interestPaymentDate['interestPaymentDate7']
-                if 'interestPaymentDate8' in interestPaymentDate:
-                    interestPaymentDate8 = interestPaymentDate['interestPaymentDate8']
-                if 'interestPaymentDate9' in interestPaymentDate:
-                    interestPaymentDate9 = interestPaymentDate['interestPaymentDate9']
-                if 'interestPaymentDate10' in interestPaymentDate:
-                    interestPaymentDate10 = interestPaymentDate['interestPaymentDate10']
-                if 'interestPaymentDate11' in interestPaymentDate:
-                    interestPaymentDate11 = interestPaymentDate['interestPaymentDate11']
-                if 'interestPaymentDate12' in interestPaymentDate:
-                    interestPaymentDate12 = interestPaymentDate['interestPaymentDate12']
+                if 'interestPaymentDate1' in interest_payment_date:
+                    interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                if 'interestPaymentDate2' in interest_payment_date:
+                    interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                if 'interestPaymentDate3' in interest_payment_date:
+                    interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                if 'interestPaymentDate4' in interest_payment_date:
+                    interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                if 'interestPaymentDate5' in interest_payment_date:
+                    interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                if 'interestPaymentDate6' in interest_payment_date:
+                    interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                if 'interestPaymentDate7' in interest_payment_date:
+                    interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                if 'interestPaymentDate8' in interest_payment_date:
+                    interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                if 'interestPaymentDate9' in interest_payment_date:
+                    interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                if 'interestPaymentDate10' in interest_payment_date:
+                    interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                if 'interestPaymentDate11' in interest_payment_date:
+                    interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                if 'interestPaymentDate12' in interest_payment_date:
+                    interest_payment_date12 = interest_payment_date['interestPaymentDate12']
             except:
                 pass
 
-            redemptionDate = TokenContract.functions.redemptionDate().call()
-            redemptionAmount = TokenContract.functions.redemptionAmount().call()
-            returnDate = TokenContract.functions.returnDate().call()
-            returnAmount = TokenContract.functions.returnAmount().call()
+            redemption_date = TokenContract.functions.redemptionDate().call()
+            redemption_amount = TokenContract.functions.redemptionAmount().call()
+            return_date = TokenContract.functions.returnDate().call()
+            return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
@@ -1217,51 +1293,61 @@ class OrderList(BaseResource):
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
 
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
             # 第三者認定（Sign）のイベント情報を検索する
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            complete_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetStraightBond',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'totalSupply':totalSupply,
-                    'faceValue':faceValue,
-                    'interestRate':interestRate,
-                    'interestPaymentDate1':interestPaymentDate1,
-                    'interestPaymentDate2':interestPaymentDate2,
-                    'interestPaymentDate3':interestPaymentDate3,
-                    'interestPaymentDate4':interestPaymentDate4,
-                    'interestPaymentDate5':interestPaymentDate5,
-                    'interestPaymentDate6':interestPaymentDate6,
-                    'interestPaymentDate7':interestPaymentDate7,
-                    'interestPaymentDate8':interestPaymentDate8,
-                    'interestPaymentDate9':interestPaymentDate9,
-                    'interestPaymentDate10':interestPaymentDate10,
-                    'interestPaymentDate11':interestPaymentDate11,
-                    'interestPaymentDate12':interestPaymentDate12,
-                    'redemptionDate':redemptionDate,
-                    'redemptionAmount':redemptionAmount,
-                    'returnDate':returnDate,
-                    'returnAmount':returnAmount,
-                    'purpose':purpose,
-                    'image_url': [
+            bondtoken = BondToken()
+            bondtoken.token_address = token_address
+            bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.company_name = company_name
+            bondtoken.name = name
+            bondtoken.symbol = symbol
+            bondtoken.total_supply = total_supply
+            bondtoken.face_value = face_value
+            bondtoken.interest_rate = interest_rate
+            bondtoken.interest_payment_date1 =interest_payment_date1
+            bondtoken.interest_payment_date2 =interest_payment_date2
+            bondtoken.interest_payment_date3 =interest_payment_date3
+            bondtoken.interest_payment_date4 =interest_payment_date4
+            bondtoken.interest_payment_date5 =interest_payment_date5
+            bondtoken.interest_payment_date6 =interest_payment_date6
+            bondtoken.interest_payment_date7 =interest_payment_date7
+            bondtoken.interest_payment_date8 =interest_payment_date8
+            bondtoken.interest_payment_date9 =interest_payment_date9
+            bondtoken.interest_payment_date10 =interest_payment_date10
+            bondtoken.interest_payment_date11 =interest_payment_date11
+            bondtoken.interest_payment_date12 =interest_payment_date12
+            bondtoken.redemption_date = redemption_date
+            bondtoken.redemption_amount = redemption_amount
+            bondtoken.return_date = return_date
+            bondtoken.return_amount = return_amount
+            bondtoken.purpose = purpose
+            bondtoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                    'certification':certification
-                },
+                    ]
+            bondtoken.certification = certification
+            # 許可済みトークンに存在しない場合は、決済手段はFalseとする
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+
+            complete_list.append({
+                'token':bondtoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':True
+                    'is_buy':True
                 },
                 'sort_id': id
             })
@@ -1270,7 +1356,7 @@ class OrderList(BaseResource):
 
     # 約定済一覧：普通社債トークン（売）
     @staticmethod
-    def get_StraightBond_CompleteList_Sell(session, account_address, company_list):
+    def get_StraightBond_CompleteList_Sell(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -1297,60 +1383,60 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
-            faceValue = TokenContract.functions.faceValue().call()
-            interestRate = TokenContract.functions.interestRate().call()
+            total_supply = TokenContract.functions.totalSupply().call()
+            face_value = TokenContract.functions.faceValue().call()
+            interest_rate = TokenContract.functions.interestRate().call()
 
-            interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
+            interest_payment_date_string = TokenContract.functions.interestPaymentDate().call()
 
-            interestPaymentDate1 = ''
-            interestPaymentDate2 = ''
-            interestPaymentDate3 = ''
-            interestPaymentDate4 = ''
-            interestPaymentDate5 = ''
-            interestPaymentDate6 = ''
-            interestPaymentDate7 = ''
-            interestPaymentDate8 = ''
-            interestPaymentDate9 = ''
-            interestPaymentDate10 = ''
-            interestPaymentDate11 = ''
-            interestPaymentDate12 = ''
+            interest_payment_date1 = ''
+            interest_payment_date2 = ''
+            interest_payment_date3 = ''
+            interest_payment_date4 = ''
+            interest_payment_date5 = ''
+            interest_payment_date6 = ''
+            interest_payment_date7 = ''
+            interest_payment_date8 = ''
+            interest_payment_date9 = ''
+            interest_payment_date10 = ''
+            interest_payment_date11 = ''
+            interest_payment_date12 = ''
 
             try:
-                interestPaymentDate = json.loads(
-                    interestPaymentDate_string.replace("'", '"').\
+                interest_payment_date = json.loads(
+                    interest_payment_date_string.replace("'", '"').\
                     replace('True', 'true').replace('False', 'false'))
-                if 'interestPaymentDate1' in interestPaymentDate:
-                    interestPaymentDate1 = interestPaymentDate['interestPaymentDate1']
-                if 'interestPaymentDate2' in interestPaymentDate:
-                    interestPaymentDate2 = interestPaymentDate['interestPaymentDate2']
-                if 'interestPaymentDate3' in interestPaymentDate:
-                    interestPaymentDate3 = interestPaymentDate['interestPaymentDate3']
-                if 'interestPaymentDate4' in interestPaymentDate:
-                    interestPaymentDate4 = interestPaymentDate['interestPaymentDate4']
-                if 'interestPaymentDate5' in interestPaymentDate:
-                    interestPaymentDate5 = interestPaymentDate['interestPaymentDate5']
-                if 'interestPaymentDate6' in interestPaymentDate:
-                    interestPaymentDate6 = interestPaymentDate['interestPaymentDate6']
-                if 'interestPaymentDate7' in interestPaymentDate:
-                    interestPaymentDate7 = interestPaymentDate['interestPaymentDate7']
-                if 'interestPaymentDate8' in interestPaymentDate:
-                    interestPaymentDate8 = interestPaymentDate['interestPaymentDate8']
-                if 'interestPaymentDate9' in interestPaymentDate:
-                    interestPaymentDate9 = interestPaymentDate['interestPaymentDate9']
-                if 'interestPaymentDate10' in interestPaymentDate:
-                    interestPaymentDate10 = interestPaymentDate['interestPaymentDate10']
-                if 'interestPaymentDate11' in interestPaymentDate:
-                    interestPaymentDate11 = interestPaymentDate['interestPaymentDate11']
-                if 'interestPaymentDate12' in interestPaymentDate:
-                    interestPaymentDate12 = interestPaymentDate['interestPaymentDate12']
+                if 'interestPaymentDate1' in interest_payment_date:
+                    interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                if 'interestPaymentDate2' in interest_payment_date:
+                    interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                if 'interestPaymentDate3' in interest_payment_date:
+                    interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                if 'interestPaymentDate4' in interest_payment_date:
+                    interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                if 'interestPaymentDate5' in interest_payment_date:
+                    interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                if 'interestPaymentDate6' in interest_payment_date:
+                    interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                if 'interestPaymentDate7' in interest_payment_date:
+                    interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                if 'interestPaymentDate8' in interest_payment_date:
+                    interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                if 'interestPaymentDate9' in interest_payment_date:
+                    interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                if 'interestPaymentDate10' in interest_payment_date:
+                    interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                if 'interestPaymentDate11' in interest_payment_date:
+                    interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                if 'interestPaymentDate12' in interest_payment_date:
+                    interest_payment_date12 = interest_payment_date['interestPaymentDate12']
             except:
                 pass
 
-            redemptionDate = TokenContract.functions.redemptionDate().call()
-            redemptionAmount = TokenContract.functions.redemptionAmount().call()
-            returnDate = TokenContract.functions.returnDate().call()
-            returnAmount = TokenContract.functions.returnAmount().call()
+            redemption_date = TokenContract.functions.redemptionDate().call()
+            redemption_amount = TokenContract.functions.redemptionAmount().call()
+            return_date = TokenContract.functions.returnDate().call()
+            return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
@@ -1363,51 +1449,61 @@ class OrderList(BaseResource):
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
 
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
             # 第三者認定（Sign）のイベント情報を検索する
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            complete_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetStraightBond',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'totalSupply':totalSupply,
-                    'faceValue':faceValue,
-                    'interestRate':interestRate,
-                    'interestPaymentDate1':interestPaymentDate1,
-                    'interestPaymentDate2':interestPaymentDate2,
-                    'interestPaymentDate3':interestPaymentDate3,
-                    'interestPaymentDate4':interestPaymentDate4,
-                    'interestPaymentDate5':interestPaymentDate5,
-                    'interestPaymentDate6':interestPaymentDate6,
-                    'interestPaymentDate7':interestPaymentDate7,
-                    'interestPaymentDate8':interestPaymentDate8,
-                    'interestPaymentDate9':interestPaymentDate9,
-                    'interestPaymentDate10':interestPaymentDate10,
-                    'interestPaymentDate11':interestPaymentDate11,
-                    'interestPaymentDate12':interestPaymentDate12,
-                    'redemptionDate':redemptionDate,
-                    'redemptionAmount':redemptionAmount,
-                    'returnDate':returnDate,
-                    'returnAmount':returnAmount,
-                    'purpose':purpose,
-                    'image_url': [
+            bondtoken = BondToken()
+            bondtoken.token_address = token_address
+            bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.company_name = company_name
+            bondtoken.name = name
+            bondtoken.symbol = symbol
+            bondtoken.total_supply = total_supply
+            bondtoken.face_value = face_value
+            bondtoken.interest_rate = interest_rate
+            bondtoken.interest_payment_date1 = interest_payment_date1
+            bondtoken.interest_payment_date2 = interest_payment_date2
+            bondtoken.interest_payment_date3 = interest_payment_date3
+            bondtoken.interest_payment_date4 = interest_payment_date4
+            bondtoken.interest_payment_date5 = interest_payment_date5
+            bondtoken.interest_payment_date6 = interest_payment_date6
+            bondtoken.interest_payment_date7 = interest_payment_date7
+            bondtoken.interest_payment_date8 = interest_payment_date8
+            bondtoken.interest_payment_date9 = interest_payment_date9
+            bondtoken.interest_payment_date10 = interest_payment_date10
+            bondtoken.interest_payment_date11 = interest_payment_date11
+            bondtoken.interest_payment_date12 = interest_payment_date12
+            bondtoken.redemption_date = redemption_date
+            bondtoken.redemption_amount = redemption_amount
+            bondtoken.return_date = return_date
+            bondtoken.return_amount = return_amount
+            bondtoken.purpose = purpose
+            bondtoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                    'certification':certification
-                },
+                    ]
+            bondtoken.certification = certification
+            # 許可済みトークンに存在しない場合は、決済手段はFalseとする
+            bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+
+            complete_list.append({
+                'token':bondtoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':False
+                    'is_buy':False
                 },
                 'sort_id': id
             })
@@ -1416,7 +1512,7 @@ class OrderList(BaseResource):
 
     # 約定済一覧：会員権トークン（買）
     @staticmethod
-    def get_Membership_CompleteList_Buy(session, account_address, company_list):
+    def get_Membership_CompleteList_Buy(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -1443,10 +1539,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
-            returnDetails = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            return_details = TokenContract.functions.returnDetails().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -1462,34 +1558,41 @@ class OrderList(BaseResource):
             for company in company_list:
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
 
-            complete_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetMembership',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details':returnDetails,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            membershiptoken = MembershipToken()
+            membershiptoken.token_address = token_address
+            membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.company_name = company_name
+            membershiptoken.name = name
+            membershiptoken.symbol = symbol
+            membershiptoken.total_supply = total_supply
+            membershiptoken.details = details
+            membershiptoken.return_details = return_details
+            membershiptoken.expiration_date = expiration_date
+            membershiptoken.memo = memo
+            membershiptoken.transferable = transferable
+            membershiptoken.status = status
+            membershiptoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            complete_list.append({
+                'token':membershiptoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':True
+                    'is_buy':True
                 },
                 'sort_id': id
             })
@@ -1498,7 +1601,7 @@ class OrderList(BaseResource):
 
     # 約定済一覧：会員権トークン（売）
     @staticmethod
-    def get_Membership_CompleteList_Sell(session, account_address, company_list):
+    def get_Membership_CompleteList_Sell(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -1525,10 +1628,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
-            returnDetails = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            return_details = TokenContract.functions.returnDetails().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -1544,34 +1647,41 @@ class OrderList(BaseResource):
             for company in company_list:
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
 
-            complete_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetMembership',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details':returnDetails,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            membershiptoken = MembershipToken()
+            membershiptoken.token_address = token_address
+            membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.company_name = company_name
+            membershiptoken.name = name
+            membershiptoken.symbol = symbol
+            membershiptoken.total_supply = total_supply
+            membershiptoken.details = details
+            membershiptoken.return_details = return_details
+            membershiptoken.expiration_date = expiration_date
+            membershiptoken.memo = memo
+            membershiptoken.transferable = transferable
+            membershiptoken.status = status
+            membershiptoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            complete_list.append({
+                'token':membershiptoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':False
+                    'is_buy':False
                 },
                 'sort_id': id
             })
@@ -1580,7 +1690,7 @@ class OrderList(BaseResource):
 
     # 約定済一覧：クーポントークン（買）
     @staticmethod
-    def get_Coupon_CompleteList_Buy(session, account_address, company_list):
+    def get_Coupon_CompleteList_Buy(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -1607,10 +1717,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
             return_details = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -1627,33 +1737,41 @@ class OrderList(BaseResource):
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
 
-            complete_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetCoupon',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details': return_details,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
+            coupontoken = CouponToken()
+            coupontoken.token_address = token_address
+            coupontoken.token_template = 'IbetCoupon'
+            coupontoken.company_name = company_name
+            coupontoken.name = name
+            coupontoken.symbol = symbol
+            coupontoken.total_supply = total_supply
+            coupontoken.details = details
+            coupontoken.return_details = return_details
+            coupontoken.expiration_date = expiration_date
+            coupontoken.memo = memo
+            coupontoken.transferable = transferable
+            coupontoken.status = status
+            coupontoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            complete_list.append({
+                'token':coupontoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':True
+                    'is_buy':True
                 },
                 'sort_id': id
             })
@@ -1662,7 +1780,7 @@ class OrderList(BaseResource):
 
     # 約定済一覧：クーポントークン（売）
     @staticmethod
-    def get_Coupon_CompleteList_Sell(session, account_address, company_list):
+    def get_Coupon_CompleteList_Sell(session, account_address, company_list, available_tokens):
         exchange_address = to_checksum_address(
             os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
 
@@ -1689,10 +1807,10 @@ class OrderList(BaseResource):
             # Token-Contractから情報を取得する
             name = TokenContract.functions.name().call()
             symbol = TokenContract.functions.symbol().call()
-            totalSupply = TokenContract.functions.totalSupply().call()
+            total_supply = TokenContract.functions.totalSupply().call()
             details = TokenContract.functions.details().call()
             return_details = TokenContract.functions.returnDetails().call()
-            expirationDate = TokenContract.functions.expirationDate().call()
+            expiration_date = TokenContract.functions.expirationDate().call()
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
@@ -1709,33 +1827,41 @@ class OrderList(BaseResource):
                 if to_checksum_address(company['address']) == owner_address:
                     company_name = company['corporate_name']
 
-            complete_list.append({
-                'token':{
-                    'token_address': token_address,
-                    'token_template': 'IbetCoupon',
-                    'company_name': company_name,
-                    'name':name,
-                    'symbol':symbol,
-                    'total_supply':totalSupply,
-                    'details':details,
-                    'return_details': return_details,
-                    'expiration_date':expirationDate,
-                    'memo':memo,
-                    'transferable':transferable,
-                    'status':status,
-                    'image_url': [
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
+            coupontoken = CouponToken()
+            coupontoken.token_address = token_address
+            coupontoken.token_template = 'IbetCoupon'
+            coupontoken.company_name = company_name
+            coupontoken.name = name
+            coupontoken.symbol = symbol
+            coupontoken.total_supply = total_supply
+            coupontoken.details = details
+            coupontoken.return_details = return_details
+            coupontoken.expiration_date = expiration_date
+            coupontoken.memo = memo
+            coupontoken.transferable = transferable
+            coupontoken.status = status
+            coupontoken.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
-                    ],
-                },
+                    ]
+            coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
+            coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            complete_list.append({
+                'token':coupontoken.__dict__,
                 'agreement':{
                     'exchange_address': exchange_address,
                     'order_id':order_id,
-                    'agreementId':agreement_id,
+                    'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'isBuy':False
+                    'is_buy':False
                 },
                 'sort_id': id
             })
