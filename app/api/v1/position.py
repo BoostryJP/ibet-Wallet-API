@@ -3,6 +3,7 @@ import json
 import requests
 import os
 from datetime import datetime, timezone, timedelta
+
 JST = timezone(timedelta(hours=+9), 'JST')
 
 from cerberus import Validator
@@ -23,14 +24,15 @@ LOG = log.get_logger()
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
+
 # ------------------------------
 # [普通社債]保有トークン一覧
 # ------------------------------
 class MyTokens(BaseResource):
-
-    '''
+    """
     Handle for endpoint: /v1/MyTokens/
-    '''
+    """
+
     def on_post(self, req, res):
         LOG.info('v1.Position.MyTokens')
 
@@ -46,11 +48,12 @@ class MyTokens(BaseResource):
         # Company List：発行体企業リスト
         try:
             if config.APP_ENV == 'local':
-                company_list = json.load(open('data/company_list.json' , 'r'))
+                company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
                     requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-        except:
+        except Exception as e:
+            LOG.error(e)
             company_list = []
 
         # Bond Exchange Contract
@@ -63,7 +66,7 @@ class MyTokens(BaseResource):
 
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
             for token in available_tokens:
-                token_info = ListContract.functions.\
+                token_info = ListContract.functions. \
                     getTokenByAddress(token.token_address).call()
 
                 token_address = token_info[0]
@@ -71,12 +74,12 @@ class MyTokens(BaseResource):
                 owner = to_checksum_address(_account_address)
 
                 if token_template == 'IbetStraightBond':
-                    BondTokenContract = Contract.\
+                    BondTokenContract = Contract. \
                         get_contract('IbetStraightBond', token_address)
                     try:
                         balance = BondTokenContract.functions.balanceOf(owner).call()
-                        commitment = BondExchangeContract.functions.\
-                            commitments(owner, token_address).call()
+                        commitment = BondExchangeContract.functions. \
+                            commitmentOf(owner, token_address).call()
 
                         # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                         # Note: 現状は、債券トークンの場合、残高・残注文ゼロの場合は詳細情報を
@@ -106,8 +109,14 @@ class MyTokens(BaseResource):
                             interest_payment_date12 = ''
                             try:
                                 interest_payment_date = json.loads(
-                                    interest_payment_date_string.replace("'", '"').\
-                                    replace('True', 'true').replace('False', 'false'))
+                                    interest_payment_date_string.replace(
+                                        "'", '"'
+                                    ).replace(
+                                        'True', 'true'
+                                    ).replace(
+                                        'False', 'false'
+                                    )
+                                )
                                 if 'interestPaymentDate1' in interest_payment_date:
                                     interest_payment_date1 = interest_payment_date['interestPaymentDate1']
                                 if 'interestPaymentDate2' in interest_payment_date:
@@ -132,7 +141,8 @@ class MyTokens(BaseResource):
                                     interest_payment_date11 = interest_payment_date['interestPaymentDate11']
                                 if 'interestPaymentDate12' in interest_payment_date:
                                     interest_payment_date12 = interest_payment_date['interestPaymentDate12']
-                            except:
+                            except Exception as e:
+                                LOG.error(e)
                                 pass
 
                             redemption_date = BondTokenContract.functions.redemptionDate().call()
@@ -179,10 +189,10 @@ class MyTokens(BaseResource):
                             bondtoken.return_amount = return_amount
                             bondtoken.purpose = purpose
                             bondtoken.image_url = [
-                                        {'id': 1, 'url': image_url_1},
-                                        {'id': 2, 'url': image_url_2},
-                                        {'id': 3, 'url': image_url_3}
-                                    ]
+                                {'id': 1, 'url': image_url_1},
+                                {'id': 2, 'url': image_url_2},
+                                {'id': 3, 'url': image_url_3}
+                            ]
                             bondtoken.certification = certification
                             bondtoken.payment_method_credit_card = token.payment_method_credit_card
                             bondtoken.payment_method_bank = token.payment_method_bank
@@ -191,7 +201,8 @@ class MyTokens(BaseResource):
                                 'balance': balance,
                                 'commitment': commitment
                             })
-                    except:
+                    except Exception as e:
+                        LOG.error(e)
                         continue
 
         self.on_success(res, position_list)
@@ -230,14 +241,15 @@ class MyTokens(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [会員権]保有トークン一覧
 # ------------------------------
 class MembershipMyTokens(BaseResource):
-
-    '''
+    """
     Handle for endpoint: /v1/Membership/MyTokens/
-    '''
+    """
+
     def on_post(self, req, res):
         LOG.info('v1.Position.MembershipMyTokens')
 
@@ -253,11 +265,12 @@ class MembershipMyTokens(BaseResource):
         # Company List：発行体企業リスト
         try:
             if config.APP_ENV == 'local':
-                company_list = json.load(open('data/company_list.json' , 'r'))
+                company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
                     requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-        except:
+        except Exception as e:
+            LOG.error(e)
             company_list = []
 
         # Exchange Contract
@@ -272,7 +285,7 @@ class MembershipMyTokens(BaseResource):
 
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
             for token in available_tokens:
-                token_info = ListContract.functions.\
+                token_info = ListContract.functions. \
                     getTokenByAddress(token.token_address).call()
 
                 token_address = token_info[0]
@@ -280,12 +293,12 @@ class MembershipMyTokens(BaseResource):
                 owner = to_checksum_address(_account_address)
 
                 if token_template == 'IbetMembership':
-                    TokenContract = Contract.\
+                    TokenContract = Contract. \
                         get_contract('IbetMembership', token_address)
                     try:
                         balance = TokenContract.functions.balanceOf(owner).call()
-                        commitment = ExchangeContract.functions.\
-                            commitments(owner, token_address).call()
+                        commitment = ExchangeContract.functions. \
+                            commitmentOf(owner, token_address).call()
 
                         # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                         # Note: 現状は、会員権トークンの場合、残高・残注文ゼロの場合は詳細情報を
@@ -306,7 +319,7 @@ class MembershipMyTokens(BaseResource):
                             image_url_2 = TokenContract.functions.getImageURL(1).call()
                             image_url_3 = TokenContract.functions.getImageURL(2).call()
                             owner_address = TokenContract.functions.owner().call()
-                            company_name, rsa_publickey = MembershipMyTokens.\
+                            company_name, rsa_publickey = MembershipMyTokens. \
                                 get_company_name(company_list, owner_address)
 
                             membershiptoken = MembershipToken()
@@ -324,10 +337,10 @@ class MembershipMyTokens(BaseResource):
                             membershiptoken.transferable = transferable
                             membershiptoken.status = status
                             membershiptoken.image_url = [
-                                        {'id': 1, 'url': image_url_1},
-                                        {'id': 2, 'url': image_url_2},
-                                        {'id': 3, 'url': image_url_3}
-                                    ]
+                                {'id': 1, 'url': image_url_1},
+                                {'id': 2, 'url': image_url_2},
+                                {'id': 3, 'url': image_url_3}
+                            ]
                             membershiptoken.payment_method_credit_card = token.payment_method_credit_card
                             membershiptoken.payment_method_bank = token.payment_method_bank
                             position_list.append({
@@ -335,7 +348,8 @@ class MembershipMyTokens(BaseResource):
                                 'balance': balance,
                                 'commitment': commitment
                             })
-                    except:
+                    except Exception as e:
+                        LOG.error(e)
                         continue
 
         self.on_success(res, position_list)
@@ -374,14 +388,15 @@ class MembershipMyTokens(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [クーポン]保有トークン一覧
 # ------------------------------
 class CouponMyTokens(BaseResource):
-
-    '''
+    """
     Handle for endpoint: /v1/Coupon/MyTokens/
-    '''
+    """
+
     def on_post(self, req, res):
         LOG.info('v1.Position.CouponMyTokens')
 
@@ -393,11 +408,12 @@ class CouponMyTokens(BaseResource):
         # Company List：発行体企業リスト
         try:
             if config.APP_ENV == 'local':
-                company_list = json.load(open('data/company_list.json' , 'r'))
+                company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
                     requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-        except:
+        except Exception as e:
+            LOG.error(e)
             company_list = []
 
         # TokenList Contract
@@ -414,7 +430,7 @@ class CouponMyTokens(BaseResource):
 
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
             for token in available_tokens:
-                token_info = ListContract.functions.\
+                token_info = ListContract.functions. \
                     getTokenByAddress(token.token_address).call()
 
                 token_address = token_info[0]
@@ -426,8 +442,8 @@ class CouponMyTokens(BaseResource):
                         Contract.get_contract('IbetCoupon', token_address)
                     try:
                         balance = CouponTokenContract.functions.balanceOf(owner).call()
-                        commitment = CouponExchangeContract.functions.\
-                            commitments(owner, token_address).call()
+                        commitment = CouponExchangeContract.functions. \
+                            commitmentOf(owner, token_address).call()
                         used = CouponTokenContract.functions.usedOf(owner).call()
 
                         # 残高、残注文、使用済数量がゼロではない場合、詳細情報を取得する
@@ -465,10 +481,10 @@ class CouponMyTokens(BaseResource):
                             coupontoken.expiration_date = expirationDate
                             coupontoken.transferable = transferable
                             coupontoken.image_url = [
-                                        {'id': 1, 'url': image_url_1},
-                                        {'id': 2, 'url': image_url_2},
-                                        {'id': 3, 'url': image_url_3}
-                                    ]
+                                {'id': 1, 'url': image_url_1},
+                                {'id': 2, 'url': image_url_2},
+                                {'id': 3, 'url': image_url_3}
+                            ]
                             coupontoken.status = status
                             coupontoken.payment_method_credit_card = token.payment_method_credit_card
                             coupontoken.payment_method_bank = token.payment_method_bank
@@ -479,7 +495,8 @@ class CouponMyTokens(BaseResource):
                                 'used': used
                             })
 
-                    except:
+                    except Exception as e:
+                        LOG.error(e)
                         continue
 
         self.on_success(res, position_list)
@@ -518,14 +535,15 @@ class CouponMyTokens(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # クーポン消費履歴
 # ------------------------------
 class CouponConsumptions(BaseResource):
-
-    '''
+    """
     Handle for endpoint: /v1/CouponConsumptions/
-    '''
+    """
+
     def on_post(self, req, res):
         LOG.info('v1.Position.CouponConsumptions')
         request_json = CouponConsumptions.validate(req)
@@ -554,18 +572,19 @@ class CouponConsumptions(BaseResource):
                     coupon_consumptions.append({
                         'account_address': _account_address,
                         'block_timestamp': datetime.fromtimestamp(
-                            web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
-                            strftime("%Y/%m/%d %H:%M:%S"),
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
+                        ).strftime("%Y/%m/%d %H:%M:%S"),
                         'value': entry['args']['value']
                     })
-            except:
+            except Exception as e:
+                LOG.error(e)
                 pass
 
         # block_timestampの昇順にソートする
         # Note: もともとのリストはaccountのリストでループして作成したリストなので、古い順になっていないため
         coupon_consumptions = sorted(
             coupon_consumptions,
-            key=lambda x:x['block_timestamp']
+            key=lambda x: x['block_timestamp']
         )
         self.on_success(res, coupon_consumptions)
 

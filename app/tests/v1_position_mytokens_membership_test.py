@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
 import json
 import os
 
@@ -11,10 +10,10 @@ from .contract_modules import membership_issue, membership_register_list, \
     membership_take_buy, membership_get_latest_agreementid, \
     membership_confirm_agreement
 
+
 # [会員権]保有トークン一覧API
 # /v1/Membership/MyTokens/
-class TestV1MembershipMyTokens():
-
+class TestV1MembershipMyTokens:
     # テスト対象API
     apiurl = '/v1/Membership/MyTokens/'
 
@@ -48,14 +47,14 @@ class TestV1MembershipMyTokens():
         # ＜投資家オペレーション＞
         #   1) Take買
         latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid - 1, 100)
+        membership_take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid - 1)
+            membership_get_latest_agreementid(exchange, latest_orderid)
         membership_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 
@@ -89,14 +88,14 @@ class TestV1MembershipMyTokens():
         # ＜投資家オペレーション＞
         #   1) Take買
         latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid - 1, 100)
+        membership_take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid - 1)
+            membership_get_latest_agreementid(exchange, latest_orderid)
         membership_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション＞
         #   1) Make売
@@ -134,14 +133,14 @@ class TestV1MembershipMyTokens():
         # ＜投資家オペレーション①＞
         #   1) Take買
         latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid - 1, 100)
+        membership_take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション①＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid - 1)
+            membership_get_latest_agreementid(exchange, latest_orderid)
         membership_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション②＞
         #   1) Make売
@@ -150,14 +149,14 @@ class TestV1MembershipMyTokens():
         # ＜発行体オペレーション②＞
         #   1) Take買
         latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(issuer, exchange, latest_orderid - 1, 100)
+        membership_take_buy(issuer, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション②＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid - 1)
+            membership_get_latest_agreementid(exchange, latest_orderid)
         membership_confirm_agreement(
-            agent, exchange, latest_orderid - 1, latest_agreementid - 1)
+            agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 
@@ -191,7 +190,7 @@ class TestV1MembershipMyTokens():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
@@ -259,7 +258,7 @@ class TestV1MembershipMyTokens():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
@@ -329,10 +328,8 @@ class TestV1MembershipMyTokens():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.\
+        resp = client. \
             simulate_post(self.apiurl, headers=headers, body=request_body)
-
-        assumed_body = {}
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -383,7 +380,7 @@ class TestV1MembershipMyTokens():
     # エラー系3-1
     # 入力値エラー（account_addressがアドレスフォーマットではない）
     def test_membership_position_error_3_1(self, client):
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
         headers = {'Content-Type': 'application/json'}

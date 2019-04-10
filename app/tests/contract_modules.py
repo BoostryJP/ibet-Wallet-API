@@ -170,7 +170,7 @@ def get_latest_agreementid(bond_exchange, order_id):
     ExchangeContract = Contract.get_contract(
         'IbetStraightBondExchange', bond_exchange['address'])
 
-    latest_agreementid = ExchangeContract.functions.latestAgreementIds(order_id).call()
+    latest_agreementid = ExchangeContract.functions.latestAgreementId(order_id).call()
     return latest_agreementid
 
 
@@ -327,7 +327,7 @@ def coupon_get_latest_agreementid(exchange, order_id):
     ExchangeContract = Contract.\
         get_contract('IbetCouponExchange', exchange['address'])
     latest_agreementid = \
-        ExchangeContract.functions.latestAgreementIds(order_id).call()
+        ExchangeContract.functions.latestAgreementId(order_id).call()
     return latest_agreementid
 
 # 決済承認
@@ -444,7 +444,7 @@ def membership_get_latest_agreementid(exchange, order_id):
     ExchangeContract = Contract.\
         get_contract('IbetMembershipExchange', exchange['address'])
     latest_agreementid = \
-        ExchangeContract.functions.latestAgreementIds(order_id).call()
+        ExchangeContract.functions.latestAgreementId(order_id).call()
     return latest_agreementid
 
 # 会員権約定の資金決済

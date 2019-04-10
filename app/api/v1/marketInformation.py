@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 from datetime import datetime, timezone, timedelta
+
 JST = timezone(timedelta(hours=+9), 'JST')
 
 from sqlalchemy import func
-from sqlalchemy.orm.exc import NoResultFound
-from cerberus import Validator, ValidationError
+from cerberus import Validator
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -28,14 +27,16 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 '''
 Straight Bond Token （普通社債）
 '''
+
+
 # ------------------------------
 # [普通社債]板情報取得
 # ------------------------------
 class OrderBook(BaseResource):
-
-    '''
+    """
     Handle for endpoint: /v1/OrderBook
-    '''
+    """
+
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.OrderBook')
         session = req.context['session']
@@ -57,7 +58,7 @@ class OrderBook(BaseResource):
         if 'account_address' in request_json:
             account_address = to_checksum_address(request_json['account_address'])
 
-            if is_buy == True:  # 買注文
+            if is_buy:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
                 #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
@@ -66,9 +67,9 @@ class OrderBook(BaseResource):
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -93,9 +94,9 @@ class OrderBook(BaseResource):
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -112,7 +113,7 @@ class OrderBook(BaseResource):
                     all()
 
         else:
-            if is_buy == True:  # 買注文
+            if is_buy:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
                 #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
@@ -120,9 +121,9 @@ class OrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -145,9 +146,9 @@ class OrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -165,7 +166,7 @@ class OrderBook(BaseResource):
         # レスポンス用の注文一覧を構築
         order_list_tmp = []
         for (order_id, amount, price, exchange_address,
-            account_address, agreement_amount) in orders:
+             account_address, agreement_amount) in orders:
             # 残存注文数量 = 発注数量 - 約定済み数量
             if not (agreement_amount is None):
                 amount -= int(agreement_amount)
@@ -224,13 +225,14 @@ class OrderBook(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [普通社債]現在値取得
 # ------------------------------
 class LastPrice(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/LastPrice
-    '''
+    """
 
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.LastPrice')
@@ -247,7 +249,8 @@ class LastPrice(BaseResource):
             try:
                 last_price = ExchangeContract.functions.lastPrice(
                     to_checksum_address(token_address)).call()
-            except:
+            except Exception as e:
+                LOG.error(e)
                 last_price = 0
             price_list.append({
                 'token_address': token_address,
@@ -284,13 +287,14 @@ class LastPrice(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [普通社債]歩み値取得
 # ------------------------------
 class Tick(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Tick
-    '''
+    """
 
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.Tick')
@@ -316,8 +320,8 @@ class Tick(BaseResource):
                 for entry in entries:
                     tick.append({
                         'block_timestamp': datetime.fromtimestamp(
-                            web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
-                            strftime("%Y/%m/%d %H:%M:%S"),
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
+                        ).strftime("%Y/%m/%d %H:%M:%S"),
                         'buy_address': entry['args']['buyAddress'],
                         'sell_address': entry['args']['sellAddress'],
                         'order_id': entry['args']['orderId'],
@@ -329,7 +333,8 @@ class Tick(BaseResource):
                     'token_address': token_address,
                     'tick': tick
                 })
-            except:
+            except Exception as e:
+                LOG.error(e)
                 tick_list = []
 
         self.on_success(res, tick_list)
@@ -366,14 +371,16 @@ class Tick(BaseResource):
 '''
 Membership Token （会員権）
 '''
+
+
 # ------------------------------
 # [会員権]板情報取得
 # ------------------------------
 class MembershipOrderBook(BaseResource):
-
-    '''
+    """
     Handle for endpoint: /v1/Membership/OrderBook
-    '''
+    """
+
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.MembershipOrderBook')
         session = req.context['session']
@@ -395,7 +402,7 @@ class MembershipOrderBook(BaseResource):
         if 'account_address' in request_json:
             account_address = to_checksum_address(request_json['account_address'])
 
-            if is_buy == True:  # 買注文
+            if is_buy:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
                 #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
@@ -404,9 +411,9 @@ class MembershipOrderBook(BaseResource):
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -431,9 +438,9 @@ class MembershipOrderBook(BaseResource):
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -450,7 +457,7 @@ class MembershipOrderBook(BaseResource):
                     all()
 
         else:
-            if is_buy == True:  # 買注文
+            if is_buy:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
                 #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
@@ -458,9 +465,9 @@ class MembershipOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -483,9 +490,9 @@ class MembershipOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -503,7 +510,7 @@ class MembershipOrderBook(BaseResource):
         # レスポンス用の注文一覧を構築
         order_list_tmp = []
         for (order_id, amount, price, exchange_address,
-            account_address, agreement_amount) in orders:
+             account_address, agreement_amount) in orders:
             # 残存注文数量 = 発注数量 - 約定済み数量
             if not (agreement_amount is None):
                 amount -= int(agreement_amount)
@@ -562,13 +569,14 @@ class MembershipOrderBook(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [会員権]現在値取得
 # ------------------------------
 class MembershipLastPrice(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Membership/LastPrice
-    '''
+    """
 
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.MembershipLastPrice')
@@ -583,9 +591,10 @@ class MembershipLastPrice(BaseResource):
         price_list = []
         for token_address in request_json['address_list']:
             try:
-                last_price = ExchangeContract.functions.\
+                last_price = ExchangeContract.functions. \
                     lastPrice(to_checksum_address(token_address)).call()
-            except:
+            except Exception as e:
+                LOG.error(e)
                 last_price = 0
 
             price_list.append({
@@ -623,13 +632,14 @@ class MembershipLastPrice(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [会員権]歩み値取得
 # ------------------------------
 class MembershipTick(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Membership/Tick
-    '''
+    """
 
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.MembershipTick')
@@ -647,19 +657,18 @@ class MembershipTick(BaseResource):
             token = to_checksum_address(token_address)
             tick = []
             try:
-                event_filter = ExchangeContract.events.Agree.\
-                    createFilter(
-                        fromBlock='earliest',
-                        argument_filters={'tokenAddress': token}
-                    )
+                event_filter = ExchangeContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'tokenAddress': token}
+                )
                 entries = event_filter.get_all_entries()
                 web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
                     tick.append({
-                        'block_timestamp': datetime.\
-                            fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
-                            strftime("%Y/%m/%d %H:%M:%S"),
+                        'block_timestamp': datetime.fromtimestamp(
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
+                        ).strftime("%Y/%m/%d %H:%M:%S"),
                         'buy_address': entry['args']['buyAddress'],
                         'sell_address': entry['args']['sellAddress'],
                         'order_id': entry['args']['orderId'],
@@ -671,7 +680,8 @@ class MembershipTick(BaseResource):
                     'token_address': token_address,
                     'tick': tick
                 })
-            except:
+            except Exception as e:
+                LOG.error(e)
                 tick_list = []
 
         self.on_success(res, tick_list)
@@ -708,14 +718,16 @@ class MembershipTick(BaseResource):
 '''
 Coupon Token （クーポン）
 '''
+
+
 # ------------------------------
 # [クーポン]板情報取得
 # ------------------------------
 class CouponOrderBook(BaseResource):
-
-    '''
+    """
     Handle for endpoint: /v1/Coupon/OrderBook
-    '''
+    """
+
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.CouponOrderBook')
         session = req.context['session']
@@ -737,7 +749,7 @@ class CouponOrderBook(BaseResource):
         if 'account_address' in request_json:
             account_address = to_checksum_address(request_json['account_address'])
 
-            if is_buy == True:  # 買注文
+            if is_buy:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
                 #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
@@ -746,8 +758,8 @@ class CouponOrderBook(BaseResource):
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
                     func.sum(Agreement.amount)).\
                     outerjoin(
                         Agreement,
@@ -773,9 +785,9 @@ class CouponOrderBook(BaseResource):
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -792,7 +804,7 @@ class CouponOrderBook(BaseResource):
                     all()
 
         else:
-            if is_buy == True:  # 買注文
+            if is_buy:  # 買注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
                 #  2) クライアントが買い注文をしたい場合 => 売り注文を抽出
@@ -800,9 +812,9 @@ class CouponOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -825,9 +837,9 @@ class CouponOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 orders = session.query(
-                    Order.order_id, Order.amount, Order.price, \
-                    Order.exchange_address, Order.account_address, \
-                    func.sum(Agreement.amount)).\
+                    Order.order_id, Order.amount, Order.price,
+                    Order.exchange_address, Order.account_address,
+                    func.sum(Agreement.amount)). \
                     outerjoin(
                         Agreement,
                         Order.unique_order_id == Agreement.unique_order_id).\
@@ -845,7 +857,7 @@ class CouponOrderBook(BaseResource):
         # レスポンス用の注文一覧を構築
         order_list_tmp = []
         for (order_id, amount, price, exchange_address,
-            account_address, agreement_amount) in orders:
+             account_address, agreement_amount) in orders:
             # 残存注文数量 = 発注数量 - 約定済み数量
             if not (agreement_amount is None):
                 amount -= int(agreement_amount)
@@ -904,13 +916,14 @@ class CouponOrderBook(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [クーポン]現在値取得
 # ------------------------------
 class CouponLastPrice(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Coupon/LastPrice
-    '''
+    """
 
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.CouponLastPrice')
@@ -925,9 +938,10 @@ class CouponLastPrice(BaseResource):
         price_list = []
         for token_address in request_json['address_list']:
             try:
-                last_price = ExchangeContract.functions.\
+                last_price = ExchangeContract.functions. \
                     lastPrice(to_checksum_address(token_address)).call()
-            except:
+            except Exception as e:
+                LOG.error(e)
                 last_price = 0
 
             price_list.append({
@@ -965,13 +979,14 @@ class CouponLastPrice(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # [クーポン]歩み値取得
 # ------------------------------
 class CouponTick(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Coupon/Tick
-    '''
+    """
 
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.CouponTick')
@@ -989,19 +1004,18 @@ class CouponTick(BaseResource):
             token = to_checksum_address(token_address)
             tick = []
             try:
-                event_filter = ExchangeContract.events.Agree.\
-                    createFilter(
-                        fromBlock='earliest',
-                        argument_filters={'tokenAddress': token}
-                    )
+                event_filter = ExchangeContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'tokenAddress': token}
+                )
                 entries = event_filter.get_all_entries()
                 web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
                     tick.append({
-                        'block_timestamp': datetime.\
-                            fromtimestamp(web3.eth.getBlock(entry['blockNumber'])['timestamp'],JST).\
-                            strftime("%Y/%m/%d %H:%M:%S"),
+                        'block_timestamp': datetime.fromtimestamp(
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
+                        ).strftime("%Y/%m/%d %H:%M:%S"),
                         'buy_address': entry['args']['buyAddress'],
                         'sell_address': entry['args']['sellAddress'],
                         'order_id': entry['args']['orderId'],
@@ -1013,7 +1027,8 @@ class CouponTick(BaseResource):
                     'token_address': token_address,
                     'tick': tick
                 })
-            except:
+            except Exception as e:
+                LOG.error(e)
                 tick_list = []
 
         self.on_success(res, tick_list)

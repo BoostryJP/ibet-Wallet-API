@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
-import json
 import os
-
 from app.model import Order, Agreement, AgreementStatus
-
-from .account_config import eth_account
 from .contract_modules import *
-
 
 # 注文一覧・約定一覧API（普通社債）
 # /v1/OrderList/
@@ -64,7 +58,7 @@ class TestV1OrderList_Bond():
         register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
-        order_id = get_latest_orderid(bond_exchange) - 1
+        order_id = get_latest_orderid(bond_exchange)
         agreement_id = get_latest_agreementid(bond_exchange, order_id)
 
         return bond_token, order_id, agreement_id
@@ -96,9 +90,9 @@ class TestV1OrderList_Bond():
         #   3) 買い注文
         register_personalinfo(trader, personal_info)
         register_payment_gateway(trader, payment_gateway)
-        order_id = get_latest_orderid(bond_exchange) - 1
+        order_id = get_latest_orderid(bond_exchange)
         take_buy_bond_token(trader, bond_exchange, order_id, 100)
-        agreement_id = get_latest_agreementid(bond_exchange, order_id) - 1
+        agreement_id = get_latest_agreementid(bond_exchange, order_id)
 
         return bond_token, order_id, agreement_id
 
@@ -129,11 +123,11 @@ class TestV1OrderList_Bond():
         #   3) 買い注文
         register_personalinfo(trader, personal_info)
         register_payment_gateway(trader, payment_gateway)
-        order_id = get_latest_orderid(bond_exchange) - 1
+        order_id = get_latest_orderid(bond_exchange)
         take_buy_bond_token(trader, bond_exchange, order_id, 100)
 
         # ＜決済業者オペレーション＞
-        agreement_id = get_latest_agreementid(bond_exchange, order_id) - 1
+        agreement_id = get_latest_agreementid(bond_exchange, order_id)
         bond_confirm_agreement(agent, bond_exchange, order_id, agreement_id)
 
         return bond_token, order_id, agreement_id
@@ -566,7 +560,7 @@ class TestV1OrderList_Membership():
         membership_register_list(issuer, token, token_list)
         membership_offer(issuer, exchange, token, 1000000, 1000)
 
-        order_id = membership_get_latest_orderid(exchange) - 1
+        order_id = membership_get_latest_orderid(exchange)
         agreement_id = membership_get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
@@ -591,9 +585,9 @@ class TestV1OrderList_Membership():
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = membership_get_latest_orderid(exchange) - 1
+        order_id = membership_get_latest_orderid(exchange)
         membership_take_buy(trader, exchange, order_id, 100)
-        agreement_id = membership_get_latest_agreementid(exchange, order_id) - 1
+        agreement_id = membership_get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
 
@@ -617,11 +611,11 @@ class TestV1OrderList_Membership():
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = membership_get_latest_orderid(exchange) - 1
+        order_id = membership_get_latest_orderid(exchange)
         membership_take_buy(trader, exchange, order_id, 100)
 
         # ＜決済業者オペレーション＞
-        agreement_id = membership_get_latest_agreementid(exchange, order_id) - 1
+        agreement_id = membership_get_latest_agreementid(exchange, order_id)
         membership_confirm_agreement(agent, exchange, order_id, agreement_id)
 
         return token, order_id, agreement_id
@@ -993,7 +987,7 @@ class TestV1OrderList_Coupon():
         coupon_register_list(issuer, token, token_list)
         coupon_offer(issuer, exchange, token, 1000000, 1000)
 
-        order_id = coupon_get_latest_orderid(exchange) - 1
+        order_id = coupon_get_latest_orderid(exchange)
         agreement_id = coupon_get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
@@ -1017,9 +1011,9 @@ class TestV1OrderList_Coupon():
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = coupon_get_latest_orderid(exchange) - 1
+        order_id = coupon_get_latest_orderid(exchange)
         coupon_take_buy(trader, exchange, order_id, 100)
-        agreement_id = coupon_get_latest_agreementid(exchange, order_id) - 1
+        agreement_id = coupon_get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
 
@@ -1042,11 +1036,11 @@ class TestV1OrderList_Coupon():
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = coupon_get_latest_orderid(exchange) - 1
+        order_id = coupon_get_latest_orderid(exchange)
         coupon_take_buy(trader, exchange, order_id, 100)
 
         # ＜決済業者オペレーション＞
-        agreement_id = coupon_get_latest_agreementid(exchange, order_id) - 1
+        agreement_id = coupon_get_latest_agreementid(exchange, order_id)
         coupon_confirm_agreement(agent, exchange, order_id, agreement_id)
 
         return token, order_id, agreement_id

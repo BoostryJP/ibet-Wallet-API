@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
 import json
 import os
 
@@ -14,7 +13,6 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
 # [普通社債]歩み値参照API
 # /v1/StraightBond/Tick/
 class TestV1StraightBondTick():
-
     # テスト対象API
     apiurl = '/v1/StraightBond/Tick/'
 
@@ -60,10 +58,9 @@ class TestV1StraightBondTick():
         register_personalinfo(trader, personal_info)
         register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, latest_orderid-1, 100)
+        take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
 
         return bond_token
-
 
     # 正常系1：存在しない取引コントラクトアドレスを指定
     #  -> ゼロ件リストが返却される
@@ -85,7 +82,6 @@ class TestV1StraightBondTick():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-
     # 正常系2：約定（Agree）イベントがゼロ件の場合
     #  -> ゼロ件リストが返却される
     def test_tick_normal_2(self, client):
@@ -104,7 +100,6 @@ class TestV1StraightBondTick():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-
     # 正常系3：約定イベントが有件の場合
     #  -> 約定イベントの情報が返却される
     def test_tick_normal_3(self, client, shared_contract):
@@ -112,7 +107,7 @@ class TestV1StraightBondTick():
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
 
-        bond_token = TestV1StraightBondTick.\
+        bond_token = TestV1StraightBondTick. \
             generate_agree_event(bond_exchange, personal_info, payment_gateway)
 
         token_address = bond_token['address']
@@ -126,8 +121,6 @@ class TestV1StraightBondTick():
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
-        assumed_body = [{'token_address': token_address, 'tick': []}]
-
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'][0]['token_address'] == token_address
@@ -135,7 +128,6 @@ class TestV1StraightBondTick():
         assert resp.json['data'][0]['tick'][0]['sell_address'] == eth_account['issuer']['account_address']
         assert resp.json['data'][0]['tick'][0]['price'] == 1000
         assert resp.json['data'][0]['tick'][0]['amount'] == 100
-
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_tick_error_1(self, client):
@@ -151,7 +143,6 @@ class TestV1StraightBondTick():
             'message': 'Invalid Parameter',
             'description': {'address_list': 'required field'}
         }
-
 
     # エラー系2：入力値エラー（headersなし）
     def test_tick_error_2(self, client):
@@ -170,10 +161,9 @@ class TestV1StraightBondTick():
             'message': 'Invalid Parameter'
         }
 
-
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_tick_error_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74" #アドレス長が短い
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
         headers = {}
@@ -188,7 +178,6 @@ class TestV1StraightBondTick():
             'message': 'Invalid Parameter'
         }
 
-
     # エラー系4：HTTPメソッドが不正
     def test_tick_error_4(self, client):
         resp = client.simulate_get(self.apiurl)
@@ -200,10 +189,10 @@ class TestV1StraightBondTick():
             'description': 'method: GET, url: /v1/StraightBond/Tick'
         }
 
+
 # [会員権]歩み値参照API
 # /v1/Membership/Tick/
 class TestV1MembershipTick():
-
     # テスト対象API
     apiurl = '/v1/Membership/Tick/'
 
@@ -231,7 +220,7 @@ class TestV1MembershipTick():
 
         # 投資家オペレーション
         latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid - 1, 100)
+        membership_take_buy(trader, exchange, latest_orderid, 100)
 
         return token
 
@@ -335,7 +324,7 @@ class TestV1MembershipTick():
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_membership_tick_error_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74" #アドレス長が短い
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
         headers = {}
@@ -361,10 +350,10 @@ class TestV1MembershipTick():
             'description': 'method: GET, url: /v1/Membership/Tick'
         }
 
+
 # [クーポン]歩み値参照API
 # /v1/Coupon/Tick/
 class TestV1CouponTick():
-
     # テスト対象API
     apiurl = '/v1/Coupon/Tick/'
 
@@ -380,6 +369,7 @@ class TestV1CouponTick():
             'totalSupply': 10000,
             'tradableExchange': exchange['address'],
             'details': 'クーポン詳細',
+            'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
             'transferable': True
@@ -391,7 +381,7 @@ class TestV1CouponTick():
 
         # 投資家オペレーション
         latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid - 1, 100)
+        coupon_take_buy(trader, exchange, latest_orderid, 100)
 
         return token
 
@@ -495,7 +485,7 @@ class TestV1CouponTick():
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_coupon_tick_error_3(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74" #アドレス長が短い
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
         headers = {}

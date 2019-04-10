@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import pytest
 
-'''
+"""
 発行会社情報参照API
 /v1/Company/{eth_address}
-'''
-class TestV1CompanyCompanyInfo():
+"""
 
+
+class TestV1CompanyCompanyInfo:
     # テスト対象API
     apiurl_base = '/v1/Company/'
 
@@ -29,7 +29,6 @@ class TestV1CompanyCompanyInfo():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-
     # エラー系1-1： 発行会社リストに指定したアドレスの情報が存在しない
     def test_error_1_1(self, client):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf1'
@@ -46,7 +45,7 @@ class TestV1CompanyCompanyInfo():
 
     # エラー系2-1： 無効なアドレス
     def test_error_2_1(self, client):
-        eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf' # アドレスが短い
+        eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf'  # アドレスが短い
         apiurl = self.apiurl_base + eth_address
 
         resp = client.simulate_get(apiurl)
