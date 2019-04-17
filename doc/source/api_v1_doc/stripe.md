@@ -294,16 +294,20 @@ curl -X POST \
                 },
                 {
                     "account_address": "0x5c572fA7690a2a2834A06427Ca2F73959A0c891e",
-                    "stripe_account_id": "acct_1EPLUEFV9leziGQ8",
-                    "stripe_customer_id": "cus_ErghPzTI68hTis",
-                    "verification_status": "rejected",
+                    "stripe_account_id": null,
+                    "stripe_customer_id": null,
+                    "verification_status": null,
                 }
             ]
         }
     ]
 }
 ```
-* `stripe_account_info_list` : レスポンス不要？
+* `stripe_account_info_list` : アドレスに紐付くstripeの情報のリスト
+  * `account_address`: リクエストに含まれるアカウントアドレス
+  * `stripe_account_id`: アカウントアドレスに紐付くstripeのconnectアカウントid
+  * `stripe_customer_id`: アカウントアドレスに紐付くstripeのcustomer id
+  * `verification_status`: 個人情報承認ステータス。`pending` or `verificated` or `rejected`
 
 
 
