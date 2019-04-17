@@ -1,0 +1,475 @@
+# stripe
+
+## POST: /v1/Stripe/CreateAccount/
+* stripeのconnectアカウントを作成する。
+* すでにaccount_addressに登録されたconnectアカウントが存在する場合は、connectアカウントのupdateを行う。
+
+### Sample
+```sh
+curl -X POST \
+  http://localhost:5000/v1/Stripe/CreateAccount/ \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "account_token":  "ct_1EPLU9HgQLLPjBO2760HyH5v"
+}'
+```
+
+### In
+```json
+{
+    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "account_token": "ct_1EPLU9HgQLLPjBO2760HyH5v"
+}
+```    
+
+* `account_address`: ウォレットのアカウントアドレス。
+* `account_token` : stripeのアカウントトークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行する。
+
+#### validation
+```py
+{
+  'account_address': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  },
+  'account_token': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  }
+}
+```
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": [
+        {
+        }
+    ]
+}
+```
+* `xxxxx` : response不要？
+
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 405 Bad Request
+* 自サーバー起因でstripeからのエラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+#### Status: 500 Server Error
+* 自サーバー起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "server error",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 505 Server Error
+* stripe側起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+## POST: /v1/Stripe/CreateExternalAccount/
+* stripeのconnectアカウントにひもづく外部口座（銀行口座）を登録する。
+* account_addressに登録されたconnectアカウントがない場合は新規で作成する。すでに存在する場合は、accout_addressに対して銀行口座を登録する。
+
+### Sample
+```sh
+curl -X POST \
+  http://localhost:5000/v1/Stripe/CreateExternalAccount/ \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "bank_token":  "btok_1EQ4ooHgQLLPjBO21MKfT6A4"
+}'
+```
+
+### In
+```json
+{
+    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "bank_token": "ct_1EPLU9HgQLLPjBO2760HyH5v"
+}
+```    
+
+* `account_address`: ウォレットのアカウントアドレス。
+* `bank_token` : stripeの銀行口座トークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行する。
+
+#### validation
+```py
+{
+  'account_address': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  },
+  'bank_token': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  }
+}
+```
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": [
+        {
+        }
+    ]
+}
+```
+* `xxxxx` : response不要？
+
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 405 Bad Request
+* 自サーバー起因でstripeからのエラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+#### Status: 500 Server Error
+* 自サーバー起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "server error",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 505 Server Error
+* stripe側起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+## POST: /v1/Stripe/CreateCustomer/
+* stripeのカスタマーの登録
+* すでにaccount_addressに登録されたcustomerが存在する場合は、ccustomerのupdateを行う。
+
+### Sample
+```sh
+curl -X POST \
+  http://localhost:5000/v1/Stripe/CreateCustomer/\
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "card_token": "tok_1ENy48HgQLLPjBO2cjTJmDqT"
+}'
+```
+
+### In
+```json
+{
+    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "card_token": "tok_1ENy48HgQLLPjBO2cjTJmDqT"
+}
+```
+* `account_address` : ウォレットのアカウントアドレス。
+* `card_token`: stripeのカードトークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行する。
+
+#### validation
+```py
+{
+  'account_address': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  },
+  'card_token': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  }
+}
+```
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": [
+        {
+        }
+    ]
+}
+```
+* `xxxxx` : レスポンス不要？
+
+
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 405 Bad Request
+* 自サーバー起因でstripeからのエラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+#### Status: 500 Server Error
+* 自サーバー起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "server error",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 505 Server Error
+* stripe側起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+
+## POST: /v1/Stripe/Charge/
+* stripeのconnectアカウントに対して、決済を行う。
+
+### Sample
+```sh
+curl -X POST \
+  http://localhost:5000/v1/v1/Stripe/Charge/ \
+  -H 'Content-Type: application/json' \
+  -H 'Postman-Token: d29aa8c2-6751-42b2-b11b-9034a66909de' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "buyer_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "seller_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "amount": 2000
+}'
+```
+
+### In
+```json
+{
+    "buyer_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "seller_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "amount": 2000
+}
+```
+* `buyer_address` : 買い手のアドレス
+* `seller_address`: 売り手のアドレス
+* `amount`: 決済金額
+
+#### validation
+```py
+{
+  'buyer_address': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  },
+  'seller_address': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  },
+  'amount': {
+    'type': 'int',
+    'schema': {'type': 'int'},
+    'empty': False,
+    'required': True
+  }
+}
+```
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": [
+        {
+            "receipt_url":"https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1EOHepHgQLLPjBO2HYfCJab7/rcpt_Es1ilYtQQ9dqURTJKXAH7fLRxBL7cbe"
+        }
+    ]
+}
+```
+* `receipt_url` : stripeの領収書url
+
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 405 Bad Request
+* 自サーバー起因でstripeからのエラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+#### Status: 500 Server Error
+* 自サーバー起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "server error",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 505 Server Error
+* stripe側起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```

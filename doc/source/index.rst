@@ -22,6 +22,7 @@ Welcome to tmr-node-doc's documentation!
    api_v1_doc/notification.md
    api_v1_doc/version.md
    api_v1_doc/x_ibet_signature.md
+   api_v1_doc/stripe.md
 
 Indices and tables
 ==================
