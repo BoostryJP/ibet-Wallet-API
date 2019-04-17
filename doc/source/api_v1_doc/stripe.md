@@ -232,9 +232,135 @@ curl -X POST \
 }
 ```
 
+## POST: /v1/Stripe/GetAccountInfo/
+* アドレスに紐付くstripeのidやアカウントの情報を取得する
+
+### Sample
+```sh
+curl -X POST \
+  http://localhost:5000/v1/Stripe/GetAccountInfo/\
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "account_address_list": [
+        "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+        "0x5c572fA7690a2a2834A06427Ca2F73959A0c891e"
+    ]
+}'
+```
+
+### In
+```json
+{
+    "account_address_list": [
+        "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+        "0x5c572fA7690a2a2834A06427Ca2F73959A0c891e"
+    ]
+}
+```
+* `account_address_list` : アカウントアドレスのリスト。※複数のアカウントの情報をまとめて返すことが出来る。
+
+#### validation
+```py
+{
+  'account_address_list': {
+    'type': 'list',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  }
+}
+```
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": [
+        {
+            "stripe_account_info_list": [
+                {
+                    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+                    "stripe_account_id": "acct_1EPLUEFV9leziGQ8",
+                    "stripe_customer_id": "cus_ErghPzTI68hTis",
+                    "verification_status": "verificated",
+                },
+                {
+                    "account_address": "0x5c572fA7690a2a2834A06427Ca2F73959A0c891e",
+                    "stripe_account_id": "acct_1EPLUEFV9leziGQ8",
+                    "stripe_customer_id": "cus_ErghPzTI68hTis",
+                    "verification_status": "rejected",
+                }
+            ]
+        }
+    ]
+}
+```
+* `stripe_account_info_list` : レスポンス不要？
+
+
+
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 405 Bad Request
+* 自サーバー起因でstripeからのエラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
+
+#### Status: 500 Server Error
+* 自サーバー起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "server error",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+#### Status: 505 Server Error
+* stripe側起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Error message From Stripe(code)",
+        "description": "Error description From Stripe(message)"
+    }
+}
+```
 ## POST: /v1/Stripe/CreateCustomer/
 * stripeのカスタマーの登録
-* すでにaccount_addressに登録されたcustomerが存在する場合は、ccustomerのupdateを行う。
+* すでにaccount_addressに登録されたcustomerが存在する場合は、customerのupdateを行う。
 
 ### Sample
 ```sh
@@ -347,6 +473,7 @@ curl -X POST \
     }
 }
 ```
+
 
 
 ## POST: /v1/Stripe/Charge/
