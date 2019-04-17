@@ -9,12 +9,14 @@
 curl -X POST \
   http://localhost:5000/v1/Stripe/CreateAccount/ \
   -H 'Content-Type: application/json' \
+  -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -H 'cache-control: no-cache' \
   -d '{
     "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "account_token":  "ct_1EPLU9HgQLLPjBO2760HyH5v"
 }'
 ```
+* `X-ibet-Signature` : クライアント認証、リクエスト認可に用いる署名情報。 [参考：X-ibet-Signature](x_ibet_signature.md)
 
 ### In
 ```json
@@ -125,12 +127,14 @@ curl -X POST \
 curl -X POST \
   http://localhost:5000/v1/Stripe/CreateExternalAccount/ \
   -H 'Content-Type: application/json' \
+  -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -H 'cache-control: no-cache' \
   -d '{
     "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "bank_token":  "btok_1EQ4ooHgQLLPjBO21MKfT6A4"
 }'
 ```
+* `X-ibet-Signature` : クライアント認証、リクエスト認可に用いる署名情報。 [参考：X-ibet-Signature](x_ibet_signature.md)
 
 ### In
 ```json
@@ -241,6 +245,7 @@ curl -X POST \
   http://localhost:5000/v1/Stripe/GetAccountInfo/\
   -H 'Content-Type: application/json' \
   -H 'cache-control: no-cache' \
+  -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -d '{
     "account_address_list": [
         "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
@@ -248,6 +253,7 @@ curl -X POST \
     ]
 }'
 ```
+* `X-ibet-Signature` : クライアント認証、リクエスト認可に用いる署名情報。 [参考：X-ibet-Signature](x_ibet_signature.md)
 
 ### In
 ```json
@@ -290,7 +296,7 @@ curl -X POST \
                     "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
                     "stripe_account_id": "acct_1EPLUEFV9leziGQ8",
                     "stripe_customer_id": "cus_ErghPzTI68hTis",
-                    "verification_status": "verificated",
+                    "verification_status": "Pending",
                 },
                 {
                     "account_address": "0x5c572fA7690a2a2834A06427Ca2F73959A0c891e",
@@ -307,7 +313,7 @@ curl -X POST \
   * `account_address`: リクエストに含まれるアカウントアドレス
   * `stripe_account_id`: アカウントアドレスに紐付くstripeのconnectアカウントid
   * `stripe_customer_id`: アカウントアドレスに紐付くstripeのcustomer id
-  * `verification_status`: 個人情報承認ステータス。`pending` or `verificated` or `rejected`
+  * `verification_status`: 個人情報承認ステータス。`Pending` or `Verified` or `Unverified`
 
 
 
@@ -372,11 +378,13 @@ curl -X POST \
   http://localhost:5000/v1/Stripe/CreateCustomer/\
   -H 'Content-Type: application/json' \
   -H 'cache-control: no-cache' \
+  -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -d '{
     "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "card_token": "tok_1ENy48HgQLLPjBO2cjTJmDqT"
 }'
 ```
+* `X-ibet-Signature` : クライアント認証、リクエスト認可に用いる署名情報。 [参考：X-ibet-Signature](x_ibet_signature.md)
 
 ### In
 ```json
@@ -488,23 +496,30 @@ curl -X POST \
 curl -X POST \
   http://localhost:5000/v1/v1/Stripe/Charge/ \
   -H 'Content-Type: application/json' \
-  -H 'Postman-Token: d29aa8c2-6751-42b2-b11b-9034a66909de' \
+  -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -H 'cache-control: no-cache' \
   -d '{
+    "order_id": 1,
+    "agreement_id": 4,
     "buyer_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "seller_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "amount": 2000
 }'
 ```
+* `X-ibet-Signature` : クライアント認証、リクエスト認可に用いる署名情報。 [参考：X-ibet-Signature](x_ibet_signature.md)
 
 ### In
 ```json
 {
+    "order_id": 1,
+    "agreement_id": 4,
     "buyer_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "seller_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
-    "amount": 2000
+    "amount": 2000,
 }
 ```
+* `order_id`: 決済対象の注文ID
+* `agremeent_id`: 決済対象の約定ID
 * `buyer_address` : 買い手のアドレス
 * `seller_address`: 売り手のアドレス
 * `amount`: 決済金額
@@ -512,6 +527,18 @@ curl -X POST \
 #### validation
 ```py
 {
+  'order_id': {
+    'type': 'int',
+    'schema': {'type': 'int'},
+    'empty': False,
+    'required': True
+  },
+  'buyer_address': {
+    'type': 'int',
+    'schema': {'type': 'int'},
+    'empty': False,
+    'required': True
+  },
   'buyer_address': {
     'type': 'string',
     'schema': {'type': 'string'},
