@@ -60,11 +60,12 @@ curl -X POST \
     },
     "data": [
         {
+            "stripe_account_id": "acct_1EQ5b5FHt5cjdvzv"
         }
     ]
 }
 ```
-* `xxxxx` : response不要？
+* `stripe_account_id` : stripeにて登録後のconnectアカウントid
 
 #### Status: 400 Bad Request
 * 入力値エラー時
@@ -182,7 +183,7 @@ curl -X POST \
     ]
 }
 ```
-* `xxxxx` : response不要？
+※正常登録時はresponse無し
 
 #### Status: 400 Bad Request
 * 入力値エラー時
@@ -427,11 +428,12 @@ curl -X POST \
     },
     "data": [
         {
+            "stripe_customer_id": "cus_ErghPzTI68hTis"
         }
     ]
 }
 ```
-* `xxxxx` : レスポンス不要？
+* `stripe_customer_id` : アカウントアドレスに紐付くstripeのcustomer id
 
 
 #### Status: 400 Bad Request
