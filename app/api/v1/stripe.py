@@ -12,7 +12,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, InvalidCardError, \
     DoubleChargeError
 from app.utils.hooks import VerifySignature
-from app.model import OmiseCharge, OmiseChargeStatus
+from app.model import StripeCharge
 from app import config
 
 import stripe
@@ -35,7 +35,8 @@ class CreateAccount(BaseResource):
         request_json = CreateAccount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
+        address = to_checksum_address(request_json['account_address'])
+        # address = to_checksum_address(req.context['address'])
 
         # 新しくConnectアカウントを作成する
         try:
@@ -61,34 +62,34 @@ class CreateAccount(BaseResource):
 
         self.on_success(res, account_id)
 
-        @staticmethod
-        def validate(req):
-            request_json = req.context['data']
-            if request_json is None:
-                raise InvalidParameterError
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
 
-            validator = Validator({
-                'account_address': {
-                    'type': 'string',
-                    'schema': {'type': 'string'},
-                    'empty': False,
-                    'required': True
-                },
-                'account_token': {
-                    'type': 'string',
-                    'schema': {'type': 'string'},
-                    'empty': False,
-                    'required': True
-                }
-            })
+        validator = Validator({
+            'account_address': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            },
+            'account_token': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
 
-            if not validator.validate(request_json):
-                raise InvalidParameterError(validator.errors)
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
 
-            if not Web3.isAddress(req.context['address']):
-                raise InvalidParameterError
+        if not Web3.isAddress(req.context['address']):
+            raise InvalidParameterError
 
-            return validator.document
+        return validator.document
 
 
 # ------------------------------
@@ -103,15 +104,16 @@ class CreateExternalAccount(BaseResource):
         LOG.info('v1.Stripe.CreateExternalAccount')
 
         # 入力値チェック
-        request_json = CreateAccount.validate(req)
+        request_json = CreateExternalAccount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
-
+        address = to_checksum_address(request_json['account_address'])
+        
         # アカウントアドレスに紐づくConnectアカウントの有無をDBで確認
-
-        # TODO DB select
-        account_id = None
+        # （アカウントアドレスは重複していない前提）
+        session = req.context['session']
+        account_id = session.query(StripeCharge).filter(StripeCharge.exchange_address == address).all()[0] \
+            .account_id
 
         # 紐づくConnectアカウントがない場合、Connectアカウントを作成する
         if account_id is None:
@@ -119,7 +121,7 @@ class CreateExternalAccount(BaseResource):
 
         # Connectアカウントに銀行口座を登録する
         try:
-            external_account = stripe.Account.create_external_account(
+            stripe.Account.create_external_account(
                 account_id,
                 external_account=request_json['bank_token']
             )
@@ -128,34 +130,34 @@ class CreateExternalAccount(BaseResource):
 
         self.on_success(res)
 
-        @staticmethod
-        def validate(req):
-            request_json = req.context['data']
-            if request_json is None:
-                raise InvalidParameterError
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
 
-            validator = Validator({
-                'account_address': {
-                    'type': 'string',
-                    'schema': {'type': 'string'},
-                    'empty': False,
-                    'required': True
-                },
-                'bank_token': {
-                    'type': 'string',
-                    'schema': {'type': 'string'},
-                    'empty': False,
-                    'required': True
-                }
-            })
+        validator = Validator({
+            'account_address': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            },
+            'bank_token': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
 
-            if not validator.validate(request_json):
-                raise InvalidParameterError(validator.errors)
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
 
-            if not Web3.isAddress(req.context['address']):
-                raise InvalidParameterError
+        if not Web3.isAddress(req.context['address']):
+            raise InvalidParameterError
 
-            return validator.document
+        return validator.document
 
 
 # ------------------------------
@@ -170,39 +172,47 @@ class GetAccountInfo(BaseResource):
         LOG.info('v1.Stripe.GetAccountInfo')
 
         # 入力値チェック
-        request_json = CreateAccount.validate(req)
+        request_json = GetAccountInfo.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
+        account_address_list = request_json['account_address_list']
 
-        # Connectアカウント情報をDBから取得
-        # TODO DB select
-        response_json = None
+        # チェックサムアドレス化
+        checked_account_address_list = {}
+        for account_address in account_address_list:
+            checked_account_address_list.append(to_checksum_address(account_address))
 
-        self.on_success(res, response_json)
+        # アカウント情報を取得
+        session = req.context["session"]
+        stripe_account_info_list = {}
+        for account in checked_account_address_list:
+            account_info = session.query(StripeCharge).filter(StripeCharge.exchange_address == account).all()[0]
+            stripe_account_info_list.append(account_info)
 
-        @staticmethod
-        def validate(req):
-            request_json = req.context['data']
-            if request_json is None:
-                raise InvalidParameterError
+        self.on_success(res, stripe_account_info_list)
 
-            validator = Validator({
-                'account_address_list': {
-                    'type': 'list',
-                    'schema': {'type': 'string'},
-                    'empty': False,
-                    'required': True
-                }
-            })
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
 
-            if not validator.validate(request_json):
-                raise InvalidParameterError(validator.errors)
+        validator = Validator({
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
 
-            if not Web3.isAddress(req.context['address']):
-                raise InvalidParameterError
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
 
-            return validator.document
+        if not Web3.isAddress(req.context['address']):
+            raise InvalidParameterError
+
+        return validator.document
 
 
 # ------------------------------
@@ -217,75 +227,67 @@ class CreateCustomer(BaseResource):
         LOG.info('v1.Stripe.CreateCustomer')
 
         # 入力値チェック
-        request_json = CreateAccount.validate(req)
+        request_json = CreateCustomer.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
+        address = to_checksum_address(request_json['account_address'])
 
         # アカウントアドレスに紐づくCustomerの有無をDBで確認
-        # TODO DB select
-        exists_customer_id = None
+        # （アカウントアドレスはテーブル内でユニークである前提）
+        session = req.context['session']
+        customer_id = session.query(StripeCharge).filter(StripeCharge.exchange_address == address).all[0] \
+            .customer_id
 
         # 紐づくCustomerがない場合、クレカ情報を紐付けたCustomerを作成
-        try:
-            account = stripe.Account.create(
-                type='custom',
-                account_token=request_json['account_token'],
-                requested_capabilities=['card_payments']
-            )
-        except stripe.Errors.api_connection_error:
-            raise Exception(description='Failure to connect to Stripes API.')
-
-
-        if exists_customer_id is None:
+        if customer_id is None:
             description = "Customer for " + address
             try:
                 customer = stripe.Customer.create(
                     description=description,
-                    source = request_json['card_token']
+                    source=request_json['card_token']
                 )['id']
             except stripe.Errors.api_connection_error:
                 raise Exception(description='Failure to connect to Stripes API.')
+
         # 紐づくCustomerがある場合、クレカ情報を更新する
         else:
             customer = stripe.Customer.modify(
-                exists_customer_id,
+                customer_id,
                 source=request_json['card_token']
             )['id']
 
         stripe_customer_id = customer.id
 
-
         self.on_success(res, stripe_customer_id)
 
-        @staticmethod
-        def validate(req):
-            request_json = req.context['data']
-            if request_json is None:
-                raise InvalidParameterError
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
 
-            validator = Validator({
-                'account_address': {
-                    'type': 'string',
-                    'schema': {'type': 'string'},
-                    'empty': False,
-                    'required': True
-                },
-                'card_token': {
-                    'type': 'string',
-                    'schema': {'type': 'string'},
-                    'empty': False,
-                    'required': True
-                }
-            })
+        validator = Validator({
+            'account_address': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            },
+            'card_token': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
 
-            if not validator.validate(request_json):
-                raise InvalidParameterError(validator.errors)
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
 
-            if not Web3.isAddress(req.context['address']):
-                raise InvalidParameterError
+        if not Web3.isAddress(req.context['address']):
+            raise InvalidParameterError
 
-            return validator.document
+        return validator.document
 
 
 # ------------------------------
