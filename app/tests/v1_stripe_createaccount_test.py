@@ -45,6 +45,7 @@ class TestV1StripeCreateAccount():
                     'first_name': 'Jane',
                     'last_name': 'Doe',
                 },
+                'business_type': 'individual',
                 'tos_shown_and_accepted': True,
             },
         )
