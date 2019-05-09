@@ -535,7 +535,7 @@ curl -X POST \
     'empty': False,
     'required': True
   },
-  'buyer_address': {
+  'agreement_id': {
     'type': 'int',
     'schema': {'type': 'int'},
     'empty': False,
