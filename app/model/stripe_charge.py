@@ -8,7 +8,6 @@ from app.model import Base
 
 class StripeCharge(Base):
     __tablename__ = 'stripe_charge'
-    __table_args__ = (UniqueConstraint('exchange_address','order_id','agreement_id'),{})
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     exchange_address = Column(String(256))
     account_id = Column(BigInteger)
@@ -37,10 +36,3 @@ class StripeChargeStatus(Enum):
     PROCESSIN = 0
     SUCCESS = 1
     ERROR = 2
-
-class StripeKYCStatus(Enum):
-    Pending = 0     # 本人確認書類提出済みでStripe側で確認中。
-    Unverified = 1  # 本人確認書類が提出されていない、またはStripe側で確認できない
-    Verified = 2    # 本人確認（審査）が完了
-
-

@@ -12,7 +12,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, InvalidCardError, \
     DoubleChargeError
 from app.utils.hooks import VerifySignature
-from app.model import StripeCharge
+from app.model import StripeCharge, StripeAccount
 from app import config
 
 import stripe
@@ -59,7 +59,15 @@ class CreateAccount(BaseResource):
 
         account_id = {'account_id': account.id}
 
-        # Todo DBにインサートする処理
+        session = req.context["session"]
+
+        # DBにインサートする処理
+        stripe_account = StripeAccount()
+        stripe_account.account_address = address
+        stripe_account.account_id = account.id
+        stripe_account.customer_id = ""
+        session.add(stripe_account)
+        session.commit()
 
         self.on_success(res, account_id)
 
@@ -107,7 +115,7 @@ class CreateExternalAccount(BaseResource):
         # アカウントアドレスに紐づくConnectアカウントの有無をDBで確認
         # （アカウントアドレスは重複していない前提）
         session = req.context['session']
-        account_id = session.query(StripeCharge).filter(StripeCharge.exchange_address == address).all()[0] \
+        account_id = session.query(StripeAccount).filter(StripeAccount.exchange_address == address).all()[0] \
             .account_id
 
         # 紐づくConnectアカウントがない場合、Connectアカウントを作成する
@@ -170,7 +178,7 @@ class GetAccountInfo(BaseResource):
         # アカウント情報を取得
         session = req.context["session"]
         stripe_account_info_list = {}
-        account_info = session.query(StripeCharge).filter(StripeCharge.exchange_address == address).all()[0]
+        account_info = session.query(StripeAccount).filter(StripeAccount.exchange_address == address).all()[0]
         stripe_account_info_list.append(account_info)
 
         self.on_success(res, stripe_account_info_list)
@@ -219,7 +227,7 @@ class CreateCustomer(BaseResource):
         # アカウントアドレスに紐づくCustomerの有無をDBで確認
         # （アカウントアドレスはテーブル内でユニークである前提）
         session = req.context['session']
-        customer_id = session.query(StripeCharge).filter(StripeCharge.exchange_address == address).all[0] \
+        customer_id = session.query(StripeAccount).filter(StripeAccount.account_address == address).all[0] \
             .customer_id
 
         # 紐づくCustomerがない場合、クレカ情報を紐付けたCustomerを作成
@@ -240,9 +248,15 @@ class CreateCustomer(BaseResource):
                 source=request_json['card_token']
             )['id']
 
-        stripe_customer_id = customer.id
+        session = req.context["session"]
 
-        self.on_success(res, stripe_customer_id)
+        # DBを更新する処理
+        stripe_account = session.query(StripeAccount).filter_by(account_address=address).first()
+        stripe_account.customer_id = customer.id
+        session.add(stripe_account)
+        session.commit()
+
+        self.on_success(res, customer.id)
 
     @staticmethod
     def validate(req):
@@ -264,7 +278,7 @@ class CreateCustomer(BaseResource):
                 'required': True
             }
         })
-
+        session = req.context["session"]
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
