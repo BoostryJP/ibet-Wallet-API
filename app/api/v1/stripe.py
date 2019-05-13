@@ -35,8 +35,7 @@ class CreateAccount(BaseResource):
         request_json = CreateAccount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(request_json['account_address'])
-        # address = to_checksum_address(req.context['address'])
+        address = to_checksum_address(req.context['address'])
 
         # 新しくConnectアカウントを作成する
         try:
@@ -60,6 +59,8 @@ class CreateAccount(BaseResource):
 
         account_id = {'account_id': account.id}
 
+        # Todo DBにインサートする処理
+
         self.on_success(res, account_id)
 
     @staticmethod
@@ -69,12 +70,6 @@ class CreateAccount(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address': {
-                'type': 'string',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
-            },
             'account_token': {
                 'type': 'string',
                 'schema': {'type': 'string'},
@@ -107,7 +102,7 @@ class CreateExternalAccount(BaseResource):
         request_json = CreateExternalAccount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(request_json['account_address'])
+        address = to_checksum_address(req.context['address'])
         
         # アカウントアドレスに紐づくConnectアカウントの有無をDBで確認
         # （アカウントアドレスは重複していない前提）
@@ -117,7 +112,8 @@ class CreateExternalAccount(BaseResource):
 
         # 紐づくConnectアカウントがない場合、Connectアカウントを作成する
         if account_id is None:
-            account_id = CreateAccount()
+            description = 'Stripe Connected Account does not exists.'
+            raise InvalidParameterError(description=description)
 
         # Connectアカウントに銀行口座を登録する
         try:
@@ -137,12 +133,6 @@ class CreateExternalAccount(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address': {
-                'type': 'string',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
-            },
             'bank_token': {
                 'type': 'string',
                 'schema': {'type': 'string'},
@@ -175,19 +165,13 @@ class GetAccountInfo(BaseResource):
         request_json = GetAccountInfo.validate(req)
 
         # リクエストから情報を抽出
-        account_address_list = request_json['account_address_list']
-
-        # チェックサムアドレス化
-        checked_account_address_list = {}
-        for account_address in account_address_list:
-            checked_account_address_list.append(to_checksum_address(account_address))
+        address = to_checksum_address(req.context['address'])
 
         # アカウント情報を取得
         session = req.context["session"]
         stripe_account_info_list = {}
-        for account in checked_account_address_list:
-            account_info = session.query(StripeCharge).filter(StripeCharge.exchange_address == account).all()[0]
-            stripe_account_info_list.append(account_info)
+        account_info = session.query(StripeCharge).filter(StripeCharge.exchange_address == address).all()[0]
+        stripe_account_info_list.append(account_info)
 
         self.on_success(res, stripe_account_info_list)
 
@@ -230,7 +214,7 @@ class CreateCustomer(BaseResource):
         request_json = CreateCustomer.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(request_json['account_address'])
+        address = to_checksum_address(req.context['address'])
 
         # アカウントアドレスに紐づくCustomerの有無をDBで確認
         # （アカウントアドレスはテーブル内でユニークである前提）

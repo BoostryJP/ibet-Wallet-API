@@ -97,11 +97,11 @@ class App(falcon.API):
         self.add_route('/v1/Omise/ChargeStatus', omise.ChargeStatus())
 
         # Stripe決済
-        self.add_route('/v1/Stripe/CreateAccount/', stripe.CreateAccount())
-        self.add_route('/v1/Stripe/CreateExternalAccount/', stripe.CreateExternalAccount())
-        self.add_route('/v1/Stripe/GetAccountInfo/', stripe.GetAccountInfo())
-        self.add_route('/v1/Stripe/CreateCustomer/', stripe.CreateCustomer())
-        self.add_route('/v1/Stripe/Charge/', stripe.Charge())
+        self.add_route('/v1/Stripe/CreateAccount', stripe.CreateAccount())
+        self.add_route('/v1/Stripe/CreateExternalAccount', stripe.CreateExternalAccount())
+        self.add_route('/v1/Stripe/GetAccountInfo', stripe.GetAccountInfo())
+        self.add_route('/v1/Stripe/CreateCustomer', stripe.CreateCustomer())
+        self.add_route('/v1/Stripe/Charge', stripe.Charge())
 
         # push通知デバイス登録
         self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
