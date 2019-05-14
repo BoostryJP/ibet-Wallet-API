@@ -46,3 +46,4 @@ urllib3==1.22
 web3==4.2.1
 websockets==4.0.1
 boto3==1.9.84
+stripe==2.24.1

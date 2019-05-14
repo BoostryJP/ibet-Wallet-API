@@ -19,6 +19,7 @@ from app.api.v1 import orderList
 from app.api.v1 import notification
 from app.api.v1 import nodeInfo
 from app.api.v1 import omise
+from app.api.v1 import stripe
 from app.api.v1 import push
 from app.api.v1 import version
 
@@ -94,6 +95,13 @@ class App(falcon.API):
         self.add_route('/v1/Omise/UpdateCustomer', omise.UpdateCustomer())
         self.add_route('/v1/Omise/Charge', omise.Charge())
         self.add_route('/v1/Omise/ChargeStatus', omise.ChargeStatus())
+
+        # Stripe決済
+        self.add_route('/v1/Stripe/CreateAccount', stripe.CreateAccount())
+        self.add_route('/v1/Stripe/CreateExternalAccount', stripe.CreateExternalAccount())
+        self.add_route('/v1/Stripe/GetAccountInfo', stripe.GetAccountInfo())
+        self.add_route('/v1/Stripe/CreateCustomer', stripe.CreateCustomer())
+        self.add_route('/v1/Stripe/Charge', stripe.Charge())
 
         # push通知デバイス登録
         self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
