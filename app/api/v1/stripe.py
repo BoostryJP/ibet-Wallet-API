@@ -92,12 +92,6 @@ class CreateAccount(BaseResource):
                 'schema': {'type': 'string'},
                 'empty': False,
                 'required': True
-            },
-            'account_address': {
-                'type': 'string',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
             }
         })
 
@@ -181,12 +175,6 @@ class CreateExternalAccount(BaseResource):
 
         validator = Validator({
             'bank_token': {
-                'type': 'string',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
-            },
-            'account_address': {
                 'type': 'string',
                 'schema': {'type': 'string'},
                 'empty': False,
@@ -321,12 +309,6 @@ class CreateCustomer(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address': {
-                'type': 'string',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
-            },
             'card_token': {
                 'type': 'string',
                 'schema': {'type': 'string'},
