@@ -33,43 +33,52 @@ class CreateAccount(BaseResource):
 
         # 入力値チェック
         request_json = CreateAccount.validate(req)
-
-        # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
-
-        # 新しくConnectアカウントを作成する
-        try:
-            account = stripe.Account.create(
-                type='custom',
-                account_token=request_json['account_token'],
-                requested_capabilities=['card_payments']
-            )
-        except stripe.Errors.api_connection_error:
-            raise Exception(description='Failure to connect to Stripes API.')
-        # except stripe.Errors.api_error:
-        #     raise Exception(description='Stripe API Error.')
-        # except stripe.Errors.authentication_error:
-        #     raise Exception(description='Failure to properly authenticate yourself in the request.')
-        # except stripe.Errors.invalid_request_error:
-        #     raise Exception(description='Invalid request errors arise when your request has invalid parameters.')
-        # except stripe.Errors.rate_limit_error:
-        #     raise Exception(description='Too many requests hit the API too quickly.')
-        # except stripe.Errors.validation_error:
-        #     raise Exception(description="failing to validate fields")
-
-        account_id = {'account_id': account.id}
-
+        address = to_checksum_address(request_json['account_address'])
+        # DBの存在チェック
         session = req.context["session"]
+        raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
 
-        # DBにインサートする処理
-        stripe_account = StripeAccount()
-        stripe_account.account_address = address
-        stripe_account.account_id = account.id
-        stripe_account.customer_id = ""
-        session.add(stripe_account)
-        session.commit()
+        # すでに存在する場合はUpdate、存在しない場合はCreateしてDBインサート
+        try:
+            if raw is not None and raw.account_id != "":
+                stripe.Account.modify(
+                  raw.account_id,
+                  account_token=request_json['account_token']
+                )
+            elif raw is not None and raw.account_id == "":
+                account = stripe.Account.create(
+                    type='custom',
+                    country='JP',
+                    account_token=request_json['account_token']
+                )
+                # DBのaccount_idをアップデート
+                raw.account_id = account.id
+                session.commit()
+            else:
+                account = stripe.Account.create(
+                    type='custom',
+                    country='JP',
+                    account_token=request_json['account_token']
+                )
+                account_id = account.id
+                # DBに新規インサートする処理
+                stripe_account = StripeAccount()
+                stripe_account.account_address = address
+                stripe_account.account_id = account.id
+                stripe_account.customer_id = ""
+                session.add(stripe_account)
+                session.commit()
 
-        self.on_success(res, account_id)
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='Failure to connect to Stripes API.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='Failure to properly authenticate yourself in the request.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.RateLimitError as e:
+            raise AppError(description='Too many requests hit the API too quickly.')
+
+        self.on_success(res, {})
 
     @staticmethod
     def validate(req):
@@ -79,6 +88,12 @@ class CreateAccount(BaseResource):
 
         validator = Validator({
             'account_token': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            },
+            'account_address': {
                 'type': 'string',
                 'schema': {'type': 'string'},
                 'empty': False,
@@ -110,29 +125,53 @@ class CreateExternalAccount(BaseResource):
         request_json = CreateExternalAccount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
+        address = to_checksum_address(request_json['account_address'])
         
         # アカウントアドレスに紐づくConnectアカウントの有無をDBで確認
         # （アカウントアドレスは重複していない前提）
         session = req.context['session']
-        account_id = session.query(StripeAccount).filter(StripeAccount.exchange_address == address).all()[0] \
-            .account_id
+        raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
 
-        # 紐づくConnectアカウントがない場合、Connectアカウントを作成する
-        if account_id is None:
-            description = 'Stripe Connected Account does not exists.'
-            raise InvalidParameterError(description=description)
-
-        # Connectアカウントに銀行口座を登録する
+        # 紐づくConnectアカウントがない場合、Connectアカウントを空で作成した上でexternalAccountの登録を行う
         try:
-            stripe.Account.create_external_account(
-                account_id,
-                external_account=request_json['bank_token']
-            )
-        except stripe.Errors.api_connection_error:
-            raise Exception(description='Failure to connect to Stripes API.')
+            if raw is not None and raw.account_id != "":
+                stripe.Account.modify(
+                  raw.account_id,
+                  external_account=request_json['bank_token']
+                )
+            elif raw is not None and raw.account_id == "":
+                account = stripe.Account.create(
+                    type='custom',
+                    country='JP',
+                    external_account=request_json['bank_token']
+                )
+                # DBのaccount_idをアップデート
+                raw.account_id = account.id
+                session.commit()
+            else:
+                account = stripe.Account.create(
+                    type='custom',
+                    country='JP',
+                    external_account=request_json['bank_token']
+                )
+                account_id = account.id
+                # DBに新規インサートする処理
+                stripe_account = StripeAccount()
+                stripe_account.account_address = address
+                stripe_account.account_id = account.id
+                stripe_account.customer_id = ""
+                session.add(stripe_account)
+                session.commit()
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='Failure to connect to Stripes API.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='Failure to properly authenticate yourself in the request.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.RateLimitError as e:
+            raise AppError(description='Too many requests hit the API too quickly.')
 
-        self.on_success(res)
+        self.on_success(res, {})
 
     @staticmethod
     def validate(req):
@@ -142,6 +181,12 @@ class CreateExternalAccount(BaseResource):
 
         validator = Validator({
             'bank_token': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            },
+            'account_address': {
                 'type': 'string',
                 'schema': {'type': 'string'},
                 'empty': False,
@@ -222,41 +267,52 @@ class CreateCustomer(BaseResource):
         request_json = CreateCustomer.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
+        address = to_checksum_address(request_json['account_address'])
 
         # アカウントアドレスに紐づくCustomerの有無をDBで確認
         # （アカウントアドレスはテーブル内でユニークである前提）
         session = req.context['session']
-        customer_id = session.query(StripeAccount).filter(StripeAccount.account_address == address).all[0] \
-            .customer_id
+        raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
 
         # 紐づくCustomerがない場合、クレカ情報を紐付けたCustomerを作成
-        if customer_id is None:
-            description = "Customer for " + address
-            try:
-                customer = stripe.Customer.create(
+        try:
+            if raw is not None and raw.customer_id != "":
+                stripe.Customer.modify(
+                    raw.customer_id,
+                    source=request_json['card_token']
+                )
+            elif raw is not None and raw.customer_id == "":
+                description = "Customer for " + address
+                customer_id = stripe.Customer.create(
                     description=description,
                     source=request_json['card_token']
                 )['id']
-            except stripe.Errors.api_connection_error:
-                raise Exception(description='Failure to connect to Stripes API.')
+                # DBのcustomer_idをアップデート
+                raw.customer_id = customer_id
+                session.commit()
+            else:
+                description = "Customer for " + address
+                customer_id = stripe.Customer.create(
+                    description=description,
+                    source=request_json['card_token']
+                )['id']
+                # DBに新規インサート
+                stripe_account = StripeAccount()
+                stripe_account.account_address = address
+                stripe_account.account_id = ""
+                stripe_account.customer_id = customer_id
+                session.add(stripe_account)
+                session.commit()
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='Failure to connect to Stripes API.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='Failure to properly authenticate yourself in the request.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.RateLimitError as e:
+            raise AppError(description='Too many requests hit the API too quickly.')
 
-        # 紐づくCustomerがある場合、クレカ情報を更新する
-        else:
-            customer = stripe.Customer.modify(
-                customer_id,
-                source=request_json['card_token']
-            )['id']
-
-        session = req.context["session"]
-
-        # DBを更新する処理
-        stripe_account = session.query(StripeAccount).filter_by(account_address=address).first()
-        stripe_account.customer_id = customer.id
-        session.add(stripe_account)
-        session.commit()
-
-        self.on_success(res, customer.id)
+        self.on_success(res, {})
 
     @staticmethod
     def validate(req):
