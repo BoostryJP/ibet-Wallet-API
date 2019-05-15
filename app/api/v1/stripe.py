@@ -45,6 +45,7 @@ class CreateAccount(BaseResource):
                   raw.account_id,
                   account_token=request_json['account_token']
                 )
+                response_data = {'stripe_account_id': raw.account_id}
             elif raw is not None and raw.account_id == "":
                 account = stripe.Account.create(
                     type='custom',
@@ -54,6 +55,7 @@ class CreateAccount(BaseResource):
                 # DBのaccount_idをアップデート
                 raw.account_id = account.id
                 session.commit()
+                response_data = {'stripe_account_id': account.id}
             else:
                 account = stripe.Account.create(
                     type='custom',
@@ -68,6 +70,7 @@ class CreateAccount(BaseResource):
                 stripe_account.customer_id = ""
                 session.add(stripe_account)
                 session.commit()
+                response_data = {'stripe_account_id': account.id}
 
         except stripe.error.APIConnectionError as e:
             raise AppError(description='Failure to connect to Stripes API.')
@@ -78,7 +81,7 @@ class CreateAccount(BaseResource):
         except stripe.error.RateLimitError as e:
             raise AppError(description='Too many requests hit the API too quickly.')
 
-        self.on_success(res, {})
+        self.on_success(res, response_data)
 
     @staticmethod
     def validate(req):
@@ -133,6 +136,7 @@ class CreateExternalAccount(BaseResource):
                   raw.account_id,
                   external_account=request_json['bank_token']
                 )
+                response_data = {'stripe_account_id': raw.account_id}
             elif raw is not None and raw.account_id == "":
                 account = stripe.Account.create(
                     type='custom',
@@ -142,6 +146,7 @@ class CreateExternalAccount(BaseResource):
                 # DBのaccount_idをアップデート
                 raw.account_id = account.id
                 session.commit()
+                response_data = {'stripe_account_id': account.id}
             else:
                 account = stripe.Account.create(
                     type='custom',
@@ -156,6 +161,7 @@ class CreateExternalAccount(BaseResource):
                 stripe_account.customer_id = ""
                 session.add(stripe_account)
                 session.commit()
+                response_data = {'stripe_account_id': account.id}
         except stripe.error.APIConnectionError as e:
             raise AppError(description='Failure to connect to Stripes API.')
         except stripe.error.AuthenticationError as e:
@@ -165,7 +171,7 @@ class CreateExternalAccount(BaseResource):
         except stripe.error.RateLimitError as e:
             raise AppError(description='Too many requests hit the API too quickly.')
 
-        self.on_success(res, {})
+        self.on_success(res, response_data)
 
     @staticmethod
     def validate(req):
@@ -269,6 +275,7 @@ class CreateCustomer(BaseResource):
                     raw.customer_id,
                     source=request_json['card_token']
                 )
+                response_data = {'stripe_customer_id': raw.customer_id}
             elif raw is not None and raw.customer_id == "":
                 description = "Customer for " + address
                 customer_id = stripe.Customer.create(
@@ -278,6 +285,7 @@ class CreateCustomer(BaseResource):
                 # DBのcustomer_idをアップデート
                 raw.customer_id = customer_id
                 session.commit()
+                response_data = {'stripe_customer_id': customer_id}
             else:
                 description = "Customer for " + address
                 customer_id = stripe.Customer.create(
@@ -291,6 +299,7 @@ class CreateCustomer(BaseResource):
                 stripe_account.customer_id = customer_id
                 session.add(stripe_account)
                 session.commit()
+                response_data = {'stripe_customer_id': customer_id}
         except stripe.error.APIConnectionError as e:
             raise AppError(description='Failure to connect to Stripes API.')
         except stripe.error.AuthenticationError as e:
@@ -300,7 +309,7 @@ class CreateCustomer(BaseResource):
         except stripe.error.RateLimitError as e:
             raise AppError(description='Too many requests hit the API too quickly.')
 
-        self.on_success(res, {})
+        self.on_success(res, response_data)
 
     @staticmethod
     def validate(req):

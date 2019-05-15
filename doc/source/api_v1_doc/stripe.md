@@ -12,7 +12,6 @@ curl -X POST \
   -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -H 'cache-control: no-cache' \
   -d '{
-    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "account_token":  "ct_1EPLU9HgQLLPjBO2760HyH5v"
 }'
 ```
@@ -21,23 +20,15 @@ curl -X POST \
 ### In
 ```json
 {
-    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "account_token": "ct_1EPLU9HgQLLPjBO2760HyH5v"
 }
 ```    
 
-* `account_address`: ウォレットのアカウントアドレス。
 * `account_token` : stripeのアカウントトークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行する。
 
 #### validation
 ```py
 {
-  'account_address': {
-    'type': 'string',
-    'schema': {'type': 'string'},
-    'empty': False,
-    'required': True
-  },
   'account_token': {
     'type': 'string',
     'schema': {'type': 'string'},
@@ -58,11 +49,10 @@ curl -X POST \
         "code": 200,
         "message": "OK"
     },
-    "data": [
+    "data": 
         {
             "stripe_account_id": "acct_1EQ5b5FHt5cjdvzv"
         }
-    ]
 }
 ```
 * `stripe_account_id` : stripeにて登録後のconnectアカウントid
@@ -131,7 +121,6 @@ curl -X POST \
   -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -H 'cache-control: no-cache' \
   -d '{
-    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "bank_token":  "btok_1EQ4ooHgQLLPjBO21MKfT6A4"
 }'
 ```
@@ -140,23 +129,15 @@ curl -X POST \
 ### In
 ```json
 {
-    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "bank_token": "ct_1EPLU9HgQLLPjBO2760HyH5v"
 }
 ```    
 
-* `account_address`: ウォレットのアカウントアドレス。
 * `bank_token` : stripeの銀行口座トークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行する。
 
 #### validation
 ```py
 {
-  'account_address': {
-    'type': 'string',
-    'schema': {'type': 'string'},
-    'empty': False,
-    'required': True
-  },
   'bank_token': {
     'type': 'string',
     'schema': {'type': 'string'},
@@ -177,13 +158,13 @@ curl -X POST \
         "code": 200,
         "message": "OK"
     },
-    "data": [
+    "data": 
         {
+            "stripe_account_id": "acct_1EQ5b5FHt5cjdvzv"
         }
-    ]
 }
 ```
-※正常登録時はresponse無し
+* `stripe_account_id` : stripeにて登録後のconnectアカウントid
 
 #### Status: 400 Bad Request
 * 入力値エラー時
@@ -381,7 +362,6 @@ curl -X POST \
   -H 'cache-control: no-cache' \
   -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -d '{
-    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "card_token": "tok_1ENy48HgQLLPjBO2cjTJmDqT"
 }'
 ```
@@ -390,22 +370,14 @@ curl -X POST \
 ### In
 ```json
 {
-    "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "card_token": "tok_1ENy48HgQLLPjBO2cjTJmDqT"
 }
 ```
-* `account_address` : ウォレットのアカウントアドレス。
 * `card_token`: stripeのカードトークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行する。
 
 #### validation
 ```py
 {
-  'account_address': {
-    'type': 'string',
-    'schema': {'type': 'string'},
-    'empty': False,
-    'required': True
-  },
   'card_token': {
     'type': 'string',
     'schema': {'type': 'string'},
@@ -426,11 +398,10 @@ curl -X POST \
         "code": 200,
         "message": "OK"
     },
-    "data": [
+    "data": 
         {
             "stripe_customer_id": "cus_ErghPzTI68hTis"
         }
-    ]
 }
 ```
 * `stripe_customer_id` : アカウントアドレスに紐付くstripeのcustomer id
