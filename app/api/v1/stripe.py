@@ -33,7 +33,7 @@ class CreateAccount(BaseResource):
 
         # 入力値チェック
         request_json = CreateAccount.validate(req)
-        address = to_checksum_address(request_json['account_address'])
+        address = to_checksum_address(req.context["address"])
         # DBの存在チェック
         session = req.context["session"]
         raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
@@ -125,7 +125,7 @@ class CreateExternalAccount(BaseResource):
         request_json = CreateExternalAccount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(request_json['account_address'])
+        address = to_checksum_address(req.context["address"])
         
         # アカウントアドレスに紐づくConnectアカウントの有無をDBで確認
         # （アカウントアドレスは重複していない前提）
@@ -267,7 +267,7 @@ class CreateCustomer(BaseResource):
         request_json = CreateCustomer.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(request_json['account_address'])
+        address = to_checksum_address(req.context["address"])
 
         # アカウントアドレスに紐づくCustomerの有無をDBで確認
         # （アカウントアドレスはテーブル内でユニークである前提）
