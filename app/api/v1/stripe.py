@@ -364,34 +364,6 @@ class Charge(BaseResource):
         exchange_fee = math.ceil(request_json['amount'] * float(config.STRIPE_FEE))
         charge_amount = amount - exchange_fee
 
-        # ------------- for debug ----------------------- #
-
-        # Agreementの情報を挿入
-        agreement = Agreement()
-        agreement.order_id = order_id
-        agreement.agreement_id = agreement_id
-        agreement.exchange_address = exchange_address
-        agreement.unique_order_id = exchange_address + '_' + str(1)
-        agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        agreement.amount = amount
-        agreement.status = AgreementStatus.PENDING.value
-        session.add(agreement)
-
-        stripe_account = StripeAccount()
-        stripe_account.account_address = buyer_address
-        stripe_account.account_id = "acct_1EaHRtHYCG1MwtWK"
-        stripe_account.customer_id = "cus_F4lJXTbs7ZjwKs"
-        session.add(stripe_account)
-
-        stripe_account = StripeAccount()
-        stripe_account.account_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        stripe_account.account_id = "acct_1EaHUYCJ5LJ0Mtg3"
-        stripe_account.customer_id = "cus_F4lGTQ4Vrvfgi1"
-        session.add(stripe_account)
-
-        # ------------- end ----------------------------- #
-
         # 約定テーブルから情報を取得
         agreement = session.query(Agreement).\
             filter(Agreement.order_id == order_id,
@@ -411,7 +383,7 @@ class Charge(BaseResource):
 
         # StripeAccountテーブルから売手の情報を取得
         seller = session.query(StripeAccount). \
-            filter(StripeAccount.account_address == "0x31b98d14007bdee637298086988a0bbd31184527").first()
+            filter(StripeAccount.account_address == agreement.seller_address).first()
         # StripeAccountテーブルに情報がない場合、入力値エラー
         if seller is None:
             description = 'The parameter "agreement.seller_address" is invalid. Record not found.'
@@ -464,16 +436,14 @@ class Charge(BaseResource):
         # 新しく課金オブジェクトを作成する
         try:
             charge = stripe.Charge.create(
-                # customer=buyer.customer_id,
-                customer="cus_F4lJXTbs7ZjwKs",
+                customer=buyer.customer_id,
                 amount=amount,
                 currency="jpy",
                 destination={
                     # 子アカウントへ配分する金額
                     "amount": charge_amount,
                     # 子アカウントを指定
-                    # "account": seller.account_id
-                    "account": "acct_1EaHUYCJ5LJ0Mtg3"
+                    "account": seller.account_id
                 }
             )
         except stripe.error.APIConnectionError as e:
