@@ -7,7 +7,7 @@ from cerberus import Validator
 import sqlalchemy
 from web3 import Web3
 from eth_utils import to_checksum_address
-import boto3
+from app.contracts import Contract
 
 from app import log
 from app.api.common import BaseResource
@@ -368,9 +368,13 @@ class Charge(BaseResource):
             filter(Agreement.order_id == order_id,
                    Agreement.agreement_id == agreement_id).first()
 
-        # Stripeテーブルから情報を取得
-        stripe_row = session.query(StripeCharge).\
+        # StripeAccountテーブルから買手の情報を取得
+        buyer = session.query(StripeCharge).\
             filter(StripeCharge.account_address == buyer_address).first()
+
+        # StripeAccountテーブルから買手の情報を取得
+        seller = session.query(StripeCharge). \
+            filter(StripeCharge.account_address == agreement.seller_address).first()
 
         # リクエストの金額が正しいか確認
         if not request_json['amount'] == agreement.amount:
@@ -379,14 +383,14 @@ class Charge(BaseResource):
         # 新しく課金オブジェクトを作成する
         try:
             charge = stripe.Charge.create(
-                customer=stripe_row.customer_id,
+                customer=buyer.customer_id,
                 amount=amount,
                 currency="jpy",
                 destination={
                     # 子アカウントへ配分する金額
                     "amount": charge_amount,
                     # 子アカウントを指定
-                    "account": stripe_row.account_id
+                    "account": seller.account_id
                 }
             )
         except stripe.Errors.api_connection_error:
