@@ -351,7 +351,7 @@ class Charge(BaseResource):
         session = req.context["session"]
 
         # 入力値チェック
-        request_json = CreateAccount.validate(req)
+        request_json = Charge.validate(req)
         buyer_address = to_checksum_address(req.context["address"])
 
         # リクエストから情報を抽出
