@@ -14,7 +14,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, InvalidCardError, \
     DoubleChargeError
 from app.utils.hooks import VerifySignature
-from app.model import StripeCharge, StripeAccount, Agreement
+from app.model import StripeCharge, StripeAccount, Agreement, StripeChargeStatus
 from app import config
 
 import stripe
@@ -357,6 +357,7 @@ class Charge(BaseResource):
         # リクエストから情報を抽出
         order_id = request_json['order_id']
         agreement_id = request_json['agreement_id']
+        exchange_address = to_checksum_address(request_json['exchange_address'])
 
         # 手数料と収入の計算（収納代行の手数料率を百分率で環境変数に設定）
         amount = request_json['amount']
@@ -380,6 +381,45 @@ class Charge(BaseResource):
         if not request_json['amount'] == agreement.amount:
             raise InvalidParameterError
 
+        # Charge（課金）状態の取得
+        stripe_charge = session.query(StripeCharge). \
+            filter(StripeCharge.exchange_address == exchange_address). \
+            filter(StripeCharge.order_id == order_id). \
+            filter(StripeCharge.agreement_id == agreement_id). \
+            first()
+
+        if stripe_charge is not None:  # 既にオペレーションを1回以上実施している場合
+            # 二重課金のチェック
+            #  - Charge状態が[PROCESSING]、[SUCCESS]の場合はエラー
+            #  - Charge状態が[ERROR]の場合は[PROCESSING]に更新（この時点でcommitする）
+            if stripe_charge.status == StripeChargeStatus.PROCESSING.value or \
+                    stripe_charge.status == StripeChargeStatus.SUCCESS.value:
+                raise DoubleChargeError(description='double charge')
+            elif stripe_charge.status == StripeChargeStatus.ERROR.value:
+                stripe_charge.status = StripeChargeStatus.PROCESSING.value
+                session.commit()
+
+        else:  # オペレーション未実施の場合
+            try:
+                # Charge状態が[PROCESSING]のレコードを作成（この時点でcommitする）
+                stripe_charge = StripeCharge()
+                stripe_charge.exchange_address = exchange_address
+                stripe_charge.order_id = order_id
+                stripe_charge.agreement_id = agreement_id
+                stripe_charge.status = StripeChargeStatus.PROCESSING.value
+                session.add(stripe_charge)
+                session.commit()
+            except:  # 一意制約違反の場合
+                session.rollback()
+                raise DoubleChargeError(description='double charge')
+
+        # 決済対象約定情報
+        description_agreement = json.dumps({
+            'exchange_address': exchange_address,
+            'order_id': order_id,
+            'agreement_id': agreement_id
+        })
+
         # 新しく課金オブジェクトを作成する
         try:
             charge = stripe.Charge.create(
@@ -393,11 +433,58 @@ class Charge(BaseResource):
                     "account": seller.account_id
                 }
             )
-        except stripe.Errors.api_connection_error:
-            raise Exception(description='Failure to connect to Stripes API.')
+        except stripe.error.APIConnectionError as e:
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='Failure to connect to Stripes API.')
+        except stripe.error.AuthenticationError as e:
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='Failure to properly authenticate yourself in the request.')
+        except stripe.error.InvalidRequestError as e:
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.RateLimitError as e:
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='Too many requests hit the API too quickly.')
+        except stripe.error.ValidationErrr as e:
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='Errors triggered by our client-side libraries when failing to validate fields')
+        except stripe.error.Card_Error as e:
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise InvalidParameterError(description=str(e))
+        except Exception as err:
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            LOG.error('Error: %s', err)
+            raise AppError
+
+        if charge.status != 'successful':
+            # Charge状態を[ERROR]ステータスに更新する
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise InvalidCardError
+
+        sqs_msg = {
+            'exchange_address': exchange_address,
+            'order_id': order_id,
+            'agreement_id': agreement_id,
+            'amount': amount
+        }
+
+        try:
+            Charge.send_sqs_msg(sqs_msg)
+        except Exception as err:
+            LOG.error('SQS Error: %s', err)
+            raise AppError
+
+        # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
+        stripe_charge.status = StripeChargeStatus.SUCCESS.value
 
         receipt_url = {'receipt_url': charge['receipt_url']}
-
         self.on_success(res, receipt_url)
 
     @staticmethod
@@ -424,7 +511,12 @@ class Charge(BaseResource):
                 'schema': {'type': 'int'},
                 'empty': False,
                 'required': True
-            }
+            },
+            'exchange_address': {
+                'type': 'string',
+                'required': True,
+                'empty': False,
+            },
         })
 
         if not validator.validate(request_json):
