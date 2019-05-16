@@ -392,7 +392,7 @@ class Charge(BaseResource):
         except stripe.Errors.api_connection_error:
             raise Exception(description='Failure to connect to Stripes API.')
 
-        receipt_url = {'account_id': charge['receipt_url']}
+        receipt_url = {'receipt_url': charge['receipt_url']}
 
         self.on_success(res, receipt_url)
 
