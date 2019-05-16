@@ -12,7 +12,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, InvalidCardError, \
     DoubleChargeError
 from app.utils.hooks import VerifySignature
-from app.model import StripeCharge, StripeAccount
+from app.model import StripeCharge, StripeAccount, Agreement
 from app import config
 
 import stripe
@@ -346,13 +346,84 @@ class Charge(BaseResource):
     def on_post(self, req, res):
         LOG.info('v1.Stripe.Charge')
 
+        session = req.context["session"]
+
         # 入力値チェック
         request_json = CreateAccount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
+        order_id = request_json['order_id']
+        agreement_id = request_json['agreement_id']
 
-        #########
-        # TODO
-        #########
+        # 手数料と収入の計算（収納代行の手数料を10%と定める）
+        amount = request_json['amount']
+        exchange_fee = math.ceil(request_json['amount'] * 0.1)
+        income = amount - exchange_fee
 
+        # 約定テーブルから情報を取得
+        agreement = session.query(Agreement).\
+            filter(Agreement.order_id == order_id,
+                   Agreement.agreement_id == agreement_id).first()
+
+        # Stripeテーブルから情報を取得
+        stripe_row = session.query(StripeCharge).\
+            filter(StripeCharge.account_id == agreement.buyer_address).first()
+
+        # リクエストの金額が正しいか確認
+        if not request_json['agreement_id'] == agreement.amount:
+            raise InvalidParameterError
+
+        # 新しく課金オブジェクトを作成する
+        try:
+            charge = stripe.Charge.create(
+                customer=stripe_row.customer_id,
+                amount=amount,
+                currency="jpy",
+                destination={
+                    # 子アカウントへ配分する金額
+                    "amount": income,
+                    # 子アカウントを指定
+                    "account": stripe_row.account_id
+                }
+            )
+        except stripe.Errors.api_connection_error:
+            raise Exception(description='Failure to connect to Stripes API.')
+
+        receipt_url = {'account_id': charge.receipt_url}
+
+        self.on_success(res, receipt_url)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'order_id': {
+                'type': 'int',
+                'schema': {'type': 'int'},
+                'empty': False,
+                'required': True
+            },
+            'agreement_id': {
+                'type': 'int',
+                'schema': {'type': 'int'},
+                'empty': False,
+                'required': True
+            },
+            'amount': {
+                'type': 'int',
+                'schema': {'type': 'int'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(req.context['address']):
+            raise InvalidParameterError
+
+        return validator.document
