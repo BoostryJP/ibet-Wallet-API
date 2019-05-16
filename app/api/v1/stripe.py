@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
+import math
+
 import falcon
 from cerberus import Validator
 import sqlalchemy
@@ -350,6 +352,7 @@ class Charge(BaseResource):
 
         # 入力値チェック
         request_json = CreateAccount.validate(req)
+        buyer_address = to_checksum_address(req.context["address"])
 
         # リクエストから情報を抽出
         order_id = request_json['order_id']
@@ -357,8 +360,8 @@ class Charge(BaseResource):
 
         # 手数料と収入の計算（収納代行の手数料を10%と定める）
         amount = request_json['amount']
-        exchange_fee = math.ceil(request_json['amount'] * 0.1)
-        income = amount - exchange_fee
+        exchange_fee = math.ceil(request_json['amount'] * (config.STRIPE_FEE / 100))
+        charge_amount = amount - exchange_fee
 
         # 約定テーブルから情報を取得
         agreement = session.query(Agreement).\
@@ -367,10 +370,10 @@ class Charge(BaseResource):
 
         # Stripeテーブルから情報を取得
         stripe_row = session.query(StripeCharge).\
-            filter(StripeCharge.account_id == agreement.buyer_address).first()
+            filter(StripeCharge.account_address == buyer_address).first()
 
         # リクエストの金額が正しいか確認
-        if not request_json['agreement_id'] == agreement.amount:
+        if not request_json['amount'] == agreement.amount:
             raise InvalidParameterError
 
         # 新しく課金オブジェクトを作成する
@@ -381,7 +384,7 @@ class Charge(BaseResource):
                 currency="jpy",
                 destination={
                     # 子アカウントへ配分する金額
-                    "amount": income,
+                    "amount": charge_amount,
                     # 子アカウントを指定
                     "account": stripe_row.account_id
                 }
@@ -389,7 +392,7 @@ class Charge(BaseResource):
         except stripe.Errors.api_connection_error:
             raise Exception(description='Failure to connect to Stripes API.')
 
-        receipt_url = {'account_id': charge.receipt_url}
+        receipt_url = {'account_id': charge['receipt_url']}
 
         self.on_success(res, receipt_url)
 
