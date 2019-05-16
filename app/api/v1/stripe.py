@@ -358,9 +358,9 @@ class Charge(BaseResource):
         order_id = request_json['order_id']
         agreement_id = request_json['agreement_id']
 
-        # 手数料と収入の計算（収納代行の手数料を10%と定める）
+        # 手数料と収入の計算（収納代行の手数料率を百分率で環境変数に設定）
         amount = request_json['amount']
-        exchange_fee = math.ceil(request_json['amount'] * (config.STRIPE_FEE / 100))
+        exchange_fee = math.ceil(request_json['amount'] * config.STRIPE_FEE)
         charge_amount = amount - exchange_fee
 
         # 約定テーブルから情報を取得
