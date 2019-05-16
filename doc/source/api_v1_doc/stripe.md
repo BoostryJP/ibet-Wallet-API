@@ -467,7 +467,7 @@ curl -X POST \
 ### Sample
 ```sh
 curl -X POST \
-  http://localhost:5000/v1/v1/Stripe/Charge/ \
+  http://localhost:5000/v1/Stripe/Charge/ \
   -H 'Content-Type: application/json' \
   -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -H 'cache-control: no-cache' \

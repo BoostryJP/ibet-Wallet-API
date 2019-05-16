@@ -14,7 +14,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, InvalidCardError, \
     DoubleChargeError
 from app.utils.hooks import VerifySignature
-from app.model import StripeCharge, StripeAccount, Agreement, StripeChargeStatus
+from app.model import StripeCharge, StripeAccount, Agreement, StripeChargeStatus, AgreementStatus
 from app import config
 
 import stripe
@@ -361,25 +361,66 @@ class Charge(BaseResource):
 
         # 手数料と収入の計算（収納代行の手数料率を百分率で環境変数に設定）
         amount = request_json['amount']
-        exchange_fee = math.ceil(request_json['amount'] * config.STRIPE_FEE)
+        exchange_fee = math.ceil(request_json['amount'] * float(config.STRIPE_FEE))
         charge_amount = amount - exchange_fee
+
+        # ------------- for debug ----------------------- #
+
+        # Agreementの情報を挿入
+        agreement = Agreement()
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(1)
+        agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        agreement.amount = amount
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        stripe_account = StripeAccount()
+        stripe_account.account_address = buyer_address
+        stripe_account.account_id = "acct_1EaHRtHYCG1MwtWK"
+        stripe_account.customer_id = "cus_F4lJXTbs7ZjwKs"
+        session.add(stripe_account)
+
+        stripe_account = StripeAccount()
+        stripe_account.account_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        stripe_account.account_id = "acct_1EaHUYCJ5LJ0Mtg3"
+        stripe_account.customer_id = "cus_F4lGTQ4Vrvfgi1"
+        session.add(stripe_account)
+
+        # ------------- end ----------------------------- #
 
         # 約定テーブルから情報を取得
         agreement = session.query(Agreement).\
             filter(Agreement.order_id == order_id,
                    Agreement.agreement_id == agreement_id).first()
+        # 約定テーブルに情報がない場合、入力値エラー
+        if agreement is None:
+            description = 'The parameter "order_id" or "agreement_id" are invalid. Record not found.'
+            raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから買手の情報を取得
-        buyer = session.query(StripeCharge).\
-            filter(StripeCharge.account_address == buyer_address).first()
+        buyer = session.query(StripeAccount).\
+            filter(StripeAccount.account_address == buyer_address).first()
+        # StripeAccountテーブルに情報がない場合、入力値エラー
+        if buyer is None:
+            description = 'The parameter "buyer_address" is invalid. Record not found.'
+            raise InvalidParameterError(description=description)
 
-        # StripeAccountテーブルから買手の情報を取得
-        seller = session.query(StripeCharge). \
-            filter(StripeCharge.account_address == agreement.seller_address).first()
+        # StripeAccountテーブルから売手の情報を取得
+        seller = session.query(StripeAccount). \
+            filter(StripeAccount.account_address == "0x31b98d14007bdee637298086988a0bbd31184527").first()
+        # StripeAccountテーブルに情報がない場合、入力値エラー
+        if seller is None:
+            description = 'The parameter "agreement.seller_address" is invalid. Record not found.'
+            raise InvalidParameterError(description=description)
 
         # リクエストの金額が正しいか確認
         if not request_json['amount'] == agreement.amount:
-            raise InvalidParameterError
+            description = agreement.amount
+            raise InvalidParameterError(description=description)
 
         # Charge（課金）状態の取得
         stripe_charge = session.query(StripeCharge). \
@@ -423,14 +464,16 @@ class Charge(BaseResource):
         # 新しく課金オブジェクトを作成する
         try:
             charge = stripe.Charge.create(
-                customer=buyer.customer_id,
+                # customer=buyer.customer_id,
+                customer="cus_F4lJXTbs7ZjwKs",
                 amount=amount,
                 currency="jpy",
                 destination={
                     # 子アカウントへ配分する金額
                     "amount": charge_amount,
                     # 子アカウントを指定
-                    "account": seller.account_id
+                    # "account": seller.account_id
+                    "account": "acct_1EaHUYCJ5LJ0Mtg3"
                 }
             )
         except stripe.error.APIConnectionError as e:
@@ -449,14 +492,14 @@ class Charge(BaseResource):
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
             raise AppError(description='Too many requests hit the API too quickly.')
-        except stripe.error.ValidationErrr as e:
-            # Charge状態を[ERROR]ステータスに更新する
-            stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='Errors triggered by our client-side libraries when failing to validate fields')
-        except stripe.error.Card_Error as e:
-            # Charge状態を[ERROR]ステータスに更新する
-            stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise InvalidParameterError(description=str(e))
+        # except stripe.error.ValidationError as e:
+        #     # Charge状態を[ERROR]ステータスに更新する
+        #     stripe_charge.status = StripeChargeStatus.ERROR.value
+        #     raise AppError(description='Errors triggered by our client-side libraries when failing to validate fields')
+        # except stripe.error.Card_Error as e:
+        #     # Charge状態を[ERROR]ステータスに更新する
+        #     stripe_charge.status = StripeChargeStatus.ERROR.value
+        #     raise InvalidParameterError(description=str(e))
         except Exception as err:
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
@@ -495,28 +538,26 @@ class Charge(BaseResource):
 
         validator = Validator({
             'order_id': {
-                'type': 'int',
-                'schema': {'type': 'int'},
+                'type': 'integer',
                 'empty': False,
                 'required': True
             },
             'agreement_id': {
-                'type': 'int',
-                'schema': {'type': 'int'},
+                'type': 'integer',
                 'empty': False,
                 'required': True
             },
             'amount': {
-                'type': 'int',
-                'schema': {'type': 'int'},
+                'type': 'integer',
                 'empty': False,
                 'required': True
             },
             'exchange_address': {
                 'type': 'string',
-                'required': True,
+                'schema': {'type': 'string'},
                 'empty': False,
-            },
+                'required': True
+            }
         })
 
         if not validator.validate(request_json):
