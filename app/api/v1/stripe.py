@@ -327,7 +327,6 @@ class CreateCustomer(BaseResource):
                 'required': True
             }
         })
-        session = req.context["session"]
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
