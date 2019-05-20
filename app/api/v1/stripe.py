@@ -391,7 +391,7 @@ class Charge(BaseResource):
 
         # リクエストの金額が正しいか確認
         if not request_json['amount'] == agreement.amount:
-            description = agreement.amount
+            description = 'The amount ' + agreement.amount + ' is invalid.'
             raise InvalidParameterError(description=description)
 
         # Charge（課金）状態の取得
@@ -444,7 +444,8 @@ class Charge(BaseResource):
                     "amount": charge_amount,
                     # 子アカウントを指定
                     "account": seller.account_id
-                }
+                },
+                description=description_agreement
             )
         except stripe.error.APIConnectionError as e:
             # Charge状態を[ERROR]ステータスに更新する
@@ -457,7 +458,11 @@ class Charge(BaseResource):
         except stripe.error.InvalidRequestError as e:
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
+            raise AppError(description='Invalid request errors arise when your request has invalid parameters.'
+                                       + 'customer:' + buyer.customer_id
+                                       + 'seller.account_id:' + seller.account_id
+                                       + 'amount:' + amount
+                           )
         except stripe.error.RateLimitError as e:
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
