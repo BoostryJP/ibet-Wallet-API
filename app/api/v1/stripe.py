@@ -369,7 +369,7 @@ class Charge(BaseResource):
                    Agreement.agreement_id == agreement_id).first()
         # 約定テーブルに情報がない場合、入力値エラー
         if agreement is None:
-            description = 'The parameter "order_id" or "agreement_id" are invalid. Record not found.'
+            description = 'Agreement not found.'
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから買手の情報を取得
@@ -377,7 +377,7 @@ class Charge(BaseResource):
             filter(StripeAccount.account_address == buyer_address).first()
         # StripeAccountテーブルに情報がない場合、入力値エラー
         if buyer is None:
-            description = 'The parameter "buyer_address" is invalid. Record not found.'
+            description = 'Buyer not found.'
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから売手の情報を取得
@@ -385,12 +385,12 @@ class Charge(BaseResource):
             filter(StripeAccount.account_address == agreement.seller_address).first()
         # StripeAccountテーブルに情報がない場合、入力値エラー
         if seller is None:
-            description = 'The parameter "agreement.seller_address" is invalid. Record not found.'
+            description = 'Seller not found.'
             raise InvalidParameterError(description=description)
 
         # リクエストの金額が正しいか確認
         if not request_json['amount'] == agreement.amount:
-            description = agreement.amount
+            description = 'The amount ' + agreement.amount + ' is invalid.'
             raise InvalidParameterError(description=description)
 
         # Charge（課金）状態の取得
