@@ -1,0 +1,1280 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.6.3, pytest-3.3.1, py-1.8.0, pluggy-0.6.0 -- /Users/t2-osawa/.pyenv/versions/3.6.3/envs/tmr-node/bin/python
+cachedir: .cache
+rootdir: /Users/t2-osawa/Documents/develop/N-Village/tmr-node, inifile:
+plugins: pylint-0.7.1, pep8-1.0.6, cov-2.5.1
+collecting ... collected 17 items
+
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_normal_1 FAILED [  5%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_normal_2 FAILED [ 11%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_normal_3 FAILED [ 17%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_normal_4 FAILED [ 23%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_normal_5 FAILED [ 29%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_normal_6 FAILED [ 35%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_normal_7 PASSED [ 41%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_error_1_1 PASSED [ 47%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_error_1_2 PASSED [ 52%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_error_2_1 PASSED [ 58%]
+app/tests/v1_notification_test.py::TestV1Notification::test_get_notification_error_2_2 PASSED [ 64%]
+app/tests/v1_notification_test.py::TestV1Notification::test_post_notification_normal_1 FAILED [ 70%]
+app/tests/v1_notification_test.py::TestV1Notification::test_post_notification_normal_2 FAILED [ 76%]
+app/tests/v1_notification_test.py::TestV1Notification::test_post_notification_normal_3 PASSED [ 82%]
+app/tests/v1_notification_test.py::TestV1Notification::test_post_notification_normal_4 PASSED [ 88%]
+app/tests/v1_notification_test.py::TestV1Notification::test_post_notification_fail_1 PASSED [ 94%]
+app/tests/v1_notification_test.py::TestV1Notification::test_post_notification_fail_2 PASSED [100%]
+
+=================================== FAILURES ===================================
+______________ TestV1Notification.test_get_notification_normal_1 _______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x10656c0b8>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x1065c3f28>
+
+    def test_get_notification_normal_1(self, client, session):
+        self._insert_test_data(session)
+    
+        resp = client.simulate_auth_get(self.apiurl, private_key=TestV1Notification.private_key)
+    
+        assumed_body = [
+            {
+                "notification_type": "SampleNotification1",
+                "id": "0x00000021034300000000000000",
+                "sort_id": 1,
+                "priority": 1,
+                "block_timestamp": "2017/06/10 10:00:00",
+                "is_read": True,
+                "is_flagged": False,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                    "aaa": "bbb"
+                },
+            },
+            {
+                "notification_type": "SampleNotification3",
+                "id": "0x00000011034000000000000000",
+                "sort_id": 2,
+                "priority": 2,
+                "block_timestamp": "2017/04/10 10:00:00",
+                "is_read": False,
+                "is_flagged": True,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+            {
+                "notification_type": "SampleNotification5",
+                "id": "0x00000001034000000000000000",
+                "sort_id": 3,
+                "priority": 0,
+                "block_timestamp": "2017/02/10 10:00:00",
+                "is_read": False,
+                "is_flagged": False,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+        ]
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"]["notifications"] == assumed_body
+E       AssertionError: assert [{'args': {'h...000000', ...}] == [{'args': {'ho...000000', ...}]
+E         At index 0 diff: {'notification_type': 'SampleNotification1', 'id': '0x00000021034300000000000000', 'priority': 1, 'block_timestamp': '2017/06/10 19:00:00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {'aaa': 'bbb'}, 'sort_id': 1} != {'notification_type': 'SampleNotification1', 'id': '0x00000021034300000000000000', 'sort_id': 1, 'priority': 1, 'block_timestamp': '2017/06/10 10:00:00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {'aaa': 'bbb'}}
+E         Full diff:
+E         [{'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/06/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/06/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000021034300000000000000',
+E         'is_deleted': False,
+E         'is_flagged': False,
+E         'is_read': True,
+E         'metainfo': {'aaa': 'bbb'},
+E         'notification_type': 'SampleNotification1',
+E         'priority': 1,
+E         'sort_id': 1},
+E         {'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/04/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/04/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000011034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': True,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification3',
+E         'priority': 2,
+E         'sort_id': 2},
+E         {'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/02/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/02/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000001034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': False,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification5',
+E         'priority': 0,
+E         'sort_id': 3}]
+
+app/tests/v1_notification_test.py:172: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+2019-04-10 17:17:27,799 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,799 INFO sqlalchemy.engine.base.Engine {'name': 'order'}
+2019-04-10 17:17:27,800 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,800 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,800 INFO sqlalchemy.engine.base.Engine {'name': 'agreement'}
+2019-04-10 17:17:27,801 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,801 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,801 INFO sqlalchemy.engine.base.Engine {'name': 'notification'}
+2019-04-10 17:17:27,802 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,802 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,803 INFO sqlalchemy.engine.base.Engine {'name': 'push'}
+2019-04-10 17:17:27,803 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,804 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,804 INFO sqlalchemy.engine.base.Engine {'name': 'omise_charge'}
+2019-04-10 17:17:27,804 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,805 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,806 INFO sqlalchemy.engine.base.Engine {'name': 'listing'}
+2019-04-10 17:17:27,807 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,808 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,809 INFO sqlalchemy.engine.base.Engine {'name': 'executable_contract'}
+2019-04-10 17:17:27,809 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:27 +0900] [49971] [INFO] API Server is starting [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/main.py:32]
+2019-04-10 17:17:27,846 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,847 INFO sqlalchemy.engine.base.Engine {'name': 'order'}
+2019-04-10 17:17:27,847 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,848 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,848 INFO sqlalchemy.engine.base.Engine {'name': 'agreement'}
+2019-04-10 17:17:27,849 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,849 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,849 INFO sqlalchemy.engine.base.Engine {'name': 'notification'}
+2019-04-10 17:17:27,850 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,850 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,850 INFO sqlalchemy.engine.base.Engine {'name': 'push'}
+2019-04-10 17:17:27,851 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,851 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,852 INFO sqlalchemy.engine.base.Engine {'name': 'omise_charge'}
+2019-04-10 17:17:27,852 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,852 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,853 INFO sqlalchemy.engine.base.Engine {'name': 'listing'}
+2019-04-10 17:17:27,853 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:27,853 INFO sqlalchemy.engine.base.Engine select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+2019-04-10 17:17:27,853 INFO sqlalchemy.engine.base.Engine {'name': 'executable_contract'}
+2019-04-10 17:17:27,854 INFO sqlalchemy.engine.base.Engine COMMIT
+---------------------------- Captured stderr setup -----------------------------
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'order'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'agreement'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'notification'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'push'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'omise_charge'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'listing'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'executable_contract'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'order'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'agreement'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'notification'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'push'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'omise_charge'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'listing'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+INFO:sqlalchemy.engine.base.Engine:{'name': 'executable_contract'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+------------------------------ Captured log setup ------------------------------
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'order'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'agreement'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'notification'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'push'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'omise_charge'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'listing'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'executable_contract'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'order'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'agreement'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'notification'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'push'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'omise_charge'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'listing'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where pg_catalog.pg_table_is_visible(c.oid) and relname=%(name)s
+log.py                     109 INFO     {'name': 'executable_contract'}
+log.py                     109 INFO     COMMIT
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:27,858 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:27,860 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:27,860 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:27,862 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:27 +0900] [49971] [INFO] v1.Notification.Notifications(GET) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:29]
+2019-04-10 17:17:27,902 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:27,903 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2019-04-10 17:17:27,903 INFO sqlalchemy.engine.base.Engine {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+2019-04-10 17:17:27,905 INFO sqlalchemy.engine.base.Engine ROLLBACK
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+INFO:sqlalchemy.engine.base.Engine:{'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+log.py                     109 INFO     {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+log.py                     109 INFO     ROLLBACK
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,077 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,077 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,078 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,078 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+______________ TestV1Notification.test_get_notification_normal_2 _______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x10657d080>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x1065a6630>
+
+    def test_get_notification_normal_2(self, client, session):
+        self._insert_test_data(session)
+    
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params={
+                                            "status": "flagged",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+    
+        assumed_body = [
+            {
+                "notification_type": "SampleNotification3",
+                "id": "0x00000011034000000000000000",
+                "sort_id": 1,
+                "priority": 2,
+                "block_timestamp": "2017/04/10 10:00:00",
+                "is_read": False,
+                "is_flagged": True,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+        ]
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"]["notifications"] == assumed_body
+E       AssertionError: assert [{'args': {'h...000000', ...}] == [{'args': {'ho...000000', ...}]
+E         At index 0 diff: {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'priority': 2, 'block_timestamp': '2017/04/10 19:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}, 'sort_id': 1} != {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'sort_id': 1, 'priority': 2, 'block_timestamp': '2017/04/10 10:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}}
+E         Full diff:
+E         [{'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/04/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/04/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000011034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': True,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification3',
+E         'priority': 2,
+E         'sort_id': 1}]
+
+app/tests/v1_notification_test.py:205: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:28,083 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,083 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:28,083 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:28,085 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:28 +0900] [49971] [INFO] v1.Notification.Notifications(GET) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:29]
+2019-04-10 17:17:28,087 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,088 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_flagged = true AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2019-04-10 17:17:28,088 INFO sqlalchemy.engine.base.Engine {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+2019-04-10 17:17:28,089 INFO sqlalchemy.engine.base.Engine ROLLBACK
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_flagged = true AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+INFO:sqlalchemy.engine.base.Engine:{'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_flagged = true AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+log.py                     109 INFO     {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+log.py                     109 INFO     ROLLBACK
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,100 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,100 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,100 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,101 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+______________ TestV1Notification.test_get_notification_normal_3 _______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x106c70978>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x106db7e80>
+
+    def test_get_notification_normal_3(self, client, session):
+        self._insert_test_data(session)
+    
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params={
+                                            "status": "deleted",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+    
+        assumed_body = [
+            {
+                "notification_type": "SampleNotification2",
+                "id": "0x00000021034000000000000000",
+                "sort_id": 1,
+                "priority": 1,
+                "block_timestamp": "2017/05/10 10:00:00",
+                "is_read": False,
+                "is_flagged": False,
+                "is_deleted": True,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+        ]
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"]["notifications"] == assumed_body
+E       AssertionError: assert [{'args': {'h...000000', ...}] == [{'args': {'ho...000000', ...}]
+E         At index 0 diff: {'notification_type': 'SampleNotification2', 'id': '0x00000021034000000000000000', 'priority': 1, 'block_timestamp': '2017/05/10 19:00:00', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}, 'sort_id': 1} != {'notification_type': 'SampleNotification2', 'id': '0x00000021034000000000000000', 'sort_id': 1, 'priority': 1, 'block_timestamp': '2017/05/10 10:00:00', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}}
+E         Full diff:
+E         [{'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/05/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/05/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000021034000000000000000',
+E         'is_deleted': True,
+E         'is_flagged': False,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification2',
+E         'priority': 1,
+E         'sort_id': 1}]
+
+app/tests/v1_notification_test.py:238: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:28,103 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,104 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:28,104 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:28,106 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:28 +0900] [49971] [INFO] v1.Notification.Notifications(GET) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:29]
+2019-04-10 17:17:28,109 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,110 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = true ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2019-04-10 17:17:28,110 INFO sqlalchemy.engine.base.Engine {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+2019-04-10 17:17:28,111 INFO sqlalchemy.engine.base.Engine ROLLBACK
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = true ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+INFO:sqlalchemy.engine.base.Engine:{'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = true ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+log.py                     109 INFO     {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+log.py                     109 INFO     ROLLBACK
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,122 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,122 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,122 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,123 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+______________ TestV1Notification.test_get_notification_normal_4 _______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x106db7ef0>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x106db7978>
+
+    def test_get_notification_normal_4(self, client, session):
+        self._insert_test_data(session)
+    
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params={
+                                            "sort": "priority",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+    
+        assumed_body = [
+            {
+                "notification_type": "SampleNotification3",
+                "id": "0x00000011034000000000000000",
+                "sort_id": 1,
+                "priority": 2,
+                "block_timestamp": "2017/04/10 10:00:00",
+                "is_read": False,
+                "is_flagged": True,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+            {
+                "notification_type": "SampleNotification1",
+                "id": "0x00000021034300000000000000",
+                "sort_id": 2,
+                "priority": 1,
+                "block_timestamp": "2017/06/10 10:00:00",
+                "is_read": True,
+                "is_flagged": False,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                    "aaa": "bbb"
+                },
+            },
+            {
+                "notification_type": "SampleNotification5",
+                "id": "0x00000001034000000000000000",
+                "sort_id": 3,
+                "priority": 0,
+                "block_timestamp": "2017/02/10 10:00:00",
+                "is_read": False,
+                "is_flagged": False,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+        ]
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"]["notifications"] == assumed_body
+E       AssertionError: assert [{'args': {'h...000000', ...}] == [{'args': {'ho...000000', ...}]
+E         At index 0 diff: {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'priority': 2, 'block_timestamp': '2017/04/10 19:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}, 'sort_id': 1} != {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'sort_id': 1, 'priority': 2, 'block_timestamp': '2017/04/10 10:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}}
+E         Full diff:
+E         [{'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/04/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/04/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000011034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': True,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification3',
+E         'priority': 2,
+E         'sort_id': 1},
+E         {'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/06/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/06/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000021034300000000000000',
+E         'is_deleted': False,
+E         'is_flagged': False,
+E         'is_read': True,
+E         'metainfo': {'aaa': 'bbb'},
+E         'notification_type': 'SampleNotification1',
+E         'priority': 1,
+E         'sort_id': 2},
+E         {'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/02/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/02/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000001034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': False,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification5',
+E         'priority': 0,
+E         'sort_id': 3}]
+
+app/tests/v1_notification_test.py:304: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:28,125 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,125 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:28,126 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:28,128 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:28 +0900] [49971] [INFO] v1.Notification.Notifications(GET) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:29]
+2019-04-10 17:17:28,131 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,131 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.priority DESC, notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2019-04-10 17:17:28,131 INFO sqlalchemy.engine.base.Engine {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+2019-04-10 17:17:28,132 INFO sqlalchemy.engine.base.Engine ROLLBACK
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.priority DESC, notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+INFO:sqlalchemy.engine.base.Engine:{'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.priority DESC, notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+log.py                     109 INFO     {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 0}
+log.py                     109 INFO     ROLLBACK
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,145 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,145 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,145 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,146 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+______________ TestV1Notification.test_get_notification_normal_5 _______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x106dc6a90>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x106dc6278>
+
+    def test_get_notification_normal_5(self, client, session):
+        self._insert_test_data(session)
+    
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params = {
+                                          "cursor": "1",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+    
+        assumed_body = [
+            {
+                "notification_type": "SampleNotification3",
+                "id": "0x00000011034000000000000000",
+                "sort_id": 2,
+                "priority": 2,
+                "block_timestamp": "2017/04/10 10:00:00",
+                "is_read": False,
+                "is_flagged": True,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+            {
+                "notification_type": "SampleNotification5",
+                "id": "0x00000001034000000000000000",
+                "sort_id": 3,
+                "priority": 0,
+                "block_timestamp": "2017/02/10 10:00:00",
+                "is_read": False,
+                "is_flagged": False,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+        ]
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"]["notifications"] == assumed_body
+E       AssertionError: assert [{'args': {'h...000000', ...}] == [{'args': {'ho...000000', ...}]
+E         At index 0 diff: {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'priority': 2, 'block_timestamp': '2017/04/10 19:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}, 'sort_id': 2} != {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'sort_id': 2, 'priority': 2, 'block_timestamp': '2017/04/10 10:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}}
+E         Full diff:
+E         [{'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/04/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/04/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000011034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': True,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification3',
+E         'priority': 2,
+E         'sort_id': 2},
+E         {'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/02/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/02/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000001034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': False,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification5',
+E         'priority': 0,
+E         'sort_id': 3}]
+
+app/tests/v1_notification_test.py:353: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:28,148 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,148 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:28,148 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:28,150 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:28 +0900] [49971] [INFO] v1.Notification.Notifications(GET) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:29]
+2019-04-10 17:17:28,153 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,153 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2019-04-10 17:17:28,153 INFO sqlalchemy.engine.base.Engine {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 1}
+2019-04-10 17:17:28,154 INFO sqlalchemy.engine.base.Engine ROLLBACK
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+INFO:sqlalchemy.engine.base.Engine:{'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 1}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+log.py                     109 INFO     {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 10, 'param_2': 1}
+log.py                     109 INFO     ROLLBACK
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,166 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,166 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,166 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,167 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+______________ TestV1Notification.test_get_notification_normal_6 _______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x106c80550>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x106dc6320>
+
+    def test_get_notification_normal_6(self, client, session):
+        self._insert_test_data(session)
+    
+        resp = client.simulate_auth_get(self.apiurl,
+                                        params = {
+                                            "cursor": "1",
+                                            "limit": "1",
+                                        },
+                                        private_key=TestV1Notification.private_key)
+    
+        assumed_body = [
+            {
+                "notification_type": "SampleNotification3",
+                "id": "0x00000011034000000000000000",
+                "sort_id": 2,
+                "priority": 2,
+                "block_timestamp": "2017/04/10 10:00:00",
+                "is_read": False,
+                "is_flagged": True,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+            },
+        ]
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"]["notifications"] == assumed_body
+E       AssertionError: assert [{'args': {'h...000000', ...}] == [{'args': {'ho...000000', ...}]
+E         At index 0 diff: {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'priority': 2, 'block_timestamp': '2017/04/10 19:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}, 'sort_id': 2} != {'notification_type': 'SampleNotification3', 'id': '0x00000011034000000000000000', 'sort_id': 2, 'priority': 2, 'block_timestamp': '2017/04/10 10:00:00', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'args': {'hoge': 'fuga'}, 'metainfo': {}}
+E         Full diff:
+E         [{'args': {'hoge': 'fuga'},
+E         -   'block_timestamp': '2017/04/10 19:00:00',
+E         ?                                   ^
+E         +   'block_timestamp': '2017/04/10 10:00:00',
+E         ?                                   ^
+E         'deleted_at': None,
+E         'id': '0x00000011034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': True,
+E         'is_read': False,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification3',
+E         'priority': 2,
+E         'sort_id': 2}]
+
+app/tests/v1_notification_test.py:387: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:28,169 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,169 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:28,169 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:28,171 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:28 +0900] [49971] [INFO] v1.Notification.Notifications(GET) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:29]
+2019-04-10 17:17:28,174 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,174 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2019-04-10 17:17:28,175 INFO sqlalchemy.engine.base.Engine {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 1, 'param_2': 1}
+2019-04-10 17:17:28,175 INFO sqlalchemy.engine.base.Engine ROLLBACK
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+INFO:sqlalchemy.engine.base.Engine:{'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 1, 'param_2': 1}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.address = %(address_1)s AND notification.is_deleted = false ORDER BY notification.notification_id DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+log.py                     109 INFO     {'address_1': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'param_1': 1, 'param_2': 1}
+log.py                     109 INFO     ROLLBACK
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,186 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,186 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,186 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,187 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+______________ TestV1Notification.test_post_notification_normal_1 ______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x106dcf8d0>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x106dcf278>
+
+    def test_post_notification_normal_1(self, client, session):
+        self._insert_test_data(session)
+    
+        notification_id = "0x00000021034300000000000000"
+        resp = client.simulate_auth_post(self.apiurl,
+                                         json={
+                                             "id": notification_id,
+                                             "is_flagged": True,
+                                         },
+                                         private_key=TestV1Notification.private_key)
+    
+        n = session.query(Notification).\
+            filter(Notification.notification_id == notification_id).\
+            first()
+    
+        assumed_body = {
+            "notification_type": "SampleNotification1",
+            "id": "0x00000021034300000000000000",
+            "priority": 1,
+            "block_timestamp": "2017/06/10 10:00:00",
+            "is_read": True,
+            "is_flagged": True,
+            "is_deleted": False,
+            "deleted_at": None,
+            "args": {
+                "hoge": "fuga",
+            },
+            "metainfo": {
+                "aaa": "bbb"
+            },
+        }
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"] == assumed_body
+E       AssertionError: assert {'args': {'ho...0000000', ...} == {'args': {'hog...0000000', ...}
+E         Common items:
+E         {'args': {'hoge': 'fuga'},
+E          'deleted_at': None,
+E          'id': '0x00000021034300000000000000',
+E          'is_deleted': False,
+E          'is_flagged': True,
+E          'is_read': True,
+E          'metainfo': {'aaa': 'bbb'},
+E          'notification_type': 'SampleNotification1',
+E          'priority': 1}
+E         Differing items:
+E         {'block_timestamp': '2017/06/10 19:00:00'} != {'block_timestamp': '2017/06/10 10:00:00'}
+E         Full diff:
+E         {'args': {'hoge': 'fuga'},
+E         -  'block_timestamp': '2017/06/10 19:00:00',
+E         ?                                  ^
+E         +  'block_timestamp': '2017/06/10 10:00:00',
+E         ?                                  ^
+E         'deleted_at': None,
+E         'id': '0x00000021034300000000000000',
+E         'is_deleted': False,
+E         'is_flagged': True,
+E         'is_read': True,
+E         'metainfo': {'aaa': 'bbb'},
+E         'notification_type': 'SampleNotification1',
+E         'priority': 1}
+
+app/tests/v1_notification_test.py:528: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:28,238 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,238 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:28,238 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:28,240 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:28 +0900] [49971] [INFO] v1.Notification.Notifications(POST) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:73]
+2019-04-10 17:17:28,243 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,243 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+2019-04-10 17:17:28,244 INFO sqlalchemy.engine.base.Engine {'notification_id_1': '0x00000021034300000000000000', 'param_1': 1}
+2019-04-10 17:17:28,246 INFO sqlalchemy.engine.base.Engine UPDATE notification SET modified=now(), is_flagged=%(is_flagged)s WHERE notification.notification_id = %(notification_notification_id)s
+2019-04-10 17:17:28,246 INFO sqlalchemy.engine.base.Engine {'is_flagged': True, 'notification_notification_id': '0x00000021034300000000000000'}
+2019-04-10 17:17:28,247 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:28,249 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,249 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(param_1)s
+2019-04-10 17:17:28,250 INFO sqlalchemy.engine.base.Engine {'param_1': '0x00000021034300000000000000'}
+2019-04-10 17:17:28,251 INFO sqlalchemy.engine.base.Engine ROLLBACK
+2019-04-10 17:17:28,252 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,253 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+2019-04-10 17:17:28,253 INFO sqlalchemy.engine.base.Engine {'notification_id_1': '0x00000021034300000000000000', 'param_1': 1}
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+INFO:sqlalchemy.engine.base.Engine:{'notification_id_1': '0x00000021034300000000000000', 'param_1': 1}
+INFO:sqlalchemy.engine.base.Engine:UPDATE notification SET modified=now(), is_flagged=%(is_flagged)s WHERE notification.notification_id = %(notification_notification_id)s
+INFO:sqlalchemy.engine.base.Engine:{'is_flagged': True, 'notification_notification_id': '0x00000021034300000000000000'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(param_1)s
+INFO:sqlalchemy.engine.base.Engine:{'param_1': '0x00000021034300000000000000'}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+INFO:sqlalchemy.engine.base.Engine:{'notification_id_1': '0x00000021034300000000000000', 'param_1': 1}
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+log.py                     109 INFO     {'notification_id_1': '0x00000021034300000000000000', 'param_1': 1}
+log.py                     109 INFO     UPDATE notification SET modified=now(), is_flagged=%(is_flagged)s WHERE notification.notification_id = %(notification_notification_id)s
+log.py                     109 INFO     {'is_flagged': True, 'notification_notification_id': '0x00000021034300000000000000'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(param_1)s
+log.py                     109 INFO     {'param_1': '0x00000021034300000000000000'}
+log.py                     109 INFO     ROLLBACK
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+log.py                     109 INFO     {'notification_id_1': '0x00000021034300000000000000', 'param_1': 1}
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,271 INFO sqlalchemy.engine.base.Engine ROLLBACK
+2019-04-10 17:17:28,271 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,271 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,271 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,272 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     ROLLBACK
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+______________ TestV1Notification.test_post_notification_normal_2 ______________
+
+self = <app.tests.v1_notification_test.TestV1Notification object at 0x106d59470>
+client = <app.testutil.auth_client.TestAuthClient object at 0x1065c68d0>
+session = <sqlalchemy.orm.session.Session object at 0x106d59588>
+
+    def test_post_notification_normal_2(self, client, session):
+        self._insert_test_data(session)
+    
+        notification_id = "0x00000011034000000000000000"
+        resp = client.simulate_auth_post(self.apiurl,
+                                         json={
+                                             "id": notification_id,
+                                             "is_flagged": False,
+                                             "is_read": True,
+                                         },
+                                         private_key=TestV1Notification.private_key)
+    
+        n = session.query(Notification). \
+            filter(Notification.notification_id == notification_id). \
+            first()
+    
+        assumed_body = {
+            "notification_type": "SampleNotification3",
+            "id": "0x00000011034000000000000000",
+            "priority": 2,
+            "block_timestamp": "2017/04/10 10:00:00",
+            "is_read": True,
+            "is_flagged": False,
+            "is_deleted": False,
+            "deleted_at": None,
+            "args": {
+                "hoge": "fuga",
+            },
+            "metainfo": {
+            },
+        }
+    
+        assert resp.status_code == 200
+>       assert resp.json["data"] == assumed_body
+E       AssertionError: assert {'args': {'ho...0000000', ...} == {'args': {'hog...0000000', ...}
+E         Common items:
+E         {'args': {'hoge': 'fuga'},
+E          'deleted_at': None,
+E          'id': '0x00000011034000000000000000',
+E          'is_deleted': False,
+E          'is_flagged': False,
+E          'is_read': True,
+E          'metainfo': {},
+E          'notification_type': 'SampleNotification3',
+E          'priority': 2}
+E         Differing items:
+E         {'block_timestamp': '2017/04/10 19:00:00'} != {'block_timestamp': '2017/04/10 10:00:00'}
+E         Full diff:
+E         {'args': {'hoge': 'fuga'},
+E         -  'block_timestamp': '2017/04/10 19:00:00',
+E         ?                                  ^
+E         +  'block_timestamp': '2017/04/10 10:00:00',
+E         ?                                  ^
+E         'deleted_at': None,
+E         'id': '0x00000011034000000000000000',
+E         'is_deleted': False,
+E         'is_flagged': False,
+E         'is_read': True,
+E         'metainfo': {},
+E         'notification_type': 'SampleNotification3',
+E         'priority': 2}
+
+app/tests/v1_notification_test.py:566: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2019-04-10 17:17:28,275 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,276 INFO sqlalchemy.engine.base.Engine INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+2019-04-10 17:17:28,276 INFO sqlalchemy.engine.base.Engine ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+2019-04-10 17:17:28,278 INFO sqlalchemy.engine.base.Engine COMMIT
+[2019-04-10 17:17:28 +0900] [49971] [INFO] v1.Notification.Notifications(POST) [in /Users/t2-osawa/Documents/develop/N-Village/tmr-node/app/api/v1/notification.py:73]
+2019-04-10 17:17:28,280 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,281 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+2019-04-10 17:17:28,281 INFO sqlalchemy.engine.base.Engine {'notification_id_1': '0x00000011034000000000000000', 'param_1': 1}
+2019-04-10 17:17:28,282 INFO sqlalchemy.engine.base.Engine UPDATE notification SET modified=now(), is_read=%(is_read)s, is_flagged=%(is_flagged)s WHERE notification.notification_id = %(notification_notification_id)s
+2019-04-10 17:17:28,282 INFO sqlalchemy.engine.base.Engine {'is_read': True, 'is_flagged': False, 'notification_notification_id': '0x00000011034000000000000000'}
+2019-04-10 17:17:28,283 INFO sqlalchemy.engine.base.Engine COMMIT
+2019-04-10 17:17:28,283 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,284 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(param_1)s
+2019-04-10 17:17:28,284 INFO sqlalchemy.engine.base.Engine {'param_1': '0x00000011034000000000000000'}
+2019-04-10 17:17:28,285 INFO sqlalchemy.engine.base.Engine ROLLBACK
+2019-04-10 17:17:28,285 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,286 INFO sqlalchemy.engine.base.Engine SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+2019-04-10 17:17:28,286 INFO sqlalchemy.engine.base.Engine {'notification_id_1': '0x00000011034000000000000000', 'param_1': 1}
+----------------------------- Captured stderr call -----------------------------
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+INFO:sqlalchemy.engine.base.Engine:({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+INFO:sqlalchemy.engine.base.Engine:{'notification_id_1': '0x00000011034000000000000000', 'param_1': 1}
+INFO:sqlalchemy.engine.base.Engine:UPDATE notification SET modified=now(), is_read=%(is_read)s, is_flagged=%(is_flagged)s WHERE notification.notification_id = %(notification_notification_id)s
+INFO:sqlalchemy.engine.base.Engine:{'is_read': True, 'is_flagged': False, 'notification_notification_id': '0x00000011034000000000000000'}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(param_1)s
+INFO:sqlalchemy.engine.base.Engine:{'param_1': '0x00000011034000000000000000'}
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+INFO:sqlalchemy.engine.base.Engine:{'notification_id_1': '0x00000011034000000000000000', 'param_1': 1}
+------------------------------ Captured log call -------------------------------
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     INSERT INTO notification (created, modified, notification_id, notification_type, priority, address, is_read, is_flagged, is_deleted, deleted_at, block_timestamp, args, metainfo) VALUES (now(), now(), %(notification_id)s, %(notification_type)s, %(priority)s, %(address)s, %(is_read)s, %(is_flagged)s, %(is_deleted)s, %(deleted_at)s, %(block_timestamp)s, %(args)s, %(metainfo)s)
+log.py                     109 INFO     ({'notification_id': '0x00000021034300000000000000', 'notification_type': 'SampleNotification1', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 6, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{"aaa": "bbb"}'}, {'notification_id': '0x00000021034000000000000000', 'notification_type': 'SampleNotification2', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': True, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 5, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011034000000000000000', 'notification_type': 'SampleNotification3', 'priority': 2, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': True, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 4, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000011032000000000000000', 'notification_type': 'SampleNotification4', 'priority': 1, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395B00', 'is_read': True, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 3, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'}, {'notification_id': '0x00000001034000000000000000', 'notification_type': 'SampleNotification5', 'priority': 0, 'address': '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', 'is_read': False, 'is_flagged': False, 'is_deleted': False, 'deleted_at': None, 'block_timestamp': datetime.datetime(2017, 2, 10, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(0, 32400), 'JST')), 'args': '{"hoge": "fuga"}', 'metainfo': '{}'})
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+log.py                     109 INFO     {'notification_id_1': '0x00000011034000000000000000', 'param_1': 1}
+log.py                     109 INFO     UPDATE notification SET modified=now(), is_read=%(is_read)s, is_flagged=%(is_flagged)s WHERE notification.notification_id = %(notification_notification_id)s
+log.py                     109 INFO     {'is_read': True, 'is_flagged': False, 'notification_notification_id': '0x00000011034000000000000000'}
+log.py                     109 INFO     COMMIT
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(param_1)s
+log.py                     109 INFO     {'param_1': '0x00000011034000000000000000'}
+log.py                     109 INFO     ROLLBACK
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     SELECT notification.created AS notification_created, notification.modified AS notification_modified, notification.notification_id AS notification_notification_id, notification.notification_type AS notification_notification_type, notification.priority AS notification_priority, notification.address AS notification_address, notification.is_read AS notification_is_read, notification.is_flagged AS notification_is_flagged, notification.is_deleted AS notification_is_deleted, notification.deleted_at AS notification_deleted_at, notification.block_timestamp AS notification_block_timestamp, notification.args AS notification_args, notification.metainfo AS notification_metainfo 
+FROM notification 
+WHERE notification.notification_id = %(notification_id_1)s 
+ LIMIT %(param_1)s
+log.py                     109 INFO     {'notification_id_1': '0x00000011034000000000000000', 'param_1': 1}
+--------------------------- Captured stdout teardown ---------------------------
+2019-04-10 17:17:28,296 INFO sqlalchemy.engine.base.Engine ROLLBACK
+2019-04-10 17:17:28,297 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+2019-04-10 17:17:28,297 INFO sqlalchemy.engine.base.Engine DELETE FROM notification
+2019-04-10 17:17:28,297 INFO sqlalchemy.engine.base.Engine {}
+2019-04-10 17:17:28,298 INFO sqlalchemy.engine.base.Engine COMMIT
+--------------------------- Captured stderr teardown ---------------------------
+INFO:sqlalchemy.engine.base.Engine:ROLLBACK
+INFO:sqlalchemy.engine.base.Engine:BEGIN (implicit)
+INFO:sqlalchemy.engine.base.Engine:DELETE FROM notification
+INFO:sqlalchemy.engine.base.Engine:{}
+INFO:sqlalchemy.engine.base.Engine:COMMIT
+---------------------------- Captured log teardown -----------------------------
+log.py                     109 INFO     ROLLBACK
+log.py                     109 INFO     BEGIN (implicit)
+log.py                     109 INFO     DELETE FROM notification
+log.py                     109 INFO     {}
+log.py                     109 INFO     COMMIT
+====================== 8 failed, 9 passed in 0.64 seconds ======================
