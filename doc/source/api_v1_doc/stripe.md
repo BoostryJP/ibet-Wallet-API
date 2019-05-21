@@ -607,18 +607,6 @@ curl -X POST \
 }
 ```
 
-* 入力値エラー時（Stripe側のエラー）
-* 指定されたStripeの顧客id `customer_id` に紐づけられているクレジットカードが有効ではない際のエラー
-
-```json
-{
-  "meta": {
-    "code": 60,
-    "message": "Invalid Credit Card"
-  }
-}
-```
-
 #### Status: 403 Server Error
 * 二重課金エラー時
 
@@ -668,5 +656,16 @@ curl -X POST \
         "message": "Error message From Stripe(code)",
         "description": "Error description From Stripe(message)"
     }
+}
+```
+
+* 指定されたStripeの顧客idに紐づけられているクレジットカードが有効ではない際のエラー
+
+```json
+{
+  "meta": {
+    "code": 60,
+    "message": "Invalid Credit Card"
+  }
 }
 ```
