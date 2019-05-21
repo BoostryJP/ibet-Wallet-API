@@ -474,8 +474,9 @@ curl -X POST \
   -d '{
     "order_id": 1,
     "agreement_id": 4,
-    "amount": 2000,
-    "exchange_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51"
+    "buyer_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "seller_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "amount": 2000
 }'
 ```
 * `X-ibet-Signature` : クライアント認証、リクエスト認可に用いる署名情報。 [参考：X-ibet-Signature](x_ibet_signature.md)
@@ -485,39 +486,50 @@ curl -X POST \
 {
     "order_id": 1,
     "agreement_id": 4,
+    "buyer_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
+    "seller_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "amount": 2000,
-    "exchange_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51"
 }
 ```
 * `order_id`: 決済対象の注文ID
 * `agremeent_id`: 決済対象の約定ID
+* `buyer_address` : 買い手のアドレス
+* `seller_address`: 売り手のアドレス
 * `amount`: 決済金額
-* `exchange_address`: 取引所のアドレス
 
 #### validation
 ```py
 {
-    'order_id': {
-        'type': 'integer',
-        'empty': False,
-        'required': True
-    },
-    'agreement_id': {
-        'type': 'integer',
-        'empty': False,
-        'required': True
-    },
-    'amount': {
-        'type': 'integer',
-        'empty': False,
-        'required': True
-    },
-    'exchange_address': {
-        'type': 'string',
-        'schema': {'type': 'string'},
-        'empty': False,
-        'required': True
-    }
+  'order_id': {
+    'type': 'int',
+    'schema': {'type': 'int'},
+    'empty': False,
+    'required': True
+  },
+  'buyer_address': {
+    'type': 'int',
+    'schema': {'type': 'int'},
+    'empty': False,
+    'required': True
+  },
+  'buyer_address': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  },
+  'seller_address': {
+    'type': 'string',
+    'schema': {'type': 'string'},
+    'empty': False,
+    'required': True
+  },
+  'amount': {
+    'type': 'int',
+    'schema': {'type': 'int'},
+    'empty': False,
+    'required': True
+  }
 }
 ```
 
@@ -550,84 +562,6 @@ curl -X POST \
         "code": 88,
         "message": "Invalid Parameter",
         "description": "No JSON object could be decoded or Malformed JSON"
-    }
-}
-```
-
-* 入力値エラー時
-* 約定情報に存在しない 'order_id' または 'agreement_id' を入力値として受け取った際のエラー
-  
-```json
-{
-    "meta": {
-        "code": 88,
-        "message": "Invalid Parameter",
-        "description": "The parameter "order_id" or "agreement_id" are invalid. Record not found."
-    }
-}
-```
-
-* 入力値エラー時
-* StripeAccountテーブルに存在しないアドレスを 'buyer_address' として受け取った際のエラー
-
-```json
-{
-    "meta": {
-        "code": 88,
-        "message": "Invalid Parameter",
-        "description": "The parameter "buyer_address" is invalid. Record not found."
-    }
-}
-```
-
-* 入力値エラー時
-* StripeAccountテーブルに存在しないアドレスを 'seller_address' として受け取った際のエラー
-* （'seller_address' は約定情報から取得したアドレス）
-
-```json
-{
-    "meta": {
-        "code": 88,
-        "message": "Invalid Parameter",
-        "description": "The parameter "seller_address" is invalid. Record not found."
-    }
-}
-```
-
-* 入力値エラー時
-* 入力された金額が約定コントラクトの約定金額と異なる際のエラー
-
-```json
-{
-    "meta": {
-        "code": 88,
-        "message": "Invalid Parameter",
-        "description": "The parameter "amount" is invalid."
-    }
-}
-```
-
-* 入力値エラー時（Stripe側のエラー）
-* 指定されたStripeの顧客id `customer_id` に紐づけられているクレジットカードが有効ではない際のエラー
-
-```json
-{
-  "meta": {
-    "code": 60,
-    "message": "Invalid Credit Card"
-  }
-}
-```
-
-#### Status: 403 Server Error
-* 二重課金エラー時
-
-```json
-{
-    "meta": {
-        "code": 70,
-        "message": "Double Charge",
-        "description": "double charge"
     }
 }
 ```
