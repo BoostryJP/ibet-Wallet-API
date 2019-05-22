@@ -87,9 +87,6 @@ class App(falcon.API):
         # 名簿用個人情報参照
         self.add_route('/v1/User/PersonalInfo', user.PersonalInfo())
 
-        # 名簿用個人情報参照
-        self.add_route('/v1/User/StreetAddress/{postal_code}', user.StreetAddress())
-
         # ノード情報
         self.add_route('/v1/NodeInfo', nodeInfo.NodeInfo())
 
