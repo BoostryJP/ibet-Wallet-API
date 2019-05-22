@@ -462,6 +462,14 @@ class Charge(BaseResource):
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
             raise AppError(description='Too many requests hit the API too quickly.')
+        # except stripe.error.ValidationError as e:
+        #     # Charge状態を[ERROR]ステータスに更新する
+        #     stripe_charge.status = StripeChargeStatus.ERROR.value
+        #     raise AppError(description='Errors triggered by our client-side libraries when failing to validate fields')
+        # except stripe.error.Card_Error as e:
+        #     # Charge状態を[ERROR]ステータスに更新する
+        #     stripe_charge.status = StripeChargeStatus.ERROR.value
+        #     raise InvalidParameterError(description=str(e))
         except Exception as err:
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
