@@ -25,7 +25,7 @@ class TestV1StreetAddress:
 
     # ＜エラー系1＞
     # 7桁の数字ではない
-    # -> 404エラー
+    # -> 400エラー
     def test_streetaddress_error_1(self, client):
         postal_code = 'aaa'
 
