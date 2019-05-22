@@ -443,8 +443,7 @@ class Charge(BaseResource):
                     "amount": charge_amount,
                     # 子アカウントを指定
                     "account": seller.account_id
-                },
-                description=description_agreement
+                }
             )
         except stripe.error.APIConnectionError as e:
             # Charge状態を[ERROR]ステータスに更新する
