@@ -12,7 +12,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError
+from app.errors import InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
 
@@ -143,3 +143,35 @@ class PersonalInfo(BaseResource):
             raise InvalidParameterError
 
         return request_json
+
+ # ------------------------------
+# 住所検索（郵便番号）
+# ------------------------------
+class StreetAddress(BaseResource):
+    '''
+    Handle for endpoint: /v1/User/StreetAddress/{postal_code}
+    '''
+    def on_get(self, req, res, postal_code):
+        print(postal_code)
+        LOG.info('v1.User.StreetAddress')
+
+        postal_code = StreetAddress.validate(postal_code)
+        try:
+            street_address_list = json.load(open('data/zip_code/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
+        except Exception as err:
+            raise DataNotExistsError('postal_code: %s' % postal_code)
+
+        self.on_success(res, street_address_list)
+
+    @staticmethod
+    def validate(postal_code):
+        request = {'postal_code': postal_code}
+
+        validator = Validator({
+            'postal_code': {'type': 'string', 'regex': '^[0-9]{7}$'}
+        })
+
+        if not validator.validate(request):
+            raise InvalidParameterError('postal_code: %s' % postal_code)
+
+        return postal_code
