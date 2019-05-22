@@ -73,15 +73,16 @@ class CreateAccount(BaseResource):
                 session.add(stripe_account)
                 session.commit()
                 response_data = {'stripe_account_id': account.id}
-
-        except stripe.error.APIConnectionError as e:
-            raise AppError(description='Failure to connect to Stripes API.')
-        except stripe.error.AuthenticationError as e:
-            raise AppError(description='Failure to properly authenticate yourself in the request.')
-        except stripe.error.InvalidRequestError as e:
-            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
         except stripe.error.RateLimitError as e:
-            raise AppError(description='Too many requests hit the API too quickly.')
+            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+        except stripe.error.StripeError as e:
+            raise AppError(description='[stripe]Something happen on Stripe')
 
         self.on_success(res, response_data)
 
@@ -164,14 +165,16 @@ class CreateExternalAccount(BaseResource):
                 session.add(stripe_account)
                 session.commit()
                 response_data = {'stripe_account_id': account.id}
-        except stripe.error.APIConnectionError as e:
-            raise AppError(description='Failure to connect to Stripes API.')
-        except stripe.error.AuthenticationError as e:
-            raise AppError(description='Failure to properly authenticate yourself in the request.')
-        except stripe.error.InvalidRequestError as e:
-            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
         except stripe.error.RateLimitError as e:
-            raise AppError(description='Too many requests hit the API too quickly.')
+            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+        except stripe.error.StripeError as e:
+            raise AppError(description='[stripe]Something happen on Stripe')
 
         self.on_success(res, response_data)
 
@@ -302,14 +305,16 @@ class CreateCustomer(BaseResource):
                 session.add(stripe_account)
                 session.commit()
                 response_data = {'stripe_customer_id': customer_id}
-        except stripe.error.APIConnectionError as e:
-            raise AppError(description='Failure to connect to Stripes API.')
-        except stripe.error.AuthenticationError as e:
-            raise AppError(description='Failure to properly authenticate yourself in the request.')
-        except stripe.error.InvalidRequestError as e:
-            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
         except stripe.error.RateLimitError as e:
-            raise AppError(description='Too many requests hit the API too quickly.')
+            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+        except stripe.error.StripeError as e:
+            raise AppError(description='[stripe]Something happen on Stripe')
 
         self.on_success(res, response_data)
 
@@ -369,7 +374,7 @@ class Charge(BaseResource):
                    Agreement.agreement_id == agreement_id).first()
         # 約定テーブルに情報がない場合、入力値エラー
         if agreement is None:
-            description = 'The parameter "order_id" or "agreement_id" are invalid. Record not found.'
+            description = 'Agreement not found.'
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから買手の情報を取得
@@ -377,7 +382,7 @@ class Charge(BaseResource):
             filter(StripeAccount.account_address == buyer_address).first()
         # StripeAccountテーブルに情報がない場合、入力値エラー
         if buyer is None:
-            description = 'The parameter "buyer_address" is invalid. Record not found.'
+            description = 'Buyer not found.'
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから売手の情報を取得
@@ -385,12 +390,12 @@ class Charge(BaseResource):
             filter(StripeAccount.account_address == agreement.seller_address).first()
         # StripeAccountテーブルに情報がない場合、入力値エラー
         if seller is None:
-            description = 'The parameter "agreement.seller_address" is invalid. Record not found.'
+            description = 'Seller not found.'
             raise InvalidParameterError(description=description)
 
         # リクエストの金額が正しいか確認
         if not request_json['amount'] == agreement.amount:
-            description = agreement.amount
+            description = 'The amount ' + agreement.amount + ' is invalid.'
             raise InvalidParameterError(description=description)
 
         # Charge（課金）状態の取得
@@ -446,22 +451,21 @@ class Charge(BaseResource):
                 },
                 description=description_agreement
             )
-        except stripe.error.APIConnectionError as e:
-            # Charge状態を[ERROR]ステータスに更新する
-            stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='Failure to connect to Stripes API.')
-        except stripe.error.AuthenticationError as e:
-            # Charge状態を[ERROR]ステータスに更新する
-            stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='Failure to properly authenticate yourself in the request.')
-        except stripe.error.InvalidRequestError as e:
-            # Charge状態を[ERROR]ステータスに更新する
-            stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='Invalid request errors arise when your request has invalid parameters.')
         except stripe.error.RateLimitError as e:
-            # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='Too many requests hit the API too quickly.')
+            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+        except stripe.error.InvalidRequestError as e:
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.AuthenticationError as e:
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+        except stripe.error.APIConnectionError as e:
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+        except stripe.error.StripeError as e:
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            raise AppError(description='[stripe]Something happen on Stripe')
         except Exception as err:
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
