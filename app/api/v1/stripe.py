@@ -395,7 +395,7 @@ class Charge(BaseResource):
 
         # リクエストの金額が正しいか確認
         if not request_json['amount'] == agreement.amount:
-            description = 'The amount ' + agreement.amount + ' is invalid.'
+            description = 'The amount ' + str(agreement.amount) + ' is invalid.'
             raise InvalidParameterError(description=description)
 
         # Charge（課金）状態の取得
