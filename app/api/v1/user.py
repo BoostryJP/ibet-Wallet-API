@@ -155,23 +155,23 @@ class StreetAddress(BaseResource):
         print(postal_code)
         LOG.info('v1.User.StreetAddress')
 
-         postal_code = StreetAddress.validate(postal_code)
+        postal_code = StreetAddress.validate(postal_code)
         try:
             street_address_list = json.load(open('data/zip_code/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
         except Exception as err:
             raise DataNotExistsError('postal_code: %s' % postal_code)
 
-         self.on_success(res, street_address_list)
+        self.on_success(res, street_address_list)
 
-     @staticmethod
+    @staticmethod
     def validate(postal_code):
         request = {'postal_code': postal_code}
 
-         validator = Validator({
+        validator = Validator({
             'postal_code': {'type': 'string', 'regex': '^[0-9]{7}$'}
         })
 
-         if not validator.validate(request):
+        if not validator.validate(request):
             raise InvalidParameterError('postal_code: %s' % postal_code)
 
-         return postal_code
+        return postal_code
