@@ -395,7 +395,7 @@ class Charge(BaseResource):
 
         # リクエストの金額が正しいか確認
         if not request_json['amount'] == agreement.amount:
-            description = 'The amount ' + agreement.amount + ' is invalid.'
+            description = 'The amount ' + str(agreement.amount) + ' is invalid.'
             raise InvalidParameterError(description=description)
 
         # Charge（課金）状態の取得
@@ -448,7 +448,8 @@ class Charge(BaseResource):
                     "amount": charge_amount,
                     # 子アカウントを指定
                     "account": seller.account_id
-                }
+                },
+                description=description_agreement
             )
         except stripe.error.RateLimitError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
