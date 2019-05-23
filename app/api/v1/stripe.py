@@ -569,3 +569,42 @@ class Charge(BaseResource):
             )
 
         return response
+
+# ------------------------------
+# [Stripe]Connected Accountの本人確認ステータスの取得
+# ------------------------------
+class GetAccountStatus(BaseResource):
+    '''
+    Handle for endpoint: /v1/Stripe/GetAccountStatus
+    '''
+    @falcon.before(VerifySignature())
+    def on_post(self, req, res):
+        LOG.info('v1.Stripe.GetAccountStatus')
+
+        address = to_checksum_address(req.context["address"])
+        # DBの存在チェック
+        session = req.context["session"]
+        raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
+
+        # 存在する場合はstripeにAccount情報を聞きに行く。存在しない場合は`unverified`で返す。
+        try:
+            verified_status = "unverified"
+            if raw is not None and raw.account_id != "":
+                response = stripe.Account.retrieve(
+                  'acct_1EaHUYCJ5LJ0Mtg3'
+                )
+                print(response)
+                verified_status = response["individual"]["verification"]["status"]
+                print(verified_status)
+        except stripe.error.RateLimitError as e:
+            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+        except stripe.error.StripeError as e:
+            raise AppError(description='[stripe]Something happen on Stripe')
+
+        self.on_success(res, verified_status)
