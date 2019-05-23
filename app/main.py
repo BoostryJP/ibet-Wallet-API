@@ -106,6 +106,7 @@ class App(falcon.API):
         self.add_route('/v1/Stripe/CreateCustomer', stripe.CreateCustomer())
         self.add_route('/v1/Stripe/Charge', stripe.Charge())
         self.add_route('/v1/Stripe/AccountStatus', stripe.AccountStatus())
+        self.add_route('/v1/Stripe/ChargeStatus', stripe.ChargeStatus())
 
         # push通知デバイス登録
         self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())

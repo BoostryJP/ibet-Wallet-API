@@ -33,6 +33,6 @@ class StripeCharge(Base):
     FIELDS.update(Base.FIELDS)
 
 class StripeChargeStatus(Enum):
-    PROCESSING = 0
-    SUCCESS = 1
-    ERROR = 2
+    PENDING = 0
+    SUCCEEDED = 1
+    FAILED = 2

@@ -614,3 +614,82 @@ class AccountStatus(BaseResource):
             'verified_status': verified_status
         }
         self.on_success(res, response_json)
+# [Stripe]課金状態取得
+# ------------------------------
+class ChargeStatus(BaseResource):
+    '''
+    Handle for endpoint: /v1/Stripe/ChargeStatus
+    '''
+    def on_post(self, req, res):
+        LOG.info('v1.Stripe.ChargeStatus')
+        session = req.context["session"]
+
+        # 入力値チェック
+        request_json = ChargeStatus.validate(req)
+
+        # リクエストから情報を抽出
+        exchange_address = to_checksum_address(request_json['exchange_address'])
+        order_id = request_json['order_id']
+        agreement_id = request_json['agreement_id']
+
+        # Charge（課金）状態の取得
+        stripe_charge = session.query(StripeCharge).\
+            filter(StripeCharge.exchange_address == exchange_address).\
+            filter(StripeCharge.order_id == order_id).\
+            filter(StripeCharge.agreement_id == agreement_id).\
+            first()
+
+        if stripe_charge is None:
+            status = 'NONE'
+        else:
+            if stripe_charge.status == StripeChargeStatus.SUCCEEDED.value:
+                status = 'SUCCEEDED'
+            elif stripe_charge.status == StripeChargeStatus.PENDING.value:
+                status = 'PENDING'
+            elif stripe_charge.status == StripeChargeStatus.FAILED.value:
+                status = 'FAILED'
+
+        response_json = {
+            'exchange_address': exchange_address,
+            'order_id': order_id,
+            'agreement_id': agreement_id,
+            'status': status
+        }
+
+        self.on_success(res, response_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'exchange_address': {
+                'type': 'string',
+                'required': True,
+                'empty': False,
+            },
+            'order_id': {
+                'type': 'integer',
+                'coerce': int,
+                'min':0,
+                'required': True,
+                'nullable': False,
+            },
+            'agreement_id': {
+                'type': 'integer',
+                'coerce': int,
+                'min':0,
+                'required': True,
+                'nullable': False,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(request_json['exchange_address']):
+            raise InvalidParameterError(description='invalid exchange address')
+
+        return validator.document
