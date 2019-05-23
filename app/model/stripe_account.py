@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from enum import Enum
 from sqlalchemy import Column
 from sqlalchemy import String, BigInteger
 from sqlalchemy import UniqueConstraint
@@ -25,3 +26,9 @@ class StripeAccount(Base):
     }
 
     FIELDS.update(Base.FIELDS)
+
+# https://stripe.com/docs/api/persons/object#person_object-verification-status
+class StripeAccountStatus(Enum):
+    UNVERIFIED = 'unverified'
+    PENDING = 'pending'
+    VERIFIED = 'verified'
