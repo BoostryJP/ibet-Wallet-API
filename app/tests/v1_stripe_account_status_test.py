@@ -10,10 +10,8 @@ class TestV1StripeAccountStatus():
     # テスト対象API
     apiurl = "/v1/Stripe/AccountStatus"
     create_account_apiurl = "/v1/Stripe/CreateAccount"
-    default_account_address = "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51"
     private_key_1 = "0000000000000000000000000000000000000000000000000000000000000001"
     private_key_2 = "0000000000000000000000000000000000000000000000000000000000000002"    
-    api_key = config.STRIPE_SECRET
 
     # 仕込み
     @staticmethod
