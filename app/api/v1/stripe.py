@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+import os
 import json
 import math
-
 import falcon
+import boto3
+
 from cerberus import Validator
 from web3 import Web3
 from eth_utils import to_checksum_address
 from app.contracts import Contract
-import boto3
 
 from app import log
 from app.api.common import BaseResource
@@ -17,10 +18,12 @@ from app.utils.hooks import VerifySignature
 from app.model import StripeCharge, StripeAccount, StripeAccountStatus, Agreement, StripeChargeStatus, AgreementStatus
 from app import config
 
+
 import stripe
 stripe.api_key = config.STRIPE_SECRET
 
 LOG = log.get_logger()
+
 
 # ------------------------------
 # [Stripe]Connected Account(ウォレット利用者)登録
@@ -362,6 +365,7 @@ class Charge(BaseResource):
         order_id = request_json['order_id']
         agreement_id = request_json['agreement_id']
         exchange_address = to_checksum_address(request_json['exchange_address'])
+        product = request_json['product']
 
         # 手数料と収入の計算（収納代行の手数料率を百分率で環境変数に設定）
         amount = request_json['amount']
@@ -369,9 +373,14 @@ class Charge(BaseResource):
         charge_amount = amount - exchange_fee
 
         # 約定テーブルから情報を取得
-        agreement = session.query(Agreement).\
-            filter(Agreement.order_id == order_id,
-                   Agreement.agreement_id == agreement_id).first()
+        # agreement = session.query(Agreement).\
+        #     filter(Agreement.order_id == order_id,
+        #            Agreement.agreement_id == agreement_id).first()
+
+        # コントラクトから約定情報を取得
+        ExchangeContract = Charge.exchange_contracts(product)
+        agreement = ExchangeContract.functions.latestAgreement(order_id).call()  # 要修正?
+
         # 約定テーブルに情報がない場合、入力値エラー
         if agreement is None:
             description = 'Agreement not found.'
@@ -497,6 +506,29 @@ class Charge(BaseResource):
         self.on_success(res, receipt_url)
 
     @staticmethod
+    def exchange_contracts(product):
+        if product == "StraigtBond":
+            ExchangeContract = Contract.get_contract(
+                'IbetStraightBondExchange',
+                to_checksum_address(os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            )
+
+        elif product == "Membership":
+            ExchangeContract = Contract.get_contract(
+                'IbetMembershipExchange',
+                to_checksum_address(os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
+            )
+
+        elif product == "Coupon":
+            ExchangeContract = Contract.get_contract(
+                'IbetCouponExchange',
+                os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+            )
+
+        return ExchangeContract
+
+
+    @staticmethod
     def validate(req):
         request_json = req.context['data']
         if request_json is None:
@@ -570,6 +602,7 @@ class Charge(BaseResource):
 
         return response
 
+
 # ------------------------------
 # [Stripe]Connected Accountの本人確認ステータスの取得
 # ------------------------------
@@ -614,6 +647,9 @@ class AccountStatus(BaseResource):
             'verified_status': verified_status
         }
         self.on_success(res, response_json)
+
+
+# ------------------------------
 # [Stripe]課金状態取得
 # ------------------------------
 class ChargeStatus(BaseResource):
