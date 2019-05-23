@@ -14,7 +14,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, InvalidCardError, \
     DoubleChargeError
 from app.utils.hooks import VerifySignature
-from app.model import StripeCharge, StripeAccount, Agreement, StripeChargeStatus, AgreementStatus
+from app.model import StripeCharge, StripeAccount, StripeAccountStatus, Agreement, StripeChargeStatus, AgreementStatus
 from app import config
 
 import stripe
@@ -571,6 +571,49 @@ class Charge(BaseResource):
         return response
 
 # ------------------------------
+# [Stripe]Connected Accountの本人確認ステータスの取得
+# ------------------------------
+class AccountStatus(BaseResource):
+    '''
+    Handle for endpoint: /v1/Stripe/AccountStatus
+    '''
+    @falcon.before(VerifySignature())
+    def on_post(self, req, res):
+        LOG.info('v1.Stripe.AccountStatus')
+
+        address = to_checksum_address(req.context["address"])
+        # DBの存在チェック
+        session = req.context["session"]
+        raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
+
+        # 存在する場合はstripeにAccount情報を聞きに行く。存在しない場合は`NONE`で返す。
+        try:
+            if raw is None or raw.account_id == "":
+                verified_status = 'NONE'
+            else:
+                response = stripe.Account.retrieve(
+                  raw.account_id
+                )
+                if response["individual"]["verification"]["status"] == StripeAccountStatus.UNVERIFIED.value:
+                    verified_status = 'UNVERIFIED'
+                elif response["individual"]["verification"]["status"] == StripeAccountStatus.PENDING.value:
+                    verified_status = 'PENDING'
+                elif response["individual"]["verification"]["status"] == StripeAccountStatus.VERIFIED.value:
+                    verified_status = 'VERIFIED'
+        except stripe.error.RateLimitError as e:
+            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+        except stripe.error.InvalidRequestError as e:
+            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+        except stripe.error.AuthenticationError as e:
+            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+        except stripe.error.APIConnectionError as e:
+            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+        except stripe.error.StripeError as e:
+            raise AppError(description='[stripe]Something happen on Stripe')
+        response_json = {
+            'verified_status': verified_status
+        }
+        self.on_success(res, response_json)
 # [Stripe]課金状態取得
 # ------------------------------
 class ChargeStatus(BaseResource):
