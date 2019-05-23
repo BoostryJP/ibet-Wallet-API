@@ -591,11 +591,9 @@ class GetAccountStatus(BaseResource):
             verified_status = "unverified"
             if raw is not None and raw.account_id != "":
                 response = stripe.Account.retrieve(
-                  'acct_1EaHUYCJ5LJ0Mtg3'
+                  raw.account_id
                 )
-                print(response)
                 verified_status = response["individual"]["verification"]["status"]
-                print(verified_status)
         except stripe.error.RateLimitError as e:
             raise AppError(description='[stripe]Too many requests hit the API too quickly.')
         except stripe.error.InvalidRequestError as e:
