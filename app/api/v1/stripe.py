@@ -12,7 +12,7 @@ import boto3
 from app import log
 from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, InvalidCardError, \
-    DoubleChargeError
+    DoubleChargeError, StripeErrorClient, StripeErrorServer
 from app.utils.hooks import VerifySignature
 from app.model import StripeCharge, StripeAccount, StripeAccountStatus, Agreement, StripeChargeStatus, AgreementStatus
 from app import config
@@ -73,16 +73,30 @@ class CreateAccount(BaseResource):
                 session.add(stripe_account)
                 session.commit()
                 response_data = {'stripe_account_id': account.id}
+        except stripe.error.CardError as e:
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.RateLimitError as e:
-            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
-            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.AuthenticationError as e:
-            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
-            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
-            raise AppError(description='[stripe]Something happen on Stripe')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
 
         self.on_success(res, response_data)
 
@@ -165,16 +179,30 @@ class CreateExternalAccount(BaseResource):
                 session.add(stripe_account)
                 session.commit()
                 response_data = {'stripe_account_id': account.id}
+        except stripe.error.CardError as e:
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.RateLimitError as e:
-            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
-            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.AuthenticationError as e:
-            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
-            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
-            raise AppError(description='[stripe]Something happen on Stripe')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
 
         self.on_success(res, response_data)
 
@@ -305,16 +333,30 @@ class CreateCustomer(BaseResource):
                 session.add(stripe_account)
                 session.commit()
                 response_data = {'stripe_customer_id': customer_id}
+        except stripe.error.CardError as e:
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.RateLimitError as e:
-            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
-            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.AuthenticationError as e:
-            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
-            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
-            raise AppError(description='[stripe]Something happen on Stripe')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
 
         self.on_success(res, response_data)
 
@@ -451,21 +493,36 @@ class Charge(BaseResource):
                 },
                 description=description_agreement
             )
+        except stripe.error.CardError as e:
+            stripe_charge.status = StripeChargeStatus.ERROR.value
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.RateLimitError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
-            raise AppError(description='[stripe]Something happen on Stripe')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
         except Exception as err:
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.ERROR.value
@@ -600,16 +657,30 @@ class AccountStatus(BaseResource):
                     verified_status = 'PENDING'
                 elif response["individual"]["verification"]["status"] == StripeAccountStatus.VERIFIED.value:
                     verified_status = 'VERIFIED'
+        except stripe.error.CardError as e:
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.RateLimitError as e:
-            raise AppError(description='[stripe]Too many requests hit the API too quickly.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
-            raise AppError(description='[stripe]Invalid request errors arise when your request has invalid parameters.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
         except stripe.error.AuthenticationError as e:
-            raise AppError(description='[stripe]Failure to properly authenticate yourself in the request.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
-            raise AppError(description='[stripe]Failure to connect to Stripes API.')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
-            raise AppError(description='[stripe]Something happen on Stripe')
+            body = e.json_body
+            err  = body.get('error', {})
+            raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
         response_json = {
             'verified_status': verified_status
         }
