@@ -403,7 +403,7 @@ class Charge(BaseResource):
 
         seller = session.query(StripeAccount). \
             filter(StripeAccount.account_address == agreement.seller_address).first()
-        # Exchangeコントラクトに情報がない場合、入力値エラー
+        # StripeAccountテーブルに情報がない場合、入力値エラー
         if seller is None:
             description = 'Seller not found.'
             raise InvalidParameterError(description=description)
