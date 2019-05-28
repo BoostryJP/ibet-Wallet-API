@@ -164,3 +164,21 @@ class DoubleChargeError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_DOUBLE_CHARGE_ERROR)
         self.error['description'] = description
+
+class StripeErrorClient(AppError):
+    def __init__(self, code=None, description=None, title=None):
+        super().__init__({
+            'status': falcon.HTTP_400,
+            'code': code,
+            'title': title
+            })
+        self.error['description'] = description
+
+class StripeErrorServer(AppError):
+    def __init__(self, code=None, description=None, title=None):
+        super().__init__({
+            'status': falcon.HTTP_500,
+            'code': code,
+            'title': title
+            })
+        self.error['description'] = description

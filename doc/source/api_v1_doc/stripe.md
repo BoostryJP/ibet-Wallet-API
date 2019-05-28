@@ -2,7 +2,7 @@
 
 ## POST: /v1/Stripe/CreateAccount/
 * stripeのconnectアカウントを作成する。
-* すでにaccount_addressに登録されたconnectアカウントが存在する場合は、connectアカウントのupdateを行う。
+* すでにaccount_addressに登録されたconnectアカウントが存在する場合は、connectアカウントならびにstripe_account(DB)のupdateを行う。
 
 ### Sample
 ```sh
@@ -24,7 +24,7 @@ curl -X POST \
 }
 ```    
 
-* `account_token` : stripeのアカウントトークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行する。
+* `account_token` : stripeのアカウントトークン。あらかじめクライアント側にて`https://api.stripe.com/v1/tokens`を呼び出した上で発行したものをセットする。
 
 #### validation
 ```py
@@ -70,15 +70,38 @@ curl -X POST \
 }
 ```
 
-#### Status: 405 Bad Request
-* 自サーバー起因でstripeからのエラー時
+* stripeにてカード関連エラー発生時
 
 ```json
 {
     "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "code": 50,
+        "message": "Your card has expired.",
+        "description": "[stripe]card error caused by exp_month"
+    }
+}
+```
+
+* stripeにて同時多数リクエストエラー発生時
+
+```json
+{
+    "meta": {
+        "code": 51,
+        "message": "Too many requests made to the API too quickly.",
+        "description": "[stripe]rate limit error"
+    }
+}
+```
+
+* stripeから項目不足などリクエスト項目に問題があった場合
+
+```json
+{
+    "meta": {
+        "code": 52,
+        "message": "Invalid parameters were supplied to Stripe's API.",
+        "description": "[stripe]invalid requiest error caused by param"
     }
 }
 ```
@@ -96,15 +119,38 @@ curl -X POST \
 }
 ```
 
-#### Status: 505 Server Error
-* stripe側起因エラー時
+* stripeの認証エラー時
 
 ```json
 {
     "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "code": 53,
+        "message": "Authentication with Stripe's API failed.",
+        "description": "[stripe]authentication error"
+    }
+}
+```
+
+* stripeのAPIコネクションにエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 54,
+        "message": "Network communication with Stripe failed.",
+        "description": "[stripe]api connection error"
+    }
+}
+```
+
+* stripe側に何らかの不明なエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 55,
+        "message": "Display a very generic error to the user, and maybe send.",
+        "description": "[stripe]stripe error"
     }
 }
 ```
@@ -179,15 +225,38 @@ curl -X POST \
 }
 ```
 
-#### Status: 405 Bad Request
-* 自サーバー起因でstripeからのエラー時
+* stripeにてカード関連エラー発生時
 
 ```json
 {
     "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "code": 50,
+        "message": "Your card has expired.",
+        "description": "[stripe]card error caused by exp_month"
+    }
+}
+```
+
+* stripeにて同時多数リクエストエラー発生時
+
+```json
+{
+    "meta": {
+        "code": 51,
+        "message": "Too many requests made to the API too quickly.",
+        "description": "[stripe]rate limit error"
+    }
+}
+```
+
+* stripeから項目不足などリクエスト項目に問題があった場合
+
+```json
+{
+    "meta": {
+        "code": 52,
+        "message": "Invalid parameters were supplied to Stripe's API.",
+        "description": "[stripe]invalid requiest error caused by param"
     }
 }
 ```
@@ -205,15 +274,39 @@ curl -X POST \
 }
 ```
 
-#### Status: 505 Server Error
-* stripe側起因エラー時
+
+* stripeの認証エラー時
 
 ```json
 {
     "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "code": 53,
+        "message": "Authentication with Stripe's API failed.",
+        "description": "[stripe]authentication error"
+    }
+}
+```
+
+* stripeのAPIコネクションにエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 54,
+        "message": "Network communication with Stripe failed.",
+        "description": "[stripe]api connection error"
+    }
+}
+```
+
+* stripe側に何らかの不明なエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 55,
+        "message": "Display a very generic error to the user, and maybe send.",
+        "description": "[stripe]stripe error"
     }
 }
 ```
@@ -312,19 +405,6 @@ curl -X POST \
 }
 ```
 
-#### Status: 405 Bad Request
-* 自サーバー起因でstripeからのエラー時
-
-```json
-{
-    "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
-    }
-}
-```
-
 #### Status: 500 Server Error
 * 自サーバー起因エラー時
 
@@ -338,18 +418,6 @@ curl -X POST \
 }
 ```
 
-#### Status: 505 Server Error
-* stripe側起因エラー時
-
-```json
-{
-    "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
-    }
-}
-```
 ## POST: /v1/Stripe/CreateCustomer/
 * stripeのカスタマーの登録
 * すでにaccount_addressに登録されたcustomerが存在する場合は、customerのupdateを行う。
@@ -420,15 +488,38 @@ curl -X POST \
 }
 ```
 
-#### Status: 405 Bad Request
-* 自サーバー起因でstripeからのエラー時
+* stripeにてカード関連エラー発生時
 
 ```json
 {
     "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "code": 50,
+        "message": "Your card has expired.",
+        "description": "[stripe]card error caused by exp_month"
+    }
+}
+```
+
+* stripeにて同時多数リクエストエラー発生時
+
+```json
+{
+    "meta": {
+        "code": 51,
+        "message": "Too many requests made to the API too quickly.",
+        "description": "[stripe]rate limit error"
+    }
+}
+```
+
+* stripeから項目不足などリクエスト項目に問題があった場合
+
+```json
+{
+    "meta": {
+        "code": 52,
+        "message": "Invalid parameters were supplied to Stripe's API.",
+        "description": "[stripe]invalid requiest error caused by param"
     }
 }
 ```
@@ -446,20 +537,41 @@ curl -X POST \
 }
 ```
 
-#### Status: 505 Server Error
-* stripe側起因エラー時
+* stripeの認証エラー時
 
 ```json
 {
     "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "code": 53,
+        "message": "Authentication with Stripe's API failed.",
+        "description": "[stripe]authentication error"
     }
 }
 ```
 
+* stripeのAPIコネクションにエラーがあった場合
 
+```json
+{
+    "meta": {
+        "code": 54,
+        "message": "Network communication with Stripe failed.",
+        "description": "[stripe]api connection error"
+    }
+}
+```
+
+* stripe側に何らかの不明なエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 55,
+        "message": "Display a very generic error to the user, and maybe send.",
+        "description": "[stripe]stripe error"
+    }
+}
+```
 
 ## POST: /v1/Stripe/Charge/
 * stripeのconnectアカウントに対して、決済を行う。
@@ -486,50 +598,39 @@ curl -X POST \
 {
     "order_id": 1,
     "agreement_id": 4,
-    "buyer_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
-    "seller_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
     "amount": 2000,
+    "exchange_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51"
 }
 ```
 * `order_id`: 決済対象の注文ID
 * `agremeent_id`: 決済対象の約定ID
-* `buyer_address` : 買い手のアドレス
-* `seller_address`: 売り手のアドレス
 * `amount`: 決済金額
+* `exchange_address`: 取引所のアドレス
 
 #### validation
 ```py
 {
-  'order_id': {
-    'type': 'int',
-    'schema': {'type': 'int'},
-    'empty': False,
-    'required': True
-  },
-  'buyer_address': {
-    'type': 'int',
-    'schema': {'type': 'int'},
-    'empty': False,
-    'required': True
-  },
-  'buyer_address': {
-    'type': 'string',
-    'schema': {'type': 'string'},
-    'empty': False,
-    'required': True
-  },
-  'seller_address': {
-    'type': 'string',
-    'schema': {'type': 'string'},
-    'empty': False,
-    'required': True
-  },
-  'amount': {
-    'type': 'int',
-    'schema': {'type': 'int'},
-    'empty': False,
-    'required': True
-  }
+    'order_id': {
+        'type': 'integer',
+        'empty': False,
+        'required': True
+    },
+    'agreement_id': {
+        'type': 'integer',
+        'empty': False,
+        'required': True
+    },
+    'amount': {
+        'type': 'integer',
+        'empty': False,
+        'required': True
+    },
+    'exchange_address': {
+        'type': 'string',
+        'schema': {'type': 'string'},
+        'empty': False,
+        'required': True
+    }
 }
 ```
 
@@ -555,26 +656,65 @@ curl -X POST \
 
 #### Status: 400 Bad Request
 * 入力値エラー時
+* 約定情報に存在しない 'order_id' または 'agreement_id' を入力値として受け取った際のエラー
+* StripeAccountテーブルに存在しないアドレスを 'buyer_address' として受け取った際のエラー
+* StripeAccountテーブルに存在しないアドレスを 'seller_address' として受け取った際のエラー
 
 ```json
 {
     "meta": {
         "code": 88,
         "message": "Invalid Parameter",
-        "description": "No JSON object could be decoded or Malformed JSON"
+        "description": "The input parameter is invalid."
     }
 }
 ```
 
-#### Status: 405 Bad Request
-* 自サーバー起因でstripeからのエラー時
+* stripeにてカード関連エラー発生時
 
 ```json
 {
     "meta": {
-        "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "code": 50,
+        "message": "Your card has expired.",
+        "description": "[stripe]card error caused by exp_month"
+    }
+}
+```
+
+* stripeにて同時多数リクエストエラー発生時
+
+```json
+{
+    "meta": {
+        "code": 51,
+        "message": "Too many requests made to the API too quickly.",
+        "description": "[stripe]rate limit error"
+    }
+}
+```
+
+* stripeから項目不足などリクエスト項目に問題があった場合
+
+```json
+{
+    "meta": {
+        "code": 52,
+        "message": "Invalid parameters were supplied to Stripe's API.",
+        "description": "[stripe]invalid requiest error caused by param"
+    }
+}
+```
+
+#### Status: 403 Server Error
+* 二重課金エラー時
+
+ ```json
+{
+    "meta": {
+        "code": 70,
+        "message": "Double Charge",
+        "description": "double charge"
     }
 }
 ```
@@ -592,15 +732,342 @@ curl -X POST \
 }
 ```
 
-#### Status: 505 Server Error
-* stripe側起因エラー時
+
+* stripeの認証エラー時
+
+```json
+{
+    "meta": {
+        "code": 53,
+        "message": "Authentication with Stripe's API failed.",
+        "description": "[stripe]authentication error"
+    }
+}
+```
+
+* stripeのAPIコネクションにエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 54,
+        "message": "Network communication with Stripe failed.",
+        "description": "[stripe]api connection error"
+    }
+}
+```
+
+* stripe側に何らかの不明なエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 55,
+        "message": "Display a very generic error to the user, and maybe send.",
+        "description": "[stripe]stripe error"
+    }
+}
+```
+
+## POST: /v1/Stripe/AccountStatus
+* 対象のアドレスに紐付くstripeのconnectアカウントの本人確認ステータスを返す
+
+### Sample
+```sh
+curl -X POST \
+  http://localhost:5000/v1/Stripe/AccountStatus \
+  -H 'Content-Type: application/json' \
+  -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
+  -H 'cache-control: no-cache'
+```
+
+* `X-ibet-Signature` : クライアント認証、リクエスト認可に用いる署名情報。 [参考：X-ibet-Signature](x_ibet_signature.md)
+
+### In
+```json
+{
+}
+```    
+
+* ※アドレス情報はsignatureに含まれるため、in bodyは空`{}`
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": 
+        {
+            "verified_status": "VERIFIED"
+        }
+}
+```
+* `verified_status` : 対象のstripe connectedアカウントの本人確認ステータス。`UNVERIFIED`、`PENDING`、`VERIFIED`のいずれか。
+
+#### Status: 400 Bad Request
+* stripeにてカード関連エラー発生時
+
+```json
+{
+    "meta": {
+        "code": 50,
+        "message": "Your card has expired.",
+        "description": "[stripe]card error caused by exp_month"
+    }
+}
+```
+
+* stripeにて同時多数リクエストエラー発生時
+
+```json
+{
+    "meta": {
+        "code": 51,
+        "message": "Too many requests made to the API too quickly.",
+        "description": "[stripe]rate limit error"
+    }
+}
+```
+
+* stripeから項目不足などリクエスト項目に問題があった場合
+
+```json
+{
+    "meta": {
+        "code": 52,
+        "message": "Invalid parameters were supplied to Stripe's API.",
+        "description": "[stripe]invalid requiest error caused by param"
+    }
+}
+```
+
+#### Status: 500 Server Error
+* 自サーバー起因エラー時
 
 ```json
 {
     "meta": {
         "code": 88,
-        "message": "Error message From Stripe(code)",
-        "description": "Error description From Stripe(message)"
+        "message": "server error",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+* stripeの認証エラー時
+
+```json
+{
+    "meta": {
+        "code": 53,
+        "message": "Authentication with Stripe's API failed.",
+        "description": "[stripe]authentication error"
+    }
+}
+```
+
+* stripeのAPIコネクションにエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 54,
+        "message": "Network communication with Stripe failed.",
+        "description": "[stripe]api connection error"
+    }
+}
+```
+
+* stripe側に何らかの不明なエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 55,
+        "message": "Display a very generic error to the user, and maybe send.",
+        "description": "[stripe]stripe error"
+    }
+}
+```
+
+## POST: /v1/Stripe/ChargeStatus
+* 対象のDEXアドレス・注文・約定に紐付くchargeの状況を返す
+
+### Sample
+```sh
+curl -X POST \
+  http://localhost:5000/v1/Stripe/ChargeStatus \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache' \
+  -d '{
+    "exchange_address":  "ct_1EPLU9HgQLLPjBO2760HyH5v",
+    "order_id": 4,
+    "agreement_id": 5
+    }'
+```
+
+### In
+```json
+{
+    "exchange_address": "ct_1EPLU9HgQLLPjBO2760HyH5v",
+    "order_id": 4,
+    "agreement_id": 5
+}
+```    
+* `exchange_address` : DEXアドレス
+* `order_id` : 注文ID
+* `agreement_id` : 約定ID
+
+#### validation
+```py
+{
+    'exchange_address': {
+        'type': 'string',
+        'required': True,
+        'empty': False,
+    },
+    'order_id': {
+        'type': 'integer',
+        'coerce': int,
+        'min':0,
+        'required': True,
+        'nullable': False,
+    },
+    'agreement_id': {
+        'type': 'integer',
+        'coerce': int,
+        'min':0,
+        'required': True,
+        'nullable': False,
+    }
+}
+```
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": 
+        {
+            "exchange_address": "ct_1EPLU9HgQLLPjBO2760HyH5v",
+            "order_id": 4,
+            "agreement_id": 5,
+            "status": "SUCCEEDED"
+        }
+}
+```
+* `exchange_address` : DEXアドレス
+* `order_id` : 注文ID
+* `agreement_id` : 約定ID
+* `status` : 対象のDEXアドレス・注文・約定に紐付くchargeの状況。`PENDING`、`SUCCEEDED`、`FAILED`のいずれか。
+
+#### Status: 400 Bad Request
+* 入力値エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+* stripeにてカード関連エラー発生時
+
+```json
+{
+    "meta": {
+        "code": 50,
+        "message": "Your card has expired.",
+        "description": "[stripe]card error caused by exp_month"
+    }
+}
+```
+
+* stripeにて同時多数リクエストエラー発生時
+
+```json
+{
+    "meta": {
+        "code": 51,
+        "message": "Too many requests made to the API too quickly.",
+        "description": "[stripe]rate limit error"
+    }
+}
+```
+
+* stripeから項目不足などリクエスト項目に問題があった場合
+
+```json
+{
+    "meta": {
+        "code": 52,
+        "message": "Invalid parameters were supplied to Stripe's API.",
+        "description": "[stripe]invalid requiest error caused by param"
+    }
+}
+```
+
+#### Status: 500 Server Error
+* 自サーバー起因エラー時
+
+```json
+{
+    "meta": {
+        "code": 88,
+        "message": "server error",
+        "description": "No JSON object could be decoded or Malformed JSON"
+    }
+}
+```
+
+* stripeの認証エラー時
+
+```json
+{
+    "meta": {
+        "code": 53,
+        "message": "Authentication with Stripe's API failed.",
+        "description": "[stripe]authentication error"
+    }
+}
+```
+
+* stripeのAPIコネクションにエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 54,
+        "message": "Network communication with Stripe failed.",
+        "description": "[stripe]api connection error"
+    }
+}
+```
+
+* stripe側に何らかの不明なエラーがあった場合
+
+```json
+{
+    "meta": {
+        "code": 55,
+        "message": "Display a very generic error to the user, and maybe send.",
+        "description": "[stripe]stripe error"
     }
 }
 ```
