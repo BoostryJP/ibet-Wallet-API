@@ -365,25 +365,60 @@ class Charge(BaseResource):
         order_id = request_json['order_id']
         agreement_id = request_json['agreement_id']
         exchange_address = to_checksum_address(request_json['exchange_address'])
-        product = request_json['product']
 
         # 手数料と収入の計算（収納代行の手数料率を百分率で環境変数に設定）
         amount = request_json['amount']
         exchange_fee = math.ceil(request_json['amount'] * float(config.STRIPE_FEE))
         charge_amount = amount - exchange_fee
 
+        # ------------- for debug ----------------------- #
+
+        # Agreementの情報を挿入
+        agreement = Agreement()
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(1)
+        agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        agreement.amount = amount
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        stripe_account = StripeAccount()
+        stripe_account.account_address = buyer_address
+        stripe_account.account_id = "acct_1EaHRtHYCG1MwtWK"
+        stripe_account.customer_id = "cus_F4lJXTbs7ZjwKs"
+        session.add(stripe_account)
+
+        stripe_account = StripeAccount()
+        stripe_account.account_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        stripe_account.account_id = "acct_1EaHUYCJ5LJ0Mtg3"
+        stripe_account.customer_id = "cus_F4lGTQ4Vrvfgi1"
+        session.add(stripe_account)
+
+        # ------------- end ----------------------------- #
+
         # 約定テーブルから情報を取得
-        # agreement = session.query(Agreement).\
-        #     filter(Agreement.order_id == order_id,
-        #            Agreement.agreement_id == agreement_id).first()
+        agreement = session.query(Agreement).\
+            filter(Agreement.order_id == order_id). \
+            filter(Agreement.agreement_id == agreement_id). \
+            filter(Agreement.status == AgreementStatus.DONE.value). \
+            first()
 
-        # コントラクトから約定情報を取得
-        ExchangeContract = Charge.exchange_contracts(product)
-        agreement = ExchangeContract.functions.latestAgreement(order_id).call()  # 要修正?
-
-        # 約定テーブルに情報がない場合、入力値エラー
+        # 約定情報がない場合、入力値エラー
         if agreement is None:
             description = 'Agreement not found.'
+            raise InvalidParameterError(description=description)
+
+        # Exchangeコントラクトから最新の約定キャンセル情報を取得
+        ExchangeContract = Charge.exchange_contracts(exchange_address)
+        _, _, _, canceled, _, _ = \
+            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+
+        # 約定情報がキャンセルされている時、入力値エラー
+        if canceled is True:
+            description = 'Canceled Agreement'
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから買手の情報を取得
@@ -394,10 +429,9 @@ class Charge(BaseResource):
             description = 'Buyer not found.'
             raise InvalidParameterError(description=description)
 
-        # StripeAccountテーブルから売手の情報を取得
         seller = session.query(StripeAccount). \
             filter(StripeAccount.account_address == agreement.seller_address).first()
-        # StripeAccountテーブルに情報がない場合、入力値エラー
+        # Exchangeコントラクトに情報がない場合、入力値エラー
         if seller is None:
             description = 'Seller not found.'
             raise InvalidParameterError(description=description)
@@ -506,27 +540,29 @@ class Charge(BaseResource):
         self.on_success(res, receipt_url)
 
     @staticmethod
-    def exchange_contracts(product):
-        if product == "StraigtBond":
+    def exchange_contracts(exchange_address):
+        if exchange_address == to_checksum_address(os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')):
             ExchangeContract = Contract.get_contract(
                 'IbetStraightBondExchange',
-                to_checksum_address(os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+                exchange_address
             )
 
-        elif product == "Membership":
+        elif exchange_address == to_checksum_address(os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')):
             ExchangeContract = Contract.get_contract(
                 'IbetMembershipExchange',
-                to_checksum_address(os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
+                exchange_address
             )
 
-        elif product == "Coupon":
+        elif exchange_address == to_checksum_address(os.environ.get('IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS')):
             ExchangeContract = Contract.get_contract(
                 'IbetCouponExchange',
-                os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+                exchange_address
             )
+        else:
+            description = 'ExchangeAddress ' + exchange_address + ' is invalid.'
+            raise InvalidParameterError(description=description)
 
         return ExchangeContract
-
 
     @staticmethod
     def validate(req):

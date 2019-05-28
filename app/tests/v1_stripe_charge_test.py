@@ -13,10 +13,10 @@ class TestV1StripeCharge():
     private_key_1 = "0000000000000000000000000000000000000000000000000000000000000001"
     api_key = config.STRIPE_SECRET
 
-    order_id = 21
-    agreement_id = 21
+    order_id = 23
+    agreement_id = 23
     amount = 2000
-    exchange_address = "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e56"
+    exchange_address = "0x476Bd2837d42868C4ddf355841602d3A792d4dbC"
 
     # ※テストではない
     # ヘッダー（Signature）作成
@@ -54,7 +54,7 @@ class TestV1StripeCharge():
         agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
         agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
         agreement.amount = self.amount
-        agreement.status = AgreementStatus.PENDING.value
+        agreement.status = AgreementStatus.DONE.value
         session.add(agreement)
 
         stripe_account = StripeAccount()
