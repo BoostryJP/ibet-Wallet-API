@@ -33,7 +33,9 @@ class TestV1MembershipMyTokens:
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
             'memo': 'メモ',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -74,7 +76,9 @@ class TestV1MembershipMyTokens:
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
             'memo': 'メモ',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -119,7 +123,9 @@ class TestV1MembershipMyTokens:
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
             'memo': 'メモ',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション①＞
@@ -219,7 +225,9 @@ class TestV1MembershipMyTokens:
                     'url': ''
                 }],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
             'commitment': 0
@@ -287,7 +295,9 @@ class TestV1MembershipMyTokens:
                     'url': ''
                 }],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 50,
             'commitment': 50

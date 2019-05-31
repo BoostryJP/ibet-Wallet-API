@@ -120,18 +120,18 @@ class Contracts(BaseResource):
 
                 interestPaymentDate_string = TokenContract.functions.interestPaymentDate().call()
 
-                interestPaymentDate1 = ''
-                interestPaymentDate2 = ''
-                interestPaymentDate3 = ''
-                interestPaymentDate4 = ''
-                interestPaymentDate5 = ''
-                interestPaymentDate6 = ''
-                interestPaymentDate7 = ''
-                interestPaymentDate8 = ''
-                interestPaymentDate9 = ''
-                interestPaymentDate10 = ''
-                interestPaymentDate11 = ''
-                interestPaymentDate12 = ''
+                interest_payment_date1 = ''
+                interest_payment_date2 = ''
+                interest_payment_date3 = ''
+                interest_payment_date4 = ''
+                interest_payment_date5 = ''
+                interest_payment_date6 = ''
+                interest_payment_date7 = ''
+                interest_payment_date8 = ''
+                interest_payment_date9 = ''
+                interest_payment_date10 = ''
+                interest_payment_date11 = ''
+                interest_payment_date12 = ''
 
                 try:
                     interestPaymentDate = json.loads(
@@ -172,6 +172,8 @@ class Contracts(BaseResource):
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
 
                 # 企業リストから、企業名とRSA鍵を取得する
                 company_name = ''
@@ -221,6 +223,8 @@ class Contracts(BaseResource):
                 bondtoken.certification = certification
                 bondtoken.payment_method_credit_card = available_token.payment_method_credit_card
                 bondtoken.payment_method_bank = available_token.payment_method_bank
+                bondtoken.contact_information = contact_information
+                bondtoken.privacy_policy = privacy_policy
                 bondtoken = bondtoken.__dict__
                 bondtoken['id'] = token_id
 
@@ -359,13 +363,13 @@ class MembershipContracts(BaseResource):
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
-
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
-
                 initial_offering_status = \
                     TokenContract.functions.initialOfferingStatus().call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
 
                 # 企業リストから、企業名とRSA鍵を取得する
                 company_name = ''
@@ -398,6 +402,8 @@ class MembershipContracts(BaseResource):
                     ]
                 membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card
                 membershiptoken.payment_method_bank = available_token.payment_method_bank
+                membershiptoken.contact_information = contact_information
+                membershiptoken.privacy_policy = privacy_policy
                 membershiptoken = membershiptoken.__dict__
                 membershiptoken['id'] = token_id
 
@@ -540,13 +546,13 @@ class CouponContracts(BaseResource):
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
-
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
-
                 initial_offering_status = \
                     TokenContract.functions.initialOfferingStatus().call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
 
                 # 企業リストから、企業名とRSA鍵を取得する
                 company_name = ''
@@ -578,6 +584,8 @@ class CouponContracts(BaseResource):
                     ]
                 coupontoken.payment_method_credit_card = available_token.payment_method_credit_card
                 coupontoken.payment_method_bank = available_token.payment_method_bank
+                coupontoken.contact_information = contact_information
+                coupontoken.privacy_policy = privacy_policy
                 coupontoken = coupontoken.__dict__
                 coupontoken['id'] = token_id
 

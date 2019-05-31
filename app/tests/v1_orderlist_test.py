@@ -35,7 +35,9 @@ class TestV1OrderList_Bond():
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'memo': 'メモ'
+            'memo': 'メモ',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
         return attribute
 
@@ -223,7 +225,9 @@ class TestV1OrderList_Bond():
                 }],
                 'certification': [],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'order': {
                 'order_id': order_id,
@@ -314,7 +318,9 @@ class TestV1OrderList_Bond():
                 }],
                 'certification': [],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'agreement': {
                 'exchange_address': bond_exchange['address'],
@@ -410,7 +416,9 @@ class TestV1OrderList_Bond():
                 }],
                 'certification': [],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'agreement': {
                 'exchange_address': bond_exchange['address'],
@@ -540,7 +548,9 @@ class TestV1OrderList_Membership():
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
             'memo': 'メモ',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
         return attribute
 
@@ -688,7 +698,9 @@ class TestV1OrderList_Membership():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'order': {
                 'order_id': order_id,
@@ -765,7 +777,9 @@ class TestV1OrderList_Membership():
                     'url': ''
                 }],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'agreement': {
                 'exchange_address': membership_exchange['address'],
@@ -838,7 +852,9 @@ class TestV1OrderList_Membership():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'agreement': {
                 'exchange_address': membership_exchange['address'],
@@ -968,7 +984,9 @@ class TestV1OrderList_Coupon():
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
         return attribute
 
@@ -1113,7 +1131,9 @@ class TestV1OrderList_Coupon():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'order': {
                 'order_id': order_id,
@@ -1184,7 +1204,9 @@ class TestV1OrderList_Coupon():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'agreement': {
                 'exchange_address': coupon_exchange['address'],
@@ -1257,7 +1279,9 @@ class TestV1OrderList_Coupon():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': False,
-                'payment_method_bank': False
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'agreement': {
                 'exchange_address': coupon_exchange['address'],

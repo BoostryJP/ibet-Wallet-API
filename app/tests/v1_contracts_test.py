@@ -51,7 +51,9 @@ class TestV1StraightBondContracts():
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'memo': 'メモ'
+            'memo': 'メモ',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
         return attribute
 
@@ -134,7 +136,9 @@ class TestV1StraightBondContracts():
             ],
             'certification': [],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -209,7 +213,9 @@ class TestV1StraightBondContracts():
             }],
             'certification': [],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -251,7 +257,9 @@ class TestV1StraightBondContracts():
             }],
             'certification': [],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -327,7 +335,9 @@ class TestV1StraightBondContracts():
             }],
             'certification': [],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -369,7 +379,9 @@ class TestV1StraightBondContracts():
             }],
             'certification': [],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -445,7 +457,9 @@ class TestV1StraightBondContracts():
             }],
             'certification': [],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -521,7 +535,9 @@ class TestV1StraightBondContracts():
             }],
             'certification': [],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -681,7 +697,9 @@ class TestV1MembershipContracts():
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
             'memo': 'メモ',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
         return attribute
 
@@ -751,7 +769,9 @@ class TestV1MembershipContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }
         ]
 
@@ -812,7 +832,9 @@ class TestV1MembershipContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -836,7 +858,9 @@ class TestV1MembershipContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }
         ]
 
@@ -897,7 +921,9 @@ class TestV1MembershipContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -921,7 +947,9 @@ class TestV1MembershipContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }
         ]
 
@@ -981,7 +1009,9 @@ class TestV1MembershipContracts():
                 {'id': 3, 'url': ''}
             ],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -1040,7 +1070,9 @@ class TestV1MembershipContracts():
                 {'id': 3, 'url': ''}
             ],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -1236,7 +1268,9 @@ class TestV1CouponContracts():
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
         return attribute
 
@@ -1306,7 +1340,9 @@ class TestV1CouponContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }
         ]
 
@@ -1367,7 +1403,9 @@ class TestV1CouponContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -1391,7 +1429,9 @@ class TestV1CouponContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }
         ]
 
@@ -1452,7 +1492,9 @@ class TestV1CouponContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -1476,7 +1518,9 @@ class TestV1CouponContracts():
                     {'id': 3, 'url': ''}
                 ],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             }
         ]
 
@@ -1536,7 +1580,9 @@ class TestV1CouponContracts():
                 {'id': 3, 'url': ''}
             ],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200
@@ -1595,7 +1641,9 @@ class TestV1CouponContracts():
                 {'id': 3, 'url': ''}
             ],
             'payment_method_credit_card': True,
-            'payment_method_bank': True
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー'
         }]
 
         assert resp.status_code == 200

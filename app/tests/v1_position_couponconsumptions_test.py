@@ -27,7 +27,9 @@ class TestV1CouponConsumptions():
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -60,7 +62,9 @@ class TestV1CouponConsumptions():
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞

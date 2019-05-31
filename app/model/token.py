@@ -12,6 +12,8 @@ class TokenBase():
     image_url: object
     payment_method_credit_card: bool
     payment_method_bank: bool
+    contact_information: str
+    privacy_policy: str
 
 class BondToken(TokenBase):
     face_value: int

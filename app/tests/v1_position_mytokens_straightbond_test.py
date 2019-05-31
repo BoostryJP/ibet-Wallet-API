@@ -48,7 +48,9 @@ class TestV1StraightBondMyTokens:
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'memo': 'メモ'
+            'memo': 'メモ',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -154,7 +156,9 @@ class TestV1StraightBondMyTokens:
                 }],
                 'certification': [],
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
             'commitment': 0
