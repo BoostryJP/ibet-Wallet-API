@@ -154,6 +154,9 @@ class MyTokens(BaseResource):
                             image_url_2 = BondTokenContract.functions.getImageURL(1).call()
                             image_url_3 = BondTokenContract.functions.getImageURL(2).call()
                             owner_address = BondTokenContract.functions.owner().call()
+                            contact_information = BondTokenContract.functions.contactInformation().call()
+                            privacy_policy = BondTokenContract.functions.privacyPolicy().call()
+
                             company_name, rsa_publickey = \
                                 MyTokens.get_company_name(company_list, owner_address)
 
@@ -196,6 +199,9 @@ class MyTokens(BaseResource):
                             bondtoken.certification = certification
                             bondtoken.payment_method_credit_card = token.payment_method_credit_card
                             bondtoken.payment_method_bank = token.payment_method_bank
+                            bondtoken.contact_information = contact_information
+                            bondtoken.privacy_policy = privacy_policy
+
                             position_list.append({
                                 'token': bondtoken.__dict__,
                                 'balance': balance,
@@ -319,6 +325,9 @@ class MembershipMyTokens(BaseResource):
                             image_url_2 = TokenContract.functions.getImageURL(1).call()
                             image_url_3 = TokenContract.functions.getImageURL(2).call()
                             owner_address = TokenContract.functions.owner().call()
+                            contact_information = TokenContract.functions.contactInformation().call()
+                            privacy_policy = TokenContract.functions.privacyPolicy().call()
+
                             company_name, rsa_publickey = MembershipMyTokens. \
                                 get_company_name(company_list, owner_address)
 
@@ -343,6 +352,9 @@ class MembershipMyTokens(BaseResource):
                             ]
                             membershiptoken.payment_method_credit_card = token.payment_method_credit_card
                             membershiptoken.payment_method_bank = token.payment_method_bank
+                            membershiptoken.contact_information = contact_information
+                            membershiptoken.privacy_policy = privacy_policy
+
                             position_list.append({
                                 'token': membershiptoken.__dict__,
                                 'balance': balance,
@@ -465,6 +477,8 @@ class CouponMyTokens(BaseResource):
                             image_url_2 = CouponTokenContract.functions.getImageURL(1).call()
                             image_url_3 = CouponTokenContract.functions.getImageURL(2).call()
                             status = CouponTokenContract.functions.status().call()
+                            contact_information = CouponTokenContract.functions.contactInformation().call()
+                            privacy_policy = CouponTokenContract.functions.privacyPolicy().call()
 
                             coupontoken = CouponToken()
                             coupontoken.token_address = token_address
@@ -488,6 +502,9 @@ class CouponMyTokens(BaseResource):
                             coupontoken.status = status
                             coupontoken.payment_method_credit_card = token.payment_method_credit_card
                             coupontoken.payment_method_bank = token.payment_method_bank
+                            coupontoken.contact_information = contact_information
+                            coupontoken.privacy_policy = privacy_policy
+
                             position_list.append({
                                 'token': coupontoken.__dict__,
                                 'balance': balance,

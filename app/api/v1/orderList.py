@@ -275,6 +275,8 @@ class OrderList(BaseResource):
                 image_url_2 = TokenContract.functions.getImageURL(1).call()
                 image_url_3 = TokenContract.functions.getImageURL(2).call()
                 owner_address = TokenContract.functions.owner().call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
 
                 # 企業リストから、企業名を取得する
                 company_name = ''
@@ -326,6 +328,8 @@ class OrderList(BaseResource):
                 # 許可済みトークンに存在しない場合は、決済手段はFalseとする
                 bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
                 bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+                bondtoken.contact_information = contact_information
+                bondtoken.privacy_policy = privacy_policy
 
                 order_list.append({
                     'token':bondtoken.__dict__,
@@ -379,10 +383,11 @@ class OrderList(BaseResource):
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
-
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
 
                 owner_address = TokenContract.functions.owner().call()
 
@@ -418,6 +423,9 @@ class OrderList(BaseResource):
                         ]
                 membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
                 membershiptoken.payment_method_bank = available_token.payment_method_bank if  hasattr( available_token, "payment_method_bank" )  else False
+                membershiptoken.contact_information = contact_information
+                membershiptoken.privacy_policy = privacy_policy
+
                 order_list.append({
                     'token': membershiptoken.__dict__,
                     'order':{
@@ -470,10 +478,11 @@ class OrderList(BaseResource):
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
-
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
 
                 owner_address = TokenContract.functions.owner().call()
 
@@ -509,6 +518,9 @@ class OrderList(BaseResource):
                         ]
                 coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
                 coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+                coupontoken.contact_information = contact_information
+                coupontoken.privacy_policy = privacy_policy
+
                 order_list.append({
                     'token':coupontoken.__dict__,
                     'order':{
@@ -611,6 +623,8 @@ class OrderList(BaseResource):
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -663,6 +677,8 @@ class OrderList(BaseResource):
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            bondtoken.contact_information = contact_information
+            bondtoken.privacy_policy = privacy_policy
 
             settlement_list.append({
                 'token':bondtoken.__dict__,
@@ -768,6 +784,8 @@ class OrderList(BaseResource):
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -819,6 +837,8 @@ class OrderList(BaseResource):
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            bondtoken.contact_information = contact_information
+            bondtoken.privacy_policy = privacy_policy
 
             settlement_list.append({
                 'token':bondtoken.__dict__,
@@ -872,12 +892,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -910,6 +930,9 @@ class OrderList(BaseResource):
                     ]
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            membershiptoken.contact_information = contact_information
+            membershiptoken.privacy_policy = privacy_policy
+
             settlement_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -962,12 +985,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1000,6 +1023,9 @@ class OrderList(BaseResource):
                     ]
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            membershiptoken.contact_information = contact_information
+            membershiptoken.privacy_policy = privacy_policy
+
             settlement_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -1052,12 +1078,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1091,6 +1117,9 @@ class OrderList(BaseResource):
                     ]
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            coupontoken.contact_information = contact_information
+            coupontoken.privacy_policy = privacy_policy
+
             settlement_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{
@@ -1143,12 +1172,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1182,6 +1211,9 @@ class OrderList(BaseResource):
                     ]
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            coupontoken.contact_information = contact_information
+            coupontoken.privacy_policy = privacy_policy
+
             settlement_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{
@@ -1286,6 +1318,8 @@ class OrderList(BaseResource):
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1338,6 +1372,8 @@ class OrderList(BaseResource):
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            bondtoken.contact_information = contact_information
+            bondtoken.privacy_policy = privacy_policy
 
             complete_list.append({
                 'token':bondtoken.__dict__,
@@ -1442,6 +1478,8 @@ class OrderList(BaseResource):
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1494,6 +1532,8 @@ class OrderList(BaseResource):
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             bondtoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            bondtoken.contact_information = contact_information
+            bondtoken.privacy_policy = privacy_policy
 
             complete_list.append({
                 'token':bondtoken.__dict__,
@@ -1546,12 +1586,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1584,6 +1624,9 @@ class OrderList(BaseResource):
                     ]
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            membershiptoken.contact_information = contact_information
+            membershiptoken.privacy_policy = privacy_policy
+
             complete_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -1635,12 +1678,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1673,6 +1716,9 @@ class OrderList(BaseResource):
                     ]
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            membershiptoken.contact_information = contact_information
+            membershiptoken.privacy_policy = privacy_policy
+
             complete_list.append({
                 'token':membershiptoken.__dict__,
                 'agreement':{
@@ -1724,12 +1770,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1763,6 +1809,9 @@ class OrderList(BaseResource):
                     ]
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            coupontoken.contact_information = contact_information
+            coupontoken.privacy_policy = privacy_policy
+
             complete_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{
@@ -1814,12 +1863,12 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
-
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
-
             owner_address = TokenContract.functions.owner().call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -1853,6 +1902,9 @@ class OrderList(BaseResource):
                     ]
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card if hasattr( available_token, "payment_method_credit_card" ) else False
             coupontoken.payment_method_bank = available_token.payment_method_bank if hasattr( available_token, "payment_method_bank" ) else False
+            coupontoken.contact_information = contact_information
+            coupontoken.privacy_policy = privacy_policy
+
             complete_list.append({
                 'token':coupontoken.__dict__,
                 'agreement':{

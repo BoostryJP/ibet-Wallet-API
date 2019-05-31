@@ -24,7 +24,9 @@ class TestV1CouponMyTokens:
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -51,7 +53,9 @@ class TestV1CouponMyTokens:
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -83,7 +87,9 @@ class TestV1CouponMyTokens:
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -124,7 +130,9 @@ class TestV1CouponMyTokens:
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション＞
@@ -169,7 +177,9 @@ class TestV1CouponMyTokens:
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # ＜発行体オペレーション①＞
@@ -270,7 +280,9 @@ class TestV1CouponMyTokens:
                 }],
                 'status': True,
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 10,
             'commitment': 0,
@@ -339,7 +351,9 @@ class TestV1CouponMyTokens:
                 }],
                 'status': False,
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 10,
             'commitment': 0,
@@ -407,7 +421,9 @@ class TestV1CouponMyTokens:
                 }],
                 'status': True,
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
             'commitment': 0,
@@ -474,7 +490,9 @@ class TestV1CouponMyTokens:
                 }],
                 'status': True,
                 'payment_method_credit_card': True,
-                'payment_method_bank': True
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 50,
             'commitment': 50,

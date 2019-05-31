@@ -45,7 +45,9 @@ class TestV1StraightBondTick():
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'memo': 'メモ'
+            'memo': 'メモ',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # 発行体オペレーション
@@ -211,7 +213,9 @@ class TestV1MembershipTick():
             'returnDetails': 'リターン詳細',
             'expirationDate': '20191231',
             'memo': 'メモ',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # 発行体オペレーション
@@ -372,7 +376,9 @@ class TestV1CouponTick():
             'returnDetails': 'リターン詳細',
             'memo': 'クーポンメモ欄',
             'expirationDate': '20191231',
-            'transferable': True
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー'
         }
 
         # 発行体オペレーション
