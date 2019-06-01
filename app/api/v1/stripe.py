@@ -18,8 +18,8 @@ from app.utils.hooks import VerifySignature
 from app.model import StripeCharge, StripeAccount, StripeAccountStatus, Agreement, StripeChargeStatus, AgreementStatus
 from app import config
 
-
 import stripe
+
 stripe.api_key = config.STRIPE_SECRET
 
 LOG = log.get_logger()
@@ -29,9 +29,9 @@ LOG = log.get_logger()
 # [Stripe]Connected Account(ウォレット利用者)登録
 # ------------------------------
 class CreateAccount(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Stripe/CreateAccount/
-    '''
+    """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Stripe.CreateAccount')
@@ -47,8 +47,8 @@ class CreateAccount(BaseResource):
         try:
             if raw is not None and raw.account_id != "":
                 stripe.Account.modify(
-                  raw.account_id,
-                  account_token=request_json['account_token']
+                    raw.account_id,
+                    account_token=request_json['account_token']
                 )
                 response_data = {'stripe_account_id': raw.account_id}
             elif raw is not None and raw.account_id == "":
@@ -67,7 +67,6 @@ class CreateAccount(BaseResource):
                     country='JP',
                     account_token=request_json['account_token']
                 )
-                account_id = account.id
                 # DBに新規インサートする処理
                 stripe_account = StripeAccount()
                 stripe_account.account_address = address
@@ -78,27 +77,29 @@ class CreateAccount(BaseResource):
                 response_data = {'stripe_account_id': account.id}
         except stripe.error.CardError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.RateLimitError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
 
         self.on_success(res, response_data)
@@ -131,9 +132,9 @@ class CreateAccount(BaseResource):
 # [Stripe]External Account(銀行口座)登録
 # ------------------------------
 class CreateExternalAccount(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Stripe/CreateExternalAccount
-    '''
+    """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Stripe.CreateExternalAccount')
@@ -143,7 +144,7 @@ class CreateExternalAccount(BaseResource):
 
         # リクエストから情報を抽出
         address = to_checksum_address(req.context["address"])
-        
+
         # アカウントアドレスに紐づくConnectアカウントの有無をDBで確認
         # （アカウントアドレスは重複していない前提）
         session = req.context['session']
@@ -153,8 +154,8 @@ class CreateExternalAccount(BaseResource):
         try:
             if raw is not None and raw.account_id != "":
                 stripe.Account.modify(
-                  raw.account_id,
-                  external_account=request_json['bank_token']
+                    raw.account_id,
+                    external_account=request_json['bank_token']
                 )
                 response_data = {'stripe_account_id': raw.account_id}
             elif raw is not None and raw.account_id == "":
@@ -173,7 +174,6 @@ class CreateExternalAccount(BaseResource):
                     country='JP',
                     external_account=request_json['bank_token']
                 )
-                account_id = account.id
                 # DBに新規インサートする処理
                 stripe_account = StripeAccount()
                 stripe_account.account_address = address
@@ -184,27 +184,29 @@ class CreateExternalAccount(BaseResource):
                 response_data = {'stripe_account_id': account.id}
         except stripe.error.CardError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.RateLimitError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
 
         self.on_success(res, response_data)
@@ -237,22 +239,22 @@ class CreateExternalAccount(BaseResource):
 # [Stripe]Connected Accountの取得
 # ------------------------------
 class GetAccountInfo(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Stripe/GetAccountInfo/
-    '''
+    """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Stripe.GetAccountInfo')
 
         # 入力値チェック
-        request_json = GetAccountInfo.validate(req)
+        GetAccountInfo.validate(req)
 
         # リクエストから情報を抽出
         address = to_checksum_address(req.context['address'])
 
         # アカウント情報を取得
         session = req.context["session"]
-        stripe_account_info_list = {}
+        stripe_account_info_list = []
         account_info = session.query(StripeAccount).filter(StripeAccount.exchange_address == address).all()[0]
         stripe_account_info_list.append(account_info)
 
@@ -286,9 +288,9 @@ class GetAccountInfo(BaseResource):
 # [Stripe]Customer(顧客)とカード情報の登録
 # ------------------------------
 class CreateCustomer(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Stripe/CreateCustomer/
-    '''
+    """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Stripe.CreateCustomer')
@@ -338,27 +340,29 @@ class CreateCustomer(BaseResource):
                 response_data = {'stripe_customer_id': customer_id}
         except stripe.error.CardError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.RateLimitError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
 
         self.on_success(res, response_data)
@@ -390,9 +394,9 @@ class CreateCustomer(BaseResource):
 # [Stripe]課金
 # ------------------------------
 class Charge(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Stripe/Charge/
-    '''
+    """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Stripe.Charge')
@@ -414,7 +418,7 @@ class Charge(BaseResource):
         charge_amount = amount - exchange_fee
 
         # 約定テーブルから情報を取得
-        agreement = session.query(Agreement).\
+        agreement = session.query(Agreement). \
             filter(Agreement.order_id == order_id). \
             filter(Agreement.agreement_id == agreement_id). \
             filter(Agreement.status == AgreementStatus.DONE.value). \
@@ -436,7 +440,7 @@ class Charge(BaseResource):
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから買手の情報を取得
-        buyer = session.query(StripeAccount).\
+        buyer = session.query(StripeAccount). \
             filter(StripeAccount.account_address == buyer_address).first()
         # StripeAccountテーブルに情報がない場合、入力値エラー
         if buyer is None:
@@ -514,32 +518,34 @@ class Charge(BaseResource):
         except stripe.error.CardError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.RateLimitError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
         except Exception as err:
             # Charge状態を[ERROR]ステータスに更新する
@@ -646,7 +652,8 @@ class Charge(BaseResource):
         try:
             # キューの名前を指定してインスタンスを取得
             queue = sqs.get_queue_by_name(QueueName=name)
-        except:
+        except Exception as err:
+            LOG.error(err)
             # 指定したキューがない場合はキューを作成
             queue = sqs.create_queue(QueueName=name)
 
@@ -675,9 +682,9 @@ class Charge(BaseResource):
 # [Stripe]Connected Accountの本人確認ステータスの取得
 # ------------------------------
 class AccountStatus(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Stripe/AccountStatus
-    '''
+    """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Stripe.AccountStatus')
@@ -693,7 +700,7 @@ class AccountStatus(BaseResource):
                 verified_status = 'NONE'
             else:
                 response = stripe.Account.retrieve(
-                  raw.account_id
+                    raw.account_id
                 )
                 if response["individual"]["verification"]["status"] == StripeAccountStatus.UNVERIFIED.value:
                     verified_status = 'UNVERIFIED'
@@ -703,27 +710,29 @@ class AccountStatus(BaseResource):
                     verified_status = 'VERIFIED'
         except stripe.error.CardError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.RateLimitError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
-            err  = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'), title=err.get('message'))
+            err = body.get('error', {})
+            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+                                    title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
             body = e.json_body
-            err  = body.get('error', {})
+            err = body.get('error', {})
             raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
         response_json = {
             'verified_status': verified_status
@@ -735,9 +744,9 @@ class AccountStatus(BaseResource):
 # [Stripe]課金状態取得
 # ------------------------------
 class ChargeStatus(BaseResource):
-    '''
+    """
     Handle for endpoint: /v1/Stripe/ChargeStatus
-    '''
+    """
     def on_post(self, req, res):
         LOG.info('v1.Stripe.ChargeStatus')
         session = req.context["session"]
@@ -751,10 +760,10 @@ class ChargeStatus(BaseResource):
         agreement_id = request_json['agreement_id']
 
         # Charge（課金）状態の取得
-        stripe_charge = session.query(StripeCharge).\
-            filter(StripeCharge.exchange_address == exchange_address).\
-            filter(StripeCharge.order_id == order_id).\
-            filter(StripeCharge.agreement_id == agreement_id).\
+        stripe_charge = session.query(StripeCharge). \
+            filter(StripeCharge.exchange_address == exchange_address). \
+            filter(StripeCharge.order_id == order_id). \
+            filter(StripeCharge.agreement_id == agreement_id). \
             first()
 
         if stripe_charge is None:
@@ -791,14 +800,14 @@ class ChargeStatus(BaseResource):
             'order_id': {
                 'type': 'integer',
                 'coerce': int,
-                'min':0,
+                'min': 0,
                 'required': True,
                 'nullable': False,
             },
             'agreement_id': {
                 'type': 'integer',
                 'coerce': int,
-                'min':0,
+                'min': 0,
                 'required': True,
                 'nullable': False,
             },
