@@ -152,7 +152,6 @@ class StreetAddress(BaseResource):
     Handle for endpoint: /v1/User/StreetAddress/{postal_code}
     '''
     def on_get(self, req, res, postal_code):
-        print(postal_code)
         LOG.info('v1.User.StreetAddress')
 
         postal_code = StreetAddress.validate(postal_code)

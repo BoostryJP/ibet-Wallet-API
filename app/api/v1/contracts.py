@@ -511,7 +511,6 @@ class CouponContracts(BaseResource):
                 owner_address = token[2],
                 available_token = available_tokens[i]
             )
-            print(token_detail)
             if token_detail != None:
                 token_list.append(token_detail)
 
