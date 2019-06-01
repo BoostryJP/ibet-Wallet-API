@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+import os
 import json
 import math
-
 import falcon
+import boto3
+
 from cerberus import Validator
 from web3 import Web3
 from eth_utils import to_checksum_address
 from app.contracts import Contract
-import boto3
 
 from app import log
 from app.api.common import BaseResource
@@ -17,10 +18,12 @@ from app.utils.hooks import VerifySignature
 from app.model import StripeCharge, StripeAccount, StripeAccountStatus, Agreement, StripeChargeStatus, AgreementStatus
 from app import config
 
+
 import stripe
 stripe.api_key = config.STRIPE_SECRET
 
 LOG = log.get_logger()
+
 
 # ------------------------------
 # [Stripe]Connected Account(ウォレット利用者)登録
@@ -412,11 +415,24 @@ class Charge(BaseResource):
 
         # 約定テーブルから情報を取得
         agreement = session.query(Agreement).\
-            filter(Agreement.order_id == order_id,
-                   Agreement.agreement_id == agreement_id).first()
-        # 約定テーブルに情報がない場合、入力値エラー
+            filter(Agreement.order_id == order_id). \
+            filter(Agreement.agreement_id == agreement_id). \
+            filter(Agreement.status == AgreementStatus.DONE.value). \
+            first()
+
+        # 約定情報がない場合、入力値エラー
         if agreement is None:
             description = 'Agreement not found.'
+            raise InvalidParameterError(description=description)
+
+        # Exchangeコントラクトから最新の約定キャンセル情報を取得
+        ExchangeContract = Charge.exchange_contracts(exchange_address)
+        _, _, _, canceled, _, _ = \
+            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+
+        # 約定情報がキャンセルされている時、入力値エラー
+        if canceled is True:
+            description = 'Canceled Agreement'
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから買手の情報を取得
@@ -427,7 +443,6 @@ class Charge(BaseResource):
             description = 'Buyer not found.'
             raise InvalidParameterError(description=description)
 
-        # StripeAccountテーブルから売手の情報を取得
         seller = session.query(StripeAccount). \
             filter(StripeAccount.account_address == agreement.seller_address).first()
         # StripeAccountテーブルに情報がない場合、入力値エラー
@@ -449,28 +464,31 @@ class Charge(BaseResource):
 
         if stripe_charge is not None:  # 既にオペレーションを1回以上実施している場合
             # 二重課金のチェック
-            #  - Charge状態が[PROCESSING]、[SUCCESS]の場合はエラー
-            #  - Charge状態が[ERROR]の場合は[PROCESSING]に更新（この時点でcommitする）
-            if stripe_charge.status == StripeChargeStatus.PROCESSING.value or \
-                    stripe_charge.status == StripeChargeStatus.SUCCESS.value:
-                raise DoubleChargeError(description='double charge')
-            elif stripe_charge.status == StripeChargeStatus.ERROR.value:
-                stripe_charge.status = StripeChargeStatus.PROCESSING.value
+            #  - Charge状態が[PENDING]、[SUCCESS]の場合はエラー
+            #  - Charge状態が[ERROR]の場合は[PENDING]に更新（この時点でcommitする）
+            if stripe_charge.status == StripeChargeStatus.PENDING.value or \
+                    stripe_charge.status == StripeChargeStatus.SUCCEEDED.value:
+                description = "Double charge"
+                raise DoubleChargeError(description=description)
+            elif stripe_charge.status == StripeChargeStatus.FAILED.value:
+                stripe_charge.status = StripeChargeStatus.PENDING.value
                 session.commit()
 
         else:  # オペレーション未実施の場合
             try:
-                # Charge状態が[PROCESSING]のレコードを作成（この時点でcommitする）
+                # Charge状態が[PENDING]のレコードを作成（この時点でcommitする）
                 stripe_charge = StripeCharge()
                 stripe_charge.exchange_address = exchange_address
                 stripe_charge.order_id = order_id
                 stripe_charge.agreement_id = agreement_id
-                stripe_charge.status = StripeChargeStatus.PROCESSING.value
+                stripe_charge.status = StripeChargeStatus.PENDING.value
                 session.add(stripe_charge)
                 session.commit()
-            except:  # 一意制約違反の場合
+            except Exception as err:  # 一意制約違反の場合
                 session.rollback()
-                raise DoubleChargeError(description='double charge')
+                LOG.error('Failed to Charge: %s', err)
+                description = "Double charge, Unique constraint violation."
+                raise DoubleChargeError(description=description)
 
         # 決済対象約定情報
         description_agreement = json.dumps({
@@ -525,13 +543,13 @@ class Charge(BaseResource):
             raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
         except Exception as err:
             # Charge状態を[ERROR]ステータスに更新する
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             LOG.error('Error: %s', err)
             raise AppError
 
         if charge.status != 'successful':
             # Charge状態を[ERROR]ステータスに更新する
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             raise InvalidCardError
 
         sqs_msg = {
@@ -548,10 +566,35 @@ class Charge(BaseResource):
             raise AppError
 
         # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
-        stripe_charge.status = StripeChargeStatus.SUCCESS.value
+        stripe_charge.status = StripeChargeStatus.SUCCEEDED.value
 
         receipt_url = {'receipt_url': charge['receipt_url']}
         self.on_success(res, receipt_url)
+
+    @staticmethod
+    def exchange_contracts(exchange_address):
+        if exchange_address == to_checksum_address(os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')):
+            ExchangeContract = Contract.get_contract(
+                'IbetStraightBondExchange',
+                exchange_address
+            )
+
+        elif exchange_address == to_checksum_address(os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')):
+            ExchangeContract = Contract.get_contract(
+                'IbetMembershipExchange',
+                exchange_address
+            )
+
+        elif exchange_address == to_checksum_address(os.environ.get('IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS')):
+            ExchangeContract = Contract.get_contract(
+                'IbetCouponExchange',
+                exchange_address
+            )
+        else:
+            description = 'ExchangeAddress ' + exchange_address + ' is invalid.'
+            raise InvalidParameterError(description=description)
+
+        return ExchangeContract
 
     @staticmethod
     def validate(req):
@@ -627,6 +670,7 @@ class Charge(BaseResource):
 
         return response
 
+
 # ------------------------------
 # [Stripe]Connected Accountの本人確認ステータスの取得
 # ------------------------------
@@ -685,6 +729,9 @@ class AccountStatus(BaseResource):
             'verified_status': verified_status
         }
         self.on_success(res, response_json)
+
+
+# ------------------------------
 # [Stripe]課金状態取得
 # ------------------------------
 class ChargeStatus(BaseResource):
