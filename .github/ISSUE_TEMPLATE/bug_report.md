@@ -1,9 +1,9 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: バグに関するレポート
 title: "[BUG]"
 labels: bug
-assignees: YoshihitoAso, kyken, OnePoke2
+assignees: kyken, OnePoke2, YoshihitoAso
 
 ---
 
