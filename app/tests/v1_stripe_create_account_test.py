@@ -1,4 +1,5 @@
-import json
+import time
+
 from falcon.util import json as util_json
 from app import config
 import stripe
@@ -45,6 +46,7 @@ class TestV1StripeCreateAccount():
                 'tos_shown_and_accepted': True,
             },
         )
+        time.sleep(5)
         resp = client.simulate_auth_post(
             self.apiurl,
             json = {"account_token": account_token.id},
