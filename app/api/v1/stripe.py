@@ -418,48 +418,48 @@ class Charge(BaseResource):
         charge_amount = amount - exchange_fee
 
         # 約定テーブルから情報を取得
+        #   DBにデータが存在しない場合、入力値エラーを返す
         agreement = session.query(Agreement). \
             filter(Agreement.order_id == order_id). \
             filter(Agreement.agreement_id == agreement_id). \
             filter(Agreement.status == AgreementStatus.DONE.value). \
             first()
-
-        # 約定情報がない場合、入力値エラー
         if agreement is None:
             description = 'Agreement not found.'
             raise InvalidParameterError(description=description)
 
-        # Exchangeコントラクトから最新の約定キャンセル情報を取得
+        # 金額チェック
+        if not request_json['amount'] == agreement.amount:
+            description = 'The amount ' + str(agreement.amount) + ' is invalid.'
+            raise InvalidParameterError(description=description)
+
+        # 約定状態のチェック
+        #   Exchangeコントラクトから最新の約定キャンセル情報を取得
+        #   キャンセル済みの場合、入力エラーを返す
         ExchangeContract = Charge.exchange_contracts(exchange_address)
         _, _, _, canceled, _, _ = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-
-        # 約定情報がキャンセルされている時、入力値エラー
         if canceled is True:
             description = 'Canceled Agreement'
             raise InvalidParameterError(description=description)
 
         # StripeAccountテーブルから買手の情報を取得
+        #   DBにデータが存在しない場合、入力値エラー
         buyer = session.query(StripeAccount). \
             filter(StripeAccount.account_address == buyer_address).first()
-        # StripeAccountテーブルに情報がない場合、入力値エラー
         if buyer is None:
             description = 'Buyer not found.'
             raise InvalidParameterError(description=description)
 
+        # StripeAccountテーブルから売手の情報を取得
+        #   DBにデータが存在しない場合、入力値エラー
         seller = session.query(StripeAccount). \
             filter(StripeAccount.account_address == agreement.seller_address).first()
-        # StripeAccountテーブルに情報がない場合、入力値エラー
         if seller is None:
             description = 'Seller not found.'
             raise InvalidParameterError(description=description)
 
-        # リクエストの金額が正しいか確認
-        if not request_json['amount'] == agreement.amount:
-            description = 'The amount ' + str(agreement.amount) + ' is invalid.'
-            raise InvalidParameterError(description=description)
-
-        # Charge（課金）状態の取得
+        # Charge（課金）状態のチェック
         stripe_charge = session.query(StripeCharge). \
             filter(StripeCharge.exchange_address == exchange_address). \
             filter(StripeCharge.order_id == order_id). \
@@ -477,7 +477,6 @@ class Charge(BaseResource):
             elif stripe_charge.status == StripeChargeStatus.FAILED.value:
                 stripe_charge.status = StripeChargeStatus.PENDING.value
                 session.commit()
-
         else:  # オペレーション未実施の場合
             try:
                 # Charge状態が[PENDING]のレコードを作成（この時点でcommitする）

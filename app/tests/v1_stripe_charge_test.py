@@ -1,12 +1,14 @@
-import json
+import os
 from falcon.util import json as util_json
-from app import config
-from app.model import StripeCharge, StripeAccount, Agreement, StripeChargeStatus, AgreementStatus
+
+from app.model import Agreement, AgreementStatus
+from .contract_modules import *
+
 import stripe
 stripe.api_key = config.STRIPE_SECRET
 
 
-class TestV1StripeCharge():
+class TestV1StripeCharge:
     # テスト対象API
     apiurl = "/v1/Stripe/Charge"
     default_account_address = "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51"
@@ -21,13 +23,13 @@ class TestV1StripeCharge():
     # ※テストではない
     # ヘッダー（Signature）作成
     def test_generate_signature(self, client, session):
-        json = {
-            "order_id": self.order_id,
-            "agreement_id": self.agreement_id,
-            "amount": self.amount,
-            "exchange_address": self.exchange_address
+        request_json = {
+            "order_id": 1,
+            "agreement_id": 2,
+            "amount": 100,
+            "exchange_address": "0xF56a5c03A2c1b2f929e9f41F34F043706f23A9E9"
         }
-        canonical_body = util_json.dumps(json, ensure_ascii=False)
+        canonical_body = util_json.dumps(request_json, ensure_ascii=False)
         print("---- canonical_body ----")
         print(canonical_body)
 
@@ -40,49 +42,6 @@ class TestV1StripeCharge():
         )
         print("---- signature ----")
         print(signature)
-
-    # 正常系1： Chargeの作成に成功
-    def test_normal(self, client, session):
-        buyer_address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
-
-        # Agreementの情報を挿入
-        agreement = Agreement()
-        agreement.order_id = self.order_id
-        agreement.agreement_id = self.agreement_id
-        agreement.exchange_address = self.exchange_address
-        agreement.unique_order_id = self.exchange_address + '_' + str(1)
-        agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        agreement.amount = self.amount
-        agreement.status = AgreementStatus.DONE.value
-        session.add(agreement)
-
-        stripe_account = StripeAccount()
-        stripe_account.account_address = buyer_address
-        stripe_account.account_id = "acct_1EaHRtHYCG1MwtWK"
-        stripe_account.customer_id = "cus_F4lJXTbs7ZjwKs"
-        session.add(stripe_account)
-
-        stripe_account = StripeAccount()
-        stripe_account.account_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        stripe_account.account_id = "acct_1EaHUYCJ5LJ0Mtg3"
-        stripe_account.customer_id = "cus_F4lGTQ4Vrvfgi1"
-        session.add(stripe_account)
-
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            json={
-                "order_id": self.order_id,
-                "agreement_id": self.agreement_id,
-                "amount": self.amount,
-                "exchange_address": self.exchange_address
-            },
-            private_key=TestV1StripeCharge.private_key_1
-        )
-
-        # test mode では、ダミーのクレカ情報で登録しているため、クレカエラーが出るが、「課金」は正しく作成されている
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {'code': 60, 'message': 'Invalid Credit Card'}
 
     # エラー系1-1
     # 必須項目なし (order_id)
@@ -145,7 +104,10 @@ class TestV1StripeCharge():
         assert resp.status_code == 400
         assert resp.json["meta"] == {
             'code': 88,
-            'description': {'agreement_id': 'required field','order_id': 'must be of integer type'},
+            'description': {
+                'agreement_id': 'required field',
+                'order_id': 'must be of integer type'
+            },
             'message': 'Invalid Parameter'
         }
 
@@ -195,6 +157,20 @@ class TestV1StripeCharge():
     # エラー系3-2
     # amountの値が不正
     def test_stripe_charge_error_3_2(self, client, session):
+        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = self.exchange_address
+
+        # Agreementの情報を挿入
+        agreement = Agreement()
+        agreement.order_id = self.order_id
+        agreement.agreement_id = self.agreement_id
+        agreement.exchange_address = self.exchange_address
+        agreement.unique_order_id = self.exchange_address + '_' + str(1)
+        agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        agreement.amount = self.amount
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
         resp = client.simulate_auth_post(
             self.apiurl,
             json={
