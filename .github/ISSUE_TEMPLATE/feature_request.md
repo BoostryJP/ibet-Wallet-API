@@ -3,7 +3,7 @@ name: Feature request
 about: プロダクトの改善提案
 title: "[FEATURE]"
 labels: feature
-assignees: YoshihitoAso, kyken, OnePoke2
+assignees: kyken, OnePoke2, YoshihitoAso
 
 ---
 
@@ -18,4 +18,4 @@ assignees: YoshihitoAso, kyken, OnePoke2
 上記の他に代替案がある場合は記載してください。
 
 **その他**
-その他
+その他の特記事項がある場合は記載してください。

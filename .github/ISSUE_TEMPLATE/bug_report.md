@@ -20,4 +20,4 @@ assignees: kyken, OnePoke2, YoshihitoAso
 スクリーンショットがあれば添付してください。
 
 **その他**
-その他
+その他の特記事項がある場合は記載してください。
