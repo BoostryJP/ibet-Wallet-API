@@ -33,6 +33,7 @@ class TestV1StripeCreateAccount():
         print("---- signature ----")
         print(signature)
 
+    '''
     # 正常系1： Connectアカウントの登録に成功
     # StripeAPIによる使い捨てトークンの発行を行い、アカウントを作成する
     def test_normal(self, client, session):
@@ -55,6 +56,7 @@ class TestV1StripeCreateAccount():
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+    '''
 
     # エラー系1-1
     # 必須項目なし (account_token)
