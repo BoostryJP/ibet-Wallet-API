@@ -425,13 +425,12 @@ class Charge(BaseResource):
             filter(Agreement.status == AgreementStatus.DONE.value). \
             first()
         if agreement is None:
-            description = 'Agreement not found.'
-            raise InvalidParameterError(description=description)
+            raise InvalidParameterError
 
         # 金額チェック
         if not request_json['amount'] == agreement.amount:
             description = 'The amount ' + str(agreement.amount) + ' is invalid.'
-            raise InvalidParameterError(description=description)
+            raise InvalidParameterError
 
         # 約定状態のチェック
         #   Exchangeコントラクトから最新の約定キャンセル情報を取得
@@ -440,24 +439,21 @@ class Charge(BaseResource):
         _, _, _, canceled, _, _ = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
         if canceled is True:
-            description = 'Canceled Agreement'
-            raise InvalidParameterError(description=description)
+            raise InvalidParameterError
 
         # StripeAccountテーブルから買手の情報を取得
         #   DBにデータが存在しない場合、入力値エラー
         buyer = session.query(StripeAccount). \
             filter(StripeAccount.account_address == buyer_address).first()
         if buyer is None:
-            description = 'Buyer not found.'
-            raise InvalidParameterError(description=description)
+            raise InvalidParameterError
 
         # StripeAccountテーブルから売手の情報を取得
         #   DBにデータが存在しない場合、入力値エラー
         seller = session.query(StripeAccount). \
             filter(StripeAccount.account_address == agreement.seller_address).first()
         if seller is None:
-            description = 'Seller not found.'
-            raise InvalidParameterError(description=description)
+            raise InvalidParameterError
 
         # Charge（課金）状態のチェック
         stripe_charge = session.query(StripeCharge). \
@@ -490,7 +486,7 @@ class Charge(BaseResource):
             except Exception as err:  # 一意制約違反の場合
                 session.rollback()
                 LOG.error('Failed to Charge: %s', err)
-                description = "Double charge, Unique constraint violation."
+                description = "Double charge"
                 raise DoubleChargeError(description=description)
 
         # 決済対象約定情報
@@ -596,7 +592,7 @@ class Charge(BaseResource):
                 exchange_address
             )
         else:
-            description = 'ExchangeAddress ' + exchange_address + ' is invalid.'
+            description = 'Invalid Address.'
             raise InvalidParameterError(description=description)
 
         return ExchangeContract
