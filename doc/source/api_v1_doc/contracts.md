@@ -93,7 +93,9 @@ curl -X GET \
             ],
             "certification": [],
             "payment_method_credit_card": true,
-            "payment_method_bank": true
+            "payment_method_bank": true,
+            "contact_information": "問い合わせ先の内容",
+            "privacy_policy": "プライバシーポリシーの内容"
         }
     ]
 }
@@ -234,7 +236,9 @@ curl -X GET \
                 }
             ],
             "payment_method_credit_card": true,
-            "payment_method_bank": true
+            "payment_method_bank": true,
+            "contact_information": "問い合わせ先の内容",
+            "privacy_policy": "プライバシーポリシーの内容"
         }
     ]
 }
@@ -362,7 +366,9 @@ curl -X GET \
                 }
             ],
             "payment_method_credit_card": true,
-            "payment_method_bank": true
+            "payment_method_bank": true,
+            "contact_information": "問い合わせ先の内容",
+            "privacy_policy": "プライバシーポリシーの内容"
         }
     ]
 }
