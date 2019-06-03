@@ -29,7 +29,7 @@ class Contracts(BaseResource):
         self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
     '''
-    Handle for endpoint: /v1/Contracts
+    Handle for endpoint: /v1/StraightBond/Contracts
     '''
     def on_get(self, req, res):
         LOG.info('v1.contracts.Contracts')

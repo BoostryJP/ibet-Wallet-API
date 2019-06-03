@@ -94,7 +94,9 @@ curl -X POST \
                 ],
                 "certification": [],
                 "payment_method_credit_card": true,
-                "payment_method_bank": true
+                "payment_method_bank": true,
+                "contact_information": "問い合わせ先の内容",
+                "privacy_policy": "プライバシーポリシーの内容"
             },
             "balance": 1000000,
             "commitment": 0
@@ -356,7 +358,9 @@ curl -X POST \
                 ],
                 "status": true,
                 "payment_method_credit_card": true,
-                "payment_method_bank": true
+                "payment_method_bank": true,
+                "contact_information": "問い合わせ先の内容",
+                "privacy_policy": "プライバシーポリシーの内容"
             },
             "balance": 0,
             "commitment": 1000000,
