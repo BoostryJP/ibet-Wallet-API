@@ -371,13 +371,13 @@ curl -X POST \
                     "account_address": "0xc194a6A7EeCA0A57706993e4e4Ef4Cf1a3434e51",
                     "stripe_account_id": "acct_1EPLUEFV9leziGQ8",
                     "stripe_customer_id": "cus_ErghPzTI68hTis",
-                    "verification_status": "Pending",
+                    "verification_status": "Pending"
                 },
                 {
                     "account_address": "0x5c572fA7690a2a2834A06427Ca2F73959A0c891e",
                     "stripe_account_id": null,
                     "stripe_customer_id": null,
-                    "verification_status": null,
+                    "verification_status": null
                 }
             ]
         }
