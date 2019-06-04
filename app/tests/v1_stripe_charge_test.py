@@ -185,7 +185,6 @@ class TestV1StripeCharge:
         assert resp.status_code == 400
         assert resp.json["meta"] == {
             'code': 88,
-            'description': 'The amount %s is invalid.' % self.amount,
             'message': 'Invalid Parameter'
         }
 
