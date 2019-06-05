@@ -636,3 +636,125 @@ class CouponConsumptions(BaseResource):
                 raise InvalidParameterError
 
         return request_json
+
+
+# ------------------------------
+# [MRF]保有トークン一覧
+# ------------------------------
+class MRFMyTokens(BaseResource):
+    """
+    Handle for endpoint: /v1/MRF/MyTokens/
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v1.Position.MRFMyTokens')
+
+        # 入力値チェック
+        request_json = MRFMyTokens.validate(req)
+
+        # 企業リスト取得
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json', 'r'))
+            else:
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+        except Exception as e:
+            LOG.error(e)
+            company_list = []
+
+        position_list = []
+        for account_address in request_json['account_address_list']:
+            account_address = to_checksum_address(account_address)
+
+            # MRFトークン設定
+            TokenContract = Contract.get_contract(
+                'IbetMRF',
+                os.environ.get('IBET_MRF_TOKEN_ADDRESS')
+            )
+
+            try:
+                balance = TokenContract.functions.balanceOf(account_address).call()
+                # 残高がゼロではない場合、詳細情報を取得する
+                if balance == 0:
+                    continue
+                else:
+                    owner_address = TokenContract.functions.owner().call()
+                    company_name, rsa_publickey = \
+                        CouponMyTokens.get_company_name(company_list, owner_address)
+                    name = TokenContract.functions.name().call()
+                    symbol = TokenContract.functions.symbol().call()
+                    total_supply = TokenContract.functions.totalSupply().call()
+                    details = TokenContract.functions.details().call()
+                    memo = TokenContract.functions.memo().call()
+                    image_url_1 = TokenContract.functions.getImageURL(0).call()
+                    image_url_2 = TokenContract.functions.getImageURL(1).call()
+                    image_url_3 = TokenContract.functions.getImageURL(2).call()
+                    status = TokenContract.functions.status().call()
+                    contact_information = TokenContract.functions.contactInformation().call()
+                    privacy_policy = TokenContract.functions.privacyPolicy().call()
+
+                    coupontoken = CouponToken()
+                    coupontoken.token_address = os.environ.get('IBET_MRF_TOKEN_ADDRESS')
+                    coupontoken.token_template = 'IbetMRF'
+                    coupontoken.owner_address = owner_address
+                    coupontoken.company_name = company_name
+                    coupontoken.rsa_publickey = rsa_publickey
+                    coupontoken.name = name
+                    coupontoken.symbol = symbol
+                    coupontoken.total_supply = total_supply
+                    coupontoken.details = details
+                    coupontoken.memo = memo
+                    coupontoken.image_url = [
+                        {'id': 1, 'url': image_url_1},
+                        {'id': 2, 'url': image_url_2},
+                        {'id': 3, 'url': image_url_3}
+                    ]
+                    coupontoken.status = status
+                    coupontoken.contact_information = contact_information
+                    coupontoken.privacy_policy = privacy_policy
+
+                    position_list.append({
+                        'token': coupontoken.__dict__,
+                        'balance': balance,
+                    })
+
+            except Exception as e:
+                LOG.error(e)
+                continue
+
+        self.on_success(res, position_list)
+
+    @staticmethod
+    def get_company_name(company_list, owner_address):
+        company_name = ''
+        rsa_publickey = ''
+        for company in company_list:
+            if to_checksum_address(company['address']) == owner_address:
+                company_name = company['corporate_name']
+                rsa_publickey = company['rsa_publickey']
+        return company_name, rsa_publickey
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json

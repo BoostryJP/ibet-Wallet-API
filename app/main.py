@@ -42,6 +42,7 @@ class App(falcon.API):
         self.add_route('/v1/StraightBondABI/', tokenTemplates.GetStraightBondABI())
         self.add_route('/v1/MembershipABI/', tokenTemplates.GetMembershipABI())
         self.add_route('/v1/CouponABI/', tokenTemplates.GetCouponABI())
+        self.add_route('/v1/MRFABI/', tokenTemplates.GetMRFABI())
 
         # 会社情報
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
@@ -72,6 +73,9 @@ class App(falcon.API):
         self.add_route('/v1/Membership/MyTokens', position.MembershipMyTokens())
         self.add_route('/v1/Coupon/MyTokens', position.CouponMyTokens())
         self.add_route('/v1/CouponConsumptions', position.CouponConsumptions())
+
+        # 保有トークン一覧（決済用）
+        self.add_route('/v1/MRF/MyTokens', position.MRFMyTokens())
 
         # 注文一覧・約定一覧
         self.add_route('/v1/OrderList', orderList.OrderList())
