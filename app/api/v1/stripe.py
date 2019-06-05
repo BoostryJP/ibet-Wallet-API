@@ -87,7 +87,7 @@ class CreateAccount(BaseResource):
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
             err = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+            raise StripeErrorClient(code=52, description='[stripe]invalid request error caused by %s' % err.get('param'),
                                     title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body
@@ -194,7 +194,7 @@ class CreateExternalAccount(BaseResource):
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
             err = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+            raise StripeErrorClient(code=52, description='[stripe]invalid request error caused by %s' % err.get('param'),
                                     title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body
@@ -350,7 +350,7 @@ class CreateCustomer(BaseResource):
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
             err = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+            raise StripeErrorClient(code=52, description='[stripe]invalid request error caused by %s' % err.get('param'),
                                     title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body
@@ -525,7 +525,7 @@ class Charge(BaseResource):
             stripe_charge.status = StripeChargeStatus.ERROR.value
             body = e.json_body
             err = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+            raise StripeErrorClient(code=52, description='[stripe]invalid request error caused by %s' % err.get('param'),
                                     title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             stripe_charge.status = StripeChargeStatus.ERROR.value
@@ -715,7 +715,7 @@ class AccountStatus(BaseResource):
         except stripe.error.InvalidRequestError as e:
             body = e.json_body
             err = body.get('error', {})
-            raise StripeErrorClient(code=52, description='[stripe]card error caused by %s' % err.get('param'),
+            raise StripeErrorClient(code=52, description='[stripe]invalid request error caused by %s' % err.get('param'),
                                     title=err.get('message'))
         except stripe.error.AuthenticationError as e:
             body = e.json_body

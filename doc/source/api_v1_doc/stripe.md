@@ -101,7 +101,7 @@ curl -X POST \
     "meta": {
         "code": 52,
         "message": "Invalid parameters were supplied to Stripe's API.",
-        "description": "[stripe]invalid requiest error caused by param"
+        "description": "[stripe]invalid request error caused by param"
     }
 }
 ```
@@ -256,7 +256,7 @@ curl -X POST \
     "meta": {
         "code": 52,
         "message": "Invalid parameters were supplied to Stripe's API.",
-        "description": "[stripe]invalid requiest error caused by param"
+        "description": "[stripe]invalid request error caused by param"
     }
 }
 ```
@@ -519,7 +519,7 @@ curl -X POST \
     "meta": {
         "code": 52,
         "message": "Invalid parameters were supplied to Stripe's API.",
-        "description": "[stripe]invalid requiest error caused by param"
+        "description": "[stripe]invalid request error caused by param"
     }
 }
 ```
@@ -701,7 +701,7 @@ curl -X POST \
     "meta": {
         "code": 52,
         "message": "Invalid parameters were supplied to Stripe's API.",
-        "description": "[stripe]invalid requiest error caused by param"
+        "description": "[stripe]invalid request error caused by param"
     }
 }
 ```
@@ -842,7 +842,7 @@ curl -X POST \
     "meta": {
         "code": 52,
         "message": "Invalid parameters were supplied to Stripe's API.",
-        "description": "[stripe]invalid requiest error caused by param"
+        "description": "[stripe]invalid request error caused by param"
     }
 }
 ```
@@ -1018,7 +1018,7 @@ curl -X POST \
     "meta": {
         "code": 52,
         "message": "Invalid parameters were supplied to Stripe's API.",
-        "description": "[stripe]invalid requiest error caused by param"
+        "description": "[stripe]invalid request error caused by param"
     }
 }
 ```
