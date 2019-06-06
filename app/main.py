@@ -49,6 +49,7 @@ class App(falcon.API):
         self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # マーケット情報：トークン一覧
+        self.add_route('/v1/JDR/Contracts', contracts.JDRContracts())
         self.add_route('/v1/StraightBond/Contracts', contracts.Contracts())
         self.add_route('/v1/Membership/Contracts', contracts.MembershipContracts())
         self.add_route('/v1/Coupon/Contracts', contracts.CouponContracts())
