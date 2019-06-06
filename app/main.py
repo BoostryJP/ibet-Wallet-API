@@ -74,6 +74,7 @@ class App(falcon.API):
         self.add_route('/v1/Membership/MyTokens', position.MembershipMyTokens())
         self.add_route('/v1/Coupon/MyTokens', position.CouponMyTokens())
         self.add_route('/v1/CouponConsumptions', position.CouponConsumptions())
+        self.add_route('/v1/JDR/MyTokens', position.JDRMyTokens())
 
         # 保有トークン一覧（決済用）
         self.add_route('/v1/MRF/MyTokens', position.MRFMyTokens())

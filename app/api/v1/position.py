@@ -17,7 +17,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, MembershipToken, CouponToken, MRFToken
+from app.model import Listing, BondToken, MembershipToken, CouponToken, MRFToken, JDRToken
 
 LOG = log.get_logger()
 
@@ -722,6 +722,148 @@ class MRFMyTokens(BaseResource):
             except Exception as e:
                 LOG.error(e)
                 continue
+
+        self.on_success(res, position_list)
+
+    @staticmethod
+    def get_company_name(company_list, owner_address):
+        company_name = ''
+        rsa_publickey = ''
+        for company in company_list:
+            if to_checksum_address(company['address']) == owner_address:
+                company_name = company['corporate_name']
+                rsa_publickey = company['rsa_publickey']
+        return company_name, rsa_publickey
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
+
+
+# ------------------------------
+# [JDR]保有トークン一覧
+# ------------------------------
+class JDRMyTokens(BaseResource):
+    """
+    Handle for endpoint: /v1/JDR/MyTokens/
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v1.Position.JDRMyTokens')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        request_json = JDRMyTokens.validate(req)
+
+        # 企業リスト取得
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json', 'r'))
+            else:
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+        except Exception as e:
+            LOG.error(e)
+            company_list = []
+
+        # TokenList コントラクト設定
+        ListContract = Contract.get_contract(
+            'TokenList',
+            os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
+        )
+
+        position_list = []
+        for _account_address in request_json['account_address_list']:
+            available_tokens = session.query(Listing).all()
+
+            # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
+            for token in available_tokens:
+                # TokenListコントラクトの登録情報を取得
+                token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
+                token_address = token_info[0]
+                token_template = token_info[1]
+                owner = to_checksum_address(_account_address)  # トークン保有者
+
+                # token_templateがIbetDepositaryReceiptであるものに対して詳細情報を取得する
+                if token_template == 'IbetDepositaryReceipt':
+                    TokenContract = Contract.get_contract(
+                        'IbetDepositaryReceipt',
+                        token_address
+                    )
+                    try:
+                        # 残高取得
+                        balance = TokenContract.functions.balanceOf(owner).call()
+
+                        # 残高がゼロではない場合、詳細情報を取得する
+                        if balance == 0:
+                            continue
+                        else:
+                            owner_address = TokenContract.functions.owner().call()
+                            company_name, rsa_publickey = \
+                                CouponMyTokens.get_company_name(company_list, owner_address)
+                            name = TokenContract.functions.name().call()
+                            symbol = TokenContract.functions.symbol().call()
+                            total_supply = TokenContract.functions.totalSupply().call()
+                            details = TokenContract.functions.details().call()
+                            memo = TokenContract.functions.memo().call()
+                            image_url_1 = TokenContract.functions.getImageURL(0).call()
+                            image_url_2 = TokenContract.functions.getImageURL(1).call()
+                            image_url_3 = TokenContract.functions.getImageURL(2).call()
+                            status = TokenContract.functions.status().call()
+                            contact_information = TokenContract.functions.contactInformation().call()
+                            privacy_policy = TokenContract.functions.privacyPolicy().call()
+
+                            jdr_token = JDRToken()
+                            jdr_token.token_address = token_address
+                            jdr_token.token_template = token_template
+                            jdr_token.owner_address = owner_address
+                            jdr_token.company_name = company_name
+                            jdr_token.rsa_publickey = rsa_publickey
+                            jdr_token.name = name
+                            jdr_token.symbol = symbol
+                            jdr_token.total_supply = total_supply
+                            jdr_token.details = details
+                            jdr_token.memo = memo
+                            jdr_token.image_url = [
+                                {'id': 1, 'url': image_url_1},
+                                {'id': 2, 'url': image_url_2},
+                                {'id': 3, 'url': image_url_3}
+                            ]
+                            jdr_token.status = status
+                            jdr_token.payment_method_credit_card = token.payment_method_credit_card
+                            jdr_token.payment_method_bank = token.payment_method_bank
+                            jdr_token.contact_information = contact_information
+                            jdr_token.privacy_policy = privacy_policy
+
+                            position_list.append({
+                                'token': jdr_token.__dict__,
+                                'balance': balance
+                            })
+
+                    except Exception as e:
+                        LOG.error(e)
+                        continue
 
         self.on_success(res, position_list)
 
