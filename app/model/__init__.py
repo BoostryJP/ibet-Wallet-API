@@ -10,4 +10,4 @@ from .stripe_charge import StripeCharge, StripeChargeStatus
 from .stripe_account import StripeAccount, StripeAccountStatus
 from .listing import Listing
 from .executable_contract import ExecutableContract
-from .token import BondToken, MembershipToken, CouponToken
+from .token import BondToken, MembershipToken, CouponToken, MRFToken, JDRToken

@@ -54,3 +54,15 @@ class CouponToken(TokenBase):
     transferable: str
     status: str
     initial_offering_status: str
+
+class MRFToken(TokenBase):
+    details: str
+    memo: str
+    status: str
+    initial_offering_status: str
+
+class JDRToken(TokenBase):
+    details: str
+    memo: str
+    status: str
+    initial_offering_status: str

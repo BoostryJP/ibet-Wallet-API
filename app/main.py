@@ -49,6 +49,7 @@ class App(falcon.API):
         self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # マーケット情報：トークン一覧
+        self.add_route('/v1/JDR/Contracts', contracts.JDRContracts())
         self.add_route('/v1/StraightBond/Contracts', contracts.Contracts())
         self.add_route('/v1/Membership/Contracts', contracts.MembershipContracts())
         self.add_route('/v1/Coupon/Contracts', contracts.CouponContracts())
@@ -59,16 +60,19 @@ class App(falcon.API):
         self.add_route('/v1/Coupon/OrderBook', marketInformation.CouponOrderBook())
 
         # マーケット情報：現在値
+        self.add_route('/v1/JDR/LastPrice', marketInformation.JDRLastPrice())
         self.add_route('/v1/StraightBond/LastPrice', marketInformation.LastPrice())
         self.add_route('/v1/Membership/LastPrice', marketInformation.MembershipLastPrice())
         self.add_route('/v1/Coupon/LastPrice', marketInformation.CouponLastPrice())
 
         # マーケット情報：歩み値
+        self.add_route('/v1/JDR/Tick', marketInformation.JDRTick())
         self.add_route('/v1/StraightBond/Tick', marketInformation.Tick())
         self.add_route('/v1/Membership/Tick', marketInformation.MembershipTick())
         self.add_route('/v1/Coupon/Tick', marketInformation.CouponTick())
 
         # 保有トークン一覧
+        self.add_route('/v1/JDR/MyTokens', position.JDRMyTokens())
         self.add_route('/v1/StraightBond/MyTokens', position.MyTokens())
         self.add_route('/v1/Membership/MyTokens', position.MembershipMyTokens())
         self.add_route('/v1/Coupon/MyTokens', position.CouponMyTokens())

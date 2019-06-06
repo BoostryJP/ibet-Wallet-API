@@ -19,6 +19,7 @@ class Listing(Base):
     FIELDS = {
         'id': int,
         'token_address': str,
+        'token_template': str,
         'payment_method_credit_card': bool,
         'payment_method_bank': bool,
     }

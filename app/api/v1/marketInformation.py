@@ -1060,3 +1060,173 @@ class CouponTick(BaseResource):
                 raise InvalidParameterError
 
         return request_json
+
+
+'''
+JDR Token
+'''
+
+
+# ------------------------------
+# [JDR]現在値取得
+# ------------------------------
+class JDRLastPrice(BaseResource):
+    """
+    Handle for endpoint: /v1/JDR/LastPrice
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v1.marketInformation.JDRLastPrice')
+
+        # 入力値チェック
+        request_json = JDRLastPrice.validate(req)
+
+        # SWAPコントラクト設定
+        SwapContract = Contract.get_contract(
+            'IbetSwap',
+            os.environ.get('IBET_JDR_SWAP_CONTRACT_ADDRESS')
+        )
+
+        price_list = []
+        for token_address in request_json['address_list']:
+            token_address = to_checksum_address(token_address)
+            buy_price = 0
+            sell_price = 0
+            try:
+                event_filter = SwapContract.events.MakeOrder.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'tokenAddress': token_address}
+                )
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+                for entry in reversed(entries):
+                    if entry['args']['isBuy'] == True:
+                        sell_price = entry['args']['price']
+                        break
+                for entry in reversed(entries):
+                    if entry['args']['isBuy'] == False:
+                        buy_price = entry['args']['price']
+                        break
+            except Exception as e:
+                LOG.error(e)
+
+            price_list.append({
+                'token_address': token_address,
+                'buy_price': buy_price,
+                'sell_price': sell_price
+            })
+
+        self.on_success(res, price_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'address_list': {
+                'type': 'list',
+                'empty': False,
+                'required': True,
+                'schema': {
+                    'type': 'string',
+                    'required': True,
+                    'empty': False,
+                }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for token_address in request_json['address_list']:
+            if not Web3.isAddress(token_address):
+                raise InvalidParameterError
+
+        return request_json
+
+
+# ------------------------------
+# [JDR]歩み値取得
+# ------------------------------
+class JDRTick(BaseResource):
+    """
+    Handle for endpoint: /v1/JDR/Tick
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v1.marketInformation.JDRTick')
+
+        # 入力値チェック
+        request_json = Tick.validate(req)
+
+        # SWAPコントラクト設定
+        SwapContract = Contract.get_contract(
+            'IbetSwap',
+            os.environ.get('IBET_JDR_SWAP_CONTRACT_ADDRESS')
+        )
+
+        tick_list = []
+        # TokenごとにTickを取得
+        for token_address in request_json['address_list']:
+            token = to_checksum_address(token_address)
+            tick = []
+            try:
+                event_filter = SwapContract.events.Agree.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={'tokenAddress': token}
+                )
+                entries = event_filter.get_all_entries()
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+                for entry in entries:
+                    tick.append({
+                        'block_timestamp': datetime.fromtimestamp(
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
+                        ).strftime("%Y/%m/%d %H:%M:%S"),
+                        'buy_address': entry['args']['buyerAddress'],
+                        'sell_address': entry['args']['sellerAddress'],
+                        'order_id': entry['args']['orderId'],
+                        'agreement_id': entry['args']['agreementId'],
+                        'price': entry['args']['price'],
+                        'amount': entry['args']['amount'],
+                    })
+                tick_list.append({
+                    'token_address': token_address,
+                    'tick': tick
+                })
+            except Exception as e:
+                LOG.error(e)
+                tick_list = []
+
+        self.on_success(res, tick_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'address_list': {
+                'type': 'list',
+                'empty': False,
+                'required': True,
+                'schema': {
+                    'type': 'string',
+                    'required': True,
+                    'empty': False,
+                }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for token_address in request_json['address_list']:
+            if not Web3.isAddress(token_address):
+                raise InvalidParameterError
+
+        return request_json
+
