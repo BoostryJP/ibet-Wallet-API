@@ -17,7 +17,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, MembershipToken, CouponToken
+from app.model import Listing, BondToken, MembershipToken, CouponToken, MRFToken
 
 LOG = log.get_logger()
 
@@ -694,28 +694,28 @@ class MRFMyTokens(BaseResource):
                     contact_information = TokenContract.functions.contactInformation().call()
                     privacy_policy = TokenContract.functions.privacyPolicy().call()
 
-                    coupontoken = CouponToken()
-                    coupontoken.token_address = os.environ.get('IBET_MRF_TOKEN_ADDRESS')
-                    coupontoken.token_template = 'IbetMRF'
-                    coupontoken.owner_address = owner_address
-                    coupontoken.company_name = company_name
-                    coupontoken.rsa_publickey = rsa_publickey
-                    coupontoken.name = name
-                    coupontoken.symbol = symbol
-                    coupontoken.total_supply = total_supply
-                    coupontoken.details = details
-                    coupontoken.memo = memo
-                    coupontoken.image_url = [
+                    token = MRFToken()
+                    token.token_address = os.environ.get('IBET_MRF_TOKEN_ADDRESS')
+                    token.token_template = 'IbetMRF'
+                    token.owner_address = owner_address
+                    token.company_name = company_name
+                    token.rsa_publickey = rsa_publickey
+                    token.name = name
+                    token.symbol = symbol
+                    token.total_supply = total_supply
+                    token.details = details
+                    token.memo = memo
+                    token.image_url = [
                         {'id': 1, 'url': image_url_1},
                         {'id': 2, 'url': image_url_2},
                         {'id': 3, 'url': image_url_3}
                     ]
-                    coupontoken.status = status
-                    coupontoken.contact_information = contact_information
-                    coupontoken.privacy_policy = privacy_policy
+                    token.status = status
+                    token.contact_information = contact_information
+                    token.privacy_policy = privacy_policy
 
                     position_list.append({
-                        'token': coupontoken.__dict__,
+                        'token': token.__dict__,
                         'balance': balance,
                     })
 
