@@ -9,6 +9,7 @@ class Listing(Base):
     __tablename__ = 'listing'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)
+    token_template = Column(String(40), index=True)
     payment_method_credit_card = Column(Boolean)
     payment_method_bank = Column(Boolean)
 
@@ -19,6 +20,7 @@ class Listing(Base):
     FIELDS = {
         'id': int,
         'token_address': str,
+        'token_template': str,
         'payment_method_credit_card': bool,
         'payment_method_bank': bool,
     }
