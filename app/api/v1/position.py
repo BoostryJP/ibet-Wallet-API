@@ -554,7 +554,7 @@ class CouponMyTokens(BaseResource):
 
 
 # ------------------------------
-# クーポン消費履歴
+# [クーポン]消費履歴
 # ------------------------------
 class CouponConsumptions(BaseResource):
     """
