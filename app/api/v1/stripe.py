@@ -422,7 +422,7 @@ class Charge(BaseResource):
         agreement = session.query(Agreement). \
             filter(Agreement.order_id == order_id). \
             filter(Agreement.agreement_id == agreement_id). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
+            filter(Agreement.status == AgreementStatus.PENDING.value). \
             first()
         if agreement is None:
             raise InvalidParameterError
@@ -430,6 +430,7 @@ class Charge(BaseResource):
         # 金額チェック
         if not request_json['amount'] == agreement.amount:
             description = 'The amount ' + str(agreement.amount) + ' is invalid.'
+            LOG.debug(description)
             raise InvalidParameterError
 
         # 約定状態のチェック
@@ -439,6 +440,7 @@ class Charge(BaseResource):
         _, _, _, canceled, _, _ = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
         if canceled is True:
+            LOG.debug('Agreement has already been canceled.')
             raise InvalidParameterError
 
         # StripeAccountテーブルから買手の情報を取得
@@ -446,6 +448,7 @@ class Charge(BaseResource):
         buyer = session.query(StripeAccount). \
             filter(StripeAccount.account_address == buyer_address).first()
         if buyer is None:
+            LOG.debug('Buyer Account not found.')
             raise InvalidParameterError
 
         # StripeAccountテーブルから売手の情報を取得
@@ -453,6 +456,7 @@ class Charge(BaseResource):
         seller = session.query(StripeAccount). \
             filter(StripeAccount.account_address == agreement.seller_address).first()
         if seller is None:
+            LOG.debug('Seller Account not found.')
             raise InvalidParameterError
 
         # Charge（課金）状態のチェック
