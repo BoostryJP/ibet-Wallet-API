@@ -427,18 +427,20 @@ class Charge(BaseResource):
         if agreement is None:
             raise InvalidParameterError
 
+        # Exchangeコントラクト接続
+        ExchangeContract = Charge.exchange_contracts(exchange_address)
+        _, agreement_amount, agreement_price, canceled, _, _ = \
+            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+
         # 金額チェック
-        if not request_json['amount'] == agreement.amount:
-            description = 'The amount ' + str(agreement.amount) + ' is invalid.'
-            LOG.debug(description)
+        #   入力内容と約定明細の約定金額が一致していなければ、入力エラーを返す
+        #   NOTE:入力の”amount”は入金金額である。約定明細のamount（約定数量）とは異なる点に注意。
+        if not request_json['amount'] == agreement_amount * agreement_price:
+            LOG.debug('Amount do not match.')
             raise InvalidParameterError
 
-        # 約定状態のチェック
-        #   Exchangeコントラクトから最新の約定キャンセル情報を取得
+        # 約定明細のキャンセル状態のチェック
         #   キャンセル済みの場合、入力エラーを返す
-        ExchangeContract = Charge.exchange_contracts(exchange_address)
-        _, _, _, canceled, _, _ = \
-            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
         if canceled is True:
             LOG.debug('Agreement has already been canceled.')
             raise InvalidParameterError
