@@ -592,7 +592,7 @@ class Charge(BaseResource):
                 exchange_address
             )
 
-        elif exchange_address == to_checksum_address(os.environ.get('IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS')):
+        elif exchange_address == to_checksum_address(os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')):
             ExchangeContract = Contract.get_contract(
                 'IbetCouponExchange',
                 exchange_address
