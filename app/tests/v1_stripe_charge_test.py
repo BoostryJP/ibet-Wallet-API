@@ -66,7 +66,7 @@ class TestV1StripeCharge:
         }
 
     # エラー系1-2
-    # order_idの値が不正
+    # order_idの値が不正（型誤り）
     def test_stripe_charge_error_1_2(self, client, session):
         resp = client.simulate_auth_post(
             self.apiurl,
@@ -112,7 +112,7 @@ class TestV1StripeCharge:
         }
 
     # エラー系2-2
-    # agreement_idの値が不正
+    # agreement_idの値が不正（型誤り）
     def test_stripe_charge_error_2_2(self, client, session):
         resp = client.simulate_auth_post(
             self.apiurl,
@@ -156,8 +156,9 @@ class TestV1StripeCharge:
 
     # エラー系3-2
     # amountの値が不正
-    def test_stripe_charge_error_3_2(self, client, session):
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = self.exchange_address
+    def test_stripe_charge_error_3_2(self, client, session, shared_contract):
+        membership_exchange = shared_contract['IbetMembershipExchange']
+        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = membership_exchange['address']
 
         # Agreementの情報を挿入
         agreement = Agreement()
@@ -167,8 +168,8 @@ class TestV1StripeCharge:
         agreement.unique_order_id = self.exchange_address + '_' + str(1)
         agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
         agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        agreement.amount = self.amount
-        agreement.status = AgreementStatus.DONE.value
+        agreement.amount = self.amount  # 2000
+        agreement.status = AgreementStatus.PENDING.value
         session.add(agreement)
 
         resp = client.simulate_auth_post(
@@ -177,7 +178,7 @@ class TestV1StripeCharge:
                 "order_id": self.order_id,
                 "agreement_id": self.agreement_id,
                 "amount": 0,
-                "exchange_address": self.exchange_address
+                "exchange_address": membership_exchange['address']
             },
             private_key=TestV1StripeCharge.private_key_1
         )
