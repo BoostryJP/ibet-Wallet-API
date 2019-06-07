@@ -12,6 +12,7 @@ RUN groupadd -g 1000 apl \
 # install packages
 RUN apt-get update -q \
  && apt-get install -y --no-install-recommends \
+ unzip \
  build-essential \
  ca-certificates \
  curl \
