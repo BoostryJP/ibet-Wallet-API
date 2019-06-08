@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 .vscode
 .project
+data/zip_code/*
 
 # Intellij
 .idea
