@@ -73,6 +73,7 @@ USER root
 COPY . /app/tmr-node/
 RUN chown -R apl:apl /app/tmr-node && \
     chmod 755 /app/tmr-node
+RUN unzip /app/tmr-node/data/zip_code.zip -d /app/tmr-node/data/
 
 USER apl
 CMD /app/tmr-node/app/tests/qa.sh
