@@ -260,7 +260,7 @@ class TestV1MembershipTick():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -277,7 +277,7 @@ class TestV1MembershipTick():
         exchange = shared_contract['IbetMembershipExchange']
         token = TestV1MembershipTick.generate_agree_event(exchange)
         token_address = token['address']
-        IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
 
         request_params = {"address_list": [token_address]}
         headers = {'Content-Type': 'application/json'}
