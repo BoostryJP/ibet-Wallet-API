@@ -554,7 +554,7 @@ class Charge(BaseResource):
             LOG.error('Error: %s', err)
             raise AppError
 
-        if charge.status != 'successful':
+        if charge.status != 'succeeded':
             # Charge状態を[ERROR]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.FAILED.value
             raise InvalidCardError

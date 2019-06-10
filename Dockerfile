@@ -12,6 +12,7 @@ RUN groupadd -g 1000 apl \
 # install packages
 RUN apt-get update -q \
  && apt-get install -y --no-install-recommends \
+ unzip \
  build-essential \
  ca-certificates \
  curl \
@@ -65,6 +66,7 @@ USER root
 COPY . /app/tmr-node
 RUN chown -R apl:apl /app/tmr-node && \
     chmod 755 /app/tmr-node
+RUN unzip /app/tmr-node/data/zip_code.zip -d /app/tmr-node/data/
 USER apl
 COPY run.sh /app/
 
