@@ -43,7 +43,7 @@ class Contracts(BaseResource):
 
         # TokenList-Contractへの接続
         ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).all()
@@ -296,7 +296,7 @@ class MembershipContracts(BaseResource):
 
         # TokenList-Contractへの接続
         ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).all()
@@ -477,7 +477,7 @@ class CouponContracts(BaseResource):
 
         # TokenList-Contractへの接続
         ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).all()
@@ -661,7 +661,7 @@ class JDRContracts(BaseResource):
 
         # TokenList-Contractの設定
         ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
         # NOTE:全件取得してくる

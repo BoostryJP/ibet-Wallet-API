@@ -85,10 +85,10 @@ class PaymentAgentInfo(BaseResource):
         except Exception as err:
             LOG.error('Failed To Get Data: %s', err)
             raise AppError
-
+            
         PaymentGatewayContract = Contract.get_contract(
             'PaymentGateway',
-            os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS')
+            config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
         )
 
         latest_terms_version = PaymentGatewayContract.functions. \

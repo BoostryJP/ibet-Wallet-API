@@ -33,13 +33,13 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 LOG = log.get_logger()
 
 # 設定の取得
-WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or "http://localhost:8545"
-URI = os.environ.get("DATABASE_URL") or "postgresql://ethuser:ethpass@localhost:5432/ethcache"
-WORKER_COUNT = int(os.environ.get("WORKER_COUNT") or 8)
-SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL") or 3)
-IBET_SB_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_SB_EXCHANGE_CONTRACT_ADDRESS")
-IBET_CP_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_CP_EXCHANGE_CONTRACT_ADDRESS")
-IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = os.environ.get("IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS")
+WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
+URI = config.DATABASE_URL
+WORKER_COUNT = int(config.WORKER_COUNT)
+SLEEP_INTERVAL = int(config.SLEEP_INTERVAL)
+IBET_SB_EXCHANGE_CONTRACT_ADDRESS = config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+IBET_CP_EXCHANGE_CONTRACT_ADDRESS = config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
@@ -56,17 +56,17 @@ NOW_BLOCKNUMBER = web3.eth.blockNumber
 # コントラクトの生成
 sb_exchange_contract = Contract.get_contract(
     'IbetStraightBondExchange',
-    os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+    config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 cp_exchange_contract = Contract.get_contract(
     'IbetCouponExchange',
-    os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
+    config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 membership_exchange_contract = Contract.get_contract(
     'IbetMembershipExchange',
-    os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
+    config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
 payment_gateway_contract = Contract.get_contract(
-    'PaymentGateway', os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS'))
+    'PaymentGateway', config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
 list_contract = Contract.get_contract(
-    'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+    'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
 token_list = TokenList(list_contract)
 

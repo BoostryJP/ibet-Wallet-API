@@ -19,25 +19,25 @@ class TestV1NodeInfo():
 
         contracts = json.load(open('data/contracts.json' , 'r'))
 
-        payment_gateway_address = os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS')
+        payment_gateway_address = config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
         payment_gateway_abi = contracts['PaymentGateway']['abi']
 
-        personalinfo_address = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
+        personalinfo_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
         personalinfo_abi = contracts['PersonalInfo']['abi']
 
         bond_exchange_address = \
-            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+             config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         bond_exchange_abi = contracts['IbetStraightBondExchange']['abi']
 
         membership_exchange_address = \
-            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+             config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         membership_exchange_abi = contracts['IbetMembershipExchange']['abi']
 
         coupon_exchange_address = \
-            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+             config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         coupon_exchange_abi = contracts['IbetCouponExchange']['abi']
 
-        agent_address = os.environ.get('AGENT_ADDRESS')
+        agent_address =  config.AGENT_ADDRESS
 
         assumed_body = {
             'payment_gateway_address': payment_gateway_address,

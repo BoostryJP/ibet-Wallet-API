@@ -34,7 +34,7 @@ class PaymentAccount(BaseResource):
         request_json = PaymentAccount.validate(req)
 
         PaymentGatewayContract = Contract.get_contract(
-            'PaymentGateway', os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDRESS'))
+            'PaymentGateway', config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
 
         # 口座登録・承認状況を参照
         account_info = PaymentGatewayContract.functions.payment_accounts(
@@ -101,7 +101,7 @@ class PersonalInfo(BaseResource):
 
         # PersonalInfo Contract
         PersonalInfoContract = Contract.get_contract(
-            'PersonalInfo', os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS'))
+            'PersonalInfo', config.PERSONAL_INFO_CONTRACT_ADDRESS)
 
         info = PersonalInfoContract.functions.personal_info(
             to_checksum_address(request_json['account_address']),
