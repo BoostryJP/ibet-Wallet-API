@@ -1,6 +1,7 @@
 import os
 from falcon.util import json as util_json
 
+from app import config
 from app.model import Agreement, AgreementStatus
 from .contract_modules import *
 
@@ -158,7 +159,7 @@ class TestV1StripeCharge:
     # amountの値が不正
     def test_stripe_charge_error_3_2(self, client, session, shared_contract):
         membership_exchange = shared_contract['IbetMembershipExchange']
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = membership_exchange['address']
+        config.BET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
 
         # Agreementの情報を挿入
         agreement = Agreement()

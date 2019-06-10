@@ -2,6 +2,7 @@
 import json
 import os
 
+from app import config
 from .account_config import eth_account
 from .contract_modules import register_payment_gateway
 
@@ -22,7 +23,7 @@ class TestV1PaymentAccount:
 
         # 収納代行コントラクト（PaymentGateway）
         payment_gateway = shared_contract['PaymentGateway']
-        os.environ["PAYMENT_GATEWAY_CONTRACT_ADDRESS"] = payment_gateway['address']
+        config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway['address']
 
         # データ準備：決済用口座情報登録->認可
         register_payment_gateway(trader, payment_gateway)
@@ -52,7 +53,7 @@ class TestV1PaymentAccount:
 
         # 収納代行コントラクト（PaymentGateway）
         payment_gateway = shared_contract['PaymentGateway']
-        os.environ["PAYMENT_GATEWAY_CONTRACT_ADDRESS"] = payment_gateway['address']
+        config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway['address']
 
         query_string = 'account_address=' + trader + \
             '&agent_address=' + agent['account_address']

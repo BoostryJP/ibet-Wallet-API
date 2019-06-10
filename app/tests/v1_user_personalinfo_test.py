@@ -2,6 +2,7 @@
 import json
 import os
 
+from app import config
 from .account_config import eth_account
 from .contract_modules import register_personalinfo
 
@@ -22,7 +23,7 @@ class TestV1PersonalInfo:
 
         # 投資家名簿用個人情報コントラクト（PersonalInfo）
         personal_info = shared_contract['PersonalInfo']
-        os.environ["PERSONAL_INFO_CONTRACT_ADDRESS"] = personal_info['address']
+        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info['address']
 
         # データ準備：情報登録
         register_personalinfo(trader, personal_info)
@@ -52,7 +53,7 @@ class TestV1PersonalInfo:
 
         # 投資家名簿用個人情報コントラクト（PersonalInfo）
         personal_info = shared_contract['PersonalInfo']
-        os.environ["PERSONAL_INFO_CONTRACT_ADDRESS"] = personal_info['address']
+        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info['address']
 
         # 検索用クエリ
         query_string = 'account_address=' + trader + \

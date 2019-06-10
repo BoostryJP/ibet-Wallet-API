@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+from app import config
 from app.model import Listing
 from .contract_modules import *
 
@@ -246,8 +247,8 @@ class TestV1CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV1CouponMyTokens.list_token(session, coupon_token)
 
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
@@ -316,8 +317,8 @@ class TestV1CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV1CouponMyTokens.list_token(session, coupon_token)
 
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = coupon_exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
@@ -383,9 +384,9 @@ class TestV1CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV1CouponMyTokens.list_token(session, token)
 
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
@@ -452,9 +453,9 @@ class TestV1CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV1CouponMyTokens.list_token(session, token)
 
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
@@ -523,8 +524,8 @@ class TestV1CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV1CouponMyTokens.list_token(session, token)
 
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from eth_utils import to_checksum_address
+from app import config
 from .account_config import eth_account
 
 '''
@@ -19,7 +20,7 @@ class TestV1CompanyPaymentAgentInfo:
         apiurl = self.apiurl_base + eth_address
 
         payment_gateway = shared_contract['PaymentGateway']
-        os.environ["PAYMENT_GATEWAY_CONTRACT_ADDRESS"] = payment_gateway['address']
+        config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway['address']
 
         resp = client.simulate_get(apiurl)
         assumed_body = {

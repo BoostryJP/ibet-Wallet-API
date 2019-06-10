@@ -2,6 +2,7 @@
 import json
 import os
 
+from app import config
 from app.model import Listing
 
 from .account_config import eth_account
@@ -188,9 +189,8 @@ class TestV1MembershipMyTokens:
         # 取扱トークンデータ挿入
         TestV1MembershipMyTokens.list_token(session, token)
 
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
-            exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
@@ -258,9 +258,8 @@ class TestV1MembershipMyTokens:
         # 取扱トークンデータ挿入
         TestV1MembershipMyTokens.list_token(session, token)
 
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
-            exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}
@@ -330,9 +329,8 @@ class TestV1MembershipMyTokens:
         # 取扱トークンデータ挿入
         TestV1MembershipMyTokens.list_token(session, token)
 
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
-            exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         request_params = {"account_address_list": [account['account_address']]}
         headers = {'Content-Type': 'application/json'}

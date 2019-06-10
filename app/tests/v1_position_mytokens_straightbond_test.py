@@ -2,6 +2,7 @@
 import json
 import os
 
+from app import config
 from app.model import Listing
 
 from .account_config import eth_account
@@ -108,8 +109,8 @@ class TestV1StraightBondMyTokens:
         # 取扱トークンデータ挿入
         TestV1StraightBondMyTokens.list_token(session, bond_token)
 
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)

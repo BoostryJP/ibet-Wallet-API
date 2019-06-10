@@ -9,6 +9,7 @@ import app.model
 from app.model import Order, Agreement, AgreementStatus
 
 from .account_config import eth_account
+from app import config
 
 class TestV1CouponOrderBook():
 
@@ -16,7 +17,7 @@ class TestV1CouponOrderBook():
     apiurl = '/v1/Coupon/OrderBook'
 
     # 環境変数設定
-    os.environ["AGENT_ADDRESS"] = eth_account['agent']['account_address']
+    config.AGENT_ADDRESS = eth_account['agent']['account_address']
 
     # ＜正常系1-1-1＞
     # 未約定＆未キャンセルの売り注文が1件存在
@@ -30,7 +31,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -81,7 +82,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -131,7 +132,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -176,7 +177,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -221,7 +222,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -261,7 +262,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -313,7 +314,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -359,7 +360,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -411,7 +412,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -456,7 +457,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -501,7 +502,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -541,7 +542,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -593,7 +594,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -633,7 +634,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -697,7 +698,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
 
@@ -761,7 +762,7 @@ class TestV1CouponOrderBook():
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
             "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
@@ -879,7 +880,7 @@ class TestV1CouponOrderBook():
     def test_coupon_orderbook_error_1(self, client):
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -901,7 +902,7 @@ class TestV1CouponOrderBook():
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -927,7 +928,7 @@ class TestV1CouponOrderBook():
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  #アドレスが短い
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -953,7 +954,7 @@ class TestV1CouponOrderBook():
         token_address = 123456789123456789123456789123456789
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
@@ -982,7 +983,7 @@ class TestV1CouponOrderBook():
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
 
         request_params = {
@@ -1008,7 +1009,7 @@ class TestV1CouponOrderBook():
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = 123456789123456789123456789123456789
 
         request_params = {
@@ -1037,7 +1038,7 @@ class TestV1CouponOrderBook():
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = exchange_address
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {

@@ -84,7 +84,7 @@ class TestV1StraightBondContracts():
 
         # TokenListコントラクト
         token_list = TestV1StraightBondContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
         exchange_address = \
@@ -155,7 +155,7 @@ class TestV1StraightBondContracts():
 
         # TokenListコントラクト
         token_list = TestV1StraightBondContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
         bond_list = []
@@ -276,7 +276,7 @@ class TestV1StraightBondContracts():
 
         # TokenListコントラクト
         token_list = TestV1StraightBondContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
         bond_list = []
@@ -398,7 +398,7 @@ class TestV1StraightBondContracts():
 
         # TokenListコントラクト
         token_list = TestV1StraightBondContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
         bond_list = []
@@ -476,7 +476,7 @@ class TestV1StraightBondContracts():
 
         # TokenListコントラクト
         token_list = TestV1StraightBondContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
         bond_list = []
@@ -729,7 +729,7 @@ class TestV1MembershipContracts():
 
         # TokenListコントラクト
         token_list = TestV1MembershipContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         exchange_address = \
@@ -789,7 +789,7 @@ class TestV1MembershipContracts():
 
         # TokenListコントラクト
         token_list = TestV1MembershipContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         issued_list = []
@@ -878,7 +878,7 @@ class TestV1MembershipContracts():
 
         # TokenListコントラクト
         token_list = TestV1MembershipContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         issued_list = []
@@ -967,7 +967,7 @@ class TestV1MembershipContracts():
 
         # TokenListコントラクト
         token_list = TestV1MembershipContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         issued_list = []
@@ -1028,7 +1028,7 @@ class TestV1MembershipContracts():
 
         # TokenListコントラクト
         token_list = TestV1MembershipContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         issued_list = []
@@ -1089,7 +1089,7 @@ class TestV1MembershipContracts():
 
         # TokenListコントラクト
         token_list = TestV1MembershipContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         exchange_address = \
@@ -1300,7 +1300,7 @@ class TestV1CouponContracts():
 
         # TokenListコントラクト
         token_list = TestV1CouponContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         exchange_address = \
@@ -1360,7 +1360,7 @@ class TestV1CouponContracts():
 
         # TokenListコントラクト
         token_list = TestV1CouponContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
@@ -1449,7 +1449,7 @@ class TestV1CouponContracts():
 
         # TokenListコントラクト
         token_list = TestV1CouponContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
@@ -1538,7 +1538,7 @@ class TestV1CouponContracts():
 
         # TokenListコントラクト
         token_list = TestV1CouponContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
@@ -1599,7 +1599,7 @@ class TestV1CouponContracts():
 
         # TokenListコントラクト
         token_list = TestV1CouponContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
@@ -1660,7 +1660,7 @@ class TestV1CouponContracts():
 
         # TokenListコントラクト
         token_list = TestV1CouponContracts.tokenlist_contract()
-        os.environ["TOKEN_LIST_CONTRACT_ADDRESS"] = token_list['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         exchange_address = \
