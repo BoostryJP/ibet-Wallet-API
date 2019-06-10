@@ -4,6 +4,7 @@ import os
 from cerberus import Validator, ValidationError
 
 from app import log
+from app import config
 from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 
@@ -23,16 +24,15 @@ class RequiredVersion(BaseResource):
         request_json = RequiredVersion.validate(req)
 
         # 環境変数の読み込み（iOS）
-        required_version_ios = os.environ.get('TMRAPP_REQUIRED_VERSION_IOS')
-        force_ios = bool(os.environ.get('TMRAPP_FORCE_UPDATE_IOS'))
-        update_url_scheme_ios = os.environ.get('TMRAPP_UPDATE_URL_SCHEME_IOS')
-        update_url_ios = os.environ.get('TMRAPP_UPDATE_URL_IOS')
-
+        required_version_ios = config.TMRAPP_REQUIRED_VERSION_IOS
+        force_ios = bool(config.TMRAPP_FORCE_UPDATE_IOS)
+        update_url_scheme_ios = config.TMRAPP_UPDATE_URL_SCHEME_IOS
+        update_url_ios = config.TMRAPP_UPDATE_URL_IOS
         # 環境変数の読み込み（Android）
-        required_version_android = os.environ.get('TMRAPP_REQUIRED_VERSION_ANDROID')
-        force_android = bool(os.environ.get('TMRAPP_FORCE_UPDATE_ANDROID'))
-        update_url_scheme_android = os.environ.get('TMRAPP_UPDATE_URL_SCHEME_ANDROID')
-        update_url_android = os.environ.get('TMRAPP_UPDATE_URL_ANDROID')
+        required_version_android = config.TMRAPP_REQUIRED_VERSION_ANDROID
+        force_android = bool(config.TMRAPP_FORCE_UPDATE_ANDROID)
+        update_url_scheme_android = config.TMRAPP_UPDATE_URL_SCHEME_ANDROID
+        update_url_android = config.TMRAPP_UPDATE_URL_ANDROID
         
         if request_json['platform'] == "ios":
             required_version = {

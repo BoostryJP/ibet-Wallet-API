@@ -3,6 +3,7 @@ import json
 import os
 
 from .account_config import eth_account
+from app import config
 from .contract_modules import issue_bond_token, offer_bond_token, \
     register_personalinfo, register_payment_gateway, take_buy_bond_token, get_latest_orderid, \
     membership_issue, membership_offer, membership_get_latest_orderid, \
@@ -73,7 +74,7 @@ class TestV1StraightBondTick():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -115,7 +116,7 @@ class TestV1StraightBondTick():
         token_address = bond_token['address']
         request_params = {"address_list": [token_address]}
 
-        os.environ["IBET_SB_EXCHANGE_CONTRACT_ADDRESS"] = bond_exchange['address']
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
@@ -237,7 +238,7 @@ class TestV1MembershipTick():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
         resp = client.simulate_post(
@@ -259,8 +260,7 @@ class TestV1MembershipTick():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
-            exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -277,8 +277,7 @@ class TestV1MembershipTick():
         exchange = shared_contract['IbetMembershipExchange']
         token = TestV1MembershipTick.generate_agree_event(exchange)
         token_address = token['address']
-        os.environ["IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS"] = \
-            exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
 
         request_params = {"address_list": [token_address]}
         headers = {'Content-Type': 'application/json'}
@@ -400,7 +399,7 @@ class TestV1CouponTick():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
         resp = client.simulate_post(
@@ -422,8 +421,7 @@ class TestV1CouponTick():
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
-            exchange['address']
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -440,8 +438,7 @@ class TestV1CouponTick():
         exchange = shared_contract['IbetCouponExchange']
         token = TestV1CouponTick.generate_agree_event(exchange)
         token_address = token['address']
-        os.environ["IBET_CP_EXCHANGE_CONTRACT_ADDRESS"] = \
-            exchange['address']
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
 
         request_params = {"address_list": [token_address]}
         headers = {'Content-Type': 'application/json'}

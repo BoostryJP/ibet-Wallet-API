@@ -51,7 +51,7 @@ class OrderBook(BaseResource):
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
         exchange_address = \
             to_checksum_address(
-                os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+                config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
@@ -82,7 +82,7 @@ class OrderBook(BaseResource):
                     filter(Order.is_buy == False).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
             else:  # 売注文
@@ -109,7 +109,7 @@ class OrderBook(BaseResource):
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
         else:
@@ -135,7 +135,7 @@ class OrderBook(BaseResource):
                     filter(Order.token_address == token_address).\
                     filter(Order.is_buy == False).\
                     filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
             else:  # 売注文
@@ -160,7 +160,7 @@ class OrderBook(BaseResource):
                     filter(Order.token_address == token_address).\
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
         # レスポンス用の注文一覧を構築
@@ -241,7 +241,7 @@ class LastPrice(BaseResource):
 
         ExchangeContract = Contract.get_contract(
             'IbetStraightBondExchange',
-            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
@@ -303,7 +303,7 @@ class Tick(BaseResource):
 
         ExchangeContract = Contract.get_contract(
             'IbetStraightBondExchange',
-            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         )
 
         tick_list = []
@@ -395,7 +395,7 @@ class MembershipOrderBook(BaseResource):
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
         exchange_address = \
             to_checksum_address(
-                os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS'))
+                config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
@@ -426,7 +426,7 @@ class MembershipOrderBook(BaseResource):
                     filter(Order.is_buy == False).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
             else:  # 売注文
@@ -453,7 +453,7 @@ class MembershipOrderBook(BaseResource):
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
         else:
@@ -479,7 +479,7 @@ class MembershipOrderBook(BaseResource):
                     filter(Order.token_address == token_address).\
                     filter(Order.is_buy == False).\
                     filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
             else:  # 売注文
@@ -504,7 +504,7 @@ class MembershipOrderBook(BaseResource):
                     filter(Order.token_address == token_address).\
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
         # レスポンス用の注文一覧を構築
@@ -585,7 +585,7 @@ class MembershipLastPrice(BaseResource):
 
         ExchangeContract = Contract.get_contract(
             'IbetMembershipExchange',
-            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
@@ -648,7 +648,7 @@ class MembershipTick(BaseResource):
 
         ExchangeContract = Contract.get_contract(
             'IbetMembershipExchange',
-            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         tick_list = []
@@ -742,7 +742,7 @@ class CouponOrderBook(BaseResource):
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
         exchange_address = \
             to_checksum_address(
-                os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
+                config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
@@ -773,7 +773,7 @@ class CouponOrderBook(BaseResource):
                     filter(Order.is_buy == False).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
             else:  # 売注文
@@ -800,7 +800,7 @@ class CouponOrderBook(BaseResource):
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
                     filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
         else:
@@ -826,7 +826,7 @@ class CouponOrderBook(BaseResource):
                     filter(Order.token_address == token_address).\
                     filter(Order.is_buy == False).\
                     filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
             else:  # 売注文
@@ -851,7 +851,7 @@ class CouponOrderBook(BaseResource):
                     filter(Order.token_address == token_address).\
                     filter(Order.is_buy == True).\
                     filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == os.environ.get('AGENT_ADDRESS')).\
+                    filter(Order.agent_address == config.AGENT_ADDRESS).\
                     all()
 
         # レスポンス用の注文一覧を構築
@@ -932,7 +932,7 @@ class CouponLastPrice(BaseResource):
 
         ExchangeContract = Contract.get_contract(
             'IbetCouponExchange',
-            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
@@ -995,7 +995,7 @@ class CouponTick(BaseResource):
 
         ExchangeContract = Contract.get_contract(
             'IbetCouponExchange',
-            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         tick_list = []
@@ -1084,7 +1084,7 @@ class JDRLastPrice(BaseResource):
         # SWAPコントラクト設定
         SwapContract = Contract.get_contract(
             'IbetSwap',
-            os.environ.get('IBET_JDR_SWAP_CONTRACT_ADDRESS')
+            config.IBET_JDR_SWAP_CONTRACT_ADDRESS
         )
 
         price_list = []
@@ -1164,7 +1164,7 @@ class JDRTick(BaseResource):
         # SWAPコントラクト設定
         SwapContract = Contract.get_contract(
             'IbetSwap',
-            os.environ.get('IBET_JDR_SWAP_CONTRACT_ADDRESS')
+            config.IBET_JDR_SWAP_CONTRACT_ADDRESS
         )
 
         tick_list = []

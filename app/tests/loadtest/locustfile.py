@@ -6,6 +6,7 @@ from locust import HttpLocust, TaskSet, task
 
 import os
 import json
+from app import config 
 from web3.auto import w3
 from eth_utils import decode_hex, to_checksum_address
 
@@ -16,12 +17,12 @@ eth_address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
 # コントラクト情報
 contracts = json.load(open('../../../data/contracts.json' , 'r'))
 personalinfo_contract_address = \
-	to_checksum_address(os.environ.get("PERSONAL_INFO_CONTRACT_ADDRESS"))
+	to_checksum_address(config.PERSONAL_INFO_CONTRACT_ADDRESS)
 personalinfo_contract_abi = contracts['PersonalInfo']['abi']
 
 # Basic認証
-basic_auth_user = os.environ.get("BASIC_AUTH_USER")
-basic_auth_pass = os.environ.get("BASIC_AUTH_PASS")
+basic_auth_user = config.BASIC_AUTH_USER
+basic_auth_pass = config.BASIC_AUTH_PASS
 
 class LoadTestTaskSet(TaskSet):
 	def on_start(self):

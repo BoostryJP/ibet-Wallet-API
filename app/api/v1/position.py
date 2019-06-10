@@ -43,7 +43,7 @@ class MyTokens(BaseResource):
 
         # TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # Company List：発行体企業リスト
         try:
@@ -58,7 +58,7 @@ class MyTokens(BaseResource):
 
         # Bond Exchange Contract
         BondExchangeContract = Contract.get_contract(
-            'IbetStraightBondExchange', os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS'))
+            'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -266,7 +266,7 @@ class MembershipMyTokens(BaseResource):
 
         # TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # Company List：発行体企業リスト
         try:
@@ -282,7 +282,7 @@ class MembershipMyTokens(BaseResource):
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
             'IbetMembershipExchange',
-            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         position_list = []
@@ -430,11 +430,11 @@ class CouponMyTokens(BaseResource):
 
         # TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList', os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS'))
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # Coupon Exchange Contract
         CouponExchangeContract = Contract.get_contract(
-            'IbetCouponExchange', os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS'))
+            'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -670,7 +670,7 @@ class MRFMyTokens(BaseResource):
             # MRFトークン設定
             TokenContract = Contract.get_contract(
                 'IbetMRF',
-                os.environ.get('IBET_MRF_TOKEN_ADDRESS')
+                config.IBET_MRF_TOKEN_ADDRESS
             )
 
             try:
@@ -695,7 +695,7 @@ class MRFMyTokens(BaseResource):
                     privacy_policy = TokenContract.functions.privacyPolicy().call()
 
                     token = MRFToken()
-                    token.token_address = os.environ.get('IBET_MRF_TOKEN_ADDRESS')
+                    token.token_address = config.IBET_MRF_TOKEN_ADDRESS
                     token.token_template = 'IbetMRF'
                     token.owner_address = owner_address
                     token.company_name = company_name
@@ -790,7 +790,7 @@ class JDRMyTokens(BaseResource):
         # TokenList コントラクト設定
         ListContract = Contract.get_contract(
             'TokenList',
-            os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
+            config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
         position_list = []

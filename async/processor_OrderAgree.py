@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 import time
 from web3 import Web3
 from app import log
+from app import config
 from app.model import Agreement, AgreementStatus, Order, Listing
 from app.contracts import Contract
 from web3.middleware import geth_poa_middleware
@@ -20,8 +21,8 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 LOG = log.get_logger()
 
 # 設定の取得
-WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
-URI = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
+WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
+URI = config.DATABASE_URL
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
@@ -188,15 +189,15 @@ class Processor:
         self.web3 = web3
         self.bond_exchange_contract = Contract.get_contract(
             'IbetStraightBondExchange',
-            os.environ.get('IBET_SB_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
         )
         self.membership_exchange_contract = Contract.get_contract(
             'IbetMembershipExchange',
-            os.environ.get('IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
         )
         self.coupon_exchange_contract = Contract.get_contract(
             'IbetCouponExchange',
-            os.environ.get('IBET_CP_EXCHANGE_CONTRACT_ADDRESS')
+            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
         )
         self.exchange_list = [
             self.bond_exchange_contract,
