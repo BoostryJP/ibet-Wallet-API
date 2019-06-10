@@ -159,7 +159,7 @@ class TestV1StripeCharge:
     # amountの値が不正
     def test_stripe_charge_error_3_2(self, client, session, shared_contract):
         membership_exchange = shared_contract['IbetMembershipExchange']
-        config.BET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
 
         # Agreementの情報を挿入
         agreement = Agreement()
