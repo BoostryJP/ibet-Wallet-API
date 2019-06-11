@@ -189,15 +189,15 @@ class Processor:
         self.web3 = web3
         self.bond_exchange_contract = Contract.get_contract(
             'IbetStraightBondExchange',
-            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
+            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         )
         self.membership_exchange_contract = Contract.get_contract(
             'IbetMembershipExchange',
-            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
+            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
         self.coupon_exchange_contract = Contract.get_contract(
             'IbetCouponExchange',
-            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
+            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         )
         self.exchange_list = [
             self.bond_exchange_contract,
