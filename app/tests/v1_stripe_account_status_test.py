@@ -106,6 +106,22 @@ class TestV1StripeAccountStatus():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+    # 正常系4： 銀行のみアカウントに対するステータスの取得(NONE)
+    def test_normal_4(self, client, session):
+        TestV1StripeAccountStatus.update_account_record(self, session, "acct_1Ekjq4Bas4up5YaL")
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json = {},
+            private_key = TestV1StripeAccountStatus.private_key_1
+        )
+        assumed_body = {
+            "verified_status": "NONE"
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜エラー系2＞
     # ヘッダー（Signature）なし
     def test_stripe_get_acocunt_status_error_1(self, client, session):
