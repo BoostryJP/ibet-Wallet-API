@@ -703,12 +703,16 @@ class AccountStatus(BaseResource):
                 response = stripe.Account.retrieve(
                     raw.account_id
                 )
-                if response["individual"]["verification"]["status"] == StripeAccountStatus.UNVERIFIED.value:
-                    verified_status = 'UNVERIFIED'
-                elif response["individual"]["verification"]["status"] == StripeAccountStatus.PENDING.value:
-                    verified_status = 'PENDING'
-                elif response["individual"]["verification"]["status"] == StripeAccountStatus.VERIFIED.value:
-                    verified_status = 'VERIFIED'
+                # external_accountのみの場合
+                if not 'individual' in response:
+                    verified_status = 'NONE'
+                else:
+                    if response["individual"]["verification"]["status"] == StripeAccountStatus.UNVERIFIED.value:
+                        verified_status = 'UNVERIFIED'
+                    elif response["individual"]["verification"]["status"] == StripeAccountStatus.PENDING.value:
+                        verified_status = 'PENDING'
+                    elif response["individual"]["verification"]["status"] == StripeAccountStatus.VERIFIED.value:
+                        verified_status = 'VERIFIED'
         except stripe.error.CardError as e:
             body = e.json_body
             err = body.get('error', {})
