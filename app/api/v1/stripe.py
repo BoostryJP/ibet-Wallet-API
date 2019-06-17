@@ -834,10 +834,9 @@ class FeeInfo(BaseResource):
     Handle for endpoint: /v1/Stripe/FeeInfo
     '''
     def on_get(self, req, res):
-        LOG.info('v1.Stripe.FeeInfo')        
-        commitment_fee = config.STRIPE_FEE
-        # 今後固定手数料が発生した場合は以下に設定
-        fix_fee = 0
-        stripe_fee = {'stripe': {'commitment_fee': float(commitment_fee), 'fix_fee': fix_fee}}
+        LOG.info('v1.Stripe.FeeInfo')      
+        stripe_fee = {'commitment_fee': float(config.STRIPE_FEE), 'fix_fee': 0}
 
-        self.on_success(res, stripe_fee)
+        response_json = {'stripe': stripe_fee}
+
+        self.on_success(res, response_json)
