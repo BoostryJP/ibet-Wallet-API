@@ -825,3 +825,18 @@ class ChargeStatus(BaseResource):
             raise InvalidParameterError(description='invalid exchange address')
 
         return validator.document
+
+# ------------------------------
+# [Stripe]手数料情報取得
+# ------------------------------
+class FeeInfo(BaseResource):
+    '''
+    Handle for endpoint: /v1/Stripe/FeeInfo
+    '''
+    def on_get(self, req, res):
+        LOG.info('v1.Stripe.FeeInfo')      
+        stripe_fee = {'commitment_fee': float(config.STRIPE_FEE), 'fix_fee': 0}
+
+        response_json = {'stripe': stripe_fee}
+
+        self.on_success(res, response_json)

@@ -808,7 +808,7 @@ curl -X POST \
         }
 }
 ```
-* `verified_status` : 対象のstripe connectedアカウントの本人確認ステータス。`UNVERIFIED`、`PENDING`、`VERIFIED`のいずれか。
+* `verified_status` : 対象のstripe connectedアカウントの本人確認ステータス。`NONE`、`UNVERIFIED`、`PENDING`、`VERIFIED`のいずれか。
 
 #### Status: 400 Bad Request
 * stripeにてカード関連エラー発生時
@@ -1071,3 +1071,37 @@ curl -X POST \
     }
 }
 ```
+
+## GET: /v1/Stripe/FeeInfo
+* stripeを決済手段として利用した際の手数料情報を返却する
+
+### Sample
+```sh
+curl -X GET \
+  http://localhost:5000/v1/Stripe/FeeInfo \
+  -H 'Content-Type: application/json' \
+  -H 'cache-control: no-cache'
+```
+
+### Out
+
+#### Status: 200 OK
+* 正常時
+
+```json
+{
+    "meta": {
+        "code": 200,
+        "message": "OK"
+    },
+    "data": {
+        "stripe": {
+            "commitment_fee": 0.1,
+            "fix_fee": 0
+        }
+    }
+}
+```
+* `stripe` : 
+    * `commitment_fee` : 決済手数料（率）
+    * `fix_fee` : 決済手数料（固定）
