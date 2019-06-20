@@ -95,7 +95,7 @@ class ConsoleSink:
         )
 
     @staticmethod
-    def on_settlement_ok(exchange_address, order_id, agreement_id):
+    def on_settlement_ok(exchange_address, order_id, agreement_id, settlement_timestamp):
         logging.info(
             "SettlementOK: exchange_address={}, orderId={}, agreementId={}".format(
                 exchange_address, order_id, agreement_id
