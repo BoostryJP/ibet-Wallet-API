@@ -2,11 +2,13 @@
 from enum import Enum
 
 from sqlalchemy import Column
-from sqlalchemy import ForeignKey
-from sqlalchemy import String, Integer, BigInteger, Boolean
+from sqlalchemy import String, Integer, BigInteger, DateTime
 
 from app.model import Base
+from app.utils import alchemy
 
+
+# 約定情報
 class Agreement(Base):
     __tablename__ = 'agreement'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -19,10 +21,11 @@ class Agreement(Base):
     counterpart_address = Column(String(256))
     amount = Column(BigInteger)
     status = Column(Integer)
+    settlement_timestamp = Column(DateTime, default=None)
 
     def __repr__(self):
         return "<Agreement(exchange_address='%s', order_id='%d', agreement_id='%d')>" % \
-            (self.exchange_address, self.order_id, self.agreement_id)
+               (self.exchange_address, self.order_id, self.agreement_id)
 
     FIELDS = {
         'id': int,
@@ -35,11 +38,13 @@ class Agreement(Base):
         'counterpart_address': str,
         'amount': int,
         'status': int,
+        'settlement_timestamp': alchemy.datetime_to_timestamp,
     }
 
     FIELDS.update(Base.FIELDS)
 
+
 class AgreementStatus(Enum):
-    PENDING=0
-    DONE=1
-    CANCELED=2
+    PENDING = 0
+    DONE = 1
+    CANCELED = 2
