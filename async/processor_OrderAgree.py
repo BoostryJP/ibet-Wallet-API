@@ -17,6 +17,9 @@ from app.model import Agreement, AgreementStatus, Order, Listing
 from app.contracts import Contract
 from web3.middleware import geth_poa_middleware
 
+from datetime import datetime, timezone, timedelta
+JST = timezone(timedelta(hours=+9), "JST")
+
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 LOG = log.get_logger()
 
@@ -155,11 +158,12 @@ class DBSink:
             agreement.status = AgreementStatus.PENDING.value
             self.db.merge(agreement)
 
-    def on_settlement_ok(self, exchange_address, order_id, agreement_id):
+    def on_settlement_ok(self, exchange_address, order_id, agreement_id, settlement_timestamp):
         agreement = self.__get_agreement(
             exchange_address, order_id, agreement_id)
         if agreement is not None:
             agreement.status = AgreementStatus.DONE.value
+            agreement.settlement_timestamp = settlement_timestamp
 
     def on_settlement_ng(self, exchange_address, order_id, agreement_id):
         agreement = self.__get_agreement(
@@ -331,10 +335,15 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
+                    settlement_timestamp = datetime.fromtimestamp(
+                        web3.eth.getBlock(event['blockNumber'])['timestamp'],
+                        JST
+                    )
                     self.sink.on_settlement_ok(
                         exchange_address=exchange_contract.address,
                         order_id=args['orderId'],
-                        agreement_id=args['agreementId']
+                        agreement_id=args['agreementId'],
+                        settlement_timestamp=settlement_timestamp
                     )
 
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
