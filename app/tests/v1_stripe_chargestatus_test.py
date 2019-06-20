@@ -21,7 +21,7 @@ class TestV1StripeChargeStatus():
     }
 
     @staticmethod
-    def insert_charge_record(self, session, status):
+    def insert_charge_record(self, session, status, receipt_url):
         # Charge情報を挿入
         stripe_charge = StripeCharge()
         stripe_charge.id = 1
@@ -29,12 +29,13 @@ class TestV1StripeChargeStatus():
         stripe_charge.order_id = self.default_order_id
         stripe_charge.agreement_id = self.default_agreement_id
         stripe_charge.status = status
+        stripe_charge.receipt_url = receipt_url
         session.add(stripe_charge)
 
     # ＜正常系1＞
     # レコードあり（PENDING）
     def test_stripe_chargestatus_normal_1(self, client, session):
-        TestV1StripeChargeStatus.insert_charge_record(self, session, 0)
+        TestV1StripeChargeStatus.insert_charge_record(self, session, 0, '')
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(self.default_request_params)
@@ -46,7 +47,8 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
-            "status": "PENDING"
+            "status": "PENDING",
+            "receipt_url": ''
         }
 
         assert resp.status_code == 200
@@ -56,7 +58,7 @@ class TestV1StripeChargeStatus():
     # ＜正常系2＞
     # レコードあり（SUCCEEDED）
     def test_stripe_chargestatus_normal_2(self, client, session):
-        TestV1StripeChargeStatus.insert_charge_record(self, session, 1)
+        TestV1StripeChargeStatus.insert_charge_record(self, session, 1, "https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE")
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(self.default_request_params)
@@ -68,7 +70,8 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
-            "status": "SUCCEEDED"
+            "status": "SUCCEEDED",
+            "receipt_url":"https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE"
         }
 
         assert resp.status_code == 200
@@ -78,7 +81,7 @@ class TestV1StripeChargeStatus():
     # ＜正常系3＞
     # レコードあり（FAILED）
     def test_stripe_chargestatus_normal_3(self, client, session):
-        TestV1StripeChargeStatus.insert_charge_record(self, session, 2)
+        TestV1StripeChargeStatus.insert_charge_record(self, session, 2, '')
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(self.default_request_params)
@@ -90,7 +93,8 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
-            "status": "FAILED"
+            "status": "FAILED",
+            "receipt_url": ''
         }
 
         assert resp.status_code == 200
@@ -110,7 +114,8 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
-            "status": "NONE"
+            "status": "NONE",
+            "receipt_url": ''
         }
 
         assert resp.status_code == 200

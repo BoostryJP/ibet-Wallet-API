@@ -478,6 +478,7 @@ class Charge(BaseResource):
                 raise DoubleChargeError(description=description)
             elif stripe_charge.status == StripeChargeStatus.FAILED.value:
                 stripe_charge.status = StripeChargeStatus.PENDING.value
+                stripe_charge.receipt_url = ''
                 session.commit()
         else:  # オペレーション未実施の場合
             try:
@@ -487,6 +488,7 @@ class Charge(BaseResource):
                 stripe_charge.order_id = order_id
                 stripe_charge.agreement_id = agreement_id
                 stripe_charge.status = StripeChargeStatus.PENDING.value
+                stripe_charge.receipt_url = ''
                 session.add(stripe_charge)
                 session.commit()
             except Exception as err:  # 一意制約違反の場合
@@ -573,6 +575,7 @@ class Charge(BaseResource):
             raise AppError
 
         # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
+        stripe_charge.receipt_url = charge['receipt_url']
         stripe_charge.status = StripeChargeStatus.SUCCEEDED.value
 
         receipt_url = {'receipt_url': charge['receipt_url']}
@@ -773,19 +776,24 @@ class ChargeStatus(BaseResource):
 
         if stripe_charge is None:
             status = 'NONE'
+            receipt_url = ''
         else:
             if stripe_charge.status == StripeChargeStatus.SUCCEEDED.value:
                 status = 'SUCCEEDED'
+                receipt_url = stripe_charge.receipt_url
             elif stripe_charge.status == StripeChargeStatus.PENDING.value:
                 status = 'PENDING'
+                receipt_url = stripe_charge.receipt_url
             elif stripe_charge.status == StripeChargeStatus.FAILED.value:
                 status = 'FAILED'
+                receipt_url = stripe_charge.receipt_url
 
         response_json = {
             'exchange_address': exchange_address,
             'order_id': order_id,
             'agreement_id': agreement_id,
-            'status': status
+            'status': status,
+            'receipt_url': receipt_url
         }
 
         self.on_success(res, response_json)

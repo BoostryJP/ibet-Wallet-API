@@ -15,6 +15,7 @@ class StripeCharge(Base):
     order_id = Column(BigInteger)
     agreement_id = Column(BigInteger)
     status = Column(Integer)
+    receipt_url = Column(String(256))
 
     def __repr__(self):
         return "<StripeCharge(exchange_address='%s', order_id='%d', agreement_id='%d')>" % \
@@ -28,6 +29,7 @@ class StripeCharge(Base):
         'order_id': int,
         'agreement_id': int,
         'status': int,
+        'receipt_url': str
     }
 
     FIELDS.update(Base.FIELDS)
