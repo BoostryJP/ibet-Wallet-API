@@ -31,7 +31,7 @@ class Agreement(Base):
         'id': int,
         'exchange_address': str,
         'order_id': int,
-        'agrecement_id': int,
+        'agreement_id': int,
         'unique_order_id': str,
         'buyer_address': str,
         'seller_address': str,
