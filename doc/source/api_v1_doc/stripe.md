@@ -965,14 +965,16 @@ curl -X POST \
             "exchange_address": "ct_1EPLU9HgQLLPjBO2760HyH5v",
             "order_id": 4,
             "agreement_id": 5,
-            "status": "SUCCEEDED"
+            "status": "SUCCEEDED",
+            "receipt_url": "https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE"
         }
 }
 ```
 * `exchange_address` : DEXアドレス
 * `order_id` : 注文ID
 * `agreement_id` : 約定ID
-* `status` : 対象のDEXアドレス・注文・約定に紐付くchargeの状況。`PENDING`、`SUCCEEDED`、`FAILED`のいずれか。
+* `status` : 対象のDEXアドレス・注文・約定に紐付くchargeの状況。`NONE`、`PENDING`、`SUCCEEDED`、`FAILED`のいずれか。
+* `receipt_url`: stripe決済の領収情報
 
 #### Status: 400 Bad Request
 * 入力値エラー時
