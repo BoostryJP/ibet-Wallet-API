@@ -573,6 +573,7 @@ class Charge(BaseResource):
             raise AppError
 
         # 全ての処理が正常処理された場合、Charge状態を[SUCCESS]ステータスに更新する
+        stripe_charge.receipt_url = charge['receipt_url']
         stripe_charge.status = StripeChargeStatus.SUCCEEDED.value
 
         receipt_url = {'receipt_url': charge['receipt_url']}

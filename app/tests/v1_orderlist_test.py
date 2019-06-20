@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from app import config
-from app.model import Order, Agreement, AgreementStatus
+from app.model import Order, Agreement, AgreementStatus, StripeCharge, StripeChargeStatus
 from .contract_modules import *
 
 # 注文一覧・約定一覧API（普通社債）
@@ -327,7 +327,8 @@ class TestV1OrderList_Bond():
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'stripe_receipt_url': None
             }
         }
 
@@ -371,6 +372,15 @@ class TestV1OrderList_Bond():
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
         session.add(agreement)
+
+        # StripeChargeイベント情報を挿入
+        stripe_charge = StripeCharge()
+        stripe_charge.exchange_address = bond_exchange['address']
+        stripe_charge.order_id = order_id
+        stripe_charge.agreement_id = agreement_id
+        stripe_charge.status = StripeChargeStatus.SUCCEEDED.value
+        stripe_charge.receipt_url = 'https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE'
+        session.add(stripe_charge)
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -424,7 +434,8 @@ class TestV1OrderList_Bond():
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'stripe_receipt_url': 'https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE'
             }
         }
 
@@ -783,7 +794,8 @@ class TestV1OrderList_Membership():
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'stripe_receipt_url': None
             }
         }
 
@@ -824,6 +836,15 @@ class TestV1OrderList_Membership():
         agreement.status = AgreementStatus.DONE.value
         session.add(agreement)
 
+        # StripeChargeイベント情報を挿入
+        stripe_charge = StripeCharge()
+        stripe_charge.exchange_address = membership_exchange['address']
+        stripe_charge.order_id = order_id
+        stripe_charge.agreement_id = agreement_id
+        stripe_charge.status = StripeChargeStatus.SUCCEEDED.value
+        stripe_charge.receipt_url = 'https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE'
+        session.add(stripe_charge)
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -857,7 +878,8 @@ class TestV1OrderList_Membership():
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'stripe_receipt_url': 'https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE'
             }
         }
 
@@ -1207,7 +1229,8 @@ class TestV1OrderList_Coupon():
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'stripe_receipt_url': None
             }
         }
 
@@ -1248,6 +1271,15 @@ class TestV1OrderList_Coupon():
         agreement.status = AgreementStatus.DONE.value
         session.add(agreement)
 
+        # StripeChargeイベント情報を挿入
+        stripe_charge = StripeCharge()
+        stripe_charge.exchange_address = coupon_exchange['address']
+        stripe_charge.order_id = order_id
+        stripe_charge.agreement_id = agreement_id
+        stripe_charge.status = StripeChargeStatus.SUCCEEDED.value
+        stripe_charge.receipt_url = 'https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE'
+        session.add(stripe_charge)
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -1281,7 +1313,8 @@ class TestV1OrderList_Coupon():
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'stripe_receipt_url': 'https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE'
             }
         }
 

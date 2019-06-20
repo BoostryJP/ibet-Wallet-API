@@ -15,7 +15,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Order, Agreement, AgreementStatus, Listing, BondToken, MembershipToken, CouponToken
+from app.model import Order, Agreement, AgreementStatus, Listing, BondToken, MembershipToken, CouponToken, StripeCharge
 
 LOG = log.get_logger()
 
@@ -689,7 +689,8 @@ class OrderList(BaseResource):
                     'amount':agreement[1],
                     'price':agreement[2],
                     'is_buy':True,
-                    'canceled':agreement[3]
+                    'canceled':agreement[3],
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -849,7 +850,8 @@ class OrderList(BaseResource):
                     'amount':agreement[1],
                     'price':agreement[2],
                     'is_buy':False,
-                    'canceled':agreement[3]
+                    'canceled':agreement[3],
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -942,7 +944,8 @@ class OrderList(BaseResource):
                     'amount':agreement[1],
                     'price':agreement[2],
                     'is_buy':True,
-                    'canceled':agreement[3]
+                    'canceled':agreement[3],
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -1035,7 +1038,8 @@ class OrderList(BaseResource):
                     'amount':agreement[1],
                     'price':agreement[2],
                     'is_buy':False,
-                    'canceled':agreement[3]
+                    'canceled':agreement[3],
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -1129,7 +1133,8 @@ class OrderList(BaseResource):
                     'amount':agreement[1],
                     'price':agreement[2],
                     'is_buy':True,
-                    'canceled':agreement[3]
+                    'canceled':agreement[3],
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -1223,7 +1228,8 @@ class OrderList(BaseResource):
                     'amount':agreement[1],
                     'price':agreement[2],
                     'is_buy':False,
-                    'canceled':agreement[3]
+                    'canceled':agreement[3],
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -1252,6 +1258,12 @@ class OrderList(BaseResource):
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
+            # stripe決済情報の取得（買のみ）
+            stripe_receipt_url = session.query(StripeCharge.receipt_url).\
+                filter(StripeCharge.exchange_address == exchange_address).\
+                filter(StripeCharge.order_id == order_id).\
+                filter(StripeCharge.agreement_id == agreement_id).\
+                first()
 
             # Token-Contractへの接続
             TokenContract = Contract.get_contract('IbetStraightBond', token_address)
@@ -1383,7 +1395,8 @@ class OrderList(BaseResource):
                     'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'is_buy':True
+                    'is_buy':True,
+                    'stripe_receipt_url': stripe_receipt_url[0]
                 },
                 'sort_id': id
             })
@@ -1543,7 +1556,8 @@ class OrderList(BaseResource):
                     'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'is_buy':False
+                    'is_buy':False,
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -1572,6 +1586,13 @@ class OrderList(BaseResource):
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
+
+            # stripe決済情報の取得（買のみ）
+            stripe_receipt_url = session.query(StripeCharge.receipt_url).\
+                filter(StripeCharge.exchange_address == exchange_address).\
+                filter(StripeCharge.order_id == order_id).\
+                filter(StripeCharge.agreement_id == agreement_id).\
+                first()
 
             # Token-Contractへの接続
             TokenContract = Contract.get_contract('IbetMembership', token_address)
@@ -1635,7 +1656,8 @@ class OrderList(BaseResource):
                     'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'is_buy':True
+                    'is_buy':True,
+                    'stripe_receipt_url': stripe_receipt_url[0]
                 },
                 'sort_id': id
             })
@@ -1727,7 +1749,8 @@ class OrderList(BaseResource):
                     'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'is_buy':False
+                    'is_buy':False,
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })
@@ -1756,6 +1779,13 @@ class OrderList(BaseResource):
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
+
+            # stripe決済情報の取得（買のみ）
+            stripe_receipt_url = session.query(StripeCharge.receipt_url).\
+                filter(StripeCharge.exchange_address == exchange_address).\
+                filter(StripeCharge.order_id == order_id).\
+                filter(StripeCharge.agreement_id == agreement_id).\
+                first()
 
             # Token-Contractへの接続
             TokenContract = Contract.get_contract('IbetCoupon', token_address)
@@ -1820,7 +1850,8 @@ class OrderList(BaseResource):
                     'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'is_buy':True
+                    'is_buy':True,
+                    'stripe_receipt_url': stripe_receipt_url[0]
                 },
                 'sort_id': id
             })
@@ -1913,7 +1944,8 @@ class OrderList(BaseResource):
                     'agreement_id':agreement_id,
                     'amount':agreement[1],
                     'price':agreement[2],
-                    'is_buy':False
+                    'is_buy':False,
+                    'stripe_receipt_url': None
                 },
                 'sort_id': id
             })

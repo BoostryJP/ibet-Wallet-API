@@ -15,7 +15,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from app import log
 from app import config
-from app.model import Notification, Push
+from app.model import Notification, Push, StripeCharge
 from app.contracts import Contract
 import json
 from async.lib.token import TokenFactory
@@ -464,12 +464,18 @@ class WatchBondBuySettlementOK(Watcher):
             token = token_factory.get_straight_bond(token_address)
 
             company = company_list.find(token.owner_address)
-
+            # 決済完了時のstripeのreceipt情報を取得
+            stripe_receipt_url = session.query(StripeCharge.receipt_url).\
+                filter(StripeCharge.exchange_address == entry["args"]["agentAddress"]).\
+                filter(StripeCharge.order_id == entry["args"]["orderId"]).\
+                filter(StripeCharge.agreement_id == entry["args"]["agreementId"]).\
+                first()
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "token_type": "IbetStraightBond",
+                "stripe_receipt_url": stripe_receipt_url[0]
             }
 
             notification = Notification()
@@ -841,12 +847,18 @@ class WatchMembershipBuySettlementOK(Watcher):
             token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
-
+            # 決済完了時のstripeのreceipt情報を取得
+            stripe_receipt_url = session.query(StripeCharge.receipt_url).\
+                filter(StripeCharge.exchange_address == entry["args"]["agentAddress"]).\
+                filter(StripeCharge.order_id == entry["args"]["orderId"]).\
+                filter(StripeCharge.agreement_id == entry["args"]["agreementId"]).\
+                first()
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetMembership"
+                "token_type": "IbetMembership",
+                "stripe_receipt_url": stripe_receipt_url[0]
             }
 
             notification = Notification()
@@ -1218,12 +1230,18 @@ class WatchCouponBuySettlementOK(Watcher):
             token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
-
+            # 決済完了時のstripeのreceipt情報を取得
+            stripe_receipt_url = session.query(StripeCharge.receipt_url).\
+                filter(StripeCharge.exchange_address == entry["args"]["agentAddress"]).\
+                filter(StripeCharge.order_id == entry["args"]["orderId"]).\
+                filter(StripeCharge.agreement_id == entry["args"]["agreementId"]).\
+                first()
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "token_type": "IbetCoupon",
+                "stripe_receipt_url": stripe_receipt_url[0]
             }
 
             notification = Notification()
