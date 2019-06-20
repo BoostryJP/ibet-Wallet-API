@@ -172,7 +172,8 @@ curl -X POST \
                     "amount": 1,
                     "price": 100,
                     "is_buy": true,
-                    "canceled": false
+                    "canceled": false,
+                    "stripe_receipt_url":null
                 },
                 "sort_id": 3
             }
@@ -215,7 +216,8 @@ curl -X POST \
                     "agreement_id": 1,
                     "amount": 1,
                     "price": 100,
-                    "is_buy": true
+                    "is_buy": true,
+                    "stripe_receipt_url":"https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE"
                 },
                 "sort_id": 4
             }
@@ -238,6 +240,7 @@ curl -X POST \
     * `amount` : 注文数量
     * `price` : 注文単価
     * `is_buy` : 売買区分（`true`:買い、`false`:売り）
+    * `stripe_receipt_url` : stripe決済の領収情報URL。決済中ではnull、決済済みかつ買いの場合にURLが入る。
 * `complete_list` : 決済済一覧
   * `agreement` : ※`settlement_list`と同じ
 * `token` : トークンの属性情報
