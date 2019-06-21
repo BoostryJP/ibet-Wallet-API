@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
-from app import config
-from app.model import Listing
+from app.model import Listing, PrivateListing
 from .contract_modules import *
 
 
@@ -229,6 +227,14 @@ class TestV1CouponMyTokens:
         listed_token.payment_method_bank = True
         session.add(listed_token)
 
+    @staticmethod
+    def list_private_token(session, token):
+        listed_token = PrivateListing()
+        listed_token.token_address = token['address']
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
+        session.add(listed_token)
+
     # ＜正常系1-1＞
     # クーポントークン保有
     #  クーポン新規発行 -> 投資家割当
@@ -351,6 +357,145 @@ class TestV1CouponMyTokens:
                     'url': ''
                 }],
                 'status': False,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 10,
+            'commitment': 0,
+            'used': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == coupon_address:
+                count = 1
+                assert token == assumed_body
+        assert count == 1
+
+    # ＜正常系1-3＞
+    # クーポントークン保有
+    #  未公開トークンリストの場合
+    def test_coupon_position_normal_1_3(self, client, session, shared_contract):
+        coupon_exchange = shared_contract['IbetCouponExchange']
+        token_list = shared_contract['TokenList']
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+
+        coupon_token = TestV1CouponMyTokens. \
+            transfer_coupon(coupon_exchange, token_list)
+        coupon_address = coupon_token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1CouponMyTokens.list_private_token(session, coupon_token)
+
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': coupon_address,
+                'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 10000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'memo': 'クーポンメモ欄',
+                'expiration_date': '20191231',
+                'transferable': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'status': True,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 10,
+            'commitment': 0,
+            'used': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == coupon_address:
+                count = 1
+                assert token == assumed_body
+        assert count == 1
+
+    # ＜正常系1-4＞
+    # クーポントークン保有
+    #  特殊系：公開トークンと未公開トークンが重複
+    def test_coupon_position_normal_1_4(self, client, session, shared_contract):
+        coupon_exchange = shared_contract['IbetCouponExchange']
+        token_list = shared_contract['TokenList']
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+
+        coupon_token = TestV1CouponMyTokens. \
+            transfer_coupon(coupon_exchange, token_list)
+        coupon_address = coupon_token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1CouponMyTokens.list_token(session, coupon_token)
+        TestV1CouponMyTokens.list_private_token(session, coupon_token)
+
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': coupon_address,
+                'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 10000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'memo': 'クーポンメモ欄',
+                'expiration_date': '20191231',
+                'transferable': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'status': True,
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',

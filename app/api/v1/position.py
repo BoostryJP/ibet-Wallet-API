@@ -17,7 +17,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, MembershipToken, CouponToken, MRFToken, JDRToken
+from app.model import Listing, PrivateListing, BondToken, MembershipToken, CouponToken, MRFToken, JDRToken
 
 LOG = log.get_logger()
 
@@ -60,12 +60,14 @@ class MyTokens(BaseResource):
         BondExchangeContract = Contract.get_contract(
             'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 
+        listed_tokens = session.query(Listing).\
+            union(session.query(PrivateListing)).\
+            all()
+
         position_list = []
         for _account_address in request_json['account_address_list']:
-            available_tokens = session.query(Listing).all()
-
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
-            for token in available_tokens:
+            for token in listed_tokens:
                 token_info = ListContract.functions. \
                     getTokenByAddress(token.token_address).call()
 
@@ -285,12 +287,14 @@ class MembershipMyTokens(BaseResource):
             config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
+        listed_tokens = session.query(Listing). \
+            union(session.query(PrivateListing)). \
+            all()
+
         position_list = []
         for _account_address in request_json['account_address_list']:
-            available_tokens = session.query(Listing).all()
-
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
-            for token in available_tokens:
+            for token in listed_tokens:
                 token_info = ListContract.functions. \
                     getTokenByAddress(token.token_address).call()
 
@@ -436,12 +440,14 @@ class CouponMyTokens(BaseResource):
         CouponExchangeContract = Contract.get_contract(
             'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
+        listed_tokens = session.query(Listing). \
+            union(session.query(PrivateListing)). \
+            all()
+
         position_list = []
         for _account_address in request_json['account_address_list']:
-            available_tokens = session.query(Listing).all()
-
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
-            for token in available_tokens:
+            for token in listed_tokens:
                 token_info = ListContract.functions. \
                     getTokenByAddress(token.token_address).call()
 
@@ -793,12 +799,14 @@ class JDRMyTokens(BaseResource):
             config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
+        listed_tokens = session.query(Listing). \
+            union(session.query(PrivateListing)). \
+            all()
+
         position_list = []
         for _account_address in request_json['account_address_list']:
-            available_tokens = session.query(Listing).all()
-
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
-            for token in available_tokens:
+            for token in listed_tokens:
                 # TokenListコントラクトの登録情報を取得
                 token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
                 token_address = token_info[0]
