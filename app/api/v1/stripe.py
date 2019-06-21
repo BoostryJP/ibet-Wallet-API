@@ -662,7 +662,7 @@ class Charge(BaseResource):
             # 指定したキューがない場合はキューを作成
             queue = sqs.create_queue(QueueName=name)
 
-        hash = hashlib.sha1(json.dumps(msg)).hexdigest()
+        hash = hashlib.sha1(json.dumps(msg).encode('utf-8')).hexdigest()
 
         # NOTE:Local開発環境では、ElasticMQに接続する
         if config.APP_ENV != 'local':
