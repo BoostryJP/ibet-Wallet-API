@@ -217,6 +217,7 @@ curl -X POST \
                     "price": 100,
                     "is_buy": true
                 },
+                "settlement_timestamp": "2017/04/10 10:00:00",
                 "sort_id": 4
             }
         ]
@@ -241,6 +242,7 @@ curl -X POST \
 * `complete_list` : 決済済一覧
   * `agreement` : ※`settlement_list`と同じ
 * `token` : トークンの属性情報
+* `settlement_timestamp` : 決済日時（受渡日時）
 * `sort_id` : ソート用のID。注文(order)、約定(agreement)のそれぞれで古いものから順に採番されている。
 
 #### Status: 400 Bad Request

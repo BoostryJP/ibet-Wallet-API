@@ -370,6 +370,7 @@ class TestV1OrderList_Bond():
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -425,7 +426,8 @@ class TestV1OrderList_Bond():
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True
-            }
+            },
+            'settlement_timestamp': '2019/06/18 09:00:00'
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
@@ -435,6 +437,7 @@ class TestV1OrderList_Bond():
             if order['token']['token_address'] == bond_token['address']:
                 assert order['token'] == assumed_body['token']
                 assert order['agreement'] == assumed_body['agreement']
+                assert order['settlement_timestamp'] == assumed_body['settlement_timestamp']
 
     # ＜エラー系1＞
     # request-bodyなし
@@ -822,6 +825,7 @@ class TestV1OrderList_Membership():
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -858,7 +862,8 @@ class TestV1OrderList_Membership():
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True
-            }
+            },
+            'settlement_timestamp': '2019/06/18 09:00:00'
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
@@ -868,6 +873,7 @@ class TestV1OrderList_Membership():
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']
                 assert order['agreement'] == assumed_body['agreement']
+                assert order['settlement_timestamp'] == assumed_body['settlement_timestamp']
 
     # ＜エラー系1＞
     # request-bodyなし
@@ -1246,6 +1252,7 @@ class TestV1OrderList_Coupon():
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -1282,7 +1289,8 @@ class TestV1OrderList_Coupon():
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True
-            }
+            },
+            'settlement_timestamp': '2019/06/18 09:00:00'
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
@@ -1292,6 +1300,7 @@ class TestV1OrderList_Coupon():
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']
                 assert order['agreement'] == assumed_body['agreement']
+                assert order['settlement_timestamp'] == assumed_body['settlement_timestamp']
 
     # ＜エラー系1＞
     # request-bodyなし
