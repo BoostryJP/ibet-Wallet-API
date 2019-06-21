@@ -4,6 +4,7 @@ import json
 import math
 import falcon
 import boto3
+import hashlib
 
 from cerberus import Validator
 from web3 import Web3
@@ -661,6 +662,8 @@ class Charge(BaseResource):
             # 指定したキューがない場合はキューを作成
             queue = sqs.create_queue(QueueName=name)
 
+        hash = hashlib.sha1(json.dumps(msg)).hexdigest()
+
         # NOTE:Local開発環境では、ElasticMQに接続する
         if config.APP_ENV != 'local':
             response = queue.send_message(
@@ -668,8 +671,8 @@ class Charge(BaseResource):
                 MessageBody=(
                     json.dumps(msg)
                 ),
-                MessageDeduplicationId='string',
-                MessageGroupId='string'
+                MessageDeduplicationId=hash,
+                MessageGroupId='charge_message'
             )
         else:
             response = queue.send_message(
