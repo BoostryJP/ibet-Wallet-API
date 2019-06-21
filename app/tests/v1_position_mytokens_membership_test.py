@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 
 from app import config
-from app.model import Listing
+from app.model import Listing, PrivateListing
 
 from .account_config import eth_account
 from .contract_modules import membership_issue, membership_register_list, \
@@ -170,6 +169,14 @@ class TestV1MembershipMyTokens:
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
+        listed_token.token_address = token['address']
+        listed_token.payment_method_credit_card = True
+        listed_token.payment_method_bank = True
+        session.add(listed_token)
+
+    @staticmethod
+    def list_private_token(session, token):
+        listed_token = PrivateListing()
         listed_token.token_address = token['address']
         listed_token.payment_method_credit_card = True
         listed_token.payment_method_bank = True
@@ -348,6 +355,143 @@ class TestV1MembershipMyTokens:
             if token['token']['token_address'] == token_address:
                 count = 1
         assert count == 0
+
+    # 正常系4
+    # 残高あり
+    #   未公開トークンリストの場合
+    def test_membership_position_normal_4(self, client, session, shared_contract):
+        exchange = shared_contract['IbetMembershipExchange']
+        token_list = shared_contract['TokenList']
+        account = eth_account['trader']
+
+        token = TestV1MembershipMyTokens.create_balance(exchange, token_list)
+        token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1MembershipMyTokens.list_private_token(session, token)
+
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client. \
+            simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token_address,
+                'token_template': 'IbetMembership',
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 100,
+            'commitment': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address:
+                count = 1
+                assert token == assumed_body
+        assert count == 1
+
+    # 正常系4
+    # 残高あり
+    #   特殊系：公開トークンと未公開トークンが重複
+    def test_membership_position_normal_5(self, client, session, shared_contract):
+        exchange = shared_contract['IbetMembershipExchange']
+        token_list = shared_contract['TokenList']
+        account = eth_account['trader']
+
+        token = TestV1MembershipMyTokens.create_balance(exchange, token_list)
+        token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV1MembershipMyTokens.list_token(session, token)
+        TestV1MembershipMyTokens.list_private_token(session, token)
+
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client. \
+            simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token_address,
+                'token_template': 'IbetMembership',
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 100,
+            'commitment': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address:
+                count = 1
+                assert token == assumed_body
+        assert count == 1
 
     # エラー系1
     # 入力値エラー（request-bodyなし）

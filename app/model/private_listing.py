@@ -4,8 +4,8 @@ from sqlalchemy import String, BigInteger, Boolean
 
 from app.model import Base
 
-class Listing(Base):
-    __tablename__ = 'listing'
+class PrivateListing(Base):
+    __tablename__ = 'private_listing'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)
     payment_method_credit_card = Column(Boolean)
