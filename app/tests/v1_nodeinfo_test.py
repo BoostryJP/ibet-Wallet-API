@@ -37,6 +37,10 @@ class TestV1NodeInfo():
              config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         coupon_exchange_abi = contracts['IbetCouponExchange']['abi']
 
+        dr_swap_exchange_address = \
+             config.IBET_JDR_SWAP_CONTRACT_ADDRESS
+        dr_swap_exchange_abi = contracts['IbetSwap']['abi']
+
         agent_address =  config.AGENT_ADDRESS
 
         assumed_body = {
@@ -44,12 +48,14 @@ class TestV1NodeInfo():
             'payment_gateway_abi': payment_gateway_abi,
             'personal_info_address': personalinfo_address,
             'personal_info_abi': personalinfo_abi,
-            'ibet_exchange_address': bond_exchange_address,
-            'ibet_exchange_abi': bond_exchange_abi,
+            'ibet_straightbond_exchange_address': bond_exchange_address,
+            'ibet_straightbond_exchange_abi': bond_exchange_abi,
             'ibet_membership_exchange_address': membership_exchange_address,
             'ibet_membership_exchange_abi': membership_exchange_abi,
             'ibet_coupon_exchange_address': coupon_exchange_address,
             'ibet_coupon_exchange_abi': coupon_exchange_abi,
+            'ibet_depositaryreceipt_swap_address': dr_swap_exchange_address,
+            'ibet_depositaryreceipt_swap_abi': dr_swap_exchange_abi,
             'agent_address': agent_address
         }
 
