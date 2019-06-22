@@ -80,6 +80,7 @@ class App(falcon.API):
 
         # 保有トークン一覧（決済用）
         self.add_route('/v1/MRF/MyTokens', position.MRFMyTokens())
+        self.add_route('/v1/MRF/Transfers', position.MRFTransfers())
 
         # 注文一覧・約定一覧
         self.add_route('/v1/OrderList', orderList.OrderList())

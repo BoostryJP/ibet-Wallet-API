@@ -767,6 +767,121 @@ class MRFMyTokens(BaseResource):
 
 
 # ------------------------------
+# [MRF]送受信履歴
+# ------------------------------
+class MRFTransfers(BaseResource):
+    """
+    Handle for endpoint: /v1/MRF/Transfers/
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v1.Position.MRFTransfers')
+        request_json = MRFTransfers.validate(req)
+
+        # MRF Contract との接続
+        MRFContract = Contract.get_contract(
+            'IbetMRF',
+            to_checksum_address(request_json['token_address'])
+        )
+
+        # 送受信履歴のリストを作成
+        mrf_transfers = []
+        for account_address in request_json['account_address_list']:
+
+            # イベント抽出
+            # コントラクト：IbetMRF
+            # イベント：Transfer（振替）
+            try:
+                # 送信（used_type="out"）
+                # 抽出条件：from が account_address と一致
+                event_filter = MRFContract.events.Transfer.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={
+                        'from': to_checksum_address(account_address)
+                    }
+                )
+                entries = event_filter.get_all_entries()
+
+                for entry in entries:
+                    mrf_transfers.append({
+                        'account_address': account_address,
+                        'block_timestamp': datetime.fromtimestamp(
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
+                        ).strftime("%Y/%m/%d %H:%M:%S"),
+                        'value': entry['args']['value'],
+                        'used_type': 'out'
+                    })
+
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+                # 受信（used_type="in"）
+                # 抽出条件：to が account_address と一致
+                event_filter = MRFContract.events.Transfer.createFilter(
+                    fromBlock='earliest',
+                    argument_filters={
+                        'to': to_checksum_address(account_address)
+                    }
+                )
+                entries = event_filter.get_all_entries()
+
+                for entry in entries:
+                    mrf_transfers.append({
+                        'account_address': account_address,
+                        'block_timestamp': datetime.fromtimestamp(
+                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
+                        ).strftime("%Y/%m/%d %H:%M:%S"),
+                        'value': entry['args']['value'],
+                        'used_type': 'in'
+                    })
+
+                web3.eth.uninstallFilter(event_filter.filter_id)
+
+            except Exception as e:
+                LOG.error(e)
+                pass
+
+        # block_timestampの昇順にソートしなおす
+        mrf_transfers = sorted(
+            mrf_transfers,
+            key=lambda x: x['block_timestamp']
+        )
+
+        self.on_success(res, mrf_transfers)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'token_address': {
+                'type': 'string',
+                'empty': False,
+                'required': True
+            },
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(request_json['token_address']):
+            raise InvalidParameterError
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
+
+
+# ------------------------------
 # [JDR]保有トークン一覧
 # ------------------------------
 class JDRMyTokens(BaseResource):
