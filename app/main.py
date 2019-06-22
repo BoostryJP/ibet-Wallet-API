@@ -43,6 +43,7 @@ class App(falcon.API):
         self.add_route('/v1/MembershipABI/', tokenTemplates.GetMembershipABI())
         self.add_route('/v1/CouponABI/', tokenTemplates.GetCouponABI())
         self.add_route('/v1/MRFABI/', tokenTemplates.GetMRFABI())
+        self.add_route('/v1/JDRABI/', tokenTemplates.GetJDRABI())
 
         # 会社情報
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
