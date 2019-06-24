@@ -395,14 +395,14 @@ class CreateCustomer(BaseResource):
 # ------------------------------
 class DeleteAccount(BaseResource):
     """
-    Handle for endpoint:/DeleteAccount/
+    Handle for endpoint:/v1/Stripe/DeleteAccount/
     """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v1.Stripe.DeleteAccount')
 
         address = to_checksum_address(req.context["address"])
-        
+
         # DBの存在チェック
         session = req.context["session"]
         raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
