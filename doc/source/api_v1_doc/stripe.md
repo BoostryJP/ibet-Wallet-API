@@ -1108,13 +1108,13 @@ curl -X GET \
     * `commitment_fee` : 決済手数料（率）
     * `fix_fee` : 決済手数料（固定）
 
-## GET: /v1/Stripe/DeleteAccount
+## POST: /v1/Stripe/DeleteAccount
 * アドレスにひもづくstripeアカウント情報をクリアする
 * アドレスに登録が存在しない場合も正常としてレスポンスする
 
 ### Sample
 ```sh
-curl -X GET \
+curl -X POST \
   http://localhost:5000/v1/Stripe/DeleteAccount \
   -H 'X-ibet-Signature: 0x99be687c42c1f2e2a6178d4cab4c07203ed8e14f37c97b7af85e293454d0705c3670cb699353bcb205a0499fae2d92cf10cef79699d76aa587d0ba5e1a8349e61b' \
   -H 'Content-Type: application/json' \
