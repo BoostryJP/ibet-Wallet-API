@@ -390,6 +390,31 @@ class CreateCustomer(BaseResource):
 
         return validator.document
 
+# ------------------------------
+# [Stripe]Account、Customerの削除
+# ------------------------------
+class DeleteAccount(BaseResource):
+    """
+    Handle for endpoint:/v1/Stripe/DeleteAccount/
+    """
+    @falcon.before(VerifySignature())
+    def on_post(self, req, res):
+        LOG.info('v1.Stripe.DeleteAccount')
+
+        address = to_checksum_address(req.context["address"])
+
+        # DBの存在チェック
+        session = req.context["session"]
+        raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
+
+        # 存在する場合はaccount_idならびにcustomer_idを""でupdate。
+        if raw is not None:
+            raw.account_id = ""
+            raw.customer_id = ""
+            session.commit()
+
+        self.on_success(res, {})
+
 
 # ------------------------------
 # [Stripe]課金
