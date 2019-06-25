@@ -440,7 +440,7 @@ class Charge(BaseResource):
 
         # 手数料と収入の計算（収納代行の手数料率を百分率で環境変数に設定）
         amount = request_json['amount']
-        exchange_fee = math.ceil(request_json['amount'] * float(config.STRIPE_FEE))
+        exchange_fee = math.floor(request_json['amount'] * float(config.STRIPE_FEE))
         charge_amount = amount - exchange_fee
 
         # 約定テーブルから情報を取得
