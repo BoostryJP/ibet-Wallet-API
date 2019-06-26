@@ -458,11 +458,17 @@ class Charge(BaseResource):
         _, agreement_amount, agreement_price, canceled, _, _ = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
 
-        # 金額チェック
+        # 金額チェック①
         #   入力内容と約定明細の約定金額が一致していなければ、入力エラーを返す
         #   NOTE:入力の”amount”は入金金額である。約定明細のamount（約定数量）とは異なる点に注意。
         if not request_json['amount'] == agreement_amount * agreement_price:
             LOG.debug('Amount do not match.')
+            raise InvalidParameterError
+
+        # 金額チェック②
+        #   金額が最小金額に満たない、または最大金額よりも大きい場合は入力エラーを返す
+        if request_json['amount'] < config.STRIPE_MINIMUM_VALUE or request_json['amount'] > config.STRIPE_MAXIMUM_VALUE:
+            LOG.debug('Amount is lower than minimum or higher maximum.')
             raise InvalidParameterError
 
         # 約定明細のキャンセル状態のチェック
@@ -865,14 +871,15 @@ class ChargeStatus(BaseResource):
 # ------------------------------
 # [Stripe]手数料情報取得
 # ------------------------------
-class FeeInfo(BaseResource):
+class Constants(BaseResource):
     '''
-    Handle for endpoint: /v1/Stripe/FeeInfo
+    Handle for endpoint: /v1/Stripe/Constants
     '''
     def on_get(self, req, res):
-        LOG.info('v1.Stripe.FeeInfo')      
-        stripe_fee = {'commitment_fee': float(config.STRIPE_FEE), 'fix_fee': 0}
+        LOG.info('v1.Stripe.Constants')      
+        stripe = {'commitment_fee': float(config.STRIPE_FEE), 
+            'fix_fee': 0, 
+            'minimum_value': int(config.STRIPE_MINIMUM_VALUE), 
+            'maximum_value': int(config.STRIPE_MAXIMUM_VALUE)}
 
-        response_json = {'stripe': stripe_fee}
-
-        self.on_success(res, response_json)
+        self.on_success(res, stripe)

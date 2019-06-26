@@ -1074,13 +1074,13 @@ curl -X POST \
 }
 ```
 
-## GET: /v1/Stripe/FeeInfo
+## GET: /v1/Stripe/Constants
 * stripeを決済手段として利用した際の手数料情報を返却する
 
 ### Sample
 ```sh
 curl -X GET \
-  http://localhost:5000/v1/Stripe/FeeInfo \
+  http://localhost:5000/v1/Stripe/Constants \
   -H 'Content-Type: application/json' \
   -H 'cache-control: no-cache'
 ```
@@ -1097,16 +1097,18 @@ curl -X GET \
         "message": "OK"
     },
     "data": {
-        "stripe": {
-            "commitment_fee": 0.1,
-            "fix_fee": 0
-        }
+        "commitment_fee": 0.1,
+        "fix_fee": 0,
+        "minimum_value": 1000,
+        "maximum_value": 500000
     }
 }
 ```
 * `stripe` : 
     * `commitment_fee` : 決済手数料（率）
     * `fix_fee` : 決済手数料（固定）
+    * `minimum_value` : 最小決済金額（円）
+    * `maximum_value` : 最大決済金額（円）
 
 ## POST: /v1/Stripe/DeleteAccount
 * アドレスにひもづくstripeアカウント情報をクリアする

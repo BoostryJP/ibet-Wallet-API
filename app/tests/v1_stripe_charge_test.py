@@ -211,6 +211,46 @@ class TestV1StripeCharge:
             'message': 'Invalid Parameter'
         }
 
+    # エラー系3-4
+    # amountの値が小さすぎる
+    def test_stripe_charge_error_3_4(self, client, session):
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "order_id": self.order_id,
+                "agreement_id": self.agreement_id,
+                "amount": 5,
+                "exchange_address": self.exchange_address
+            },
+            private_key=TestV1StripeCharge.private_key_1
+        )
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # エラー系3-5
+    # amountの値が大きすぎる
+    def test_stripe_charge_error_3_5(self, client, session):
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "order_id": self.order_id,
+                "agreement_id": self.agreement_id,
+                "amount": 100000000,
+                "exchange_address": self.exchange_address
+            },
+            private_key=TestV1StripeCharge.private_key_1
+        )
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
     # ＜エラー系4＞
     # ヘッダー（Signature）なし
     def test_stripe_charge_error_4(self, client, session):

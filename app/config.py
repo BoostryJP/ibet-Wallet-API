@@ -68,7 +68,9 @@ OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
 
 # stripe setting
 STRIPE_SECRET = os.environ.get('STRIPE_SECRET')
-STRIPE_FEE = os.environ.get('STRIPE_FEE')
+STRIPE_FEE = os.environ.get('STRIPE_FEE') or 0.1
+STRIPE_MINIMUM_VALUE = os.environ.get('STRIPE_MINIMUM_VALUE') or 50
+STRIPE_MAXIMUM_VALUE = os.environ.get('STRIPE_MAXIMUM_VALUE') or 500000
 
 # push notification setting
 SNS_APPLICATION_ARN_IOS = os.environ.get('SNS_APPLICATION_ARN_IOS')
