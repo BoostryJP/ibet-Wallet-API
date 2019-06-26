@@ -1091,7 +1091,9 @@ class JDRLastPrice(BaseResource):
         for token_address in request_json['address_list']:
             token_address = to_checksum_address(token_address)
             buy_price = 0
+            buy_order_id = None
             sell_price = 0
+            sell_order_id = None
             try:
                 event_filter = SwapContract.events.MakeOrder.createFilter(
                     fromBlock='earliest',
@@ -1102,10 +1104,12 @@ class JDRLastPrice(BaseResource):
                 for entry in reversed(entries):
                     if entry['args']['isBuy'] == True:
                         sell_price = entry['args']['price']
+                        sell_order_id = entry['args']['orderId']
                         break
                 for entry in reversed(entries):
                     if entry['args']['isBuy'] == False:
                         buy_price = entry['args']['price']
+                        buy_order_id = entry['args']['orderId']
                         break
             except Exception as e:
                 LOG.error(e)
@@ -1113,7 +1117,9 @@ class JDRLastPrice(BaseResource):
             price_list.append({
                 'token_address': token_address,
                 'buy_price': buy_price,
-                'sell_price': sell_price
+                'buy_order_id': buy_order_id,
+                'sell_price': sell_price,
+                'sell_order_id': sell_order_id
             })
 
         self.on_success(res, price_list)
