@@ -21,8 +21,8 @@ LOG_LEVEL = CONFIG['logging']['level']
 
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
 WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
-WORKER_COUNT = int(os.environ.get("WORKER_COUNT")) or 8
-SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL")) or 3
+WORKER_COUNT = int(os.environ.get("WORKER_COUNT")) if os.environ.get("WORKER_COUNT") else 8
+SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL")) if os.environ.get("SLEEP_INTERVAL") else 3
 
 BASIC_AUTH_USER = os.environ.get('BASIC_AUTH_USER')
 BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
@@ -68,14 +68,14 @@ OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
 
 # stripe setting
 STRIPE_SECRET = os.environ.get('STRIPE_SECRET')
-STRIPE_FEE = float(os.environ.get('STRIPE_FEE')) or 0.1
-STRIPE_MINIMUM_VALUE = int(os.environ.get('STRIPE_MINIMUM_VALUE')) or 50
-STRIPE_MAXIMUM_VALUE = int(os.environ.get('STRIPE_MAXIMUM_VALUE')) or 500000
+STRIPE_FEE = float(os.environ.get("STRIPE_FEE")) if os.environ.get("STRIPE_FEE") else 0.1
+STRIPE_MINIMUM_VALUE = int(os.environ.get("STRIPE_MINIMUM_VALUE")) if os.environ.get("STRIPE_MINIMUM_VALUE") else 50
+STRIPE_MAXIMUM_VALUE = int(os.environ.get("STRIPE_MAXIMUM_VALUE")) if os.environ.get("STRIPE_MAXIMUM_VALUE") else 500000
 
 # push notification setting
 SNS_APPLICATION_ARN_IOS = os.environ.get('SNS_APPLICATION_ARN_IOS')
 SNS_APPLICATION_ARN_ANDROID = os.environ.get('SNS_APPLICATION_ARN_ANDROID')
-PUSH_PRIORITY = int(os.environ.get('PUSH_PRIORITY')) or 0
+PUSH_PRIORITY = int(os.environ.get("PUSH_PRIORITY")) if os.environ.get("PUSH_PRIORITY") else 0
 
 AGENT_SQS_URL = os.environ.get('AGENT_SQS_URL') or 'http://localhost:9324'
 AGENT_SQS_QUEUE_NAME = os.environ.get('AGENT_SQS_QUEUE_NAME') or 'charge_message'
