@@ -112,7 +112,6 @@ class App(falcon.API):
         # Stripe決済
         self.add_route('/v1/Stripe/CreateAccount', stripe.CreateAccount())
         self.add_route('/v1/Stripe/CreateExternalAccount', stripe.CreateExternalAccount())
-        self.add_route('/v1/Stripe/GetAccountInfo', stripe.GetAccountInfo())
         self.add_route('/v1/Stripe/CreateCustomer', stripe.CreateCustomer())
         self.add_route('/v1/Stripe/DeleteAccount', stripe.DeleteAccount())
         self.add_route('/v1/Stripe/Charge', stripe.Charge())
