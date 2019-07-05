@@ -815,7 +815,7 @@ class ChargeStatus(BaseResource):
             receipt_url = ''
         else:
             receipt_url = stripe_charge.receipt_url
-            delivery_amount = stripe_charge.delivery_amount
+            delivery_amount = int(stripe_charge.delivery_amount)
             if stripe_charge.status == StripeChargeStatus.SUCCEEDED.value:
                 status = 'SUCCEEDED'
             elif stripe_charge.status == StripeChargeStatus.PENDING.value:
@@ -827,7 +827,7 @@ class ChargeStatus(BaseResource):
             'exchange_address': exchange_address,
             'order_id': order_id,
             'agreement_id': agreement_id,
-            'delivery_amount': int(delivery_amount),
+            'delivery_amount': delivery_amount,
             'status': status,
             'receipt_url': receipt_url
         }
