@@ -14,6 +14,7 @@ class TestV1StripeChargeStatus():
     default_exchange_address = '0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF'
     default_order_id = 1
     default_agreement_id = 1
+    delivery_amount = 1000
     default_request_params = {
         'exchange_address': default_exchange_address,
         'order_id': default_order_id,
@@ -28,6 +29,7 @@ class TestV1StripeChargeStatus():
         stripe_charge.exchange_address = self.default_exchange_address
         stripe_charge.order_id = self.default_order_id
         stripe_charge.agreement_id = self.default_agreement_id
+        stripe_charge.delivery_amount = self.delivery_amount
         stripe_charge.status = status
         stripe_charge.receipt_url = receipt_url
         session.add(stripe_charge)
@@ -47,6 +49,7 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
+            "delivery_amount": 1000
             "status": "PENDING",
             "receipt_url": ''
         }
@@ -70,6 +73,7 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
+            "delivery_amount": 1000,
             "status": "SUCCEEDED",
             "receipt_url":"https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE"
         }
@@ -93,6 +97,7 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
+            "delivery_amount": 1000,
             "status": "FAILED",
             "receipt_url": ''
         }
@@ -114,6 +119,7 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
+            "delivery_amount": None
             "status": "NONE",
             "receipt_url": ''
         }
