@@ -827,7 +827,7 @@ class ChargeStatus(BaseResource):
             'exchange_address': exchange_address,
             'order_id': order_id,
             'agreement_id': agreement_id,
-            'delivery_amount': delivery_amount
+            'delivery_amount': delivery_amount,
             'status': status,
             'receipt_url': receipt_url
         }
