@@ -235,56 +235,6 @@ class CreateExternalAccount(BaseResource):
 
         return validator.document
 
-
-# ------------------------------
-# [Stripe]Connected Accountの取得
-# ------------------------------
-class GetAccountInfo(BaseResource):
-    """
-    Handle for endpoint: /v1/Stripe/GetAccountInfo/
-    """
-    @falcon.before(VerifySignature())
-    def on_post(self, req, res):
-        LOG.info('v1.Stripe.GetAccountInfo')
-
-        # 入力値チェック
-        GetAccountInfo.validate(req)
-
-        # リクエストから情報を抽出
-        address = to_checksum_address(req.context['address'])
-
-        # アカウント情報を取得
-        session = req.context["session"]
-        stripe_account_info_list = []
-        account_info = session.query(StripeAccount).filter(StripeAccount.exchange_address == address).all()[0]
-        stripe_account_info_list.append(account_info)
-
-        self.on_success(res, stripe_account_info_list)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context['data']
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            'account_address_list': {
-                'type': 'list',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        if not Web3.isAddress(req.context['address']):
-            raise InvalidParameterError
-
-        return validator.document
-
-
 # ------------------------------
 # [Stripe]Customer(顧客)とカード情報の登録
 # ------------------------------
