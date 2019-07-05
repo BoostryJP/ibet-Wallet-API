@@ -49,7 +49,7 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
-            "delivery_amount": 1000
+            "delivery_amount": 1000,
             "status": "PENDING",
             "receipt_url": ''
         }
@@ -119,7 +119,7 @@ class TestV1StripeChargeStatus():
             "exchange_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
             "order_id": 1,
             "agreement_id": 1,
-            "delivery_amount": None
+            "delivery_amount": None,
             "status": "NONE",
             "receipt_url": ''
         }
