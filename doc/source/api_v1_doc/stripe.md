@@ -858,6 +858,7 @@ curl -X POST \
             "exchange_address": "ct_1EPLU9HgQLLPjBO2760HyH5v",
             "order_id": 4,
             "agreement_id": 5,
+            "delivery_amount": 9000,
             "status": "SUCCEEDED",
             "receipt_url": "https://pay.stripe.com/receipts/acct_1EMvILHgQLLPjBO2/ch_1Eig9bHgQLLPjBO2z5ENiAKy/rcpt_FD6MhF6EpK4IRarTdCK8FTwwrC7r5PE"
         }
@@ -866,6 +867,7 @@ curl -X POST \
 * `exchange_address` : DEXアドレス
 * `order_id` : 注文ID
 * `agreement_id` : 約定ID
+* `delivery_amount`: 受渡金額。決済金額から手数料を引いた売り側に支払われる金額。
 * `status` : 対象のDEXアドレス・注文・約定に紐付くchargeの状況。`NONE`、`PENDING`、`SUCCEEDED`、`FAILED`のいずれか。
 * `receipt_url`: stripe決済の領収情報
 

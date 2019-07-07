@@ -469,6 +469,7 @@ class Charge(BaseResource):
                 stripe_charge.exchange_address = exchange_address
                 stripe_charge.order_id = order_id
                 stripe_charge.agreement_id = agreement_id
+                stripe_charge.delivery_amount = charge_amount
                 stripe_charge.status = StripeChargeStatus.PENDING.value
                 stripe_charge.receipt_url = ''
                 session.add(stripe_charge)
@@ -760,22 +761,23 @@ class ChargeStatus(BaseResource):
 
         if stripe_charge is None:
             status = 'NONE'
+            delivery_amount = None
             receipt_url = ''
         else:
+            receipt_url = stripe_charge.receipt_url
+            delivery_amount = int(stripe_charge.delivery_amount)
             if stripe_charge.status == StripeChargeStatus.SUCCEEDED.value:
                 status = 'SUCCEEDED'
-                receipt_url = stripe_charge.receipt_url
             elif stripe_charge.status == StripeChargeStatus.PENDING.value:
                 status = 'PENDING'
-                receipt_url = stripe_charge.receipt_url
             elif stripe_charge.status == StripeChargeStatus.FAILED.value:
                 status = 'FAILED'
-                receipt_url = stripe_charge.receipt_url
 
         response_json = {
             'exchange_address': exchange_address,
             'order_id': order_id,
             'agreement_id': agreement_id,
+            'delivery_amount': delivery_amount,
             'status': status,
             'receipt_url': receipt_url
         }

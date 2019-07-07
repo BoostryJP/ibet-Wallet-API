@@ -14,6 +14,7 @@ class StripeCharge(Base):
     customer_id = Column(BigInteger)
     order_id = Column(BigInteger)
     agreement_id = Column(BigInteger)
+    delivery_amount = Column(String(256))
     status = Column(Integer)
     receipt_url = Column(String(256))
 
@@ -28,6 +29,7 @@ class StripeCharge(Base):
         'customer_id': int,
         'order_id': int,
         'agreement_id': int,
+        'delivery_amount': int,
         'status': int,
         'receipt_url': str
     }
