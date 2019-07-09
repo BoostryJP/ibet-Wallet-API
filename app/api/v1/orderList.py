@@ -16,7 +16,8 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Order, Agreement, AgreementStatus, Listing, BondToken, MembershipToken, CouponToken
+from app.model import Order, Agreement, AgreementStatus, Listing, \
+    BondToken, MembershipToken, CouponToken, JDRToken
 
 LOG = log.get_logger()
 
@@ -152,6 +153,16 @@ class OrderList(BaseResource):
             # クーポントークン（売）
             complete_list.extend(
                 OrderList.get_Coupon_CompleteList_Sell(
+                    session, account_address, company_list, available_tokens))
+
+            # DRトークン（買）
+            complete_list.extend(
+                OrderList.get_DR_CompleteList_Buy(
+                    session, account_address, company_list, available_tokens))
+
+            # DRトークン（買）
+            complete_list.extend(
+                OrderList.get_DR_CompleteList_Sell(
                     session, account_address, company_list, available_tokens))
 
             complete_list = sorted(
@@ -2015,3 +2026,194 @@ class OrderList(BaseResource):
             })
 
         return complete_list
+
+    # 約定済一覧：DRトークン（買）
+    @staticmethod
+    def get_DR_CompleteList_Buy(session, account_address, company_list, available_tokens):
+        exchange_address = to_checksum_address(config.IBET_JDR_SWAP_CONTRACT_ADDRESS)
+
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract('IbetSwap', exchange_address)
+
+        # 指定したアカウントアドレスから発生している約定イベントを抽出する
+        entries = session.query(
+            Agreement.id,
+            Agreement.order_id,
+            Agreement.agreement_id,
+            Agreement.settlement_timestamp). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(Agreement.buyer_address == account_address). \
+            filter(Agreement.status == AgreementStatus.DONE.value). \
+            all()
+
+        complete_list = []
+        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+            if settlement_timestamp is not None:
+                settlement_timestamp_jp = settlement_timestamp.\
+                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+            else:
+                settlement_timestamp_jp = ''
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+            token_address = to_checksum_address(orderBook[1])
+
+            # Token-Contractへの接続
+            TokenContract = Contract.get_contract('IbetDepositaryReceipt', token_address)
+
+            # Token-Contractから情報を取得する
+            name = TokenContract.functions.name().call()
+            symbol = TokenContract.functions.symbol().call()
+            total_supply = TokenContract.functions.totalSupply().call()
+            details = TokenContract.functions.details().call()
+            memo = TokenContract.functions.memo().call()
+            status = TokenContract.functions.status().call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
+            owner_address = TokenContract.functions.owner().call()
+
+            # 企業リストから、企業名を取得する
+            company_name = ''
+            for company in company_list:
+                if to_checksum_address(company['address']) == owner_address:
+                    company_name = company['corporate_name']
+
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
+            token = JDRToken()
+            token.token_address = token_address
+            token.token_template = 'IbetDepositaryReceipt'
+            token.company_name = company_name
+            token.name = name
+            token.symbol = symbol
+            token.total_supply = total_supply
+            token.details = details
+            token.memo = memo
+            token.status = status
+            token.image_url = [
+                {'id': 1, 'url': image_url_1},
+                {'id': 2, 'url': image_url_2},
+                {'id': 3, 'url': image_url_3},
+            ]
+            token.payment_method_credit_card = available_token.payment_method_credit_card
+            token.payment_method_bank = available_token.payment_method_bank
+            token.contact_information = contact_information
+            token.privacy_policy = privacy_policy
+
+            complete_list.append({
+                'token': token.__dict__,
+                'agreement': {
+                    'exchange_address': exchange_address,
+                    'order_id': order_id,
+                    'agreement_id': agreement_id,
+                    'amount': agreement[1],
+                    'price': agreement[2],
+                    'is_buy': True
+                },
+                'settlement_timestamp': settlement_timestamp_jp,
+                'sort_id': id
+            })
+
+        return complete_list
+
+    # 約定済一覧：DRトークン（売）
+    @staticmethod
+    def get_DR_CompleteList_Sell(session, account_address, company_list, available_tokens):
+        exchange_address = to_checksum_address(config.IBET_JDR_SWAP_CONTRACT_ADDRESS)
+
+        # Exchange Contract
+        ExchangeContract = Contract.get_contract('IbetSwap', exchange_address)
+
+        # 指定したアカウントアドレスから発生している約定イベントを抽出する
+        entries = session.query(
+            Agreement.id,
+            Agreement.order_id,
+            Agreement.agreement_id,
+            Agreement.settlement_timestamp). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(Agreement.seller_address == account_address). \
+            filter(Agreement.status == AgreementStatus.DONE.value). \
+            all()
+
+        complete_list = []
+        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+            if settlement_timestamp is not None:
+                settlement_timestamp_jp = settlement_timestamp.\
+                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+            else:
+                settlement_timestamp_jp = ''
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+            token_address = to_checksum_address(orderBook[1])
+
+            # Token-Contractへの接続
+            TokenContract = Contract.get_contract('IbetDepositaryReceipt', token_address)
+
+            # Token-Contractから情報を取得する
+            name = TokenContract.functions.name().call()
+            symbol = TokenContract.functions.symbol().call()
+            total_supply = TokenContract.functions.totalSupply().call()
+            details = TokenContract.functions.details().call()
+            memo = TokenContract.functions.memo().call()
+            status = TokenContract.functions.status().call()
+            image_url_1 = TokenContract.functions.image_urls(0).call()
+            image_url_2 = TokenContract.functions.image_urls(1).call()
+            image_url_3 = TokenContract.functions.image_urls(2).call()
+            contact_information = TokenContract.functions.contactInformation().call()
+            privacy_policy = TokenContract.functions.privacyPolicy().call()
+            owner_address = TokenContract.functions.owner().call()
+
+            # 企業リストから、企業名を取得する
+            company_name = ''
+            for company in company_list:
+                if to_checksum_address(company['address']) == owner_address:
+                    company_name = company['corporate_name']
+
+            # 許可済みトークンリストから、token情報を取得する
+            available_token = {}
+            for available in available_tokens:
+                if to_checksum_address(available.token_address) == token_address:
+                    available_token = available
+
+            token = JDRToken()
+            token.token_address = token_address
+            token.token_template = 'IbetDepositaryReceipt'
+            token.company_name = company_name
+            token.name = name
+            token.symbol = symbol
+            token.total_supply = total_supply
+            token.details = details
+            token.memo = memo
+            token.status = status
+            token.image_url = [
+                {'id': 1, 'url': image_url_1},
+                {'id': 2, 'url': image_url_2},
+                {'id': 3, 'url': image_url_3},
+            ]
+            token.payment_method_credit_card = available_token.payment_method_credit_card
+            token.payment_method_bank = available_token.payment_method_bank
+            token.contact_information = contact_information
+            token.privacy_policy = privacy_policy
+
+            complete_list.append({
+                'token': token.__dict__,
+                'agreement': {
+                    'exchange_address': exchange_address,
+                    'order_id': order_id,
+                    'agreement_id': agreement_id,
+                    'amount': agreement[1],
+                    'price': agreement[2],
+                    'is_buy': False
+                },
+                'settlement_timestamp': settlement_timestamp_jp,
+                'sort_id': id
+            })
+
+        return complete_list
+

@@ -54,6 +54,10 @@ class Sinks:
         for sink in self.sinks:
             sink.on_agree(*args, **kwargs)
 
+    def on_agree_dr(self, *args, **kwargs):
+        for sink in self.sinks:
+            sink.on_agree_dr(*args, **kwargs)
+
     def on_settlement_ok(self, *args, **kwargs):
         for sink in self.sinks:
             sink.on_settlement_ok(*args, **kwargs)
@@ -87,6 +91,15 @@ class ConsoleSink:
 
     @staticmethod
     def on_agree(exchange_address, order_id, agreement_id,
+                 buyer_address, seller_address, counterpart_address, amount):
+        logging.info(
+            "Agree: exchange_address={}, orderId={}, agreementId={}".format(
+                exchange_address, order_id, agreement_id
+            )
+        )
+
+    @staticmethod
+    def on_agree_dr(exchange_address, order_id, agreement_id,
                  buyer_address, seller_address, counterpart_address, amount):
         logging.info(
             "Agree: exchange_address={}, orderId={}, agreementId={}".format(
@@ -158,6 +171,23 @@ class DBSink:
             agreement.status = AgreementStatus.PENDING.value
             self.db.merge(agreement)
 
+    def on_agree_dr(self, exchange_address, order_id, agreement_id,
+                 buyer_address, seller_address, counterpart_address, amount):
+        agreement = self.__get_agreement(
+            exchange_address, order_id, agreement_id)
+        if agreement is None:
+            agreement = Agreement()
+            agreement.exchange_address = exchange_address
+            agreement.order_id = order_id
+            agreement.agreement_id = agreement_id
+            agreement.unique_order_id = exchange_address + '_' + str(order_id)
+            agreement.buyer_address = buyer_address
+            agreement.seller_address = seller_address
+            agreement.counterpart_address = counterpart_address
+            agreement.amount = amount
+            agreement.status = AgreementStatus.DONE.value
+            self.db.merge(agreement)
+
     def on_settlement_ok(self, exchange_address, order_id, agreement_id, settlement_timestamp):
         agreement = self.__get_agreement(
             exchange_address, order_id, agreement_id)
@@ -202,6 +232,10 @@ class Processor:
         self.coupon_exchange_contract = Contract.get_contract(
             'IbetCouponExchange',
             config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+        )
+        self.jdr_swap_contract = Contract.get_contract(
+            'IbetSwap',
+            config.IBET_JDR_SWAP_CONTRACT_ADDRESS
         )
         self.exchange_list = [
             self.bond_exchange_contract,
@@ -323,6 +357,40 @@ class Processor:
             except Exception as e:
                 logging.error(e)
                 pass
+
+        # JDR_SWAP
+        try:
+            event_filter = self.jdr_swap_contract.eventFilter(
+                'Agree', {
+                    'fromBlock': block_from,
+                    'toBlock': block_to,
+                }
+            )
+            for event in event_filter.get_all_entries():
+                args = event['args']
+                if args['amount'] > sys.maxsize:
+                    pass
+                else:
+                    order_id = args['orderId']
+                    orderbook = exchange_contract.functions.getOrder(order_id).call()
+                    is_buy = orderbook[4]
+                    counterpart_address = args['buyerAddress']
+                    if is_buy:
+                        counterpart_address = args['sellerAddress']
+
+                    self.sink.on_agree_dr(
+                        exchange_address=exchange_contract.address,
+                        order_id=args['orderId'],
+                        agreement_id=args['agreementId'],
+                        buyer_address=args['buyerAddress'],
+                        seller_address=args['sellerAddress'],
+                        counterpart_address=counterpart_address,
+                        amount=args['amount'],
+                    )
+            self.web3.eth.uninstallFilter(event_filter.filter_id)
+        except Exception as e:
+            logging.error(e)
+            pass
 
     def __sync_settlement_ok(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
