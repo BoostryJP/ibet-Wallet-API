@@ -803,7 +803,8 @@ class MRFTransfers(BaseResource):
                 entries = event_filter.get_all_entries()
 
                 for entry in entries:
-                    LOG.info(entry)
+                    if entry['args']['value'] == 0:
+                        continue
                     mrf_transfers.append({
                         'account_address': account_address,
                         'block_timestamp': datetime.fromtimestamp(
@@ -826,7 +827,8 @@ class MRFTransfers(BaseResource):
                 entries = event_filter.get_all_entries()
 
                 for entry in entries:
-                    LOG.info(entry)
+                    if entry['args']['value'] == 0:
+                        continue
                     mrf_transfers.append({
                         'account_address': account_address,
                         'block_timestamp': datetime.fromtimestamp(
