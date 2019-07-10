@@ -372,14 +372,14 @@ class Processor:
                     pass
                 else:
                     order_id = args['orderId']
-                    orderbook = exchange_contract.functions.getOrder(order_id).call()
+                    orderbook = self.jdr_swap_contract.functions.getOrder(order_id).call()
                     is_buy = orderbook[4]
                     counterpart_address = args['buyerAddress']
                     if is_buy:
                         counterpart_address = args['sellerAddress']
 
                     self.sink.on_agree_dr(
-                        exchange_address=exchange_contract.address,
+                        exchange_address=self.jdr_swap_contract.address,
                         order_id=args['orderId'],
                         agreement_id=args['agreementId'],
                         buyer_address=args['buyerAddress'],
