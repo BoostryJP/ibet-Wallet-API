@@ -71,6 +71,15 @@ STRIPE_SECRET = os.environ.get('STRIPE_SECRET')
 STRIPE_FEE = float(os.environ.get("STRIPE_FEE")) if os.environ.get("STRIPE_FEE") else 0.1
 STRIPE_MINIMUM_VALUE = int(os.environ.get("STRIPE_MINIMUM_VALUE")) if os.environ.get("STRIPE_MINIMUM_VALUE") else 50
 STRIPE_MAXIMUM_VALUE = int(os.environ.get("STRIPE_MAXIMUM_VALUE")) if os.environ.get("STRIPE_MAXIMUM_VALUE") else 500000
+STRIPE_PAYOUT_SCHEDULE = {
+    'payouts': {
+        'schedule': {
+            'delay_days': 18,
+            'interval': 'monthly',
+            'monthly_anchor': 28
+        }
+    }
+}
 
 # push notification setting
 SNS_APPLICATION_ARN_IOS = os.environ.get('SNS_APPLICATION_ARN_IOS')

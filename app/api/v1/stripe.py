@@ -56,7 +56,8 @@ class CreateAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    account_token=request_json['account_token']
+                    account_token=request_json['account_token'],
+                    settings=config.STRIPE_PAYOUT_SCHEDULE
                 )
                 # DBのaccount_idをアップデート
                 raw.account_id = account.id
@@ -66,7 +67,8 @@ class CreateAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    account_token=request_json['account_token']
+                    account_token=request_json['account_token'],
+                    settings=config.STRIPE_PAYOUT_SCHEDULE
                 )
                 # DBに新規インサートする処理
                 stripe_account = StripeAccount()
@@ -163,7 +165,8 @@ class CreateExternalAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    external_account=request_json['bank_token']
+                    external_account=request_json['bank_token'],
+                    settings=config.STRIPE_PAYOUT_SCHEDULE
                 )
                 # DBのaccount_idをアップデート
                 raw.account_id = account.id
@@ -173,7 +176,8 @@ class CreateExternalAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    external_account=request_json['bank_token']
+                    external_account=request_json['bank_token'],
+                    settings=config.STRIPE_PAYOUT_SCHEDULE
                 )
                 # DBに新規インサートする処理
                 stripe_account = StripeAccount()
