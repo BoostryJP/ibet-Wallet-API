@@ -43,6 +43,15 @@ class CreateAccount(BaseResource):
         # DBの存在チェック
         session = req.context["session"]
         raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
+        payout_schedule = {
+            'payouts': {
+                'schedule': {
+                    'delay_days': config.STRIPE_PAYOUT_SCHEDULE_DELAY,
+                    'interval': 'monthly',
+                    'monthly_anchor': config.STRIPE_PAYOUT_SCHEDULE_ANCHOR
+                }
+            }
+        }
 
         # すでに存在する場合はUpdate、存在しない場合はCreateしてDBインサート
         try:
@@ -56,7 +65,8 @@ class CreateAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    account_token=request_json['account_token']
+                    account_token=request_json['account_token'],
+                    settings=payout_schedule
                 )
                 # DBのaccount_idをアップデート
                 raw.account_id = account.id
@@ -66,7 +76,8 @@ class CreateAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    account_token=request_json['account_token']
+                    account_token=request_json['account_token'],
+                    settings=payout_schedule
                 )
                 # DBに新規インサートする処理
                 stripe_account = StripeAccount()
@@ -163,7 +174,8 @@ class CreateExternalAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    external_account=request_json['bank_token']
+                    external_account=request_json['bank_token'],
+                    settings=payout_schedule
                 )
                 # DBのaccount_idをアップデート
                 raw.account_id = account.id
@@ -173,7 +185,8 @@ class CreateExternalAccount(BaseResource):
                 account = stripe.Account.create(
                     type='custom',
                     country='JP',
-                    external_account=request_json['bank_token']
+                    external_account=request_json['bank_token'],
+                    settings=payout_schedule
                 )
                 # DBに新規インサートする処理
                 stripe_account = StripeAccount()
