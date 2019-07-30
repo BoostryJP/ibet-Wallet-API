@@ -43,6 +43,8 @@ class CreateAccount(BaseResource):
         # DBの存在チェック
         session = req.context["session"]
         raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
+
+        # stripe銀行振込タイミング設定
         payout_schedule = {
             'payouts': {
                 'schedule': {
@@ -161,6 +163,17 @@ class CreateExternalAccount(BaseResource):
         # （アカウントアドレスは重複していない前提）
         session = req.context['session']
         raw = session.query(StripeAccount).filter(StripeAccount.account_address == address).first()
+
+        # stripe銀行振込タイミング設定
+        payout_schedule = {
+            'payouts': {
+                'schedule': {
+                    'delay_days': config.STRIPE_PAYOUT_SCHEDULE_DELAY,
+                    'interval': 'monthly',
+                    'monthly_anchor': config.STRIPE_PAYOUT_SCHEDULE_ANCHOR
+                }
+            }
+        }
 
         # 紐づくConnectアカウントがない場合、Connectアカウントを空で作成した上でexternalAccountの登録を行う
         try:
