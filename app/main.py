@@ -18,7 +18,6 @@ from app.api.v1 import position
 from app.api.v1 import orderList
 from app.api.v1 import notification
 from app.api.v1 import nodeInfo
-from app.api.v1 import omise
 from app.api.v1 import stripe
 from app.api.v1 import push
 from app.api.v1 import version
@@ -102,12 +101,6 @@ class App(falcon.API):
 
         # ノード情報
         self.add_route('/v1/NodeInfo', nodeInfo.NodeInfo())
-
-        # Omise決済
-        self.add_route('/v1/Omise/CreateCustomer', omise.CreateCustomer())
-        self.add_route('/v1/Omise/UpdateCustomer', omise.UpdateCustomer())
-        self.add_route('/v1/Omise/Charge', omise.Charge())
-        self.add_route('/v1/Omise/ChargeStatus', omise.ChargeStatus())
 
         # Stripe決済
         self.add_route('/v1/Stripe/CreateAccount', stripe.CreateAccount())

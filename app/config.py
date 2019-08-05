@@ -62,10 +62,6 @@ if APP_ENV == 'live':
 else:
     PAYMENT_AGENT_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list-dev/payment_agent_list.json'
 
-# omise setting
-OMISE_SECRET = os.environ.get('OMISE_SECRET')
-OMISE_PUBLIC = os.environ.get('OMISE_PUBLIC')
-
 # stripe setting
 STRIPE_SECRET = os.environ.get('STRIPE_SECRET')
 STRIPE_FEE = float(os.environ.get("STRIPE_FEE")) if os.environ.get("STRIPE_FEE") else 0.1
