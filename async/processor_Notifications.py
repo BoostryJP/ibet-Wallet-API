@@ -54,9 +54,9 @@ company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
-sb_exchange_contract = Contract.get_contract(
-    'IbetStraightBondExchange',
-    config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
+# sb_exchange_contract = Contract.get_contract(
+#    'IbetStraightBondExchange',
+#    config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 cp_exchange_contract = Contract.get_contract(
     'IbetCouponExchange',
     config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
@@ -153,9 +153,12 @@ class Watcher:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
+
 '''
 決済用口座認可関連（PaymentGateway）
 '''
+
+
 # イベント：決済用口座登録
 class WatchPaymentAccountRegister(Watcher):
     def __init__(self):
@@ -180,6 +183,8 @@ class WatchPaymentAccountRegister(Watcher):
                          '決済用口座情報登録が完了しました。',
                          )
 
+
+"""
 # イベント：決済用口座承認
 class WatchPaymentAccountApprove(Watcher):
     def __init__(self):
@@ -275,10 +280,12 @@ class WatchPaymentAccountBan(Watcher):
                          '決済用口座の認証取消',
                          '決済用の口座の認証が取り消されました。',
                          )
+"""
 
 '''
 普通社債取引関連（IbetStraightBondExchange）
 '''
+"""
 # イベント：注文
 class WatchBondNewOrder(Watcher):
     def __init__(self):
@@ -615,9 +622,13 @@ class WatchBondSellSettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
+"""
+
 '''
 会員権取引関連（IbetMembershipExchange）
 '''
+
+
 # イベント：会員権割当・譲渡
 class WatchMembershipTransfer(Watcher):
     def __init__(self):
@@ -655,6 +666,7 @@ class WatchMembershipTransfer(Watcher):
                          '会員権発行完了',
                          '会員権が発行されました。保有トークンの一覧からご確認ください。',
                          )
+
 
 # イベント：注文
 class WatchMembershipNewOrder(Watcher):
@@ -698,6 +710,7 @@ class WatchMembershipNewOrder(Watcher):
                          '新規注文が完了しました。',
                          )
 
+
 # イベント：注文取消
 class WatchMembershipCancelOrder(Watcher):
     def __init__(self):
@@ -739,6 +752,7 @@ class WatchMembershipCancelOrder(Watcher):
                          '注文キャンセル完了',
                          '注文のキャンセルが完了しました。',
                          )
+
 
 # イベント：約定（買）
 class WatchMembershipBuyAgreement(Watcher):
@@ -782,6 +796,7 @@ class WatchMembershipBuyAgreement(Watcher):
                          '買い注文が約定しました。代金の支払いを実施してください。',
                          )
 
+
 # イベント：約定（売）
 class WatchMembershipSellAgreement(Watcher):
     def __init__(self):
@@ -823,6 +838,7 @@ class WatchMembershipSellAgreement(Watcher):
                          '約定完了',
                          '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
                          )
+
 
 # イベント：決済OK（買）
 class WatchMembershipBuySettlementOK(Watcher):
@@ -866,6 +882,7 @@ class WatchMembershipBuySettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
+
 # イベント：決済OK（売）
 class WatchMembershipSellSettlementOK(Watcher):
     def __init__(self):
@@ -907,6 +924,7 @@ class WatchMembershipSellSettlementOK(Watcher):
                          '決済完了',
                          '注文の決済が完了しました。',
                          )
+
 
 # イベント：決済NG（買）
 class WatchMembershipBuySettlementNG(Watcher):
@@ -950,6 +968,7 @@ class WatchMembershipBuySettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
+
 # イベント：決済NG（売）
 class WatchMembershipSellSettlementNG(Watcher):
     def __init__(self):
@@ -992,9 +1011,12 @@ class WatchMembershipSellSettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
+
 '''
 クーポン取引関連（IbetCouponExchange）
 '''
+
+
 # イベント：クーポン割当・譲渡
 class WatchCouponTransfer(Watcher):
     def __init__(self):
@@ -1032,6 +1054,7 @@ class WatchCouponTransfer(Watcher):
                          'クーポン発行完了',
                          'クーポンが発行されました。保有トークンの一覧からご確認ください。',
                          )
+
 
 # イベント：注文
 class WatchCouponNewOrder(Watcher):
@@ -1075,6 +1098,7 @@ class WatchCouponNewOrder(Watcher):
                          '新規注文が完了しました。',
                          )
 
+
 # イベント：注文取消
 class WatchCouponCancelOrder(Watcher):
     def __init__(self):
@@ -1116,6 +1140,7 @@ class WatchCouponCancelOrder(Watcher):
                          '注文キャンセル完了',
                          '注文のキャンセルが完了しました。',
                          )
+
 
 # イベント：約定（買）
 class WatchCouponBuyAgreement(Watcher):
@@ -1159,6 +1184,7 @@ class WatchCouponBuyAgreement(Watcher):
                          '買い注文が約定しました。代金の支払いを実施してください。',
                          )
 
+
 # イベント：約定（売）
 class WatchCouponSellAgreement(Watcher):
     def __init__(self):
@@ -1200,6 +1226,7 @@ class WatchCouponSellAgreement(Watcher):
                          '約定完了',
                          '売り注文が約定しました。代金が振り込まれるまでしばらくお待ち下さい。',
                          )
+
 
 # イベント：決済OK（買）
 class WatchCouponBuySettlementOK(Watcher):
@@ -1243,6 +1270,7 @@ class WatchCouponBuySettlementOK(Watcher):
                          '注文の決済が完了しました。',
                          )
 
+
 # イベント：決済OK（売）
 class WatchCouponSellSettlementOK(Watcher):
     def __init__(self):
@@ -1284,6 +1312,7 @@ class WatchCouponSellSettlementOK(Watcher):
                          '決済完了',
                          '注文の決済が完了しました。',
                          )
+
 
 # イベント：決済NG（買）
 class WatchCouponBuySettlementNG(Watcher):
@@ -1327,6 +1356,7 @@ class WatchCouponBuySettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
+
 # イベント：決済NG（売）
 class WatchCouponSellSettlementNG(Watcher):
     def __init__(self):
@@ -1369,21 +1399,22 @@ class WatchCouponSellSettlementNG(Watcher):
                          '注文の決済が失敗しました。内容をご確認ください。',
                          )
 
+
 def main():
     watchers = [
         WatchPaymentAccountRegister(),
-        WatchPaymentAccountApprove(),
-        WatchPaymentAccountWarn(),
-        WatchPaymentAccountUnapprove(),
-        WatchPaymentAccountBan(),
-        WatchBondNewOrder(),
-        WatchBondCancelOrder(),
-        WatchBondBuyAgreement(),
-        WatchBondSellAgreement(),
-        WatchBondBuySettlementOK(),
-        WatchBondSellSettlementOK(),
-        WatchBondBuySettlementNG(),
-        WatchBondSellSettlementNG(),
+        # WatchPaymentAccountApprove(),
+        # WatchPaymentAccountWarn(),
+        # WatchPaymentAccountUnapprove(),
+        # WatchPaymentAccountBan(),
+        # WatchBondNewOrder(),
+        # WatchBondCancelOrder(),
+        # WatchBondBuyAgreement(),
+        # WatchBondSellAgreement(),
+        # WatchBondBuySettlementOK(),
+        # WatchBondSellSettlementOK(),
+        # WatchBondBuySettlementNG(),
+        # WatchBondSellSettlementNG(),
         WatchMembershipTransfer(),
         WatchMembershipNewOrder(),
         WatchMembershipCancelOrder(),
@@ -1417,8 +1448,6 @@ def main():
         print("[LOOP] finished in {} secs".format(elapsed_time))
 
         time.sleep(max(SLEEP_INTERVAL - elapsed_time, 0))
-
-    print("OK")
 
 
 if __name__ == "__main__":
