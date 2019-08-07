@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import os
 import sys
 import boto3
@@ -19,13 +20,13 @@ from app.contracts import Contract
 import json
 from async.lib.token import TokenFactory
 from async.lib.company_list import CompanyListFactory
+from async.lib.token_list import TokenList
 from async.lib.misc import wait_all_futures
 from concurrent.futures import ThreadPoolExecutor
 import time
 from datetime import datetime, timezone, timedelta
 
 JST = timezone(timedelta(hours=+9), "JST")
-from eth_utils import to_checksum_address
 
 # logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -50,8 +51,9 @@ company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
-mrf_token_address = to_checksum_address(config.IBET_MRF_TOKEN_ADDRESS)
-mrf_token = Contract.get_contract('IbetMRF', mrf_token_address)
+swap_contract = Contract.get_contract('IbetSwap', config.IBET_JDR_SWAP_CONTRACT_ADDRESS)
+list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+token_list = TokenList(list_contract)
 
 
 ########################################
@@ -145,53 +147,101 @@ class Watcher:
 ########################################
 # Event
 ########################################
-class WatchMRFTransfer(Watcher):
+# Event: 約定（買）
+class WatchSwapBuyAgreement(Watcher):
     def __init__(self):
-        super().__init__(mrf_token, "Transfer", {})
+        super().__init__(swap_contract, "Agree", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
-            if entry["args"]["from"] == to_checksum_address(config.IBET_JDR_SWAP_CONTRACT_ADDRESS):
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
                 continue
-            else:
-                token = token_factory.get_mrf(mrf_token_address)
-                company = company_list.find(token.owner_address)
 
-                metadata = {
-                    "company_name": company.corporate_name,
-                    "token_name": token.name,
-                    "from": entry["args"]["from"],
-                    "value": entry["args"]["value"],
-                }
+            token = token_factory.get_dr(token_address)
+            company = company_list.find(token.owner_address)
 
-                # 通知DB登録
-                notification = Notification()
-                notification.notification_id = self._gen_notification_id(entry)
-                notification.notification_type = "MRFTransfer"
-                notification.priority = 0
-                notification.address = entry["args"]["to"]
-                notification.block_timestamp = self._gen_block_timestamp(entry)
-                notification.args = dict(entry["args"])
-                notification.metainfo = metadata
-                db_session.merge(notification)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": config.IBET_JDR_SWAP_CONTRACT_ADDRESS,
+                "token_type": "IbetDepositaryReceipt"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "BuyAgreement"
+            notification.priority = 0
+            notification.address = entry["args"]["buyerAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
 
     def push(self, entries):
         for entry in entries:
             push_publish(
-                self._gen_notification_id(entry),
-                entry["args"]["to"],
-                0,
+                self._gen_notification_id(entry, 1),
+                entry["args"]["buyerAddress"],
+                1,
                 entry["blockNumber"],
-                'ポイントを受領しました。',
-                'ポイントを受領しました。保有一覧からご確認ください。',
+                '約定完了',
+                '買い注文が約定しました。',
             )
 
 
+# Event: 約定（売）
+class WatchSwapSellAgreement(Watcher):
+    def __init__(self):
+        super().__init__(swap_contract, "Agree", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_dr(token_address)
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token.name,
+                "exchange_address": config.IBET_JDR_SWAP_CONTRACT_ADDRESS,
+                "token_type": "IbetDepositaryReceipt"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "SellAgreement"
+            notification.priority = 0
+            notification.address = entry["args"]["sellerAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, entries):
+        for entry in entries:
+            push_publish(
+                self._gen_notification_id(entry, 1),
+                entry["args"]["sellerAddress"],
+                1,
+                entry["blockNumber"],
+                '約定完了',
+                '売り注文が約定しました。',
+            )
+
 def main():
     watchers = [
-        WatchMRFTransfer(),
+        WatchSwapBuyAgreement(),
+        WatchSwapSellAgreement(),
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
