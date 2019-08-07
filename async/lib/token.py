@@ -17,6 +17,10 @@ class TokenFactory:
         contract = Contract.get_contract('IbetCoupon', address)
         return Token(contract)
 
+    def get_mrf(self, address):
+        contract = Contract.get_contract('IbetMRF', address)
+        return Token(contract)
+
 class Token:
     def __init__(self, contract):
         self.contract = contract
