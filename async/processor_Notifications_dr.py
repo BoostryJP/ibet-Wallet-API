@@ -172,9 +172,9 @@ class WatchSwapBuyAgreement(Watcher):
             }
 
             notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_id = self._gen_notification_id(entry, 1)
             notification.notification_type = "BuySettlementOK"
-            notification.priority = 0
+            notification.priority = 1
             notification.address = entry["args"]["buyerAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -218,9 +218,9 @@ class WatchSwapSellAgreement(Watcher):
             }
 
             notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_id = self._gen_notification_id(entry, 2)
             notification.notification_type = "SellSettlementOK"
-            notification.priority = 0
+            notification.priority = 1
             notification.address = entry["args"]["sellerAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -230,7 +230,7 @@ class WatchSwapSellAgreement(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(
-                self._gen_notification_id(entry, 1),
+                self._gen_notification_id(entry, 2),
                 entry["args"]["sellerAddress"],
                 1,
                 entry["blockNumber"],
