@@ -173,7 +173,7 @@ class WatchSwapBuyAgreement(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "BuyAgreement"
+            notification.notification_type = "BuySettlementOK"
             notification.priority = 0
             notification.address = entry["args"]["buyerAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -188,8 +188,8 @@ class WatchSwapBuyAgreement(Watcher):
                 entry["args"]["buyerAddress"],
                 1,
                 entry["blockNumber"],
-                '約定完了',
-                '買い注文が約定しました。',
+                '決済完了',
+                '注文の決済が完了しました。',
             )
 
 
@@ -219,7 +219,7 @@ class WatchSwapSellAgreement(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "SellAgreement"
+            notification.notification_type = "SellSettlementOK"
             notification.priority = 0
             notification.address = entry["args"]["sellerAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -234,8 +234,8 @@ class WatchSwapSellAgreement(Watcher):
                 entry["args"]["sellerAddress"],
                 1,
                 entry["blockNumber"],
-                '約定完了',
-                '売り注文が約定しました。',
+                '決済完了',
+                '注文の決済が完了しました。',
             )
 
 def main():
