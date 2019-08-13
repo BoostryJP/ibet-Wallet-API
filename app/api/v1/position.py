@@ -784,27 +784,27 @@ class MRFTransfers(BaseResource):
             to_checksum_address(request_json['token_address'])
         )
 
+        # イベント抽出
+        # コントラクト：IbetMRF
+        # イベント：Transfer（振替）
+        entries = []
+        try:
+            event_filter = MRFContract.events.Transfer.createFilter(
+                fromBlock='earliest',
+                argument_filters={}
+            )
+            entries = event_filter.get_all_entries()
+        except Exception as e:
+            LOG.error(e)
+
         # 送受信履歴のリストを作成
         mrf_transfers = []
         for account_address in request_json['account_address_list']:
 
-            # イベント抽出
-            # コントラクト：IbetMRF
-            # イベント：Transfer（振替）
-            try:
-                # 送信（used_type="out"）
-                # 抽出条件：from が account_address と一致
-                event_filter = MRFContract.events.Transfer.createFilter(
-                    fromBlock='earliest',
-                    argument_filters={
-                        'from': to_checksum_address(account_address)
-                    }
-                )
-                entries = event_filter.get_all_entries()
-
-                for entry in entries:
-                    if entry['args']['value'] == 0:
-                        continue
+            # 送信（used_type="out"）
+            # 抽出条件：from が account_address と一致
+            for entry in entries:
+                if entry['args']['from'] == to_checksum_address(account_address) and entry['args']['value'] != 0:
                     mrf_transfers.append({
                         'account_address': account_address,
                         'block_timestamp': datetime.fromtimestamp(
@@ -814,21 +814,10 @@ class MRFTransfers(BaseResource):
                         'used_type': 'out'
                     })
 
-                web3.eth.uninstallFilter(event_filter.filter_id)
-
-                # 受信（used_type="in"）
-                # 抽出条件：to が account_address と一致
-                event_filter = MRFContract.events.Transfer.createFilter(
-                    fromBlock='earliest',
-                    argument_filters={
-                        'to': to_checksum_address(account_address)
-                    }
-                )
-                entries = event_filter.get_all_entries()
-
-                for entry in entries:
-                    if entry['args']['value'] == 0:
-                        continue
+            # 受信（used_type="in"）
+            # 抽出条件：to が account_address と一致
+            for entry in entries:
+                if entry['args']['to'] == to_checksum_address(account_address) and entry['args']['value'] != 0:
                     mrf_transfers.append({
                         'account_address': account_address,
                         'block_timestamp': datetime.fromtimestamp(
@@ -837,12 +826,6 @@ class MRFTransfers(BaseResource):
                         'value': entry['args']['value'],
                         'used_type': 'in'
                     })
-
-                web3.eth.uninstallFilter(event_filter.filter_id)
-
-            except Exception as e:
-                LOG.error(e)
-                pass
 
         # block_timestampの昇順にソートしなおす
         mrf_transfers = sorted(
