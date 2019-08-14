@@ -1091,8 +1091,10 @@ class JDRLastPrice(BaseResource):
         for token_address in request_json['address_list']:
             token_address = to_checksum_address(token_address)
             buy_price = 0
+            buy_amount = 0
             buy_order_id = None
             sell_price = 0
+            sell_amount = 0
             sell_order_id = None
             try:
                 event_filter = SwapContract.events.MakeOrder.createFilter(
@@ -1102,14 +1104,16 @@ class JDRLastPrice(BaseResource):
                 entries = event_filter.get_all_entries()
                 web3.eth.uninstallFilter(event_filter.filter_id)
                 for entry in reversed(entries):
-                    if entry['args']['isBuy'] == True:
+                    if entry['args']['isBuy']:
                         sell_price = entry['args']['price']
                         sell_order_id = entry['args']['orderId']
+                        sell_amount = SwapContract.functions.getOrder(sell_order_id).call()[2]
                         break
                 for entry in reversed(entries):
-                    if entry['args']['isBuy'] == False:
+                    if not entry['args']['isBuy']:
                         buy_price = entry['args']['price']
                         buy_order_id = entry['args']['orderId']
+                        buy_amount = SwapContract.functions.getOrder(buy_order_id).call()[2]
                         break
             except Exception as e:
                 LOG.error(e)
@@ -1117,8 +1121,10 @@ class JDRLastPrice(BaseResource):
             price_list.append({
                 'token_address': token_address,
                 'buy_price': buy_price,
+                'buy_amount': buy_amount,
                 'buy_order_id': buy_order_id,
                 'sell_price': sell_price,
+                'sell_amount': sell_amount,
                 'sell_order_id': sell_order_id
             })
 
@@ -1235,4 +1241,3 @@ class JDRTick(BaseResource):
                 raise InvalidParameterError
 
         return request_json
-
