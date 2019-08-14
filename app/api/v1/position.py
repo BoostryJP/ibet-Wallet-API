@@ -807,6 +807,7 @@ class MRFTransfers(BaseResource):
                 if entry['args']['from'] == to_checksum_address(account_address) and entry['args']['value'] != 0:
                     mrf_transfers.append({
                         'account_address': account_address,
+                        'target_address': entry['args']['to'],
                         'block_timestamp': datetime.fromtimestamp(
                             web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
                         ).strftime("%Y/%m/%d %H:%M:%S"),
@@ -820,6 +821,7 @@ class MRFTransfers(BaseResource):
                 if entry['args']['to'] == to_checksum_address(account_address) and entry['args']['value'] != 0:
                     mrf_transfers.append({
                         'account_address': account_address,
+                        'target_address': entry['args']['from'],
                         'block_timestamp': datetime.fromtimestamp(
                             web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
                         ).strftime("%Y/%m/%d %H:%M:%S"),

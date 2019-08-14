@@ -50,6 +50,7 @@ class App(falcon.API):
 
         # マーケット情報：トークン一覧
         self.add_route('/v1/JDR/Contracts', contracts.JDRContracts())
+        self.add_route('/v1/MRF/Contracts', contracts.MRFContracts())
         self.add_route('/v1/StraightBond/Contracts', contracts.Contracts())
         self.add_route('/v1/Membership/Contracts', contracts.MembershipContracts())
         self.add_route('/v1/Coupon/Contracts', contracts.CouponContracts())

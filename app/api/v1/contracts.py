@@ -816,3 +816,59 @@ class JDRContracts(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return validator.document
+
+
+# ------------------------------
+# [MRF]トークン一覧
+# ------------------------------
+class MRFContracts(BaseResource):
+    """
+    Handle for endpoint: /v1/MRF/Contracts
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res):
+        LOG.info('v1.contracts.MRFContracts')
+
+        # 企業リスト取得
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json', 'r'))
+            else:
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+        except Exception as e:
+            LOG.error(e)
+            company_list = []
+
+        # MRFトークン設定
+        TokenContract = Contract.get_contract(
+            'IbetMRF',
+            config.IBET_MRF_TOKEN_ADDRESS
+        )
+
+        # トークンの詳細情報を取得
+        # NOTE:リストで返しているが、現状は１件のみ返却する
+        token_list = []
+        token_address = to_checksum_address(config.IBET_MRF_TOKEN_ADDRESS)
+        token_name = TokenContract.functions.name().call()
+        owner_address = TokenContract.functions.owner().call()
+
+        company_name = ''
+        for company in company_list:
+            if to_checksum_address(company['address']) == owner_address:
+                company_name = company['corporate_name']
+
+        token_detail = {
+            'name': token_name,
+            'token_address': token_address,
+            'owner_address': owner_address,
+            'company_name': company_name
+        }
+        token_list.append(token_detail)
+
+        self.on_success(res, token_list)
