@@ -100,7 +100,7 @@ class ConsoleSink:
 
     @staticmethod
     def on_agree_dr(exchange_address, order_id, agreement_id,
-                 buyer_address, seller_address, counterpart_address, amount):
+                 buyer_address, seller_address, counterpart_address, amount, settlement_timestamp):
         logging.info(
             "Agree: exchange_address={}, orderId={}, agreementId={}".format(
                 exchange_address, order_id, agreement_id
@@ -172,7 +172,7 @@ class DBSink:
             self.db.merge(agreement)
 
     def on_agree_dr(self, exchange_address, order_id, agreement_id,
-                 buyer_address, seller_address, counterpart_address, amount):
+                 buyer_address, seller_address, counterpart_address, amount, settlement_timestamp):
         agreement = self.__get_agreement(
             exchange_address, order_id, agreement_id)
         if agreement is None:
@@ -186,6 +186,7 @@ class DBSink:
             agreement.counterpart_address = counterpart_address
             agreement.amount = amount
             agreement.status = AgreementStatus.DONE.value
+            agreement.settlement_timestamp = settlement_timestamp
             self.db.merge(agreement)
 
     def on_settlement_ok(self, exchange_address, order_id, agreement_id, settlement_timestamp):
@@ -377,7 +378,10 @@ class Processor:
                     counterpart_address = args['buyerAddress']
                     if is_buy:
                         counterpart_address = args['sellerAddress']
-
+                    settlement_timestamp = datetime.fromtimestamp(
+                        web3.eth.getBlock(event['blockNumber'])['timestamp'],
+                        JST
+                    )
                     self.sink.on_agree_dr(
                         exchange_address=self.jdr_swap_contract.address,
                         order_id=args['orderId'],
@@ -386,6 +390,7 @@ class Processor:
                         seller_address=args['sellerAddress'],
                         counterpart_address=counterpart_address,
                         amount=args['amount'],
+                        settlement_timestamp=settlement_timestamp
                     )
             self.web3.eth.uninstallFilter(event_filter.filter_id)
         except Exception as e:
