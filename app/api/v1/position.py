@@ -903,6 +903,12 @@ class JDRMyTokens(BaseResource):
             config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
+        # SWAPコントラクト設定
+        SwapContract = Contract.get_contract(
+            'IbetSwap',
+            config.IBET_JDR_SWAP_CONTRACT_ADDRESS
+        )
+
         listed_tokens = session.query(Listing). \
             union(session.query(PrivateListing)). \
             all()
@@ -931,9 +937,8 @@ class JDRMyTokens(BaseResource):
                         if balance == 0:
                             continue
                         else:
+                            # トークン情報取得
                             owner_address = TokenContract.functions.owner().call()
-                            company_name, rsa_publickey = \
-                                CouponMyTokens.get_company_name(company_list, owner_address)
                             name = TokenContract.functions.name().call()
                             symbol = TokenContract.functions.symbol().call()
                             total_supply = TokenContract.functions.totalSupply().call()
@@ -945,6 +950,29 @@ class JDRMyTokens(BaseResource):
                             status = TokenContract.functions.status().call()
                             contact_information = TokenContract.functions.contactInformation().call()
                             privacy_policy = TokenContract.functions.privacyPolicy().call()
+
+                            # 企業名取得
+                            company_name, rsa_publickey = \
+                                CouponMyTokens.get_company_name(company_list, owner_address)
+
+                            # 時価評価額算出（SWAP）
+                            sell_price = 0
+                            try:
+                                event_filter = SwapContract.events.MakeOrder.createFilter(
+                                    fromBlock='earliest',
+                                    argument_filters={'tokenAddress': token_address}
+                                )
+                                entries = event_filter.get_all_entries()
+                                web3.eth.uninstallFilter(event_filter.filter_id)
+                                for entry in reversed(entries):
+                                    if entry['args']['isBuy']:
+                                        sell_order_id = entry['args']['orderId']
+                                        sell_price = SwapContract.functions.getOrder(sell_order_id).call()[3]
+                                        break
+                            except Exception as e:
+                                LOG.error(e)
+
+                            market_value_swap = balance * sell_price
 
                             jdr_token = JDRToken()
                             jdr_token.token_address = token_address
@@ -970,7 +998,8 @@ class JDRMyTokens(BaseResource):
 
                             position_list.append({
                                 'token': jdr_token.__dict__,
-                                'balance': balance
+                                'balance': balance,
+                                'market_value_swap': market_value_swap
                             })
 
                     except Exception as e:
