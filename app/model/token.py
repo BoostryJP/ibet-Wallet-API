@@ -66,3 +66,4 @@ class JDRToken(TokenBase):
     memo: str
     status: str
     initial_offering_status: str
+    market_value_swap: int
