@@ -1105,15 +1105,17 @@ class JDRLastPrice(BaseResource):
                 web3.eth.uninstallFilter(event_filter.filter_id)
                 for entry in reversed(entries):
                     if entry['args']['isBuy']:
-                        sell_price = entry['args']['price']
                         sell_order_id = entry['args']['orderId']
-                        sell_amount = SwapContract.functions.getOrder(sell_order_id).call()[2]
+                        sell_order = SwapContract.functions.getOrder(sell_order_id).call()
+                        sell_amount = sell_order[2]
+                        sell_price = sell_order[3]
                         break
                 for entry in reversed(entries):
                     if not entry['args']['isBuy']:
-                        buy_price = entry['args']['price']
                         buy_order_id = entry['args']['orderId']
-                        buy_amount = SwapContract.functions.getOrder(buy_order_id).call()[2]
+                        buy_order = SwapContract.functions.getOrder(buy_order_id).call()
+                        buy_amount = buy_order[2]
+                        buy_price = buy_order[3]
                         break
             except Exception as e:
                 LOG.error(e)
