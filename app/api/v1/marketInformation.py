@@ -1193,6 +1193,7 @@ class JDRTick(BaseResource):
                 web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
+                    is_buy = SwapContract.functions.getOrder(entry['args']['orderId']).call()[4]
                     tick.append({
                         'block_timestamp': datetime.fromtimestamp(
                             web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
@@ -1203,6 +1204,7 @@ class JDRTick(BaseResource):
                         'agreement_id': entry['args']['agreementId'],
                         'price': entry['args']['price'],
                         'amount': entry['args']['amount'],
+                        'isBuy': is_buy
                     })
                 tick_list.append({
                     'token_address': token_address,
