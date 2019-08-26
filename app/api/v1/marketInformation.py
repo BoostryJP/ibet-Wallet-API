@@ -1195,7 +1195,11 @@ class JDRTick(BaseResource):
                 web3.eth.uninstallFilter(event_filter.filter_id)
 
                 for entry in entries:
-                    is_buy = SwapContract.functions.getOrder(entry['args']['orderId']).call()[4]
+                    order_is_buy = SwapContract.functions.getOrder(entry['args']['orderId']).call()[4]
+                    if order_is_buy is True:
+                        is_buy = False
+                    else:
+                        is_buy = True
                     tick.append({
                         'block_timestamp': datetime.fromtimestamp(
                             web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
