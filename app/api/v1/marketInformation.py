@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 JST = timezone(timedelta(hours=+9), 'JST')
 
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from cerberus import Validator
 
 from web3 import Web3
@@ -1077,57 +1077,49 @@ class JDRLastPrice(BaseResource):
 
     def on_post(self, req, res):
         LOG.info('v1.marketInformation.JDRLastPrice')
+        session = req.context['session']
 
         # 入力値チェック
         request_json = JDRLastPrice.validate(req)
 
-        # SWAPコントラクト設定
-        SwapContract = Contract.get_contract(
-            'IbetSwap',
-            config.IBET_JDR_SWAP_CONTRACT_ADDRESS
-        )
+        swap_address = to_checksum_address(config.IBET_JDR_SWAP_CONTRACT_ADDRESS)
 
         price_list = []
         for token_address in request_json['address_list']:
             token_address = to_checksum_address(token_address)
-            buy_price = 0
-            buy_amount = 0
-            buy_order_id = None
-            sell_price = 0
-            sell_amount = 0
-            sell_order_id = None
-            try:
-                event_filter = SwapContract.events.MakeOrder.createFilter(
-                    fromBlock='earliest',
-                    argument_filters={'tokenAddress': token_address}
-                )
-                entries = event_filter.get_all_entries()
-                web3.eth.uninstallFilter(event_filter.filter_id)
-                for entry in reversed(entries):
-                    if entry['args']['isBuy']:
-                        sell_order_id = entry['args']['orderId']
-                        sell_order = SwapContract.functions.getOrder(sell_order_id).call()
-                        sell_amount = sell_order[2]
-                        sell_price = sell_order[3]
-                        break
-                for entry in reversed(entries):
-                    if not entry['args']['isBuy']:
-                        buy_order_id = entry['args']['orderId']
-                        buy_order = SwapContract.functions.getOrder(buy_order_id).call()
-                        buy_amount = buy_order[2]
-                        buy_price = buy_order[3]
-                        break
-            except Exception as e:
-                LOG.error(e)
+
+            # ＜Make買＞
+            make_buy_order = session.query(Order.order_id, Order.amount, Order.price).\
+                filter(Order.exchange_address == swap_address).\
+                filter(Order.token_address == token_address).\
+                filter(Order.is_buy == True).\
+                filter(Order.is_cancelled == False).\
+                order_by(desc(Order.id)).\
+                first()
+
+            if make_buy_order is None:
+                make_buy_order = (None, 0, 0)
+
+            # ＜Make売＞
+            make_sell_order = session.query(Order.order_id, Order.amount, Order.price).\
+                filter(Order.exchange_address == swap_address).\
+                filter(Order.token_address == token_address).\
+                filter(Order.is_buy == False).\
+                filter(Order.is_cancelled == False).\
+                order_by(desc(Order.id)).\
+                first()
+
+            if make_sell_order is None:
+                make_sell_order = (None, 0, 0)
 
             price_list.append({
                 'token_address': token_address,
-                'buy_price': buy_price,
-                'buy_amount': buy_amount,
-                'buy_order_id': buy_order_id,
-                'sell_price': sell_price,
-                'sell_amount': sell_amount,
-                'sell_order_id': sell_order_id
+                'buy_order_id': make_buy_order[0],
+                'buy_amount': make_buy_order[1],
+                'buy_price': make_buy_order[2],
+                'sell_order_id': make_sell_order[0],
+                'sell_amount': make_sell_order[1],
+                'sell_price': make_sell_order[2],
             })
 
         self.on_success(res, price_list)
