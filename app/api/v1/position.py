@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
 
 from cerberus import Validator
+from sqlalchemy import desc
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -17,7 +18,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing, BondToken, MembershipToken, CouponToken, MRFToken, JDRToken
+from app.model import Listing, PrivateListing, BondToken, MembershipToken, CouponToken, MRFToken, JDRToken, Order
 
 LOG = log.get_logger()
 
@@ -904,10 +905,7 @@ class JDRMyTokens(BaseResource):
         )
 
         # SWAPコントラクト設定
-        SwapContract = Contract.get_contract(
-            'IbetSwap',
-            config.IBET_JDR_SWAP_CONTRACT_ADDRESS
-        )
+        swap_address = to_checksum_address(config.IBET_JDR_SWAP_CONTRACT_ADDRESS)
 
         listed_tokens = session.query(Listing). \
             union(session.query(PrivateListing)). \
@@ -956,21 +954,16 @@ class JDRMyTokens(BaseResource):
                                 CouponMyTokens.get_company_name(company_list, owner_address)
 
                             # 時価評価額算出（SWAP）
-                            sell_price = 0
-                            try:
-                                event_filter = SwapContract.events.MakeOrder.createFilter(
-                                    fromBlock='earliest',
-                                    argument_filters={'tokenAddress': token_address}
-                                )
-                                entries = event_filter.get_all_entries()
-                                web3.eth.uninstallFilter(event_filter.filter_id)
-                                for entry in reversed(entries):
-                                    if entry['args']['isBuy']:
-                                        sell_order_id = entry['args']['orderId']
-                                        sell_price = SwapContract.functions.getOrder(sell_order_id).call()[3]
-                                        break
-                            except Exception as e:
-                                LOG.error(e)
+                            sell_price = session.query(Order.price). \
+                                filter(Order.exchange_address == swap_address). \
+                                filter(Order.token_address == token_address). \
+                                filter(Order.is_buy == False). \
+                                filter(Order.is_cancelled == False). \
+                                order_by(desc(Order.id)). \
+                                first()
+
+                            if sell_price is None:
+                                sell_price = 0
 
                             market_value_swap = balance * sell_price
 
