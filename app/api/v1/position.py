@@ -957,7 +957,7 @@ class JDRMyTokens(BaseResource):
                             sell_price = session.query(Order.price). \
                                 filter(Order.exchange_address == swap_address). \
                                 filter(Order.token_address == token_address). \
-                                filter(Order.is_buy == False). \
+                                filter(Order.is_buy == True). \
                                 filter(Order.is_cancelled == False). \
                                 order_by(desc(Order.id)). \
                                 first()
