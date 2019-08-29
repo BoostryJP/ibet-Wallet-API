@@ -1114,12 +1114,12 @@ class JDRLastPrice(BaseResource):
 
             price_list.append({
                 'token_address': token_address,
-                'buy_order_id': make_buy_order[0],
-                'buy_amount': make_buy_order[1],
-                'buy_price': make_buy_order[2],
-                'sell_order_id': make_sell_order[0],
-                'sell_amount': make_sell_order[1],
-                'sell_price': make_sell_order[2],
+                'buy_order_id': make_sell_order[0],
+                'buy_amount': make_sell_order[1],
+                'buy_price': make_sell_order[2],
+                'sell_order_id': make_buy_order[0],
+                'sell_amount': make_buy_order[1],
+                'sell_price': make_buy_order[2],
             })
 
         self.on_success(res, price_list)
