@@ -30,10 +30,10 @@ BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
 REQUEST_TIMEOUT = (3.0, 7.5)
 
 # enable token type
-BOND_TOKEN_ENABLED = os.environ.get('BOND_TOKEN_ENABLED') or True
-MEMBERSHIP_TOKEN_ENABLED = os.environ.get('MEMBERSHIP_TOKEN_ENABLED') or True
-COUPON_TOKEN_ENABLED = os.environ.get('COUPON_TOKEN_ENABLED') or True
-DEPOSITARY_RECEIPT_TOKEN_ENABLED = os.environ.get('DEPOSITARY_RECEIPT_TOKEN_ENABLED') or True
+BOND_TOKEN_ENABLED = False if os.environ.get('BOND_TOKEN_ENABLED') == '0' else True
+MEMBERSHIP_TOKEN_ENABLED = False if os.environ.get('MEMBERSHIP_TOKEN_ENABLED') == '0' else True
+COUPON_TOKEN_ENABLED = False if os.environ.get('COUPON_TOKEN_ENABLED') == '0' else True
+DEPOSITARY_RECEIPT_TOKEN_ENABLED = False if os.environ.get('DEPOSITARY_RECEIPT_TOKEN_ENABLED') == '0' else True
 
 # addresses
 AGENT_ADDRESS = os.environ.get('AGENT_ADDRESS')
