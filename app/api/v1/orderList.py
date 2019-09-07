@@ -52,6 +52,7 @@ class OrderList(BaseResource):
                     requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except:
                 pass
+
         # Listingの情報を取得する
         available_tokens = session.query(Listing).all()
 
@@ -60,32 +61,35 @@ class OrderList(BaseResource):
         '''
         order_list = []
         for account_address in request_json['account_address_list']:
-            # 普通社債トークン
-            try:
-                order_list.extend(
-                    OrderList.get_StraightBond_OrderList(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # BOND
+            if config.BOND_TOKEN_ENABLED is True:
+                try:
+                    order_list.extend(
+                        OrderList.get_StraightBond_OrderList(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # 会員権トークン
-            try:
-                order_list.extend(
-                    OrderList.get_Membership_OrderList(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # MEMBERSHIP
+            if config.MEMBERSHIP_TOKEN_ENABLED is True:
+                try:
+                    order_list.extend(
+                        OrderList.get_Membership_OrderList(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # クーポントークン
-            try:
-                order_list.extend(
-                    OrderList.get_Coupon_OrderList(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # COUPON
+            if config.COUPON_TOKEN_ENABLED is True:
+                try:
+                    order_list.extend(
+                        OrderList.get_Coupon_OrderList(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
             order_list = sorted(
                 order_list,
@@ -97,59 +101,65 @@ class OrderList(BaseResource):
         '''
         settlement_list = []
         for account_address in request_json['account_address_list']:
-            # 普通社債トークン（買）
-            try:
-                settlement_list.extend(
-                    OrderList.get_StraightBond_SettlementList_Buy(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # BOND
+            if config.BOND_TOKEN_ENABLED is True:
+                # BOND_BUY
+                try:
+                    settlement_list.extend(
+                        OrderList.get_StraightBond_SettlementList_Buy(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # 普通社債トークン（売）
-            try:
-                settlement_list.extend(
-                    OrderList.get_StraightBond_SettlementList_Sell(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+                # BOND_SELL
+                try:
+                    settlement_list.extend(
+                        OrderList.get_StraightBond_SettlementList_Sell(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # 会員権トークン（買）
-            try:
-                settlement_list.extend(
-                    OrderList.get_Membership_SettlementList_Buy(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # MEMBERSHIP
+            if config.MEMBERSHIP_TOKEN_ENABLED is True:
+                # MEMBERSHIP_BUY
+                try:
+                    settlement_list.extend(
+                        OrderList.get_Membership_SettlementList_Buy(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # 会員権トークン（売）
-            try:
-                settlement_list.extend(
-                    OrderList.get_Membership_SettlementList_Sell(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+                # MEMBERSHIP_SELL
+                try:
+                    settlement_list.extend(
+                        OrderList.get_Membership_SettlementList_Sell(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # クーポントークン（買）
-            try:
-                settlement_list.extend(
-                    OrderList.get_Coupon_SettlementList_Buy(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # COUPON
+            if config.COUPON_TOKEN_ENABLED is True:
+                # COUPON_BUY
+                try:
+                    settlement_list.extend(
+                        OrderList.get_Coupon_SettlementList_Buy(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # クーポントークン（売）
-            try:
-                settlement_list.extend(
-                    OrderList.get_Coupon_SettlementList_Sell(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+                # COUPON_SELL
+                try:
+                    settlement_list.extend(
+                        OrderList.get_Coupon_SettlementList_Sell(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
             settlement_list = sorted(
                 settlement_list,
@@ -161,77 +171,85 @@ class OrderList(BaseResource):
         '''
         complete_list = []
         for account_address in request_json['account_address_list']:
-            # 普通社債トークン（買）
-            try:
-                complete_list.extend(
-                    OrderList.get_StraightBond_CompleteList_Buy(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # BOND
+            if config.BOND_TOKEN_ENABLED is True:
+                # BOND_BUY
+                try:
+                    complete_list.extend(
+                        OrderList.get_StraightBond_CompleteList_Buy(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # 普通社債トークン（売）
-            try:
-                complete_list.extend(
-                    OrderList.get_StraightBond_CompleteList_Sell(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+                # BOND_SELL
+                try:
+                    complete_list.extend(
+                        OrderList.get_StraightBond_CompleteList_Sell(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # 会員権トークン（買）
-            try:
-                complete_list.extend(
-                    OrderList.get_Membership_CompleteList_Buy(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # MEMBERSHIP
+            if config.MEMBERSHIP_TOKEN_ENABLED is True:
+                # MEMBERSHIP_BUY
+                try:
+                    complete_list.extend(
+                        OrderList.get_Membership_CompleteList_Buy(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # 会員権トークン（売）
-            try:
-                complete_list.extend(
-                    OrderList.get_Membership_CompleteList_Sell(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+                # MEMBERSHIP_SELL
+                try:
+                    complete_list.extend(
+                        OrderList.get_Membership_CompleteList_Sell(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # クーポントークン（買）
-            try:
-                complete_list.extend(
-                    OrderList.get_Coupon_CompleteList_Buy(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # COUPON
+            if config.COUPON_TOKEN_ENABLED is True:
+                # COUPON_BUY
+                try:
+                    complete_list.extend(
+                        OrderList.get_Coupon_CompleteList_Buy(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # クーポントークン（売）
-            try:
-                complete_list.extend(
-                    OrderList.get_Coupon_CompleteList_Sell(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+                # COUPON_SELL
+                try:
+                    complete_list.extend(
+                        OrderList.get_Coupon_CompleteList_Sell(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # DRトークン（買）
-            try:
-                complete_list.extend(
-                    OrderList.get_DR_CompleteList_Buy(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+            # DEPOSITARY_RECEIPT
+            if config.DEPOSITARY_RECEIPT_TOKEN_ENABLED is True:
+                # DR_BUY
+                try:
+                    complete_list.extend(
+                        OrderList.get_DR_CompleteList_Buy(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
-            # DRトークン（買）
-            try:
-                complete_list.extend(
-                    OrderList.get_DR_CompleteList_Sell(
-                        session, account_address, company_list, available_tokens))
-            except Exception as err:
-                LOG.error(err)
-                pass
+                # DR_SELL
+                try:
+                    complete_list.extend(
+                        OrderList.get_DR_CompleteList_Sell(
+                            session, account_address, company_list, available_tokens))
+                except Exception as err:
+                    LOG.error(err)
+                    pass
 
             complete_list = sorted(
                 complete_list,
