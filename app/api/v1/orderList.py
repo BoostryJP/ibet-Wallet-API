@@ -2133,6 +2133,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
+        token_attribute_cache = [] # トークンの属性情報のキャッシュ
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.\
@@ -2143,22 +2144,57 @@ class OrderList(BaseResource):
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
-            # Token-Contractへの接続
-            TokenContract = Contract.get_contract('IbetDepositaryReceipt', token_address)
+            # キャッシュにヒットした場合はキャッシュから属性情報を取得する
+            token_attribute = None
+            for x in token_attribute_cache:
+                if x['token_address'] == token_address:
+                    token_attribute = x
 
-            # Token-Contractから情報を取得する
-            name = TokenContract.functions.name().call()
-            symbol = TokenContract.functions.symbol().call()
-            total_supply = TokenContract.functions.totalSupply().call()
-            details = TokenContract.functions.details().call()
-            memo = TokenContract.functions.memo().call()
-            status = TokenContract.functions.status().call()
-            image_url_1 = TokenContract.functions.image_urls(0).call()
-            image_url_2 = TokenContract.functions.image_urls(1).call()
-            image_url_3 = TokenContract.functions.image_urls(2).call()
-            contact_information = TokenContract.functions.contactInformation().call()
-            privacy_policy = TokenContract.functions.privacyPolicy().call()
-            owner_address = TokenContract.functions.owner().call()
+            if token_attribute is not None:
+                name = token_attribute['name']
+                symbol = token_attribute['symbol']
+                total_supply = token_attribute['total_supply']
+                details = token_attribute['details']
+                memo = token_attribute['memo']
+                status = token_attribute['status']
+                image_url_1 = token_attribute['image_url_1']
+                image_url_2 = token_attribute['image_url_2']
+                image_url_3 = token_attribute['image_url_3']
+                contact_information = token_attribute['contact_information']
+                privacy_policy = token_attribute['privacy_policy']
+                owner_address = token_attribute['owner_address']
+            else:
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract('IbetDepositaryReceipt', token_address)
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                total_supply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                memo = TokenContract.functions.memo().call()
+                status = TokenContract.functions.status().call()
+                image_url_1 = TokenContract.functions.image_urls(0).call()
+                image_url_2 = TokenContract.functions.image_urls(1).call()
+                image_url_3 = TokenContract.functions.image_urls(2).call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
+                owner_address = TokenContract.functions.owner().call()
+                # 属性情報をキャッシュ
+                token_attribute_cache.append({
+                    'token_address': token_address,
+                    'name': name,
+                    'symbol': symbol,
+                    'total_supply': total_supply,
+                    'details': details,
+                    'memo': memo,
+                    'status': status,
+                    'image_url_1': image_url_1,
+                    'image_url_2': image_url_2,
+                    'image_url_3': image_url_3,
+                    'contact_information': contact_information,
+                    'privacy_policy': privacy_policy,
+                    'owner_address': owner_address
+                })
 
             # 企業リストから、企業名を取得する
             company_name = ''
@@ -2228,6 +2264,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
+        token_attribute_cache = []  # トークンの属性情報のキャッシュ
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.\
@@ -2238,22 +2275,57 @@ class OrderList(BaseResource):
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
 
-            # Token-Contractへの接続
-            TokenContract = Contract.get_contract('IbetDepositaryReceipt', token_address)
+            # キャッシュにヒットした場合はキャッシュから属性情報を取得する
+            token_attribute = None
+            for x in token_attribute_cache:
+                if x['token_address'] == token_address:
+                    token_attribute = x
 
-            # Token-Contractから情報を取得する
-            name = TokenContract.functions.name().call()
-            symbol = TokenContract.functions.symbol().call()
-            total_supply = TokenContract.functions.totalSupply().call()
-            details = TokenContract.functions.details().call()
-            memo = TokenContract.functions.memo().call()
-            status = TokenContract.functions.status().call()
-            image_url_1 = TokenContract.functions.image_urls(0).call()
-            image_url_2 = TokenContract.functions.image_urls(1).call()
-            image_url_3 = TokenContract.functions.image_urls(2).call()
-            contact_information = TokenContract.functions.contactInformation().call()
-            privacy_policy = TokenContract.functions.privacyPolicy().call()
-            owner_address = TokenContract.functions.owner().call()
+            if token_attribute is not None:
+                name = token_attribute['name']
+                symbol = token_attribute['symbol']
+                total_supply = token_attribute['total_supply']
+                details = token_attribute['details']
+                memo = token_attribute['memo']
+                status = token_attribute['status']
+                image_url_1 = token_attribute['image_url_1']
+                image_url_2 = token_attribute['image_url_2']
+                image_url_3 = token_attribute['image_url_3']
+                contact_information = token_attribute['contact_information']
+                privacy_policy = token_attribute['privacy_policy']
+                owner_address = token_attribute['owner_address']
+            else:
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract('IbetDepositaryReceipt', token_address)
+                # Token-Contractから情報を取得する
+                name = TokenContract.functions.name().call()
+                symbol = TokenContract.functions.symbol().call()
+                total_supply = TokenContract.functions.totalSupply().call()
+                details = TokenContract.functions.details().call()
+                memo = TokenContract.functions.memo().call()
+                status = TokenContract.functions.status().call()
+                image_url_1 = TokenContract.functions.image_urls(0).call()
+                image_url_2 = TokenContract.functions.image_urls(1).call()
+                image_url_3 = TokenContract.functions.image_urls(2).call()
+                contact_information = TokenContract.functions.contactInformation().call()
+                privacy_policy = TokenContract.functions.privacyPolicy().call()
+                owner_address = TokenContract.functions.owner().call()
+                # 属性情報をキャッシュ
+                token_attribute_cache.append({
+                    'token_address': token_address,
+                    'name': name,
+                    'symbol': symbol,
+                    'total_supply': total_supply,
+                    'details': details,
+                    'memo': memo,
+                    'status': status,
+                    'image_url_1': image_url_1,
+                    'image_url_2': image_url_2,
+                    'image_url_3': image_url_3,
+                    'contact_information': contact_information,
+                    'privacy_policy': privacy_policy,
+                    'owner_address': owner_address
+                })
 
             # 企業リストから、企業名を取得する
             company_name = ''
