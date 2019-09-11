@@ -4,7 +4,13 @@ from __future__ import unicode_literals
 
 from locust import HttpLocust, TaskSet, task
 
+import os
+import sys
 import json
+
+path = os.path.join(os.path.dirname(__file__), '../../../')
+sys.path.append(path)
+
 from app import config
 
 # テスト用のアカウント
