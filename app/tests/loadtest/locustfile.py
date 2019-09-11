@@ -66,7 +66,7 @@ class LoadTestTaskSet(TaskSet):
     def v1_orderlist(self):
         headers = {'content-type': 'application/json'}
         response = self.client.post(
-            "v1/OrderList",
+            "/v1/OrderList",
             json.dumps({'account_address_list': [eth_address]}),
             headers=headers,
 			auth=(basic_auth_user, basic_auth_pass),
