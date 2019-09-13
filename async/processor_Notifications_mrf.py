@@ -61,10 +61,6 @@ def push_publish(notification_id, address, priority, blocknumber, subject, messa
     # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
     # 「対象のblockNumber」が起動時のblockNumber以上の場合は送信
     if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
-        # 通知tableの情報取得
-        query_notification = db_session.query(Notification). \
-            filter(Notification.notification_id == notification_id)
-        notification = query_notification.first()
         # pushの情報取得
         query = db_session.query(Push). \
             filter(Push.account_address == address)
@@ -77,14 +73,14 @@ def push_publish(notification_id, address, priority, blocknumber, subject, messa
                         "alert": message
                     },
                     "data": {
-                        "notification_id": notification.notification_id
+                        "notification_id": notification_id
                     }
                 }
                 send_data = json.dumps({"APNS": json.dumps(message_dict)})
             elif device_data.platform == 'android':
                 message_dict = {
                     "data": {
-                        "message": message, "notification_id": notification.notification_id
+                        "message": message, "notification_id": notification_id
                     }
                 }
                 send_data = json.dumps({"GCM": json.dumps(message_dict)})
