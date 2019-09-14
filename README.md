@@ -1,10 +1,9 @@
-# ローカル開発環境構築（Mac）
+# ローカル開発環境構築
 
 ## 前提条件
 
-* OS:　OSX
-* 以下の tmr-sc の Readme に従い、環境構築を行なっていること。
-* （Pythonなどの環境構築、呼び出し先のQuorumの環境構築が事前に必要なため）
+* OS: OSX
+* 以下の tmr-sc の Readme に従い、環境構築を行なっていること。（Python仮想環境の構築、Quorumの環境構築が事前に必要）
 * https://github.com/N-Village/tmr-sc/blob/master/README.md
 
 ## 1. PostgreSQLインストール&設定
@@ -92,8 +91,6 @@ $ psql -l
 export PGDATA=/usr/local/var/postgres
 ```
 
-
-
 ### 1-7. Roleの作成
 * データベースのユーザ（Role）を作成する。
 
@@ -163,7 +160,7 @@ listen_addresses = '*'
 $ psql --username=ethuser --password --dbname=ethcache
 ```
 
-## 2. 依存パッケージのインストール
+## 2. Python依存パッケージのインストール
 * 依存パッケージをpipでインストールする。
 
 ```
@@ -233,11 +230,5 @@ $ pytest tests/[テストするモジュール名].py -k [テストするメソ�
 
 ### 4-3. （参考）pdbを用いたデバッグ
 
-* pdbを用いたデバッグを行う際は、以下のページを参考
-* https://docs.python.jp/3/library/pdb.html
-
-### 4-4. (参考)postmanを用いたREST APIの動作確認
-
-* ダウンロード　→　https://www.getpostman.com/
-* 参考　→　https://www.webprofessional.jp/master-api-workflow-postman/
-
+* pdbを用いてデバッグを行う。
+* 参考：https://docs.python.jp/3/library/pdb.html
