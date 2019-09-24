@@ -963,7 +963,7 @@ class JDRMyTokens(BaseResource):
                                 first()
 
                             if sell_price is None:
-                                sell_price = (0)
+                                sell_price = (0, )
 
                             market_value_swap = balance * sell_price[0]
 
