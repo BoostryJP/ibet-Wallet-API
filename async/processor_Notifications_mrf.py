@@ -175,14 +175,17 @@ class WatchMRFTransfer(Watcher):
 
     def push(self, entries):
         for entry in entries:
-            push_publish(
-                self._gen_notification_id(entry),
-                entry["args"]["to"],
-                0,
-                entry["blockNumber"],
-                'ポイントを受領しました。',
-                'ポイントを受領しました。保有一覧からご確認ください。',
-            )
+            if entry["args"]["from"] == to_checksum_address(config.IBET_JDR_SWAP_CONTRACT_ADDRESS):
+                continue
+            else:
+                push_publish(
+                    self._gen_notification_id(entry),
+                    entry["args"]["to"],
+                    0,
+                    entry["blockNumber"],
+                    'ポイントを受領しました。',
+                    'ポイントを受領しました。保有一覧からご確認ください。',
+                )
 
 
 def main():
