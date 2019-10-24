@@ -210,6 +210,7 @@ class TestV1MembershipMyTokens:
             'token': {
                 'token_address': token_address,
                 'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -279,6 +280,7 @@ class TestV1MembershipMyTokens:
             'token': {
                 'token_address': token_address,
                 'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -384,6 +386,7 @@ class TestV1MembershipMyTokens:
             'token': {
                 'token_address': token_address,
                 'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',
@@ -453,6 +456,7 @@ class TestV1MembershipMyTokens:
             'token': {
                 'token_address': token_address,
                 'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト会員権',

@@ -339,6 +339,7 @@ class MembershipMyTokens(BaseResource):
                             membershiptoken = MembershipToken()
                             membershiptoken.token_address = token_address
                             membershiptoken.token_template = token_template
+                            membershiptoken.owner_address = owner_address
                             membershiptoken.company_name = company_name
                             membershiptoken.rsa_publickey = rsa_publickey
                             membershiptoken.name = name
