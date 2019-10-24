@@ -34,7 +34,7 @@ repoze.lru==0.7
 rlp==0.6.0
 scrypt==0.8.6
 semantic-version==2.6.0
-six==1.11.0
+six==1.12.0
 SQLAlchemy==1.2.2
 toolz==0.9.0
 web3==4.8.2
