@@ -1,7 +1,7 @@
 #!/bin/bash
 source ~/.bash_profile
 
-cd /app/tmr-node
+cd /app/ibet-Wallet-API
 
 # test
 pytest -v --cov=app/api/ --cov-report=xml --cov-branch

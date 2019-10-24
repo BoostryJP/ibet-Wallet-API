@@ -3,7 +3,7 @@
 ## processor_OrderAgree.py
 
 - 各種環境変数は適宜環境に合わせて修正してください。
-- テーブルの自動作成は行わないため、先にtmr-nodeを起動しておく必要があります。
+- テーブルの自動作成は行わないため、先にibet-Wallet-APIを起動しておく必要があります。
 
 ```
 $ export WEB3_HTTP_PROVIDER=http://localhost:8545

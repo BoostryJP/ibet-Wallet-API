@@ -1,7 +1,7 @@
 #!/bin/bash
 source ~/.bash_profile
 
-cd /app/tmr-node
+cd /app/ibet-Wallet-API
 
 python async/processor_Notifications.py < /dev/null 2>&1 /dev/null &
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 source ~/.bash_profile
 
-cd /app/tmr-node
+cd /app/ibet-Wallet-API
 
 #run server
 ./bin/run.sh start

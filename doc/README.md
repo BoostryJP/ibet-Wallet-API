@@ -8,12 +8,12 @@
 * ドキュメント作成に必要なライブラリをインストールする。
 
 ```sh
-$ cd ./tmr-node/doc/
+$ cd ./ibet-Wallet-API/doc/
 $ pip install -r requirements.txt
 ```
 
 ## ドキュメントの作成
-* `tmr-node/doc/source`の下にmarkdown形式のドキュメントを作成する。
+* `ibet-Wallet-API/doc/source`の下にmarkdown形式のドキュメントを作成する。
 * `index.rst`に作成したmarkdownファイルのリンクを記述するとtoctreeが作成される。
 
 ## ビルド（HTMLファイル作成）
@@ -21,4 +21,4 @@ $ pip install -r requirements.txt
 $ make html
 ```
 * 上記コマンドを実行すると、read the docsテーマのHTMLファイルが作成される。
-* 作成されたファイルは（htmlファイル、JSファイルなど）、`tmr-node/doc/build`の下に全て格納される。
+* 作成されたファイルは（htmlファイル、JSファイルなど）、`ibet-Wallet-API/doc/build`の下に全て格納される。

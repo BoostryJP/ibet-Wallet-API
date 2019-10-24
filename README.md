@@ -164,7 +164,7 @@ $ psql --username=ethuser --password --dbname=ethcache
 * 依存パッケージをpipでインストールする。
 
 ```
-$ cd tmr-node
+$ cd ibet-Wallet-API
 $ pip install -r requirements.txt
 ```
 
@@ -188,10 +188,10 @@ export WORKER_COUNT=8
 * API Server is starting というメッセージが表示されたら、起動成功
 
 ```
-$ cd tmr-node
+$ cd ibet-Wallet-API
 $ ./bin/run.sh start
 
- [73139] [INFO] API Server is starting [in / * /tmr-node/app/main.py:31]
+ [73139] [INFO] API Server is starting [in / * /ibet-Wallet-API/app/main.py:31]
 ```
 
 ## 4. アプリケーションのテスト

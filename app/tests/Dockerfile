@@ -71,10 +71,10 @@ RUN . ~/.bash_profile \
 
 # app
 USER root
-COPY . /app/tmr-node/
-RUN chown -R apl:apl /app/tmr-node && \
-    chmod 755 /app/tmr-node
-RUN unzip /app/tmr-node/data/zip_code.zip -d /app/tmr-node/data/
+COPY . /app/ibet-Wallet-API/
+RUN chown -R apl:apl /app/ibet-Wallet-API && \
+    chmod 755 /app/ibet-Wallet-API
+RUN unzip /app/ibet-Wallet-API/data/zip_code.zip -d /app/ibet-Wallet-API/data/
 
 USER apl
-CMD /app/tmr-node/app/tests/qa.sh
+CMD /app/ibet-Wallet-API/app/tests/qa.sh
