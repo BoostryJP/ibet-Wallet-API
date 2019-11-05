@@ -122,8 +122,10 @@ class DeleteDevice(BaseResource):
 
         # クエリを設定
         session = req.context["session"]
+        address = to_checksum_address(req.context['address'])
         query = session.query(Push). \
-            filter(Push.device_id == request_json['device_id'])
+            filter(Push.device_id == request_json['device_id']). \
+            filter(Push.account_address == address)
         device_data = query.first()
         if device_data is not None:
             # SNSのendpoint ARNを削除

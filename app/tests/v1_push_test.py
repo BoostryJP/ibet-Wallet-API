@@ -7,7 +7,7 @@ from datetime import datetime
 from app import config
 from app import log
 from concurrent.futures import ThreadPoolExecutor
-import json
+
 LOG = log.get_logger()
 
 class TestV1Push():
@@ -127,6 +127,31 @@ class TestV1Push():
         assert tmpdata.device_token == self.upd_data_2['device_token']
         assert tmpdata.account_address == self.address_2
         assert tmpdata.platform == self.upd_data_2['platform']
+
+        # SNS確認
+        client = boto3.client('sns', 'ap-northeast-1')
+        response = client.get_endpoint_attributes(
+            EndpointArn=tmpdata.device_endpoint_arn
+        )
+        assert response is not None
+
+    # ＜正常系1_4＞
+    # 短期間での同一device_idの二重登録
+    def test_normal_1_4(self, client, session):
+        res = []
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = executor.map(client.simulate_auth_post, [self.url_UpdateDevice, self.url_UpdateDevice], [self.private_key, self.private_key], [None, None], [self.upd_data_3, self.upd_data_3])
+        res = list(results)
+        # DB確認
+        query = session.query(Push). \
+            filter(Push.device_id == self.upd_data_3['device_id'])
+        tmpdata = query.first()
+        assert res[0].status_code == 200
+        assert res[1].status_code == 200
+        assert tmpdata.device_id == self.upd_data_3['device_id']
+        assert tmpdata.device_token == self.upd_data_3['device_token']
+        assert tmpdata.account_address == self.address
+        assert tmpdata.platform == self.upd_data_3['platform']
 
         # SNS確認
         client = boto3.client('sns', 'ap-northeast-1')
@@ -495,31 +520,6 @@ class TestV1Push():
                 'device_id': 'must be of string type'
             }
         }
-
-    # ＜エラー系3-13＞
-    # 【UpdateDevice】短期間での同一device_idの二重登録
-    def test_error_3_13(self, client, session):
-        res = []
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            results = executor.map(client.simulate_auth_post, [self.url_UpdateDevice, self.url_UpdateDevice], [self.private_key, self.private_key], [None, None], [self.upd_data_3, self.upd_data_3])
-        res = list(results)
-        # DB確認
-        query = session.query(Push). \
-            filter(Push.device_id == self.upd_data_3['device_id'])
-        tmpdata = query.first()
-        assert res[0].status_code == 200
-        assert res[1].status_code == 200
-        assert tmpdata.device_id == self.upd_data_3['device_id']
-        assert tmpdata.device_token == self.upd_data_3['device_token']
-        assert tmpdata.account_address == self.address
-        assert tmpdata.platform == self.upd_data_3['platform']
-
-        # SNS確認
-        client = boto3.client('sns', 'ap-northeast-1')
-        response = client.get_endpoint_attributes(
-            EndpointArn=tmpdata.device_endpoint_arn
-        )
-        assert response is not None
 
     # 最後のケース　設定変更
     def test_teardown(self, client):
