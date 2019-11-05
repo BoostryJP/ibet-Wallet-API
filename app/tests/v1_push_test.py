@@ -6,6 +6,7 @@ from app.model import Push
 from datetime import datetime
 from app import config
 from app import log
+from concurrent import futures
 LOG = log.get_logger()
 
 class TestV1Push():
@@ -27,6 +28,11 @@ class TestV1Push():
     upd_data_2 = {
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
         "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c29",
+        "platform":"android"
+    }
+    upd_data_3 = {
+        "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10G",
+        "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c30",
         "platform":"android"
     }
     del_data_1 = {
@@ -488,6 +494,30 @@ class TestV1Push():
                 'device_id': 'must be of string type'
             }
         }
+
+    # ＜エラー系3-13＞
+    # 【UpdateDevice】短期間での同一device_idの二重登録
+    def test_error_3_13(self, client, session):
+        with ThreadPoolExecutor(max_workers=2, thread_name_prefix="thread") as executor:
+            results = executor.map(client.simulate_auth_pos, [self.url_UpdateDevice, self.url_UpdateDevice], [self.upd_data_3, self.upd_data_3], [self.private_key, self.private_key])
+
+        # DB確認
+        print(results)
+        query = session.query(Push). \
+            filter(Push.device_id == self.upd_data_3['device_id'])
+        tmpdata = query.first()
+        assert resp.status_code == 200
+        assert tmpdata.device_id == self.upd_data_3['device_id']
+        assert tmpdata.device_token == self.upd_data_3['device_token']
+        assert tmpdata.account_address == self.address
+        assert tmpdata.platform == self.upd_data_3['platform']
+
+        # SNS確認
+        client = boto3.client('sns', 'ap-northeast-1')
+        response = client.get_endpoint_attributes(
+            EndpointArn=tmpdata.device_endpoint_arn
+        )
+        assert response is not None
 
     # 最後のケース　設定変更
     def test_teardown(self, client):

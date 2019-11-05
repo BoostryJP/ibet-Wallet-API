@@ -8,7 +8,7 @@ from app.model import Base
 class Push(Base):
     __tablename__ = 'push'
     id = Column(BigInteger, primary_key=True)
-    device_id = Column(String(256), index=True)
+    device_id = Column(String(256), index=True, unique=True)
     account_address = Column(String(256))
     device_token = Column(String(256))
     device_endpoint_arn = Column(String(256))

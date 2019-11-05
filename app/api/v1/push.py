@@ -67,6 +67,11 @@ class UpdateDevice(BaseResource):
             device_data.device_token = request_json['device_token']
             device_data.device_endpoint_arn = endpoint
             device_data.platform = request_json['platform']
+            # 一意制約違反の場合でも正常応答とする（SNS登録中に別トランザクションが入る得るため）
+            try:
+                session.add(device_data)
+            except IntegrityError as e:
+                print(e)
             session.add(device_data)
         self.on_success(res, None)
 
