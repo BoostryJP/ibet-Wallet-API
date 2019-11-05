@@ -7,6 +7,7 @@ from datetime import datetime
 from app import config
 from app import log
 from concurrent.futures import ThreadPoolExecutor
+import json
 LOG = log.get_logger()
 
 class TestV1Push():
@@ -498,16 +499,16 @@ class TestV1Push():
     # ＜エラー系3-13＞
     # 【UpdateDevice】短期間での同一device_idの二重登録
     def test_error_3_13(self, client, session):
-        with ThreadPoolExecutor(max_workers=2, thread_name_prefix="thread") as executor:
-            results = executor.map(client.simulate_auth_post, [self.url_UpdateDevice, self.url_UpdateDevice], [self.upd_data_3, self.upd_data_3], [self.private_key, self.private_key])
-
+        res = []
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = executor.map(client.simulate_auth_post, [self.url_UpdateDevice, self.url_UpdateDevice], [self.private_key, self.private_key], [None, None], [self.upd_data_3, self.upd_data_3])
+        res = list(results)
         # DB確認
-        print(results)
         query = session.query(Push). \
             filter(Push.device_id == self.upd_data_3['device_id'])
         tmpdata = query.first()
-        assert results[0].status_code == 200
-        assert results[1].status_code == 200
+        assert res[0].status_code == 200
+        assert res[1].status_code == 200
         assert tmpdata.device_id == self.upd_data_3['device_id']
         assert tmpdata.device_token == self.upd_data_3['device_token']
         assert tmpdata.account_address == self.address

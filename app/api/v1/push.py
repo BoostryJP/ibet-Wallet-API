@@ -72,7 +72,6 @@ class UpdateDevice(BaseResource):
                 session.add(device_data)
             except IntegrityError as e:
                 print(e)
-            session.add(device_data)
         self.on_success(res, None)
 
     @staticmethod
