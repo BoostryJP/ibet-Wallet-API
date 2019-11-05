@@ -6,7 +6,7 @@ from app.model import Push
 from datetime import datetime
 from app import config
 from app import log
-from concurrent import futures
+from concurrent.futures import ThreadPoolExecutor
 LOG = log.get_logger()
 
 class TestV1Push():
@@ -506,7 +506,8 @@ class TestV1Push():
         query = session.query(Push). \
             filter(Push.device_id == self.upd_data_3['device_id'])
         tmpdata = query.first()
-        assert resp.status_code == 200
+        assert results[0].status_code == 200
+        assert results[1].status_code == 200
         assert tmpdata.device_id == self.upd_data_3['device_id']
         assert tmpdata.device_token == self.upd_data_3['device_token']
         assert tmpdata.account_address == self.address
