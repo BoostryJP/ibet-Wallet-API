@@ -13,6 +13,7 @@ from app.errors import InvalidParameterError, SNSNotFoundError
 from app.utils.hooks import VerifySignature
 from app import config
 from app.model import Push
+from sqlalchemy import exc
 
 LOG = log.get_logger()
 
@@ -70,8 +71,9 @@ class UpdateDevice(BaseResource):
             # 一意制約違反の場合でも正常応答とする（SNS登録中に別トランザクションが入る得るため）
             try:
                 session.add(device_data)
-            except IntegrityError as e:
-                print(e)
+                session.commit()
+            except exc.IntegrityError:
+                session.rollback()
                 pass
         self.on_success(res, None)
 

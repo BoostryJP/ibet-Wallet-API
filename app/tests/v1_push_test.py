@@ -172,7 +172,7 @@ class TestV1Push():
         # 削除リクエスト
         resp = client.simulate_auth_post(self.url_DeleteDevice,
         json=self.del_data_1,
-        private_key=self.private_key)
+        private_key=self.private_key_2)
 
         # DB確認
         query = session.query(Push). \
