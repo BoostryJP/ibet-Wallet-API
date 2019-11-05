@@ -499,7 +499,7 @@ class TestV1Push():
     # 【UpdateDevice】短期間での同一device_idの二重登録
     def test_error_3_13(self, client, session):
         with ThreadPoolExecutor(max_workers=2, thread_name_prefix="thread") as executor:
-            results = executor.map(client.simulate_auth_pos, [self.url_UpdateDevice, self.url_UpdateDevice], [self.upd_data_3, self.upd_data_3], [self.private_key, self.private_key])
+            results = executor.map(client.simulate_auth_post, [self.url_UpdateDevice, self.url_UpdateDevice], [self.upd_data_3, self.upd_data_3], [self.private_key, self.private_key])
 
         # DB確認
         print(results)
