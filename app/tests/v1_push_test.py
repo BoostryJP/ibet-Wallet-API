@@ -6,6 +6,8 @@ from app.model import Push
 from datetime import datetime
 from app import config
 from app import log
+from concurrent.futures import ThreadPoolExecutor
+
 LOG = log.get_logger()
 
 class TestV1Push():
@@ -27,6 +29,11 @@ class TestV1Push():
     upd_data_2 = {
         "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10F",
         "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c29",
+        "platform":"android"
+    }
+    upd_data_3 = {
+        "device_id": "25D451DF-7BC1-63AD-A267-678ACDC1D10G",
+        "device_token": "65ae6c04ebcb60f1547980c6e42921139cc95251d484657e40bb571ecceb2c30",
         "platform":"android"
     }
     del_data_1 = {
@@ -128,6 +135,31 @@ class TestV1Push():
         )
         assert response is not None
 
+    # ＜正常系1_4＞
+    # 短期間での同一device_idの二重登録
+    def test_normal_1_4(self, client, session):
+        res = []
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = executor.map(client.simulate_auth_post, [self.url_UpdateDevice, self.url_UpdateDevice], [self.private_key, self.private_key], [None, None], [self.upd_data_3, self.upd_data_3])
+        res = list(results)
+        # DB確認
+        query = session.query(Push). \
+            filter(Push.device_id == self.upd_data_3['device_id'])
+        tmpdata = query.first()
+        assert res[0].status_code == 200
+        assert res[1].status_code == 200
+        assert tmpdata.device_id == self.upd_data_3['device_id']
+        assert tmpdata.device_token == self.upd_data_3['device_token']
+        assert tmpdata.account_address == self.address
+        assert tmpdata.platform == self.upd_data_3['platform']
+
+        # SNS確認
+        client = boto3.client('sns', 'ap-northeast-1')
+        response = client.get_endpoint_attributes(
+            EndpointArn=tmpdata.device_endpoint_arn
+        )
+        assert response is not None
+
     # ＜正常系2_1＞
     # device token削除
     def test_normal_2_1(self, client, session):
@@ -140,7 +172,7 @@ class TestV1Push():
         # 削除リクエスト
         resp = client.simulate_auth_post(self.url_DeleteDevice,
         json=self.del_data_1,
-        private_key=self.private_key)
+        private_key=self.private_key_2)
 
         # DB確認
         query = session.query(Push). \

@@ -13,6 +13,7 @@ from app.errors import InvalidParameterError, SNSNotFoundError
 from app.utils.hooks import VerifySignature
 from app import config
 from app.model import Push
+from sqlalchemy import exc
 
 LOG = log.get_logger()
 
@@ -67,7 +68,13 @@ class UpdateDevice(BaseResource):
             device_data.device_token = request_json['device_token']
             device_data.device_endpoint_arn = endpoint
             device_data.platform = request_json['platform']
-            session.add(device_data)
+            # 一意制約違反の場合でも正常応答とする（SNS登録中に別トランザクションが入る得るため）
+            try:
+                session.add(device_data)
+                session.commit()
+            except exc.IntegrityError:
+                session.rollback()
+                pass
         self.on_success(res, None)
 
     @staticmethod
@@ -118,8 +125,10 @@ class DeleteDevice(BaseResource):
 
         # クエリを設定
         session = req.context["session"]
+        address = to_checksum_address(req.context['address'])
         query = session.query(Push). \
-            filter(Push.device_id == request_json['device_id'])
+            filter(Push.device_id == request_json['device_id']). \
+            filter(Push.account_address == address)
         device_data = query.first()
         if device_data is not None:
             # SNSのendpoint ARNを削除
