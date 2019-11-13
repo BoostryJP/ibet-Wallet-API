@@ -513,3 +513,36 @@ class TestV1CouponTick():
             'message': 'Not Supported',
             'description': 'method: GET, url: /v1/Coupon/Tick'
         }
+
+# [JDR]歩み値参照API
+# /v1/JDR/Tick/
+class TestV1JDRTick():
+    # テスト対象API
+    apiurl = '/v1/JDR/Tick'
+
+    # 約定イベントの作成
+    @staticmethod
+    def generate_agree_event(swap_contract_address, order_id):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+
+        attribute = {
+            'name': 'テストJDR',
+            'symbol': 'JDR',
+            'initialSupply': 1000000,
+            'tradableExchange': exchange['address'],
+            'details': '詳細',
+            'returnDetails': 'リターン詳細',
+            'expirationDate': '20191231',
+            'memo': 'メモ',
+            'transferable': True,
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー',
+        }
+
+        # 発行体オペレーション
+        ## JDトークンは発行せず、SWAPのみ
+
+        # 投資家オペレーション
+        latest_orderid = jdr_get_latest_orderid(swap_contract_address, order_id)
+        jdr_take_buy(trader, swap_contract_address, latest_orderid, 100)

@@ -495,3 +495,28 @@ def membership_confirm_agreement(invoker, exchange, order_id, agreement_id):
         confirmAgreement(order_id, agreement_id). \
         transact({'from': invoker['account_address'], 'gas': gas})
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+'''
+JDR Token （信託受益証券）
+'''
+
+
+# 直近注文IDを取得
+def jdr_get_latest_orderid(swap_contract_address, order_id):
+    SwapContract = Contract.get_contract('IbetSwap', swap_contract_address)
+    latest_orderid = SwapContract.functions.latestOrderId().call()
+    return latest_orderid
+
+
+# 信託受益証券Tokenの買いTake注文
+def jdr_take_buy(invoker, swap_contract_address, order_id, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+    SwapContract = Contract.get_contract('IbetSwap', swap_contract_address)
+    gas = SwapContract.estimateGas(). \
+        executeOrder(order_id, amount, True)
+    tx_hash = SwapContract.functions. \
+        executeOrder(order_id, amount, True). \
+        transact({'from': invoker['account_address'], 'gas': gas})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)

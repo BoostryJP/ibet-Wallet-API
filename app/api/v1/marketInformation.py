@@ -300,7 +300,6 @@ class Tick(BaseResource):
         LOG.info('v1.marketInformation.Tick')
 
         request_json = Tick.validate(req)
-
         ExchangeContract = Contract.get_contract(
             'IbetStraightBondExchange',
             config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
@@ -316,7 +315,6 @@ class Tick(BaseResource):
                 )
                 entries = event_filter.get_all_entries()
                 web3.eth.uninstallFilter(event_filter.filter_id)
-
                 for entry in entries:
                     tick.append({
                         'block_timestamp': datetime.fromtimestamp(
@@ -1167,41 +1165,34 @@ class JDRTick(BaseResource):
         # 入力値チェック
         request_json = Tick.validate(req)
 
-        # SWAPコントラクト設定
-        SwapContract = Contract.get_contract(
-            'IbetSwap',
-            config.IBET_JDR_SWAP_CONTRACT_ADDRESS
-        )
-
         tick_list = []
         # TokenごとにTickを取得
         for token_address in request_json['address_list']:
             token = to_checksum_address(token_address)
             tick = []
+
             try:
-                event_filter = SwapContract.events.Agree.createFilter(
-                    fromBlock='earliest',
-                    argument_filters={'tokenAddress': token}
-                )
-                entries = event_filter.get_all_entries()
-                web3.eth.uninstallFilter(event_filter.filter_id)
+                session = req.context["session"]
+
+                entries = session.query(Agreement, Order).join(Order, Agreement.order_id == Order.order_id). \
+                    filter(Order.token_address == token). \
+                    filter(Agreement.status == 1). \
+                    filter(Order.is_cancelled == False).all()
 
                 for entry in entries:
-                    order_is_buy = SwapContract.functions.getOrder(entry['args']['orderId']).call()[4]
+                    order_is_buy = entry.Order.is_buy
                     if order_is_buy is True:
                         is_buy = False
                     else:
                         is_buy = True
                     tick.append({
-                        'block_timestamp': datetime.fromtimestamp(
-                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
-                        ).strftime("%Y/%m/%d %H:%M:%S"),
-                        'buy_address': entry['args']['buyerAddress'],
-                        'sell_address': entry['args']['sellerAddress'],
-                        'order_id': entry['args']['orderId'],
-                        'agreement_id': entry['args']['agreementId'],
-                        'price': entry['args']['price'],
-                        'amount': entry['args']['amount'],
+                        'block_timestamp': '',
+                        'buy_address': entry.Agreement.buyer_address,
+                        'sell_address': entry.Agreement.seller_address,
+                        'order_id': entry.Agreement.order_id,
+                        'agreement_id': entry.Agreement.agreement_id,
+                        'price': entry.Order.price,
+                        'amount': entry.Order.amount,
                         'isBuy': is_buy
                     })
                 tick_list.append({
