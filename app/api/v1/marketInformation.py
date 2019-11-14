@@ -1185,8 +1185,18 @@ class JDRTick(BaseResource):
                         is_buy = False
                     else:
                         is_buy = True
+
+                    print('-----------debug----------------')
+                    print()
+                    # print(datetime.fromtimestamp(entry.Agreement.settlement_timestamp, JST).strftime("%Y/%m/%d %H:%M:%S"))
+                    # print(datetime.fromtimestamp(entry.Agreement.settlement_timestamp, JST))
+                    print(entry.Agreement.settlement_timestamp)
+                    if(entry != None):
+                        print(entry.Agreement.settlement_timestamp.strftime('%Y/%m/%d %H:%M:%S'))
+                    print('--------------------------------')
+
                     tick.append({
-                        'block_timestamp': '',
+                        'block_timestamp': entry.Agreement.settlement_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
                         'buy_address': entry.Agreement.buyer_address,
                         'sell_address': entry.Agreement.seller_address,
                         'order_id': entry.Agreement.order_id,
