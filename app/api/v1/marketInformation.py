@@ -300,6 +300,7 @@ class Tick(BaseResource):
         LOG.info('v1.marketInformation.Tick')
 
         request_json = Tick.validate(req)
+
         ExchangeContract = Contract.get_contract(
             'IbetStraightBondExchange',
             config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
@@ -315,6 +316,7 @@ class Tick(BaseResource):
                 )
                 entries = event_filter.get_all_entries()
                 web3.eth.uninstallFilter(event_filter.filter_id)
+                
                 for entry in entries:
                     tick.append({
                         'block_timestamp': datetime.fromtimestamp(
@@ -1185,15 +1187,6 @@ class JDRTick(BaseResource):
                         is_buy = False
                     else:
                         is_buy = True
-
-                    print('-----------debug----------------')
-                    print()
-                    # print(datetime.fromtimestamp(entry.Agreement.settlement_timestamp, JST).strftime("%Y/%m/%d %H:%M:%S"))
-                    # print(datetime.fromtimestamp(entry.Agreement.settlement_timestamp, JST))
-                    print(entry.Agreement.settlement_timestamp)
-                    if(entry != None):
-                        print(entry.Agreement.settlement_timestamp.strftime('%Y/%m/%d %H:%M:%S'))
-                    print('--------------------------------')
 
                     tick.append({
                         'block_timestamp': entry.Agreement.settlement_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
