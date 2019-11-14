@@ -316,7 +316,7 @@ class Tick(BaseResource):
                 )
                 entries = event_filter.get_all_entries()
                 web3.eth.uninstallFilter(event_filter.filter_id)
-                
+
                 for entry in entries:
                     tick.append({
                         'block_timestamp': datetime.fromtimestamp(

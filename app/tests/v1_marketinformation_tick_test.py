@@ -4,6 +4,7 @@ import os
 
 from .account_config import eth_account
 from app import config
+from app.model import Order, Agreement
 from .contract_modules import issue_bond_token, offer_bond_token, \
     register_personalinfo, register_payment_gateway, take_buy_bond_token, get_latest_orderid, \
     membership_issue, membership_offer, membership_get_latest_orderid, \
@@ -16,6 +17,8 @@ from .contract_modules import issue_bond_token, offer_bond_token, \
 class TestV1StraightBondTick():
     # テスト対象API
     apiurl = '/v1/StraightBond/Tick/'
+
+    private_key = "0000000000000000000000000000000000000000000000000000000000000001"
 
     @staticmethod
     def generate_agree_event(bond_exchange, personal_info, payment_gateway):
@@ -514,35 +517,121 @@ class TestV1CouponTick():
             'description': 'method: GET, url: /v1/Coupon/Tick'
         }
 
+
 # [JDR]歩み値参照API
 # /v1/JDR/Tick/
 class TestV1JDRTick():
     # テスト対象API
     apiurl = '/v1/JDR/Tick'
 
-    # 約定イベントの作成
-    @staticmethod
-    def generate_agree_event(swap_contract_address, order_id):
-        issuer = eth_account['issuer']
-        trader = eth_account['trader']
+    private_key = "0000000000000000000000000000000000000000000000000000000000000001"
 
-        attribute = {
-            'name': 'テストJDR',
-            'symbol': 'JDR',
-            'initialSupply': 1000000,
-            'tradableExchange': exchange['address'],
-            'details': '詳細',
-            'returnDetails': 'リターン詳細',
-            'expirationDate': '20191231',
-            'memo': 'メモ',
-            'transferable': True,
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー',
+    # 約定イベントの作成
+    # @staticmethod
+    # def generate_agree_event(swap_contract_address, order_id):
+        # issuer = eth_account['issuer']
+        # trader = eth_account['trader']
+
+        # attribute = {
+        #     'name': 'テストJDR',
+        #     'symbol': 'JDR',
+        #     'initialSupply': 1000000,
+        #     'tradableExchange': exchange['address'],
+        #     'details': '詳細',
+        #     'returnDetails': 'リターン詳細',
+        #     'expirationDate': '20191231',
+        #     'memo': 'メモ',
+        #     'transferable': True,
+        #     'contactInformation': '問い合わせ先',
+        #     'privacyPolicy': 'プライバシーポリシー',
+        # }
+
+        # # 発行体オペレーション
+        # ## JDトークンは発行せず、SWAPのみ
+
+        # # 投資家オペレーション
+        # latest_orderid = jdr_get_latest_orderid(swap_contract_address, order_id)
+        # jdr_take_buy(trader, swap_contract_address, latest_orderid, 100)
+
+    def _insert_test_data(self, session):
+        self.session = session
+        o = Order()
+        o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
+        o.order_id = 1
+        o.price = 70
+        o.amount = 5
+        o.is_buy = True
+        o.is_cancelled = False
+        session.add(o)
+
+        o = Order()
+        o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
+        o.order_id = 2
+        o.price = 80
+        o.amount = 5
+        o.is_buy = True
+        o.is_cancelled = False
+        session.add(o)
+
+        a = Agreement()
+        a.order_id = 1
+        a.agreement_id = 101
+        a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.status = 1
+        a.settlement_timestamp = '2019-11-13 16:23:14.183706'
+        a.created = '2019-11-13 16:26:14.183706'
+        session.add(a)
+
+        a = Agreement()
+        a.order_id = 2
+        a.agreement_id = 102
+        a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.status = 1
+        a.settlement_timestamp = '2019-11-13 16:24:14.183706'
+        a.created = '2019-11-13 16:26:14.183706'
+        session.add(a)
+    
+    # ＜正常系1＞
+    # DBに約定情報レコードと注文レコードが存在し、歩み値を正常に取得
+    def test_coupon_tick_normal_1(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "address_list": ["0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a"]
+            },
+            private_key=TestV1JDRTick.private_key)
+        
+        assumed_body = {
+            "token_address": "0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a",
+            "tick": [
+                {
+                    "block_timestamp": "2019/11/13 16:23:14",
+                    "buy_address": "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb",
+                    "sell_address": "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb",
+                    "order_id": 1,
+                    "agreement_id": 101,
+                    "price": 70,
+                    "amount": 5,
+                    "isBuy": False
+                },
+                {
+                    "block_timestamp": "2019/11/13 16:24:14",
+                    "buy_address": "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb",
+                    "sell_address": "0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb",
+                    "order_id": 2,
+                    "agreement_id": 102,
+                    "price": 80,
+                    "amount": 5,
+                    "isBuy": False
+                },
+            ]
         }
 
-        # 発行体オペレーション
-        ## JDトークンは発行せず、SWAPのみ
-
-        # 投資家オペレーション
-        latest_orderid = jdr_get_latest_orderid(swap_contract_address, order_id)
-        jdr_take_buy(trader, swap_contract_address, latest_orderid, 100)
+        assert resp.status_code == 200
+        assert resp.json["data"] == assumed_body
