@@ -18,8 +18,6 @@ class TestV1StraightBondTick():
     # テスト対象API
     apiurl = '/v1/StraightBond/Tick/'
 
-    private_key = "0000000000000000000000000000000000000000000000000000000000000001"
-
     @staticmethod
     def generate_agree_event(bond_exchange, personal_info, payment_gateway):
         issuer = eth_account['issuer']
@@ -526,33 +524,6 @@ class TestV1JDRTick():
 
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
 
-    # 約定イベントの作成
-    # @staticmethod
-    # def generate_agree_event(swap_contract_address, order_id):
-        # issuer = eth_account['issuer']
-        # trader = eth_account['trader']
-
-        # attribute = {
-        #     'name': 'テストJDR',
-        #     'symbol': 'JDR',
-        #     'initialSupply': 1000000,
-        #     'tradableExchange': exchange['address'],
-        #     'details': '詳細',
-        #     'returnDetails': 'リターン詳細',
-        #     'expirationDate': '20191231',
-        #     'memo': 'メモ',
-        #     'transferable': True,
-        #     'contactInformation': '問い合わせ先',
-        #     'privacyPolicy': 'プライバシーポリシー',
-        # }
-
-        # # 発行体オペレーション
-        # ## JDトークンは発行せず、SWAPのみ
-
-        # # 投資家オペレーション
-        # latest_orderid = jdr_get_latest_orderid(swap_contract_address, order_id)
-        # jdr_take_buy(trader, swap_contract_address, latest_orderid, 100)
-
     def _insert_test_data(self, session):
         self.session = session
         o = Order()
@@ -594,10 +565,52 @@ class TestV1JDRTick():
         a.settlement_timestamp = '2019-11-13 16:24:14.183706'
         a.created = '2019-11-13 16:26:14.183706'
         session.add(a)
-    
-    # ＜正常系1＞
+
+    # 正常系1：存在しない取引コントラクトアドレスを指定
+    #  -> ゼロ件リストが返却される
+    def test_jdr_tick_normal_1(self, client):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        request_params = {"address_list": [token_address]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        config.IBET_JDR_SWAP_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = [{'token_address': token_address, 'tick': []}]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # 正常系2：
+    # 注文履歴がないtoken_addressの歩み値を取得しようとする
+    # 入力されたtoken_addressが、DBの注文レコードに存在しない
+    def test_jdr_tick_normal_2(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "address_list": ["0x0000000000000000000000000000000000000000"]
+            },
+            private_key=TestV1JDRTick.private_key)
+
+        assumed_body = [{
+            "tick": [],
+            "token_address": "0x0000000000000000000000000000000000000000"
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == assumed_body
+
+    # 正常系3：
     # DBに約定情報レコードと注文レコードが存在し、歩み値を正常に取得
-    def test_coupon_tick_normal_1(self, client, session):
+    def test_jdr_tick_normal_3(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_auth_post(
@@ -606,9 +619,8 @@ class TestV1JDRTick():
                 "address_list": ["0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a"]
             },
             private_key=TestV1JDRTick.private_key)
-        
-        assumed_body = {
-            "token_address": "0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a",
+
+        assumed_body = [{
             "tick": [
                 {
                     "block_timestamp": "2019/11/13 16:23:14",
@@ -630,8 +642,69 @@ class TestV1JDRTick():
                     "amount": 5,
                     "isBuy": False
                 },
-            ]
-        }
+            ],
+            "token_address": "0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a"
+        }]
 
         assert resp.status_code == 200
         assert resp.json["data"] == assumed_body
+
+    # エラー系1：入力値エラー（request-bodyなし）
+    def test_jdr_tick_error_1(self, client):
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps({})
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'address_list': 'required field'}
+        }
+
+    # エラー系2：入力値エラー（headersなし）
+    def test_jdr_tick_error_2(self, client):
+        token_address = "0xa4CEe3b909751204AA151860ebBE8E7A851c2A1b"
+        request_params = {"address_list": [token_address]}
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
+    def test_jdr_tick_error_3(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "address_list": ["0x"]
+            },
+            private_key=TestV1JDRTick.private_key)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # エラー系4：HTTPメソッドが不正
+    def test_jdr_tick_error_4(self, client):
+        resp = client.simulate_get(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v1/JDR/Tick'
+        }
