@@ -3,7 +3,7 @@ name: Bug report
 about: バグに関するレポート
 title: "[BUG]"
 labels: bug
-assignees: kyken, OnePoke2, YoshihitoAso
+assignees: YoshihitoAso, horsewin, kyken
 
 ---
 
