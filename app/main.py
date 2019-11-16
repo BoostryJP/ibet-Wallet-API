@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-
 import falcon
 
 from app import log
@@ -22,9 +20,12 @@ from app.api.v1 import stripe
 from app.api.v1 import push
 from app.api.v1 import version
 
+from app.api.v2 import token_abi
+
 from app.errors import AppError
 
 LOG = log.get_logger()
+
 
 class App(falcon.API):
     def __init__(self, *args, **kwargs):
@@ -32,6 +33,10 @@ class App(falcon.API):
         LOG.info('API Server is starting')
 
         self.add_route('/', base.BaseResource())
+
+        """
+        Version 1
+        """
 
         # トランザクション
         self.add_route('/v1/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
@@ -97,7 +102,7 @@ class App(falcon.API):
         # 名簿用個人情報参照
         self.add_route('/v1/User/PersonalInfo', user.PersonalInfo())
 
-         # 名簿用個人情報参照
+        # 住所検索（郵便番号）
         self.add_route('/v1/User/StreetAddress/{postal_code}', user.StreetAddress())
 
         # ノード情報
@@ -120,7 +125,17 @@ class App(falcon.API):
         # 動作保証アプリバーションの取得
         self.add_route('/v1/RequiredVersion', version.RequiredVersion())
 
+
+        """
+        Version 2
+        """
+
+        # トークンABI参照
+        self.add_route('/v2/ABI/Membership', token_abi.GetMembershipABI())
+        self.add_route('/v2/ABI/Coupon', token_abi.GetCouponABI())
+
         self.add_error_handler(AppError, AppError.handle)
+
 
 init_session()
 middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
