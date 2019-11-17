@@ -13,7 +13,7 @@ class TestV2CouponLastPrice:
     """
 
     # テスト対象API
-    apiurl = '/v2/LastPrice/Coupon'
+    apiurl = '/v2/Market/LastPrice/Coupon'
 
     # 約定イベントの作成
     @staticmethod
@@ -178,5 +178,5 @@ class TestV2CouponLastPrice:
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/LastPrice/Coupon'
+            'description': 'method: GET, url: /v2/Market/LastPrice/Coupon'
         }

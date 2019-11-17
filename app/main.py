@@ -141,16 +141,16 @@ class App(falcon.API):
         self.add_route('/v2/Token/Coupon', token.CouponTokens())
 
         # マーケット情報：オーダーブック
-        self.add_route('/v2/OrderBook/Membership', market_information.MembershipOrderBook())
-        self.add_route('/v2/OrderBook/Coupon', market_information.CouponOrderBook())
+        self.add_route('/v2/Market/OrderBook/Membership', market_information.MembershipOrderBook())
+        self.add_route('/v2/Market/OrderBook/Coupon', market_information.CouponOrderBook())
 
         # マーケット情報：現在値
-        self.add_route('/v2/LastPrice/Membership', market_information.MembershipLastPrice())
-        self.add_route('/v2/LastPrice/Coupon', market_information.CouponLastPrice())
+        self.add_route('/v2/Market/LastPrice/Membership', market_information.MembershipLastPrice())
+        self.add_route('/v2/Market/LastPrice/Coupon', market_information.CouponLastPrice())
 
         # マーケット情報：歩み値
-        self.add_route('/v2/Tick/Membership', market_information.MembershipTick())
-        self.add_route('/v2/Tick/Coupon', market_information.CouponTick())
+        self.add_route('/v2/Market/Tick/Membership', market_information.MembershipTick())
+        self.add_route('/v2/Market/Tick/Coupon', market_information.CouponTick())
 
 
         """

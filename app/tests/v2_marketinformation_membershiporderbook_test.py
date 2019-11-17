@@ -16,7 +16,7 @@ class TestV2MembershipOrderBook():
     """
 
     # テスト対象API
-    apiurl = '/v2/OrderBook/Membership'
+    apiurl = '/v2/Market/OrderBook/Membership'
 
     # 環境変数設定
     config.AGENT_ADDRESS = eth_account['agent']['account_address']
@@ -1071,5 +1071,5 @@ class TestV2MembershipOrderBook():
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/OrderBook/Membership'
+            'description': 'method: GET, url: /v2/Market/OrderBook/Membership'
         }

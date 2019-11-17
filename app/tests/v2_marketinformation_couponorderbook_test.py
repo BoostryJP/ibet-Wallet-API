@@ -16,7 +16,7 @@ class TestV2CouponOrderBook():
     """
 
     # テスト対象API
-    apiurl = '/v2/OrderBook/Coupon'
+    apiurl = '/v2/Market/OrderBook/Coupon'
 
     # 環境変数設定
     config.AGENT_ADDRESS = eth_account['agent']['account_address']
@@ -1071,5 +1071,5 @@ class TestV2CouponOrderBook():
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/OrderBook/Coupon'
+            'description': 'method: GET, url: /v2/Market/OrderBook/Coupon'
         }
