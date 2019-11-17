@@ -13,7 +13,7 @@ class TestV2MembershipTick:
     """
 
     # テスト対象API
-    apiurl = '/v2/Tick/Membership'
+    apiurl = '/v2/Market/Tick/Membership'
 
     # 約定イベントの作成
     @staticmethod
@@ -166,5 +166,5 @@ class TestV2MembershipTick:
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/Tick/Membership'
+            'description': 'method: GET, url: /v2/Market/Tick/Membership'
         }
