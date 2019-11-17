@@ -23,6 +23,7 @@ from app.api.v1 import version
 from app.api.v2 import token_abi
 from app.api.v2 import token
 from app.api.v2 import market_information
+from app.api.v2 import position as v2position
 
 from app.errors import AppError
 
@@ -151,6 +152,10 @@ class App(falcon.API):
         # マーケット情報：歩み値
         self.add_route('/v2/Market/Tick/Membership', market_information.MembershipTick())
         self.add_route('/v2/Market/Tick/Coupon', market_information.CouponTick())
+
+        # 保有トークン一覧
+        self.add_route('/v2/Position/Membership', v2position.MembershipMyTokens())
+        self.add_route('/v2/Position/Coupon', v2position.CouponMyTokens())
 
 
         """
