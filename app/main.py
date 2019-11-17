@@ -22,6 +22,7 @@ from app.api.v1 import version
 
 from app.api.v2 import token_abi
 from app.api.v2 import token
+from app.api.v2 import market_information
 
 from app.errors import AppError
 
@@ -132,12 +133,29 @@ class App(falcon.API):
         """
 
         # トークンABI参照
-        self.add_route('/v2/ABI/Membership', token_abi.GetMembershipABI())
-        self.add_route('/v2/ABI/Coupon', token_abi.GetCouponABI())
+        self.add_route('/v2/ABI/Membership', token_abi.MembershipABI())
+        self.add_route('/v2/ABI/Coupon', token_abi.CouponABI())
 
         # トークン一覧参照
-        self.add_route('/v2/Token/Membership', token.GetMembershipTokens())
-        self.add_route('/v2/Token/Coupon', token.GetCouponTokens())
+        self.add_route('/v2/Token/Membership', token.MembershipTokens())
+        self.add_route('/v2/Token/Coupon', token.CouponTokens())
+
+        # マーケット情報：オーダーブック
+        self.add_route('/v2/OrderBook/Membership', market_information.MembershipOrderBook())
+        self.add_route('/v2/OrderBook/Coupon', market_information.CouponOrderBook())
+
+        # マーケット情報：現在値
+        self.add_route('/v2/LastPrice/Membership', market_information.MembershipLastPrice())
+        self.add_route('/v2/LastPrice/Coupon', market_information.CouponLastPrice())
+
+        # マーケット情報：歩み値
+        self.add_route('/v2/Tick/Membership', market_information.MembershipTick())
+        self.add_route('/v2/Tick/Coupon', market_information.CouponTick())
+
+
+        """
+        Error Handler
+        """
 
         self.add_error_handler(AppError, AppError.handle)
 
