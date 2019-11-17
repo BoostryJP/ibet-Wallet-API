@@ -10,13 +10,13 @@ LOG = log.get_logger()
 # ------------------------------
 # 会員権ABI参照
 # ------------------------------
-class GetMembershipABI(BaseResource):
+class MembershipABI(BaseResource):
     """
     Handle for endpoint: /v2/ABI/Membership
     """
 
     def on_get(self, req, res):
-        LOG.info('v2.token_abi.GetMembershipABI')
+        LOG.info('v2.token_abi.MembershipABI')
         contracts = json.load(open('data/contracts.json', 'r'))
         abi = contracts['IbetMembership']['abi']
         self.on_success(res, abi)
@@ -25,13 +25,13 @@ class GetMembershipABI(BaseResource):
 # ------------------------------
 # クーポンABI参照
 # ------------------------------
-class GetCouponABI(BaseResource):
+class CouponABI(BaseResource):
     """
     Handle for endpoint: /v2/ABI/Coupon
     """
 
     def on_get(self, req, res):
-        LOG.info('v2.token_abi.GetCouponABI')
+        LOG.info('v2.token_abi.CouponABI')
         contracts = json.load(open('data/contracts.json', 'r'))
         abi = contracts['IbetCoupon']['abi']
         self.on_success(res, abi)

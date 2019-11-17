@@ -22,7 +22,7 @@ LOG = log.get_logger()
 # ------------------------------
 # [会員権]公開中トークン一覧
 # ------------------------------
-class GetMembershipTokens(BaseResource):
+class MembershipTokens(BaseResource):
     """
     Handle for endpoint: /v2/Token/Membership
     """
@@ -33,12 +33,12 @@ class GetMembershipTokens(BaseResource):
         self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
-        LOG.info('v2.token.GetMembershipTokens')
+        LOG.info('v2.token.MembershipTokens')
 
         session = req.context["session"]
 
         # Validation
-        request_json = GetMembershipTokens.validate(req)
+        request_json = MembershipTokens.validate(req)
 
         # TokenList-Contractへの接続
         ListContract = Contract.get_contract(
@@ -203,7 +203,7 @@ class GetMembershipTokens(BaseResource):
 # ------------------------------
 # [クーポン]公開中トークン一覧
 # ------------------------------
-class GetCouponTokens(BaseResource):
+class CouponTokens(BaseResource):
     """
     Handle for endpoint: /v2/Token/Coupon
     """
@@ -214,12 +214,12 @@ class GetCouponTokens(BaseResource):
         self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
-        LOG.info('v2.token.GetCouponTokens')
+        LOG.info('v2.token.CouponTokens')
 
         session = req.context["session"]
 
         # Validation
-        request_json = GetCouponTokens.validate(req)
+        request_json = CouponTokens.validate(req)
 
         # TokenList-Contractへの接続
         ListContract = Contract.get_contract(
