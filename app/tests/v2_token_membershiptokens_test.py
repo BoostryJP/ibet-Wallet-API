@@ -11,8 +11,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import membership_issue, membership_register_list, membership_invalidate, \
-    issue_coupon_token, coupon_register_list, invalidate_coupon_token
+from .contract_modules import membership_issue, membership_register_list, membership_invalidate
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)

@@ -141,6 +141,10 @@ class App(falcon.API):
         self.add_route('/v2/Token/Membership', token.MembershipTokens())
         self.add_route('/v2/Token/Coupon', token.CouponTokens())
 
+        # トークン詳細参照
+        self.add_route('/v2/Token/Membership/{contract_address}', token.MembershipTokenDetails())
+        self.add_route('/v2/Token/Coupon/{contract_address}', token.CouponTokenDetails())
+
         # マーケット情報：オーダーブック
         self.add_route('/v2/Market/OrderBook/Membership', market_information.MembershipOrderBook())
         self.add_route('/v2/Market/OrderBook/Coupon', market_information.CouponOrderBook())
