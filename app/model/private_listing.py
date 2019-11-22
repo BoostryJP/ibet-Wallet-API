@@ -8,6 +8,8 @@ class PrivateListing(Base):
     __tablename__ = 'private_listing'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(256), index=True)
+    max_holding_quantity = Column(BigInteger)
+    max_sell_amount = Column(BigInteger)
     payment_method_credit_card = Column(Boolean)
     payment_method_bank = Column(Boolean)
 
@@ -19,6 +21,8 @@ class PrivateListing(Base):
         'id': int,
         'token_address': str,
         'token_template': str,
+        'max_holding_quantity': int,
+        'max_sell_amount': int,
         'payment_method_credit_card': bool,
         'payment_method_bank': bool,
     }

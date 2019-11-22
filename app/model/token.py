@@ -46,6 +46,20 @@ class MembershipToken(TokenBase):
     status: str
     initial_offering_status: str
 
+class MembershipTokenV2(TokenBase):
+    """
+    version2
+    """
+    details: str
+    return_details: str
+    expiration_date: str
+    memo: str
+    transferable: str
+    status: str
+    initial_offering_status: str
+    max_holding_quantity: int
+    max_sell_amount: int
+
 class CouponToken(TokenBase):
     details: str
     return_details: str
@@ -54,6 +68,20 @@ class CouponToken(TokenBase):
     transferable: str
     status: str
     initial_offering_status: str
+
+class CouponTokenV2(TokenBase):
+    """
+    version2
+    """
+    details: str
+    return_details: str
+    expiration_date: str
+    memo: str
+    transferable: str
+    status: str
+    initial_offering_status: str
+    max_holding_quantity: int
+    max_sell_amount: int
 
 class MRFToken(TokenBase):
     details: str

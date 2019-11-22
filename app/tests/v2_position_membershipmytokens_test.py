@@ -172,6 +172,8 @@ class TestV2MembershipMyTokens:
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.max_holding_quantity = 1
+        listed_token.max_sell_amount = 1000
         listed_token.payment_method_credit_card = True
         listed_token.payment_method_bank = True
         session.add(listed_token)
@@ -180,6 +182,8 @@ class TestV2MembershipMyTokens:
     def list_private_token(session, token):
         listed_token = PrivateListing()
         listed_token.token_address = token['address']
+        listed_token.max_holding_quantity = 1
+        listed_token.max_sell_amount = 1000
         listed_token.payment_method_credit_card = True
         listed_token.payment_method_bank = True
         session.add(listed_token)
@@ -234,6 +238,8 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
@@ -304,6 +310,8 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
@@ -410,6 +418,8 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
@@ -480,6 +490,8 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
