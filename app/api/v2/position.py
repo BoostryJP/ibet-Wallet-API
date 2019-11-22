@@ -16,7 +16,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing, MembershipToken, CouponToken
+from app.model import Listing, PrivateListing, MembershipTokenV2, CouponTokenV2
 
 LOG = log.get_logger()
 
@@ -109,7 +109,7 @@ class MembershipMyTokens(BaseResource):
                             company_name, rsa_publickey = MembershipMyTokens. \
                                 get_company_name(company_list, owner_address)
 
-                            membershiptoken = MembershipToken()
+                            membershiptoken = MembershipTokenV2()
                             membershiptoken.token_address = token_address
                             membershiptoken.token_template = token_template
                             membershiptoken.owner_address = owner_address
@@ -129,6 +129,8 @@ class MembershipMyTokens(BaseResource):
                                 {'id': 2, 'url': image_url_2},
                                 {'id': 3, 'url': image_url_3}
                             ]
+                            membershiptoken.max_holding_quantity = token.max_holding_quantity
+                            membershiptoken.max_sell_amount = token.max_sell_amount
                             membershiptoken.payment_method_credit_card = token.payment_method_credit_card
                             membershiptoken.payment_method_bank = token.payment_method_bank
                             membershiptoken.contact_information = contact_information
@@ -261,7 +263,7 @@ class CouponMyTokens(BaseResource):
                             contact_information = CouponTokenContract.functions.contactInformation().call()
                             privacy_policy = CouponTokenContract.functions.privacyPolicy().call()
 
-                            coupontoken = CouponToken()
+                            coupontoken = CouponTokenV2()
                             coupontoken.token_address = token_address
                             coupontoken.token_template = token_template
                             coupontoken.owner_address = owner_address
@@ -281,6 +283,8 @@ class CouponMyTokens(BaseResource):
                                 {'id': 3, 'url': image_url_3}
                             ]
                             coupontoken.status = status
+                            coupontoken.max_holding_quantity = token.max_holding_quantity
+                            coupontoken.max_sell_amount = token.max_sell_amount
                             coupontoken.payment_method_credit_card = token.payment_method_credit_card
                             coupontoken.payment_method_bank = token.payment_method_bank
                             coupontoken.contact_information = contact_information

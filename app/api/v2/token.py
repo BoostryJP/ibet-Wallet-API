@@ -14,7 +14,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, MembershipToken, CouponToken
+from app.model import Listing, MembershipTokenV2, CouponTokenV2
 
 LOG = log.get_logger()
 
@@ -138,7 +138,7 @@ class MembershipTokens(BaseResource):
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
 
-                membershiptoken = MembershipToken()
+                membershiptoken = MembershipTokenV2()
                 membershiptoken.token_address = token_address
                 membershiptoken.token_template = token_template
                 membershiptoken.owner_address = owner_address
@@ -159,6 +159,8 @@ class MembershipTokens(BaseResource):
                     {'id': 2, 'url': image_url_2},
                     {'id': 3, 'url': image_url_3},
                 ]
+                membershiptoken.max_holding_quantity = available_token.max_holding_quantity
+                membershiptoken.max_sell_amount = available_token.max_sell_amount
                 membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card
                 membershiptoken.payment_method_bank = available_token.payment_method_bank
                 membershiptoken.contact_information = contact_information
@@ -314,7 +316,7 @@ class MembershipTokenDetails(BaseResource):
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
 
-                membershiptoken = MembershipToken()
+                membershiptoken = MembershipTokenV2()
                 membershiptoken.token_address = token_address
                 membershiptoken.token_template = token_template
                 membershiptoken.owner_address = owner_address
@@ -335,6 +337,8 @@ class MembershipTokenDetails(BaseResource):
                     {'id': 2, 'url': image_url_2},
                     {'id': 3, 'url': image_url_3},
                 ]
+                membershiptoken.max_holding_quantity = listed_token.max_holding_quantity
+                membershiptoken.max_sell_amount = listed_token.max_sell_amount
                 membershiptoken.payment_method_credit_card = listed_token.payment_method_credit_card
                 membershiptoken.payment_method_bank = listed_token.payment_method_bank
                 membershiptoken.contact_information = contact_information
@@ -469,7 +473,7 @@ class CouponTokens(BaseResource):
                     if to_checksum_address(company['address']) == owner_address:
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
-                coupontoken = CouponToken()
+                coupontoken = CouponTokenV2()
                 coupontoken.token_address = token_address
                 coupontoken.token_template = token_template
                 coupontoken.owner_address = owner_address
@@ -490,6 +494,8 @@ class CouponTokens(BaseResource):
                     {'id': 2, 'url': image_url_2},
                     {'id': 3, 'url': image_url_3},
                 ]
+                coupontoken.max_holding_quantity = available_token.max_holding_quantity
+                coupontoken.max_sell_amount = available_token.max_sell_amount
                 coupontoken.payment_method_credit_card = available_token.payment_method_credit_card
                 coupontoken.payment_method_bank = available_token.payment_method_bank
                 coupontoken.contact_information = contact_information
@@ -644,7 +650,7 @@ class CouponTokenDetails(BaseResource):
                     if to_checksum_address(company['address']) == owner_address:
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
-                coupontoken = CouponToken()
+                coupontoken = CouponTokenV2()
                 coupontoken.token_address = token_address
                 coupontoken.token_template = token_template
                 coupontoken.owner_address = owner_address
@@ -665,6 +671,8 @@ class CouponTokenDetails(BaseResource):
                     {'id': 2, 'url': image_url_2},
                     {'id': 3, 'url': image_url_3},
                 ]
+                coupontoken.max_holding_quantity = listed_token.max_holding_quantity
+                coupontoken.max_sell_amount = listed_token.max_sell_amount
                 coupontoken.payment_method_credit_card = listed_token.payment_method_credit_card
                 coupontoken.payment_method_bank = listed_token.payment_method_bank
                 coupontoken.contact_information = contact_information
