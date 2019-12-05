@@ -195,6 +195,18 @@ def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 債券の償還
+def bond_redeem(invoker, token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+
+    tx_hash = TokenContract.functions.redeem(). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Coupon Token （クーポン）
 '''

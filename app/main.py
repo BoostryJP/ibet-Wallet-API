@@ -134,30 +134,37 @@ class App(falcon.API):
         """
 
         # トークンABI参照
+        self.add_route('/v2/ABI/StraightBond', token_abi.StraightBondABI())
         self.add_route('/v2/ABI/Membership', token_abi.MembershipABI())
         self.add_route('/v2/ABI/Coupon', token_abi.CouponABI())
 
         # トークン一覧参照
+        self.add_route('/v2/Token/StraightBond', token.StraightBondTokens())
         self.add_route('/v2/Token/Membership', token.MembershipTokens())
         self.add_route('/v2/Token/Coupon', token.CouponTokens())
 
         # トークン詳細参照
+        self.add_route('/v2/Token/StraightBond/{contract_address}', token.StraightBondTokenDetails())
         self.add_route('/v2/Token/Membership/{contract_address}', token.MembershipTokenDetails())
         self.add_route('/v2/Token/Coupon/{contract_address}', token.CouponTokenDetails())
 
         # マーケット情報：オーダーブック
+        self.add_route('/v2/Market/OrderBook/StraightBond', market_information.StraightBondOrderBook())
         self.add_route('/v2/Market/OrderBook/Membership', market_information.MembershipOrderBook())
         self.add_route('/v2/Market/OrderBook/Coupon', market_information.CouponOrderBook())
 
         # マーケット情報：現在値
+        self.add_route('/v2/Market/LastPrice/StraightBond', market_information.StraightBondLastPrice())
         self.add_route('/v2/Market/LastPrice/Membership', market_information.MembershipLastPrice())
         self.add_route('/v2/Market/LastPrice/Coupon', market_information.CouponLastPrice())
 
         # マーケット情報：歩み値
+        self.add_route('/v2/Market/Tick/StraightBond', market_information.StraightBondTick())
         self.add_route('/v2/Market/Tick/Membership', market_information.MembershipTick())
         self.add_route('/v2/Market/Tick/Coupon', market_information.CouponTick())
 
         # 保有トークン一覧
+        self.add_route('/v2/Position/StraightBond', v2position.StraightBondMyTokens())
         self.add_route('/v2/Position/Membership', v2position.MembershipMyTokens())
         self.add_route('/v2/Position/Coupon', v2position.CouponMyTokens())
 
