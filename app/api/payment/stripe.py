@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import json
 import math
 import falcon
@@ -261,6 +260,7 @@ class CreateExternalAccount(BaseResource):
 
         return validator.document
 
+
 # ------------------------------
 # [Stripe]Customer(顧客)とカード情報の登録
 # ------------------------------
@@ -365,6 +365,7 @@ class CreateCustomer(BaseResource):
             raise InvalidParameterError
 
         return validator.document
+
 
 # ------------------------------
 # [Stripe]Account、Customerの削除
@@ -845,6 +846,7 @@ class ChargeStatus(BaseResource):
             raise InvalidParameterError(description='invalid exchange address')
 
         return validator.document
+
 
 # ------------------------------
 # [Stripe]手数料情報取得

@@ -6,24 +6,27 @@ from app.middleware import JSONTranslator, DatabaseSessionManager
 from app.database import db_session, init_session
 
 from app.api.common import base
-from app.api.v1 import eth
-from app.api.v1 import company
-from app.api.v1 import user
+from app.api.common import eth
+from app.api.common import company
+from app.api.common import notification
+from app.api.common import user
+from app.api.common import push
+from app.api.common import version
+from app.api.common import nodeInfo
+
+from app.api.payment import stripe
+
 from app.api.v1 import tokenTemplates
 from app.api.v1 import contracts
 from app.api.v1 import marketInformation
 from app.api.v1 import position
 from app.api.v1 import orderList
-from app.api.v1 import notification
-from app.api.v1 import nodeInfo
-from app.api.v1 import stripe
-from app.api.v1 import push
-from app.api.v1 import version
 
 from app.api.v2 import token_abi
 from app.api.v2 import token
 from app.api.v2 import market_information
 from app.api.v2 import position as v2position
+from app.api.v2 import order_list
 
 from app.errors import AppError
 
@@ -128,10 +131,17 @@ class App(falcon.API):
         # 動作保証アプリバーションの取得
         self.add_route('/v1/RequiredVersion', version.RequiredVersion())
 
-
         """
         Version 2
         """
+
+        # トランザクション
+        self.add_route('/v2/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
+        self.add_route('/v2/Eth/SendRawTransaction', eth.SendRawTransaction())
+
+        # 会社情報
+        self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
+        self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # トークンABI参照
         self.add_route('/v2/ABI/StraightBond', token_abi.StraightBondABI())
@@ -168,6 +178,42 @@ class App(falcon.API):
         self.add_route('/v2/Position/Membership', v2position.MembershipMyTokens())
         self.add_route('/v2/Position/Coupon', v2position.CouponMyTokens())
 
+        # 注文一覧・約定一覧
+        self.add_route('/v2/OrderList', order_list.OrderList())
+
+        # 通知一覧
+        self.add_route('/v2/Notifications', notification.Notifications())
+        self.add_route('/v2/Notifications/Read', notification.NotificationsRead())
+        self.add_route('/v2/NotificationCount', notification.NotificationCount())
+
+        # 決済用口座登録状況参照
+        self.add_route('/v2/User/PaymentAccount', user.PaymentAccount())
+
+        # 名簿用個人情報参照
+        self.add_route('/v2/User/PersonalInfo', user.PersonalInfo())
+
+        # 住所検索（郵便番号）
+        self.add_route('/v2/User/StreetAddress/{postal_code}', user.StreetAddress())
+
+        # ノード情報
+        self.add_route('/v2/NodeInfo', nodeInfo.NodeInfo())
+
+        # push通知デバイス登録
+        self.add_route('/v2/Push/UpdateDevice', push.UpdateDevice())
+        self.add_route('/v2/Push/DeleteDevice', push.DeleteDevice())
+
+        # 動作保証アプリバーションの取得
+        self.add_route('/v2/RequiredVersion', version.RequiredVersion())
+
+        # Stripe決済
+        self.add_route('/v2/Stripe/CreateAccount', stripe.CreateAccount())
+        self.add_route('/v2/Stripe/CreateExternalAccount', stripe.CreateExternalAccount())
+        self.add_route('/v2/Stripe/CreateCustomer', stripe.CreateCustomer())
+        self.add_route('/v2/Stripe/DeleteAccount', stripe.DeleteAccount())
+        self.add_route('/v2/Stripe/Charge', stripe.Charge())
+        self.add_route('/v2/Stripe/AccountStatus', stripe.AccountStatus())
+        self.add_route('/v2/Stripe/ChargeStatus', stripe.ChargeStatus())
+        self.add_route('/v2/Stripe/Constants', stripe.Constants())
 
         """
         Error Handler
