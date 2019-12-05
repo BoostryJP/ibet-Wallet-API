@@ -57,6 +57,7 @@ class TestV1StraightBondContracts():
         }
         return attribute
 
+    @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
@@ -703,6 +704,7 @@ class TestV1MembershipContracts():
         }
         return attribute
 
+    @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
@@ -1274,6 +1276,7 @@ class TestV1CouponContracts():
         }
         return attribute
 
+    @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']

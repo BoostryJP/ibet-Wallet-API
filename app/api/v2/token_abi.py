@@ -8,6 +8,21 @@ LOG = log.get_logger()
 
 
 # ------------------------------
+# 普通社債ABI参照
+# ------------------------------
+class StraightBondABI(BaseResource):
+    """
+    Handle for endpoint: /v2/ABI/StraightBond
+    """
+
+    def on_get(self, req, res):
+        LOG.info('v2.token_abi.StraightBondABI')
+        contracts = json.load(open('data/contracts.json', 'r'))
+        abi = contracts['IbetStraightBond']['abi']
+        self.on_success(res, abi)
+
+
+# ------------------------------
 # 会員権ABI参照
 # ------------------------------
 class MembershipABI(BaseResource):

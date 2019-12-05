@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
-from datetime import datetime, timezone, timedelta
+from datetime import timezone, timedelta
 
 JST = timezone(timedelta(hours=+9), 'JST')
 
@@ -16,12 +16,238 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing, MembershipTokenV2, CouponTokenV2
+from app.model import Listing, PrivateListing, BondTokenV2, MembershipTokenV2, CouponTokenV2
 
 LOG = log.get_logger()
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+
+# ------------------------------
+# [普通社債]保有トークン一覧
+# ------------------------------
+class StraightBondMyTokens(BaseResource):
+    """
+    Handle for endpoint: /v2/Position/StraightBond
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v2.position.StraightBondMyTokens')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        request_json = StraightBondMyTokens.validate(req)
+
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList',
+            config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
+
+        # Company List：発行体企業リスト
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json', 'r'))
+            else:
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+        except Exception as e:
+            LOG.error(e)
+            company_list = []
+
+        # Bond Exchange Contract
+        BondExchangeContract = Contract.get_contract(
+            'IbetStraightBondExchange',
+            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        )
+
+        listed_tokens = session.query(Listing).\
+            union(session.query(PrivateListing)).\
+            all()
+
+        position_list = []
+        for _account_address in request_json['account_address_list']:
+            # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
+            for token in listed_tokens:
+                token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
+                token_address = token_info[0]
+                token_template = token_info[1]
+                owner = to_checksum_address(_account_address)
+
+                if token_template == 'IbetStraightBond':
+                    BondTokenContract = Contract.get_contract('IbetStraightBond', token_address)
+                    try:
+                        balance = BondTokenContract.functions.balanceOf(owner).call()
+                        commitment = BondExchangeContract.functions.commitmentOf(owner, token_address).call()
+
+                        # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
+                        # Note: 現状は、債券トークンの場合、残高・残注文ゼロの場合は詳細情報を
+                        #       返さない仕様としている。
+                        if balance == 0 and commitment == 0:
+                            continue
+                        else:
+                            name = BondTokenContract.functions.name().call()
+                            symbol = BondTokenContract.functions.symbol().call()
+                            total_supply = BondTokenContract.functions.totalSupply().call()
+                            face_value = BondTokenContract.functions.faceValue().call()
+                            interest_rate = BondTokenContract.functions.interestRate().call()
+
+                            interest_payment_date_string = BondTokenContract.functions.interestPaymentDate().call()
+                            interest_payment_date1 = ''
+                            interest_payment_date2 = ''
+                            interest_payment_date3 = ''
+                            interest_payment_date4 = ''
+                            interest_payment_date5 = ''
+                            interest_payment_date6 = ''
+                            interest_payment_date7 = ''
+                            interest_payment_date8 = ''
+                            interest_payment_date9 = ''
+                            interest_payment_date10 = ''
+                            interest_payment_date11 = ''
+                            interest_payment_date12 = ''
+                            try:
+                                interest_payment_date = json.loads(
+                                    interest_payment_date_string.replace(
+                                        "'", '"'
+                                    ).replace(
+                                        'True', 'true'
+                                    ).replace(
+                                        'False', 'false'
+                                    )
+                                )
+                                if 'interestPaymentDate1' in interest_payment_date:
+                                    interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                                if 'interestPaymentDate2' in interest_payment_date:
+                                    interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                                if 'interestPaymentDate3' in interest_payment_date:
+                                    interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                                if 'interestPaymentDate4' in interest_payment_date:
+                                    interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                                if 'interestPaymentDate5' in interest_payment_date:
+                                    interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                                if 'interestPaymentDate6' in interest_payment_date:
+                                    interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                                if 'interestPaymentDate7' in interest_payment_date:
+                                    interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                                if 'interestPaymentDate8' in interest_payment_date:
+                                    interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                                if 'interestPaymentDate9' in interest_payment_date:
+                                    interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                                if 'interestPaymentDate10' in interest_payment_date:
+                                    interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                                if 'interestPaymentDate11' in interest_payment_date:
+                                    interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                                if 'interestPaymentDate12' in interest_payment_date:
+                                    interest_payment_date12 = interest_payment_date['interestPaymentDate12']
+                            except Exception as e:
+                                LOG.error(e)
+                                pass
+
+                            redemption_date = BondTokenContract.functions.redemptionDate().call()
+                            redemption_amount = BondTokenContract.functions.redemptionAmount().call()
+                            return_date = BondTokenContract.functions.returnDate().call()
+                            return_amount = BondTokenContract.functions.returnAmount().call()
+                            purpose = BondTokenContract.functions.purpose().call()
+                            image_url_1 = BondTokenContract.functions.getImageURL(0).call()
+                            image_url_2 = BondTokenContract.functions.getImageURL(1).call()
+                            image_url_3 = BondTokenContract.functions.getImageURL(2).call()
+                            owner_address = BondTokenContract.functions.owner().call()
+                            contact_information = BondTokenContract.functions.contactInformation().call()
+                            privacy_policy = BondTokenContract.functions.privacyPolicy().call()
+
+                            company_name, rsa_publickey = \
+                                StraightBondMyTokens.get_company_name(company_list, owner_address)
+
+                            # 第三者認定（Sign）のイベント情報を検索する
+                            # NOTE:現状項目未使用であるため空のリストを返す
+                            certification = []
+
+                            bondtoken = BondTokenV2()
+                            bondtoken.token_address = token_address
+                            bondtoken.token_template = token_template
+                            bondtoken.company_name = company_name
+                            bondtoken.rsa_publickey = rsa_publickey
+                            bondtoken.name = name
+                            bondtoken.symbol = symbol
+                            bondtoken.total_supply = total_supply
+                            bondtoken.face_value = face_value
+                            bondtoken.interest_rate = interest_rate
+                            bondtoken.interest_payment_date1 = interest_payment_date1
+                            bondtoken.interest_payment_date2 = interest_payment_date2
+                            bondtoken.interest_payment_date3 = interest_payment_date3
+                            bondtoken.interest_payment_date4 = interest_payment_date4
+                            bondtoken.interest_payment_date5 = interest_payment_date5
+                            bondtoken.interest_payment_date6 = interest_payment_date6
+                            bondtoken.interest_payment_date7 = interest_payment_date7
+                            bondtoken.interest_payment_date8 = interest_payment_date8
+                            bondtoken.interest_payment_date9 = interest_payment_date9
+                            bondtoken.interest_payment_date10 = interest_payment_date10
+                            bondtoken.interest_payment_date11 = interest_payment_date11
+                            bondtoken.interest_payment_date12 = interest_payment_date12
+                            bondtoken.redemption_date = redemption_date
+                            bondtoken.redemption_amount = redemption_amount
+                            bondtoken.return_date = return_date
+                            bondtoken.return_amount = return_amount
+                            bondtoken.purpose = purpose
+                            bondtoken.image_url = [
+                                {'id': 1, 'url': image_url_1},
+                                {'id': 2, 'url': image_url_2},
+                                {'id': 3, 'url': image_url_3}
+                            ]
+                            bondtoken.certification = certification
+                            bondtoken.max_holding_quantity = token.max_holding_quantity
+                            bondtoken.max_sell_amount = token.max_sell_amount
+                            bondtoken.payment_method_credit_card = token.payment_method_credit_card
+                            bondtoken.payment_method_bank = token.payment_method_bank
+                            bondtoken.contact_information = contact_information
+                            bondtoken.privacy_policy = privacy_policy
+
+                            position_list.append({
+                                'token': bondtoken.__dict__,
+                                'balance': balance,
+                                'commitment': commitment
+                            })
+                    except Exception as e:
+                        LOG.error(e)
+                        continue
+
+        self.on_success(res, position_list)
+
+    @staticmethod
+    def get_company_name(company_list, owner_address):
+        company_name = ''
+        rsa_publickey = ''
+        for company in company_list:
+            if to_checksum_address(company['address']) == owner_address:
+                company_name = company['corporate_name']
+                rsa_publickey = company['rsa_publickey']
+        return company_name, rsa_publickey
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
 
 
 # ------------------------------
