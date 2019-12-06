@@ -140,8 +140,8 @@ class App(falcon.API):
         self.add_route('/v2/Eth/SendRawTransaction', eth.SendRawTransaction())
 
         # 会社情報
-        self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
-        self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
+        self.add_route('/v2/Company/{eth_address}', company.CompanyInfo())
+        self.add_route('/v2/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # トークンABI参照
         self.add_route('/v2/ABI/StraightBond', token_abi.StraightBondABI())
