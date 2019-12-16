@@ -71,11 +71,7 @@ class PaymentAgentInfo(BaseResource):
             description = 'invalid eth_address'
             raise InvalidParameterError(description=description)
 
-        agent_address = to_checksum_address(eth_address)
-
-        company_list = []
         isExist = False
-
         try:
             if config.APP_ENV == 'local':
                 company_list = json.load(open('data/payment_agent_list.json', 'r'))
@@ -85,28 +81,10 @@ class PaymentAgentInfo(BaseResource):
         except Exception as err:
             LOG.error('Failed To Get Data: %s', err)
             raise AppError
-            
-        PaymentGatewayContract = Contract.get_contract(
-            'PaymentGateway',
-            config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
-        )
-
-        latest_terms_version = PaymentGatewayContract.functions. \
-            latest_terms_version(agent_address).call()
-        if latest_terms_version == 0:
-            raise DataNotExistsError('eth_address: %s' % eth_address)
-        else:
-            terms_version = latest_terms_version - 1
-            terms = PaymentGatewayContract.functions.terms(agent_address, terms_version).call()
-            if not terms[1]:
-                raise DataNotExistsError('eth_address: %s' % eth_address)
 
         for company_info in company_list:
-            if to_checksum_address(company_info['address']) == \
-                    to_checksum_address(eth_address):
+            if to_checksum_address(company_info['address']) == to_checksum_address(eth_address):
                 isExist = True
-                terms = {'terms': terms[0]}
-                company_info.update(terms)
                 self.on_success(res, company_info)
         if not isExist:
             raise DataNotExistsError('eth_address: %s' % eth_address)
