@@ -69,7 +69,7 @@ def exchange_regulator_service_contract():
     web3.personal.unlockAccount(deployer['account_address'], deployer['password'])
 
     contract_address, abi = Contract.deploy_contract(
-        'ExchangeRegulatorService', [], deployer['account_address'])\
+        'ExchangeRegulatorService', [], deployer['account_address'])
 
     exchange_regulator_service = Contract.get_contract('ExchangeRegulatorService', contract_address)
 
