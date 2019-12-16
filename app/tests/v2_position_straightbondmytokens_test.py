@@ -46,13 +46,14 @@ class TestV2StraightBondMyTokens:
             'interestPaymentDate11': '1101',
             'interestPaymentDate12': '1201',
             'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
+            'redemptionValue': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info['address']
         }
 
         # ＜発行体オペレーション＞

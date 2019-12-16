@@ -175,7 +175,7 @@ class Contracts(BaseResource):
                     pass
 
                 redemption_date = TokenContract.functions.redemptionDate().call()
-                redemption_amount = TokenContract.functions.redemptionAmount().call()
+                redemption_amount = TokenContract.functions.redemptionValue().call()
                 return_date = TokenContract.functions.returnDate().call()
                 return_amount = TokenContract.functions.returnAmount().call()
                 purpose = TokenContract.functions.purpose().call()

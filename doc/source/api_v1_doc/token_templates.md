@@ -45,7 +45,7 @@
         {
             "constant": true,
             "inputs": [],
-            "name": "redemptionAmount",
+            "name": "redemptionValue",
             "outputs": [
                 {
                     "name": "",
@@ -534,7 +534,7 @@
                     "type": "string"
                 },
                 {
-                    "name": "_redemptionAmount",
+                    "name": "_redemptionValue",
                     "type": "uint256"
                 },
                 {
@@ -1317,7 +1317,7 @@ curl -X GET \
         {
             "constant": true,
             "inputs": [],
-            "name": "redemptionAmount",
+            "name": "redemptionValue",
             "outputs": [
                 {
                     "name": "",
@@ -1806,7 +1806,7 @@ curl -X GET \
                     "type": "string"
                 },
                 {
-                    "name": "_redemptionAmount",
+                    "name": "_redemptionValue",
                     "type": "uint256"
                 },
                 {

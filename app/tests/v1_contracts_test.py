@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 import sys
 
 from eth_utils import to_checksum_address
@@ -12,21 +11,22 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list,\
-    membership_issue, membership_register_list, membership_invalidate,\
+from .contract_modules import issue_bond_token, register_bond_list, \
+    membership_issue, membership_register_list, membership_invalidate, \
     issue_coupon_token, coupon_register_list, invalidate_coupon_token
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
+
 # [普通社債]トークン一覧参照API
 # /v1/StraightBond/Contracts
-class TestV1StraightBondContracts():
-
+class TestV1StraightBondContracts:
     # テスト対象API
     apiurl = '/v1/StraightBond/Contracts/'
 
-    def bond_token_attribute(exchange_address):
+    @staticmethod
+    def bond_token_attribute(exchange_address, personal_info_address):
         attribute = {
             'name': 'テスト債券',
             'symbol': 'BOND',
@@ -47,13 +47,14 @@ class TestV1StraightBondContracts():
             'interestPaymentDate11': '1101',
             'interestPaymentDate12': '1201',
             'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
+            'redemptionValue': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info_address
         }
         return attribute
 
@@ -61,13 +62,11 @@ class TestV1StraightBondContracts():
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal.unlockAccount(deployer['account_address'],deployer['password'])
+        web3.personal.unlockAccount(deployer['account_address'], deployer['password'])
+        contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
+        return {'address': contract_address, 'abi': abi}
 
-        contract_address, abi = Contract.deploy_contract(
-            'TokenList', [], deployer['account_address'])
-
-        return {'address':contract_address, 'abi':abi}
-
+    @staticmethod
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
@@ -88,10 +87,9 @@ class TestV1StraightBondContracts():
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
-        attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info_address = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address, personal_info_address)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
 
@@ -160,11 +158,10 @@ class TestV1StraightBondContracts():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info_address = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address, personal_info_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -281,11 +278,10 @@ class TestV1StraightBondContracts():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info_address = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address, personal_info_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -403,11 +399,10 @@ class TestV1StraightBondContracts():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info_address = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address, personal_info_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -481,11 +476,10 @@ class TestV1StraightBondContracts():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info_address = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address)
+            attribute = TestV1StraightBondContracts.bond_token_attribute(exchange_address, personal_info_address)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -681,10 +675,10 @@ class TestV1StraightBondContracts():
             }
         }
 
+
 # [会員権]トークン一覧参照API
 # /v1/Membership/Contracts
 class TestV1MembershipContracts():
-
     # テスト対象API
     apiurl = '/v1/Membership/Contracts/'
 
@@ -708,11 +702,11 @@ class TestV1MembershipContracts():
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal.\
-            unlockAccount(deployer['account_address'],deployer['password'])
-        contract_address, abi = Contract.\
+        web3.personal. \
+            unlockAccount(deployer['account_address'], deployer['password'])
+        contract_address, abi = Contract. \
             deploy_contract('TokenList', [], deployer['account_address'])
-        return {'address':contract_address, 'abi':abi}
+        return {'address': contract_address, 'abi': abi}
 
     def list_token(session, token):
         listed_token = Listing()
@@ -799,7 +793,7 @@ class TestV1MembershipContracts():
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.\
+            attribute = TestV1MembershipContracts. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
@@ -888,7 +882,7 @@ class TestV1MembershipContracts():
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.\
+            attribute = TestV1MembershipContracts. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
@@ -977,7 +971,7 @@ class TestV1MembershipContracts():
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.\
+            attribute = TestV1MembershipContracts. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
@@ -1038,7 +1032,7 @@ class TestV1MembershipContracts():
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1MembershipContracts.\
+            attribute = TestV1MembershipContracts. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
@@ -1097,7 +1091,7 @@ class TestV1MembershipContracts():
         exchange_address = \
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
-        attribute = TestV1MembershipContracts.\
+        attribute = TestV1MembershipContracts. \
             token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
@@ -1115,7 +1109,6 @@ class TestV1MembershipContracts():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
-
 
     # ＜エラー系1＞
     # HTTPメソッド不正
@@ -1253,10 +1246,10 @@ class TestV1MembershipContracts():
             }
         }
 
+
 # [クーポン]トークン一覧参照API
 # /v1/Coupon/Contracts
 class TestV1CouponContracts():
-
     # テスト対象API
     apiurl = '/v1/Coupon/Contracts/'
 
@@ -1280,11 +1273,11 @@ class TestV1CouponContracts():
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal.\
-            unlockAccount(deployer['account_address'],deployer['password'])
-        contract_address, abi = Contract.\
+        web3.personal. \
+            unlockAccount(deployer['account_address'], deployer['password'])
+        contract_address, abi = Contract. \
             deploy_contract('TokenList', [], deployer['account_address'])
-        return {'address':contract_address, 'abi':abi}
+        return {'address': contract_address, 'abi': abi}
 
     def list_token(session, token):
         listed_token = Listing()
@@ -1371,7 +1364,7 @@ class TestV1CouponContracts():
             to_checksum_address(
                 shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1CouponContracts.\
+            attribute = TestV1CouponContracts. \
                 token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
@@ -1460,7 +1453,7 @@ class TestV1CouponContracts():
             to_checksum_address(
                 shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1CouponContracts.\
+            attribute = TestV1CouponContracts. \
                 token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
@@ -1549,7 +1542,7 @@ class TestV1CouponContracts():
             to_checksum_address(
                 shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1CouponContracts.\
+            attribute = TestV1CouponContracts. \
                 token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
@@ -1610,7 +1603,7 @@ class TestV1CouponContracts():
             to_checksum_address(
                 shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1CouponContracts.\
+            attribute = TestV1CouponContracts. \
                 token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
@@ -1669,7 +1662,7 @@ class TestV1CouponContracts():
         exchange_address = \
             to_checksum_address(
                 shared_contract['IbetCouponExchange']['address'])
-        attribute = TestV1CouponContracts.\
+        attribute = TestV1CouponContracts. \
             token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
@@ -1688,7 +1681,6 @@ class TestV1CouponContracts():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
-
 
     # ＜エラー系1＞
     # HTTPメソッド不正

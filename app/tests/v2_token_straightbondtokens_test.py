@@ -17,7 +17,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
-class TestV2TokenStraightBondTokens():
+class TestV2TokenStraightBondTokens:
     """
     Test Case for v2.token.StraightBondTokens
     """
@@ -25,7 +25,8 @@ class TestV2TokenStraightBondTokens():
     # テスト対象API
     apiurl = '/v2/Token/StraightBond'
 
-    def bond_token_attribute(exchange_address):
+    @staticmethod
+    def bond_token_attribute(exchange_address, personal_info_address):
         attribute = {
             'name': 'テスト債券',
             'symbol': 'BOND',
@@ -46,13 +47,14 @@ class TestV2TokenStraightBondTokens():
             'interestPaymentDate11': '1101',
             'interestPaymentDate12': '1201',
             'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
+            'redemptionValue': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info_address
         }
         return attribute
 
@@ -66,6 +68,7 @@ class TestV2TokenStraightBondTokens():
 
         return {'address': contract_address, 'abi': abi}
 
+    @staticmethod
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
@@ -88,10 +91,9 @@ class TestV2TokenStraightBondTokens():
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
-        attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address)
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
 
@@ -162,11 +164,10 @@ class TestV2TokenStraightBondTokens():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address)
+            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -287,11 +288,10 @@ class TestV2TokenStraightBondTokens():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address)
+            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -413,11 +413,10 @@ class TestV2TokenStraightBondTokens():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address)
+            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
@@ -493,11 +492,10 @@ class TestV2TokenStraightBondTokens():
 
         # データ準備：債券新規発行
         bond_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetStraightBondExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address)
+            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
