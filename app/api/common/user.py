@@ -42,25 +42,17 @@ class PaymentAccount(BaseResource):
             to_checksum_address(request_json['agent_address'])
         ).call()
 
-        # 最新版の利用規約の同意ステータスを参照
-        agreement_status = PaymentGatewayContract.functions.termAgreementStatus(
-            to_checksum_address(request_json['account_address']),
-            to_checksum_address(request_json['agent_address'])
-        ).call()
-
         if account_info[0] == '0x0000000000000000000000000000000000000000':
             response_json = {
                 'account_address': request_json['account_address'],
                 'agent_address': request_json['agent_address'],
-                'approval_status': 0,
-                'agreement_status': agreement_status
+                'approval_status': 0
             }
         else:
             response_json = {
                 'account_address': account_info[0],
                 'agent_address': account_info[1],
-                'approval_status': account_info[3],
-                'agreement_status': agreement_status
+                'approval_status': account_info[3]
             }
 
         self.on_success(res, response_json)

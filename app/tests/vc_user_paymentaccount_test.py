@@ -36,8 +36,7 @@ class TestV1PaymentAccount:
         assumed_body = {
             'account_address': trader['account_address'],
             'agent_address': agent['account_address'],
-            'approval_status': 2,
-            'agreement_status': True
+            'approval_status': 2
         }
 
         assert resp.status_code == 200
@@ -63,8 +62,7 @@ class TestV1PaymentAccount:
         assumed_body = {
             'account_address': trader,
             'agent_address': agent['account_address'],
-            'approval_status': 0,
-            'agreement_status': False
+            'approval_status': 0
         }
 
         assert resp.status_code == 200
