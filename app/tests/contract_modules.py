@@ -55,6 +55,19 @@ def register_payment_gateway(invoker, payment_gateway):
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 取引参加者登録
+def register_exchange_regulator(invoker, exchange_regulator_service, account_address):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    ExchangeRegulatorService = \
+        Contract.get_contract('ExchangeRegulatorService', exchange_regulator_service['address'])
+
+    tx_hash = ExchangeRegulatorService.functions.register(account_address, False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Straight Bond Token （普通社債）
 '''
@@ -86,10 +99,11 @@ def issue_bond_token(invoker, attribute):
         attribute['name'], attribute['symbol'], attribute['totalSupply'],
         attribute['tradableExchange'],
         attribute['faceValue'], attribute['interestRate'], interestPaymentDate,
-        attribute['redemptionDate'], attribute['redemptionAmount'],
+        attribute['redemptionDate'], attribute['redemptionValue'],
         attribute['returnDate'], attribute['returnAmount'],
         attribute['purpose'], attribute['memo'],
-        attribute['contactInformation'], attribute['privacyPolicy']
+        attribute['contactInformation'], attribute['privacyPolicy'],
+        attribute['personalInfoAddress']
     ]
 
     contract_address, abi = Contract.deploy_contract(

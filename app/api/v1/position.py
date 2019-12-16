@@ -149,7 +149,7 @@ class MyTokens(BaseResource):
                                 pass
 
                             redemption_date = BondTokenContract.functions.redemptionDate().call()
-                            redemption_amount = BondTokenContract.functions.redemptionAmount().call()
+                            redemption_amount = BondTokenContract.functions.redemptionValue().call()
                             return_date = BondTokenContract.functions.returnDate().call()
                             return_amount = BondTokenContract.functions.returnAmount().call()
                             purpose = BondTokenContract.functions.purpose().call()

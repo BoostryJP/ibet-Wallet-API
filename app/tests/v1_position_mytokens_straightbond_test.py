@@ -18,8 +18,7 @@ class TestV1StraightBondMyTokens:
 
     # 債券トークンの保有状態（約定イベント）を作成
     @staticmethod
-    def generate_bond_position(bond_exchange, personal_info,
-                               payment_gateway, token_list):
+    def generate_bond_position(bond_exchange, personal_info, payment_gateway, token_list):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -44,13 +43,14 @@ class TestV1StraightBondMyTokens:
             'interestPaymentDate11': '1101',
             'interestPaymentDate12': '1201',
             'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
+            'redemptionValue': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info['address']
         }
 
         # ＜発行体オペレーション＞

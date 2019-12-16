@@ -11,7 +11,8 @@ class TestV1OrderList_Bond():
     # テスト対象API
     apiurl = '/v1/OrderList/'
 
-    def bond_token_attribute(exchange):
+    @staticmethod
+    def bond_token_attribute(exchange, personal_info):
         attribute = {
             'name': 'テスト債券',
             'symbol': 'BOND',
@@ -32,13 +33,14 @@ class TestV1OrderList_Bond():
             'interestPaymentDate11': '1101',
             'interestPaymentDate12': '1201',
             'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
+            'redemptionValue': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info['address']
         }
         return attribute
 
@@ -47,7 +49,7 @@ class TestV1OrderList_Bond():
     def order_event(bond_exchange, personal_info, payment_gateway, token_list):
         issuer = eth_account['issuer']
 
-        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange)
+        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange, personal_info)
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -73,7 +75,7 @@ class TestV1OrderList_Bond():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange)
+        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange, personal_info)
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -106,7 +108,7 @@ class TestV1OrderList_Bond():
         trader = eth_account['trader']
         agent = eth_account['agent']
 
-        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange)
+        attribute = TestV1OrderList_Bond.bond_token_attribute(bond_exchange, personal_info)
 
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行

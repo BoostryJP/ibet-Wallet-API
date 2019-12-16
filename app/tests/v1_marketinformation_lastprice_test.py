@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 
 from .account_config import eth_account
 from app import config
 from .contract_modules import issue_bond_token, offer_bond_token, \
-    register_personalinfo, register_payment_gateway, take_buy_bond_token, get_latest_orderid, \
+    register_personalinfo, register_payment_gateway, register_exchange_regulator,\
+    take_buy_bond_token, get_latest_orderid, \
     membership_issue, membership_offer, membership_get_latest_orderid, \
     membership_take_buy, issue_coupon_token, coupon_offer, \
     coupon_get_latest_orderid, coupon_take_buy
@@ -43,13 +43,14 @@ class TestV1StraightBondLastPrice:
             'interestPaymentDate11': '1101',
             'interestPaymentDate12': '1201',
             'redemptionDate': '20191231',
-            'redemptionAmount': 10000,
+            'redemptionValue': 10000,
             'returnDate': '20191231',
             'returnAmount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info['address']
         }
 
         # 発行体オペレーション
