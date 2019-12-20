@@ -159,6 +159,7 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
+                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -246,6 +247,7 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
+                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -334,6 +336,7 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
+                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
