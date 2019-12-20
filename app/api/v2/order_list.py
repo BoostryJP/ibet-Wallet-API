@@ -33,11 +33,11 @@ JST = timezone(timedelta(hours=+9), "JST")
 # ------------------------------
 class OrderList(BaseResource):
     '''
-    Handle for endpoint: /v1/OrderList/
+    Handle for endpoint: /v2/OrderList/
     '''
 
     def on_post(self, req, res):
-        LOG.info('v1.OrderList.OrderList')
+        LOG.info('v2.OrderList.OrderList')
         session = req.context['session']
 
         request_json = OrderList.validate(req)

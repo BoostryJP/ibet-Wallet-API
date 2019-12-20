@@ -26,7 +26,7 @@ class Notifications(BaseResource):
 
     @falcon.before(VerifySignature())
     def on_get(self, req, res):
-        LOG.info('v1.Notification.Notifications(GET)')
+        LOG.info('common.Notification.Notifications(GET)')
 
         session = req.context["session"]
 
@@ -70,7 +70,7 @@ class Notifications(BaseResource):
 
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Notification.Notifications(POST)')
+        LOG.info('common.Notification.Notifications(POST)')
 
         session = req.context["session"]
 
@@ -200,7 +200,7 @@ class NotificationsRead(BaseResource):
 
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Notification.Read')
+        LOG.info('common.Notification.Read')
 
         session = req.context["session"]
 
@@ -249,7 +249,7 @@ class NotificationCount(BaseResource):
 
     @falcon.before(VerifySignature())
     def on_get(self, req, res):
-        LOG.info("v1.Notification.NotificationCount")
+        LOG.info("common.Notification.NotificationCount")
 
         session = req.context["session"]
 

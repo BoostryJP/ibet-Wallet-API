@@ -26,7 +26,7 @@ class UpdateDevice(BaseResource):
     '''
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Push.UpdateDevice')
+        LOG.info('common.Push.UpdateDevice')
 
         # 入力値チェック
         request_json = UpdateDevice.validate(req)
@@ -118,7 +118,7 @@ class DeleteDevice(BaseResource):
     '''
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Push.DeleteDevice')
+        LOG.info('common.Push.DeleteDevice')
 
         # 入力値チェック
         request_json = DeleteDevice.validate(req)

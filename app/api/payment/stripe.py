@@ -34,7 +34,7 @@ class CreateAccount(BaseResource):
     """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Stripe.CreateAccount')
+        LOG.info('payment.Stripe.CreateAccount')
 
         # 入力値チェック
         request_json = CreateAccount.validate(req)
@@ -150,7 +150,7 @@ class CreateExternalAccount(BaseResource):
     """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Stripe.CreateExternalAccount')
+        LOG.info('payment.Stripe.CreateExternalAccount')
 
         # 入力値チェック
         request_json = CreateExternalAccount.validate(req)
@@ -270,7 +270,7 @@ class CreateCustomer(BaseResource):
     """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Stripe.CreateCustomer')
+        LOG.info('payment.Stripe.CreateCustomer')
 
         # 入力値チェック
         request_json = CreateCustomer.validate(req)
@@ -376,7 +376,7 @@ class DeleteAccount(BaseResource):
     """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Stripe.DeleteAccount')
+        LOG.info('payment.Stripe.DeleteAccount')
 
         address = to_checksum_address(req.context["address"])
 
@@ -402,7 +402,7 @@ class Charge(BaseResource):
     """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Stripe.Charge')
+        LOG.info('payment.Stripe.Charge')
 
         session = req.context["session"]
 
@@ -703,7 +703,7 @@ class AccountStatus(BaseResource):
     """
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('v1.Stripe.AccountStatus')
+        LOG.info('payment.Stripe.AccountStatus')
 
         address = to_checksum_address(req.context["address"])
         # DBの存在チェック
@@ -768,7 +768,7 @@ class ChargeStatus(BaseResource):
     Handle for endpoint: /v1/Stripe/ChargeStatus
     """
     def on_post(self, req, res):
-        LOG.info('v1.Stripe.ChargeStatus')
+        LOG.info('payment.Stripe.ChargeStatus')
         session = req.context["session"]
 
         # 入力値チェック
@@ -856,7 +856,7 @@ class Constants(BaseResource):
     Handle for endpoint: /v1/Stripe/Constants
     '''
     def on_get(self, req, res):
-        LOG.info('v1.Stripe.Constants')      
+        LOG.info('payment.Stripe.Constants')
         stripe = {'commitment_fee': float(config.STRIPE_FEE), 
             'fix_fee': 0, 
             'minimum_value': int(config.STRIPE_MINIMUM_VALUE), 

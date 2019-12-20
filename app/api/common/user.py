@@ -29,7 +29,7 @@ class PaymentAccount(BaseResource):
     Handle for endpoint: /v1/User/PaymentAccount
     '''
     def on_get(self, req, res):
-        LOG.info('v1.User.PaymentAccount')
+        LOG.info('common.User.PaymentAccount')
 
         request_json = PaymentAccount.validate(req)
 
@@ -87,7 +87,7 @@ class PersonalInfo(BaseResource):
     Handle for endpoint: /v1/User/PersonalInfo
     '''
     def on_get(self, req, res):
-        LOG.info('v1.User.PersonalInfo')
+        LOG.info('common.User.PersonalInfo')
 
         request_json = PersonalInfo.validate(req)
 
@@ -144,7 +144,7 @@ class StreetAddress(BaseResource):
     Handle for endpoint: /v1/User/StreetAddress/{postal_code}
     '''
     def on_get(self, req, res, postal_code):
-        LOG.info('v1.User.StreetAddress')
+        LOG.info('common.User.StreetAddress')
 
         postal_code = StreetAddress.validate(postal_code)
         try:
