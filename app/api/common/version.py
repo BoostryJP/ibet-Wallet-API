@@ -19,7 +19,7 @@ class RequiredVersion(BaseResource):
     Handle for endpoint: /v1/RequiredVersion
     '''
     def on_get(self, req, res):
-        LOG.info('v1.Version.RequiredVersion')
+        LOG.info('common.Version.RequiredVersion')
 
         request_json = RequiredVersion.validate(req)
 

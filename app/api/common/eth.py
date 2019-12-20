@@ -29,7 +29,7 @@ class GetTransactionCount(BaseResource):
     """
 
     def on_get(self, req, res, eth_address):
-        LOG.info('v1.Eth.GetTransactionCount')
+        LOG.info('common.Eth.GetTransactionCount')
 
         try:
             eth_address = to_checksum_address(eth_address)
@@ -53,7 +53,7 @@ class SendRawTransaction(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v1.Eth.SendRawTransaction')
+        LOG.info('common.Eth.SendRawTransaction')
 
         session = req.context["session"]
 

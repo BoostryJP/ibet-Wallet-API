@@ -417,7 +417,7 @@ class CouponMyTokens(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v1.position.CouponMyTokens')
+        LOG.info('v2.position.CouponMyTokens')
 
         session = req.context["session"]
 

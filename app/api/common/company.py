@@ -29,7 +29,7 @@ class CompanyInfo(BaseResource):
     """
 
     def on_get(self, req, res, eth_address):
-        LOG.info('v1.Company.CompanyInfo')
+        LOG.info('common.Company.CompanyInfo')
 
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'
@@ -65,7 +65,7 @@ class PaymentAgentInfo(BaseResource):
     """
 
     def on_get(self, req, res, eth_address):
-        LOG.info('v1.Company.PaymentAgent')
+        LOG.info('common.Company.PaymentAgent')
 
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'
