@@ -151,6 +151,7 @@ class StraightBondMyTokens(BaseResource):
                             return_amount = BondTokenContract.functions.returnAmount().call()
                             purpose = BondTokenContract.functions.purpose().call()
                             transferable = BondTokenContract.functions.transferable().call()
+                            isRedeemed = BondTokenContract.functions.isRedeemed().call()
                             image_url_1 = BondTokenContract.functions.getImageURL(0).call()
                             image_url_2 = BondTokenContract.functions.getImageURL(1).call()
                             image_url_3 = BondTokenContract.functions.getImageURL(2).call()
@@ -193,6 +194,7 @@ class StraightBondMyTokens(BaseResource):
                             bondtoken.return_amount = return_amount
                             bondtoken.purpose = purpose
                             bondtoken.transferable = transferable
+                            bondtoken.isRedeemed = isRedeemed
                             bondtoken.image_url = [
                                 {'id': 1, 'url': image_url_1},
                                 {'id': 2, 'url': image_url_2},
