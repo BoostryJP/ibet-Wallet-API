@@ -53,7 +53,9 @@ class TestV2StraightBondMyTokens:
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
             'privacyPolicy': 'プライバシーポリシー',
-            'personalInfoAddress': personal_info['address']
+            'personalInfoAddress': personal_info['address'],
+            'transferable': True,
+            'isRedeemed': False
         }
 
         # ＜発行体オペレーション＞
@@ -176,7 +178,9 @@ class TestV2StraightBondMyTokens:
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'transferable': True,
+                'isRedeemed': False
             },
             'balance': 100,
             'commitment': 0
@@ -264,7 +268,9 @@ class TestV2StraightBondMyTokens:
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'transferable': True,
+                'isRedeemed': False
             },
             'balance': 100,
             'commitment': 0
@@ -353,7 +359,9 @@ class TestV2StraightBondMyTokens:
                 'payment_method_credit_card': True,
                 'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'transferable': True,
+                'isRedeemed': False
             },
             'balance': 100,
             'commitment': 0
