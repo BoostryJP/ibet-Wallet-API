@@ -22,7 +22,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 # ------------------------------
-# 決済用口座登録状況参照
+# 受領用銀行口座登録状況参照
 # ------------------------------
 class PaymentAccount(BaseResource):
     '''
