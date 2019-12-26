@@ -102,7 +102,7 @@ class App(falcon.API):
         self.add_route('/v1/Notifications/Read', notification.NotificationsRead())
         self.add_route('/v1/NotificationCount', notification.NotificationCount())
 
-        # 決済用口座登録状況参照
+        # 受領用銀行口座登録状況参照
         self.add_route('/v1/User/PaymentAccount', user.PaymentAccount())
 
         # 名簿用個人情報参照
@@ -186,7 +186,7 @@ class App(falcon.API):
         self.add_route('/v2/Notifications/Read', notification.NotificationsRead())
         self.add_route('/v2/NotificationCount', notification.NotificationCount())
 
-        # 決済用口座登録状況参照
+        # 受領用銀行口座登録状況参照
         self.add_route('/v2/User/PaymentAccount', user.PaymentAccount())
 
         # 名簿用個人情報参照

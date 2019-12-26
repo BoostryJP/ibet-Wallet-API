@@ -146,11 +146,11 @@ curl -X GET \
 }
 ```
 * `notification_type` : 通知タイプ
-  * `PaymentAccountRegister` : 決済用口座登録
-  * `PaymentAccountApprove` : 決済用口座承認
-  * `PaymentAccountWarn` : 決済用口座警告
-  * `PaymentAccountUnapprove` : 決済用口座非承認
-  * `PaymentAccountBan` : 決済用口座アカウント停止
+  * `PaymentAccountRegister` : 受領用銀行口座登録
+  * `PaymentAccountApprove` : 受領用銀行口座承認
+  * `PaymentAccountWarn` : 受領用銀行口座警告
+  * `PaymentAccountUnapprove` : 受領用銀行口座非承認
+  * `PaymentAccountBan` : 受領用銀行口座アカウント停止
   * `NewOrder` : 新規注文
   * `CancelOrder` : 注文取消
   * `BuyAgreement` : 買約定

@@ -150,11 +150,11 @@ class Watcher:
 
 
 '''
-決済用口座認可関連（PaymentGateway）
+受領用銀行口座認可関連（PaymentGateway）
 '''
 
 
-# イベント：決済用口座登録
+# イベント：受領用銀行口座登録
 class WatchPaymentAccountRegister(Watcher):
     def __init__(self):
         super().__init__(payment_gateway_contract, "Register", {})
@@ -174,12 +174,12 @@ class WatchPaymentAccountRegister(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 2, entry["blockNumber"],
-                         '決済用口座情報登録完了',
-                         '決済用口座情報登録が完了しました。',
+                         '受領用銀行口座情報登録完了',
+                         '受領用銀行口座情報登録が完了しました。',
                          )
 
 
-# イベント：決済用口座承認
+# イベント：受領用銀行口座承認
 class WatchPaymentAccountApprove(Watcher):
     def __init__(self):
         super().__init__(payment_gateway_contract, "Approve", {})
@@ -199,12 +199,12 @@ class WatchPaymentAccountApprove(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                         '決済用口座情報承認完了',
-                         '決済用口座が承認されました。',
+                         '受領用銀行口座情報承認完了',
+                         '受領用銀行口座が承認されました。',
                          )
 
 
-# イベント：決済用口座警告
+# イベント：受領用銀行口座警告
 class WatchPaymentAccountWarn(Watcher):
     def __init__(self):
         super().__init__(payment_gateway_contract, "Warn", {})
@@ -224,12 +224,12 @@ class WatchPaymentAccountWarn(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                         '決済用口座の確認',
-                         '決済用口座の情報が確認できませんでした。',
+                         '受領用銀行口座の確認',
+                         '受領用銀行口座の情報が確認できませんでした。',
                          )
 
 
-# イベント：決済用口座非承認
+# イベント：受領用銀行口座非承認
 class WatchPaymentAccountUnapprove(Watcher):
     def __init__(self):
         super().__init__(payment_gateway_contract, "Unapprove", {})
@@ -249,12 +249,12 @@ class WatchPaymentAccountUnapprove(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 0, entry["blockNumber"],
-                         '決済用口座情報再登録',
-                         '決済用口座の承認ステータスが変更されました。',
+                         '受領用銀行口座情報再登録',
+                         '受領用銀行口座の承認ステータスが変更されました。',
                          )
 
 
-# イベント：決済用口座アカウント停止
+# イベント：受領用銀行口座アカウント停止
 class WatchPaymentAccountBan(Watcher):
     def __init__(self):
         super().__init__(payment_gateway_contract, "Ban", {})
@@ -274,8 +274,8 @@ class WatchPaymentAccountBan(Watcher):
     def push(self, entries):
         for entry in entries:
             push_publish(self._gen_notification_id(entry), entry["args"]["account_address"], 2, entry["blockNumber"],
-                         '決済用口座の認証取消',
-                         '決済用の口座の認証が取り消されました。',
+                         '受領用銀行口座の認証取消',
+                         '受領用銀行口座の認証が取り消されました。',
                          )
 
 

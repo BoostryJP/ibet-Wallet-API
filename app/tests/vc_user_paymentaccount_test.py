@@ -7,7 +7,7 @@ from .account_config import eth_account
 from .contract_modules import register_payment_gateway
 
 
-# 決済用口座登録状況参照API
+# 受領用銀行口座登録状況参照API
 # /v1/User/PaymentAccount
 class TestV1PaymentAccount:
 
@@ -25,7 +25,7 @@ class TestV1PaymentAccount:
         payment_gateway = shared_contract['PaymentGateway']
         config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway['address']
 
-        # データ準備：決済用口座情報登録->認可
+        # データ準備：受領用銀行口座情報登録->認可
         register_payment_gateway(trader, payment_gateway)
 
         query_string = 'account_address=' + trader['account_address'] + \
