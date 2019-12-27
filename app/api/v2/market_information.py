@@ -644,35 +644,27 @@ class MembershipTick(BaseResource):
 
         request_json = MembershipTick.validate(req)
 
-        ExchangeContract = Contract.get_contract(
-            'IbetMembershipExchange',
-            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-        )
-
         tick_list = []
         # TokenごとにTickを取得
         for token_address in request_json['address_list']:
             token = to_checksum_address(token_address)
             tick = []
             try:
-                event_filter = ExchangeContract.events.Agree.createFilter(
-                    fromBlock='earliest',
-                    argument_filters={'tokenAddress': token}
-                )
-                entries = event_filter.get_all_entries()
-                web3.eth.uninstallFilter(event_filter.filter_id)
+                session = req.context["session"]
+                entries = session.query(Agreement, Order).join(Order, Agreement.order_id == Order.order_id).\
+                    filter(Order.token_address == token).\
+                    filter(Agreement.status == 1).\
+                    filter(Order.is_cancelled == False).all()
 
                 for entry in entries:
                     tick.append({
-                        'block_timestamp': datetime.fromtimestamp(
-                            web3.eth.getBlock(entry['blockNumber'])['timestamp'], JST
-                        ).strftime("%Y/%m/%d %H:%M:%S"),
-                        'buy_address': entry['args']['buyAddress'],
-                        'sell_address': entry['args']['sellAddress'],
-                        'order_id': entry['args']['orderId'],
-                        'agreement_id': entry['args']['agreementId'],
-                        'price': entry['args']['price'],
-                        'amount': entry['args']['amount'],
+                        'block_timestamp': entry.Agreement.settlement_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
+                        'buy_address': entry.Agreement.buyer_address,
+                        'sell_address': entry.Agreement.seller_address,
+                        'order_id': entry.Agreement.order_id,
+                        'agreement_id': entry.Agreement.agreement_id,
+                        'price': entry.Order.price,
+                        'amount': entry.Order.amount
                     })
                 tick_list.append({
                     'token_address': token_address,
