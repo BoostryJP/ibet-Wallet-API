@@ -40,6 +40,7 @@ class TestV2MembershipTick:
         a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.amount = 3
         a.status = 1
         a.settlement_timestamp = '2019-11-13 16:23:14.183706'
         a.created = '2019-11-13 16:26:14.183706'
@@ -51,6 +52,7 @@ class TestV2MembershipTick:
         a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.amount = 3
         a.status = 1
         a.settlement_timestamp = '2019-11-13 16:24:14.183706'
         a.created = '2019-11-13 16:26:14.183706'
@@ -101,7 +103,7 @@ class TestV2MembershipTick:
                         'order_id': 1,
                         'agreement_id': 101,
                         'price': 70,
-                        'amount': 5
+                        'amount': 3
                     }, {
                         'block_timestamp': '2019/11/13 16:24:14',
                         'buy_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
@@ -109,7 +111,7 @@ class TestV2MembershipTick:
                         'order_id': 2,
                         'agreement_id': 102,
                         'price': 80,
-                        'amount': 5
+                        'amount': 3
                     }
                 ]
             }

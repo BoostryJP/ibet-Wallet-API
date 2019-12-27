@@ -657,7 +657,6 @@ class MembershipTick(BaseResource):
                     filter(Order.is_cancelled == False).all()
 
                 for entry in entries:
-                    print(entry)
                     tick.append({
                         'block_timestamp': entry.Agreement.settlement_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
                         'buy_address': entry.Agreement.buyer_address,
@@ -665,7 +664,7 @@ class MembershipTick(BaseResource):
                         'order_id': entry.Agreement.order_id,
                         'agreement_id': entry.Agreement.agreement_id,
                         'price': entry.Order.price,
-                        'amount': entry.Order.amount
+                        'amount': entry.Agreement.amount
                     })
                 tick_list.append({
                     'token_address': token_address,
