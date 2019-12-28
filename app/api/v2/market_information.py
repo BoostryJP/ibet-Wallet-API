@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), 'JST')
 
 from sqlalchemy import func
+from sqlalchemy import desc
 from cerberus import Validator
 
 from web3 import Web3
@@ -654,11 +655,15 @@ class MembershipTick(BaseResource):
                 entries = session.query(Agreement, Order).join(Order, Agreement.order_id == Order.order_id).\
                     filter(Order.token_address == token).\
                     filter(Agreement.status == 1).\
-                    filter(Order.is_cancelled == False).all()
+                    filter(Order.is_cancelled == False).\
+                    order_by(desc(Agreement.settlement_timestamp)).\
+                    all()
 
                 for entry in entries:
+                    block_timestamp_utc = entry.Agreement.settlement_timestamp
+                    block_timestamp_jst = block_timestamp_utc + timedelta(hours=9)
                     tick.append({
-                        'block_timestamp': entry.Agreement.settlement_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
+                        'block_timestamp': block_timestamp_jst.strftime('%Y/%m/%d %H:%M:%S'),
                         'buy_address': entry.Agreement.buyer_address,
                         'sell_address': entry.Agreement.seller_address,
                         'order_id': entry.Agreement.order_id,
