@@ -181,18 +181,6 @@ class TestV1Push():
         assert resp.status_code == 200
         assert tmpdata is None
 
-        # SNS確認
-        flag = False
-        client = boto3.client('sns', 'ap-northeast-1')
-        try:
-            client.get_endpoint_attributes(
-                EndpointArn=device_endpoint_arn
-            )
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'NotFound':
-                flag = True
-        assert flag
-
     # ＜エラー系1_1＞
     # 【UpdateDevice】存在しないdevice tokenを削除
     # DBには存在するが、SNSには存在しない
