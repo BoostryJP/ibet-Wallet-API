@@ -645,13 +645,14 @@ class MembershipTick(BaseResource):
 
         request_json = MembershipTick.validate(req)
 
+        session = req.context["session"]
+
         tick_list = []
         # TokenごとにTickを取得
         for token_address in request_json['address_list']:
             token = to_checksum_address(token_address)
             tick = []
             try:
-                session = req.context["session"]
                 entries = session.query(Agreement, Order).join(Order, Agreement.order_id == Order.order_id).\
                     filter(Order.token_address == token).\
                     filter(Agreement.status == 1).\
