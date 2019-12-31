@@ -10,15 +10,15 @@
   </a>
 </p>
 
-## Start the API server
+## Starting and Stopping the Server
 Install packages
 ```
 $ pip install -r requirements.txt
 ```
 
-You can start the API server with:
+You can start (or stop) the API server with:
 ```
-$ ./bin/run.sh start
+$ ./bin/run.sh start(stop)
 ```
 
 ## Running the tests
