@@ -12,8 +12,6 @@ class TestV2MembershipTick:
     # テスト対象API
     apiurl = '/v2/Market/Tick/Membership'
 
-    private_key = "0000000000000000000000000000000000000000000000000000000000000001"
-
     def _insert_test_data(self, session):
         self.session = session
         o = Order()
