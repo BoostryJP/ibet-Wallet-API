@@ -1,5 +1,7 @@
 # ibet-Wallet-API
 
+<img alt="ibet" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png" width="200"/>
+
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.7-blue.svg?cacheSeconds=2592000" />
   <a href="https:/doc.com" target="_blank">
