@@ -661,9 +661,8 @@ class MembershipTick(BaseResource):
 
                 for entry in entries:
                     block_timestamp_utc = entry.Agreement.settlement_timestamp
-                    block_timestamp_jst = block_timestamp_utc + timedelta(hours=9)
                     tick.append({
-                        'block_timestamp': block_timestamp_jst.strftime('%Y/%m/%d %H:%M:%S'),
+                        'block_timestamp': block_timestamp_utc.strftime('%Y/%m/%d %H:%M:%S'),
                         'buy_address': entry.Agreement.buyer_address,
                         'sell_address': entry.Agreement.seller_address,
                         'order_id': entry.Agreement.order_id,
