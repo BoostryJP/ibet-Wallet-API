@@ -12,8 +12,6 @@ class TestV2MembershipTick:
     # テスト対象API
     apiurl = '/v2/Market/Tick/Membership'
 
-    private_key = "0000000000000000000000000000000000000000000000000000000000000001"
-
     def _insert_test_data(self, session):
         self.session = session
         o = Order()
@@ -97,7 +95,7 @@ class TestV2MembershipTick:
                 'token_address': '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a',
                 'tick': [
                     {
-                        'block_timestamp': '2019/11/14 01:24:14',
+                        'block_timestamp': '2019/11/13 16:24:14',
                         'buy_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
                         'sell_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
                         'order_id': 2,
@@ -106,7 +104,7 @@ class TestV2MembershipTick:
                         'amount': 3
                     },
                     {
-                        'block_timestamp': '2019/11/14 01:23:14',
+                        'block_timestamp': '2019/11/13 16:23:14',
                         'buy_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
                         'sell_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
                         'order_id': 1,

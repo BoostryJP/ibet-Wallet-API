@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
-
-from .account_config import eth_account
 from app import config
-from .contract_modules import issue_coupon_token, coupon_offer, \
-    coupon_get_latest_orderid, coupon_take_buy
+from app.model import Order, Agreement
 
 
 class TestV2CouponTick:
@@ -15,35 +12,49 @@ class TestV2CouponTick:
     # テスト対象API
     apiurl = '/v2/Market/Tick/Coupon'
 
-    # 約定イベントの作成
-    @staticmethod
-    def generate_agree_event(exchange):
-        issuer = eth_account['issuer']
-        trader = eth_account['trader']
+    def _insert_test_data(self, session):
+        self.session = session
+        o = Order()
+        o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
+        o.order_id = 1
+        o.price = 70
+        o.amount = 5
+        o.is_buy = True
+        o.is_cancelled = False
+        session.add(o)
 
-        attribute = {
-            'name': 'テストクーポン',
-            'symbol': 'COUPON',
-            'totalSupply': 10000,
-            'tradableExchange': exchange['address'],
-            'details': 'クーポン詳細',
-            'returnDetails': 'リターン詳細',
-            'memo': 'クーポンメモ欄',
-            'expirationDate': '20191231',
-            'transferable': True,
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー'
-        }
+        o = Order()
+        o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
+        o.order_id = 2
+        o.price = 80
+        o.amount = 5
+        o.is_buy = True
+        o.is_cancelled = False
+        session.add(o)
 
-        # 発行体オペレーション
-        token = issue_coupon_token(issuer, attribute)
-        coupon_offer(issuer, exchange, token, 10000, 1000)
+        a = Agreement()
+        a.order_id = 1
+        a.agreement_id = 101
+        a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.amount = 3
+        a.status = 1
+        a.settlement_timestamp = '2019-11-13 16:23:14.183706'
+        a.created = '2019-11-13 16:26:14.183706'
+        session.add(a)
 
-        # 投資家オペレーション
-        latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid, 100)
-
-        return token
+        a = Agreement()
+        a.order_id = 2
+        a.agreement_id = 102
+        a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.amount = 3
+        a.status = 1
+        a.settlement_timestamp = '2019-11-13 16:24:14.183706'
+        a.created = '2019-11-13 16:26:14.183706'
+        session.add(a)
 
     # 正常系1：存在しない取引コントラクトアドレスを指定
     #  -> ゼロ件リストが返却される
@@ -66,36 +77,12 @@ class TestV2CouponTick:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-    # 正常系2：約定（Agree）イベントがゼロ件の場合
-    #  -> ゼロ件リストが返却される
-    def test_coupon_tick_normal_2(self, client, shared_contract):
-        exchange = shared_contract['IbetCouponExchange']
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        request_params = {"address_list": [token_address]}
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assumed_body = [{'token_address': token_address, 'tick': []}]
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
-
-    # 正常系3：約定イベントが有件の場合
+    # 正常系2：約定イベントが有件の場合
     #  -> 約定イベントの情報が返却される
-    def test_coupon_tick_normal_3(self, client, shared_contract):
-        exchange = shared_contract['IbetCouponExchange']
-        token = TestV2CouponTick.generate_agree_event(exchange)
-        token_address = token['address']
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+    def test_coupon_tick_normal_2(self, client, session):
+        self._insert_test_data(session)
 
-        request_params = {"address_list": [token_address]}
+        request_params = {"address_list": ["0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a"]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
         resp = client.simulate_post(
@@ -103,11 +90,31 @@ class TestV2CouponTick:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'][0]['token_address'] == token_address
-        assert resp.json['data'][0]['tick'][0]['buy_address'] == eth_account['trader']['account_address']
-        assert resp.json['data'][0]['tick'][0]['sell_address'] == eth_account['issuer']['account_address']
-        assert resp.json['data'][0]['tick'][0]['price'] == 1000
-        assert resp.json['data'][0]['tick'][0]['amount'] == 100
+        assert resp.json['data'] == [
+            {
+                'token_address': '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a',
+                'tick': [
+                    {
+                        'block_timestamp': '2019/11/13 16:24:14',
+                        'buy_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+                        'sell_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+                        'order_id': 2,
+                        'agreement_id': 102,
+                        'price': 80,
+                        'amount': 3
+                    },
+                    {
+                        'block_timestamp': '2019/11/13 16:23:14',
+                        'buy_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+                        'sell_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+                        'order_id': 1,
+                        'agreement_id': 101,
+                        'price': 70,
+                        'amount': 3
+                    }
+                ]
+            }
+        ]
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_coupon_tick_error_1(self, client):
