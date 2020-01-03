@@ -4,7 +4,7 @@ import os
 import configparser
 
 # basic setting
-BRAND_NAME = 'TMR-API'
+BRAND_NAME = 'ibet-Wallet-API'
 
 APP_ENV = os.environ.get('APP_ENV') or 'local'
 INI_FILE = os.path.join(

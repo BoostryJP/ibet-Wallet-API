@@ -15,7 +15,7 @@ eth-utils==1.0.1
 ethereum==2.3.0
 falcon==1.4.1
 future==0.16.0
-gunicorn==19.7.1
+gunicorn==20.0.4
 hexbytes==0.1.0
 lru-dict==1.1.6
 parsimonious==0.8.0
