@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 function start () {
     #source .venv/bin/activate
-    gunicorn -b 0.0.0.0:5000 --reload app.main:application --timeout 30 --workers=$WORKER_COUNT --max-requests 500 --max-requests-jitter 200
+    gunicorn -b 0.0.0.0:5000 --reload app.main:application --timeout 30 --workers=$WORKER_COUNT --max-requests 500 --max-requests-jitter 200 -k gevent
 }
 
 function stop () {
