@@ -146,7 +146,7 @@ class StraightBondMyTokens(BaseResource):
                                 pass
 
                             redemption_date = BondTokenContract.functions.redemptionDate().call()
-                            redemption_amount = BondTokenContract.functions.redemptionValue().call()
+                            redemption_value = BondTokenContract.functions.redemptionValue().call()
                             return_date = BondTokenContract.functions.returnDate().call()
                             return_amount = BondTokenContract.functions.returnAmount().call()
                             purpose = BondTokenContract.functions.purpose().call()
@@ -189,7 +189,7 @@ class StraightBondMyTokens(BaseResource):
                             bondtoken.interest_payment_date11 = interest_payment_date11
                             bondtoken.interest_payment_date12 = interest_payment_date12
                             bondtoken.redemption_date = redemption_date
-                            bondtoken.redemption_amount = redemption_amount
+                            bondtoken.redemption_value = redemption_value
                             bondtoken.return_date = return_date
                             bondtoken.return_amount = return_amount
                             bondtoken.purpose = purpose

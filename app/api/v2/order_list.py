@@ -348,7 +348,7 @@ class OrderList(BaseResource):
                     pass
 
                 redemption_date = TokenContract.functions.redemptionDate().call()
-                redemption_amount = TokenContract.functions.redemptionValue().call()
+                redemption_value = TokenContract.functions.redemptionValue().call()
                 return_date = TokenContract.functions.returnDate().call()
                 return_amount = TokenContract.functions.returnAmount().call()
                 purpose = TokenContract.functions.purpose().call()
@@ -396,7 +396,7 @@ class OrderList(BaseResource):
                 bondtoken.interest_payment_date11 = interest_payment_date11
                 bondtoken.interest_payment_date12 = interest_payment_date12
                 bondtoken.redemption_date = redemption_date
-                bondtoken.redemption_amount = redemption_amount
+                bondtoken.redemption_value = redemption_value
                 bondtoken.return_date = return_date
                 bondtoken.return_amount = return_amount
                 bondtoken.purpose = purpose
@@ -702,7 +702,7 @@ class OrderList(BaseResource):
                 pass
 
             redemption_date = TokenContract.functions.redemptionDate().call()
-            redemption_amount = TokenContract.functions.redemptionValue().call()
+            redemption_value = TokenContract.functions.redemptionValue().call()
             return_date = TokenContract.functions.returnDate().call()
             return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
@@ -751,7 +751,7 @@ class OrderList(BaseResource):
             bondtoken.interest_payment_date11 = interest_payment_date11
             bondtoken.interest_payment_date12 = interest_payment_date12
             bondtoken.redemption_date = redemption_date
-            bondtoken.redemption_amount = redemption_amount
+            bondtoken.redemption_value = redemption_value
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
@@ -865,7 +865,7 @@ class OrderList(BaseResource):
                 pass
 
             redemption_date = TokenContract.functions.redemptionDate().call()
-            redemption_amount = TokenContract.functions.redemptionValue().call()
+            redemption_value = TokenContract.functions.redemptionValue().call()
             return_date = TokenContract.functions.returnDate().call()
             return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
@@ -913,7 +913,7 @@ class OrderList(BaseResource):
             bondtoken.interest_payment_date11 = interest_payment_date11
             bondtoken.interest_payment_date12 = interest_payment_date12
             bondtoken.redemption_date = redemption_date
-            bondtoken.redemption_amount = redemption_amount
+            bondtoken.redemption_value = redemption_value
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
@@ -1418,7 +1418,7 @@ class OrderList(BaseResource):
                 pass
 
             redemption_date = TokenContract.functions.redemptionDate().call()
-            redemption_amount = TokenContract.functions.redemptionValue().call()
+            redemption_value = TokenContract.functions.redemptionValue().call()
             return_date = TokenContract.functions.returnDate().call()
             return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
@@ -1467,7 +1467,7 @@ class OrderList(BaseResource):
             bondtoken.interest_payment_date11 = interest_payment_date11
             bondtoken.interest_payment_date12 = interest_payment_date12
             bondtoken.redemption_date = redemption_date
-            bondtoken.redemption_amount = redemption_amount
+            bondtoken.redemption_value = redemption_value
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
@@ -1590,7 +1590,7 @@ class OrderList(BaseResource):
                 pass
 
             redemption_date = TokenContract.functions.redemptionDate().call()
-            redemption_amount = TokenContract.functions.redemptionValue().call()
+            redemption_value = TokenContract.functions.redemptionValue().call()
             return_date = TokenContract.functions.returnDate().call()
             return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
@@ -1639,7 +1639,7 @@ class OrderList(BaseResource):
             bondtoken.interest_payment_date11 = interest_payment_date11
             bondtoken.interest_payment_date12 = interest_payment_date12
             bondtoken.redemption_date = redemption_date
-            bondtoken.redemption_amount = redemption_amount
+            bondtoken.redemption_value = redemption_value
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
