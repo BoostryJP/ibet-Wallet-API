@@ -67,6 +67,7 @@ class SendRawTransaction(BaseResource):
             try:
                 raw_tx = decode(HexBytes(raw_tx_hex))
                 to_contract_address = to_checksum_address('0x' + raw_tx[3].hex())
+                LOG.info(raw_tx)
             except Exception as e:
                 result.append({'id': i + 1, 'status': 0})
                 LOG.error(e)
