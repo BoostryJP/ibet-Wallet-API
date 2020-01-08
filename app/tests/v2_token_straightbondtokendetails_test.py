@@ -123,7 +123,7 @@ class TestV2TokenStraightBondTokenDetails:
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
             'redemption_date': '20191231',
-            'redemption_amount': 10000,
+            'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',

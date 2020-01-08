@@ -55,7 +55,7 @@ class BondTokenV2(TokenBase):
     interest_payment_date11: str
     interest_payment_date12: str
     redemption_date: str
-    redemption_amount: int
+    redemption_value: int
     return_date: str
     return_amount: str
     purpose: str
