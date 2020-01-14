@@ -140,3 +140,80 @@ class SendRawTransaction(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return request_json
+
+
+# ------------------------------
+# sendRawTransaction (No Wait)
+# ------------------------------
+class SendRawTransactionNoWait(BaseResource):
+    """
+    Handle for endpoint: /v2/Eth/SendRawTransactionNoWait
+    """
+
+    def on_post(self, req, res):
+        LOG.info('common.Eth.SendRawTransactionNoWait')
+
+        session = req.context["session"]
+
+        request_json = SendRawTransactionNoWait.validate(req)
+        raw_tx_hex_list = request_json['raw_tx_hex_list']
+
+        result = []
+
+        for i, raw_tx_hex in enumerate(raw_tx_hex_list):
+            # 実行コントラクトのアドレスを取得
+            try:
+                raw_tx = decode(HexBytes(raw_tx_hex))
+                to_contract_address = to_checksum_address('0x' + raw_tx[3].hex())
+                LOG.info(raw_tx)
+            except Exception as e:
+                result.append({'id': i + 1, 'status': 0})
+                LOG.error(e)
+                LOG.error('RLP decoding failed')
+                continue
+
+            # 実行可能コントラクトであることをチェック
+            executable_contract = session.query(ExecutableContract). \
+                filter(to_contract_address == ExecutableContract.contract_address). \
+                first()
+            if executable_contract is None:
+                result.append({'id': i + 1, 'status': 0})
+                LOG.error('Not executable')
+                continue
+
+            # ブロックチェーンノードに送信
+            try:
+                web3.eth.sendRawTransaction(raw_tx_hex)
+            except ValueError as e:
+                result.append({
+                    'id': i + 1,
+                    'status': 0,
+                })
+                LOG.error(e)
+                continue
+
+        self.on_success(res, result)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'raw_tx_hex_list': {
+                'type': 'list',
+                'empty': False,
+                'required': True,
+                'schema': {
+                    'type': 'string',
+                    'required': True,
+                    'empty': False,
+                }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return request_json
