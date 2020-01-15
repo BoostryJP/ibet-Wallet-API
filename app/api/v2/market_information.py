@@ -308,7 +308,8 @@ class StraightBondTick(BaseResource):
             token = to_checksum_address(token_address)
             tick = []
             try:
-                entries = session.query(Agreement, Order).join(Order, Agreement.order_id == Order.order_id). \
+                entries = session.query(Agreement, Order).\
+                    join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
                     filter(Order.is_cancelled == False). \
@@ -650,7 +651,8 @@ class MembershipTick(BaseResource):
             token = to_checksum_address(token_address)
             tick = []
             try:
-                entries = session.query(Agreement, Order).join(Order, Agreement.order_id == Order.order_id).\
+                entries = session.query(Agreement, Order). \
+                    join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token).\
                     filter(Agreement.status == 1).\
                     filter(Order.is_cancelled == False).\
@@ -992,7 +994,8 @@ class CouponTick(BaseResource):
             token = to_checksum_address(token_address)
             tick = []
             try:
-                entries = session.query(Agreement, Order).join(Order, Agreement.order_id == Order.order_id). \
+                entries = session.query(Agreement, Order). \
+                    join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
                     filter(Order.is_cancelled == False). \

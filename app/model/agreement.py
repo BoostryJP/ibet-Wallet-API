@@ -15,7 +15,7 @@ class Agreement(Base):
     exchange_address = Column(String(256), primary_key=True)
     order_id = Column(BigInteger, primary_key=True)
     agreement_id = Column(BigInteger, primary_key=True)
-    unique_order_id = Column(String(256), index=True)
+    unique_order_id = Column(String(256), index=True)  # NOTE: exchange_address + '_' + str(order_id)
     buyer_address = Column(String(256), index=True)
     seller_address = Column(String(256), index=True)
     counterpart_address = Column(String(256))

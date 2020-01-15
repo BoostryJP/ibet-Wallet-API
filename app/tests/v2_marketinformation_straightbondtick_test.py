@@ -13,9 +13,13 @@ class TestV2StraightBondTick:
 
     def _insert_test_data(self, session):
         self.session = session
+
+        # Order Record
         o = Order()
+        o.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
         o.order_id = 1
+        o.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(1)
         o.price = 70
         o.amount = 5
         o.is_buy = True
@@ -23,18 +27,22 @@ class TestV2StraightBondTick:
         session.add(o)
 
         o = Order()
+        o.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
         o.order_id = 2
+        o.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(2)
         o.price = 80
         o.amount = 5
         o.is_buy = True
         o.is_cancelled = False
         session.add(o)
 
+        # Agreement Record
         a = Agreement()
         a.order_id = 1
         a.agreement_id = 101
         a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(1)
         a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.amount = 3
@@ -47,6 +55,7 @@ class TestV2StraightBondTick:
         a.order_id = 2
         a.agreement_id = 102
         a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(2)
         a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.amount = 3
@@ -54,6 +63,18 @@ class TestV2StraightBondTick:
         a.settlement_timestamp = '2019-11-13 16:24:14.183706'
         a.created = '2019-11-13 16:26:14.183706'
         session.add(a)
+
+        # Order Record (other exchange)
+        o = Order()
+        o.exchange_address = '0x1234567890123456789012345678901234567890'
+        o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
+        o.order_id = 1
+        o.unique_order_id = '0x1234567890123456789012345678901234567890' + "_" + str(1)
+        o.price = 70
+        o.amount = 5
+        o.is_buy = True
+        o.is_cancelled = False
+        session.add(o)
 
     # 正常系1：存在しない取引コントラクトアドレスを指定
     #  -> ゼロ件リストが返却される
