@@ -20,8 +20,9 @@ from web3.middleware import geth_poa_middleware
 from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), "JST")
 
-logging.getLogger("urllib3").setLevel(logging.WARNING)
 LOG = log.get_logger()
+log_fmt = 'PROCESSOR-OrderAgree [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
+logging.basicConfig(format=log_fmt)
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -71,7 +72,7 @@ class ConsoleSink:
     @staticmethod
     def on_new_order(token_address, exchange_address,
                      order_id, account_address, is_buy, price, amount, agent_address):
-        logging.info(
+        LOG.info(
             "NewOrder: exchange_address={}, order_id={}".format(
                 exchange_address, order_id
             )
@@ -79,7 +80,7 @@ class ConsoleSink:
 
     @staticmethod
     def on_cancel_order(exchange_address, order_id):
-        logging.info(
+        LOG.info(
             "CancelOrder: exchange_address={}, order_id={}".format(
                 exchange_address, order_id
             )
@@ -88,7 +89,7 @@ class ConsoleSink:
     @staticmethod
     def on_agree(exchange_address, order_id, agreement_id,
                  buyer_address, seller_address, counterpart_address, amount):
-        logging.info(
+        LOG.info(
             "Agree: exchange_address={}, orderId={}, agreementId={}".format(
                 exchange_address, order_id, agreement_id
             )
@@ -96,7 +97,7 @@ class ConsoleSink:
 
     @staticmethod
     def on_settlement_ok(exchange_address, order_id, agreement_id, settlement_timestamp):
-        logging.info(
+        LOG.info(
             "SettlementOK: exchange_address={}, orderId={}, agreementId={}".format(
                 exchange_address, order_id, agreement_id
             )
@@ -104,7 +105,7 @@ class ConsoleSink:
 
     @staticmethod
     def on_settlement_ng(exchange_address, order_id, agreement_id):
-        logging.info(
+        LOG.info(
             "SettlementNG: exchange_address={}, orderId={}, agreementId={}".format(
                 exchange_address, order_id, agreement_id
             )
@@ -224,7 +225,7 @@ class Processor:
         self.latest_block = blockTo
 
     def __sync_all(self, block_from, block_to):
-        logging.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_new_order(block_from, block_to)
         self.__sync_cancel_order(block_from, block_to)
         self.__sync_agree(block_from, block_to)
@@ -263,7 +264,7 @@ class Processor:
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
 
             except Exception as e:
-                logging.error(e)
+                LOG.error(e)
                 pass
 
     def __sync_cancel_order(self, block_from, block_to):
@@ -284,7 +285,7 @@ class Processor:
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
 
             except Exception as e:
-                logging.error(e)
+                LOG.error(e)
                 pass
 
     def __sync_agree(self, block_from, block_to):
@@ -321,7 +322,7 @@ class Processor:
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
 
             except Exception as e:
-                logging.error(e)
+                LOG.error(e)
                 pass
 
     def __sync_settlement_ok(self, block_from, block_to):
@@ -349,7 +350,7 @@ class Processor:
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
 
             except Exception as e:
-                logging.error(e)
+                LOG.error(e)
                 pass
 
     def __sync_settlement_ng(self, block_from, block_to):
@@ -372,7 +373,7 @@ class Processor:
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
 
             except Exception as e:
-                logging.error(e)
+                LOG.error(e)
                 pass
 
 

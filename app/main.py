@@ -178,6 +178,7 @@ class App(falcon.API):
         self.add_route('/v2/Position/StraightBond', v2position.StraightBondMyTokens())
         self.add_route('/v2/Position/Membership', v2position.MembershipMyTokens())
         self.add_route('/v2/Position/Coupon', v2position.CouponMyTokens())
+        self.add_route('/v2/Position/Coupon/Consumptions', v2position.CouponConsumptions())
 
         # 注文一覧・約定一覧
         self.add_route('/v2/OrderList', order_list.OrderList())
