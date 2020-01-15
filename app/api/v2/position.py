@@ -5,6 +5,8 @@ from datetime import timezone, timedelta
 
 JST = timezone(timedelta(hours=+9), 'JST')
 
+from sqlalchemy import desc
+
 from cerberus import Validator
 
 from web3 import Web3
@@ -16,7 +18,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing, BondTokenV2, MembershipTokenV2, CouponTokenV2
+from app.model import Listing, PrivateListing, BondTokenV2, MembershipTokenV2, CouponTokenV2, ConsumeCoupon
 
 LOG = log.get_logger()
 
@@ -566,3 +568,76 @@ class CouponMyTokens(BaseResource):
                 raise InvalidParameterError
 
         return request_json
+
+
+# ------------------------------
+# [クーポン]消費履歴
+# ------------------------------
+class CouponConsumptions(BaseResource):
+    """
+    Handle for endpoint: /v2/Position/Coupon/Consumptions
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v2.Position.CouponConsumptions')
+        session = req.context['session']
+
+        # 入力値チェック
+        request_json = CouponConsumptions.validate(req)
+
+        # クーポン消費履歴のリストを作成
+        _coupon_address = to_checksum_address(request_json['token_address'])
+        coupon_consumptions = []
+        for _account_address in request_json['account_address_list']:
+            consumptions = session.query(ConsumeCoupon).\
+                filter(ConsumeCoupon.token_address == _coupon_address).\
+                filter(ConsumeCoupon.account_address == _account_address).\
+                all()
+            for consumption in consumptions:
+                coupon_consumptions.append({
+                    'account_address': _account_address,
+                    'block_timestamp': consumption.block_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
+                    'value': consumption.amount
+                })
+
+        # block_timestampの昇順にソートする
+        # Note: もともとのリストはaccountのリストでループして作成したリストなので、古い順になっていないため
+        coupon_consumptions = sorted(
+            coupon_consumptions,
+            key=lambda x: x['block_timestamp']
+        )
+
+        self.on_success(res, coupon_consumptions)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'token_address': {
+                'type': 'string',
+                'empty': False,
+                'required': True
+            },
+            'account_address_list': {
+                'type': 'list',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(request_json['token_address']):
+            raise InvalidParameterError
+
+        for account_address in request_json['account_address_list']:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
+
