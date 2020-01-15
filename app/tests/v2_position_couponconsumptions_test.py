@@ -20,6 +20,16 @@ class TestV2CouponConsumptions():
         consume_coupon.block_timestamp = "2020-01-15 13:56:12.183706"
         session.add(consume_coupon)
 
+    def _insert_test_data_2(self, session):
+        self.session = session
+        consume_coupon = ConsumeCoupon()
+        consume_coupon.transaction_hash = "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
+        consume_coupon.token_address = "0xE0C95ECa44f2A1A23C4AfeA84dba62e15A35a69b"
+        consume_coupon.account_address = "0x28e0ad30c43b3d55851b881e25586926894de3e9"
+        consume_coupon.amount = 100
+        consume_coupon.block_timestamp = "2020-01-15 13:56:12.183705"
+        session.add(consume_coupon)
+
     # ＜正常系1＞
     #  クーポン消費（0件）
     def test_couponconsumptions_normal_1(self, client):
@@ -38,6 +48,39 @@ class TestV2CouponConsumptions():
     # ＜正常系2＞
     #  クーポン消費（1件）
     def test_couponconsumptions_normal_2(self, client, session):
+        self._insert_test_data(session)
+        self._insert_test_data_2(session)
+
+        request_params = {
+            "token_address": "0xE0C95ECa44f2A1A23C4AfeA84dba62e15A35a69b",
+            "account_address_list": [
+                "0x28e0ad30c43b3d55851b881e25586926894de3e9",
+                "0x16f39D63d156f9abCe0a9aB46F751E2eFdEB040f"
+            ]
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == [
+            {
+                'account_address': '0x28e0ad30c43b3d55851b881e25586926894de3e9',
+                'block_timestamp': '2020/01/15 13:56:12',
+                'value': 100
+            },
+            {
+                'account_address': '0x16f39D63d156f9abCe0a9aB46F751E2eFdEB040f',
+                'block_timestamp': '2020/01/15 13:56:12',
+                'value': 100
+            }
+        ]
+
+
+    # ＜正常系3＞
+    #  クーポン消費（2件:別アドレス）
+    def test_couponconsumptions_normal_3(self, client, session):
         self._insert_test_data(session)
 
         request_params = {

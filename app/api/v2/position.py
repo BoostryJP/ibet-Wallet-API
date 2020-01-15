@@ -592,13 +592,20 @@ class CouponConsumptions(BaseResource):
             consumptions = session.query(ConsumeCoupon).\
                 filter(ConsumeCoupon.token_address == _coupon_address).\
                 filter(ConsumeCoupon.account_address == _account_address).\
-                order_by(desc(ConsumeCoupon.block_timestamp)).all()
+                all()
             for consumption in consumptions:
                 coupon_consumptions.append({
                     'account_address': _account_address,
                     'block_timestamp': consumption.block_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
                     'value': consumption.amount
                 })
+
+        # block_timestampの昇順にソートする
+        # Note: もともとのリストはaccountのリストでループして作成したリストなので、古い順になっていないため
+        coupon_consumptions = sorted(
+            coupon_consumptions,
+            key=lambda x: x['block_timestamp']
+        )
 
         self.on_success(res, coupon_consumptions)
 
