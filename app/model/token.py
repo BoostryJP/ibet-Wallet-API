@@ -59,8 +59,10 @@ class BondTokenV2(TokenBase):
     return_date: str
     return_amount: str
     purpose: str
+    isRedeemed: bool
     transferable: bool
     certification: str
+    initial_offering_status: bool
     max_holding_quantity: int
     max_sell_amount: int
 
@@ -113,17 +115,3 @@ class CouponTokenV2(TokenBase):
     initial_offering_status: str
     max_holding_quantity: int
     max_sell_amount: int
-
-
-class MRFToken(TokenBase):
-    details: str
-    memo: str
-    status: str
-    initial_offering_status: str
-
-
-class JDRToken(TokenBase):
-    details: str
-    memo: str
-    status: str
-    initial_offering_status: str

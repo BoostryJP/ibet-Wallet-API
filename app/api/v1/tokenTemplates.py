@@ -50,33 +50,3 @@ class GetCouponABI(BaseResource):
         contracts = json.load(open('data/contracts.json', 'r'))
         abi = contracts['IbetCoupon']['abi']
         self.on_success(res, abi)
-
-
-# ------------------------------
-# MRF ABI参照
-# ------------------------------
-class GetMRFABI(BaseResource):
-    """
-    Handle for endpoint: /v1/MRFABI/
-    """
-
-    def on_get(self, req, res):
-        LOG.info('v1.tokenTemplates.GetMRFABI')
-        contracts = json.load(open('data/contracts.json', 'r'))
-        abi = contracts['IbetMRF']['abi']
-        self.on_success(res, abi)
-
-
-# ------------------------------
-# JDR ABI参照
-# ------------------------------
-class GetJDRABI(BaseResource):
-    """
-    Handle for endpoint: /v1/JDRABI/
-    """
-
-    def on_get(self, req, res):
-        LOG.info('v1.tokenTemplates.GetJDRABI')
-        contracts = json.load(open('data/contracts.json', 'r'))
-        abi = contracts['IbetDepositaryReceipt']['abi']
-        self.on_success(res, abi)

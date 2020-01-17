@@ -52,16 +52,12 @@ class App(falcon.API):
         self.add_route('/v1/StraightBondABI/', tokenTemplates.GetStraightBondABI())
         self.add_route('/v1/MembershipABI/', tokenTemplates.GetMembershipABI())
         self.add_route('/v1/CouponABI/', tokenTemplates.GetCouponABI())
-        self.add_route('/v1/MRFABI/', tokenTemplates.GetMRFABI())
-        self.add_route('/v1/JDRABI/', tokenTemplates.GetJDRABI())
 
         # 会社情報
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
         self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # マーケット情報：トークン一覧
-        self.add_route('/v1/JDR/Contracts', contracts.JDRContracts())
-        self.add_route('/v1/MRF/Contracts', contracts.MRFContracts())
         self.add_route('/v1/StraightBond/Contracts', contracts.Contracts())
         self.add_route('/v1/Membership/Contracts', contracts.MembershipContracts())
         self.add_route('/v1/Coupon/Contracts', contracts.CouponContracts())
@@ -72,27 +68,20 @@ class App(falcon.API):
         self.add_route('/v1/Coupon/OrderBook', marketInformation.CouponOrderBook())
 
         # マーケット情報：現在値
-        self.add_route('/v1/JDR/LastPrice', marketInformation.JDRLastPrice())
         self.add_route('/v1/StraightBond/LastPrice', marketInformation.LastPrice())
         self.add_route('/v1/Membership/LastPrice', marketInformation.MembershipLastPrice())
         self.add_route('/v1/Coupon/LastPrice', marketInformation.CouponLastPrice())
 
         # マーケット情報：歩み値
-        self.add_route('/v1/JDR/Tick', marketInformation.JDRTick())
         self.add_route('/v1/StraightBond/Tick', marketInformation.Tick())
         self.add_route('/v1/Membership/Tick', marketInformation.MembershipTick())
         self.add_route('/v1/Coupon/Tick', marketInformation.CouponTick())
 
         # 保有トークン一覧
-        self.add_route('/v1/JDR/MyTokens', position.JDRMyTokens())
         self.add_route('/v1/StraightBond/MyTokens', position.MyTokens())
         self.add_route('/v1/Membership/MyTokens', position.MembershipMyTokens())
         self.add_route('/v1/Coupon/MyTokens', position.CouponMyTokens())
         self.add_route('/v1/CouponConsumptions', position.CouponConsumptions())
-
-        # 保有トークン一覧（決済用）
-        self.add_route('/v1/MRF/MyTokens', position.MRFMyTokens())
-        self.add_route('/v1/MRF/Transfers', position.MRFTransfers())
 
         # 注文一覧・約定一覧
         self.add_route('/v1/OrderList', orderList.OrderList())
