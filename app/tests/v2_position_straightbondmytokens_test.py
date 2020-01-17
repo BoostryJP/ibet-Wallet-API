@@ -161,7 +161,6 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -173,6 +172,7 @@ class TestV2StraightBondMyTokens:
                     'url': ''
                 }],
                 'certification': [],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -251,7 +251,6 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -263,6 +262,7 @@ class TestV2StraightBondMyTokens:
                     'url': ''
                 }],
                 'certification': [],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -342,7 +342,6 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -354,6 +353,7 @@ class TestV2StraightBondMyTokens:
                     'url': ''
                 }],
                 'certification': [],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,

@@ -182,6 +182,7 @@ class StraightBondTokens(BaseResource):
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
+                initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
                 contact_information = TokenContract.functions.contactInformation().call()
                 privacy_policy = TokenContract.functions.privacyPolicy().call()
 
@@ -231,6 +232,7 @@ class StraightBondTokens(BaseResource):
                     {'id': 3, 'url': image_url_3},
                 ]
                 bondtoken.certification = certification
+                bondtoken.initial_offering_status = initial_offering_status
                 bondtoken.max_holding_quantity = available_token.max_holding_quantity
                 bondtoken.max_sell_amount = available_token.max_sell_amount
                 bondtoken.payment_method_credit_card = available_token.payment_method_credit_card
@@ -280,7 +282,7 @@ class StraightBondTokens(BaseResource):
 # ------------------------------
 class StraightBondTokenDetails(BaseResource):
     """
-    Handle for endpoint: /v2/Token/StraightBond
+    Handle for endpoint: /v2/Token/StraightBond/{contract_address}
     """
 
     def __init__(self):
@@ -424,6 +426,7 @@ class StraightBondTokenDetails(BaseResource):
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
+                initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
                 contact_information = TokenContract.functions.contactInformation().call()
                 privacy_policy = TokenContract.functions.privacyPolicy().call()
 
@@ -473,6 +476,7 @@ class StraightBondTokenDetails(BaseResource):
                     {'id': 3, 'url': image_url_3},
                 ]
                 bondtoken.certification = certification
+                bondtoken.initial_offering_status = initial_offering_status
                 bondtoken.max_holding_quantity = listed_token.max_holding_quantity
                 bondtoken.max_sell_amount = listed_token.max_sell_amount
                 bondtoken.payment_method_credit_card = listed_token.payment_method_credit_card

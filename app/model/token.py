@@ -59,8 +59,10 @@ class BondTokenV2(TokenBase):
     return_date: str
     return_amount: str
     purpose: str
+    isRedeemed: bool
     transferable: bool
     certification: str
+    initial_offering_status: bool
     max_holding_quantity: int
     max_sell_amount: int
 

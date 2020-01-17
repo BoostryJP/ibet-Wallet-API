@@ -133,6 +133,7 @@ class TestV2TokenStraightBondTokenDetails:
                 {'id': 3, 'url': ''}
             ],
             'certification': [],
+            'initial_offering_status': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,

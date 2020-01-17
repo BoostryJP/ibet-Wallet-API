@@ -154,6 +154,7 @@ class StraightBondMyTokens(BaseResource):
                             purpose = BondTokenContract.functions.purpose().call()
                             transferable = BondTokenContract.functions.transferable().call()
                             isRedeemed = BondTokenContract.functions.isRedeemed().call()
+                            initial_offering_status = BondTokenContract.functions.initialOfferingStatus().call()
                             image_url_1 = BondTokenContract.functions.getImageURL(0).call()
                             image_url_2 = BondTokenContract.functions.getImageURL(1).call()
                             image_url_3 = BondTokenContract.functions.getImageURL(2).call()
@@ -203,6 +204,7 @@ class StraightBondMyTokens(BaseResource):
                                 {'id': 3, 'url': image_url_3}
                             ]
                             bondtoken.certification = certification
+                            bondtoken.initial_offering_status = initial_offering_status
                             bondtoken.max_holding_quantity = token.max_holding_quantity
                             bondtoken.max_sell_amount = token.max_sell_amount
                             bondtoken.payment_method_credit_card = token.payment_method_credit_card
