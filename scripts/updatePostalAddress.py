@@ -1,6 +1,5 @@
 # 日本郵政HPから最新の郵便番号-住所のデータを取得する
 import urllib.request
-import sys
 import os
 import csv
 import zipfile
@@ -8,51 +7,63 @@ import json
 import subprocess
 import shutil
 import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
 import time
 import datetime
 
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
 # 設定
-class Config():
+class Config:
     yuseiUrl = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip"
     basePath = os.getcwd()
     targetZip = os.path.join(basePath, 'data', 'zip_code.zip')
 
-def getRawFile(yuseiUrl, basePath):
+
+# ファイル取得
+def getRawFile(yusei_url, base_path):
     try:
-        fileName = yuseiUrl.split("/")[len(yuseiUrl.split("/"))-1]
-        urllib.request.urlretrieve(yuseiUrl, os.path.join(basePath, fileName))
+        file_name = yusei_url.split("/")[len(yusei_url.split("/")) - 1]
+        urllib.request.urlretrieve(yusei_url, os.path.join(base_path, file_name))
         # 待たないとzipファイル取得しきれない
         # fuzzy
         time.sleep(5)
-        return fileName, os.path.getsize(os.path.join(basePath, fileName))
-    except:
+        return file_name, os.path.getsize(os.path.join(base_path, file_name))
+    except Exception as e:
+        print(e)
         print('マスタデータの取得に失敗しました郵政HPを確認してください')
         raise
 
-def checkVersion(basePath, fileSize):
-    with open(os.path.join(basePath, 'data', 'zip_code_version')) as f:
+
+# バージョンチェック
+def checkVersion(base_path, file_size):
+    with open(os.path.join(base_path, 'data', 'zip_code_version')) as f:
         reader = csv.reader(f)
         for row in reader:
-            if int(row[1]) == fileSize:
+            if int(row[1]) == file_size:
                 return False
             else:
                 return True
 
-def writeJson(data, pathWithFile):
-    fw = open(pathWithFile,'w')
+
+# JSONファイル出力
+def writeJson(data, path_with_file):
+    fw = open(path_with_file, 'w')
     json.dump(data, fw, indent=2, ensure_ascii=False)
 
-def createJson(basePath, fileName):
+
+# JSONファイル作成
+def createJson(base_path, file_name):
     try:
-        with zipfile.ZipFile(os.path.join(basePath, fileName)) as zf:
-            zf.extract('KEN_ALL.CSV', basePath)
+        with zipfile.ZipFile(os.path.join(base_path, file_name)) as zip_file:
+            zip_file.extract('KEN_ALL.CSV', base_path)
         print('マスタデータを解凍しました')
-    except:
+    except Exception as e:
+        print(e)
         print('マスタデータの解凍に失敗しました')
         raise
     try:
-        with open(os.path.join(basePath, 'KEN_ALL.CSV'), encoding='shift_jis') as f:
+        with open(os.path.join(base_path, 'KEN_ALL.CSV'), encoding='shift_jis') as f:
             reader = csv.reader(f)
             codeList = []
             for row in reader:
@@ -68,7 +79,7 @@ def createJson(basePath, fileName):
                 'prefecture_name': codeList[0][6],
                 'city_name': codeList[0][7],
                 'town_name': codeList[0][8]
-                }
+            }
             for item in codeList:
                 # 特殊な町域
                 # お探しの町域が見つからない場合、市区町村名の後ろに町域名がなく番地がくる住所、町域名がない市区町村
@@ -88,23 +99,27 @@ def createJson(basePath, fileName):
                     'prefecture_name': item[6],
                     'city_name': item[7],
                     'town_name': townName
-                    }
+                }
                 if preZipJson['zip_code'] == jsonData['zip_code']:
                     zipArray.append(jsonData)
                 else:
-                    if not os.path.exists(os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3])):
-                        os.makedirs(os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3]))
-                    writeJson(zipArray, os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3], preZipJson['zip_code'] + '.json'))
+                    if not os.path.exists(os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3])):
+                        os.makedirs(os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3]))
+                    writeJson(zipArray, os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3],
+                                                     preZipJson['zip_code'] + '.json'))
                     preZipJson = jsonData
                     zipArray = [jsonData]
             if zipArray:
-                writeJson(zipArray, os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3], preZipJson['zip_code'] + '.json'))
-            
-    except:
+                writeJson(zipArray, os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3],
+                                                 preZipJson['zip_code'] + '.json'))
+
+    except Exception as e:
+        print(e)
         print('JSONファイル作成に失敗しました')
         raise
 
 
+# 差分チェック
 def checkDiff(before, after):
     command = 'diff -r ' + before + ' ' + after
     ret = subprocess.run(command.split(), stdout=subprocess.PIPE)
@@ -115,12 +130,16 @@ def checkDiff(before, after):
         print(i, line)
         print('-----------------diff end----------------')
 
-def updateVersion(basePath, version):
-    with open(os.path.join(basePath, 'data', 'zip_code_version'), 'w') as f:
+
+# バージョンファイルの更新
+def updateVersion(base_path, version):
+    with open(os.path.join(base_path, 'data', 'zip_code_version'), 'w') as f:
         writer = csv.writer(f)
         dt = datetime.date.today().strftime('%Y%m%d')
         writer.writerow([dt, version])
 
+
+# メイン処理
 if __name__ == "__main__":
     tmpdir = os.path.join(Config.basePath, "scripts", 'tmp')
     os.makedirs(tmpdir, exist_ok=True)
@@ -145,4 +164,3 @@ if __name__ == "__main__":
     finally:
         print('処理が終わりました')
         shutil.rmtree(tmpdir)
-
