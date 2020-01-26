@@ -17,7 +17,7 @@ class TestV1StreetAddress:
 
         resp = client.simulate_get(self.apiurl + '/' + postal_code)
 
-        assumed_body = [{"prefecture_jis_code":"13","city_jis_code":"13115","zip_code":"1670052","prefecture_name_kana":"ﾄｳｷｮｳﾄ","city_name_kana":"ｽｷﾞﾅﾐｸ","town_name_kana":"ﾐﾅﾐｵｷﾞｸﾎﾞ","prefecture_name":"東京都","city_name":"杉並区","town_name":"南荻窪"}]
+        assumed_body = [{"jis_code":"13115","zip_code":"1670052","prefecture_name_kana":"ﾄｳｷｮｳﾄ","city_name_kana":"ｽｷﾞﾅﾐｸ","town_name_kana":"ﾐﾅﾐｵｷﾞｸﾎﾞ","prefecture_name":"東京都","city_name":"杉並区","town_name":"南荻窪"}]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}

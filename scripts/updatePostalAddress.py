@@ -2,11 +2,9 @@
 import urllib.request
 import sys
 import os
-import re
 import csv
 import zipfile
 import json
-import filecmp
 import subprocess
 import shutil
 import ssl
@@ -40,6 +38,10 @@ def checkVersion(basePath, fileSize):
                 return False
             else:
                 return True
+
+def writeJson(data, pathWithFile):
+    fw = open(pathWithFile,'w')
+    json.dump(data, fw, indent=2, ensure_ascii=False)
 
 def createJson(basePath, fileName):
     try:
@@ -92,10 +94,12 @@ def createJson(basePath, fileName):
                 else:
                     if not os.path.exists(os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3])):
                         os.makedirs(os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3]))
-                    fw = open(os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3], preZipJson['zip_code'] + '.json'),'w')
-                    json.dump(zipArray, fw, indent=2, ensure_ascii=False)
+                    writeJson(zipArray, os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3], preZipJson['zip_code'] + '.json'))
                     preZipJson = jsonData
                     zipArray = [jsonData]
+            if zipArray:
+                writeJson(zipArray, os.path.join(basePath, 'zip_code', preZipJson['zip_code'][0:3], preZipJson['zip_code'] + '.json'))
+            
     except:
         print('JSONファイル作成に失敗しました')
         raise

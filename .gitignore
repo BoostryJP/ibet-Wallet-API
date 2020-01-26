@@ -5,6 +5,7 @@ __pycache__/
 .vscode
 .project
 data/zip_code/*
+scripts/tmp/*
 
 # Intellij
 .idea
