@@ -15,3 +15,5 @@ data/zip_code/*
 
 # Sphinx
 doc/build/*
+
+.DS_Store

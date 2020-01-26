@@ -66,7 +66,7 @@ USER root
 COPY . /app/ibet-Wallet-API
 RUN chown -R apl:apl /app/ibet-Wallet-API && \
     chmod 755 /app/ibet-Wallet-API
-RUN unzip /app/ibet-Wallet-API/data/zip_code.zip -d /app/ibet-Wallet-API/data/
+RUN unzip /app/ibet-Wallet-API/data/zip_code.zip -d /app/ibet-Wallet-API/data/zip_code
 USER apl
 COPY run.sh /app/
 
