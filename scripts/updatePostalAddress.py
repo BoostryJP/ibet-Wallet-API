@@ -25,9 +25,6 @@ def getRawFile(yusei_url, base_path):
     try:
         file_name = yusei_url.split("/")[len(yusei_url.split("/")) - 1]
         urllib.request.urlretrieve(yusei_url, os.path.join(base_path, file_name))
-        # 待たないとzipファイル取得しきれない
-        # fuzzy
-        time.sleep(5)
         return file_name, os.path.getsize(os.path.join(base_path, file_name))
     except Exception as e:
         print(e)
@@ -153,7 +150,7 @@ if __name__ == "__main__":
             with zipfile.ZipFile(os.path.join(tmpdir, "zip_code.zip")) as zf:
                 zf.extractall(os.path.join(tmpdir, "zip_code_old"))
             checkDiff(os.path.join(tmpdir, "zip_code_old"), os.path.join(tmpdir, "zip_code"))
-            shutil.make_archive(os.path.join(tmpdir, "zip_code"), 'zip', root_dir=os.path.join(tmpdir, "zip_code"))
+            shutil.make_archive(os.path.join(tmpdir, "zip_code"), 'zip', root_dir=tmpdir, base_dir="zip_code")
             shutil.move(os.path.join(tmpdir, "zip_code.zip"), Config.targetZip)
             updateVersion(Config.basePath, fileSize)
         else:
