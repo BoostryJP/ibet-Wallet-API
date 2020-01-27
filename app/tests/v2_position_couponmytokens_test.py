@@ -32,12 +32,10 @@ class TestV2CouponMyTokens:
 
         # ＜発行体オペレーション＞
         #   1) クーポントークン発行
-        #   2) Exchangeにデポジット（10トークン）
-        #   3) 投資家に付与（10トークン）
+        #   2) 投資家に付与（10トークン）
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
-        deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange, trader['account_address'], 10)
+        transfer_coupon_token(issuer, coupon_token, trader['account_address'], 10)
         return coupon_token
 
     # 無効化クーポントークンの保有状態を作成（譲渡イベント）
@@ -61,14 +59,11 @@ class TestV2CouponMyTokens:
 
         # ＜発行体オペレーション＞
         #   1) クーポントークン発行
-        #   2) Exchangeにデポジット（10トークン）
-        #   3) 投資家に付与（10トークン）
-        #   4) クーポントークンを無効化
+        #   2) 投資家に付与（10トークン）
+        #   3) クーポントークンを無効化
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
-        deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-                              trader['account_address'], 10)
+        transfer_coupon_token(issuer, coupon_token, trader['account_address'], 10)
         invalidate_coupon_token(issuer, coupon_token)
         return coupon_token
 

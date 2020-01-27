@@ -2,8 +2,7 @@
 import json
 
 from .account_config import eth_account
-from .contract_modules import issue_coupon_token, deposit_coupon_token, \
-    transfer_coupon_token, consume_coupon_token
+from .contract_modules import issue_coupon_token, transfer_coupon_token, consume_coupon_token
 
 
 # クーポン消費履歴API
@@ -34,12 +33,9 @@ class TestV1CouponConsumptions():
 
         # ＜発行体オペレーション＞
         #   1) クーポントークン発行
-        #   2) Exchangeにデポジット（10トークン）
-        #   3) 投資家に付与（10トークン）
+        #   2) 投資家に付与（10トークン）
         coupon_token = issue_coupon_token(issuer, attribute)
-        deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange,
-                              trader['account_address'], 10)
+        transfer_coupon_token(issuer, coupon_token, trader['account_address'], 10)
 
         # ＜投資家オペレーション＞
         #   1) クーポン消費
@@ -69,11 +65,9 @@ class TestV1CouponConsumptions():
 
         # ＜発行体オペレーション＞
         #   1) クーポントークン発行
-        #   2) Exchangeにデポジット（10トークン）
-        #   3) 投資家に付与（10トークン）
+        #   2) 投資家に付与（10トークン）
         coupon_token = issue_coupon_token(issuer, attribute)
-        deposit_coupon_token(issuer, coupon_token, coupon_exchange, 10)
-        transfer_coupon_token(issuer, coupon_token, coupon_exchange, trader['account_address'], 10)
+        transfer_coupon_token(issuer, coupon_token, trader['account_address'], 10)
 
         # ＜投資家オペレーション＞
         #   1) クーポン消費
