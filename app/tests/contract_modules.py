@@ -259,32 +259,15 @@ def coupon_register_list(invoker, token, token_list):
     tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
 
-# クーポントークンのデポジット
-def deposit_coupon_token(invoker, coupon_token, coupon_exchange, value):
-    web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
-    CouponTokenContract = Contract.get_contract(
-        'IbetCoupon', coupon_token['address'])
-
-    tx_hash = CouponTokenContract.functions. \
-        allocate(coupon_exchange['address'], value). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
-
-
 # クーポントークンの割当
-def transfer_coupon_token(invoker, coupon_token, coupon_exchange, to, value):
+def transfer_coupon_token(invoker, coupon_token, to, value):
     web3.eth.defaultAccount = invoker['account_address']
     web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
-    CouponExchangeContract = Contract.get_contract(
-        'IbetCouponExchange', coupon_exchange['address'])
-
-    tx_hash = CouponExchangeContract.functions. \
-        transfer(coupon_token['address'], to, value). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    coupon_contract = Contract.get_contract('IbetCoupon', coupon_token['address'])
+    gas = coupon_contract.estimateGas().transfer(to, value)
+    tx_hash = coupon_contract.functions.transfer(to, value). \
+        transact({'from': invoker['account_address'], 'gas': gas})
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # クーポントークンの無効化
