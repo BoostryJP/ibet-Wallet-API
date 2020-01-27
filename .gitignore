@@ -5,6 +5,7 @@ __pycache__/
 .vscode
 .project
 data/zip_code/*
+scripts/tmp/*
 
 # Intellij
 .idea
@@ -15,3 +16,5 @@ data/zip_code/*
 
 # Sphinx
 doc/build/*
+
+.DS_Store
