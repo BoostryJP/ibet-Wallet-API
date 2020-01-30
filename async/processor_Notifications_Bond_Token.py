@@ -126,7 +126,7 @@ class Watcher:
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == 'IbetStraightBond':
+            elif (token_list.get_token(registered_token.token_address))[1] == 'IbetStraightBond':
                 res.append(registered_token)
         return res
 
