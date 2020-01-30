@@ -77,6 +77,7 @@ class Notification(Base):
             "deleted_at": Notification.format_timestamp(self.deleted_at),
             "args": self.args,
             "metainfo": self.metainfo,
+            "account_address": self.address,
         }
 
     FIELDS = {
