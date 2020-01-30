@@ -269,7 +269,7 @@ class WatchApplyForOffering(Watcher):
             token_name = token_contract.functions.name().call()
             push_publish(
                 self._gen_notification_id(entry),
-                None,
+                entry["args"]["accountAddress"],
                 0,
                 entry["blockNumber"],
                 token_name + 'の募集申込が完了しました。',
@@ -307,7 +307,7 @@ class WatchTransfer(Watcher):
             token_name = token_contract.functions.name().call()
             push_publish(
                 self._gen_notification_id(entry),
-                None,
+                entry["args"]["to"],
                 0,
                 entry["blockNumber"],
                 token_name + 'を受領しました。',
