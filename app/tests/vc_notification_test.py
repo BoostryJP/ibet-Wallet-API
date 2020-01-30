@@ -133,6 +133,7 @@ class TestV1Notification():
                 "metainfo": {
                     "aaa": "bbb"
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
             {
                 "notification_type": "SampleNotification3",
@@ -149,6 +150,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
             {
                 "notification_type": "SampleNotification5",
@@ -165,6 +167,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
         ]
 
@@ -198,6 +201,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
         ]
 
@@ -231,6 +235,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
         ]
 
@@ -264,6 +269,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
             {
                 "notification_type": "SampleNotification1",
@@ -281,6 +287,7 @@ class TestV1Notification():
                 "metainfo": {
                     "aaa": "bbb"
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
             {
                 "notification_type": "SampleNotification5",
@@ -297,6 +304,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
         ]
 
@@ -330,6 +338,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
             {
                 "notification_type": "SampleNotification5",
@@ -346,6 +355,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
         ]
 
@@ -380,6 +390,7 @@ class TestV1Notification():
                 },
                 "metainfo": {
                 },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
             },
         ]
 
@@ -522,6 +533,7 @@ class TestV1Notification():
             "metainfo": {
                 "aaa": "bbb"
             },
+            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         }
 
         assert resp.status_code == 200
@@ -560,6 +572,7 @@ class TestV1Notification():
             },
             "metainfo": {
             },
+            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         }
 
         assert resp.status_code == 200
