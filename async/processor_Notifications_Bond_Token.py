@@ -167,7 +167,7 @@ class Watcher:
 # イベント：募集申込開始
 class WatchStartInitialOffering(Watcher):
     def __init__(self):
-        super().__init__("ChangeInitialOfferingStatus", {'status': True})
+        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': True}} )
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
@@ -201,10 +201,10 @@ class WatchStartInitialOffering(Watcher):
             )
 
 
-# イベント：募集申込開始
+# イベント：募集申込終了
 class WatchStopInitialOffering(Watcher):
     def __init__(self):
-        super().__init__("ChangeInitialOfferingStatus", {'status': False})
+        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': False}})
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
