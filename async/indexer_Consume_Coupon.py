@@ -24,7 +24,7 @@ from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), "JST")
 
 LOG = log.get_logger()
-log_fmt = 'PROCESSOR-Consume-Coupon [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
+log_fmt = 'INDEXER-Consume-Coupon [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
 logging.basicConfig(format=log_fmt)
 
 # 設定の取得
