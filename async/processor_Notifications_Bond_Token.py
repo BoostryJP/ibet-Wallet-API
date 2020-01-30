@@ -143,7 +143,7 @@ class Watcher:
             for bond_token in bond_token_list:
                 try:
                     # イベント取得
-                    bond_contract = Contract.get_contract('IbetStraightBondExchange', bond_token.token_address)
+                    bond_contract = Contract.get_contract('IbetStraightBond', bond_token.token_address)
                     event_filter = bond_contract.eventFilter(self.filter_name, self.filter_params)
                     entries = event_filter.get_all_entries()
                     web3.eth.uninstallFilter(event_filter.filter_id)
