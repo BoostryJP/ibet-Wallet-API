@@ -172,7 +172,7 @@ class WatchStartInitialOffering(Watcher):
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
-            token_owner_address = token_contract.functi.ons.owner().call()
+            token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
             company = company_list.find(token_owner_address)
             metadata = {
