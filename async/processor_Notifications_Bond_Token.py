@@ -93,11 +93,11 @@ def push_publish(notification_id, account_address, priority, blocknumber, messag
                 send_data = json.dumps({"GCM": json.dumps(message_dict)})
             try:
                 client = boto3.client('sns', 'ap-northeast-1')
-                #client.publish(
-                #    TargetArn=device_data.device_endpoint_arn,
-                #    Message=send_data,
-                #    MessageStructure='json'
-                #)
+                client.publish(
+                    TargetArn=device_data.device_endpoint_arn,
+                    Message=send_data,
+                    MessageStructure='json'
+                )
             except ClientError:
                 LOG.warning('device_endpoint_arn does not found.')
 
