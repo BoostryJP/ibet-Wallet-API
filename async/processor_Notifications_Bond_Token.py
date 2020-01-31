@@ -43,7 +43,6 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
-token_factory = TokenFactory(web3)
 company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
