@@ -238,6 +238,43 @@ class WatchStopInitialOffering(Watcher):
             )
 
 
+# イベント：償還
+class WatchRedeem(Watcher):
+    def __init__(self):
+        super().__init__("Redeem", {} )
+
+    def db_merge(self, token_contract, entries):
+        company_list = company_list_factory.get()
+        for entry in entries:
+            token_owner_address = token_contract.functions.owner().call()
+            token_name = token_contract.functions.name().call()
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token_name,
+                "token_type": "IbetStraightBond"
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "Redeem"
+            notification.priority = 0
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, token_contract, entries):
+        for entry in entries:
+            token_name = token_contract.functions.name().call()
+            push_publish(
+                self._gen_notification_id(entry),
+                None,
+                0,
+                entry["blockNumber"],
+                token_name + 'が償還されました。',
+            )
+
+
 # イベント：募集申込
 class WatchApplyForOffering(Watcher):
     def __init__(self):
@@ -319,6 +356,7 @@ def main():
     watchers = [
         WatchStartInitialOffering(),
         WatchStopInitialOffering(),
+        WatchRedeem(),
         WatchApplyForOffering(),
         WatchTransfer(),
     ]
