@@ -4,7 +4,7 @@ import json
 from .account_config import eth_account
 from app import config
 from .contract_modules import issue_coupon_token, coupon_offer, \
-    coupon_get_latest_orderid, coupon_take_buy
+    coupon_get_latest_orderid, coupon_take_buy, coupon_get_latest_agreementid, coupon_confirm_agreement
 
 
 class TestV2CouponLastPrice:
@@ -20,6 +20,7 @@ class TestV2CouponLastPrice:
     def generate_agree_event(exchange):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
+        agent = eth_account['agent']
 
         attribute = {
             'name': 'テストクーポン',
@@ -42,6 +43,10 @@ class TestV2CouponLastPrice:
         # 投資家オペレーション
         latest_orderid = coupon_get_latest_orderid(exchange)
         coupon_take_buy(trader, exchange, latest_orderid, 100)
+
+        # 決済業者オペレーション
+        latest_agreementid = coupon_get_latest_agreementid(exchange, latest_orderid)
+        coupon_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 

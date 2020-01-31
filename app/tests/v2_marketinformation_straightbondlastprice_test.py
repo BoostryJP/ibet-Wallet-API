@@ -5,7 +5,7 @@ from .account_config import eth_account
 from app import config
 from .contract_modules import issue_bond_token, offer_bond_token, \
     register_personalinfo, register_payment_gateway, \
-    take_buy_bond_token, get_latest_orderid
+    take_buy_bond_token, get_latest_orderid, get_latest_agreementid, bond_confirm_agreement
 
 
 class TestV2StraightBondLastPrice:
@@ -21,6 +21,7 @@ class TestV2StraightBondLastPrice:
     def generate_agree_event(bond_exchange, personal_info, payment_gateway):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
+        agent = eth_account['agent']
 
         attribute = {
             'name': 'テスト債券',
@@ -63,6 +64,10 @@ class TestV2StraightBondLastPrice:
         register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
         take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
+
+        # 決済業者オペレーション
+        latest_agreementid = get_latest_agreementid(bond_exchange, latest_orderid)
+        bond_confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
 
         return bond_token
 
