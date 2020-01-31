@@ -18,9 +18,8 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 from app import log
 from app import config
-from app.model import Notification, Push, Listing
+from app.model import Notification, Push, Listing, PrivateListing
 from app.contracts import Contract
-from async.lib.token import TokenFactory
 from async.lib.company_list import CompanyListFactory
 from async.lib.token_list import TokenList
 from async.lib.misc import wait_all_futures
@@ -118,9 +117,19 @@ class Watcher:
     def _gen_block_timestamp(self, entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def _get_bond_token_list(self):
+    def _get_bond_token_public_list(self):
         res = []
         registered_token_list = db_session.query(Listing).all()
+        for registered_token in registered_token_list:
+            if not token_list.is_registered(registered_token.token_address):
+                continue
+            elif token_list.get_token(registered_token.token_address)[1] == 'IbetStraightBond':
+                res.append(registered_token)
+        return res
+
+    def _get_bond_token_all_list(self):
+        res = []
+        registered_token_list = db_session.query(Listing).union(db_session.query(PrivateListing)).all()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
@@ -135,7 +144,10 @@ class Watcher:
             self.filter_params["fromBlock"] = self.from_block
 
             # 登録済みの債券リストを取得
-            bond_token_list = self._get_bond_token_list()
+            if self.__class__.__name__ == "WatchTransfer":
+                bond_token_list = self._get_bond_token_all_list()
+            else:
+                bond_token_list = self._get_bond_token_public_list()
 
             # イベント処理
             for bond_token in bond_token_list:
@@ -176,6 +188,7 @@ class WatchStartInitialOffering(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token_name,
+                "exchange_address": "",
                 "token_type": "IbetStraightBond"
             }
             notification = Notification()
@@ -213,6 +226,7 @@ class WatchStopInitialOffering(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token_name,
+                "exchange_address": "",
                 "token_type": "IbetStraightBond"
             }
             notification = Notification()
@@ -250,6 +264,7 @@ class WatchRedeem(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token_name,
+                "exchange_address": "",
                 "token_type": "IbetStraightBond"
             }
             notification = Notification()
@@ -287,6 +302,7 @@ class WatchApplyForOffering(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token_name,
+                "exchange_address": "",
                 "token_type": "IbetStraightBond"
             }
             notification = Notification()
@@ -325,6 +341,7 @@ class WatchTransfer(Watcher):
             metadata = {
                 "company_name": company.corporate_name,
                 "token_name": token_name,
+                "exchange_address": "",
                 "token_type": "IbetStraightBond"
             }
             notification = Notification()
