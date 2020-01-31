@@ -4,11 +4,13 @@ import json
 from .account_config import eth_account
 from app import config
 from .contract_modules import issue_bond_token, offer_bond_token, \
-    register_personalinfo, register_payment_gateway, register_exchange_regulator,\
+    register_personalinfo, register_payment_gateway, register_exchange_regulator, \
     take_buy_bond_token, get_latest_orderid, \
     membership_issue, membership_offer, membership_get_latest_orderid, \
     membership_take_buy, issue_coupon_token, coupon_offer, \
-    coupon_get_latest_orderid, coupon_take_buy
+    coupon_get_latest_orderid, coupon_take_buy, get_latest_agreementid, bond_confirm_agreement, \
+    membership_get_latest_agreementid, membership_confirm_agreement, coupon_get_latest_agreementid, \
+    coupon_confirm_agreement
 
 
 # [普通社債]現在値取得API
@@ -22,6 +24,7 @@ class TestV1StraightBondLastPrice:
     def generate_agree_event(bond_exchange, personal_info, payment_gateway):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
+        agent = eth_account['agent']
 
         attribute = {
             'name': 'テスト債券',
@@ -64,6 +67,10 @@ class TestV1StraightBondLastPrice:
         register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
         take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
+
+        # 決済業者オペレーション
+        latest_agreementid = get_latest_agreementid(bond_exchange, latest_orderid)
+        bond_confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
 
         return bond_token
 
@@ -219,6 +226,7 @@ class TestV1MembershipLastPrice:
     def generate_agree_event(exchange):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
+        agent = eth_account['agent']
 
         attribute = {
             'name': 'テスト会員権',
@@ -241,6 +249,10 @@ class TestV1MembershipLastPrice:
         # 投資家オペレーション
         latest_orderid = membership_get_latest_orderid(exchange)
         membership_take_buy(trader, exchange, latest_orderid, 100)
+
+        # 決済業者オペレーション
+        latest_agreementid = membership_get_latest_agreementid(exchange, latest_orderid)
+        membership_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 
@@ -392,6 +404,7 @@ class TestV1CouponLastPrice:
     def generate_agree_event(exchange):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
+        agent = eth_account['agent']
 
         attribute = {
             'name': 'テストクーポン',
@@ -414,6 +427,10 @@ class TestV1CouponLastPrice:
         # 投資家オペレーション
         latest_orderid = coupon_get_latest_orderid(exchange)
         coupon_take_buy(trader, exchange, latest_orderid, 100)
+
+        # 決済業者オペレーション
+        latest_agreementid = coupon_get_latest_agreementid(exchange, latest_orderid)
+        coupon_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 

@@ -4,7 +4,7 @@ import json
 from .account_config import eth_account
 from app import config
 from .contract_modules import membership_issue, membership_offer, \
-    membership_get_latest_orderid, membership_take_buy
+    membership_get_latest_orderid, membership_take_buy, membership_get_latest_agreementid, membership_confirm_agreement
 
 
 class TestV2MembershipLastPrice:
@@ -20,6 +20,7 @@ class TestV2MembershipLastPrice:
     def generate_agree_event(exchange):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
+        agent = eth_account['agent']
 
         attribute = {
             'name': 'テスト会員権',
@@ -42,6 +43,10 @@ class TestV2MembershipLastPrice:
         # 投資家オペレーション
         latest_orderid = membership_get_latest_orderid(exchange)
         membership_take_buy(trader, exchange, latest_orderid, 100)
+
+        # 決済業者オペレーション
+        latest_agreementid = membership_get_latest_agreementid(exchange, latest_orderid)
+        membership_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 
