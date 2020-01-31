@@ -27,7 +27,7 @@ from async.lib.misc import wait_all_futures
 JST = timezone(timedelta(hours=+9), "JST")
 
 LOG = log.get_logger()
-log_fmt = 'PROCESSOR-Notifications_Bond_Token [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
+log_fmt = 'PROCESSOR-Notifications_Coupon_Token [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
 logging.basicConfig(format=log_fmt)
 
 # 設定の取得
@@ -117,23 +117,23 @@ class Watcher:
     def _gen_block_timestamp(self, entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def _get_bond_token_public_list(self):
+    def _get_coupon_token_public_list(self):
         res = []
         registered_token_list = db_session.query(Listing).all()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == 'IbetStraightBond':
+            elif token_list.get_token(registered_token.token_address)[1] == 'IbetCoupon':
                 res.append(registered_token)
         return res
 
-    def _get_bond_token_all_list(self):
+    def _get_coupon_token_all_list(self):
         res = []
         registered_token_list = db_session.query(Listing).union(db_session.query(PrivateListing)).all()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == 'IbetStraightBond':
+            elif token_list.get_token(registered_token.token_address)[1] == 'IbetCoupon':
                 res.append(registered_token)
         return res
 
@@ -145,16 +145,16 @@ class Watcher:
 
             # 登録済みの債券リストを取得
             if self.__class__.__name__ == "WatchTransfer":
-                bond_token_list = self._get_bond_token_all_list()
+                coupon_token_list = self._get_coupon_token_all_list()
             else:
-                bond_token_list = self._get_bond_token_public_list()
+                coupon_token_list = self._get_coupon_token_public_list()
 
             # イベント処理
-            for bond_token in bond_token_list:
+            for coupon_token in coupon_token_list:
                 try:
                     # イベント取得
-                    bond_contract = Contract.get_contract('IbetStraightBond', bond_token.token_address)
-                    event_filter = bond_contract.eventFilter(self.filter_name, self.filter_params)
+                    coupon_contract = Contract.get_contract('IbetCoupon', coupon_token.token_address)
+                    event_filter = coupon_contract.eventFilter(self.filter_name, self.filter_params)
                     entries = event_filter.get_all_entries()
                     web3.eth.uninstallFilter(event_filter.filter_id)
                 except Exception as e:
@@ -164,167 +164,14 @@ class Watcher:
                     continue
                 else:
                     # DB登録
-                    self.db_merge(bond_contract, entries)
+                    self.db_merge(coupon_contract, entries)
                     self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
                     db_session.commit()
                     # Push通知
-                    self.push(bond_contract, entries)
+                    self.push(coupon_contract, entries)
         finally:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
-
-
-# イベント：募集申込開始
-class WatchStartInitialOffering(Watcher):
-    def __init__(self):
-        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': True}} )
-
-    def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
-        for entry in entries:
-            token_owner_address = token_contract.functions.owner().call()
-            token_name = token_contract.functions.name().call()
-            company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
-                "token_name": token_name,
-                "exchange_address": "",
-                "token_type": "IbetStraightBond"
-            }
-            notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "StartInitialOffering"
-            notification.priority = 0
-            notification.block_timestamp = self._gen_block_timestamp(entry)
-            notification.args = dict(entry["args"])
-            notification.metainfo = metadata
-            db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                None,
-                0,
-                entry["blockNumber"],
-                token_name + 'の募集申込が開始されました。',
-            )
-
-
-# イベント：募集申込終了
-class WatchStopInitialOffering(Watcher):
-    def __init__(self):
-        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': False}})
-
-    def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
-        for entry in entries:
-            token_owner_address = token_contract.functions.owner().call()
-            token_name = token_contract.functions.name().call()
-            company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
-                "token_name": token_name,
-                "exchange_address": "",
-                "token_type": "IbetStraightBond"
-            }
-            notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "StopInitialOffering"
-            notification.priority = 0
-            notification.block_timestamp = self._gen_block_timestamp(entry)
-            notification.args = dict(entry["args"])
-            notification.metainfo = metadata
-            db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                None,
-                0,
-                entry["blockNumber"],
-                token_name + 'の募集申込が終了しました。',
-            )
-
-
-# イベント：償還
-class WatchRedeem(Watcher):
-    def __init__(self):
-        super().__init__("Redeem", {} )
-
-    def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
-        for entry in entries:
-            token_owner_address = token_contract.functions.owner().call()
-            token_name = token_contract.functions.name().call()
-            company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
-                "token_name": token_name,
-                "exchange_address": "",
-                "token_type": "IbetStraightBond"
-            }
-            notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "Redeem"
-            notification.priority = 0
-            notification.block_timestamp = self._gen_block_timestamp(entry)
-            notification.args = dict(entry["args"])
-            notification.metainfo = metadata
-            db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                None,
-                0,
-                entry["blockNumber"],
-                token_name + 'が償還されました。',
-            )
-
-
-# イベント：募集申込
-class WatchApplyForOffering(Watcher):
-    def __init__(self):
-        super().__init__("ApplyFor", {})
-
-    def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
-        for entry in entries:
-            token_owner_address = token_contract.functions.owner().call()
-            token_name = token_contract.functions.name().call()
-            company = company_list.find(token_owner_address)
-            metadata = {
-                "company_name": company.corporate_name,
-                "token_name": token_name,
-                "exchange_address": "",
-                "token_type": "IbetStraightBond"
-            }
-            notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "ApplyForOffering"
-            notification.priority = 0
-            notification.address = entry["args"]["accountAddress"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
-            notification.args = dict(entry["args"])
-            notification.metainfo = metadata
-            db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                entry["args"]["accountAddress"],
-                0,
-                entry["blockNumber"],
-                token_name + 'の募集申込が完了しました。',
-            )
 
 
 # イベント：トークン移転（受領時）
@@ -342,7 +189,7 @@ class WatchTransfer(Watcher):
                 "company_name": company.corporate_name,
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetStraightBond"
+                "token_type": "IbetCoupon"
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -369,10 +216,6 @@ class WatchTransfer(Watcher):
 # メイン処理
 def main():
     watchers = [
-        WatchStartInitialOffering(),
-        WatchStopInitialOffering(),
-        WatchRedeem(),
-        WatchApplyForOffering(),
         WatchTransfer(),
     ]
 
