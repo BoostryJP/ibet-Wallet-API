@@ -58,7 +58,7 @@ token_list = TokenList(list_contract)
 
 
 # PUSH通知送信
-def push_publish(notification_id, address, priority, blocknumber, subject, message):
+def push_publish(notification_id, address, priority, blocknumber, subject, message, detail_link=True):
     # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
     # 「対象のblockNumber」が起動時のblockNumber以上の場合は送信
     if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
@@ -78,14 +78,15 @@ def push_publish(notification_id, address, priority, blocknumber, subject, messa
                         "alert": message
                     },
                     "data": {
-                        "notification_id": notification.notification_id
+                        "notification_id": notification.notification_id,
+                        "detail_link": detail_link
                     }
                 }
                 send_data = json.dumps({"APNS": json.dumps(message_dict)})
             elif device_data.platform == 'android':
                 message_dict = {
                     "data": {
-                        "message": message, "notification_id": notification.notification_id
+                        "message": message, "notification_id": notification.notification_id, "detail_link": detail_link
                     }
                 }
                 send_data = json.dumps({"GCM": json.dumps(message_dict)})
