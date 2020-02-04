@@ -4,7 +4,6 @@ import os
 import csv
 import zipfile
 import json
-import subprocess
 import shutil
 import ssl
 import datetime
@@ -111,7 +110,6 @@ def update_version(base_path, version):
 
 # メイン処理
 if __name__ == "__main__":
-
     # 作業ディレクトリ作成
     tmp_dir = os.path.join(base_dir, "scripts", 'tmp')
     os.makedirs(tmp_dir, exist_ok=True)
@@ -137,5 +135,6 @@ if __name__ == "__main__":
     except Exception as err:
         logging.error(err, "処理中にエラーが発生しました。")
     finally:
+        # 作業ディレクトリの削除
         shutil.rmtree(tmp_dir)
         logging.info('正常終了しました。')
