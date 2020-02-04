@@ -7,7 +7,6 @@ import json
 import subprocess
 import shutil
 import ssl
-import time
 import datetime
 
 ssl._create_default_https_context = ssl._create_unverified_context
