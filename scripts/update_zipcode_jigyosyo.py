@@ -77,7 +77,7 @@ def create_json(work_dir):
         for item in code_list:
             json_data = {
                 'jis_code': item[0],  # 大口事業所の所在地のJISコード
-                'zip_code': item[7],  #	大口事業所個別番号
+                'zip_code': item[7],  # 大口事業所個別番号
                 'corporate_name_kana': item[1],  # 大口事業所名（かな）
                 'corporate_name': item[2],  # 大口事業所名（漢字）
                 'prefecture_name_kana': '',  # 都道府県名（かな）
