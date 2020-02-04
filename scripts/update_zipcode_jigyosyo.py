@@ -117,7 +117,7 @@ if __name__ == "__main__":
     try:
         # ファイルダウンロード
         file_size = download_file(tmp_dir)
-        if check_version(file_size):
+        if check_version(file_size):  # バージョンに差分がない場合は処理をスキップ
             # JSONファイル作成
             create_json(tmp_dir)
             # アーカイブファイル作成
