@@ -1,4 +1,4 @@
-# 日本郵政HPから最新の郵便番号-住所のデータを取得する
+# -*- coding: utf-8 -*-
 import urllib.request
 import os
 import csv
@@ -10,6 +10,12 @@ import ssl
 import datetime
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+
+"""
+日本郵政HPから最新の郵便番号-住所のデータを取得する
+https://www.post.japanpost.jp/zipcode/download.html
+"""
 
 
 # 設定
