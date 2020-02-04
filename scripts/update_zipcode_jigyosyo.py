@@ -133,8 +133,9 @@ if __name__ == "__main__":
             shutil.move(os.path.join(tmp_dir, "zip_code_jigyosyo.zip"), out_file)
             update_version(base_dir, file_size)
         else:
-            print('マスタデータに変更はありませんでした')
+            logging.info('マスタデータに変更はありませんでした。')
     except Exception as err:
-        logging.error(err, "エラーが発生しました。")
+        logging.error(err, "処理中にエラーが発生しました。")
     finally:
         shutil.rmtree(tmp_dir)
+        logging.info('正常終了しました。')
