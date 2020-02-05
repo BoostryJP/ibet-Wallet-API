@@ -1,7 +1,5 @@
-import os
 from falcon.util import json as util_json
 
-from app import config
 from app.model import Agreement, AgreementStatus
 from .contract_modules import *
 
@@ -23,7 +21,7 @@ class TestV1StripeCharge:
 
     # ※テストではない
     # ヘッダー（Signature）作成
-    def test_generate_signature(self, client, session):
+    def test_generate_signature(self, client):
         request_json = {
             "order_id": 1,
             "agreement_id": 2,
@@ -45,60 +43,53 @@ class TestV1StripeCharge:
         print(signature)
 
     # エラー系1-1
-    # 必須項目なし (order_id)
-    # 400 Bad Request
-    def test_stripe_charge_error_1_1(self, client, session):
-        resp = client.simulate_auth_post(
+    # 認証認可
+    #   Signatureなし
+    def test_stripe_charge_error_1_1(self, client):
+        resp = client.simulate_post(
             self.apiurl,
             json={
-                # "order_id": self.order_id,
+                "order_id": self.order_id,
                 "agreement_id": self.agreement_id,
                 "amount": self.amount,
                 "exchange_address": self.exchange_address
             },
-            private_key=TestV1StripeCharge.private_key_1
         )
-
         assert resp.status_code == 400
         assert resp.json["meta"] == {
             'code': 88,
-            'description': {'order_id': 'required field'},
+            'description': 'signature is empty',
             'message': 'Invalid Parameter'
         }
 
     # エラー系1-2
-    # order_idの値が不正（型誤り）
-    def test_stripe_charge_error_1_2(self, client, session):
-        resp = client.simulate_auth_post(
+    # 認証認可
+    #   Signature誤り
+    def test_stripe_charge_error_1_2(self, client):
+        resp = client.simulate_post(
             self.apiurl,
             json={
-                "order_id": "a",
+                "order_id": self.order_id,
                 "agreement_id": self.agreement_id,
                 "amount": self.amount,
                 "exchange_address": self.exchange_address
             },
-            private_key=TestV1StripeCharge.private_key_1
+            headers={"X-ibet-Signature":"some_wrong_signature"}
         )
-
         assert resp.status_code == 400
         assert resp.json["meta"] == {
             'code': 88,
-            'description': {'order_id': 'must be of integer type'},
+            'description': 'failed to recover hash',
             'message': 'Invalid Parameter'
         }
 
-    # エラー系2-1
-    # 必須項目なし (agreement_id)
-    # 400 Bad Request
-    def test_stripe_charge_error_2_1(self, client, session):
+    # エラー系2
+    # 入力値チェック：必須入力チェック
+    #   400 Bad Request
+    def test_stripe_charge_error_2(self, client):
         resp = client.simulate_auth_post(
             self.apiurl,
-            json={
-                "order_id": "a",
-                # "agreement_id": self.agreement_id,
-                "amount": self.amount,
-                "exchange_address": self.exchange_address
-            },
+            json={},
             private_key=TestV1StripeCharge.private_key_1
         )
 
@@ -106,58 +97,44 @@ class TestV1StripeCharge:
         assert resp.json["meta"] == {
             'code': 88,
             'description': {
+                'order_id': 'required field',
+                'amount': 'required field',
                 'agreement_id': 'required field',
-                'order_id': 'must be of integer type'
+                'exchange_address': 'required field'
             },
             'message': 'Invalid Parameter'
         }
 
-    # エラー系2-2
-    # agreement_idの値が不正（型誤り）
-    def test_stripe_charge_error_2_2(self, client, session):
+    # エラー系3
+    # 入力値チェック：型誤り
+    #   400 Bad Request
+    def test_stripe_charge_error_3(self, client):
         resp = client.simulate_auth_post(
             self.apiurl,
             json={
-                "order_id": self.order_id,
-                "agreement_id": "a",
-                "amount": self.amount,
-                "exchange_address": self.exchange_address
+                "order_id": "1",  # String型
+                "agreement_id": "1",  # String型
+                "amount": "1",  # String型
+                "exchange_address": 12345  # Integer型
             },
             private_key=TestV1StripeCharge.private_key_1
         )
-
         assert resp.status_code == 400
         assert resp.json["meta"] == {
             'code': 88,
-            'description': {'agreement_id': 'must be of integer type'},
-            'message': 'Invalid Parameter'
-        }
-
-    # エラー系3-1
-    # 必須項目なし (amount)
-    # 400 Bad Request
-    def test_stripe_charge_error_3_1(self, client, session):
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            json={
-                "order_id": self.order_id,
-                "agreement_id": self.agreement_id,
-                # "amount": self.amount,
-                "exchange_address": self.exchange_address
+            'description': {
+                'order_id': 'must be of integer type',
+                'agreement_id': 'must be of integer type',
+                'amount': 'must be of integer type',
+                'exchange_address': 'must be of string type'
             },
-            private_key=TestV1StripeCharge.private_key_1
-        )
-
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'description': {'amount': 'required field'},
             'message': 'Invalid Parameter'
         }
 
-    # エラー系3-2
-    # amountの値が不正
-    def test_stripe_charge_error_3_2(self, client, session, shared_contract):
+    # エラー系4-1
+    # 決済代金：amount
+    #   金額チェック（最小金額：STRIPE_MINIMUM_VALUE = 50）
+    def test_stripe_charge_error_4_1(self, client, session, shared_contract):
         membership_exchange = shared_contract['IbetMembershipExchange']
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
 
@@ -165,11 +142,9 @@ class TestV1StripeCharge:
         agreement = Agreement()
         agreement.order_id = self.order_id
         agreement.agreement_id = self.agreement_id
-        agreement.exchange_address = self.exchange_address
-        agreement.unique_order_id = self.exchange_address + '_' + str(1)
+        agreement.exchange_address = membership_exchange['address']
         agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        agreement.counterpart_address = "0x31b98d14007bdee637298086988a0bbd31184527"
-        agreement.amount = self.amount  # 2000
+        agreement.amount = self.amount
         agreement.status = AgreementStatus.PENDING.value
         session.add(agreement)
 
@@ -178,7 +153,7 @@ class TestV1StripeCharge:
             json={
                 "order_id": self.order_id,
                 "agreement_id": self.agreement_id,
-                "amount": 0,
+                "amount": 49,
                 "exchange_address": membership_exchange['address']
             },
             private_key=TestV1StripeCharge.private_key_1
@@ -190,57 +165,30 @@ class TestV1StripeCharge:
             'message': 'Invalid Parameter'
         }
 
-    # エラー系3-3
-    # amountの値が文字列
-    def test_stripe_charge_error_3_3(self, client, session):
+    # エラー系4-2
+    # 決済代金：amount
+    #   金額チェック（最大金額：STRIPE_MAXIMUM_VALUE = 500000）
+    def test_stripe_charge_error_4_2(self, client, session, shared_contract):
+        membership_exchange = shared_contract['IbetMembershipExchange']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
+
+        # Agreementの情報を挿入
+        agreement = Agreement()
+        agreement.order_id = self.order_id
+        agreement.agreement_id = self.agreement_id
+        agreement.exchange_address = membership_exchange['address']
+        agreement.seller_address = "0x31b98d14007bdee637298086988a0bbd31184527"
+        agreement.amount = self.amount
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
         resp = client.simulate_auth_post(
             self.apiurl,
             json={
                 "order_id": self.order_id,
                 "agreement_id": self.agreement_id,
-                "amount": "a",
-                "exchange_address": self.exchange_address
-            },
-            private_key=TestV1StripeCharge.private_key_1
-        )
-
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'description': {'amount': 'must be of integer type'},
-            'message': 'Invalid Parameter'
-        }
-
-    # エラー系3-4
-    # amountの値が小さすぎる
-    def test_stripe_charge_error_3_4(self, client, session):
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            json={
-                "order_id": self.order_id,
-                "agreement_id": self.agreement_id,
-                "amount": 5,
-                "exchange_address": self.exchange_address
-            },
-            private_key=TestV1StripeCharge.private_key_1
-        )
-
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
-        }
-
-    # エラー系3-5
-    # amountの値が大きすぎる
-    def test_stripe_charge_error_3_5(self, client, session):
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            json={
-                "order_id": self.order_id,
-                "agreement_id": self.agreement_id,
-                "amount": 100000000,
-                "exchange_address": self.exchange_address
+                "amount": 500001,
+                "exchange_address": membership_exchange['address']
             },
             private_key=TestV1StripeCharge.private_key_1
         )
@@ -251,23 +199,9 @@ class TestV1StripeCharge:
             'message': 'Invalid Parameter'
         }
 
-    # ＜エラー系4＞
-    # ヘッダー（Signature）なし
-    def test_stripe_charge_error_4(self, client, session):
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            private_key=TestV1StripeCharge.private_key_1
-        )
-
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
-        }
-
-    # <エラー系5>
-    # 自サーバー起因エラー時 405 Error
-    def test_stripe_charge_error_5(self, client, session):
+    # エラー系5
+    # HTTP Method
+    def test_stripe_charge_error_5(self, client):
         # getは提供していないため、エラーとなる
         resp = client.simulate_get(self.apiurl)
 
@@ -277,3 +211,30 @@ class TestV1StripeCharge:
             'description': 'method: GET, url: /v1/Stripe/Charge',
             'message': 'Not Supported'
         }
+
+    # エラー系6
+    # DBチェック
+    #   約定情報存在なし
+    def test_stripe_charge_error_6(self, client):
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "order_id": self.order_id,
+                "agreement_id": self.agreement_id,
+                "amount": self.amount,
+                "exchange_address": "0x476Bd2837d42868C4ddf355841602d3A792d4dbD"
+            },
+            private_key=TestV1StripeCharge.private_key_1
+        )
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'description': 'Data not found.',
+            'message': 'Invalid Parameter'
+        }
+
+    # TODO: テスト追加）約定明細がキャンセル済み
+    # TODO: テスト追加）StripeAccountテーブルに買手の情報が存在しない
+    # TODO: テスト追加）StripeAccountテーブルに売手の情報が存在しない
+    # TODO: テスト追加）二重課金チェック

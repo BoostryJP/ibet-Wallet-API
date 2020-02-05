@@ -10,7 +10,7 @@ class VerifySignature(object):
     署名検証及び認証を行うHookです
     リクエストの署名を検証し、req.context["address"]にアドレスを格納します。
 
-    仕様：https://github.com/N-Village/ibet-Wallet-API/issues/103
+    仕様：https://github.com/BoostryJP/ibet-Wallet-API/issues/103
     """
     
     HEADER_SIGNATURE_KEY = "X-ibet-Signature"
