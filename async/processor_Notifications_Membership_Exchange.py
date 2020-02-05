@@ -41,7 +41,7 @@ IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = config.IBET_MEMBERSHIP_EXCHANGE_CONT
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-engine = create_engine(URI, echo=True)
+engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
 token_factory = TokenFactory(web3)
