@@ -339,6 +339,10 @@ class WatchTransfer(Watcher):
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
+            # Exchangeアドレスが移転元の場合、処理をSKIPする
+            tradable_exchange = token_contract.functions.tradableExchange().call()
+            if entries["args"]["from"] == tradable_exchange:
+                continue
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
             company = company_list.find(token_owner_address)
@@ -360,6 +364,10 @@ class WatchTransfer(Watcher):
 
     def push(self, token_contract, entries):
         for entry in entries:
+            # Exchangeアドレスが移転元の場合、処理をSKIPする
+            tradable_exchange = token_contract.functions.tradableExchange().call()
+            if entries["args"]["from"] == tradable_exchange:
+                continue
             token_name = token_contract.functions.name().call()
             push_publish(
                 self._gen_notification_id(entry),
