@@ -74,7 +74,7 @@ def create_json(work_dir):
             code_list.sort(key=lambda x: x[2])
 
         for item in code_list:
-            json_data = {
+            json_data = [{
                 'jis_code': item[0],  # 大口事業所の所在地のJISコード
                 'zip_code': item[7],  # 大口事業所個別番号
                 'corporate_name_kana': item[1],  # 大口事業所名（かな）
@@ -85,7 +85,7 @@ def create_json(work_dir):
                 'prefecture_name': item[3],  # 都道府県名（漢字）
                 'city_name': item[4],  # 市区町村名（漢字）
                 'town_name': item[5]  # 町域名（漢字）
-            }
+            }]
             # 郵便番号の上3桁ごとにディレクトリを作成する
             zip_code_head = item[7][0:3]
             if not os.path.exists(os.path.join(work_dir, 'zip_code_jigyosyo', zip_code_head)):
