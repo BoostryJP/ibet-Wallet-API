@@ -134,9 +134,7 @@ class Watcher:
             # DB登録
             self.watch(entries)
             self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
-            LOG.info(entries)
             db_session.commit()
-            LOG.info(db_session)
             # Push通知
             self.push(entries)
         except Exception as e:
