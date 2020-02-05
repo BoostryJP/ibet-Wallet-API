@@ -148,11 +148,16 @@ class StreetAddress(BaseResource):
 
         postal_code = StreetAddress.validate(postal_code)
         try:
-            street_address_list = json.load(open('data/zip_code/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
-        except Exception as err:
+            street_address = \
+                json.load(open('data/zip_code/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
+        except FileNotFoundError:
+            street_address = \
+                json.load(open('data/zip_code_jigyosyo/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
+        except Exception as e:
+            LOG.info(e)
             raise DataNotExistsError('postal_code: %s' % postal_code)
 
-        self.on_success(res, street_address_list)
+        self.on_success(res, street_address)
 
     @staticmethod
     def validate(postal_code):

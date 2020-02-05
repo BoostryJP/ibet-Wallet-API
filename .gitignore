@@ -5,6 +5,7 @@ __pycache__/
 .vscode
 .project
 data/zip_code/*
+data/zip_code_jigyosyo/*
 scripts/tmp/*
 
 # Intellij
@@ -17,4 +18,5 @@ scripts/tmp/*
 # Sphinx
 doc/build/*
 
+# Mac
 .DS_Store
