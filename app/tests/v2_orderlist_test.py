@@ -422,7 +422,7 @@ class TestV2OrderList_Bond:
                 'price': 1000,
                 'is_buy': True
             },
-            'settlement_timestamp': '2019/06/18 09:00:00'
+            'settlement_timestamp': '2019/06/18 00:00:00'
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
@@ -865,7 +865,7 @@ class TestV2OrderList_Membership:
                 'price': 1000,
                 'is_buy': True
             },
-            'settlement_timestamp': '2019/06/18 09:00:00'
+            'settlement_timestamp': '2019/06/18 00:00:00'
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
@@ -1299,7 +1299,7 @@ class TestV2OrderList_Coupon:
                 'price': 1000,
                 'is_buy': True
             },
-            'settlement_timestamp': '2019/06/18 09:00:00'
+            'settlement_timestamp': '2019/06/18 00:00:00'
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
