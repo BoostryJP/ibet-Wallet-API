@@ -21,11 +21,7 @@ from app.model import Order, Agreement, AgreementStatus, Listing, \
 LOG = log.get_logger()
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-
-UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 # ------------------------------
@@ -1353,8 +1349,7 @@ class OrderList(BaseResource):
         complete_list = []
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp. \
-                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ''
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
@@ -1525,8 +1520,7 @@ class OrderList(BaseResource):
         complete_list = []
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp. \
-                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ''
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
@@ -1697,8 +1691,7 @@ class OrderList(BaseResource):
         complete_list = []
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp. \
-                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ''
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
@@ -1801,8 +1794,7 @@ class OrderList(BaseResource):
         complete_list = []
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp. \
-                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ''
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
@@ -1905,8 +1897,7 @@ class OrderList(BaseResource):
         complete_list = []
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp. \
-                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ''
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
@@ -2010,8 +2001,7 @@ class OrderList(BaseResource):
         complete_list = []
         for (id, order_id, agreement_id, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp. \
-                    replace(tzinfo=UTC).astimezone(JST).strftime("%Y/%m/%d %H:%M:%S")
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ''
             orderBook = ExchangeContract.functions.getOrder(order_id).call()

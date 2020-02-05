@@ -423,12 +423,13 @@ class Charge(BaseResource):
         # 約定テーブルから情報を取得
         #   DBにデータが存在しない場合、入力値エラーを返す
         agreement = session.query(Agreement). \
+            filter(Agreement.exchange_address == exchange_address).\
             filter(Agreement.order_id == order_id). \
             filter(Agreement.agreement_id == agreement_id). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             first()
         if agreement is None:
-            raise InvalidParameterError
+            raise InvalidParameterError('Data not found.')
 
         # Exchangeコントラクト接続
         ExchangeContract = Charge.exchange_contracts(exchange_address)
