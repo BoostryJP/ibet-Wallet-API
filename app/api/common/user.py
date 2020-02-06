@@ -136,7 +136,7 @@ class PersonalInfo(BaseResource):
 
         return request_json
 
- # ------------------------------
+# ------------------------------
 # 住所検索（郵便番号）
 # ------------------------------
 class StreetAddress(BaseResource):
@@ -145,17 +145,27 @@ class StreetAddress(BaseResource):
     '''
     def on_get(self, req, res, postal_code):
         LOG.info('common.User.StreetAddress')
-
         postal_code = StreetAddress.validate(postal_code)
+
+        street_address = []
+        street_address_jigyosyo = []
+
         try:
             street_address = \
                 json.load(open('data/zip_code/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
         except FileNotFoundError:
-            street_address = \
+            pass
+
+        try:
+            street_address_jigyosyo = \
                 json.load(open('data/zip_code_jigyosyo/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
-        except Exception as e:
-            LOG.info(e)
+        except FileNotFoundError:
+            pass
+
+        if street_address == [] and street_address_jigyosyo == []:
             raise DataNotExistsError('postal_code: %s' % postal_code)
+
+        street_address.extend(street_address_jigyosyo)
 
         self.on_success(res, street_address)
 
