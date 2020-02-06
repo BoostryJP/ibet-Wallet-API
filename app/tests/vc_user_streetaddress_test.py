@@ -41,7 +41,7 @@ class TestV1StreetAddress:
 
     # ＜エラー系2＞
     # 7桁の数字だがファイルが存在しない
-    def test_ptreetaddress_error_2(self, client):
+    def test_streetaddress_error_2(self, client):
         postal_code = '9999999'
 
         resp = client.simulate_get(self.apiurl + '/' + postal_code)

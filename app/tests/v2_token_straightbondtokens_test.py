@@ -11,7 +11,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list
+from .contract_modules import issue_bond_token, register_bond_list, bond_change_transferable
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -54,7 +54,7 @@ class TestV2TokenStraightBondTokens:
             'memo': 'メモ',
             'contactInformation': '問い合わせ先',
             'privacyPolicy': 'プライバシーポリシー',
-            'personalInfoAddress': personal_info_address
+            'personalInfoAddress': personal_info_address,
         }
         return attribute
 
@@ -144,7 +144,8 @@ class TestV2TokenStraightBondTokens:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
         }]
 
         assert resp.status_code == 200
@@ -223,7 +224,8 @@ class TestV2TokenStraightBondTokens:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -270,7 +272,8 @@ class TestV2TokenStraightBondTokens:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
         }]
 
         assert resp.status_code == 200
@@ -350,7 +353,8 @@ class TestV2TokenStraightBondTokens:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -397,7 +401,8 @@ class TestV2TokenStraightBondTokens:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
         }]
 
         assert resp.status_code == 200
@@ -477,7 +482,8 @@ class TestV2TokenStraightBondTokens:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
         }]
 
         assert resp.status_code == 200
@@ -557,7 +563,139 @@ class TestV2TokenStraightBondTokens:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系6＞
+    # 発行済債券あり（2件）
+    # cursor=2、 limit=2
+    # -> 1件目のみtransferableを不可に変更
+    def test_bondlist_normal_6(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：債券新規発行
+        bond_list = []
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        for i in range(0, 2):
+            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+            bond_token = issue_bond_token(issuer, attribute)
+            register_bond_list(issuer, bond_token, token_list)
+            bond_list.append(bond_token)
+            # 取扱トークンデータ挿入
+            TestV2TokenStraightBondTokens.list_token(session, bond_token)
+        # 1件目のtransferableをFalseに変更
+        bond_change_transferable(issuer, bond_list[0], False)
+
+        query_string = 'cursor=2&limit=2'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [{
+            'id': 1,
+            'token_address': bond_list[1]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_value': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
+            'image_url': [{
+                'id': 1,
+                'url': ''
+            }, {
+                'id': 2,
+                'url': ''
+            }, {
+                'id': 3,
+                'url': ''
+            }],
+            'certification': [],
+            'initial_offering_status': False,
+            'max_holding_quantity': 1,
+            'max_sell_amount': 1000,
+            'payment_method_credit_card': True,
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
+        }, {
+            'id': 0,
+            'token_address': bond_list[0]['address'],
+            'token_template': 'IbetStraightBond',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'total_supply': 1000000,
+            'face_value': 10000,
+            'interest_rate': 1000,
+            'interest_payment_date1': '0101',
+            'interest_payment_date2': '0201',
+            'interest_payment_date3': '0301',
+            'interest_payment_date4': '0401',
+            'interest_payment_date5': '0501',
+            'interest_payment_date6': '0601',
+            'interest_payment_date7': '0701',
+            'interest_payment_date8': '0801',
+            'interest_payment_date9': '0901',
+            'interest_payment_date10': '1001',
+            'interest_payment_date11': '1101',
+            'interest_payment_date12': '1201',
+            'redemption_date': '20191231',
+            'redemption_value': 10000,
+            'return_date': '20191231',
+            'return_amount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
+            'image_url': [{
+                'id': 1,
+                'url': ''
+            }, {
+                'id': 2,
+                'url': ''
+            }, {
+                'id': 3,
+                'url': ''
+            }],
+            'certification': [],
+            'initial_offering_status': False,
+            'max_holding_quantity': 1,
+            'max_sell_amount': 1000,
+            'payment_method_credit_card': True,
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': False
         }]
 
         assert resp.status_code == 200
