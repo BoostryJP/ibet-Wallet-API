@@ -350,7 +350,7 @@ class WatchAllot(Watcher):
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = "Allot"
-            notification.priority = 0
+            notification.priority = 1
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
