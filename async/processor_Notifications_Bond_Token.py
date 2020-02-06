@@ -330,6 +330,44 @@ class WatchApplyForOffering(Watcher):
                 token_name + 'の募集申込が完了しました。',
             )
 
+# イベント：募集割当確定
+class WatchAllot(Watcher):
+    def __init__(self):
+        super().__init__("Allot", {})
+
+    def db_merge(self, token_contract, entries):
+        company_list = company_list_factory.get()
+        for entry in entries:
+            token_owner_address = token_contract.functions.owner().call()
+            token_name = token_contract.functions.name().call()
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": "IbetStraightBond"
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = "Allot"
+            notification.priority = 0
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+    def push(self, token_contract, entries):
+        for entry in entries:
+            token_name = token_contract.functions.name().call()
+            push_publish(
+                self._gen_notification_id(entry),
+                entry["args"]["accountAddress"],
+                0,
+                entry["blockNumber"],
+                token_name + 'の募集割当が確定しました。',
+            )
+
 
 # イベント：トークン移転（受領時）
 class WatchTransfer(Watcher):
@@ -386,6 +424,7 @@ def main():
         WatchRedeem(),
         WatchApplyForOffering(),
         WatchTransfer(),
+        WatchAllot(),
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
