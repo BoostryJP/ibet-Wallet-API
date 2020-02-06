@@ -185,6 +185,7 @@ class StraightBondTokens(BaseResource):
                 initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
                 contact_information = TokenContract.functions.contactInformation().call()
                 privacy_policy = TokenContract.functions.privacyPolicy().call()
+                transferable = TokenContract.functions.transferable().call()
 
                 # 企業リストから、企業名とRSA鍵を取得する
                 company_name = ''
@@ -239,6 +240,7 @@ class StraightBondTokens(BaseResource):
                 bondtoken.payment_method_bank = available_token.payment_method_bank
                 bondtoken.contact_information = contact_information
                 bondtoken.privacy_policy = privacy_policy
+                bondtoken.transferable = transferable
                 bondtoken = bondtoken.__dict__
                 bondtoken['id'] = token_id
 

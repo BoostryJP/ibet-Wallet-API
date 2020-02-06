@@ -220,6 +220,17 @@ def bond_redeem(invoker, token):
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
+# 債券の譲渡可否変更
+def bond_change_transferable(invoker, token, transferable):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+
+    tx_hash = TokenContract.functions.setTransferable(transferable). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
 
 '''
 Coupon Token （クーポン）
