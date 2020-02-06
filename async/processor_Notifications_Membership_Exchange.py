@@ -137,6 +137,8 @@ class Watcher:
             db_session.commit()
             # Push通知
             self.push(entries)
+        except Exception as e:
+            LOG.error(e)
         finally:
             elapsed_time = time.time() - start_time
             print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
