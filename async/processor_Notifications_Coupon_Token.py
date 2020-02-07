@@ -185,7 +185,7 @@ class WatchTransfer(Watcher):
         for entry in entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
             tradable_exchange = token_contract.functions.tradableExchange().call()
-            if entries["args"]["from"] == tradable_exchange:
+            if entry["args"]["from"] == tradable_exchange:
                 continue
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
@@ -210,7 +210,7 @@ class WatchTransfer(Watcher):
         for entry in entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
             tradable_exchange = token_contract.functions.tradableExchange().call()
-            if entries["args"]["from"] == tradable_exchange:
+            if entry["args"]["from"] == tradable_exchange:
                 continue
             token_name = token_contract.functions.name().call()
             push_publish(
