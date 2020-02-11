@@ -107,7 +107,7 @@ class Processor:
         ListContract = Contract.get_contract(
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing). \
-            union(self.db.query(PrivateListing)). \
+            union_all(self.db.query(PrivateListing)). \
             all()
         for listed_token in listed_tokens:
             token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
