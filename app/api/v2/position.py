@@ -66,7 +66,7 @@ class StraightBondMyTokens(BaseResource):
         )
 
         listed_tokens = session.query(Listing).\
-            union(session.query(PrivateListing)).\
+            union_all(session.query(PrivateListing)).\
             all()
 
         position_list = []
@@ -296,7 +296,7 @@ class MembershipMyTokens(BaseResource):
         )
 
         listed_tokens = session.query(Listing). \
-            union(session.query(PrivateListing)). \
+            union_all(session.query(PrivateListing)). \
             all()
 
         position_list = []
@@ -452,7 +452,7 @@ class CouponMyTokens(BaseResource):
             'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
         listed_tokens = session.query(Listing). \
-            union(session.query(PrivateListing)). \
+            union_all(session.query(PrivateListing)). \
             all()
 
         position_list = []
