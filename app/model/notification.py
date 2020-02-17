@@ -100,5 +100,23 @@ Index("notification_index_1", Notification.address, Notification.notification_id
 # 通知を重要度→新着順でソート時に使用
 Index("notification_index_2", Notification.address, Notification.priority, Notification.notification_id)
 
-
-
+class NotifitationType(Enum):
+    NEW_ORDER = "NewOrder"
+    CANCEL_ORDER = "CancelOrder"
+    BUY_AGREEMENT = "BuyAgreement"
+    BUY_SETTLEMENT_OK = "BuySettlementOK"
+    BUY_SETTLEMENT_NG = "BuySettlementNG"
+    SELL_AGREEMENT = "SellAgreement"
+    SELL_SETTLEMENT_OK = "SellSettlementOK"
+    SELL_SETTLEMENT_NG = "SellSettlementNG"
+    START_INITIAL_OFFERING = "StartInitialOffering"
+    STOP_INITIAL_OFFERING = "StopInitialOffering"
+    REDEEM = "Redeem"
+    APPLY_FOR_OFFERING = "ApplyForOffering"
+    ALLOT = "Allot"
+    TRANSFER = "Transfer"
+    PAYMENT_ACCOUNT_REGISTER = "PaymentAccountRegister"
+    PAYMENT_ACCOUNT_APPROVE = "PaymentAccountApprove"
+    PAYMENT_ACCOUNT_UNAPPROVE = "PaymentAccountUnapprove"
+    PAYMENT_ACCOUNT_WARN =  "PaymentAccountWarn"
+    PAYMENT_ACCOUNT_BAN = "PaymentAccountBan"
