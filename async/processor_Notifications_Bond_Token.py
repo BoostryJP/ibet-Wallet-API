@@ -18,7 +18,7 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 from app import log
 from app import config
-from app.model import Notification, Push, Listing, PrivateListing
+from app.model import Notification, NotifitationType, Push, Listing, PrivateListing
 from app.contracts import Contract
 from async.lib.company_list import CompanyListFactory
 from async.lib.token_list import TokenList
@@ -194,7 +194,7 @@ class WatchStartInitialOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "StartInitialOffering"
+            notification.notification_type = NotifitationType.START_INITIAL_OFFERING
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -233,7 +233,7 @@ class WatchStopInitialOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "StopInitialOffering"
+            notification.notification_type = NotifitationType.STOP_INITIAL_OFFERING
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -272,7 +272,7 @@ class WatchRedeem(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "Redeem"
+            notification.notification_type = NotifitationType.REDEEM
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -311,7 +311,7 @@ class WatchApplyForOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "ApplyForOffering"
+            notification.notification_type = NotifitationType.APPLY_FOR_OFFERING
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -349,7 +349,7 @@ class WatchAllot(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "Allot"
+            notification.notification_type = NotifitationType.ALLOT
             notification.priority = 1
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -392,7 +392,7 @@ class WatchTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "Transfer"
+            notification.notification_type = NotifitationType.TRANSFER
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)

@@ -481,7 +481,7 @@ class Charge(BaseResource):
         if stripe_charge is not None:  # 既にオペレーションを1回以上実施している場合
             # 二重課金のチェック
             #  - Charge状態が[PENDING]、[SUCCESS]の場合はエラー
-            #  - Charge状態が[ERROR]の場合は[PENDING]に更新（この時点でcommitする）
+            #  - Charge状態が[FAILED]の場合は[PENDING]に更新（この時点でcommitする）
             if stripe_charge.status == StripeChargeStatus.PENDING.value or \
                     stripe_charge.status == StripeChargeStatus.SUCCEEDED.value:
                 description = "Double charge"
@@ -530,45 +530,45 @@ class Charge(BaseResource):
                 description=description_agreement
             )
         except stripe.error.CardError as e:
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             body = e.json_body
             err = body.get('error', {})
             raise StripeErrorClient(code=50, description='[stripe]card error caused by %s' % err.get('param'),
                                     title=err.get('message'))
         except stripe.error.RateLimitError as e:
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             body = e.json_body
             err = body.get('error', {})
             raise StripeErrorClient(code=51, description='[stripe]rate limit error', title=err.get('message'))
         except stripe.error.InvalidRequestError as e:
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             body = e.json_body
             err = body.get('error', {})
             raise StripeErrorClient(code=52, description='[stripe]invalid request error caused by %s' % err.get('param'),
                                     title=err.get('message'))
         except stripe.error.AuthenticationError as e:
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             body = e.json_body
             err = body.get('error', {})
             raise StripeErrorServer(code=53, description='[stripe]authentication error', title=err.get('message'))
         except stripe.error.APIConnectionError as e:
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             body = e.json_body
             err = body.get('error', {})
             raise StripeErrorServer(code=54, description='[stripe]api connection error', title=err.get('message'))
         except stripe.error.StripeError as e:
-            stripe_charge.status = StripeChargeStatus.ERROR.value
+            stripe_charge.status = StripeChargeStatus.FAILED.value
             body = e.json_body
             err = body.get('error', {})
             raise StripeErrorServer(code=55, description='[stripe]stripe error', title=err.get('message'))
         except Exception as err:
-            # Charge状態を[ERROR]ステータスに更新する
+            # Charge状態を[FAILED]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.FAILED.value
             LOG.error('Error: %s', err)
             raise AppError
 
         if charge.status != 'succeeded':
-            # Charge状態を[ERROR]ステータスに更新する
+            # Charge状態を[FAILED]ステータスに更新する
             stripe_charge.status = StripeChargeStatus.FAILED.value
             raise InvalidCardError
 
