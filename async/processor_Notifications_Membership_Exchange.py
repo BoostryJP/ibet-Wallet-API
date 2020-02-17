@@ -18,7 +18,7 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 from app import log
 from app import config
-from app.model import Notification, Push
+from app.model import Notification, NotifitationType, Push
 from app.contracts import Contract
 from async.lib.token import TokenFactory
 from async.lib.company_list import CompanyListFactory
@@ -176,7 +176,7 @@ class WatchMembershipNewOrder(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "NewOrder"
+            notification.notification_type = NotifitationType.NEW_ORDER
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -219,7 +219,7 @@ class WatchMembershipCancelOrder(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "CancelOrder"
+            notification.notification_type = NotifitationType.CANCEL_ORDER
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -262,7 +262,7 @@ class WatchMembershipBuyAgreement(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
-            notification.notification_type = "BuyAgreement"
+            notification.notification_type = NotifitationType.BUY_AGREEMENT
             notification.priority = 1
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -305,7 +305,7 @@ class WatchMembershipSellAgreement(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
-            notification.notification_type = "SellAgreement"
+            notification.notification_type = NotifitationType.SELL_AGREEMENT
             notification.priority = 2
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -348,7 +348,7 @@ class WatchMembershipBuySettlementOK(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
-            notification.notification_type = "BuySettlementOK"
+            notification.notification_type = NotifitationType.BUY_SETTLEMENT_OK
             notification.priority = 1
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -391,7 +391,7 @@ class WatchMembershipSellSettlementOK(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
-            notification.notification_type = "SellSettlementOK"
+            notification.notification_type = NotifitationType.SELL_SETTLEMENT_OK
             notification.priority = 1
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -434,7 +434,7 @@ class WatchMembershipBuySettlementNG(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
-            notification.notification_type = "BuySettlementNG"
+            notification.notification_type = NotifitationType.BUY_SETTLEMENT_NG
             notification.priority = 2
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -477,7 +477,7 @@ class WatchMembershipSellSettlementNG(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
-            notification.notification_type = "SellSettlementNG"
+            notification.notification_type = NotifitationType.SELL_SETTLEMENT_NG
             notification.priority = 2
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
