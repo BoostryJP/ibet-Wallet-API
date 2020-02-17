@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from enum import Enum
 from sqlalchemy import Column, Index
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 
