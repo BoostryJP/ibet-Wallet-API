@@ -198,7 +198,7 @@ class WatchTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.TRANSFER
+            notification.notification_type = NotifitationType.TRANSFER.value
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
