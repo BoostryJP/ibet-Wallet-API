@@ -194,7 +194,7 @@ class WatchStartInitialOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.START_INITIAL_OFFERING
+            notification.notification_type = NotifitationType.START_INITIAL_OFFERING.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -233,7 +233,7 @@ class WatchStopInitialOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.STOP_INITIAL_OFFERING
+            notification.notification_type = NotifitationType.STOP_INITIAL_OFFERING.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -272,7 +272,7 @@ class WatchRedeem(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.REDEEM
+            notification.notification_type = NotifitationType.REDEEM.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -311,7 +311,7 @@ class WatchApplyForOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.APPLY_FOR_OFFERING
+            notification.notification_type = NotifitationType.APPLY_FOR_OFFERING.value
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -349,7 +349,7 @@ class WatchAllot(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.ALLOT
+            notification.notification_type = NotifitationType.ALLOT.value
             notification.priority = 1
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -392,7 +392,7 @@ class WatchTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.TRANSFER
+            notification.notification_type = NotifitationType.TRANSFER.value
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
