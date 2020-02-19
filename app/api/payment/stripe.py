@@ -509,11 +509,7 @@ class Charge(BaseResource):
                 raise DoubleChargeError(description=description)
 
         # 決済対象約定情報
-        description_agreement = json.dumps({
-            'exchange_address': exchange_address,
-            'order_id': order_id,
-            'agreement_id': agreement_id
-        })
+        description = "ibet決済（" + exchange_address + "/" + str(order_id) + "/" + str(agreement_id) + "）"
 
         # 新しく課金オブジェクトを作成する
         try:
@@ -527,7 +523,7 @@ class Charge(BaseResource):
                     # 子アカウントを指定
                     "account": seller.account_id
                 },
-                description=description_agreement
+                description=description
             )
         except stripe.error.CardError as e:
             stripe_charge.status = StripeChargeStatus.FAILED.value
