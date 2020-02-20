@@ -219,6 +219,7 @@ class TestV2CouponMyTokens:
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
+        listed_token.id = 1
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -229,6 +230,7 @@ class TestV2CouponMyTokens:
     @staticmethod
     def list_private_token(session, token):
         listed_token = PrivateListing()
+        listed_token.id = 1
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -523,6 +525,124 @@ class TestV2CouponMyTokens:
                 count = 1
                 assert token == assumed_body
         assert count == 1
+
+    # ＜正常系1-5＞
+    # 複数保有
+    #  公開トークンと未公開トークンの複数保有
+    def test_coupon_position_normal_1_5(self, client, session, shared_contract):
+        coupon_exchange = shared_contract['IbetCouponExchange']
+        token_list = shared_contract['TokenList']
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+
+        # クーポン①
+        coupon_token_1 = TestV2CouponMyTokens.transfer_coupon(coupon_exchange, token_list)
+        coupon_address_1 = coupon_token_1['address']
+
+        # クーポン②
+        coupon_token_2 = TestV2CouponMyTokens.transfer_coupon(coupon_exchange, token_list)
+        coupon_address_2 = coupon_token_2['address']
+
+        # 取扱トークンデータ挿入
+        TestV2CouponMyTokens.list_token(session, coupon_token_1)
+        TestV2CouponMyTokens.list_private_token(session, coupon_token_2)
+
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body_1 = {
+            'token': {
+                'token_address': coupon_address_1,
+                'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 10000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'memo': 'クーポンメモ欄',
+                'expiration_date': '20191231',
+                'transferable': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'status': True,
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 10,
+            'commitment': 0,
+            'used': 0
+        }
+
+        assumed_body_2 = {
+            'token': {
+                'token_address': coupon_address_2,
+                'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 10000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'memo': 'クーポンメモ欄',
+                'expiration_date': '20191231',
+                'transferable': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'status': True,
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 10,
+            'commitment': 0,
+            'used': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == coupon_address_1:
+                count += 1
+                assert token == assumed_body_1
+            if token['token']['token_address'] == coupon_address_2:
+                count += 1
+                assert token == assumed_body_2
+        assert count == 2
+
 
     # ＜正常系2-1＞
     # 残高あり、売注文中なし

@@ -171,6 +171,7 @@ class TestV2MembershipMyTokens:
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
+        listed_token.id = 1
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -181,6 +182,7 @@ class TestV2MembershipMyTokens:
     @staticmethod
     def list_private_token(session, token):
         listed_token = PrivateListing()
+        listed_token.id = 1
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -439,7 +441,7 @@ class TestV2MembershipMyTokens:
                 assert token == assumed_body
         assert count == 1
 
-    # 正常系4
+    # 正常系5
     # 残高あり
     #   特殊系：公開トークンと未公開トークンが重複
     def test_membership_position_normal_5(self, client, session, shared_contract):
@@ -510,6 +512,125 @@ class TestV2MembershipMyTokens:
                 count = 1
                 assert token == assumed_body
         assert count == 1
+
+    # 正常系6
+    # 複数保有
+    #  公開トークンと未公開トークンの複数保有
+    def test_membership_position_normal_6(self, client, session, shared_contract):
+        exchange = shared_contract['IbetMembershipExchange']
+        token_list = shared_contract['TokenList']
+        account = eth_account['trader']
+
+        # 会員権①
+        token_1 = TestV2MembershipMyTokens.create_balance(exchange, token_list)
+        token_address_1 = token_1['address']
+
+        # 会員権②
+        token_2 = TestV2MembershipMyTokens.create_balance(exchange, token_list)
+        token_address_2 = token_2['address']
+
+        # 取扱トークンデータ挿入
+        TestV2MembershipMyTokens.list_token(session, token_1)
+        TestV2MembershipMyTokens.list_private_token(session, token_2)
+
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client. \
+            simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body_1 = {
+            'token': {
+                'token_address': token_address_1,
+                'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 100,
+            'commitment': 0
+        }
+
+        assumed_body_2 = {
+            'token': {
+                'token_address': token_address_2,
+                'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 100,
+            'commitment': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address_1:
+                count += 1
+                assert token == assumed_body_1
+            if token['token']['token_address'] == token_address_2:
+                count += 1
+                assert token == assumed_body_2
+
+        assert count == 2
+
 
     # エラー系1
     # 入力値エラー（request-bodyなし）
