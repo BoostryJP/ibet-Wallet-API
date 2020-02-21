@@ -209,7 +209,7 @@ class StraightBondTokens(BaseResource):
                 bondtoken.symbol = symbol
                 bondtoken.total_supply = total_supply
                 bondtoken.face_value = face_value
-                bondtoken.interest_rate = interest_rate
+                bondtoken.interest_rate = interest_rate * 0.0001
                 bondtoken.interest_payment_date1 = interest_payment_date1
                 bondtoken.interest_payment_date2 = interest_payment_date2
                 bondtoken.interest_payment_date3 = interest_payment_date3
@@ -454,7 +454,7 @@ class StraightBondTokenDetails(BaseResource):
                 bondtoken.symbol = symbol
                 bondtoken.total_supply = total_supply
                 bondtoken.face_value = face_value
-                bondtoken.interest_rate = interest_rate
+                bondtoken.interest_rate = interest_rate * 0.0001
                 bondtoken.interest_payment_date1 = interest_payment_date1
                 bondtoken.interest_payment_date2 = interest_payment_date2
                 bondtoken.interest_payment_date3 = interest_payment_date3

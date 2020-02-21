@@ -41,7 +41,7 @@ class BondToken(TokenBase):
 
 class BondTokenV2(TokenBase):
     face_value: int
-    interest_rate: int
+    interest_rate: float
     interest_payment_date1: str
     interest_payment_date2: str
     interest_payment_date3: str
