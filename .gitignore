@@ -6,7 +6,8 @@ __pycache__/
 .project
 data/zip_code/*
 data/zip_code_jigyosyo/*
-scripts/tmp/*
+scripts/input_file/*
+!.gitkeep
 
 # Intellij
 .idea
