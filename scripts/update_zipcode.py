@@ -1,140 +1,135 @@
 # -*- coding: utf-8 -*-
-import urllib.request
+import sys
 import os
 import csv
 import zipfile
 import json
-import subprocess
 import shutil
 import ssl
 import datetime
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
+import logging
+log_fmt = '[Update Zipcode] [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
+logging.basicConfig(level="DEBUG", format=log_fmt)
 
 """
-日本郵政HPから最新の郵便番号-住所のデータを取得する
-https://www.post.japanpost.jp/zipcode/download.html
+株式会社アイビス社提供の加工済み郵便番号データを利用
+http://zipcloud.ibsnet.co.jp/
 """
-
 
 # 設定
-class Config:
-    yuseiUrl = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip"
-    basePath = os.getcwd()
-    targetZip = os.path.join(basePath, 'data', 'zip_code.zip')
+ssl._create_default_https_context = ssl._create_unverified_context
+base_dir = os.getcwd()
+input_dir = os.path.join(base_dir, 'scripts', 'input_file')
+out_file = os.path.join(base_dir, 'data', 'zip_code.zip')
 
 
-# ファイル取得
-def getRawFile(yusei_url, base_path):
-    try:
-        file_name = yusei_url.split("/")[len(yusei_url.split("/")) - 1]
-        urllib.request.urlretrieve(yusei_url, os.path.join(base_path, file_name))
-        return file_name, os.path.getsize(os.path.join(base_path, file_name))
-    except Exception as e:
-        print(e)
-        print('マスタデータの取得に失敗しました郵政HPを確認してください')
-        raise
-
-
-# バージョンチェック
-def checkVersion(base_path, file_size):
-    with open(os.path.join(base_path, 'data', 'zip_code_version')) as f:
-        reader = csv.reader(f)
-        for row in reader:
-            if int(row[1]) == file_size:
-                return False
-            else:
-                return True
-
-
-# JSONファイル出力
-def writeJson(data, path_with_file):
+# 共通部品: JSONファイル出力
+def write_json(data, path_with_file):
     fw = open(path_with_file, 'w')
     json.dump(data, fw, indent=2, ensure_ascii=False)
 
 
-# JSONファイル作成
-def createJson(base_path, file_name):
+# バージョンチェック
+def check_version(file_size):
+    logging.info('[START] check_version')
+    with open(os.path.join(base_dir, 'data', 'zip_code_version')) as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if int(row[1]) == file_size:  # バージョン一致
+                logging.info('現在のファイルは最新バージョンです。')
+                check_result = False
+            else:  # バージョン不一致
+                logging.info('現在のファイルは古いバージョンです。')
+                check_result = True
+    logging.info('[END] check_version')
+    return check_result
+
+
+# 入力ファイルを作業ディレクトリにコピー
+def move_to_temp_dir(in_path, tmp_path):
+    logging.info('[START] move_to_temp_dir')
     try:
-        with zipfile.ZipFile(os.path.join(base_path, file_name)) as zip_file:
-            zip_file.extract('KEN_ALL.CSV', base_path)
-        print('マスタデータを解凍しました')
+        shutil.copyfile(in_path, tmp_path)
+        logging.info('作業ディレクトリへのコピーに成功しました。')
     except Exception as e:
-        print(e)
-        print('マスタデータの解凍に失敗しました')
+        logging.error(e, '作業ディレクトリへのコピーに失敗しました。')
         raise
+    logging.info('[END] move_to_temp_dir')
+
+
+# 入力ファイル（Zip）の解凍
+def unzip(path, file_name):
+    logging.info('[START] unzip')
     try:
-        with open(os.path.join(base_path, 'KEN_ALL.CSV'), encoding='shift_jis') as f:
+        with zipfile.ZipFile(os.path.join(path, file_name)) as zip_file:
+            zip_file.extract('x-ken-all.csv', path)
+        logging.info('Zipファイルの解凍に成功しました。')
+    except Exception as e:
+        logging.error(e, 'Zipファイルの解凍に失敗しました。')
+        raise
+    logging.info('[END] unzip')
+
+
+# JSONファイル作成
+def create_json(base_path):
+    logging.info('[START] create_json')
+    try:
+        with open(os.path.join(base_path, 'x-ken-all.csv'), encoding='shift_jis') as f:
             reader = csv.reader(f)
             codeList = []
             for row in reader:
                 codeList.append(row)
             codeList.sort(key=lambda x: x[2])
-            zipArray = []
-            preZipJson = {
-                'jis_code': codeList[0][0],
-                'zip_code': codeList[0][2],
-                'prefecture_name_kana': codeList[0][3],
-                'city_name_kana': codeList[0][4],
-                'town_name_kana': codeList[0][5],
-                'prefecture_name': codeList[0][6],
-                'city_name': codeList[0][7],
-                'town_name': codeList[0][8]
+        zipArray = []
+        preZipJson = {
+            'jis_code': codeList[0][0],
+            'zip_code': codeList[0][2],
+            'prefecture_name_kana': codeList[0][3],
+            'city_name_kana': codeList[0][4],
+            'town_name_kana': codeList[0][5],
+            'prefecture_name': codeList[0][6],
+            'city_name': codeList[0][7],
+            'town_name': codeList[0][8]
+        }
+        for item in codeList:
+            jsonData = {
+                'jis_code': item[0],
+                'zip_code': item[2],
+                'prefecture_name_kana': item[3],
+                'city_name_kana': item[4],
+                'town_name_kana': item[5],
+                'prefecture_name': item[6],
+                'city_name': item[7],
+                'town_name': item[8]
             }
-            for item in codeList:
-                # 特殊な町域
-                # お探しの町域が見つからない場合、市区町村名の後ろに町域名がなく番地がくる住所、町域名がない市区町村
-                if '以下に掲載がない場合' in item[8] or 'の次に番地がくる場合' in item[8] or '一円' in item[8]:
-                    townName = ''
-                    townNameKana = ''
-                else:
-                    townName = item[8]
-                    townNameKana = item[5]
-
-                jsonData = {
-                    'jis_code': item[0],
-                    'zip_code': item[2],
-                    'prefecture_name_kana': item[3],
-                    'city_name_kana': item[4],
-                    'town_name_kana': townNameKana,
-                    'prefecture_name': item[6],
-                    'city_name': item[7],
-                    'town_name': townName
-                }
-                if preZipJson['zip_code'] == jsonData['zip_code']:
-                    zipArray.append(jsonData)
-                else:
-                    if not os.path.exists(os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3])):
-                        os.makedirs(os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3]))
-                    writeJson(zipArray, os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3],
-                                                     preZipJson['zip_code'] + '.json'))
-                    preZipJson = jsonData
-                    zipArray = [jsonData]
-            if zipArray:
-                writeJson(zipArray, os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3],
-                                                 preZipJson['zip_code'] + '.json'))
-
+            if preZipJson['zip_code'] == jsonData['zip_code']:
+                zipArray.append(jsonData)
+            else:
+                # 郵便番号の上3桁ごとにディレクトリを作成する
+                if not os.path.exists(os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3])):
+                    os.makedirs(os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3]))
+                # JSONファイルを作成
+                write_json(
+                    zipArray,
+                    os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3], preZipJson['zip_code'] + '.json')
+                )
+                preZipJson = jsonData
+                zipArray = [jsonData]
+        if zipArray:
+            write_json(
+                zipArray,
+                os.path.join(base_path, 'zip_code', preZipJson['zip_code'][0:3], preZipJson['zip_code'] + '.json')
+            )
+        logging.info('JSONファイルの作成に成功しました。')
     except Exception as e:
-        print(e)
-        print('JSONファイル作成に失敗しました')
+        logging.error(e, 'JSONファイルの作成に失敗しました。')
         raise
 
-
-# 差分チェック
-def checkDiff(before, after):
-    command = 'diff -r ' + before + ' ' + after
-    ret = subprocess.run(command.split(), stdout=subprocess.PIPE)
-    output = ret.stdout.decode()
-    lines = output.splitlines()
-    for i, line in enumerate(lines):
-        print('-----------------diff start----------------')
-        print(i, line)
-        print('-----------------diff end----------------')
+    logging.info('[END] create_json')
 
 
 # バージョンファイルの更新
-def updateVersion(base_path, version):
+def update_version(base_path, version):
     with open(os.path.join(base_path, 'data', 'zip_code_version'), 'w') as f:
         writer = csv.writer(f)
         dt = datetime.date.today().strftime('%Y%m%d')
@@ -143,26 +138,36 @@ def updateVersion(base_path, version):
 
 # メイン処理
 if __name__ == "__main__":
-    tmpdir = os.path.join(Config.basePath, "scripts", 'tmp')
-    os.makedirs(tmpdir, exist_ok=True)
+    args = sys.argv
+
+    # 入力ファイル
+    # NOTE:事前にサイトからダウンロードして、input_fileディレクトリに格納しておく
+    in_file_name = args[1]
+    in_file = os.path.join(input_dir, in_file_name)
+
+    # 作業ディレクトリの作成
+    tmp_dir = os.path.join(base_dir, "scripts", 'tmp')
+    os.makedirs(tmp_dir, exist_ok=True)
+
     try:
-        fileName, fileSize = getRawFile(Config.yuseiUrl, tmpdir)
-        print('マスタデータを取得しました')
-        if checkVersion(Config.basePath, fileSize):
-            createJson(tmpdir, fileName)
-            print('JSONファイルを作成しました')
-            shutil.copyfile(Config.targetZip, os.path.join(tmpdir, "zip_code.zip"))
-            with zipfile.ZipFile(os.path.join(tmpdir, "zip_code.zip")) as zf:
-                zf.extractall(os.path.join(tmpdir, "zip_code_old"))
-            checkDiff(os.path.join(tmpdir, "zip_code_old"), os.path.join(tmpdir, "zip_code"))
-            shutil.make_archive(os.path.join(tmpdir, "zip_code"), 'zip', root_dir=tmpdir, base_dir="zip_code")
-            shutil.move(os.path.join(tmpdir, "zip_code.zip"), Config.targetZip)
-            updateVersion(Config.basePath, fileSize)
+        # ファイルサイズを取得
+        file_size = os.path.getsize(in_file)
+        if check_version(file_size):  # バージョンに差分が存在する場合は後続処理をおこなう
+            # 入力ファイルを作業ディレクトリにコピー
+            move_to_temp_dir(in_file, os.path.join(tmp_dir, in_file_name))
+            # Zipファイルの解凍
+            unzip(tmp_dir, in_file_name)
+            # JSONファイルを作成
+            create_json(tmp_dir)
+            # アーカイブファイルを作成
+            shutil.make_archive(os.path.join(tmp_dir, "zip_code"), 'zip', root_dir=tmp_dir, base_dir="zip_code")
+            # 出力ファイルを移動
+            shutil.move(os.path.join(tmp_dir, "zip_code.zip"), out_file)
+            update_version(base_dir, file_size)
         else:
-            print('マスタデータに変更はありませんでした')
+            logging.info('マスタデータに変更はありませんでした。')
     except Exception as err:
-        print(err)
-        print('エラー発生')
+        logging.error(err, "処理中にエラーが発生しました。")
     finally:
-        print('処理が終わりました')
-        shutil.rmtree(tmpdir)
+        shutil.rmtree(tmp_dir)
+        logging.info('正常終了しました。')
