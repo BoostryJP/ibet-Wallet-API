@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 import sys
-import urllib.request
 import os
 import csv
 import zipfile
 import json
-import subprocess
 import shutil
 import ssl
 import datetime
