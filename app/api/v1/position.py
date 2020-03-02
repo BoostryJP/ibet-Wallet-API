@@ -61,9 +61,8 @@ class MyTokens(BaseResource):
         BondExchangeContract = Contract.get_contract(
             'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 
-        listed_tokens = session.query(Listing).\
-            union(session.query(PrivateListing)).\
-            all()
+        listed_tokens = session.query(Listing).all()
+        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -288,9 +287,8 @@ class MembershipMyTokens(BaseResource):
             config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
-        listed_tokens = session.query(Listing). \
-            union(session.query(PrivateListing)). \
-            all()
+        listed_tokens = session.query(Listing).all()
+        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -442,9 +440,8 @@ class CouponMyTokens(BaseResource):
         CouponExchangeContract = Contract.get_contract(
             'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
-        listed_tokens = session.query(Listing). \
-            union(session.query(PrivateListing)). \
-            all()
+        listed_tokens = session.query(Listing).all()
+        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:

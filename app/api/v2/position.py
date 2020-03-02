@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
+from decimal import Decimal
+
 import requests
 from datetime import timezone, timedelta
 
 JST = timezone(timedelta(hours=+9), 'JST')
-
-from sqlalchemy import desc
 
 from cerberus import Validator
 
@@ -65,9 +65,8 @@ class StraightBondMyTokens(BaseResource):
             config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         )
 
-        listed_tokens = session.query(Listing).\
-            union(session.query(PrivateListing)).\
-            all()
+        listed_tokens = session.query(Listing).all()
+        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -178,7 +177,7 @@ class StraightBondMyTokens(BaseResource):
                             bondtoken.symbol = symbol
                             bondtoken.total_supply = total_supply
                             bondtoken.face_value = face_value
-                            bondtoken.interest_rate = interest_rate
+                            bondtoken.interest_rate = float(Decimal(str(interest_rate)) * Decimal('0.0001'))
                             bondtoken.interest_payment_date1 = interest_payment_date1
                             bondtoken.interest_payment_date2 = interest_payment_date2
                             bondtoken.interest_payment_date3 = interest_payment_date3
@@ -295,9 +294,8 @@ class MembershipMyTokens(BaseResource):
             config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
-        listed_tokens = session.query(Listing). \
-            union(session.query(PrivateListing)). \
-            all()
+        listed_tokens = session.query(Listing).all()
+        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -451,9 +449,8 @@ class CouponMyTokens(BaseResource):
         CouponExchangeContract = Contract.get_contract(
             'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
-        listed_tokens = session.query(Listing). \
-            union(session.query(PrivateListing)). \
-            all()
+        listed_tokens = session.query(Listing).all()
+        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:

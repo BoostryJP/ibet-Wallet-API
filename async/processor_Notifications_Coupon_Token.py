@@ -18,7 +18,7 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 from app import log
 from app import config
-from app.model import Notification, Push, Listing, PrivateListing
+from app.model import Notification, NotifitationType, Push, Listing, PrivateListing
 from app.contracts import Contract
 from async.lib.company_list import CompanyListFactory
 from async.lib.token_list import TokenList
@@ -130,7 +130,8 @@ class Watcher:
 
     def _get_coupon_token_all_list(self):
         res = []
-        registered_token_list = db_session.query(Listing).union(db_session.query(PrivateListing)).all()
+        registered_token_list = db_session.query(Listing).all()
+        registered_token_list = registered_token_list + db_session.query(PrivateListing).all()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
@@ -185,7 +186,7 @@ class WatchTransfer(Watcher):
         for entry in entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
             tradable_exchange = token_contract.functions.tradableExchange().call()
-            if entries["args"]["from"] == tradable_exchange:
+            if entry["args"]["from"] == tradable_exchange:
                 continue
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
@@ -198,7 +199,7 @@ class WatchTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = "Transfer"
+            notification.notification_type = NotifitationType.TRANSFER.value
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -210,7 +211,7 @@ class WatchTransfer(Watcher):
         for entry in entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
             tradable_exchange = token_contract.functions.tradableExchange().call()
-            if entries["args"]["from"] == tradable_exchange:
+            if entry["args"]["from"] == tradable_exchange:
                 continue
             token_name = token_contract.functions.name().call()
             push_publish(

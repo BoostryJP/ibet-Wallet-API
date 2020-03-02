@@ -32,7 +32,7 @@ class TestV2StraightBondMyTokens:
             'totalSupply': 1000000,
             'tradableExchange': bond_exchange['address'],
             'faceValue': 10000,
-            'interestRate': 1000,
+            'interestRate': 602,
             'interestPaymentDate1': '0101',
             'interestPaymentDate2': '0201',
             'interestPaymentDate3': '0301',
@@ -88,6 +88,7 @@ class TestV2StraightBondMyTokens:
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
+        listed_token.id = 1
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -98,6 +99,7 @@ class TestV2StraightBondMyTokens:
     @staticmethod
     def list_private_token(session, token):
         listed_token = PrivateListing()
+        listed_token.id = 1
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -143,7 +145,7 @@ class TestV2StraightBondMyTokens:
                 'symbol': 'BOND',
                 'total_supply': 1000000,
                 'face_value': 10000,
-                'interest_rate': 1000,
+                'interest_rate': 0.0602,
                 'interest_payment_date1': '0101',
                 'interest_payment_date2': '0201',
                 'interest_payment_date3': '0301',
@@ -233,7 +235,7 @@ class TestV2StraightBondMyTokens:
                 'symbol': 'BOND',
                 'total_supply': 1000000,
                 'face_value': 10000,
-                'interest_rate': 1000,
+                'interest_rate': 0.0602,
                 'interest_payment_date1': '0101',
                 'interest_payment_date2': '0201',
                 'interest_payment_date3': '0301',
@@ -324,7 +326,7 @@ class TestV2StraightBondMyTokens:
                 'symbol': 'BOND',
                 'total_supply': 1000000,
                 'face_value': 10000,
-                'interest_rate': 1000,
+                'interest_rate': 0.0602,
                 'interest_payment_date1': '0101',
                 'interest_payment_date2': '0201',
                 'interest_payment_date3': '0301',
@@ -376,6 +378,161 @@ class TestV2StraightBondMyTokens:
                 count = 1
                 assert token == assumed_body
         assert count == 1
+
+    # ＜正常系4＞
+    # 複数保有
+    #  公開トークンと未公開トークンの複数保有
+    def test_position_normal_4(self, client, session, shared_contract):
+        bond_exchange = shared_contract['IbetStraightBondExchange']
+        personal_info = shared_contract['PersonalInfo']
+        payment_gateway = shared_contract['PaymentGateway']
+        token_list = shared_contract['TokenList']
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+
+        # トークン①
+        bond_token_1 = TestV2StraightBondMyTokens.generate_bond_position(
+            bond_exchange, personal_info, payment_gateway, token_list)
+        token_address_1 = bond_token_1['address']
+
+        # トークン②
+        bond_token_2 = TestV2StraightBondMyTokens.generate_bond_position(
+            bond_exchange, personal_info, payment_gateway, token_list)
+        token_address_2 = bond_token_2['address']
+
+
+        # 取扱トークンデータ挿入
+        TestV2StraightBondMyTokens.list_private_token(session, bond_token_1)
+        TestV2StraightBondMyTokens.list_token(session, bond_token_2)
+
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body_1 = {
+            'token': {
+                'token_address': token_address_1,
+                'token_template': 'IbetStraightBond',
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト債券',
+                'symbol': 'BOND',
+                'total_supply': 1000000,
+                'face_value': 10000,
+                'interest_rate': 0.0602,
+                'interest_payment_date1': '0101',
+                'interest_payment_date2': '0201',
+                'interest_payment_date3': '0301',
+                'interest_payment_date4': '0401',
+                'interest_payment_date5': '0501',
+                'interest_payment_date6': '0601',
+                'interest_payment_date7': '0701',
+                'interest_payment_date8': '0801',
+                'interest_payment_date9': '0901',
+                'interest_payment_date10': '1001',
+                'interest_payment_date11': '1101',
+                'interest_payment_date12': '1201',
+                'redemption_date': '20191231',
+                'redemption_value': 10000,
+                'return_date': '20191231',
+                'return_amount': '商品券をプレゼント',
+                'purpose': '新商品の開発資金として利用。',
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'certification': [],
+                'initial_offering_status': False,
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'transferable': True,
+                'isRedeemed': False
+            },
+            'balance': 100,
+            'commitment': 0
+        }
+
+        assumed_body_2 = {
+            'token': {
+                'token_address': token_address_2,
+                'token_template': 'IbetStraightBond',
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト債券',
+                'symbol': 'BOND',
+                'total_supply': 1000000,
+                'face_value': 10000,
+                'interest_rate': 0.0602,
+                'interest_payment_date1': '0101',
+                'interest_payment_date2': '0201',
+                'interest_payment_date3': '0301',
+                'interest_payment_date4': '0401',
+                'interest_payment_date5': '0501',
+                'interest_payment_date6': '0601',
+                'interest_payment_date7': '0701',
+                'interest_payment_date8': '0801',
+                'interest_payment_date9': '0901',
+                'interest_payment_date10': '1001',
+                'interest_payment_date11': '1101',
+                'interest_payment_date12': '1201',
+                'redemption_date': '20191231',
+                'redemption_value': 10000,
+                'return_date': '20191231',
+                'return_amount': '商品券をプレゼント',
+                'purpose': '新商品の開発資金として利用。',
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'certification': [],
+                'initial_offering_status': False,
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'payment_method_credit_card': True,
+                'payment_method_bank': True,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'transferable': True,
+                'isRedeemed': False
+            },
+            'balance': 100,
+            'commitment': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address_1:
+                count += 1
+                assert token == assumed_body_1
+            if token['token']['token_address'] == token_address_2:
+                count += 1
+                assert token == assumed_body_2
+        assert count == 2
+
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_position_error_1(self, client):
