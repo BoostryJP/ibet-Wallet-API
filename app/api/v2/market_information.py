@@ -60,8 +60,11 @@ class GetAgreement(BaseResource):
         if agreement is None:
             raise InvalidParameterError('Data not found')
 
-        # Exchangeコントラクト接続
+        # 取引コントラクトに接続
         ExchangeContract = GetAgreement.exchange_contracts(exchange_address)
+
+        # 約定情報の取得
+        # NOTE: 取引コントラクトから直近の情報を取得する
         counterpart, amount, price, canceled, paid, expiry = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
 
