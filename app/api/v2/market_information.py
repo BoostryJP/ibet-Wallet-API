@@ -49,8 +49,8 @@ class GetAgreement(BaseResource):
         agreement_id = request_json['agreement_id']
         exchange_address = to_checksum_address(request_json['exchange_address'])
 
-        # 約定テーブルから情報を取得
-        #   DBにデータが存在しない場合、入力値エラーを返す
+        # 未決済の約定イベントの存在有無を確認
+        # DBにデータが存在しない場合は、入力値エラーを返す
         agreement = session.query(Agreement). \
             filter(Agreement.exchange_address == exchange_address).\
             filter(Agreement.order_id == order_id). \
