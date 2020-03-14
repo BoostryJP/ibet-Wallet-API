@@ -201,6 +201,7 @@ class TestV2GetAgreement:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
+            'paid': False,
             'price': 1000
         }
 
@@ -209,6 +210,7 @@ class TestV2GetAgreement:
         assert resp.json['data']['amount'] == assumed_body['amount']
         assert resp.json['data']['canceled'] == assumed_body['canceled']
         assert resp.json['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json['data']['paid'] == assumed_body['paid']
         assert resp.json['data']['price'] == assumed_body['price']
 
     # <Normal_2>
@@ -233,6 +235,7 @@ class TestV2GetAgreement:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
+            'paid': False,
             'price': 1000
         }
 
@@ -241,6 +244,7 @@ class TestV2GetAgreement:
         assert resp.json['data']['amount'] == assumed_body['amount']
         assert resp.json['data']['canceled'] == assumed_body['canceled']
         assert resp.json['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json['data']['paid'] == assumed_body['paid']
         assert resp.json['data']['price'] == assumed_body['price']
 
     # <Normal_3>
@@ -265,6 +269,7 @@ class TestV2GetAgreement:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
+            'paid': False,
             'price': 1000
         }
 
@@ -273,6 +278,7 @@ class TestV2GetAgreement:
         assert resp.json['data']['amount'] == assumed_body['amount']
         assert resp.json['data']['canceled'] == assumed_body['canceled']
         assert resp.json['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json['data']['paid'] == assumed_body['paid']
         assert resp.json['data']['price'] == assumed_body['price']
 
     ########################################################################################

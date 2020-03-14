@@ -51,6 +51,7 @@ class GetAgreement(BaseResource):
 
         # 未決済の約定イベントの存在有無を確認
         # DBにデータが存在しない場合は、入力値エラーを返す
+        # NOTE: コントラクトアクセスの負荷を下げるためにイベントの存在有無を先に確認している
         agreement = session.query(Agreement). \
             filter(Agreement.exchange_address == exchange_address).\
             filter(Agreement.order_id == order_id). \
@@ -70,10 +71,11 @@ class GetAgreement(BaseResource):
 
         res_data = {
             'counterpart': counterpart,
-            'amount': amount,
-            'price': price,
-            'canceled': canceled,
-            'expiry': expiry
+            'amount': amount,  # 約定数量
+            'price': price,  # 約定単価
+            'canceled': canceled,  # 約定取消フラグ
+            'paid': paid,  # 支払済フラグ
+            'expiry': expiry  # 有効期限（unixtime）
         }
 
         self.on_success(res, res_data)
