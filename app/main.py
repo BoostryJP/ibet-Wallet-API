@@ -163,9 +163,6 @@ class App(falcon.API):
         self.add_route('/v2/Market/Tick/Membership', market_information.MembershipTick())
         self.add_route('/v2/Market/Tick/Coupon', market_information.CouponTick())
 
-        # マーケット情報：約定情報参照
-        self.add_route('/v2/Market/Agreement', market_information.GetAgreement())
-
         # 保有トークン一覧
         self.add_route('/v2/Position/StraightBond', v2position.StraightBondMyTokens())
         self.add_route('/v2/Position/Membership', v2position.MembershipMyTokens())
