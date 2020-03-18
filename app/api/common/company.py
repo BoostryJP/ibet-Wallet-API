@@ -62,7 +62,7 @@ class CompanyInfo(BaseResource):
 # ------------------------------
 class CompanyInfoList(BaseResource):
     """
-    Handle for endpoint: /v1/CompanyList
+    Handle for endpoint: /v2/CompanyList
     """
 
     def on_get(self, req, res):
@@ -94,18 +94,19 @@ class CompanyInfoList(BaseResource):
             token_address = to_checksum_address(token.token_address)
             owner_address = ListContract.functions.getOwnerAddress(token_address).call()
             listing_owner_list.append(owner_address)
-        checkExistence = self._checkExistenceCreator(listing_owner_list)
-        filtered_company_list = filter(checkExistence, company_list)
+        has_listing_owner_function = self.has_listing_owner_function_creator(listing_owner_list)
+        filtered_company_list = filter(has_listing_owner_function, company_list)
 
         self.on_success(res, list(filtered_company_list))
 
-    def _checkExistenceCreator(self, listing_owner_list):
-        def _checkExistence(company_info):
+    @staticmethod
+    def has_listing_owner_function_creator(listing_owner_list):
+        def has_listing_owner_function(company_info):
             for address in listing_owner_list:
                 if company_info['address'] == address:
                     return True
             return False
-        return _checkExistence
+        return has_listing_owner_function
 
 
 # ------------------------------

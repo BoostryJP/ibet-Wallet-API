@@ -17,14 +17,15 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 """
 発行会社情報一覧参照API
-/v1/CompanyList
+/v2/CompanyList
 """
 
 
 class TestV1CompanyCompanyInfoList:
     # テスト対象API
-    apiurl = '/v1/CompanyList'
+    apiurl = '/v2/CompanyList'
 
+    @staticmethod
     def token_attribute(exchange_address):
         attribute = {
             'name': 'テストクーポン',
@@ -50,7 +51,7 @@ class TestV1CompanyCompanyInfoList:
         contract_address, abi = Contract. \
             deploy_contract('TokenList', [], deployer['account_address'])
         return {'address': contract_address, 'abi': abi}
-
+    @staticmethod
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
@@ -68,9 +69,7 @@ class TestV1CompanyCompanyInfoList:
         company_list[1]['address'] = eth_account['deployer']['account_address']
         with open('data/company_list.json', 'w') as f:
             json.dump(company_list, f, ensure_ascii=False, indent=4)
-        issuerList = []
-        issuerList.append(eth_account['issuer'])
-        issuerList.append(eth_account['deployer'])
+        issuerList = [eth_account['issuer'], eth_account['deployer']]
 
         # TokenListコントラクトアドレスの設定
         token_list = TestV1CompanyCompanyInfoList.tokenlist_contract()
@@ -121,9 +120,7 @@ class TestV1CompanyCompanyInfoList:
         company_list[1]['address'] = eth_account['deployer']['account_address']
         with open('data/company_list.json', 'w') as f:
             json.dump(company_list, f, ensure_ascii=False, indent=4)
-        issuerList = []
-        issuerList.append(eth_account['issuer'])
-        issuerList.append(eth_account['deployer'])
+        issuerList = [eth_account['issuer'], eth_account['deployer']]
 
         # TokenListコントラクトアドレスの設定
         token_list = TestV1CompanyCompanyInfoList.tokenlist_contract()

@@ -55,7 +55,6 @@ class App(falcon.API):
 
         # 会社情報
         self.add_route('/v1/Company/{eth_address}', company.CompanyInfo())
-        self.add_route('/v1/CompanyList', company.CompanyInfoList())
         self.add_route('/v1/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # マーケット情報：トークン一覧
@@ -132,6 +131,7 @@ class App(falcon.API):
 
         # 会社情報
         self.add_route('/v2/Company/{eth_address}', company.CompanyInfo())
+        self.add_route('/v2/CompanyList', company.CompanyInfoList())
         self.add_route('/v2/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # トークンABI参照
