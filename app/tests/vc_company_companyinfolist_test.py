@@ -17,13 +17,13 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 """
 発行会社情報一覧参照API
-/v2/CompanyList
+/v2/Companies
 """
 
 
 class TestV1CompanyCompanyInfoList:
     # テスト対象API
-    apiurl = '/v2/CompanyList'
+    apiurl = '/v2/Companies'
 
     @staticmethod
     def token_attribute(exchange_address):

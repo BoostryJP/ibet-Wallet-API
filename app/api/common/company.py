@@ -62,7 +62,7 @@ class CompanyInfo(BaseResource):
 # ------------------------------
 class CompanyInfoList(BaseResource):
     """
-    Handle for endpoint: /v2/CompanyList
+    Handle for endpoint: /v2/Companies
     """
 
     def on_get(self, req, res):
