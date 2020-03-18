@@ -51,6 +51,7 @@ class TestV1CompanyCompanyInfoList:
         contract_address, abi = Contract. \
             deploy_contract('TokenList', [], deployer['account_address'])
         return {'address': contract_address, 'abi': abi}
+
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
