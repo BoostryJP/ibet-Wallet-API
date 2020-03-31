@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
-from eth_utils import to_checksum_address
 from app import config
 from .account_config import eth_account
 
-'''
+"""
 決済代行業者情報参照API
 /v1/PaymentAgent/{eth_address}
-'''
+"""
 
 
 class TestV1CompanyPaymentAgentInfo:
@@ -15,7 +13,7 @@ class TestV1CompanyPaymentAgentInfo:
     apiurl_base = '/v1/PaymentAgent/'
 
     # 正常系1-1：決済代行業者リストに指定したアドレスの情報が存在
-    def test_normal_1_1(self, client, shared_contract):
+    def test_normal_1_1(self, client, shared_contract, mocked_payment_agent_list):
         eth_address = eth_account['agent']['account_address']
         apiurl = self.apiurl_base + eth_address
 
@@ -24,7 +22,7 @@ class TestV1CompanyPaymentAgentInfo:
 
         resp = client.simulate_get(apiurl)
         assumed_body = {
-            "address": to_checksum_address(eth_address),
+            "address": eth_address,
             "corporate_name": "株式会社１",
             "enode": "d27f4b9e02e8482aece2ebcec72acc739d80e99ffdcae6bdc224ce309d23c23fccd09970aca5ba91304b4fea986d808bf018b8a4aada960f3e10be9b741b8cb1",
             "ip_address": "XXX.XXX.XXX.XXX",
@@ -37,7 +35,7 @@ class TestV1CompanyPaymentAgentInfo:
         assert resp.json['data'] == assumed_body
 
     # エラー系1-1：決済代行業者会社リストに指定したアドレスの情報が存在しない
-    def test_error_1_1(self, client):
+    def test_error_1_1(self, client, mocked_payment_agent_list):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf1'
         apiurl = self.apiurl_base + eth_address
 
@@ -51,7 +49,7 @@ class TestV1CompanyPaymentAgentInfo:
         }
 
     # エラー系2-1： 無効なアドレス
-    def test_error_2_1(self, client):
+    def test_error_2_1(self, client, mocked_payment_agent_list):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf'  # アドレスが短い
         apiurl = self.apiurl_base + eth_address
 
