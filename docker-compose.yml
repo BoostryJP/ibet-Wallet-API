@@ -12,7 +12,9 @@ services:
     ports:
       - "8545:8545"
   ibet-wallet-api:
-    build: "app/tests/"
+    build:
+      context: ./
+      dockerfile: ./app/tests/Dockerfile
     environment:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
