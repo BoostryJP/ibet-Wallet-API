@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-
 from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -63,13 +61,8 @@ class TestV1CompanyCompanyInfoList:
         session.add(listed_token)
 
     # 正常系1-1： 登録済みのトークンアドレスに紐づく会社情報が返却される
-    def test_normal_1_1(self, client, session, shared_contract):
+    def test_normal_1_1(self, client, session, shared_contract, mocked_company_list):
         # テスト用アカウント
-        company_list = json.load(open('data/company_list.json', 'r'))
-        company_list[0]['address'] = eth_account['issuer']['account_address']
-        company_list[1]['address'] = eth_account['deployer']['account_address']
-        with open('data/company_list.json', 'w') as f:
-            json.dump(company_list, f, ensure_ascii=False, indent=4)
         issuerList = [eth_account['issuer'], eth_account['deployer']]
 
         # TokenListコントラクトアドレスの設定
@@ -114,13 +107,8 @@ class TestV1CompanyCompanyInfoList:
         assert resp.json['data'] == assumed_body
 
     # 正常系1-2： listing対象とcompanylistが突合されず0件リターン
-    def test_normal_1_2(self, client, shared_contract):
+    def test_normal_1_2(self, client, shared_contract, mocked_company_list):
         # テスト用アカウント
-        company_list = json.load(open('data/company_list.json', 'r'))
-        company_list[0]['address'] = eth_account['issuer']['account_address']
-        company_list[1]['address'] = eth_account['deployer']['account_address']
-        with open('data/company_list.json', 'w') as f:
-            json.dump(company_list, f, ensure_ascii=False, indent=4)
         issuerList = [eth_account['issuer'], eth_account['deployer']]
 
         # TokenListコントラクトアドレスの設定
