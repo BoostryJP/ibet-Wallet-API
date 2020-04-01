@@ -11,8 +11,8 @@ services:
     image: "trufflesuite/ganache-cli:latest"
     ports:
       - "8545:8545"
-    entrypoint:
-      - "--gasPrice 0"
+    command:
+      - --gasPrice 0
   ibet-wallet-api:
     build:
       context: ./
