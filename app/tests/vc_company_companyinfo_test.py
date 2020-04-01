@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from .account_config import eth_account
+
 """
 発行会社情報参照API
 /v1/Company/{eth_address}
@@ -11,13 +13,13 @@ class TestV1CompanyCompanyInfo:
     apiurl_base = '/v1/Company/'
 
     # 正常系1-1： 発行会社リストに指定したアドレスの情報が存在
-    def test_normal_1_1(self, client):
-        eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd'
+    def test_normal_1_1(self, client, mocked_company_list):
+        eth_address = eth_account['issuer']['account_address']
         apiurl = self.apiurl_base + eth_address
 
         resp = client.simulate_get(apiurl)
         assumed_body = {
-            "address": "0x865de50bb0f21c3f318b736c04d2b6ff7dea3bfd",
+            "address": eth_account['issuer']['account_address'],
             "corporate_name": "株式会社DEMO",
             "enode": "d27f4b9e02e8482aece2ebcec72acc739d80e99ffdcae6bdc224ce309d23c23fccd09970aca5ba91304b4fea986d808bf018b8a4aada960f3e10be9b741b8cb1",
             "ip_address": "XXX.XXX.XXX.XXX",
@@ -30,7 +32,7 @@ class TestV1CompanyCompanyInfo:
         assert resp.json['data'] == assumed_body
 
     # エラー系1-1： 発行会社リストに指定したアドレスの情報が存在しない
-    def test_error_1_1(self, client):
+    def test_error_1_1(self, client, mocked_company_list):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf1'
         apiurl = self.apiurl_base + eth_address
 
@@ -44,7 +46,7 @@ class TestV1CompanyCompanyInfo:
         }
 
     # エラー系2-1： 無効なアドレス
-    def test_error_2_1(self, client):
+    def test_error_2_1(self, client, mocked_company_list):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf'  # アドレスが短い
         apiurl = self.apiurl_base + eth_address
 
