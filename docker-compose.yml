@@ -12,8 +12,7 @@ services:
     ports:
       - "8545:8545"
     entrypoint:
-      - --gasPrice
-      - 0
+      - "--gasPrice 0"
   ibet-wallet-api:
     build:
       context: ./
