@@ -48,7 +48,7 @@ class Token(BaseResource):
             first()
 
         res_data = {
-            'holders_count': holders_count
+            'holders_count': holders_count[0]
         }
 
         self.on_success(res, res_data)
