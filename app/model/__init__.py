@@ -12,3 +12,4 @@ from .private_listing import PrivateListing
 from .executable_contract import ExecutableContract
 from .token import BondToken, BondTokenV2, MembershipToken, MembershipTokenV2, CouponToken, CouponTokenV2
 from .consume_coupon import ConsumeCoupon
+from .position import Position
