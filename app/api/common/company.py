@@ -84,16 +84,17 @@ class CompanyInfoList(BaseResource):
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).all()
 
-        # TokenList-Contractへの接続
-        ListContract = Contract.get_contract(
-            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-
         # 取扱トークンのownerAddressと会社リストを突合
         listing_owner_list = []
         for token in available_tokens:
-            token_address = to_checksum_address(token.token_address)
-            owner_address = ListContract.functions.getOwnerAddress(token_address).call()
-            listing_owner_list.append(owner_address)
+            try:
+                token_address = to_checksum_address(token.token_address)
+                token_contract = Contract.get_contract('IbetStandardTokenInterface', token_address)
+                owner_address = token_contract.functions.owner().call()
+                listing_owner_list.append(owner_address)
+            except Exception as e:
+                LOG.warning(e)
+                pass
         has_listing_owner_function = self.has_listing_owner_function_creator(listing_owner_list)
         filtered_company_list = filter(has_listing_owner_function, company_list)
 
@@ -103,7 +104,7 @@ class CompanyInfoList(BaseResource):
     def has_listing_owner_function_creator(listing_owner_list):
         def has_listing_owner_function(company_info):
             for address in listing_owner_list:
-                if company_info['address'] == address:
+                if to_checksum_address(company_info['address']) == address:
                     return True
             return False
         return has_listing_owner_function
