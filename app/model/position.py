@@ -22,7 +22,7 @@ class Position(Base):
         'id': int,
         'token_address': str,
         'account_address': str,
-        'position': int,
+        'balance': int,
     }
 
     FIELDS.update(Base.FIELDS)
