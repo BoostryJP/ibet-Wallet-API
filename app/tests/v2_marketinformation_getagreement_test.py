@@ -329,7 +329,7 @@ class TestV2GetAgreement:
     # 400
     def test_tick_error_3(self, client):
         request_params = {
-            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B',  # アドレス長が短い
+            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B', # アドレス長が短い
             'order_id': 2,
             'agreement_id': 102
         }
