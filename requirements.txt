@@ -37,6 +37,7 @@ scrypt==0.8.6
 semantic-version==2.6.0
 six==1.12.0
 SQLAlchemy==1.2.2
+sqlalchemy-migrate==0.13.0
 toolz==0.9.0
 web3==4.8.2
 websockets==4.0.1
