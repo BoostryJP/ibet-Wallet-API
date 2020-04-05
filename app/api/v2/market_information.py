@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timezone, timedelta
-
-JST = timezone(timedelta(hours=+9), 'JST')
-
 from sqlalchemy import func
 from sqlalchemy import desc
 from cerberus import Validator
@@ -14,7 +10,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import Order, Agreement
+from app.model import Order, Agreement, AgreementStatus
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
@@ -24,10 +20,120 @@ LOG = log.get_logger()
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
+"""
+Common
+"""
+
+
+# ------------------------------
+# 約定情報参照
+# ------------------------------
+class GetAgreement(BaseResource):
+    """
+    Handle for endpoint: /v2/Market/Agreement
+    """
+
+    def on_post(self, req, res):
+        LOG.info('market_information.GetAgreement')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        request_json = GetAgreement.validate(req)
+
+        # リクエストから情報を抽出
+        order_id = request_json['order_id']
+        agreement_id = request_json['agreement_id']
+        exchange_address = to_checksum_address(request_json['exchange_address'])
+
+        # 未決済の約定イベントの存在有無を確認
+        # DBにデータが存在しない場合は、入力値エラーを返す
+        # NOTE: コントラクトアクセスの負荷を下げるためにイベントの存在有無を先に確認している
+        agreement = session.query(Agreement). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(Agreement.order_id == order_id). \
+            filter(Agreement.agreement_id == agreement_id). \
+            filter(Agreement.status == AgreementStatus.PENDING.value). \
+            first()
+        if agreement is None:
+            raise InvalidParameterError('Data not found')
+
+        # 取引コントラクトに接続
+        ExchangeContract = GetAgreement.exchange_contracts(exchange_address)
+
+        # 約定情報の取得
+        # NOTE: 取引コントラクトから直近の情報を取得する
+        counterpart, amount, price, canceled, paid, expiry = \
+            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+
+        res_data = {
+            'counterpart': counterpart,
+            'amount': amount,  # 約定数量
+            'price': price,  # 約定単価
+            'canceled': canceled,  # 約定取消フラグ
+            'paid': paid,  # 支払済フラグ
+            'expiry': expiry  # 有効期限（unixtime）
+        }
+
+        self.on_success(res, res_data)
+
+    @staticmethod
+    def exchange_contracts(exchange_address):
+        if exchange_address == to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS):
+            ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
+
+        elif exchange_address == to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS):
+            ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
+
+        elif exchange_address == to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS):
+            ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
+        else:
+            description = 'Invalid Address'
+            raise InvalidParameterError(description=description)
+
+        return ExchangeContract
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            'order_id': {
+                'type': 'integer',
+                'empty': False,
+                'required': True
+            },
+            'agreement_id': {
+                'type': 'integer',
+                'empty': False,
+                'required': True
+            },
+            'exchange_address': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        try:
+            if not Web3.isAddress(request_json['exchange_address']):
+                raise InvalidParameterError
+        except:
+            raise InvalidParameterError
+
+        return validator.document
+
 
 """
 Straight Bond
 """
+
 
 # ------------------------------
 # [普通社債]板情報取得
@@ -71,18 +177,18 @@ class StraightBondOrderBook(BaseResource):
                     Order.exchange_address, Order.account_address,
                     func.sum(Agreement.amount)). \
                     outerjoin(
-                        Agreement,
-                        Order.unique_order_id == Agreement.unique_order_id).\
+                    Agreement,
+                    Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(
-                        Order.order_id, Order.amount,
-                        Order.price, Order.exchange_address,
-                        Order.account_address).\
-                    filter(Order.exchange_address == exchange_address).\
-                    filter(Order.token_address == token_address).\
-                    filter(Order.is_buy == False).\
-                    filter(Order.is_cancelled == False).\
-                    filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == config.AGENT_ADDRESS).\
+                    Order.order_id, Order.amount,
+                    Order.price, Order.exchange_address,
+                    Order.account_address). \
+                    filter(Order.exchange_address == exchange_address). \
+                    filter(Order.token_address == token_address). \
+                    filter(Order.is_buy == False). \
+                    filter(Order.is_cancelled == False). \
+                    filter(Order.account_address != account_address). \
+                    filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
 
             else:  # 売注文
@@ -98,18 +204,18 @@ class StraightBondOrderBook(BaseResource):
                     Order.exchange_address, Order.account_address,
                     func.sum(Agreement.amount)). \
                     outerjoin(
-                        Agreement,
-                        Order.unique_order_id == Agreement.unique_order_id).\
+                    Agreement,
+                    Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(
-                        Order.order_id, Order.amount,
-                        Order.price, Order.exchange_address,
-                        Order.account_address).\
-                    filter(Order.exchange_address == exchange_address).\
-                    filter(Order.token_address == token_address).\
-                    filter(Order.is_buy == True).\
-                    filter(Order.is_cancelled == False).\
-                    filter(Order.account_address != account_address).\
-                    filter(Order.agent_address == config.AGENT_ADDRESS).\
+                    Order.order_id, Order.amount,
+                    Order.price, Order.exchange_address,
+                    Order.account_address). \
+                    filter(Order.exchange_address == exchange_address). \
+                    filter(Order.token_address == token_address). \
+                    filter(Order.is_buy == True). \
+                    filter(Order.is_cancelled == False). \
+                    filter(Order.account_address != account_address). \
+                    filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
 
         else:
@@ -125,17 +231,17 @@ class StraightBondOrderBook(BaseResource):
                     Order.exchange_address, Order.account_address,
                     func.sum(Agreement.amount)). \
                     outerjoin(
-                        Agreement,
-                        Order.unique_order_id == Agreement.unique_order_id).\
+                    Agreement,
+                    Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(
-                        Order.order_id, Order.amount,
-                        Order.price, Order.exchange_address,
-                        Order.account_address).\
-                    filter(Order.exchange_address == exchange_address).\
-                    filter(Order.token_address == token_address).\
-                    filter(Order.is_buy == False).\
-                    filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == config.AGENT_ADDRESS).\
+                    Order.order_id, Order.amount,
+                    Order.price, Order.exchange_address,
+                    Order.account_address). \
+                    filter(Order.exchange_address == exchange_address). \
+                    filter(Order.token_address == token_address). \
+                    filter(Order.is_buy == False). \
+                    filter(Order.is_cancelled == False). \
+                    filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
 
             else:  # 売注文
@@ -150,17 +256,17 @@ class StraightBondOrderBook(BaseResource):
                     Order.exchange_address, Order.account_address,
                     func.sum(Agreement.amount)). \
                     outerjoin(
-                        Agreement,
-                        Order.unique_order_id == Agreement.unique_order_id).\
+                    Agreement,
+                    Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(
-                        Order.order_id, Order.amount,
-                        Order.price, Order.exchange_address,
-                        Order.account_address).\
-                    filter(Order.exchange_address == exchange_address).\
-                    filter(Order.token_address == token_address).\
-                    filter(Order.is_buy == True).\
-                    filter(Order.is_cancelled == False).\
-                    filter(Order.agent_address == config.AGENT_ADDRESS).\
+                    Order.order_id, Order.amount,
+                    Order.price, Order.exchange_address,
+                    Order.account_address). \
+                    filter(Order.exchange_address == exchange_address). \
+                    filter(Order.token_address == token_address). \
+                    filter(Order.is_buy == True). \
+                    filter(Order.is_cancelled == False). \
+                    filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
 
         # レスポンス用の注文一覧を構築
@@ -308,7 +414,7 @@ class StraightBondTick(BaseResource):
             token = to_checksum_address(token_address)
             tick = []
             try:
-                entries = session.query(Agreement, Order).\
+                entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
@@ -369,6 +475,7 @@ class StraightBondTick(BaseResource):
 """
 Membership
 """
+
 
 # ------------------------------
 # [会員権]板情報取得
@@ -653,10 +760,10 @@ class MembershipTick(BaseResource):
             try:
                 entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
-                    filter(Order.token_address == token).\
-                    filter(Agreement.status == 1).\
-                    filter(Order.is_cancelled == False).\
-                    order_by(desc(Agreement.settlement_timestamp)).\
+                    filter(Order.token_address == token). \
+                    filter(Agreement.status == 1). \
+                    filter(Order.is_cancelled == False). \
+                    order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
                 for entry in entries:
@@ -712,6 +819,7 @@ class MembershipTick(BaseResource):
 """
 Coupon
 """
+
 
 # ------------------------------
 # [クーポン]板情報取得

@@ -31,11 +31,7 @@ RUN apt-get update -q \
  language-pack-ja-base \
  language-pack-ja \
  git \
- libyaml-cpp-dev && \
- apt-get install -y software-properties-common && \
- add-apt-repository -y ppa:ethereum/ethereum && \
- apt-get update -y && \
- apt-get install -y solc
+ libyaml-cpp-dev
 
 # remove unnessesory package files
 RUN apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -74,4 +70,3 @@ COPY run.sh /app/
 EXPOSE 5000
 
 CMD /app/run.sh
-
