@@ -133,6 +133,7 @@ class App(falcon.API):
 
         # 会社情報
         self.add_route('/v2/Company/{eth_address}', company.CompanyInfo())
+        self.add_route('/v2/Companies', company.CompanyInfoList())
         self.add_route('/v2/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # トークンABI参照
@@ -164,6 +165,9 @@ class App(falcon.API):
         self.add_route('/v2/Market/Tick/StraightBond', market_information.StraightBondTick())
         self.add_route('/v2/Market/Tick/Membership', market_information.MembershipTick())
         self.add_route('/v2/Market/Tick/Coupon', market_information.CouponTick())
+
+        # マーケット情報：約定情報参照
+        self.add_route('/v2/Market/Agreement', market_information.GetAgreement())
 
         # 保有トークン一覧
         self.add_route('/v2/Position/StraightBond', v2position.StraightBondMyTokens())
