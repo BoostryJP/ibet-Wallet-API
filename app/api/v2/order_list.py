@@ -18,7 +18,7 @@ from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
 from app.model import Order, Agreement, AgreementStatus, Listing, \
-    BondToken, MembershipToken, CouponToken
+    BondTokenV2, MembershipTokenV2, CouponTokenV2
 
 LOG = log.get_logger()
 
@@ -350,6 +350,9 @@ class OrderList(BaseResource):
                 return_date = TokenContract.functions.returnDate().call()
                 return_amount = TokenContract.functions.returnAmount().call()
                 purpose = TokenContract.functions.purpose().call()
+                isRedeemed = TokenContract.functions.isRedeemed().call()
+                transferable = TokenContract.functions.transferable().call()
+                initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
                 image_url_1 = TokenContract.functions.getImageURL(0).call()
                 image_url_2 = TokenContract.functions.getImageURL(1).call()
                 image_url_3 = TokenContract.functions.getImageURL(2).call()
@@ -372,9 +375,10 @@ class OrderList(BaseResource):
                 # 第三者認定（Sign）のイベント情報を検索する
                 # NOTE:現状項目未使用であるため空のリストを返す
                 certification = []
-                bondtoken = BondToken()
+                bondtoken = BondTokenV2()
                 bondtoken.token_address = token_address
                 bondtoken.token_template = 'IbetStraightBond'
+                bondtoken.owner_address = owner_address
                 bondtoken.company_name = company_name
                 bondtoken.name = name
                 bondtoken.symbol = symbol
@@ -398,12 +402,20 @@ class OrderList(BaseResource):
                 bondtoken.return_date = return_date
                 bondtoken.return_amount = return_amount
                 bondtoken.purpose = purpose
+                bondtoken.isRedeemed = isRedeemed
+                bondtoken.transferable = transferable
                 bondtoken.image_url = [
                     {'id': 1, 'url': image_url_1},
                     {'id': 2, 'url': image_url_2},
                     {'id': 3, 'url': image_url_3}
                 ]
                 bondtoken.certification = certification
+                bondtoken.initial_offering_status = initial_offering_status
+                # 許可済みトークンに存在しない場合は、0とする
+                bondtoken.max_holding_quantity = available_token.max_holding_quantity \
+                    if hasattr(available_token, "max_holding_quantity") else 0
+                bondtoken.max_sell_amount = available_token.max_sell_amount \
+                    if hasattr(available_token, "max_sell_amount") else 0
                 # 許可済みトークンに存在しない場合は、決済手段はFalseとする
                 bondtoken.payment_method_credit_card = available_token.payment_method_credit_card \
                     if hasattr(available_token, "payment_method_credit_card") else False
@@ -464,6 +476,7 @@ class OrderList(BaseResource):
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
+                initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -484,9 +497,10 @@ class OrderList(BaseResource):
                     if to_checksum_address(available.token_address) == token_address:
                         available_token = available
 
-                membershiptoken = MembershipToken()
+                membershiptoken = MembershipTokenV2()
                 membershiptoken.token_address = token_address
                 membershiptoken.token_template = 'IbetMembership'
+                membershiptoken.owner_address = owner_address
                 membershiptoken.company_name = company_name
                 membershiptoken.name = name
                 membershiptoken.symbol = symbol
@@ -497,11 +511,17 @@ class OrderList(BaseResource):
                 membershiptoken.memo = memo
                 membershiptoken.transferable = transferable
                 membershiptoken.status = status
+                membershiptoken.initial_offering_status = initial_offering_status
                 membershiptoken.image_url = [
                     {'id': 1, 'url': image_url_1},
                     {'id': 2, 'url': image_url_2},
                     {'id': 3, 'url': image_url_3}
                 ]
+                # 許可済みトークンに存在しない場合は、0とする
+                membershiptoken.max_holding_quantity = available_token.max_holding_quantity \
+                    if hasattr(available_token, "max_holding_quantity") else 0
+                membershiptoken.max_sell_amount = available_token.max_sell_amount \
+                    if hasattr(available_token, "max_sell_amount") else 0
                 membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card \
                     if hasattr(available_token, "payment_method_credit_card") else False
                 membershiptoken.payment_method_bank = available_token.payment_method_bank \
@@ -561,6 +581,7 @@ class OrderList(BaseResource):
                 memo = TokenContract.functions.memo().call()
                 transferable = TokenContract.functions.transferable().call()
                 status = TokenContract.functions.status().call()
+                initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
                 image_url_1 = TokenContract.functions.image_urls(0).call()
                 image_url_2 = TokenContract.functions.image_urls(1).call()
                 image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -581,9 +602,10 @@ class OrderList(BaseResource):
                     if to_checksum_address(available.token_address) == token_address:
                         available_token = available
 
-                coupontoken = CouponToken()
+                coupontoken = CouponTokenV2()
                 coupontoken.token_address = token_address
                 coupontoken.token_template = 'IbetCoupon'
+                coupontoken.owner_address = owner_address
                 coupontoken.company_name = company_name
                 coupontoken.name = name
                 coupontoken.symbol = symbol
@@ -594,11 +616,22 @@ class OrderList(BaseResource):
                 coupontoken.memo = memo
                 coupontoken.transferable = transferable
                 coupontoken.status = status
+                coupontoken.initial_offering_status = initial_offering_status
                 coupontoken.image_url = [
                     {'id': 1, 'url': image_url_1},
                     {'id': 2, 'url': image_url_2},
                     {'id': 3, 'url': image_url_3}
                 ]
+                # 許可済みトークンに存在しない場合は、0とする
+                coupontoken.max_holding_quantity = available_token.max_holding_quantity \
+                    if hasattr(available_token, "max_holding_quantity") else 0
+                coupontoken.max_sell_amount = available_token.max_sell_amount \
+                    if hasattr(available_token, "max_sell_amount") else 0
+                # 許可済みトークンに存在しない場合は、0とする
+                coupontoken.max_holding_quantity = available_token.max_holding_quantity \
+                    if hasattr(available_token, "max_holding_quantity") else 0
+                coupontoken.max_sell_amount = available_token.max_sell_amount \
+                    if hasattr(available_token, "max_sell_amount") else 0
                 coupontoken.payment_method_credit_card = available_token.payment_method_credit_card \
                     if hasattr(available_token, "payment_method_credit_card") else False
                 coupontoken.payment_method_bank = available_token.payment_method_bank \
@@ -704,6 +737,9 @@ class OrderList(BaseResource):
             return_date = TokenContract.functions.returnDate().call()
             return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
+            isRedeemed = TokenContract.functions.isRedeemed().call()
+            transferable = TokenContract.functions.transferable().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
@@ -727,9 +763,10 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondToken()
+            bondtoken = BondTokenV2()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.owner_address = owner_address
             bondtoken.company_name = company_name
             bondtoken.name = name
             bondtoken.symbol = symbol
@@ -753,12 +790,20 @@ class OrderList(BaseResource):
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
+            bondtoken.isRedeemed = isRedeemed
+            bondtoken.transferable = transferable
             bondtoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
             bondtoken.certification = certification
+            bondtoken.initial_offering_status = initial_offering_status
+            # 許可済みトークンに存在しない場合は、0とする
+            bondtoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            bondtoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
@@ -870,6 +915,9 @@ class OrderList(BaseResource):
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
+            isRedeemed = TokenContract.functions.isRedeemed().call()
+            transferable = TokenContract.functions.transferable().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             owner_address = TokenContract.functions.owner().call()
             contact_information = TokenContract.functions.contactInformation().call()
             privacy_policy = TokenContract.functions.privacyPolicy().call()
@@ -889,9 +937,10 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondToken()
+            bondtoken = BondTokenV2()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.owner_address = owner_address
             bondtoken.company_name = company_name
             bondtoken.name = name
             bondtoken.symbol = symbol
@@ -915,12 +964,20 @@ class OrderList(BaseResource):
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
+            bondtoken.isRedeemed = isRedeemed
+            bondtoken.transferable = transferable
             bondtoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
             bondtoken.certification = certification
+            bondtoken.initial_offering_status = initial_offering_status
+            # 許可済みトークンに存在しない場合は、0とする
+            bondtoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            bondtoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
@@ -981,6 +1038,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -999,9 +1057,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipToken()
+            membershiptoken = MembershipTokenV2()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.owner_address = owner_address
             membershiptoken.company_name = company_name
             membershiptoken.name = name
             membershiptoken.symbol = symbol
@@ -1012,11 +1071,17 @@ class OrderList(BaseResource):
             membershiptoken.memo = memo
             membershiptoken.transferable = transferable
             membershiptoken.status = status
+            membershiptoken.initial_offering_status = initial_offering_status
             membershiptoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            membershiptoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            membershiptoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank \
@@ -1076,6 +1141,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -1094,9 +1160,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipToken()
+            membershiptoken = MembershipTokenV2()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.owner_address = owner_address
             membershiptoken.company_name = company_name
             membershiptoken.name = name
             membershiptoken.symbol = symbol
@@ -1107,11 +1174,17 @@ class OrderList(BaseResource):
             membershiptoken.memo = memo
             membershiptoken.transferable = transferable
             membershiptoken.status = status
+            membershiptoken.initial_offering_status = initial_offering_status
             membershiptoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            membershiptoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            membershiptoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank \
@@ -1171,6 +1244,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -1190,9 +1264,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponToken()
+            coupontoken = CouponTokenV2()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
+            coupontoken.owner_address = owner_address
             coupontoken.company_name = company_name
             coupontoken.name = name
             coupontoken.symbol = symbol
@@ -1203,11 +1278,17 @@ class OrderList(BaseResource):
             coupontoken.memo = memo
             coupontoken.transferable = transferable
             coupontoken.status = status
+            coupontoken.initial_offering_status = initial_offering_status
             coupontoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            coupontoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            coupontoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             coupontoken.payment_method_bank = available_token.payment_method_bank \
@@ -1267,6 +1348,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -1286,9 +1368,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponToken()
+            coupontoken = CouponTokenV2()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
+            coupontoken.owner_address = owner_address
             coupontoken.company_name = company_name
             coupontoken.name = name
             coupontoken.symbol = symbol
@@ -1299,11 +1382,17 @@ class OrderList(BaseResource):
             coupontoken.memo = memo
             coupontoken.transferable = transferable
             coupontoken.status = status
+            coupontoken.initial_offering_status = initial_offering_status
             coupontoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            coupontoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            coupontoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             coupontoken.payment_method_bank = available_token.payment_method_bank \
@@ -1419,6 +1508,9 @@ class OrderList(BaseResource):
             return_date = TokenContract.functions.returnDate().call()
             return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
+            isRedeemed = TokenContract.functions.isRedeemed().call()
+            transferable = TokenContract.functions.transferable().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
@@ -1442,9 +1534,10 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondToken()
+            bondtoken = BondTokenV2()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.owner_address = owner_address
             bondtoken.company_name = company_name
             bondtoken.name = name
             bondtoken.symbol = symbol
@@ -1468,12 +1561,20 @@ class OrderList(BaseResource):
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
+            bondtoken.isRedeemed = isRedeemed
+            bondtoken.transferable = transferable
             bondtoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
             bondtoken.certification = certification
+            bondtoken.initial_offering_status = initial_offering_status
+            # 許可済みトークンに存在しない場合は、0とする
+            bondtoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            bondtoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
@@ -1590,6 +1691,9 @@ class OrderList(BaseResource):
             return_date = TokenContract.functions.returnDate().call()
             return_amount = TokenContract.functions.returnAmount().call()
             purpose = TokenContract.functions.purpose().call()
+            isRedeemed = TokenContract.functions.isRedeemed().call()
+            transferable = TokenContract.functions.transferable().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.getImageURL(0).call()
             image_url_2 = TokenContract.functions.getImageURL(1).call()
             image_url_3 = TokenContract.functions.getImageURL(2).call()
@@ -1613,9 +1717,10 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondToken()
+            bondtoken = BondTokenV2()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
+            bondtoken.owner_address = owner_address
             bondtoken.company_name = company_name
             bondtoken.name = name
             bondtoken.symbol = symbol
@@ -1639,12 +1744,20 @@ class OrderList(BaseResource):
             bondtoken.return_date = return_date
             bondtoken.return_amount = return_amount
             bondtoken.purpose = purpose
+            bondtoken.isRedeemed = isRedeemed
+            bondtoken.transferable = transferable
             bondtoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
             bondtoken.certification = certification
+            bondtoken.initial_offering_status = initial_offering_status
+            # 許可済みトークンに存在しない場合は、0とする
+            bondtoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            bondtoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             # 許可済みトークンに存在しない場合は、決済手段はFalseとする
             bondtoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
@@ -1713,6 +1826,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -1731,9 +1845,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipToken()
+            membershiptoken = MembershipTokenV2()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.owner_address = owner_address
             membershiptoken.company_name = company_name
             membershiptoken.name = name
             membershiptoken.symbol = symbol
@@ -1744,11 +1859,17 @@ class OrderList(BaseResource):
             membershiptoken.memo = memo
             membershiptoken.transferable = transferable
             membershiptoken.status = status
+            membershiptoken.initial_offering_status = initial_offering_status
             membershiptoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            membershiptoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            membershiptoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank \
@@ -1816,6 +1937,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -1834,9 +1956,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipToken()
+            membershiptoken = MembershipTokenV2()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
+            membershiptoken.owner_address
             membershiptoken.company_name = company_name
             membershiptoken.name = name
             membershiptoken.symbol = symbol
@@ -1847,11 +1970,17 @@ class OrderList(BaseResource):
             membershiptoken.memo = memo
             membershiptoken.transferable = transferable
             membershiptoken.status = status
+            membershiptoken.initial_offering_status = initial_offering_status
             membershiptoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            membershiptoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            membershiptoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             membershiptoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             membershiptoken.payment_method_bank = available_token.payment_method_bank \
@@ -1919,6 +2048,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -1938,9 +2068,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponToken()
+            coupontoken = CouponTokenV2()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
+            coupontoken.owner_address = owner_address
             coupontoken.company_name = company_name
             coupontoken.name = name
             coupontoken.symbol = symbol
@@ -1951,11 +2082,17 @@ class OrderList(BaseResource):
             coupontoken.memo = memo
             coupontoken.transferable = transferable
             coupontoken.status = status
+            coupontoken.initial_offering_status = initial_offering_status
             coupontoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            coupontoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            coupontoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             coupontoken.payment_method_bank = available_token.payment_method_bank \
@@ -2023,6 +2160,7 @@ class OrderList(BaseResource):
             memo = TokenContract.functions.memo().call()
             transferable = TokenContract.functions.transferable().call()
             status = TokenContract.functions.status().call()
+            initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
             image_url_1 = TokenContract.functions.image_urls(0).call()
             image_url_2 = TokenContract.functions.image_urls(1).call()
             image_url_3 = TokenContract.functions.image_urls(2).call()
@@ -2042,9 +2180,10 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponToken()
+            coupontoken = CouponTokenV2()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
+            coupontoken.owner_address = owner_address
             coupontoken.company_name = company_name
             coupontoken.name = name
             coupontoken.symbol = symbol
@@ -2055,11 +2194,17 @@ class OrderList(BaseResource):
             coupontoken.memo = memo
             coupontoken.transferable = transferable
             coupontoken.status = status
+            coupontoken.initial_offering_status = initial_offering_status
             coupontoken.image_url = [
                 {'id': 1, 'url': image_url_1},
                 {'id': 2, 'url': image_url_2},
                 {'id': 3, 'url': image_url_3}
             ]
+            # 許可済みトークンに存在しない場合は、0とする
+            coupontoken.max_holding_quantity = available_token.max_holding_quantity \
+                if hasattr(available_token, "max_holding_quantity") else 0
+            coupontoken.max_sell_amount = available_token.max_sell_amount \
+                if hasattr(available_token, "max_sell_amount") else 0
             coupontoken.payment_method_credit_card = available_token.payment_method_credit_card \
                 if hasattr(available_token, "payment_method_credit_card") else False
             coupontoken.payment_method_bank = available_token.payment_method_bank \
