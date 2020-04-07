@@ -627,11 +627,6 @@ class OrderList(BaseResource):
                     if hasattr(available_token, "max_holding_quantity") else 0
                 coupontoken.max_sell_amount = available_token.max_sell_amount \
                     if hasattr(available_token, "max_sell_amount") else 0
-                # 許可済みトークンに存在しない場合は、0とする
-                coupontoken.max_holding_quantity = available_token.max_holding_quantity \
-                    if hasattr(available_token, "max_holding_quantity") else 0
-                coupontoken.max_sell_amount = available_token.max_sell_amount \
-                    if hasattr(available_token, "max_sell_amount") else 0
                 coupontoken.payment_method_credit_card = available_token.payment_method_credit_card \
                     if hasattr(available_token, "payment_method_credit_card") else False
                 coupontoken.payment_method_bank = available_token.payment_method_bank \
