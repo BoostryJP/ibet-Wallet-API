@@ -139,7 +139,7 @@ class TestV2GetAgreement:
         a.agreement_id = agreement_id
         a.exchange_address = exchange['address']
         a.unique_order_id = exchange['address'] + "_" + str(order_id)
-        a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.buyer_address = '0x2e98E5e4098d838900509703FA8ee220E31eEdEE'
         a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.amount = 3
         a.status = 0
@@ -152,7 +152,7 @@ class TestV2GetAgreement:
         a.agreement_id = 102
         a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(2)
-        a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.buyer_address = '0x2e98E5e4098d838900509703FA8ee220E31eEdEE'
         a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.amount = 3
         a.status = 0
@@ -165,7 +165,7 @@ class TestV2GetAgreement:
         a.agreement_id = agreement_id
         a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'  # NOTE: Exchangeアドレスのみ異なる
         a.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(1)
-        a.buyer_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        a.buyer_address = '0x2e98E5e4098d838900509703FA8ee220E31eEdEE'
         a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         a.amount = 3
         a.status = 0
@@ -201,6 +201,8 @@ class TestV2GetAgreement:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
+            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
+            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
             'paid': False,
             'price': 1000
         }
@@ -210,6 +212,8 @@ class TestV2GetAgreement:
         assert resp.json['data']['amount'] == assumed_body['amount']
         assert resp.json['data']['canceled'] == assumed_body['canceled']
         assert resp.json['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
+        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
         assert resp.json['data']['paid'] == assumed_body['paid']
         assert resp.json['data']['price'] == assumed_body['price']
 
@@ -235,6 +239,8 @@ class TestV2GetAgreement:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
+            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
+            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
             'paid': False,
             'price': 1000
         }
@@ -244,6 +250,8 @@ class TestV2GetAgreement:
         assert resp.json['data']['amount'] == assumed_body['amount']
         assert resp.json['data']['canceled'] == assumed_body['canceled']
         assert resp.json['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
+        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
         assert resp.json['data']['paid'] == assumed_body['paid']
         assert resp.json['data']['price'] == assumed_body['price']
 
@@ -269,6 +277,8 @@ class TestV2GetAgreement:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
+            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
+            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
             'paid': False,
             'price': 1000
         }
@@ -278,6 +288,8 @@ class TestV2GetAgreement:
         assert resp.json['data']['amount'] == assumed_body['amount']
         assert resp.json['data']['canceled'] == assumed_body['canceled']
         assert resp.json['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
+        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
         assert resp.json['data']['paid'] == assumed_body['paid']
         assert resp.json['data']['price'] == assumed_body['price']
 
