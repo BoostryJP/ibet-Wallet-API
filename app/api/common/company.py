@@ -10,7 +10,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing
+from app.model import Listing, PrivateListing
 
 LOG = log.get_logger()
 
@@ -108,6 +108,39 @@ class CompanyInfoList(BaseResource):
                     return True
             return False
         return has_listing_owner_function
+
+
+# ------------------------------
+# 発行会社のトークン一覧
+# ------------------------------
+class CompanyTokenList(BaseResource):
+    """
+    Handle for endpoint: /v2/Company/{eth_address}/Tokens
+    """
+
+    def on_get(self, req, res, eth_address):
+        LOG.info('common.Company.CompanyTokenInfo')
+
+        if not Web3.isAddress(eth_address):
+            description = 'invalid eth_address'
+            raise InvalidParameterError(description=description)
+
+        session = req.context['session']
+
+        # 取扱トークンリストを取得
+        listing_list = session.query(Listing).filter(Listing.owner_address == eth_address).all()
+        listing_list += session.query(PrivateListing).filter(PrivateListing.owner_address == eth_address).all()
+        print(listing_list)
+        # TokenListを降順に調べる(登録が新しい順)
+        listing_list.sort(key=lambda token: token.created, reverse=True)
+
+        token_address_list = list(map(lambda listing: to_checksum_address(listing.token_address), listing_list))
+
+        data = {
+           'token_list': token_address_list
+        }
+
+        self.on_success(res, data)
 
 
 # ------------------------------
