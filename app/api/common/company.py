@@ -119,7 +119,7 @@ class CompanyTokenList(BaseResource):
     """
 
     def on_get(self, req, res, eth_address):
-        LOG.info('common.Company.CompanyTokenInfo')
+        LOG.info('common.Company.CompanyTokenList')
 
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'
