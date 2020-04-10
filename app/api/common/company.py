@@ -130,7 +130,7 @@ class CompanyTokenList(BaseResource):
         # 取扱トークンリストを取得
         listing_list = session.query(Listing).filter(Listing.owner_address == eth_address).all()
         listing_list += session.query(PrivateListing).filter(PrivateListing.owner_address == eth_address).all()
-        print(listing_list)
+
         # TokenListを降順に調べる(登録が新しい順)
         listing_list.sort(key=lambda token: token.created, reverse=True)
 
