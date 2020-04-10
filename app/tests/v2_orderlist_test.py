@@ -190,6 +190,7 @@ class TestV2OrderList_Bond:
             'token': {
                 'token_address': bond_token['address'],
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
@@ -213,6 +214,8 @@ class TestV2OrderList_Bond:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
+                'isRedeemed': False,
+                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -224,6 +227,9 @@ class TestV2OrderList_Bond:
                     'url': ''
                 }],
                 'certification': [],
+                'initial_offering_status': False,
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -239,8 +245,10 @@ class TestV2OrderList_Bond:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['order_list']) >= 1
         for order in resp.json['data']['order_list']:
             if order['token']['token_address'] == bond_token['address']:
                 assert order['token'] == assumed_body['token']
@@ -281,6 +289,7 @@ class TestV2OrderList_Bond:
             'token': {
                 'token_address': bond_token['address'],
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
@@ -304,6 +313,8 @@ class TestV2OrderList_Bond:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
+                'isRedeemed': False,
+                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -315,6 +326,9 @@ class TestV2OrderList_Bond:
                     'url': ''
                 }],
                 'certification': [],
+                'initial_offering_status': False,
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -332,8 +346,10 @@ class TestV2OrderList_Bond:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['settlement_list']) >= 1
         for order in resp.json['data']['settlement_list']:
             if order['token']['token_address'] == bond_token['address']:
                 assert order['token'] == assumed_body['token']
@@ -375,6 +391,7 @@ class TestV2OrderList_Bond:
             'token': {
                 'token_address': bond_token['address'],
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
@@ -398,6 +415,8 @@ class TestV2OrderList_Bond:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
+                'isRedeemed': False,
+                'transferable': True,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -409,6 +428,9 @@ class TestV2OrderList_Bond:
                     'url': ''
                 }],
                 'certification': [],
+                'initial_offering_status': False,
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -426,8 +448,10 @@ class TestV2OrderList_Bond:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['complete_list']) >= 1
         for order in resp.json['data']['complete_list']:
             if order['token']['token_address'] == bond_token['address']:
                 assert order['token'] == assumed_body['token']
@@ -682,6 +706,7 @@ class TestV2OrderList_Membership:
             'token': {
                 'token_address': token['address'],
                 'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
@@ -692,11 +717,14 @@ class TestV2OrderList_Membership:
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -712,8 +740,10 @@ class TestV2OrderList_Membership:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、order_listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['order_list']) >= 1
         for order in resp.json['data']['order_list']:
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']
@@ -756,6 +786,7 @@ class TestV2OrderList_Membership:
             'token': {
                 'token_address': token['address'],
                 'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
@@ -766,6 +797,7 @@ class TestV2OrderList_Membership:
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [{
                     'id': 1,
                     'url': ''
@@ -776,6 +808,8 @@ class TestV2OrderList_Membership:
                     'id': 3,
                     'url': ''
                 }],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -793,8 +827,10 @@ class TestV2OrderList_Membership:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['settlement_list']) >= 1
         for order in resp.json['data']['settlement_list']:
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']
@@ -837,6 +873,7 @@ class TestV2OrderList_Membership:
             'token': {
                 'token_address': token['address'],
                 'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
@@ -847,11 +884,14 @@ class TestV2OrderList_Membership:
                 'memo': 'メモ',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -869,8 +909,10 @@ class TestV2OrderList_Membership:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['complete_list']) >= 1
         for order in resp.json['data']['complete_list']:
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']
@@ -1122,6 +1164,7 @@ class TestV2OrderList_Coupon:
             'token': {
                 'token_address': token['address'],
                 'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
@@ -1132,11 +1175,14 @@ class TestV2OrderList_Coupon:
                 'memo': 'クーポンメモ欄',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -1152,8 +1198,10 @@ class TestV2OrderList_Coupon:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、order_listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['order_list']) >= 1
         for order in resp.json['data']['order_list']:
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']
@@ -1195,6 +1243,7 @@ class TestV2OrderList_Coupon:
             'token': {
                 'token_address': token['address'],
                 'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
@@ -1205,11 +1254,14 @@ class TestV2OrderList_Coupon:
                 'memo': 'クーポンメモ欄',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -1227,8 +1279,10 @@ class TestV2OrderList_Coupon:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['settlement_list']) >= 1
         for order in resp.json['data']['settlement_list']:
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']
@@ -1271,6 +1325,7 @@ class TestV2OrderList_Coupon:
             'token': {
                 'token_address': token['address'],
                 'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
@@ -1281,11 +1336,14 @@ class TestV2OrderList_Coupon:
                 'memo': 'クーポンメモ欄',
                 'transferable': True,
                 'status': True,
+                'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
                     {'id': 2, 'url': ''},
                     {'id': 3, 'url': ''}
                 ],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
                 'payment_method_credit_card': False,
                 'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
@@ -1303,8 +1361,10 @@ class TestV2OrderList_Coupon:
         }
 
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['complete_list']) >= 1
         for order in resp.json['data']['complete_list']:
             if order['token']['token_address'] == token['address']:
                 assert order['token'] == assumed_body['token']

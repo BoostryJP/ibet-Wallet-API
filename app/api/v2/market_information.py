@@ -68,6 +68,8 @@ class GetAgreement(BaseResource):
 
         res_data = {
             'counterpart': counterpart,
+            'buyer_address': agreement.buyer_address,  # 買い手EOA
+            'seller_address': agreement.seller_address,  # 売り手EOA
             'amount': amount,  # 約定数量
             'price': price,  # 約定単価
             'canceled': canceled,  # 約定取消フラグ
