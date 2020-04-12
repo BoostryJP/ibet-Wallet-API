@@ -15,9 +15,25 @@
 % migrate version .
 ```
 
-## 新規テーブル作成時
+## マイグレーション実行
 
-### スクリプト作成
+### アップグレード
+```sh
+% python manage.py upgrade    
+0 -> 1... 
+done
+```
+
+### ダウングレード
+```sh
+ % python manage.py downgrade 0
+1 -> 0... 
+done
+```
+
+## スクリプトの記述方法
+
+### テーブル新規作成
 以下のコマンドを実行するとマイグレーションスクリプトが新規作成される。
 * テーブル新規作成のためのスクリプトは `create_<TBL名>` とする。
 ```sh
@@ -73,25 +89,40 @@ def downgrade(migrate_engine):
 
 ```
 
-### マイグレーション実行
+### カラム追加
+テーブル新規追加のスクリプトは以下のような構造で記述する。
 
-#### アップグレード
-```sh
-% python manage.py upgrade    
-0 -> 1... 
-done
+```python
+# -*- coding: utf-8 -*-
+import logging
+
+from sqlalchemy import *
+from sqlalchemy.exc import ProgrammingError
+from migrate import *
+
+
+meta = MetaData()
+
+def upgrade(migrate_engine):
+    meta.bind = migrate_engine
+
+    listing_table = Table("listing", meta)
+    col = Column("owner_address", String(256))
+    try:
+        col.create(listing_table)
+    except sqlalchemy.exc.ProgrammingError as err:
+        logging.warning(err)
+
+def downgrade(migrate_engine):
+    meta.bind = migrate_engine
+
+    listing_table = Table("listing", meta)
+    try:
+        Column("owner_address").drop(listing_table)
+    except sqlalchemy.exc.ProgrammingError as err:
+        logging.warning(err)
+
 ```
 
-#### ダウングレード
-```sh
- % python manage.py downgrade 0
-1 -> 0... 
-done
-```
-
-
-## 項目追加時
-TBD
-
-## 項目修正時
+### カラム修正
 TBD

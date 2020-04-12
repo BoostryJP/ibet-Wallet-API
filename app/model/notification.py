@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from enum import Enum
-from sqlalchemy import Column, Index
+from sqlalchemy import Column, Index, BigInteger, Sequence
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 
 from datetime import datetime, timedelta, timezone
@@ -14,6 +14,9 @@ JST = timezone(timedelta(hours=+9), "JST")
 # 既読情報や重要フラグの情報なども保存される
 class Notification(Base):
     __tablename__ = 'notification'
+
+    # レコードID
+    id = Column(BigInteger, server_default=Sequence("notification_id_seq").next_value(), autoincrement=True)
 
     # 通知ID
     # Spec: 0x | <blockNumber> | <transactionIndex> | <logIndex> | <optionType>
