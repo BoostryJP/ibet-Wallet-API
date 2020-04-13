@@ -5,8 +5,8 @@ from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
 
-
 meta = MetaData()
+
 
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
@@ -24,6 +24,7 @@ def upgrade(migrate_engine):
         col.create(private_listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
         logging.warning(err)
+
 
 def downgrade(migrate_engine):
     meta.bind = migrate_engine

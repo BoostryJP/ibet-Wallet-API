@@ -77,9 +77,6 @@ STRIPE_PAYOUT_SCHEDULE_ANCHOR = int(os.environ.get("STRIPE_PAYOUT_SCHEDULE_ANCHO
 # push notification setting
 SNS_APPLICATION_ARN_IOS = os.environ.get('SNS_APPLICATION_ARN_IOS')
 SNS_APPLICATION_ARN_ANDROID = os.environ.get('SNS_APPLICATION_ARN_ANDROID')
-PUSH_PRIORITY = int(os.environ.get("PUSH_PRIORITY")) if os.environ.get("PUSH_PRIORITY") else 0
 
 AGENT_SQS_URL = os.environ.get('AGENT_SQS_URL') or 'http://localhost:9324'
 AGENT_SQS_QUEUE_NAME = os.environ.get('AGENT_SQS_QUEUE_NAME') or 'charge_message'
-
-
