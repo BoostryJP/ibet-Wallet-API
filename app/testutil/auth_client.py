@@ -69,3 +69,18 @@ class TestAuthClient(testing.TestClient):
             path, body=body, json=json,
             headers={TestAuthClient.HEADER_SIGNATURE_KEY: signature}
         )
+
+    def generate_ibet_signature(self, path, private_key, params=None, json=None):
+        query_string = ""
+        request_body = None
+        if params is not None:
+            query_string = self._params_to_query_string(params)
+        if json is not None:
+            request_body = j.dumps(json, separators=(",", ":"))
+
+        signature = self._generate_signature(
+            private_key, method="POST", path=path,
+            request_body=request_body,
+            query_string=query_string
+        )
+        return signature
