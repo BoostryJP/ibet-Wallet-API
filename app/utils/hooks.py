@@ -4,6 +4,9 @@ import falcon
 from web3.auto import w3
 from eth_account.messages import defunct_hash_message
 from app.errors import InvalidParameterError
+from app import log
+
+LOG = log.get_logger()
 
 class VerifySignature(object):
     """
@@ -40,15 +43,18 @@ class VerifySignature(object):
 
     def __call__(self, req, resp, resource, params):
         signature = req.get_header(VerifySignature.HEADER_SIGNATURE_KEY)
+        LOG.debug("X-ibet-Signature: " + signature)
         if signature is None:
             raise InvalidParameterError("signature is empty")
 
         canonical_request = self._canonical_request(req)
+        LOG.debug("Canonical Request: " + canonical_request)
 
         try:
             req.context["address"] = w3.eth.account.recoverHash(
                 defunct_hash_message(text=canonical_request),
                 signature=signature,
             )
+            LOG.debug("Recovered EOA: " + req.context["address"])
         except Exception:
             raise InvalidParameterError("failed to recover hash")
