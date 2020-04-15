@@ -33,7 +33,7 @@ class VerifySignature(object):
         return "?" + "&".join(kvs)
             
     def _canonical_request(self, req):
-        request_body = self._get_request_body(req)
+        request_body = str(self._get_request_body(req)).replace(" ", "")
         request_body_hash = w3.sha3(text=request_body).hex()
         canonical_request = req.method + "\n" +\
                             req.path + "\n" +\
