@@ -43,9 +43,9 @@ class VerifySignature(object):
 
     def __call__(self, req, resp, resource, params):
         signature = req.get_header(VerifySignature.HEADER_SIGNATURE_KEY)
-        LOG.debug("X-ibet-Signature: " + signature)
         if signature is None:
             raise InvalidParameterError("signature is empty")
+        LOG.debug("X-ibet-Signature: " + signature)
 
         canonical_request = self._canonical_request(req)
         LOG.debug("Canonical Request: " + canonical_request)
