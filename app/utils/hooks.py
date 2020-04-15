@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 
 import falcon
 from web3.auto import w3
@@ -8,6 +9,7 @@ from app import log
 
 LOG = log.get_logger()
 
+
 class VerifySignature(object):
     """
     署名検証及び認証を行うHookです
@@ -15,13 +17,14 @@ class VerifySignature(object):
 
     仕様：https://github.com/BoostryJP/ibet-Wallet-API/issues/103
     """
-    
+
     HEADER_SIGNATURE_KEY = "X-ibet-Signature"
-    
+
     def _get_request_body(self, req):
-        if "raw_data" in req.context:
-            return req.context["raw_data"]
-        return "{}"
+        if "data" in req.context and req.context["data"] is not None:
+            return req.context["data"]
+        else:
+            return {}
 
     def _get_query_string(self, req):
         kvs = []
@@ -31,13 +34,13 @@ class VerifySignature(object):
         if len(kvs) == 0:
             return ""
         return "?" + "&".join(kvs)
-            
+
     def _canonical_request(self, req):
-        request_body = str(self._get_request_body(req)).replace(" ", "")
+        request_body = json.dumps(self._get_request_body(req), separators=(",", ":"))
         request_body_hash = w3.sha3(text=request_body).hex()
-        canonical_request = req.method + "\n" +\
-                            req.path + "\n" +\
-                            self._get_query_string(req) + "\n" +\
+        canonical_request = req.method + "\n" + \
+                            req.path + "\n" + \
+                            self._get_query_string(req) + "\n" + \
                             request_body_hash
         return canonical_request
 
