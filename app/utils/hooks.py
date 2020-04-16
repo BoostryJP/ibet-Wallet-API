@@ -21,8 +21,8 @@ class VerifySignature(object):
     HEADER_SIGNATURE_KEY = "X-ibet-Signature"
 
     def _get_request_body(self, req):
-        LOG.debug(req.context)
         if "data" in req.context and req.context["data"] is not None:
+            LOG.debug(req.context)
             return req.context["data"]
         else:
             return {}
@@ -38,7 +38,7 @@ class VerifySignature(object):
 
     def _canonical_request(self, req):
         request_body = json.dumps(self._get_request_body(req), separators=(",", ":"))
-        print(request_body)
+        LOG.debug(request_body)
         request_body_hash = w3.sha3(text=request_body).hex()
         canonical_request = req.method + "\n" + \
                             req.path + "\n" + \
