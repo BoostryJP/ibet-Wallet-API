@@ -21,7 +21,7 @@ class VerifySignature(object):
     HEADER_SIGNATURE_KEY = "X-ibet-Signature"
 
     def _get_request_body(self, req):
-        print(req.context)
+        LOG.debug(req.context)
         if "data" in req.context and req.context["data"] is not None:
             return req.context["data"]
         else:
