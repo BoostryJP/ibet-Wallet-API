@@ -66,6 +66,20 @@ class BondTokenV2(TokenBase):
     max_holding_quantity: int
     max_sell_amount: int
 
+class ShareToken(TokenBase):
+    issue_price: int
+    dividend_information: {
+        "dividends": int,
+        "dividend_record_date": str,
+        "dividend_payment_date": str
+    }
+    cancellation_date: str
+    reference_urls: object
+    memo: str
+    transferable: bool
+    offering_status: bool
+    max_holding_quantity: int
+    max_sell_amount: int
 
 class MembershipToken(TokenBase):
     details: str

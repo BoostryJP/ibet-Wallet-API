@@ -16,7 +16,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondTokenV2, MembershipTokenV2, CouponTokenV2
+from app.model import Listing, BondTokenV2, ShareToken, MembershipTokenV2, CouponTokenV2
 
 LOG = log.get_logger()
 
@@ -493,6 +493,181 @@ class StraightBondTokenDetails(BaseResource):
             except Exception as e:
                 LOG.error(e)
                 return None
+
+
+# ------------------------------
+# [株式]公開中トークン一覧
+# ------------------------------
+class ShareTokens(BaseResource):
+    """
+    Handle for endpoint: /v2/Token/Share
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res):
+        LOG.info('v2.token.ShareTokens')
+
+        session = req.context["session"]
+
+        # Validation
+        request_json = ShareTokens.validate(req)
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
+
+        if request_json['cursor'] is not None and request_json['cursor'] > list_length:
+            raise InvalidParameterError("cursor parameter must be less than token list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        if cursor is None:
+            cursor = list_length
+        else:
+            cursor = cursor + 1
+        limit = request_json['limit']
+        if limit is None:
+            limit = 10
+
+        # 企業リストの情報を取得する
+        company_list = []
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json', 'r'))
+            else:
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+        except Exception as err:
+            LOG.error(err)
+            pass
+
+        token_list = []
+        # TokenListを降順に調べる(登録が新しい順)
+        for i in reversed(range(0, cursor)):
+            if len(token_list) >= limit:
+                break
+
+            # TokenList-Contractからトークンの情報を取得する
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions. \
+                getTokenByAddress(token_address).call()
+
+            token_detail = self.get_token_detail(
+                token_id=i,
+                company_list=company_list,
+                token_address=token[0],
+                token_template=token[1],
+                owner_address=token[2],
+                available_token=available_tokens[i]
+            )
+
+            if token_detail is not None:
+                token_list.append(token_detail)
+
+        self.on_success(res, token_list)
+
+    def get_token_detail(self, token_id, token_address, token_template,
+                         owner_address, company_list, available_token):
+        """
+        トークン詳細を取得する。
+        取得に失敗した場合はNoneを返す。
+        """
+
+        if token_template == 'IbetShare':
+            try:
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract(
+                    token_template,
+                    to_checksum_address(token_address)
+                )
+
+                # Token-Contractから情報を取得する
+                dividend_information = TokenContract.functions.dividendInformation().call()
+
+                # 企業リストから、企業名とRSA鍵を取得する
+                company_name = ''
+                rsa_publickey = ''
+                for company in company_list:
+                    if to_checksum_address(company['address']) == owner_address:
+                        company_name = company['corporate_name']
+                        rsa_publickey = company['rsa_publickey']
+
+                sharetoken = ShareToken()
+                sharetoken.token_address = token_address
+                sharetoken.token_template = token_template
+                sharetoken.owner_address = owner_address
+                sharetoken.company_name = company_name
+                sharetoken.rsa_publickey = rsa_publickey
+                sharetoken.name = TokenContract.functions.name().call()
+                sharetoken.symbol = TokenContract.functions.symbol().call()
+                sharetoken.total_supply = TokenContract.functions.totalSupply().call()
+                sharetoken.image_url = []
+                sharetoken.payment_method_credit_card = available_token.payment_method_credit_card
+                sharetoken.payment_method_bank = available_token.payment_method_bank
+                sharetoken.contact_information = TokenContract.functions.contactInformation().call()
+                sharetoken.privacy_policy = TokenContract.functions.privacyPolicy().call()
+
+                sharetoken.issue_price = TokenContract.functions.issuePrice().call()
+                sharetoken.dividend_information = {
+                    'dividends': dividend_information[0],
+                    'dividend_record_date': dividend_information[1],
+                    'dividend_payment_date': dividend_information[2],
+                }
+                sharetoken.cancellation_date =  TokenContract.functions.cancellationDate().call()
+                sharetoken.reference_urls = [
+                    {'id': 1, 'url': TokenContract.functions.referenceUrls(0).call()},
+                    {'id': 2, 'url': TokenContract.functions.referenceUrls(1).call()},
+                    {'id': 3, 'url': TokenContract.functions.referenceUrls(2).call()},
+                ]
+                sharetoken.memo =  TokenContract.functions.memo().call()
+                sharetoken.transferable = TokenContract.functions.transferable().call()
+                sharetoken.offering_status = TokenContract.functions.offeringStatus().call()
+                sharetoken.max_holding_quantity = available_token.max_holding_quantity
+                sharetoken.max_sell_amount = available_token.max_sell_amount
+
+                sharetoken = sharetoken.__dict__
+                sharetoken['id'] = token_id
+
+                return sharetoken
+            except Exception as e:
+                LOG.error(e)
+                return None
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
 
 
 # ------------------------------

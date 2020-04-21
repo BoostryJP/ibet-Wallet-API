@@ -144,6 +144,7 @@ class App(falcon.API):
 
         # トークン一覧参照
         self.add_route('/v2/Token/StraightBond', token.StraightBondTokens())
+        self.add_route('/v2/Token/Share', token.ShareTokens())
         self.add_route('/v2/Token/Membership', token.MembershipTokens())
         self.add_route('/v2/Token/Coupon', token.CouponTokens())
 
