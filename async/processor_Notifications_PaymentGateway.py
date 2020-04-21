@@ -15,7 +15,7 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 from app import log
 from app import config
-from app.model import Notification, NotifitationType
+from app.model import Notification, NotificationType
 from app.contracts import Contract
 from async.lib.token import TokenFactory
 from async.lib.company_list import CompanyListFactory
@@ -109,7 +109,7 @@ class WatchPaymentAccountRegister(Watcher):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.PAYMENT_ACCOUNT_REGISTER.value
+            notification.notification_type = NotificationType.PAYMENT_ACCOUNT_REGISTER.value
             notification.priority = 2
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -127,7 +127,7 @@ class WatchPaymentAccountApprove(Watcher):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.PAYMENT_ACCOUNT_APPROVE.value
+            notification.notification_type = NotificationType.PAYMENT_ACCOUNT_APPROVE.value
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -145,7 +145,7 @@ class WatchPaymentAccountWarn(Watcher):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.PAYMENT_ACCOUNT_WARN.value
+            notification.notification_type = NotificationType.PAYMENT_ACCOUNT_WARN.value
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -163,7 +163,7 @@ class WatchPaymentAccountUnapprove(Watcher):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.PAYMENT_ACCOUNT_UNAPPROVE.value
+            notification.notification_type = NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -181,7 +181,7 @@ class WatchPaymentAccountBan(Watcher):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.PAYMENT_ACCOUNT_BAN.value
+            notification.notification_type = NotificationType.PAYMENT_ACCOUNT_BAN.value
             notification.priority = 2
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
