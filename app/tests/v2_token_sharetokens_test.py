@@ -228,7 +228,7 @@ class TestV2TokenShareTokens:
 
     # ＜正常系3＞
     # 発行済株式あり（2件）
-    # cursor=1、 limit=2
+    # cursor=2、 limit=2
     # -> 登録が新しい順にリストが返却（2件）
     def test_sharelist_normal_3(self, client, session, shared_contract):
         # テスト用アカウント
@@ -250,7 +250,7 @@ class TestV2TokenShareTokens:
             # 取扱トークンデータ挿入
             TestV2TokenShareTokens.list_token(session, share_token)
 
-        query_string = 'cursor=1&limit=2'
+        query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [{
@@ -325,7 +325,7 @@ class TestV2TokenShareTokens:
 
     # ＜正常系4＞
     # 発行済株式あり（2件）
-    # cursor=0、 limit=1
+    # cursor=1、 limit=1
     # -> 登録が新しい順にリストが返却（1件）
     def test_sharelist_normal_4(self, client, session, shared_contract):
         # テスト用アカウント
@@ -347,7 +347,7 @@ class TestV2TokenShareTokens:
             # 取扱トークンデータ挿入
             TestV2TokenShareTokens.list_token(session, share_token)
 
-        query_string = 'cursor=0&limit=1'
+        query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [{
@@ -387,7 +387,74 @@ class TestV2TokenShareTokens:
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
-        
+
+
+
+    # ＜正常系5＞
+    # 発行済債券あり（2件）
+    # cursor=1、 limit=2
+    # -> 登録が新しい順にリストが返却（1件）
+    def test_sharelist_normal_5(self, client, session, shared_contract):
+       # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenShareTokens.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：株式新規発行
+        share_list = []
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        for i in range(0, 2):
+            attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
+            share_token = issue_share_token(issuer, attribute)
+            register_share_list(issuer, share_token, token_list)
+            share_list.append(share_token)
+            # 取扱トークンデータ挿入
+            TestV2TokenShareTokens.list_token(session, share_token)
+
+        query_string = 'cursor=1&limit=2'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assumed_body = [{
+            'id': 0,
+            'token_address': share_list[0]['address'],
+            'token_template': 'IbetShare',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト株式',
+            'symbol': 'SHARE',
+            'total_supply': 1000000,
+            'image_url': [],
+            'issue_price': 10000,
+            'dividend_information': {
+                'dividends': 100,
+                'dividend_record_date': '20200909',
+                'dividend_payment_date': '20201001'
+            },
+            'cancellation_date': '20210101',
+            'reference_urls': [
+                {'id': 1, 'url': ''},
+                {'id': 2, 'url': ''},
+                {'id': 3, 'url': ''}
+            ],
+            'offering_status': False,
+            'memo':  'メモ',
+            'max_holding_quantity': 1,
+            'max_sell_amount': 1000,
+            'payment_method_credit_card': True,
+            'payment_method_bank': True,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
 
     # ＜エラー系1＞
     # HTTPメソッド不正

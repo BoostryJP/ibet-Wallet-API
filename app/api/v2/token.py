@@ -523,13 +523,13 @@ class ShareTokens(BaseResource):
         available_tokens = session.query(Listing).all()
         list_length = len(available_tokens)
 
-        if request_json['cursor'] is not None and request_json['cursor'] >= list_length:
+        if request_json['cursor'] is not None and request_json['cursor'] > list_length:
             raise InvalidParameterError("cursor parameter must be less than token list num")
 
         # パラメータを設定
         cursor = request_json['cursor']
         if cursor is None:
-            cursor = list_length - 1
+            cursor = list_length
         limit = request_json['limit']
         if limit is None:
             limit = 10
@@ -548,7 +548,7 @@ class ShareTokens(BaseResource):
 
         token_list = []
         # TokenListを降順に調べる(登録が新しい順)
-        for i in reversed(range(0, cursor + 1)):
+        for i in reversed(range(0, cursor)):
             if len(token_list) >= limit:
                 break
 
