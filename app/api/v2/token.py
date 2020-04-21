@@ -618,13 +618,13 @@ class ShareTokens(BaseResource):
                     'dividend_record_date': dividend_information[1],
                     'dividend_payment_date': dividend_information[2],
                 }
-                sharetoken.cancellation_date =  TokenContract.functions.cancellationDate().call()
+                sharetoken.cancellation_date = TokenContract.functions.cancellationDate().call()
                 sharetoken.reference_urls = [
                     {'id': 1, 'url': TokenContract.functions.referenceUrls(0).call()},
                     {'id': 2, 'url': TokenContract.functions.referenceUrls(1).call()},
                     {'id': 3, 'url': TokenContract.functions.referenceUrls(2).call()},
                 ]
-                sharetoken.memo =  TokenContract.functions.memo().call()
+                sharetoken.memo = TokenContract.functions.memo().call()
                 sharetoken.transferable = TokenContract.functions.transferable().call()
                 sharetoken.offering_status = TokenContract.functions.offeringStatus().call()
                 sharetoken.max_holding_quantity = available_token.max_holding_quantity

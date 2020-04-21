@@ -391,7 +391,7 @@ class TestV2TokenShareTokens:
 
 
     # ＜正常系5＞
-    # 発行済債券あり（2件）
+    # 発行済株式あり（2件）
     # cursor=1、 limit=2
     # -> 登録が新しい順にリストが返却（1件）
     def test_sharelist_normal_5(self, client, session, shared_contract):
