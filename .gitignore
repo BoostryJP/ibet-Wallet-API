@@ -16,8 +16,5 @@ scripts/input_file/*
 # PyEnv
 .python-version
 
-# Sphinx
-docs/build/*
-
 # Mac
 .DS_Store
