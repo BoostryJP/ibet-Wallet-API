@@ -23,6 +23,21 @@ class StraightBondABI(BaseResource):
 
 
 # ------------------------------
+# 株式ABI参照
+# ------------------------------
+class ShareABI(BaseResource):
+    """
+    Handle for endpoint: /v2/ABI/Share
+    """
+
+    def on_get(self, req, res):
+        LOG.info('v2.token_abi.ShareABI')
+        contracts = json.load(open('data/contracts.json', 'r'))
+        abi = contracts['IbetShare']['abi']
+        self.on_success(res, abi)
+
+
+# ------------------------------
 # 会員権ABI参照
 # ------------------------------
 class MembershipABI(BaseResource):
