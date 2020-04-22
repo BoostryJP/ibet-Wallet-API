@@ -557,21 +557,114 @@ class ShareTokens(BaseResource):
             token = ListContract.functions. \
                 getTokenByAddress(token_address).call()
 
-            token_detail = self.get_token_detail(
-                token_id=i,
-                company_list=company_list,
+            token_detail = ShareTokenDetails.get_token_detail(
                 token_address=token[0],
                 token_template=token[1],
                 owner_address=token[2],
+                company_list=company_list,
                 available_token=available_tokens[i]
             )
 
             if token_detail is not None:
+                token_detail["id"] = i
                 token_list.append(token_detail)
 
         self.on_success(res, token_list)
 
-    def get_token_detail(self, token_id, token_address, token_template,
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+
+# ------------------------------
+# [株式]トークン詳細
+# ------------------------------
+class ShareTokenDetails(BaseResource):
+    """
+    Handle for endpoint: /v2/Token/Share/{contract_address}
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res, contract_address):
+        LOG.info('v2.token.ShareTokenDetails')
+
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                description = 'invalid contract_address'
+                raise InvalidParameterError(description=description)
+        except:
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+
+        session = req.context["session"]
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
+        # 企業リストの情報を取得する
+        company_list = []
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json', 'r'))
+            else:
+                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+        except Exception as err:
+            LOG.error(err)
+            pass
+
+        # TokenList-Contractからトークンの情報を取得する
+        token_address = to_checksum_address(contract_address)
+        token = ListContract.functions.getTokenByAddress(token_address).call()
+
+        # 取扱トークン情報を取得
+        listed_token = session.query(Listing). \
+            filter(Listing.token_address == contract_address).first()
+
+        token_detail = self.get_token_detail(
+            token_address=token[0],
+            token_template=token[1],
+            owner_address=token[2],
+            company_list=company_list,
+            available_token=listed_token
+        )
+
+        if token_detail is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        self.on_success(res, token_detail)
+
+    @staticmethod
+    def get_token_detail(token_address, token_template,
                          owner_address, company_list, available_token):
         """
         トークン詳細を取得する。
@@ -631,41 +724,11 @@ class ShareTokens(BaseResource):
                 sharetoken.max_sell_amount = available_token.max_sell_amount
 
                 sharetoken = sharetoken.__dict__
-                sharetoken['id'] = token_id
 
                 return sharetoken
             except Exception as e:
                 LOG.error(e)
                 return None
-
-    @staticmethod
-    def validate(req):
-        request_json = {
-            'cursor': req.get_param('cursor'),
-            'limit': req.get_param('limit'),
-        }
-
-        validator = Validator({
-            'cursor': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-            'limit': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
 
 
 # ------------------------------
