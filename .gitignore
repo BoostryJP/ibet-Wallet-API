@@ -17,7 +17,7 @@ scripts/input_file/*
 .python-version
 
 # Sphinx
-doc/build/*
+docs/build/*
 
 # Mac
 .DS_Store
