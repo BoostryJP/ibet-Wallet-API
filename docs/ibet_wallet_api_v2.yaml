@@ -1,0 +1,1174 @@
+swagger: "2.0"
+info:
+  description: "ibet Wallet API"
+  version: "2.0.0"
+  title: "ibet Wallet API"
+  termsOfService: ""
+  contact:
+    email: "dev@boostry.co.jp"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+basePath: "/v2"
+tags:
+- name: "NodeInfo"
+  description: "Blockchain node information"
+- name: "Eth"
+  description: "Ethereum Transaction API"
+- name: "Company"
+  description: "Information related to issuer"
+- name: "PaymentAgent"
+  description: "Information related to payment agent"
+- name: "ABI"
+  description: "Contract ABI"
+- name: "User"
+  description: "Use related information"
+- name: "Token"
+  description: "Attribute information of token"
+schemes:
+- "https"
+- "http"
+paths:
+  /NodeInfo:
+    get:
+      tags:
+        - "NodeInfo"
+      summary: "Blockchain node information"
+      operationId: "NodeInfo"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  payment_gateway_address:
+                    type: string
+                    example:
+                  payment_gateway_abi:
+                    type: object
+                  personal_info_address:
+                    type: string
+                  personal_info_abi:
+                    type: object
+                  ibet_straightbond_exchange_address:
+                    type: string
+                  ibet_straightbond_exchange_abi:
+                    type: object
+                  ibet_membership_exchange_address:
+                    type: string
+                  ibet_membership_exchange_abi:
+                    type: object
+                  ibet_coupon_exchange_address:
+                    type: string
+                  ibet_coupon_exchange_abi:
+                    type: object
+                  agent_address:
+                    type: string
+  /Eth/TransactionCount/{eth_address}:
+    get:
+      tags:
+        - "Eth"
+      summary: "Transaction count for the specified eth_address"
+      operationId: "TransactionCount"
+      parameters:
+        - name: "eth_address"
+          in: "path"
+          description: "address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  nonce:
+                    type: integer
+                    example: 34
+                  gasprice:
+                    type: integer
+                    example: 0
+                  chainid:
+                    type: string
+                    example: 2017
+  /Eth/SendRawTransaction:
+    post:
+      tags:
+        - "Eth"
+      summary: "Send signed transaction"
+      operationId: "SendRawTransaction"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: raw_tx_hex_list
+          in: query
+          description: "signed transaction list"
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example:
+                        1
+                      description: transaction send order
+                    status:
+                      type: integer
+                      example:
+                        1
+                      description: execution success:1, execution failure:0
+  /Eth/SendRawTransactionNoWait:
+    post:
+      tags:
+        - "Eth"
+      summary: "Send signed transaction"
+      operationId: "SendRawTransactionNoWait"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: raw_tx_hex_list
+          in: query
+          description: "signed transaction list"
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example:
+                        1
+                      description: transaction send order
+                    status:
+                      type: integer
+                      example:
+                        1
+                      description: success:1, error(ValueError):0
+  /Company/{eth_address}:
+    get:
+      tags:
+        - "Company"
+      summary: "Issuer Information"
+      operationId: "Company"
+      parameters:
+        - name: "eth_address"
+          in: "path"
+          description: "address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  corporate_name:
+                    type: string
+                  enode:
+                    type: string
+                  ip_address:
+                    type: string
+                  rsa_publickey:
+                    type: string
+                  homepage:
+                    type: string
+  /Companies:
+    get:
+      tags:
+        - "Company"
+      summary: "Issuer Information List"
+      operationId: "Companies"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    address:
+                      type: string
+                    corporate_name:
+                      type: string
+                    enode:
+                      type: string
+                    ip_address:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    homepage:
+                      type: string
+  /Company/{eth_address}/Tokens:
+   get:
+      tags:
+        - "Company"
+      summary: "List of tokens issued by issuer"
+      operationId: "CompanyTokenList"
+      parameters:
+        - name: "eth_address"
+          in: "path"
+          description: "address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  token_list:
+                    type: array
+                    items:
+                      type: string
+  /PaymentAgent/{eth_address}:
+    get:
+      tags:
+        - "PaymentAgent"
+      summary: "Payment Agent Information"
+      operationId: "PaymentAgent"
+      parameters:
+        - name: "eth_address"
+          in: "path"
+          description: "address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  corporate_name:
+                    type: string
+                  enode:
+                    type: string
+                  ip_address:
+                    type: string
+                  rsa_publickey:
+                    type: string
+                  homepage:
+                    type: string
+  /ABI/StraightBond:
+    get:
+      tags:
+        - "ABI"
+      summary: "StraightBond ABI"
+      operationId: "StraightBondABI"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+  /ABI/Membership:
+    get:
+      tags:
+        - "ABI"
+      summary: "Membership ABI"
+      operationId: "MembershipABI"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+  /ABI/Coupon:
+    get:
+      tags:
+        - "ABI"
+      summary: "Coupon ABI"
+      operationId: "CouponABI"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+  /User/PaymentAccount:
+    get:
+      tags:
+        - "User"
+      summary: "Registration status to PaymentGateway Contract"
+      operationId: "PaymentAccount"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  account_address:
+                    type: string
+                  agent_address:
+                    type: string
+                  approval_status:
+                    type: integer
+                    description: approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))
+  /User/PersonalInfo:
+    get:
+      tags:
+        - "User"
+      summary: "Registration status to PersonalInfo Contract"
+      operationId: "PersonalInfo"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  account_address:
+                    type: string
+                  owner_address:
+                    type: string
+                    description: link address
+                  registered:
+                    type: boolean
+  /User/StreetAddress/{postal_code}:
+    get:
+      tags:
+        - "User"
+      summary: "Search address by zip code (Japan)"
+      operationId: "StreetAddress"
+      parameters:
+        - name: "postal_code"
+          in: "path"
+          description: "postal code"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    jis_code:
+                      type: string
+                      description: jis code
+                      example:
+                        13101
+                    zip_code:
+                      type: string
+                      example:
+                        1010032
+                      description: zip code
+                    prefecture_name_kana:
+                      type: string
+                      example:
+                        ﾄｳｷｮｳﾄ
+                    city_name_kana:
+                      type: string
+                      example:
+                        ﾁﾖﾀﾞｸ
+                    town_name_kana:
+                      type: string
+                      example:
+                        ｲﾜﾓﾄﾁｮｳ
+                    prefecture_name:
+                      type: string
+                      example:
+                        東京都
+                    city_name:
+                      type: string
+                      example:
+                        千代田区
+                    town_name:
+                      type: string
+                      example:
+                        岩本町
+  /Token/StraightBond:
+    get:
+      tags:
+        - "Token"
+      summary: "List of StraightBond tokens"
+      operationId: "StraightBondTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                      example:
+                        IbetStraightBond
+                    owner_address:
+                      type: string
+                      description: issuer address
+                    company_name:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                      description: token name
+                    symbol:
+                      type: string
+                      description: token symbol
+                    total_supply:
+                      type: integer
+                    face_value:
+                      type: integer
+                    interest_rate:
+                      type: number
+                    interest_payment_date1:
+                      type: string
+                    interest_payment_date2:
+                      type: string
+                    interest_payment_date3:
+                      type: string
+                    interest_payment_date4:
+                      type: string
+                    interest_payment_date5:
+                      type: string
+                    interest_payment_date6:
+                      type: string
+                    interest_payment_date7:
+                      type: string
+                    interest_payment_date8:
+                      type: string
+                    interest_payment_date9:
+                      type: string
+                    interest_payment_date10:
+                      type: string
+                    interest_payment_date11:
+                      type: string
+                    interest_payment_date12:
+                      type: string
+                    redemption_date:
+                      type: string
+                    redemption_value:
+                      type: integer
+                    return_date:
+                      type: string
+                    return_amount:
+                      type: string
+                    purpose:
+                      type: string
+                      description: purpose of issue
+                    image_url:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          url:
+                            type: string
+                    certification:
+                      type: string
+                    initial_offering_status:
+                      type: boolean
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
+                      type: string
+                    transferable:
+                      type: boolean
+                    id:
+                      type: integer
+                      description: cursor id
+  /Token/Membership:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Membership tokens"
+      operationId: "MembershipTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                      example:
+                        IbetMembership
+                    owner_address:
+                      type: string
+                      description: issuer address
+                    company_name:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                      description: token name
+                    symbol:
+                      type: string
+                      description: token symbol
+                    total_supply:
+                      type: integer
+                    details:
+                      type: string
+                    return_details:
+                      type: string
+                    expiration_date:
+                      type: string
+                    memo:
+                      type: string
+                    transferable:
+                      type: boolean
+                    status:
+                      type: boolean
+                    initial_offering_status:
+                      type: boolean
+                    image_url:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          url:
+                            type: string
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
+                      type: string
+                    id:
+                      type: integer
+                      description: cursor id
+  /Token/Coupon:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Coupon tokens"
+      operationId: "CouponTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                      example:
+                        IbetCoupon
+                    owner_address:
+                      type: string
+                      description: issuer address
+                    company_name:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                      description: token name
+                    symbol:
+                      type: string
+                      description: token symbol
+                    total_supply:
+                      type: integer
+                    details:
+                      type: string
+                    return_details:
+                      type: string
+                    expiration_date:
+                      type: string
+                    memo:
+                      type: string
+                    transferable:
+                      type: boolean
+                    status:
+                      type: boolean
+                    initial_offering_status:
+                      type: boolean
+                    image_url:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          url:
+                            type: string
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
+                      type: string
+                    id:
+                      type: integer
+                      description: cursor id
+  /Token/StraightBond/{contract_address}:
+    get:
+      tags:
+        - "Token"
+      summary: "List of StraightBond tokens"
+      operationId: "StraightBondTokenDetails"
+      parameters:
+        - name: "contract_address"
+          in: "path"
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  token_address:
+                    type: string
+                  token_template:
+                    type: string
+                    example:
+                      IbetStraightBond
+                  owner_address:
+                    type: string
+                    description: issuer address
+                  company_name:
+                    type: string
+                  rsa_publickey:
+                    type: string
+                  name:
+                    type: string
+                    description: token name
+                  symbol:
+                    type: string
+                    description: token symbol
+                  total_supply:
+                    type: integer
+                  face_value:
+                    type: integer
+                  interest_rate:
+                    type: number
+                  interest_payment_date1:
+                    type: string
+                  interest_payment_date2:
+                    type: string
+                  interest_payment_date3:
+                    type: string
+                  interest_payment_date4:
+                    type: string
+                  interest_payment_date5:
+                    type: string
+                  interest_payment_date6:
+                    type: string
+                  interest_payment_date7:
+                    type: string
+                  interest_payment_date8:
+                    type: string
+                  interest_payment_date9:
+                    type: string
+                  interest_payment_date10:
+                    type: string
+                  interest_payment_date11:
+                    type: string
+                  interest_payment_date12:
+                    type: string
+                  redemption_date:
+                    type: string
+                  redemption_value:
+                    type: integer
+                  return_date:
+                    type: string
+                  return_amount:
+                    type: string
+                  purpose:
+                    type: string
+                    description: purpose of issue
+                  image_url:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        url:
+                          type: string
+                  certification:
+                    type: string
+                  initial_offering_status:
+                    type: boolean
+                  max_holding_quantity:
+                    type: integer
+                  max_sell_amount:
+                    type: integer
+                  payment_method_credit_card:
+                    type: boolean
+                  payment_method_bank:
+                    type: boolean
+                  contact_information:
+                    type: string
+                  privacy_policy:
+                    type: string
+                  transferable:
+                    type: boolean
+  /Token/Membership/{contract_address}:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Membership tokens"
+      operationId: "MembershipTokenDetails"
+      parameters:
+        - name: "contract_address"
+          in: "path"
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  token_address:
+                    type: string
+                  token_template:
+                    type: string
+                    example:
+                      IbetMembership
+                  owner_address:
+                    type: string
+                    description: issuer address
+                  company_name:
+                    type: string
+                  rsa_publickey:
+                    type: string
+                  name:
+                    type: string
+                    description: token name
+                  symbol:
+                    type: string
+                    description: token symbol
+                  total_supply:
+                    type: integer
+                  details:
+                    type: string
+                  return_details:
+                    type: string
+                  expiration_date:
+                    type: string
+                  memo:
+                    type: string
+                  transferable:
+                    type: boolean
+                  status:
+                    type: boolean
+                  initial_offering_status:
+                    type: boolean
+                  image_url:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        url:
+                          type: string
+                  max_holding_quantity:
+                    type: integer
+                  max_sell_amount:
+                    type: integer
+                  payment_method_credit_card:
+                    type: boolean
+                  payment_method_bank:
+                    type: boolean
+                  contact_information:
+                    type: string
+                  privacy_policy:
+                    type: string
+  /Token/Coupon/{contract_address}:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Coupon tokens"
+      operationId: "CouponTokenDetails"
+      parameters:
+        - name: "contract_address"
+          in: "path"
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  token_address:
+                    type: string
+                  token_template:
+                    type: string
+                    example:
+                      IbetCoupon
+                  owner_address:
+                    type: string
+                    description: issuer address
+                  company_name:
+                    type: string
+                  rsa_publickey:
+                    type: string
+                  name:
+                    type: string
+                    description: token name
+                  symbol:
+                    type: string
+                    description: token symbol
+                  total_supply:
+                    type: integer
+                  details:
+                    type: string
+                  return_details:
+                    type: string
+                  expiration_date:
+                    type: string
+                  memo:
+                    type: string
+                  transferable:
+                    type: boolean
+                  status:
+                    type: boolean
+                  initial_offering_status:
+                    type: boolean
+                  image_url:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        url:
+                          type: string
+                  max_holding_quantity:
+                    type: integer
+                  max_sell_amount:
+                    type: integer
+                  payment_method_credit_card:
+                    type: boolean
+                  payment_method_bank:
+                    type: boolean
+                  contact_information:
+                    type: string
+                  privacy_policy:
+                    type: string
