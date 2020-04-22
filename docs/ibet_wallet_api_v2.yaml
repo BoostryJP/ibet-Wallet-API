@@ -12,19 +12,23 @@ info:
 basePath: "/v2"
 tags:
 - name: "NodeInfo"
-  description: "Blockchain node information"
+  description: "Blockchain Node Settings"
 - name: "Eth"
-  description: "Ethereum Transaction API"
-- name: "Company"
-  description: "Information related to issuer"
-- name: "PaymentAgent"
-  description: "Information related to payment agent"
+  description: "Transaction Generator"
 - name: "ABI"
   description: "Contract ABI"
+- name: "Company"
+  description: "Issuer Information"
+- name: "PaymentAgent"
+  description: "Payment Agent Information"
 - name: "User"
-  description: "Use related information"
+  description: "User Information"
 - name: "Token"
-  description: "Attribute information of token"
+  description: "Token information"
+- name: "Market"
+  description: "Market Data"
+- name: "Position"˚
+  description: "Token Position"
 schemes:
 - "https"
 - "http"
@@ -211,6 +215,75 @@ paths:
                       example:
                         1
                       description: success:1, error(ValueError):0
+  /ABI/StraightBond:
+    get:
+      tags:
+        - "ABI"
+      summary: "StraightBond ABI"
+      operationId: "StraightBondABI"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+  /ABI/Membership:
+    get:
+      tags:
+        - "ABI"
+      summary: "Membership ABI"
+      operationId: "MembershipABI"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+  /ABI/Coupon:
+    get:
+      tags:
+        - "ABI"
+      summary: "Coupon ABI"
+      operationId: "CouponABI"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
   /Company/{eth_address}:
     get:
       tags:
@@ -367,75 +440,6 @@ paths:
                     type: string
                   homepage:
                     type: string
-  /ABI/StraightBond:
-    get:
-      tags:
-        - "ABI"
-      summary: "StraightBond ABI"
-      operationId: "StraightBondABI"
-      responses:
-        200:
-          description: successful operation
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  mesage:
-                    type: string
-                    example: OK
-              data:
-                type: object
-  /ABI/Membership:
-    get:
-      tags:
-        - "ABI"
-      summary: "Membership ABI"
-      operationId: "MembershipABI"
-      responses:
-        200:
-          description: successful operation
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  mesage:
-                    type: string
-                    example: OK
-              data:
-                type: object
-  /ABI/Coupon:
-    get:
-      tags:
-        - "ABI"
-      summary: "Coupon ABI"
-      operationId: "CouponABI"
-      responses:
-        200:
-          description: successful operation
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  mesage:
-                    type: string
-                    example: OK
-              data:
-                type: object
   /User/PaymentAccount:
     get:
       tags:
@@ -671,7 +675,9 @@ paths:
                           url:
                             type: string
                     certification:
-                      type: string
+                      type: array
+                      items:
+                        type: string
                     initial_offering_status:
                       type: boolean
                     max_holding_quantity:
@@ -1172,3 +1178,870 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
+  /Market/OrderBook/StraightBond:
+    post:
+      tags:
+        - "Market"
+      summary: "StraightBond Token Orderbook"
+      operationId: "StraightBondOrderBook"
+      parameters:
+        - name: account_address
+          in: query
+          description: Orderer's account address
+          required: false
+          type: string
+        - name: token_address
+          in: query
+          description: token address
+          required: true
+          type: string
+        - name: order_type
+          in: query
+          description: order type
+          required: true
+          type: string
+          enum: [buy,sell]
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    order_id:
+                      type: integer
+                    price:
+                      type: integer
+                    amount:
+                      type: integer
+                    account_address:
+                      type: string
+  /Market/OrderBook/Membership:
+    post:
+      tags:
+        - "Market"
+      summary: "Membership Token Orderbook"
+      operationId: "MembershipOrderBook"
+      parameters:
+        - name: account_address
+          in: query
+          description: Orderer's account address
+          required: false
+          type: string
+        - name: token_address
+          in: query
+          description: token address
+          required: true
+          type: string
+        - name: order_type
+          in: query
+          description: order type
+          required: true
+          type: string
+          enum: [buy,sell]
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    order_id:
+                      type: integer
+                    price:
+                      type: integer
+                    amount:
+                      type: integer
+                    account_address:
+                      type: string
+  /Market/OrderBook/Coupon:
+    post:
+      tags:
+        - "Market"
+      summary: "Coupon Token Orderbook"
+      operationId: "CouponOrderBook"
+      parameters:
+        - name: account_address
+          in: query
+          description: Orderer's account address
+          required: false
+          type: string
+        - name: token_address
+          in: query
+          description: token address
+          required: true
+          type: string
+        - name: order_type
+          in: query
+          description: order type
+          required: true
+          type: string
+          enum: [buy,sell]
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    order_id:
+                      type: integer
+                    price:
+                      type: integer
+                    amount:
+                      type: integer
+                    account_address:
+                      type: string
+  /Market/LastPrice/StraightBond:
+    post:
+      tags:
+        - "Market"
+      summary: "StraightBond Token Last Price (Bulk Get)"
+      operationId: "StraightBondLastPrice"
+      parameters:
+        - name: address_list
+          in: query
+          description: token address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    last_price:
+                      type: integer
+  /Market/LastPrice/Membership:
+    post:
+      tags:
+        - "Market"
+      summary: "Membership Token Last Price (Bulk Get)"
+      operationId: "MembershipLastPrice"
+      parameters:
+        - name: address_list
+          in: query
+          description: token address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    last_price:
+                      type: integer
+  /Market/LastPrice/Coupon:
+    post:
+      tags:
+        - "Market"
+      summary: "Coupon Token Last Price (Bulk Get)"
+      operationId: "CouponLastPrice"
+      parameters:
+        - name: address_list
+          in: query
+          description: token address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    last_price:
+                      type: integer
+  /Market/Tick/StraightBond:
+    post:
+      tags:
+        - "Market"
+      summary: "StraightBond Token Tick (Bulk Get)"
+      operationId: "StraightBondTick"
+      parameters:
+        - name: address_list
+          in: query
+          description: token address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    tick:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          block_timestamp:
+                            type: string
+                            description: block timestamp (UTC)
+                          buy_address:
+                            type: string
+                          sell_address:
+                            type: string
+                          order_id:
+                            type: integer
+                          agreement_id:
+                            type: integer
+                          price:
+                            type: integer
+                          amount:
+                            type: integer
+  /Market/Tick/Membership:
+    post:
+      tags:
+        - "Market"
+      summary: "Membership Token Tick (Bulk Get)"
+      operationId: "MembershipTick"
+      parameters:
+        - name: address_list
+          in: query
+          description: token address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    tick:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          block_timestamp:
+                            type: string
+                            description: block timestamp (UTC)
+                          buy_address:
+                            type: string
+                          sell_address:
+                            type: string
+                          order_id:
+                            type: integer
+                          agreement_id:
+                            type: integer
+                          price:
+                            type: integer
+                          amount:
+                            type: integer
+  /Market/Tick/Coupon:
+    post:
+      tags:
+        - "Market"
+      summary: "Coupon Token Tick (Bulk Get)"
+      operationId: "CouponTick"
+      parameters:
+        - name: address_list
+          in: query
+          description: token address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    tick:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          block_timestamp:
+                            type: string
+                            description: block timestamp (UTC)
+                          buy_address:
+                            type: string
+                          sell_address:
+                            type: string
+                          order_id:
+                            type: integer
+                          agreement_id:
+                            type: integer
+                          price:
+                            type: integer
+                          amount:
+                            type: integer
+  /Market/Agreement:
+    post:
+      tags:
+        - "Market"
+      summary: "Agreement Details"
+      operationId: "GetAgreement"
+      parameters:
+        - name: order_id
+          in: query
+          description: order id
+          required: true
+          type: integer
+          allowEmptyValue: false
+        - name: agreement_id
+          in: query
+          description: agreement id
+          required: true
+          type: integer
+          allowEmptyValue: false
+        - name: exchange_address
+          in: query
+          description: exchange address
+          required: true
+          type: string
+          allowEmptyValue: false
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  counterpart:
+                    type: string
+                  buyer_address:
+                    type: string
+                  seller_address:
+                    type: string
+                  amount:
+                    type: integer
+                  price:
+                    type: integer
+                  canceled:
+                    type: boolean
+                  paid:
+                    type: boolean
+                  expiry:
+                    type: string
+                    description: expiry (unixtime)
+  /Position/StraightBond:
+    post:
+      tags:
+        - "Position"
+      summary: "StraightBond Token Position (Bulk Get)"
+      operationId: "StraightBondMyTokens"
+      parameters:
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        token_template:
+                          type: string
+                          example:
+                            IbetStraightBond
+                        owner_address:
+                          type: string
+                          description: issuer address
+                        company_name:
+                          type: string
+                        rsa_publickey:
+                          type: string
+                        name:
+                          type: string
+                          description: token name
+                        symbol:
+                          type: string
+                          description: token symbol
+                        total_supply:
+                          type: integer
+                        face_value:
+                          type: integer
+                        interest_rate:
+                          type: number
+                        interest_payment_date1:
+                          type: string
+                        interest_payment_date2:
+                          type: string
+                        interest_payment_date3:
+                          type: string
+                        interest_payment_date4:
+                          type: string
+                        interest_payment_date5:
+                          type: string
+                        interest_payment_date6:
+                          type: string
+                        interest_payment_date7:
+                          type: string
+                        interest_payment_date8:
+                          type: string
+                        interest_payment_date9:
+                          type: string
+                        interest_payment_date10:
+                          type: string
+                        interest_payment_date11:
+                          type: string
+                        interest_payment_date12:
+                          type: string
+                        redemption_date:
+                          type: string
+                        redemption_value:
+                          type: integer
+                        return_date:
+                          type: string
+                        return_amount:
+                          type: string
+                        purpose:
+                          type: string
+                          description: purpose of issue
+                        transferable:
+                          type: boolean
+                        isRedeemed:
+                          type: boolean
+                        image_url:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              url:
+                                type: string
+                        certification:
+                          type: array
+                          items:
+                            type: string
+                        initial_offering_status:
+                          type: boolean
+                        max_holding_quantity:
+                          type: integer
+                        max_sell_amount:
+                          type: integer
+                        payment_method_credit_card:
+                          type: boolean
+                        payment_method_bank:
+                          type: boolean
+                        contact_information:
+                          type: string
+                        privacy_policy:
+                          type: string
+                    balance:
+                      type: integer
+                    commitment:
+                      type: integer
+  /Position/Membership:
+    post:
+      tags:
+        - "Position"
+      summary: "Membership Token Position (Bulk Get)"
+      operationId: "MembershipMyTokens"
+      parameters:
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        token_template:
+                          type: string
+                          example:
+                            IbetMembership
+                        owner_address:
+                          type: string
+                          description: issuer address
+                        company_name:
+                          type: string
+                        rsa_publickey:
+                          type: string
+                        name:
+                          type: string
+                          description: token name
+                        symbol:
+                          type: string
+                          description: token symbol
+                        total_supply:
+                          type: integer
+                        details:
+                          type: string
+                        return_details:
+                          type: string
+                        expiration_date:
+                          type: string
+                        memo:
+                          type: string
+                        transferable:
+                          type: boolean
+                        status:
+                          type: boolean
+                        image_url:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              url:
+                                type: string
+                        max_holding_quantity:
+                          type: integer
+                        max_sell_amount:
+                          type: integer
+                        payment_method_credit_card:
+                          type: boolean
+                        payment_method_bank:
+                          type: boolean
+                        contact_information:
+                          type: string
+                        privacy_policy:
+                          type: string
+                    balance:
+                      type: integer
+                    commitment:
+                      type: integer
+  /Position/Coupon:
+    post:
+      tags:
+        - "Position"
+      summary: "Coupon Token Position (Bulk Get)"
+      operationId: "CouponMyTokens"
+      parameters:
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        token_template:
+                          type: string
+                          example:
+                            IbetCoupon
+                        owner_address:
+                          type: string
+                          description: issuer address
+                        company_name:
+                          type: string
+                        rsa_publickey:
+                          type: string
+                        name:
+                          type: string
+                          description: token name
+                        symbol:
+                          type: string
+                          description: token symbol
+                        total_supply:
+                          type: integer
+                        details:
+                          type: string
+                        return_details:
+                          type: string
+                        expiration_date:
+                          type: string
+                        memo:
+                          type: string
+                        transferable:
+                          type: boolean
+                        status:
+                          type: boolean
+                        image_url:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              url:
+                                type: string
+                        max_holding_quantity:
+                          type: integer
+                        max_sell_amount:
+                          type: integer
+                        payment_method_credit_card:
+                          type: boolean
+                        payment_method_bank:
+                          type: boolean
+                        contact_information:
+                          type: string
+                        privacy_policy:
+                          type: string
+                    balance:
+                      type: integer
+                    commitment:
+                      type: integer
+                    used:
+                      type: integer
+  /Position/Coupon/Consumptions:
+    post:
+      tags:
+        - "Position"
+      summary: "Coupon Consumption history (Bulk Get)"
+      operationId: "CouponConsumptions"
+      parameters:
+        - name: token_address
+          in: query
+          description: token address
+          required: true
+          type: string
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  mesage:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                description: sorted by block_timestamp
+                items:
+                  type: object
+                  properties:
+                    account_address:
+                      type: string
+                    block_timestamp:
+                      type: string
+                      description: block timestamp (UTC)
+                    value:
+                      type: integer
+                      description: consumption amount
