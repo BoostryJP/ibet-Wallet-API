@@ -15,7 +15,7 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 from app import log
 from app import config
-from app.model import Notification, NotifitationType, Listing, PrivateListing
+from app.model import Notification, NotificationType, Listing, PrivateListing
 from app.contracts import Contract
 from async.lib.company_list import CompanyListFactory
 from async.lib.token_list import TokenList
@@ -149,7 +149,7 @@ class WatchTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.TRANSFER.value
+            notification.notification_type = NotificationType.TRANSFER.value
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)

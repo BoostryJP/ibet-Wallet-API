@@ -231,6 +231,59 @@ def bond_change_transferable(invoker, token, transferable):
 
 
 '''
+Share Token （株式）
+'''
+
+
+# 株式トークンの発行
+def issue_share_token(invoker, attribute):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    arguments = [
+        attribute['name'], attribute['symbol'], 
+        attribute['tradableExchange'], attribute['personalInfoAddress'],
+        attribute['issuePrice'], attribute['totalSupply'], attribute['dividends'],
+        attribute['dividendRecordDate'], attribute['dividendPaymentDate'],
+        attribute['cancellationDate'], attribute['contactInformation'], 
+        attribute['privacyPolicy'], attribute['memo'], attribute['transferable']
+    ]
+
+    contract_address, abi = Contract.deploy_contract(
+        'IbetShare', arguments, invoker['account_address'])
+
+    return {'address': contract_address, 'abi': abi}
+
+
+# 株式トークンのリスト登録
+def register_share_list(invoker, share_token, token_list):
+    TokenListContract = Contract.get_contract(
+        'TokenList', token_list['address'])
+
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    tx_hash = TokenListContract.functions.register(
+        share_token['address'], 'IbetShare'). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 株式トークンの関連URL追加
+def register_share_reference_url(invoker, token, url_list):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    i = 0
+    for url in url_list:
+        tx_hash = TokenContract.functions.setReferenceUrls(i, url). \
+            transact({'from': invoker['account_address'], 'gas': 4000000})
+        web3.eth.waitForTransactionReceipt(tx_hash)
+        i = i + 1
+
+
+'''
 Coupon Token （クーポン）
 '''
 

@@ -117,7 +117,7 @@ Index("notification_index_1", Notification.address, Notification.notification_id
 Index("notification_index_2", Notification.address, Notification.priority, Notification.notification_id)
 
 
-class NotifitationType(Enum):
+class NotificationType(Enum):
     NEW_ORDER = "NewOrder"
     CANCEL_ORDER = "CancelOrder"
     BUY_AGREEMENT = "BuyAgreement"
