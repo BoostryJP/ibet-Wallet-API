@@ -16,7 +16,7 @@ sys.path.append(path)
 
 from app import log
 from app import config
-from app.model import Listing, PrivateListing, Position
+from app.model import Listing, PrivateListing, Position, Transfer
 from app.contracts import Contract
 
 LOG = log.get_logger()
@@ -53,10 +53,11 @@ class Sinks:
 
 class ConsoleSink:
     @staticmethod
-    def on_transfer(token_address, from_account_address, from_account_balance, to_account_address, to_account_balance):
+    def on_transfer(transaction_hash, token_address,
+                    from_account_address, from_account_balance, to_account_address, to_account_balance, value):
         LOG.info(
-            "Transfer: token_address={}, from_account_address={}, to_account_address={}".format(
-                token_address, from_account_address, to_account_address
+            "Transfer: transaction_hash={}, token_address={}, from_account_address={}, to_account_address={}".format(
+                transaction_hash, token_address, from_account_address, to_account_address
             )
         )
 
@@ -68,9 +69,10 @@ class DBSink:
     def __init__(self, db):
         self.db = db
 
-    def on_transfer(self, token_address, from_account_address, from_account_balance, to_account_address, to_account_balance):
+    def on_transfer(self, transaction_hash, token_address,
+                    from_account_address, from_account_balance, to_account_address, to_account_balance, value):
         # From-Account の残高情報を更新
-        from_position = self.__get_record(token_address, from_account_address)
+        from_position = self.__get_position_record(token_address, from_account_address)
         if from_position is None:
             from_position = Position()
             from_position.token_address = token_address
@@ -81,7 +83,7 @@ class DBSink:
         self.db.merge(from_position)
 
         # To-Account の残高情報を更新
-        to_position = self.__get_record(token_address, to_account_address)
+        to_position = self.__get_position_record(token_address, to_account_address)
         if to_position is None:
             to_position = Position()
             to_position.token_address = token_address
@@ -91,14 +93,29 @@ class DBSink:
             to_position.balance = to_account_balance
         self.db.merge(to_position)
 
+        # Transfer イベント情報の更新
+        transfer = self.__get_transfer_record(transaction_hash)
+        if transfer is None:
+            transfer = Transfer()
+            transfer.transaction_hash = transaction_hash
+            transfer.token_address = token_address
+            transfer.from_address = from_account_address
+            transfer.to_address = to_account_address
+            transfer.value = value
+            self.db.merge(transfer)
 
     def flush(self):
         self.db.commit()
 
-    def __get_record(self, token_address, account_address):
+    def __get_position_record(self, token_address, account_address):
         return self.db.query(Position). \
             filter(Position.token_address == token_address). \
             filter(Position.account_address == account_address). \
+            first()
+
+    def __get_transfer_record(self, transaction_hash):
+        return self.db.query(Transfer). \
+            filter(Transfer.transaction_hash == transaction_hash). \
             first()
 
 
@@ -161,11 +178,13 @@ class Processor:
                         pass
                     else:
                         self.sink.on_transfer(
+                            transaction_hash=event["transactionHash"].hex(),
                             token_address=to_checksum_address(token.address),
                             from_account_address=args["from"],
                             from_account_balance=from_account_balance,
                             to_account_address=args["to"],
                             to_account_balance=to_account_balance,
+                            value=args["value"]
                         )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
