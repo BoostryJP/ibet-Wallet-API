@@ -4,11 +4,13 @@ from sqlalchemy import String, BigInteger
 
 from app.model import Base
 
-"""
-トークン保有残高
-"""
+
 class Position(Base):
+    """
+    トークン保有残高
+    """
     __tablename__ = 'position'
+
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     token_address = Column(String(42), index=True)
     account_address = Column(String(42))
@@ -16,7 +18,7 @@ class Position(Base):
 
     def __repr__(self):
         return "<Position(token_address='%s', account_address='%s', balance='%d')>" % \
-            (self.token_address, self.account_address, self.balance)
+               (self.token_address, self.account_address, self.balance)
 
     FIELDS = {
         'id': int,

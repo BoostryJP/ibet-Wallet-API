@@ -13,3 +13,4 @@ from .executable_contract import ExecutableContract
 from .token import BondToken, BondTokenV2, ShareToken, MembershipToken, MembershipTokenV2, CouponToken, CouponTokenV2
 from .consume_coupon import ConsumeCoupon
 from .position import Position
+from .transfer import Transfer
