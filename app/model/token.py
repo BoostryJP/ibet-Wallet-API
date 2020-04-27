@@ -75,6 +75,7 @@ class ShareToken(TokenBase):
     memo: str
     transferable: bool
     offering_status: bool
+    reference_urls: object
     max_holding_quantity: int
     max_sell_amount: int
 

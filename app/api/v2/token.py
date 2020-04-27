@@ -719,6 +719,7 @@ class ShareTokenDetails(BaseResource):
                 ]
                 sharetoken.memo = TokenContract.functions.memo().call()
                 sharetoken.transferable = TokenContract.functions.transferable().call()
+                sharetoken.status = TokenContract.functions.status().call()
                 sharetoken.offering_status = TokenContract.functions.offeringStatus().call()
                 sharetoken.max_holding_quantity = available_token.max_holding_quantity
                 sharetoken.max_sell_amount = available_token.max_sell_amount

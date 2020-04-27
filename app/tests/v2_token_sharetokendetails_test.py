@@ -118,7 +118,8 @@ class TestV2TokenShareTokenDetails:
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'status': True
         }
 
         assert resp.status_code == 200
