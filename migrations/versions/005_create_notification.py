@@ -10,7 +10,6 @@ from migrate import *
 meta = MetaData()
 table = Table(
     "notification", meta,
-    Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("notification_id", String(256), primary_key=True),
     Column("notification_type", String(256)),
     Column("priority", Integer),
@@ -24,6 +23,19 @@ table = Table(
     Column("metainfo", JSON),
     Column("created", DateTime, default=func.now()),
     Column("modified", DateTime, default=func.now(), onupdate=func.now())
+)
+
+notification_index_1 = Index(
+    "notification_index_1",
+    table.c.address,
+    table.c.notification_id
+)
+
+notification_index_2 = Index(
+    "notification_index_2",
+    table.c.address,
+    table.c.priority,
+    table.c.notification_id
 )
 
 

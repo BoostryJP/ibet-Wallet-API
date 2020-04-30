@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 import sys
 import logging
@@ -7,8 +6,6 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 from datetime import datetime, timezone, timedelta
 
-import boto3
-from botocore.exceptions import ClientError
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
@@ -18,7 +15,7 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 from app import log
 from app import config
-from app.model import Notification, NotifitationType, Push, Listing, PrivateListing
+from app.model import Notification, NotificationType, Listing, PrivateListing
 from app.contracts import Contract
 from async.lib.company_list import CompanyListFactory
 from async.lib.token_list import TokenList
@@ -50,54 +47,6 @@ NOW_BLOCKNUMBER = web3.eth.blockNumber
 # コントラクトの生成
 list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 token_list = TokenList(list_contract)
-
-
-# PUSH通知送信
-def push_publish(notification_id, account_address, priority, blocknumber, message, detail_link=True):
-    # 「対象の優先度」が送信設定（PUSH_PRIORITY）以上 かつ
-    # 「対象のblockNumber」が起動時のblockNumber以上の場合は送信
-    if priority >= config.PUSH_PRIORITY and blocknumber >= NOW_BLOCKNUMBER:
-        # 通知tableの情報取得
-        query_notification = db_session.query(Notification).filter(Notification.notification_id == notification_id)
-        notification = query_notification.first()
-
-        # PUSH通知先デバイス情報の取得
-        if account_address is None:
-            query = db_session.query(Push)
-        else:
-            query = db_session.query(Push).filter(Push.account_address == account_address)
-        devices = query.all()
-
-        for device_data in devices:
-            # 通知json作成。iosとandroidでjsonの構造を変更。
-            send_data = ''
-            if device_data.platform == 'ios':
-                message_dict = {
-                    "aps": {
-                        "alert": message
-                    },
-                    "data": {
-                        "notification_id": notification.notification_id,
-                        "detail_link": detail_link
-                    }
-                }
-                send_data = json.dumps({"APNS": json.dumps(message_dict)})
-            elif device_data.platform == 'android':
-                message_dict = {
-                    "data": {
-                        "message": message, "notification_id": notification.notification_id, "detail_link": detail_link
-                    }
-                }
-                send_data = json.dumps({"GCM": json.dumps(message_dict)})
-            try:
-                client = boto3.client('sns', 'ap-northeast-1')
-                client.publish(
-                    TargetArn=device_data.device_endpoint_arn,
-                    Message=send_data,
-                    MessageStructure='json'
-                )
-            except ClientError:
-                LOG.warning('device_endpoint_arn does not found.')
 
 
 # Watcher
@@ -139,10 +88,13 @@ class Watcher:
                 res.append(registered_token)
         return res
 
+    def db_merge(self, token_contract, entries):
+        pass
+
     def loop(self):
         start_time = time.time()
         try:
-            print("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
+            LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
             self.filter_params["fromBlock"] = self.from_block
 
             # 登録済みの債券リストを取得
@@ -169,17 +121,15 @@ class Watcher:
                     self.db_merge(bond_contract, entries)
                     self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
                     db_session.commit()
-                    # Push通知
-                    self.push(bond_contract, entries)
         finally:
             elapsed_time = time.time() - start_time
-            print("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
+            LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
 
 # イベント：募集申込開始
 class WatchStartInitialOffering(Watcher):
     def __init__(self):
-        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': True}} )
+        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': True}})
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
@@ -195,24 +145,12 @@ class WatchStartInitialOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.START_INITIAL_OFFERING.value
+            notification.notification_type = NotificationType.START_INITIAL_OFFERING.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                None,
-                0,
-                entry["blockNumber"],
-                token_name + 'の募集申込が開始されました。',
-                detail_link=False
-            )
 
 
 # イベント：募集申込終了
@@ -234,30 +172,18 @@ class WatchStopInitialOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.STOP_INITIAL_OFFERING.value
+            notification.notification_type = NotificationType.STOP_INITIAL_OFFERING.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
 
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                None,
-                0,
-                entry["blockNumber"],
-                token_name + 'の募集申込が終了しました。',
-                detail_link=False
-            )
-
 
 # イベント：償還
 class WatchRedeem(Watcher):
     def __init__(self):
-        super().__init__("Redeem", {} )
+        super().__init__("Redeem", {})
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
@@ -273,24 +199,12 @@ class WatchRedeem(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.REDEEM.value
+            notification.notification_type = NotificationType.REDEEM.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                None,
-                0,
-                entry["blockNumber"],
-                token_name + 'が償還されました。',
-                detail_link=False
-            )
 
 
 # イベント：募集申込
@@ -312,7 +226,7 @@ class WatchApplyForOffering(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.APPLY_FOR_OFFERING.value
+            notification.notification_type = NotificationType.APPLY_FOR_OFFERING.value
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -320,16 +234,6 @@ class WatchApplyForOffering(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                entry["args"]["accountAddress"],
-                0,
-                entry["blockNumber"],
-                token_name + 'の募集申込が完了しました。',
-            )
 
 # イベント：募集割当確定
 class WatchAllot(Watcher):
@@ -350,24 +254,13 @@ class WatchAllot(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.ALLOT.value
+            notification.notification_type = NotificationType.ALLOT.value
             notification.priority = 1
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                entry["args"]["accountAddress"],
-                0,
-                entry["blockNumber"],
-                token_name + 'の募集割当が確定しました。',
-            )
 
 
 # イベント：トークン移転（受領時）
@@ -393,28 +286,13 @@ class WatchTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotifitationType.TRANSFER.value
+            notification.notification_type = NotificationType.TRANSFER.value
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
-
-    def push(self, token_contract, entries):
-        for entry in entries:
-            # Exchangeアドレスが移転元の場合、処理をSKIPする
-            tradable_exchange = token_contract.functions.tradableExchange().call()
-            if entry["args"]["from"] == tradable_exchange:
-                continue
-            token_name = token_contract.functions.name().call()
-            push_publish(
-                self._gen_notification_id(entry),
-                entry["args"]["to"],
-                0,
-                entry["blockNumber"],
-                token_name + 'を受領しました。',
-            )
 
 
 # メイン処理
@@ -438,7 +316,7 @@ def main():
         wait_all_futures(fs)
 
         elapsed_time = time.time() - start_time
-        print("[LOOP] finished in {} secs".format(elapsed_time))
+        LOG.info("[LOOP] finished in {} secs".format(elapsed_time))
 
         time.sleep(max(SLEEP_INTERVAL - elapsed_time, 0))
 

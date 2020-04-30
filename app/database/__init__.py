@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Sequence
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from app import log
@@ -30,6 +31,9 @@ engine = get_engine(config.DATABASE_URL)
 
 def init_session():
     db_session.configure(bind=engine)
+
+    from app.model import Notification
+    Notification.notification_id_seq.create(bind=engine)
 
     from app.model import Base
     Base.metadata.create_all(engine)

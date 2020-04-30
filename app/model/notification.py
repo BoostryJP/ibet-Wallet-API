@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
 from enum import Enum
-from sqlalchemy import Column, Index
+from sqlalchemy import Column, Index, BigInteger, Sequence
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 
 from datetime import datetime, timedelta, timezone
@@ -10,10 +11,24 @@ from app.model import Base
 UTC = timezone(timedelta(hours=0), "UTC")
 JST = timezone(timedelta(hours=+9), "JST")
 
+
 # 通知データをキャッシュするためのテーブル
 # 既読情報や重要フラグの情報なども保存される
 class Notification(Base):
     __tablename__ = 'notification'
+
+    # レコードIDのシーケンス
+    notification_id_seq = Sequence(
+        "notification_id_seq",
+        start=1,
+        increment=1,
+        minvalue=1,
+        maxvalue=sys.maxsize,
+        cache=1
+    )
+
+    # レコードID
+    id = Column(BigInteger, server_default=Sequence("notification_id_seq").next_value(), autoincrement=True)
 
     # 通知ID
     # Spec: 0x | <blockNumber> | <transactionIndex> | <logIndex> | <optionType>
@@ -95,12 +110,14 @@ class Notification(Base):
 
     FIELDS.update(Base.FIELDS)
 
+
 # 通知を新着順でソート時に使用
 Index("notification_index_1", Notification.address, Notification.notification_id)
 # 通知を重要度→新着順でソート時に使用
 Index("notification_index_2", Notification.address, Notification.priority, Notification.notification_id)
 
-class NotifitationType(Enum):
+
+class NotificationType(Enum):
     NEW_ORDER = "NewOrder"
     CANCEL_ORDER = "CancelOrder"
     BUY_AGREEMENT = "BuyAgreement"
@@ -118,5 +135,5 @@ class NotifitationType(Enum):
     PAYMENT_ACCOUNT_REGISTER = "PaymentAccountRegister"
     PAYMENT_ACCOUNT_APPROVE = "PaymentAccountApprove"
     PAYMENT_ACCOUNT_UNAPPROVE = "PaymentAccountUnapprove"
-    PAYMENT_ACCOUNT_WARN =  "PaymentAccountWarn"
+    PAYMENT_ACCOUNT_WARN = "PaymentAccountWarn"
     PAYMENT_ACCOUNT_BAN = "PaymentAccountBan"

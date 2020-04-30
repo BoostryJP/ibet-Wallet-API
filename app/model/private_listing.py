@@ -12,6 +12,7 @@ class PrivateListing(Base):
     max_sell_amount = Column(BigInteger)
     payment_method_credit_card = Column(Boolean)
     payment_method_bank = Column(Boolean)
+    owner_address = Column(String(256), index=True)
 
     def __repr__(self):
         return "<Listing id='%d'>" % \
@@ -25,6 +26,7 @@ class PrivateListing(Base):
         'max_sell_amount': int,
         'payment_method_credit_card': bool,
         'payment_method_bank': bool,
+        'owner_address': str,
     }
 
     FIELDS.update(Base.FIELDS)
