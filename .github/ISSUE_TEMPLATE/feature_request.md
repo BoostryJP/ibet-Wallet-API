@@ -8,6 +8,7 @@ assignees: YoshihitoAso
 ---
 
 ## 対象
+:sob: 株式
 :sob: 債券
 :sob: 会員権
 :sob: クーポン
