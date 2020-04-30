@@ -37,6 +37,11 @@ class TestV1NodeInfo():
              config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         coupon_exchange_abi = contracts['IbetCouponExchange']['abi']
 
+        otc_exchange_address = \
+             config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+
+        otc_exchange_abi = contracts['IbetOTCExchange']['abi']
+
         agent_address =  config.AGENT_ADDRESS
 
         assumed_body = {
@@ -50,6 +55,8 @@ class TestV1NodeInfo():
             'ibet_membership_exchange_abi': membership_exchange_abi,
             'ibet_coupon_exchange_address': coupon_exchange_address,
             'ibet_coupon_exchange_abi': coupon_exchange_abi,
+            'ibet_otc_exchange_address': otc_exchange_address,
+            'ibet_otc_exchange_abi': otc_exchange_abi,
             'agent_address': agent_address
         }
 
