@@ -31,6 +31,8 @@ class NodeInfo(BaseResource):
             'ibet_membership_exchange_abi': contracts['IbetMembershipExchange']['abi'],
             'ibet_coupon_exchange_address': config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
             'ibet_coupon_exchange_abi': contracts['IbetCouponExchange']['abi'],
+            'ibet_otc_exchange_address': config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+            'ibet_otc_exchange_abi': contracts['IbetOTCExchange']['abi'],
             'agent_address': config.AGENT_ADDRESS,
         }
 
