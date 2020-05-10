@@ -42,4 +42,3 @@ toolz==0.9.0
 web3==4.8.2
 websockets==4.0.1
 boto3==1.9.84
-stripe==2.24.1

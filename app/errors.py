@@ -8,7 +8,6 @@ try:
 except ImportError:
     OrderedDict = dict
 
-
 OK = {
     'status': falcon.HTTP_200,
     'code': 200,
@@ -80,6 +79,7 @@ ERR_DOUBLE_CHARGE_ERROR = {
     'title': 'Double Charge'
 }
 
+
 class AppError(Exception):
     def __init__(self, error=ERR_UNKNOWN, description=None):
         self.error = error
@@ -111,10 +111,12 @@ class AppError(Exception):
             meta['description'] = exception.description
         res.body = json.dumps({'meta': meta})
 
+
 class InvalidParameterError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_INVALID_PARAMETER)
         self.error['description'] = description
+
 
 class DatabaseError(AppError):
     def __init__(self, error, args=None, params=None):
@@ -124,61 +126,51 @@ class DatabaseError(AppError):
         obj['params'] = str(params)
         self.error['description'] = obj
 
+
 class NotSupportedError(AppError):
     def __init__(self, method=None, url=None):
         super().__init__(ERR_NOT_SUPPORTED)
         if method and url:
             self.error['description'] = 'method: %s, url: %s' % (method, url)
 
+
 class UserNotExistsError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_USER_NOT_EXISTS)
         self.error['description'] = description
+
 
 class PasswordNotMatch(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_PASSWORD_NOT_MATCH)
         self.error['description'] = description
 
+
 class DataNotExistsError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_DATA_NOT_EXISTS)
         self.error['description'] = description
+
 
 class EthValueError(AppError):
     def __init__(self, code=None, message=None):
         super().__init__(ERR_ETH_VALUE_ERROR)
         self.error['description'] = 'code: %i, message: %s' % (code, message)
 
+
 class SNSNotFoundError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_SNS_NOTFOUND_ERROR)
         self.error['description'] = description
+
 
 class InvalidCardError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_INVALID_CARD_ERROR)
         self.error['description'] = description
 
+
 class DoubleChargeError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_DOUBLE_CHARGE_ERROR)
-        self.error['description'] = description
-
-class StripeErrorClient(AppError):
-    def __init__(self, code=None, description=None, title=None):
-        super().__init__({
-            'status': falcon.HTTP_400,
-            'code': code,
-            'title': title
-            })
-        self.error['description'] = description
-
-class StripeErrorServer(AppError):
-    def __init__(self, code=None, description=None, title=None):
-        super().__init__({
-            'status': falcon.HTTP_500,
-            'code': code,
-            'title': title
-            })
         self.error['description'] = description

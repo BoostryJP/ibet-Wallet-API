@@ -12,8 +12,6 @@ from app.api.common import notification
 from app.api.common import user
 from app.api.common import nodeInfo
 
-from app.api.payment import stripe
-
 from app.api.v1 import tokenTemplates
 from app.api.v1 import contracts
 from app.api.v1 import marketInformation
@@ -103,16 +101,6 @@ class App(falcon.API):
         # ノード情報
         self.add_route('/v1/NodeInfo', nodeInfo.NodeInfo())
 
-        # Stripe決済
-        self.add_route('/v1/Stripe/CreateAccount', stripe.CreateAccount())
-        self.add_route('/v1/Stripe/CreateExternalAccount', stripe.CreateExternalAccount())
-        self.add_route('/v1/Stripe/CreateCustomer', stripe.CreateCustomer())
-        self.add_route('/v1/Stripe/DeleteAccount', stripe.DeleteAccount())
-        self.add_route('/v1/Stripe/Charge', stripe.Charge())
-        self.add_route('/v1/Stripe/AccountStatus', stripe.AccountStatus())
-        self.add_route('/v1/Stripe/ChargeStatus', stripe.ChargeStatus())
-        self.add_route('/v1/Stripe/Constants', stripe.Constants())
-
         """
         Version 2
         """
@@ -190,16 +178,6 @@ class App(falcon.API):
 
         # ノード情報
         self.add_route('/v2/NodeInfo', nodeInfo.NodeInfo())
-
-        # Stripe決済
-        self.add_route('/v2/Stripe/CreateAccount', stripe.CreateAccount())
-        self.add_route('/v2/Stripe/CreateExternalAccount', stripe.CreateExternalAccount())
-        self.add_route('/v2/Stripe/CreateCustomer', stripe.CreateCustomer())
-        self.add_route('/v2/Stripe/DeleteAccount', stripe.DeleteAccount())
-        self.add_route('/v2/Stripe/Charge', stripe.Charge())
-        self.add_route('/v2/Stripe/AccountStatus', stripe.AccountStatus())
-        self.add_route('/v2/Stripe/ChargeStatus', stripe.ChargeStatus())
-        self.add_route('/v2/Stripe/Constants', stripe.Constants())
 
         # 統計値
         self.add_route('/v2/Statistics/Token/{contract_address}', statistics.Token())
