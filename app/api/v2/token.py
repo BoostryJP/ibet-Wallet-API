@@ -16,7 +16,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondTokenV2, ShareToken, MembershipTokenV2, CouponTokenV2
+from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken
 
 LOG = log.get_logger()
 
@@ -201,7 +201,7 @@ class StraightBondTokens(BaseResource):
                 # NOTE:現状項目未使用であるため空のリストを返す
                 certification = []
 
-                bondtoken = BondTokenV2()
+                bondtoken = BondToken()
                 bondtoken.token_address = token_address
                 bondtoken.token_template = token_template
                 bondtoken.owner_address = owner_address
@@ -446,7 +446,7 @@ class StraightBondTokenDetails(BaseResource):
                 # NOTE:現状項目未使用であるため空のリストを返す
                 certification = []
 
-                bondtoken = BondTokenV2()
+                bondtoken = BondToken()
                 bondtoken.token_address = token_address
                 bondtoken.token_template = token_template
                 bondtoken.owner_address = owner_address
@@ -851,7 +851,7 @@ class MembershipTokens(BaseResource):
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
 
-                membershiptoken = MembershipTokenV2()
+                membershiptoken = MembershipToken()
                 membershiptoken.token_address = token_address
                 membershiptoken.token_template = token_template
                 membershiptoken.owner_address = owner_address
@@ -1029,7 +1029,7 @@ class MembershipTokenDetails(BaseResource):
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
 
-                membershiptoken = MembershipTokenV2()
+                membershiptoken = MembershipToken()
                 membershiptoken.token_address = token_address
                 membershiptoken.token_template = token_template
                 membershiptoken.owner_address = owner_address
@@ -1186,7 +1186,7 @@ class CouponTokens(BaseResource):
                     if to_checksum_address(company['address']) == owner_address:
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
-                coupontoken = CouponTokenV2()
+                coupontoken = CouponToken()
                 coupontoken.token_address = token_address
                 coupontoken.token_template = token_template
                 coupontoken.owner_address = owner_address
@@ -1363,7 +1363,7 @@ class CouponTokenDetails(BaseResource):
                     if to_checksum_address(company['address']) == owner_address:
                         company_name = company['corporate_name']
                         rsa_publickey = company['rsa_publickey']
-                coupontoken = CouponTokenV2()
+                coupontoken = CouponToken()
                 coupontoken.token_address = token_address
                 coupontoken.token_template = token_template
                 coupontoken.owner_address = owner_address

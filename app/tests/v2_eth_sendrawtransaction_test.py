@@ -2,11 +2,9 @@
 import json
 
 
-# sendRawTransaction API
-# /v1/Eth/SendRawTransaction
-class TestV1EthSendRawTransaction():
+class TestEthSendRawTransaction():
     # テスト対象API
-    apiurl = '/v1/Eth/SendRawTransaction/'
+    apiurl = '/v2/Eth/SendRawTransaction/'
 
     # ＜正常系1＞
     # 入力リストが空
@@ -32,7 +30,7 @@ class TestV1EthSendRawTransaction():
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v1/Eth/SendRawTransaction'
+            'description': 'method: GET, url: /v2/Eth/SendRawTransaction'
         }
 
     # ＜エラー系2＞
@@ -141,7 +139,7 @@ class TestV1EthSendRawTransaction():
 
 # sendRawTransaction API (No Wait)
 # /v2/Eth/SendRawTransactionNoWait
-class TestV1EthSendRawTransactionNoWait():
+class TestEthSendRawTransactionNoWait():
     # テスト対象API
     apiurl = '/v2/Eth/SendRawTransactionNoWait/'
 

@@ -1,42 +1,40 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 
 from app import config
 from .account_config import eth_account
-from .contract_modules import register_payment_gateway
+from .contract_modules import register_personalinfo
 
 
-# 受領用銀行口座登録状況参照API
-# /v1/User/PaymentAccount
-class TestV1PaymentAccount:
+class TestPersonalInfo:
 
     # テスト対象API
-    apiurl = '/v1/User/PaymentAccount'
+    apiurl = '/v2/User/PersonalInfo'
 
     # ＜正常系1＞
-    # 通常参照（登録 -> 認可済）
-    def test_paymentaccount_normal_1(self, client, shared_contract):
+    # 通常参照（登録済）
+    def test_personalinfo_normal_1(self, client, shared_contract):
         # テスト用アカウント
         trader = eth_account['trader']
-        agent = eth_account['agent']
+        issuer = eth_account['issuer']
 
-        # 収納代行コントラクト（PaymentGateway）
-        payment_gateway = shared_contract['PaymentGateway']
-        config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway['address']
+        # 投資家名簿用個人情報コントラクト（PersonalInfo）
+        personal_info = shared_contract['PersonalInfo']
+        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info['address']
 
-        # データ準備：受領用銀行口座情報登録->認可
-        register_payment_gateway(trader, payment_gateway)
+        # データ準備：情報登録
+        register_personalinfo(trader, personal_info)
 
+        # 検索用クエリ
         query_string = 'account_address=' + trader['account_address'] + \
-            '&agent_address=' + agent['account_address']
+            '&owner_address=' + issuer['account_address']
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = {
             'account_address': trader['account_address'],
-            'agent_address': agent['account_address'],
-            'approval_status': 2
+            'owner_address': issuer['account_address'],
+            'registered': True
         }
 
         assert resp.status_code == 200
@@ -45,24 +43,25 @@ class TestV1PaymentAccount:
 
     # ＜正常系2＞
     # 通常参照（登録なし）
-    def test_paymentaccount_normal_2(self, client, shared_contract):
+    def test_personalinfo_normal_2(self, client, shared_contract):
         # テスト用アカウント（traderは任意のアドレス）
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        agent = eth_account['agent']
+        issuer = eth_account['issuer']['account_address']
 
-        # 収納代行コントラクト（PaymentGateway）
-        payment_gateway = shared_contract['PaymentGateway']
-        config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway['address']
+        # 投資家名簿用個人情報コントラクト（PersonalInfo）
+        personal_info = shared_contract['PersonalInfo']
+        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info['address']
 
+        # 検索用クエリ
         query_string = 'account_address=' + trader + \
-            '&agent_address=' + agent['account_address']
+            '&owner_address=' + issuer
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = {
             'account_address': trader,
-            'agent_address': agent['account_address'],
-            'approval_status': 0
+            'owner_address': issuer,
+            'registered': False
         }
 
         assert resp.status_code == 200
@@ -72,7 +71,7 @@ class TestV1PaymentAccount:
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
-    def test_paymentaccount_error_1(self, client):
+    def test_personalinfo_error_1(self, client):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -83,17 +82,17 @@ class TestV1PaymentAccount:
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: POST, url: /v1/User/PaymentAccount'
+            'description': 'method: POST, url: /v2/User/PersonalInfo'
         }
 
     # ＜エラー系2-1＞
     # 入力エラー
     # account_addressが未設定
-    def test_paymentaccount_error_2_1(self, client):
+    def test_personalinfo_error_2_1(self, client):
         # テスト用アカウント
-        agent = eth_account['agent']
+        issuer = eth_account['issuer']
 
-        query_string = 'agent_address=' + agent['account_address']
+        query_string = 'owner_address=' + issuer['account_address']
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -110,13 +109,13 @@ class TestV1PaymentAccount:
     # ＜エラー系2-2＞
     # 入力エラー
     # account_addressのアドレスフォーマットが正しくない
-    def test_paymentaccount_error_2_2(self, client):
+    def test_personalinfo_error_2_2(self, client):
         # テスト用アカウント
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い
-        agent = eth_account['agent']
+        issuer = eth_account['issuer']
 
         query_string = 'account_address=' + trader + \
-            '&agent_address=' + agent['account_address']
+            '&owner_address=' + issuer['account_address']
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -128,8 +127,8 @@ class TestV1PaymentAccount:
 
     # ＜エラー系3-1＞
     # 入力エラー
-    # agent_addressが未設定
-    def test_paymentaccount_error_3_1(self, client):
+    # owner_addressが未設定
+    def test_personalinfo_error_3_1(self, client):
         # テスト用アカウント
         trader = eth_account['trader']['account_address']
 
@@ -142,20 +141,20 @@ class TestV1PaymentAccount:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'agent_address':
+                'owner_address':
                 ['null value not allowed', 'must be of string type']
             }
         }
 
     # ＜エラー系3-2＞
-    # agent_addressのアドレスフォーマットが正しくない
-    def test_paymentaccount_error_3_2(self, client):
+    # owner_addressのアドレスフォーマットが正しくない
+    def test_personalinfo_error_3_2(self, client):
         # テスト用アカウント
         trader = eth_account['trader']['account_address']
-        agent = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い
+        issuer = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い
 
         query_string = 'account_address=' + trader + \
-            '&agent_address=' + agent
+            '&owner_address=' + issuer
 
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 

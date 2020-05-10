@@ -3,9 +3,10 @@ from datetime import datetime, timedelta, timezone
 
 JST = timezone(timedelta(hours=+9), "JST")
 
-class TestV1Notification():
+
+class TestNotification:
     # テスト対象API
-    apiurl = "/v1/Notifications"
+    apiurl = "/v2/Notifications"
 
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
@@ -19,7 +20,7 @@ class TestV1Notification():
         self.session.commit()
 
     def _insert_test_data(self, session):
-        self.session = session # HACK: updateでcommitされてしまう対策
+        self.session = session  # HACK: updateでcommitされてしまう対策
 
         n = Notification()
         n.notification_id = "0x00000021034300000000000000"
@@ -30,7 +31,7 @@ class TestV1Notification():
         n.is_flagged = False
         n.is_deleted = False
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(tzinfo=JST) # JST時間として保存する
+        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(tzinfo=JST)  # JST時間として保存する
         n.args = {
             "hoge": "fuga",
         }
@@ -114,7 +115,7 @@ class TestV1Notification():
     def test_get_notification_normal_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl, private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(self.apiurl, private_key=TestNotification.private_key)
 
         assumed_body = [
             {
@@ -179,11 +180,11 @@ class TestV1Notification():
     def test_get_notification_normal_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params={
-                                            "status": "flagged",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={"status": "flagged"},
+            private_key=TestNotification.private_key
+        )
 
         assumed_body = [
             {
@@ -213,11 +214,13 @@ class TestV1Notification():
     def test_get_notification_normal_3(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params={
-                                            "status": "deleted",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={
+                "status": "deleted",
+            },
+            private_key=TestNotification.private_key
+        )
 
         assumed_body = [
             {
@@ -247,11 +250,11 @@ class TestV1Notification():
     def test_get_notification_normal_4(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params={
-                                            "sort": "priority",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={"sort": "priority"},
+            private_key=TestNotification.private_key
+        )
 
         assumed_body = [
             {
@@ -316,11 +319,13 @@ class TestV1Notification():
     def test_get_notification_normal_5(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params = {
-                                          "cursor": "1",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={
+                "cursor": "1",
+            },
+            private_key=TestNotification.private_key
+        )
 
         assumed_body = [
             {
@@ -367,12 +372,14 @@ class TestV1Notification():
     def test_get_notification_normal_6(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params = {
-                                            "cursor": "1",
-                                            "limit": "1",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={
+                "cursor": "1",
+                "limit": "1",
+            },
+            private_key=TestNotification.private_key
+        )
 
         assumed_body = [
             {
@@ -402,8 +409,10 @@ class TestV1Notification():
     def test_get_notification_normal_7(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        private_key=TestV1Notification.private_key_2)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            private_key=TestNotification.private_key_2
+        )
 
         assumed_body = []
 
@@ -415,12 +424,14 @@ class TestV1Notification():
     def test_get_notification_error_1_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params = {
-                                            "cursor": "-1",
-                                            "limit": "1",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={
+                "cursor": "-1",
+                "limit": "1",
+            },
+            private_key=TestNotification.private_key
+        )
 
         assert resp.status_code == 400
         assert resp.json["meta"] == {
@@ -434,12 +445,14 @@ class TestV1Notification():
     def test_get_notification_error_1_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params = {
-                                            "cursor": "0.1",
-                                            "limit": "1",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={
+                "cursor": "0.1",
+                "limit": "1",
+            },
+            private_key=TestNotification.private_key
+        )
 
         assert resp.status_code == 400
         assert resp.json["meta"] == {
@@ -458,12 +471,14 @@ class TestV1Notification():
     def test_get_notification_error_2_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params = {
-                                            "cursor": "1",
-                                            "limit": "-1",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={
+                "cursor": "1",
+                "limit": "-1",
+            },
+            private_key=TestNotification.private_key
+        )
 
         assert resp.status_code == 400
         assert resp.json["meta"] == {
@@ -477,12 +492,14 @@ class TestV1Notification():
     def test_get_notification_error_2_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl,
-                                        params = {
-                                            "cursor": "1",
-                                            "limit": "0.1",
-                                        },
-                                        private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_get(
+            self.apiurl,
+            params={
+                "cursor": "1",
+                "limit": "0.1",
+            },
+            private_key=TestNotification.private_key
+        )
 
         assert resp.status_code == 400
         assert resp.json["meta"] == {
@@ -496,7 +513,6 @@ class TestV1Notification():
             }
         }
 
-
     # ---------------------------------------------------------------------------
     # POST
     # ---------------------------------------------------------------------------
@@ -507,15 +523,17 @@ class TestV1Notification():
         self._insert_test_data(session)
 
         notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_auth_post(self.apiurl,
-                                         json={
-                                             "id": notification_id,
-                                             "is_flagged": True,
-                                         },
-                                         private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "id": notification_id,
+                "is_flagged": True,
+            },
+            private_key=TestNotification.private_key
+        )
 
-        n = session.query(Notification).\
-            filter(Notification.notification_id == notification_id).\
+        n = session.query(Notification). \
+            filter(Notification.notification_id == notification_id). \
             first()
 
         assumed_body = {
@@ -546,13 +564,15 @@ class TestV1Notification():
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
-        resp = client.simulate_auth_post(self.apiurl,
-                                         json={
-                                             "id": notification_id,
-                                             "is_flagged": False,
-                                             "is_read": True,
-                                         },
-                                         private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "id": notification_id,
+                "is_flagged": False,
+                "is_read": True,
+            },
+            private_key=TestNotification.private_key
+        )
 
         n = session.query(Notification). \
             filter(Notification.notification_id == notification_id). \
@@ -586,12 +606,14 @@ class TestV1Notification():
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
-        resp = client.simulate_auth_post(self.apiurl,
-                                         json={
-                                             "id": notification_id,
-                                             "is_deleted": True,
-                                         },
-                                         private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "id": notification_id,
+                "is_deleted": True,
+            },
+            private_key=TestNotification.private_key
+        )
 
         n = session.query(Notification). \
             filter(Notification.notification_id == notification_id). \
@@ -609,19 +631,23 @@ class TestV1Notification():
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
-        client.simulate_auth_post(self.apiurl,
-                                         json={
-                                             "id": notification_id,
-                                             "is_deleted": True,
-                                         },
-                                         private_key=TestV1Notification.private_key)
-        resp = client.simulate_auth_post(self.apiurl,
-                                  json={
-                                      "id": notification_id,
-                                      "is_deleted": False,
-                                  },
-                                  private_key=TestV1Notification.private_key)
+        client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "id": notification_id,
+                "is_deleted": True,
+            },
+            private_key=TestNotification.private_key
+        )
 
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "id": notification_id,
+                "is_deleted": False,
+            },
+            private_key=TestNotification.private_key
+        )
 
         n = session.query(Notification). \
             filter(Notification.notification_id == notification_id). \
@@ -639,12 +665,14 @@ class TestV1Notification():
         self._insert_test_data(session)
 
         notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_auth_post(self.apiurl,
-                                         json={
-                                             "id": notification_id,
-                                             "is_flagged": True,
-                                         },
-                                         private_key=TestV1Notification.private_key_2)
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "id": notification_id,
+                "is_flagged": True,
+            },
+            private_key=TestNotification.private_key_2
+        )
 
         assert resp.status_code == 400
         assert resp.json["meta"]["code"] == 88
@@ -655,12 +683,14 @@ class TestV1Notification():
         self._insert_test_data(session)
 
         notification_id = "0x00000021034100000000000003"
-        resp = client.simulate_auth_post(self.apiurl,
-                                         json={
-                                             "id": notification_id,
-                                             "is_flagged": True,
-                                         },
-                                         private_key=TestV1Notification.private_key)
+        resp = client.simulate_auth_post(
+            self.apiurl,
+            json={
+                "id": notification_id,
+                "is_flagged": True,
+            },
+            private_key=TestNotification.private_key
+        )
 
         assert resp.status_code == 404
         assert resp.json["meta"]["code"] == 30

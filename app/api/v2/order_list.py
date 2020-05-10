@@ -18,7 +18,7 @@ from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
 from app.model import Order, Agreement, AgreementStatus, Listing, \
-    BondTokenV2, MembershipTokenV2, CouponTokenV2
+    BondToken, MembershipToken, CouponToken
 
 LOG = log.get_logger()
 
@@ -375,7 +375,7 @@ class OrderList(BaseResource):
                 # 第三者認定（Sign）のイベント情報を検索する
                 # NOTE:現状項目未使用であるため空のリストを返す
                 certification = []
-                bondtoken = BondTokenV2()
+                bondtoken = BondToken()
                 bondtoken.token_address = token_address
                 bondtoken.token_template = 'IbetStraightBond'
                 bondtoken.owner_address = owner_address
@@ -497,7 +497,7 @@ class OrderList(BaseResource):
                     if to_checksum_address(available.token_address) == token_address:
                         available_token = available
 
-                membershiptoken = MembershipTokenV2()
+                membershiptoken = MembershipToken()
                 membershiptoken.token_address = token_address
                 membershiptoken.token_template = 'IbetMembership'
                 membershiptoken.owner_address = owner_address
@@ -602,7 +602,7 @@ class OrderList(BaseResource):
                     if to_checksum_address(available.token_address) == token_address:
                         available_token = available
 
-                coupontoken = CouponTokenV2()
+                coupontoken = CouponToken()
                 coupontoken.token_address = token_address
                 coupontoken.token_template = 'IbetCoupon'
                 coupontoken.owner_address = owner_address
@@ -758,7 +758,7 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondTokenV2()
+            bondtoken = BondToken()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
             bondtoken.owner_address = owner_address
@@ -932,7 +932,7 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondTokenV2()
+            bondtoken = BondToken()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
             bondtoken.owner_address = owner_address
@@ -1052,7 +1052,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipTokenV2()
+            membershiptoken = MembershipToken()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
             membershiptoken.owner_address = owner_address
@@ -1155,7 +1155,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipTokenV2()
+            membershiptoken = MembershipToken()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
             membershiptoken.owner_address = owner_address
@@ -1259,7 +1259,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponTokenV2()
+            coupontoken = CouponToken()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
             coupontoken.owner_address = owner_address
@@ -1363,7 +1363,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponTokenV2()
+            coupontoken = CouponToken()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
             coupontoken.owner_address = owner_address
@@ -1529,7 +1529,7 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondTokenV2()
+            bondtoken = BondToken()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
             bondtoken.owner_address = owner_address
@@ -1712,7 +1712,7 @@ class OrderList(BaseResource):
             # NOTE:現状項目未使用であるため空のリストを返す
             certification = []
 
-            bondtoken = BondTokenV2()
+            bondtoken = BondToken()
             bondtoken.token_address = token_address
             bondtoken.token_template = 'IbetStraightBond'
             bondtoken.owner_address = owner_address
@@ -1840,7 +1840,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipTokenV2()
+            membershiptoken = MembershipToken()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
             membershiptoken.owner_address = owner_address
@@ -1951,7 +1951,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            membershiptoken = MembershipTokenV2()
+            membershiptoken = MembershipToken()
             membershiptoken.token_address = token_address
             membershiptoken.token_template = 'IbetMembership'
             membershiptoken.owner_address
@@ -2063,7 +2063,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponTokenV2()
+            coupontoken = CouponToken()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
             coupontoken.owner_address = owner_address
@@ -2175,7 +2175,7 @@ class OrderList(BaseResource):
                 if to_checksum_address(available.token_address) == token_address:
                     available_token = available
 
-            coupontoken = CouponTokenV2()
+            coupontoken = CouponToken()
             coupontoken.token_address = token_address
             coupontoken.token_template = 'IbetCoupon'
             coupontoken.owner_address = owner_address
