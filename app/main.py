@@ -11,7 +11,6 @@ from app.api.common import company
 from app.api.common import notification
 from app.api.common import user
 from app.api.common import push
-from app.api.common import version
 from app.api.common import nodeInfo
 
 from app.api.payment import stripe
@@ -119,9 +118,6 @@ class App(falcon.API):
         self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
         self.add_route('/v1/Push/DeleteDevice', push.DeleteDevice())
 
-        # 動作保証アプリバーションの取得
-        self.add_route('/v1/RequiredVersion', version.RequiredVersion())
-
         """
         Version 2
         """
@@ -203,9 +199,6 @@ class App(falcon.API):
         # push通知デバイス登録
         self.add_route('/v2/Push/UpdateDevice', push.UpdateDevice())
         self.add_route('/v2/Push/DeleteDevice', push.DeleteDevice())
-
-        # 動作保証アプリバーションの取得
-        self.add_route('/v2/RequiredVersion', version.RequiredVersion())
 
         # Stripe決済
         self.add_route('/v2/Stripe/CreateAccount', stripe.CreateAccount())
