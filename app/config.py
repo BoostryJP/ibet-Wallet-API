@@ -65,9 +65,5 @@ STRIPE_MAXIMUM_VALUE = int(os.environ.get("STRIPE_MAXIMUM_VALUE")) if os.environ
 STRIPE_PAYOUT_SCHEDULE_DELAY = int(os.environ.get("STRIPE_PAYOUT_SCHEDULE_DELAY")) if os.environ.get("STRIPE_PAYOUT_SCHEDULE_DELAY") else 18
 STRIPE_PAYOUT_SCHEDULE_ANCHOR = int(os.environ.get("STRIPE_PAYOUT_SCHEDULE_ANCHOR")) if os.environ.get("STRIPE_PAYOUT_SCHEDULE_ANCHOR") else 28
 
-# push notification setting
-SNS_APPLICATION_ARN_IOS = os.environ.get('SNS_APPLICATION_ARN_IOS')
-SNS_APPLICATION_ARN_ANDROID = os.environ.get('SNS_APPLICATION_ARN_ANDROID')
-
 AGENT_SQS_URL = os.environ.get('AGENT_SQS_URL') or 'http://localhost:9324'
 AGENT_SQS_QUEUE_NAME = os.environ.get('AGENT_SQS_QUEUE_NAME') or 'charge_message'

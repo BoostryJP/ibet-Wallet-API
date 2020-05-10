@@ -10,7 +10,6 @@ from app.api.common import eth
 from app.api.common import company
 from app.api.common import notification
 from app.api.common import user
-from app.api.common import push
 from app.api.common import nodeInfo
 
 from app.api.payment import stripe
@@ -114,10 +113,6 @@ class App(falcon.API):
         self.add_route('/v1/Stripe/ChargeStatus', stripe.ChargeStatus())
         self.add_route('/v1/Stripe/Constants', stripe.Constants())
 
-        # push通知デバイス登録
-        self.add_route('/v1/Push/UpdateDevice', push.UpdateDevice())
-        self.add_route('/v1/Push/DeleteDevice', push.DeleteDevice())
-
         """
         Version 2
         """
@@ -195,10 +190,6 @@ class App(falcon.API):
 
         # ノード情報
         self.add_route('/v2/NodeInfo', nodeInfo.NodeInfo())
-
-        # push通知デバイス登録
-        self.add_route('/v2/Push/UpdateDevice', push.UpdateDevice())
-        self.add_route('/v2/Push/DeleteDevice', push.DeleteDevice())
 
         # Stripe決済
         self.add_route('/v2/Stripe/CreateAccount', stripe.CreateAccount())
