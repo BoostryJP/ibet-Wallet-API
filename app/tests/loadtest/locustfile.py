@@ -35,7 +35,7 @@ class LoadTestTaskSet(TaskSet):
 	@staticmethod
 	def get_tx_info(self, eth_address):
 		response = self.client.get(
-			"/v1/Eth/TransactionCount/" + eth_address,
+			"/v2/Eth/TransactionCount/" + eth_address,
 			auth = (basic_auth_user, basic_auth_pass),
 			verify=False
 		)
@@ -48,7 +48,7 @@ class LoadTestTaskSet(TaskSet):
 		return nonce, gas_price
 
 	@task
-	def v1_eth_sendrawtransaction(self):
+	def eth_sendrawtransaction(self):
 		contract = w3.eth.contract(
 			address = personalinfo_contract_address,
 			abi = personalinfo_contract_abi,
@@ -71,7 +71,7 @@ class LoadTestTaskSet(TaskSet):
 		payload = {'raw_tx_hex_list': raw_tx_hex_list}
 		headers = {'content-type': 'application/json'}
 		response = self.client.post(
-			"/v1/Eth/SendRawTransaction",
+			"/v2/Eth/SendRawTransaction",
 			headers = headers,
 			auth = (basic_auth_user, basic_auth_pass),
 			data = json.dumps(payload),

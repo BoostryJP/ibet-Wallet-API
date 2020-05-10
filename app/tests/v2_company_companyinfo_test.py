@@ -2,15 +2,10 @@
 
 from .account_config import eth_account
 
-"""
-発行会社情報参照API
-/v1/Company/{eth_address}
-"""
+class TestCompanyCompanyInfo:
 
-
-class TestV1CompanyCompanyInfo:
     # テスト対象API
-    apiurl_base = '/v1/Company/'
+    apiurl_base = '/v2/Company/'
 
     # 正常系1-1： 発行会社リストに指定したアドレスの情報が存在
     def test_normal_1_1(self, client, mocked_company_list):

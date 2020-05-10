@@ -21,7 +21,7 @@ JST = timezone(timedelta(hours=+9), "JST")
 # ------------------------------
 class Notifications(BaseResource):
     '''
-    Handle for endpoint: /v1/Notifications/
+    Handle for endpoint: /Notifications/
     '''
 
     @falcon.before(VerifySignature())
@@ -195,7 +195,7 @@ class Notifications(BaseResource):
 # ------------------------------
 class NotificationsRead(BaseResource):
     '''
-    Handle for endpoint: /v1/Notifications/Read/
+    Handle for endpoint: /Notifications/Read/
     '''
 
     @falcon.before(VerifySignature())
@@ -244,7 +244,7 @@ class NotificationsRead(BaseResource):
 # ------------------------------
 class NotificationCount(BaseResource):
     '''
-    Handle for endpoint: /v1/NotificationCount/
+    Handle for endpoint: /NotificationCount/
     '''
 
     @falcon.before(VerifySignature())

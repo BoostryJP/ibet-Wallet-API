@@ -2,15 +2,10 @@
 from app import config
 from .account_config import eth_account
 
-"""
-決済代行業者情報参照API
-/v1/PaymentAgent/{eth_address}
-"""
 
-
-class TestV1CompanyPaymentAgentInfo:
+class TestCompanyPaymentAgentInfo:
     # テスト対象API
-    apiurl_base = '/v1/PaymentAgent/'
+    apiurl_base = '/v2/PaymentAgent/'
 
     # 正常系1-1：決済代行業者リストに指定したアドレスの情報が存在
     def test_normal_1_1(self, client, shared_contract, mocked_payment_agent_list):

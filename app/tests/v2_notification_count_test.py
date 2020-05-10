@@ -1,9 +1,10 @@
 from app.model import Notification
 from datetime import datetime
 
-class TestV1NotificationCount():
+
+class TestNotificationCount:
     # テスト対象API
-    apiurl = "/v1/NotificationCount"
+    apiurl = "/v2/NotificationCount"
 
     private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
@@ -96,7 +97,7 @@ class TestV1NotificationCount():
     def test_notificationcount_normal_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl, private_key=TestV1NotificationCount.private_key)
+        resp = client.simulate_auth_get(self.apiurl, private_key=TestNotificationCount.private_key)
 
         assumed_body = {
             "unread_counts": 2,
@@ -105,12 +106,10 @@ class TestV1NotificationCount():
         assert resp.status_code == 200
         assert resp.json["data"] == assumed_body
 
-
-
     # ＜正常系1-2＞
     # 未読カウントが0の場合
     def test_notificationcount_normal_2(self, client, session):
-        resp = client.simulate_auth_get(self.apiurl, private_key=TestV1NotificationCount.private_key)
+        resp = client.simulate_auth_get(self.apiurl, private_key=TestNotificationCount.private_key)
 
         assumed_body = {
             "unread_counts": 0,

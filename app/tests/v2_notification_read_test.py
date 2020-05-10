@@ -3,9 +3,10 @@ from datetime import datetime, timedelta, timezone
 
 JST = timezone(timedelta(hours=+9), "JST")
 
-class TestV1NotificationRead():
+
+class TestNotificationRead:
     # テスト対象API
-    apiurl = "/v1/Notifications/Read"
+    apiurl = "/v2/Notifications/Read"
 
     private_key_1 = "0000000000000000000000000000000000000000000000000000000000000001"
     address_1 = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
@@ -21,7 +22,7 @@ class TestV1NotificationRead():
         self.session.commit()
 
     def _insert_test_data(self, session):
-        self.session = session # HACK: updateでcommitされてしまう対策
+        self.session = session  # HACK: updateでcommitされてしまう対策
 
         n = Notification()
         n.notification_id = "0x00000021034300000000000000"
@@ -32,7 +33,7 @@ class TestV1NotificationRead():
         n.is_flagged = False
         n.is_deleted = False
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(tzinfo=JST) # JST時間として保存する
+        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(tzinfo=JST)  # JST時間として保存する
         n.args = {
             "hoge": "fuga",
         }
@@ -114,21 +115,21 @@ class TestV1NotificationRead():
 
         resp = client.simulate_auth_post(
             self.apiurl,
-            json = {
+            json={
                 "is_read": True,
             },
-            private_key = TestV1NotificationRead.private_key_1
+            private_key=TestNotificationRead.private_key_1
         )
 
         notification_1_list = \
-            session.query(Notification).\
-            filter(Notification.address == TestV1NotificationRead.address_1).\
-            all()
+            session.query(Notification). \
+                filter(Notification.address == TestNotificationRead.address_1). \
+                all()
 
         notification_2_list = \
-            session.query(Notification).\
-            filter(Notification.address == TestV1NotificationRead.address_2).\
-            all()
+            session.query(Notification). \
+                filter(Notification.address == TestNotificationRead.address_2). \
+                all()
 
         assert resp.status_code == 200
         assert len(notification_1_list) == 4
@@ -147,10 +148,10 @@ class TestV1NotificationRead():
 
         resp = client.simulate_auth_post(
             self.apiurl,
-            json = {
+            json={
                 "is_read": False,
             },
-            private_key = TestV1NotificationRead.private_key_1
+            private_key=TestNotificationRead.private_key_1
         )
 
         notification_list = session.query(Notification).all()
@@ -168,10 +169,10 @@ class TestV1NotificationRead():
 
         resp = client.simulate_auth_post(
             self.apiurl,
-            json = {
+            json={
                 "is_read": True,
             },
-            private_key = TestV1NotificationRead.private_key_3
+            private_key=TestNotificationRead.private_key_3
         )
 
         assert resp.status_code == 200
@@ -183,10 +184,10 @@ class TestV1NotificationRead():
 
         resp = client.simulate_auth_post(
             self.apiurl,
-            json = {
+            json={
                 "is_read": "True",
             },
-            private_key = TestV1NotificationRead.private_key_1
+            private_key=TestNotificationRead.private_key_1
         )
 
         assert resp.status_code == 400
@@ -205,10 +206,10 @@ class TestV1NotificationRead():
 
         resp = client.simulate_auth_post(
             self.apiurl,
-            json = {
+            json={
                 "is_read": None,
             },
-            private_key = TestV1NotificationRead.private_key_1
+            private_key=TestNotificationRead.private_key_1
         )
 
         assert resp.status_code == 400

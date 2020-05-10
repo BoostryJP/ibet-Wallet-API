@@ -3,12 +3,10 @@ import json
 import os
 
 
-# 住所検索API
-# /v1/User/StreetAddress/{postal_code}
-class TestV1StreetAddress:
+class TestStreetAddress:
 
     # テスト対象API
-    apiurl = '/v1/User/StreetAddress'
+    apiurl = '/v2/User/StreetAddress'
 
     # ＜正常系1＞
     # 通常参照（登録済）

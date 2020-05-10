@@ -18,7 +18,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing, BondTokenV2, ShareToken, MembershipTokenV2, CouponTokenV2, ConsumeCoupon
+from app.model import Listing, PrivateListing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon
 
 LOG = log.get_logger()
 
@@ -326,7 +326,7 @@ class StraightBondMyTokens(BaseResource):
                             # NOTE:現状項目未使用であるため空のリストを返す
                             certification = []
 
-                            bondtoken = BondTokenV2()
+                            bondtoken = BondToken()
                             bondtoken.token_address = token_address
                             bondtoken.token_template = token_template
                             bondtoken.company_name = company_name
@@ -499,7 +499,7 @@ class MembershipMyTokens(BaseResource):
                             company_name, rsa_publickey = MembershipMyTokens. \
                                 get_company_name(company_list, owner_address)
 
-                            membershiptoken = MembershipTokenV2()
+                            membershiptoken = MembershipToken()
                             membershiptoken.token_address = token_address
                             membershiptoken.token_template = token_template
                             membershiptoken.owner_address = owner_address
@@ -652,7 +652,7 @@ class CouponMyTokens(BaseResource):
                             contact_information = CouponTokenContract.functions.contactInformation().call()
                             privacy_policy = CouponTokenContract.functions.privacyPolicy().call()
 
-                            coupontoken = CouponTokenV2()
+                            coupontoken = CouponToken()
                             coupontoken.token_address = token_address
                             coupontoken.token_template = token_template
                             coupontoken.owner_address = owner_address
