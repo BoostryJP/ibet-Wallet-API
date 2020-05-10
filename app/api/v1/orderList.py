@@ -231,26 +231,6 @@ class OrderList(BaseResource):
                     LOG.error(err)
                     pass
 
-            # DEPOSITARY_RECEIPT
-            if config.DEPOSITARY_RECEIPT_TOKEN_ENABLED is True:
-                # DR_BUY
-                try:
-                    complete_list.extend(
-                        OrderList.get_DR_CompleteList_Buy(
-                            session, account_address, company_list, available_tokens))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-                # DR_SELL
-                try:
-                    complete_list.extend(
-                        OrderList.get_DR_CompleteList_Sell(
-                            session, account_address, company_list, available_tokens))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
             complete_list = sorted(
                 complete_list,
                 key=lambda x: x['sort_id']
