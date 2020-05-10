@@ -61,24 +61,6 @@ ERR_ETH_VALUE_ERROR = {
     'title': 'Eth ValueError'
 }
 
-ERR_SNS_NOTFOUND_ERROR = {
-    'status': falcon.HTTP_404,
-    'code': 50,
-    'title': 'SNS NotFoundError'
-}
-
-ERR_INVALID_CARD_ERROR = {
-    'status': falcon.HTTP_400,
-    'code': 60,
-    'title': 'Invalid Credit Card'
-}
-
-ERR_DOUBLE_CHARGE_ERROR = {
-    'status': falcon.HTTP_403,
-    'code': 70,
-    'title': 'Double Charge'
-}
-
 
 class AppError(Exception):
     def __init__(self, error=ERR_UNKNOWN, description=None):
@@ -156,21 +138,3 @@ class EthValueError(AppError):
     def __init__(self, code=None, message=None):
         super().__init__(ERR_ETH_VALUE_ERROR)
         self.error['description'] = 'code: %i, message: %s' % (code, message)
-
-
-class SNSNotFoundError(AppError):
-    def __init__(self, description=None):
-        super().__init__(ERR_SNS_NOTFOUND_ERROR)
-        self.error['description'] = description
-
-
-class InvalidCardError(AppError):
-    def __init__(self, description=None):
-        super().__init__(ERR_INVALID_CARD_ERROR)
-        self.error['description'] = description
-
-
-class DoubleChargeError(AppError):
-    def __init__(self, description=None):
-        super().__init__(ERR_DOUBLE_CHARGE_ERROR)
-        self.error['description'] = description
