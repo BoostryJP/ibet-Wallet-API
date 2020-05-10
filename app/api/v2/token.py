@@ -707,7 +707,7 @@ class ShareTokenDetails(BaseResource):
 
                 sharetoken.issue_price = TokenContract.functions.issuePrice().call()
                 sharetoken.dividend_information = {
-                    'dividends': dividend_information[0],
+                    'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
                     'dividend_record_date': dividend_information[1],
                     'dividend_payment_date': dividend_information[2],
                 }

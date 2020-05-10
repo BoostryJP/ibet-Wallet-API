@@ -118,9 +118,9 @@ class ShareMyTokens(BaseResource):
                             sharetoken.total_supply = total_supply
                             sharetoken.issue_price = issue_price
                             sharetoken.dividend_information = {
-                                'dividends': dividend_information[0],
-                                'dividendRecordDate': dividend_information[1],
-                                'dividendPaymentDate': dividend_information[2]
+                                'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
+                                'dividend_record_date': dividend_information[1],
+                                'dividend_payment_date': dividend_information[2]
                             }
                             sharetoken.cancellation_date = cancellation_date
                             sharetoken.memo = memo
