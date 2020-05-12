@@ -102,7 +102,6 @@ class TestV2TokenShareTokens:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -116,7 +115,7 @@ class TestV2TokenShareTokens:
                 {'id': 3, 'url': 'http://hogehoge/3'}
             ],
             'offering_status': False,
-            'memo':  'メモ',
+            'memo': 'メモ',
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,
@@ -167,7 +166,6 @@ class TestV2TokenShareTokens:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -181,7 +179,7 @@ class TestV2TokenShareTokens:
                 {'id': 3, 'url': ''}
             ],
             'offering_status': False,
-            'memo':  'メモ',
+            'memo': 'メモ',
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,
@@ -200,7 +198,6 @@ class TestV2TokenShareTokens:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -214,7 +211,7 @@ class TestV2TokenShareTokens:
                 {'id': 3, 'url': ''}
             ],
             'offering_status': False,
-            'memo':  'メモ',
+            'memo': 'メモ',
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,
@@ -266,7 +263,6 @@ class TestV2TokenShareTokens:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -280,7 +276,7 @@ class TestV2TokenShareTokens:
                 {'id': 3, 'url': ''}
             ],
             'offering_status': False,
-            'memo':  'メモ',
+            'memo': 'メモ',
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,
@@ -299,7 +295,6 @@ class TestV2TokenShareTokens:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -313,7 +308,7 @@ class TestV2TokenShareTokens:
                 {'id': 3, 'url': ''}
             ],
             'offering_status': False,
-            'memo':  'メモ',
+            'memo': 'メモ',
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,
@@ -365,7 +360,6 @@ class TestV2TokenShareTokens:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -379,7 +373,7 @@ class TestV2TokenShareTokens:
                 {'id': 3, 'url': ''}
             ],
             'offering_status': False,
-            'memo':  'メモ',
+            'memo': 'メモ',
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,
@@ -394,14 +388,12 @@ class TestV2TokenShareTokens:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-
-
     # ＜正常系5＞
     # 発行済株式あり（2件）
     # cursor=1、 limit=2
     # -> 登録が新しい順にリストが返却（1件）
     def test_sharelist_normal_5(self, client, session, shared_contract):
-       # テスト用アカウント
+        # テスト用アカウント
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
@@ -433,7 +425,6 @@ class TestV2TokenShareTokens:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -447,7 +438,7 @@ class TestV2TokenShareTokens:
                 {'id': 3, 'url': ''}
             ],
             'offering_status': False,
-            'memo':  'メモ',
+            'memo': 'メモ',
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'payment_method_credit_card': True,
@@ -461,7 +452,6 @@ class TestV2TokenShareTokens:
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
-
 
     # ＜エラー系1＞
     # HTTPメソッド不正

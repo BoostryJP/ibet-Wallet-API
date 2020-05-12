@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import time
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -13,6 +12,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 class Contract:
 
+    @staticmethod
     def get_contract(contract_name, address):
         contracts = json.load(open('data/contracts.json', 'r'))
         contract = web3.eth.contract(
@@ -21,6 +21,7 @@ class Contract:
         )
         return contract
 
+    @staticmethod
     def deploy_contract(contract_name, args, deployer):
         contracts = json.load(open('data/contracts.json', 'r'))
         contract = web3.eth.contract(

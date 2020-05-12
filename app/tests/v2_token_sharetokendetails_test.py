@@ -97,7 +97,6 @@ class TestV2TokenShareTokenDetails:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,

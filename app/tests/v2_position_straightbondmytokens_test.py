@@ -20,8 +20,7 @@ class TestV2StraightBondMyTokens:
 
     # 債券トークンの保有状態（約定イベント）を作成
     @staticmethod
-    def generate_bond_position(bond_exchange, personal_info,
-                               payment_gateway, token_list):
+    def generate_bond_position(bond_exchange, personal_info, payment_gateway, token_list):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -139,6 +138,7 @@ class TestV2StraightBondMyTokens:
             'token': {
                 'token_address': token_address,
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト債券',
@@ -229,6 +229,7 @@ class TestV2StraightBondMyTokens:
             'token': {
                 'token_address': token_address,
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト債券',
@@ -320,6 +321,7 @@ class TestV2StraightBondMyTokens:
             'token': {
                 'token_address': token_address,
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト債券',
@@ -401,7 +403,6 @@ class TestV2StraightBondMyTokens:
             bond_exchange, personal_info, payment_gateway, token_list)
         token_address_2 = bond_token_2['address']
 
-
         # 取扱トークンデータ挿入
         TestV2StraightBondMyTokens.list_private_token(session, bond_token_1)
         TestV2StraightBondMyTokens.list_token(session, bond_token_2)
@@ -418,6 +419,7 @@ class TestV2StraightBondMyTokens:
             'token': {
                 'token_address': token_address_1,
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト債券',
@@ -471,6 +473,7 @@ class TestV2StraightBondMyTokens:
             'token': {
                 'token_address': token_address_2,
                 'token_template': 'IbetStraightBond',
+                'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
                 'rsa_publickey': '',
                 'name': 'テスト債券',
@@ -532,7 +535,6 @@ class TestV2StraightBondMyTokens:
                 count += 1
                 assert token == assumed_body_2
         assert count == 2
-
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_position_error_1(self, client):
