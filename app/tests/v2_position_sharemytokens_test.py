@@ -267,6 +267,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -345,6 +346,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -461,6 +463,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -539,6 +542,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -622,6 +626,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -665,6 +670,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,

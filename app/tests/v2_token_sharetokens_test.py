@@ -114,6 +114,7 @@ class TestV2TokenShareTokens:
                 {'id': 2, 'url': 'http://hogehoge/2'},
                 {'id': 3, 'url': 'http://hogehoge/3'}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo': 'メモ',
             'max_holding_quantity': 1,
@@ -178,6 +179,7 @@ class TestV2TokenShareTokens:
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo': 'メモ',
             'max_holding_quantity': 1,
@@ -210,6 +212,7 @@ class TestV2TokenShareTokens:
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo': 'メモ',
             'max_holding_quantity': 1,
@@ -275,6 +278,7 @@ class TestV2TokenShareTokens:
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo': 'メモ',
             'max_holding_quantity': 1,
@@ -307,6 +311,7 @@ class TestV2TokenShareTokens:
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo': 'メモ',
             'max_holding_quantity': 1,
@@ -372,6 +377,7 @@ class TestV2TokenShareTokens:
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo': 'メモ',
             'max_holding_quantity': 1,
@@ -437,6 +443,7 @@ class TestV2TokenShareTokens:
                 {'id': 2, 'url': ''},
                 {'id': 3, 'url': ''}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo': 'メモ',
             'max_holding_quantity': 1,

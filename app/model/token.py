@@ -303,6 +303,7 @@ class ShareToken(TokenBase):
             {'id': 2, 'url': reference_url_2},
             {'id': 3, 'url': reference_url_3},
         ]
+        sharetoken.image_url = []
         sharetoken.memo = memo
         sharetoken.transferable = transferable
         sharetoken.offering_status = offering_status
