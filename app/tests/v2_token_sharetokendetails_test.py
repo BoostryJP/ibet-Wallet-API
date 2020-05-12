@@ -97,7 +97,6 @@ class TestV2TokenShareTokenDetails:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
                 'dividends': 1.01,
@@ -110,6 +109,7 @@ class TestV2TokenShareTokenDetails:
                 {'id': 2, 'url': 'http://hogehoge/2'},
                 {'id': 3, 'url': 'http://hogehoge/3'}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo':  'メモ',
             'max_holding_quantity': 1,

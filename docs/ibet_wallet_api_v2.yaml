@@ -976,6 +976,8 @@ paths:
                     type: string
                   interest_payment_date12:
                     type: string
+                  isRedeemed:
+                    type: boolean
                   redemption_date:
                     type: string
                   redemption_value:

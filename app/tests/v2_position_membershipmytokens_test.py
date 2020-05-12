@@ -240,6 +240,7 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -312,6 +313,7 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -420,6 +422,7 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -492,6 +495,7 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -569,6 +573,7 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -606,6 +611,7 @@ class TestV2MembershipMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
