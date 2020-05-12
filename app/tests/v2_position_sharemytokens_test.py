@@ -255,6 +255,7 @@ class TestV2ShareMyTokens:
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -332,6 +333,7 @@ class TestV2ShareMyTokens:
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -447,6 +449,7 @@ class TestV2ShareMyTokens:
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -524,6 +527,7 @@ class TestV2ShareMyTokens:
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -606,6 +610,7 @@ class TestV2ShareMyTokens:
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -648,6 +653,7 @@ class TestV2ShareMyTokens:
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,

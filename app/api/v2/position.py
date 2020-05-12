@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-from decimal import Decimal
-
-import requests
 from datetime import timezone, timedelta
 
 JST = timezone(timedelta(hours=+9), 'JST')
@@ -43,19 +39,7 @@ class ShareMyTokens(BaseResource):
         request_json = ShareMyTokens.validate(req)
 
         # TokenList Contract
-        ListContract = Contract.get_contract(
-            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-
-        # Company List：発行体企業リスト
-        try:
-            if config.APP_ENV == 'local':
-                company_list = json.load(open('data/company_list.json', 'r'))
-            else:
-                company_list = \
-                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-        except Exception as e:
-            LOG.exception(e)
-            company_list = []
+        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # Exchange Contract
         ExchangeContract = Contract.get_contract(
@@ -70,8 +54,7 @@ class ShareMyTokens(BaseResource):
         for _account_address in request_json['account_address_list']:
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
             for token in listed_tokens:
-                token_info = ListContract.functions. \
-                    getTokenByAddress(token.token_address).call()
+                token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
                 token_address = token_info[0]
                 token_template = token_info[1]
                 owner = to_checksum_address(_account_address)
@@ -80,64 +63,14 @@ class ShareMyTokens(BaseResource):
                     TokenContract = Contract.get_contract('IbetShare', token_address)
                     try:
                         balance = TokenContract.functions.balanceOf(owner).call()
-                        commitment = ExchangeContract.functions. \
-                            commitmentOf(owner, token_address).call()
+                        commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
                         # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                         # Note: 現状は、株式トークンの場合、残高・残注文ゼロの場合は詳細情報を
                         #       返さない仕様としている。
                         if balance == 0 and commitment == 0:
                             continue
                         else:
-                            name = TokenContract.functions.name().call()
-                            symbol = TokenContract.functions.symbol().call()
-                            total_supply = TokenContract.functions.totalSupply().call()
-                            issue_price = TokenContract.functions.issuePrice().call()
-                            dividend_information = TokenContract.functions.dividendInformation().call()
-                            cancellation_date = TokenContract.functions.cancellationDate().call()
-                            reference_urls_1 = TokenContract.functions.referenceUrls(0).call()
-                            reference_urls_2 = TokenContract.functions.referenceUrls(1).call()
-                            reference_urls_3 = TokenContract.functions.referenceUrls(2).call()
-                            memo = TokenContract.functions.memo().call()
-                            transferable = TokenContract.functions.transferable().call()
-                            status = TokenContract.functions.status().call()
-                            owner_address = TokenContract.functions.owner().call()
-                            contact_information = TokenContract.functions.contactInformation().call()
-                            privacy_policy = TokenContract.functions.privacyPolicy().call()
-
-                            company_name, rsa_publickey = ShareMyTokens. \
-                                get_company_name(company_list, owner_address)
-
-                            sharetoken = ShareToken()
-                            sharetoken.token_address = token_address
-                            sharetoken.token_template = token_template
-                            sharetoken.owner_address = owner_address
-                            sharetoken.company_name = company_name
-                            sharetoken.rsa_publickey = rsa_publickey
-                            sharetoken.name = name
-                            sharetoken.symbol = symbol
-                            sharetoken.total_supply = total_supply
-                            sharetoken.issue_price = issue_price
-                            sharetoken.dividend_information = {
-                                'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
-                                'dividend_record_date': dividend_information[1],
-                                'dividend_payment_date': dividend_information[2]
-                            }
-                            sharetoken.cancellation_date = cancellation_date
-                            sharetoken.memo = memo
-                            sharetoken.transferable = transferable
-                            sharetoken.status = status
-                            sharetoken.reference_urls = [
-                                {'id': 1, 'url': reference_urls_1},
-                                {'id': 2, 'url': reference_urls_2},
-                                {'id': 3, 'url': reference_urls_3}
-                            ]
-                            sharetoken.max_holding_quantity = token.max_holding_quantity
-                            sharetoken.max_sell_amount = token.max_sell_amount
-                            sharetoken.payment_method_credit_card = token.payment_method_credit_card
-                            sharetoken.payment_method_bank = token.payment_method_bank
-                            sharetoken.contact_information = contact_information
-                            sharetoken.privacy_policy = privacy_policy
-
+                            sharetoken = ShareToken.get(session=session, token_address=token_address)
                             position_list.append({
                                 'token': sharetoken.__dict__,
                                 'balance': balance,
@@ -148,16 +81,6 @@ class ShareMyTokens(BaseResource):
                         continue
 
         self.on_success(res, position_list)
-
-    @staticmethod
-    def get_company_name(company_list, owner_address):
-        company_name = ''
-        rsa_publickey = ''
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
-        return company_name, rsa_publickey
 
     @staticmethod
     def validate(req):
