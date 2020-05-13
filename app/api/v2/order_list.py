@@ -216,14 +216,14 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
-        entries = session.query(Order.id, Order.order_id). \
+        entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
             filter(Order.account_address == account_address). \
             all()
 
         order_list = []
-        for (id, order_id) in entries:
+        for (id, order_id, order_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
@@ -236,7 +236,8 @@ class OrderList(BaseResource):
                         'amount': orderBook[2],
                         'price': orderBook[3],
                         'is_buy': orderBook[4],
-                        'canceled': orderBook[6]
+                        'canceled': orderBook[6],
+                        'order_timestamp': order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                     },
                     'sort_id': id
                 })
@@ -251,14 +252,14 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
-        entries = session.query(Order.id, Order.order_id). \
+        entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
             filter(Order.account_address == account_address). \
             all()
 
         order_list = []
-        for (id, order_id) in entries:
+        for (id, order_id, order_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
 
             # 残注文ゼロの場合は以下の処理をSKIP
@@ -272,7 +273,8 @@ class OrderList(BaseResource):
                         'amount': orderBook[2],
                         'price': orderBook[3],
                         'is_buy': orderBook[4],
-                        'canceled': orderBook[6]
+                        'canceled': orderBook[6],
+                        'order_timestamp': order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                     },
                     'sort_id': id
                 })
@@ -287,14 +289,14 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
-        entries = session.query(Order.id, Order.order_id). \
+        entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
             filter(Order.account_address == account_address). \
             all()
 
         order_list = []
-        for (id, order_id) in entries:
+        for (id, order_id, order_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
 
             # 残注文ゼロの場合は以下の処理をSKIP
@@ -308,7 +310,8 @@ class OrderList(BaseResource):
                         'amount': orderBook[2],
                         'price': orderBook[3],
                         'is_buy': orderBook[4],
-                        'canceled': orderBook[6]
+                        'canceled': orderBook[6],
+                        'order_timestamp': order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                     },
                     'sort_id': id
                 })
@@ -323,14 +326,15 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session.query(Agreement.id, Agreement.order_id, Agreement.agreement_id). \
+        entries = session.\
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.buyer_address == account_address). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
@@ -344,7 +348,8 @@ class OrderList(BaseResource):
                     'amount': agreement[1],
                     'price': agreement[2],
                     'is_buy': True,
-                    'canceled': agreement[3]
+                    'canceled': agreement[3],
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'sort_id': id
             })
@@ -362,14 +367,15 @@ class OrderList(BaseResource):
             'IbetStraightBondExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（売：未決済）を抽出する
-        entries = session.query(Agreement.id, Agreement.order_id, Agreement.agreement_id). \
+        entries = session.\
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.seller_address == account_address). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
@@ -383,7 +389,8 @@ class OrderList(BaseResource):
                     'amount': agreement[1],
                     'price': agreement[2],
                     'is_buy': False,
-                    'canceled': agreement[3]
+                    'canceled': agreement[3],
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'sort_id': id
             })
@@ -398,14 +405,15 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session.query(Agreement.id, Agreement.order_id, Agreement.agreement_id). \
+        entries = session.\
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.buyer_address == account_address). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
@@ -419,7 +427,8 @@ class OrderList(BaseResource):
                     'amount': agreement[1],
                     'price': agreement[2],
                     'is_buy': True,
-                    'canceled': agreement[3]
+                    'canceled': agreement[3],
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'sort_id': id
             })
@@ -434,14 +443,15 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（売：未決済）を抽出する
-        entries = session.query(Agreement.id, Agreement.order_id, Agreement.agreement_id). \
+        entries = session.\
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.seller_address == account_address). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
@@ -455,7 +465,8 @@ class OrderList(BaseResource):
                     'amount': agreement[1],
                     'price': agreement[2],
                     'is_buy': False,
-                    'canceled': agreement[3]
+                    'canceled': agreement[3],
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'sort_id': id
             })
@@ -470,14 +481,15 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session.query(Agreement.id, Agreement.order_id, Agreement.agreement_id). \
+        entries = session.\
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.buyer_address == account_address). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
@@ -491,7 +503,8 @@ class OrderList(BaseResource):
                     'amount': agreement[1],
                     'price': agreement[2],
                     'is_buy': True,
-                    'canceled': agreement[3]
+                    'canceled': agreement[3],
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'sort_id': id
             })
@@ -506,14 +519,15 @@ class OrderList(BaseResource):
         ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（売：未決済）を抽出する
-        entries = session.query(Agreement.id, Agreement.order_id, Agreement.agreement_id). \
+        entries = session.\
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.seller_address == account_address). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
@@ -527,7 +541,8 @@ class OrderList(BaseResource):
                     'amount': agreement[1],
                     'price': agreement[2],
                     'is_buy': False,
-                    'canceled': agreement[3]
+                    'canceled': agreement[3],
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'sort_id': id
             })
@@ -546,6 +561,7 @@ class OrderList(BaseResource):
             Agreement.id,
             Agreement.order_id,
             Agreement.agreement_id,
+            Agreement.agreement_timestamp,
             Agreement.settlement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.buyer_address == account_address). \
@@ -553,7 +569,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
@@ -570,7 +586,8 @@ class OrderList(BaseResource):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': True
+                    'is_buy': True,
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'settlement_timestamp': settlement_timestamp_jp,
                 'sort_id': id
@@ -590,6 +607,7 @@ class OrderList(BaseResource):
             Agreement.id,
             Agreement.order_id,
             Agreement.agreement_id,
+            Agreement.agreement_timestamp,
             Agreement.settlement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.seller_address == account_address). \
@@ -597,7 +615,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
@@ -614,7 +632,8 @@ class OrderList(BaseResource):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': False
+                    'is_buy': False,
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'settlement_timestamp': settlement_timestamp_jp,
                 'sort_id': id
@@ -634,6 +653,7 @@ class OrderList(BaseResource):
             Agreement.id,
             Agreement.order_id,
             Agreement.agreement_id,
+            Agreement.agreement_timestamp,
             Agreement.settlement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.buyer_address == account_address). \
@@ -641,7 +661,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
@@ -658,7 +678,8 @@ class OrderList(BaseResource):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': True
+                    'is_buy': True,
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'settlement_timestamp': settlement_timestamp_jp,
                 'sort_id': id
@@ -678,6 +699,7 @@ class OrderList(BaseResource):
             Agreement.id,
             Agreement.order_id,
             Agreement.agreement_id,
+            Agreement.agreement_timestamp,
             Agreement.settlement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.seller_address == account_address). \
@@ -685,7 +707,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
@@ -702,7 +724,8 @@ class OrderList(BaseResource):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': False
+                    'is_buy': False,
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'settlement_timestamp': settlement_timestamp_jp,
                 'sort_id': id
@@ -722,6 +745,7 @@ class OrderList(BaseResource):
             Agreement.id,
             Agreement.order_id,
             Agreement.agreement_id,
+            Agreement.agreement_timestamp,
             Agreement.settlement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.buyer_address == account_address). \
@@ -729,7 +753,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
@@ -746,7 +770,8 @@ class OrderList(BaseResource):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': True
+                    'is_buy': True,
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'settlement_timestamp': settlement_timestamp_jp,
                 'sort_id': id
@@ -766,6 +791,7 @@ class OrderList(BaseResource):
             Agreement.id,
             Agreement.order_id,
             Agreement.agreement_id,
+            Agreement.agreement_timestamp,
             Agreement.settlement_timestamp). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.seller_address == account_address). \
@@ -773,7 +799,7 @@ class OrderList(BaseResource):
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, settlement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
@@ -790,7 +816,8 @@ class OrderList(BaseResource):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': False
+                    'is_buy': False,
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'settlement_timestamp': settlement_timestamp_jp,
                 'sort_id': id
