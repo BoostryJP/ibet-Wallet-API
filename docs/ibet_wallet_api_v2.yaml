@@ -2108,6 +2108,8 @@ paths:
                               type: boolean
                             canceled:
                               type: boolean
+                            order_timestamp:
+                              type: string
                         sort_id:
                           type: integer
                   settlement_list:
@@ -2133,6 +2135,8 @@ paths:
                               type: boolean
                             canceled:
                               type: boolean
+                            agreement_timestamp:
+                              type: string
                         sort_id:
                           type: integer
                   complete_list:
@@ -2158,6 +2162,8 @@ paths:
                               type: boolean
                             canceled:
                               type: boolean
+                            agreement_timestamp:
+                              type: string
                         settlement_timestamp:
                           type: string
                           description: settlement timestamp (JST)
