@@ -33,7 +33,7 @@ class TestV2ShareMyTokens:
             'personalInfoAddress': personal_info['address'],
             'issuePrice': 1000,
             'totalSupply': 1000000,
-            'dividends': 100,
+            'dividends': 101,
             'dividendRecordDate': '20200401',
             'dividendPaymentDate': '20200502',
             'cancellationDate': '20200603',
@@ -83,7 +83,7 @@ class TestV2ShareMyTokens:
             'personalInfoAddress': personal_info['address'],
             'issuePrice': 1000,
             'totalSupply': 1000000,
-            'dividends': 100,
+            'dividends': 101,
             'dividendRecordDate': '20200401',
             'dividendPaymentDate': '20200502',
             'cancellationDate': '20200603',
@@ -138,7 +138,7 @@ class TestV2ShareMyTokens:
             'personalInfoAddress': personal_info['address'],
             'issuePrice': 1000,
             'totalSupply': 1000000,
-            'dividends': 100,
+            'dividends': 101,
             'dividendRecordDate': '20200401',
             'dividendPaymentDate': '20200502',
             'cancellationDate': '20200603',
@@ -248,13 +248,14 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 100,
-                    'dividendRecordDate': '20200401',
-                    'dividendPaymentDate': '20200502'
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -266,6 +267,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -325,13 +327,14 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 100,
-                    'dividendRecordDate': '20200401',
-                    'dividendPaymentDate': '20200502'
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -343,6 +346,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -440,13 +444,14 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 100,
-                    'dividendRecordDate': '20200401',
-                    'dividendPaymentDate': '20200502'
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -458,6 +463,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -517,13 +523,14 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 100,
-                    'dividendRecordDate': '20200401',
-                    'dividendPaymentDate': '20200502'
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -535,6 +542,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -599,13 +607,14 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 100,
-                    'dividendRecordDate': '20200401',
-                    'dividendPaymentDate': '20200502'
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -617,6 +626,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,
@@ -641,13 +651,14 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 100,
-                    'dividendRecordDate': '20200401',
-                    'dividendPaymentDate': '20200502'
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
                 'transferable': True,
+                'offering_status': False,
                 'status': True,
                 'reference_urls': [{
                     'id': 1,
@@ -659,6 +670,7 @@ class TestV2ShareMyTokens:
                     'id': 3,
                     'url': ''
                 }],
+                'image_url': [],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'payment_method_credit_card': True,

@@ -122,6 +122,7 @@ class TestV2TokenStraightBondTokenDetails:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
+            'isRedeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
@@ -139,7 +140,8 @@ class TestV2TokenStraightBondTokenDetails:
             'payment_method_credit_card': True,
             'payment_method_bank': True,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True
         }
 
         assert resp.status_code == 200

@@ -9,12 +9,10 @@ from app import config
 from .account_config import eth_account
 
 
-# nonce取得API
-# /v1/Eth/TransactionCount/{eth_address}
-class TestV1EthTransactionCount():
+class TestEthTransactionCount():
 
     # テスト対象API
-    apiurl_base = '/v1/Eth/TransactionCount/'
+    apiurl_base = '/v2/Eth/TransactionCount/'
 
     # ＜正常系1＞
     # トランザクション未実行のアドレス

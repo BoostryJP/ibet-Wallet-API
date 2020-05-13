@@ -13,13 +13,8 @@ from .contract_modules import issue_coupon_token, coupon_register_list
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
-"""
-発行会社情報一覧参照API
-/v2/Companies
-"""
 
-
-class TestV1CompanyCompanyInfoList:
+class TestCompanyCompanyInfoList:
     # テスト対象API
     apiurl = '/v2/Companies'
 
@@ -66,7 +61,7 @@ class TestV1CompanyCompanyInfoList:
         issuerList = [eth_account['issuer'], eth_account['deployer']]
 
         # TokenListコントラクトアドレスの設定
-        token_list = TestV1CompanyCompanyInfoList.tokenlist_contract()
+        token_list = TestCompanyCompanyInfoList.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行（クーポン）
@@ -74,12 +69,12 @@ class TestV1CompanyCompanyInfoList:
             to_checksum_address(
                 shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1CompanyCompanyInfoList. \
+            attribute = TestCompanyCompanyInfoList. \
                 token_attribute(exchange_address)
             token = issue_coupon_token(issuerList[i], attribute)
             coupon_register_list(issuerList[i], token, token_list)
             # 取扱トークンデータ挿入
-            TestV1CompanyCompanyInfoList.list_token(session, token)
+            TestCompanyCompanyInfoList.list_token(session, token)
 
         resp = client.simulate_get(self.apiurl)
 
@@ -112,7 +107,7 @@ class TestV1CompanyCompanyInfoList:
         issuerList = [eth_account['issuer'], eth_account['deployer']]
 
         # TokenListコントラクトアドレスの設定
-        token_list = TestV1CompanyCompanyInfoList.tokenlist_contract()
+        token_list = TestCompanyCompanyInfoList.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行（クーポン）
@@ -120,7 +115,7 @@ class TestV1CompanyCompanyInfoList:
             to_checksum_address(
                 shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV1CompanyCompanyInfoList. \
+            attribute = TestCompanyCompanyInfoList. \
                 token_attribute(exchange_address)
             token = issue_coupon_token(issuerList[i], attribute)
             coupon_register_list(issuerList[i], token, token_list)

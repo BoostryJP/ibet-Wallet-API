@@ -181,6 +181,7 @@ class TestV2OrderList_Bond:
         order.amount = 100
         order.agent_address = eth_account['agent']['account_address']
         order.is_cancelled = False
+        order.order_timestamp = '2019-06-17 00:00:00'
         session.add(order)
 
         resp = client.simulate_post(
@@ -192,6 +193,7 @@ class TestV2OrderList_Bond:
                 'token_template': 'IbetStraightBond',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
                 'total_supply': 1000000,
@@ -240,7 +242,8 @@ class TestV2OrderList_Bond:
                 'amount': 1000000,
                 'price': 1000,
                 'is_buy': False,
-                'canceled': False
+                'canceled': False,
+                'order_timestamp': '2019/06/17 00:00:00'
             }
         }
 
@@ -280,6 +283,7 @@ class TestV2OrderList_Bond:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -291,6 +295,7 @@ class TestV2OrderList_Bond:
                 'token_template': 'IbetStraightBond',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
                 'total_supply': 1000000,
@@ -341,7 +346,8 @@ class TestV2OrderList_Bond:
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             }
         }
 
@@ -381,6 +387,7 @@ class TestV2OrderList_Bond:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
@@ -393,6 +400,7 @@ class TestV2OrderList_Bond:
                 'token_template': 'IbetStraightBond',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
                 'total_supply': 1000000,
@@ -442,7 +450,8 @@ class TestV2OrderList_Bond:
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             },
             'settlement_timestamp': '2019/06/18 00:00:00'
         }
@@ -697,6 +706,7 @@ class TestV2OrderList_Membership:
         order.amount = 100
         order.agent_address = eth_account['agent']['account_address']
         order.is_cancelled = False
+        order.order_timestamp = '2019-06-17 00:00:00'
         session.add(order)
 
         resp = client.simulate_post(
@@ -708,6 +718,7 @@ class TestV2OrderList_Membership:
                 'token_template': 'IbetMembership',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
                 'total_supply': 1000000,
@@ -735,7 +746,8 @@ class TestV2OrderList_Membership:
                 'amount': 1000000,
                 'price': 1000,
                 'is_buy': False,
-                'canceled': False
+                'canceled': False,
+                'order_timestamp': '2019/06/17 00:00:00'
             }
         }
 
@@ -777,6 +789,7 @@ class TestV2OrderList_Membership:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -788,6 +801,7 @@ class TestV2OrderList_Membership:
                 'token_template': 'IbetMembership',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
                 'total_supply': 1000000,
@@ -822,7 +836,8 @@ class TestV2OrderList_Membership:
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             }
         }
 
@@ -863,6 +878,7 @@ class TestV2OrderList_Membership:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
@@ -875,6 +891,7 @@ class TestV2OrderList_Membership:
                 'token_template': 'IbetMembership',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
                 'total_supply': 1000000,
@@ -903,7 +920,8 @@ class TestV2OrderList_Membership:
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             },
             'settlement_timestamp': '2019/06/18 00:00:00'
         }
@@ -1155,6 +1173,7 @@ class TestV2OrderList_Coupon:
         order.amount = 100
         order.agent_address = eth_account['agent']['account_address']
         order.is_cancelled = False
+        order.order_timestamp = '2019-06-17 00:00:00'
         session.add(order)
 
         resp = client.simulate_post(
@@ -1166,6 +1185,7 @@ class TestV2OrderList_Coupon:
                 'token_template': 'IbetCoupon',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
                 'total_supply': 1000000,
@@ -1193,7 +1213,8 @@ class TestV2OrderList_Coupon:
                 'amount': 1000000,
                 'price': 1000,
                 'is_buy': False,
-                'canceled': False
+                'canceled': False,
+                'order_timestamp': '2019/06/17 00:00:00'
             }
         }
 
@@ -1234,6 +1255,7 @@ class TestV2OrderList_Coupon:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -1245,6 +1267,7 @@ class TestV2OrderList_Coupon:
                 'token_template': 'IbetCoupon',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
                 'total_supply': 1000000,
@@ -1274,7 +1297,8 @@ class TestV2OrderList_Coupon:
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             }
         }
 
@@ -1315,6 +1339,7 @@ class TestV2OrderList_Coupon:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
@@ -1327,6 +1352,7 @@ class TestV2OrderList_Coupon:
                 'token_template': 'IbetCoupon',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
                 'total_supply': 1000000,
@@ -1355,7 +1381,8 @@ class TestV2OrderList_Coupon:
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             },
             'settlement_timestamp': '2019/06/18 00:00:00'
         }
