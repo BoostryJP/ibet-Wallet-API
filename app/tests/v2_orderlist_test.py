@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 from app.model import Order, Agreement, AgreementStatus
+from web3 import Web3
+from web3.middleware import geth_poa_middleware
 from .contract_modules import *
+
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 """
 Straight Bond
@@ -1509,17 +1514,10 @@ class TestV2OrderList_Share:
 
     # テスト対象API
     apiurl = "/v2/OrderList/Share"
-    issuer = {
-        'account_address':  "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-        'password': 'password',
-        'private_key': "0000000000000000000000000000000000000000000000000000000000000001"
-    }
-
-    trader = {
-        'account_address':  "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
-        'password': 'password',
-        'private_key': "0000000000000000000000000000000000000000000000000000000000000002"
-    }
+    issuer = web3.eth.account.create()
+    print(issuer)
+    trader = web3.eth.account.create()
+    print(trader)
     
     @staticmethod
     def share_token_attribute(exchange, personal_info):
