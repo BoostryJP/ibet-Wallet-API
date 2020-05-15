@@ -121,7 +121,7 @@ class DBSink:
         self.db = db
 
     def on_new_order(self, transaction_hash: str, token_address: str, exchange_address: str,
-                     order_id: int, account_address: int, is_buy: bool, price: int, amount: int,
+                     order_id: int, account_address: str, counterpart_address: str, is_buy: bool, price: int, amount: int,
                      agent_address: str, order_timestamp: datetime):
         order = self.__get_order(exchange_address, order_id)
         if order is None:
@@ -132,7 +132,7 @@ class DBSink:
             order.order_id = order_id
             order.unique_order_id = exchange_address + '_' + str(order_id)
             order.account_address = account_address
-            order.counterpart_address = ''
+            order.counterpart_address = counterpart_address
             order.is_buy = is_buy
             order.price = price
             order.amount = amount
@@ -209,10 +209,15 @@ class Processor:
             'IbetCouponExchange',
             config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         )
+        self.share_exchange_contract = Contract.get_contract(
+            'IbetOTCExchange',
+            config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+        )
         self.exchange_list = [
             self.bond_exchange_contract,
             self.membership_exchange_contract,
-            self.coupon_exchange_contract
+            self.coupon_exchange_contract,
+            self.share_exchange_contract
         ]
         self.sink = sink
         self.latest_block = web3.eth.blockNumber
@@ -260,13 +265,15 @@ class Processor:
                             JST
                         )
                         if available_token is not None:
+                            # NOTE: 相対取引の場合、args[counterpartAddress]が存在し、args[isBuy]が存在しない。
                             self.sink.on_new_order(
                                 transaction_hash=transaction_hash,
                                 token_address=args['tokenAddress'],
                                 exchange_address=exchange_contract.address,
                                 order_id=args['orderId'],
                                 account_address=args['accountAddress'],
-                                is_buy=args['isBuy'],
+                                counterpart_address=args['counterpartAddress'] if args.get('counterpartAddress') is not None else '',
+                                is_buy=args['isBuy'] if args.get('isBuy') is not None else False,
                                 price=args['price'],
                                 amount=args['amount'],
                                 agent_address=args['agentAddress'],
@@ -315,9 +322,11 @@ class Processor:
                         pass
                     else:
                         order_id = args['orderId']
-                        orderbook = exchange_contract.functions.getOrder(order_id).call()
-                        is_buy = orderbook[4]
-                        if is_buy:
+                        order_book = self.db.query(Order.id, Order.order_id, Order.is_buy). \
+                            filter(Order.order_id == order_id). \
+                            filter(Order.is_cancelled == False). \
+                            first()
+                        if order_book.is_buy:
                             counterpart_address = args['sellAddress']
                         else:
                             counterpart_address = args['buyAddress']

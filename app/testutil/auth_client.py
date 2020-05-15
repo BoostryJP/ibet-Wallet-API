@@ -18,7 +18,6 @@ class TestAuthClient(testing.TestClient):
         if query_string != "":
             query_string = "?" + query_string
 
-        print(query_string == "")
         request_body_hash = w3.sha3(text=request_body).hex()
         canonical_request = method + "\n" + \
                             path + "\n" + \
@@ -29,12 +28,7 @@ class TestAuthClient(testing.TestClient):
 
     def _generate_signature(self, private_key, **kwargs):
         canonical_request = self._canonical_request(**kwargs)
-        print('debuuug')
-        print(canonical_request)
         message_hash = defunct_hash_message(text=canonical_request)
-        print(message_hash)
-        print(private_key)
-        # print(fuck)
         signed_message = w3.eth.account.signHash(message_hash, private_key=private_key)
         return signed_message["signature"].hex()
 

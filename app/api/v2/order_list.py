@@ -121,23 +121,23 @@ class BaseOrderList(object):
 
         return order_list
 
-    # 決済中一覧（買）
+    # 決済中一覧
     @staticmethod
-    def get_SettlementList_Buy(session, token_model, contract_name, exchange_contract_address, account_address):
+    def get_SettlementList(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
         exchange_address = to_checksum_address(exchange_contract_address)
         ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
         entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp, Agreement.buyer_address). \
             filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.buyer_address == account_address). \
+            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
@@ -150,7 +150,7 @@ class BaseOrderList(object):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': True,
+                    'is_buy': buyer_address == account_address,
                     'canceled': agreement[3],
                     'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
@@ -159,26 +159,26 @@ class BaseOrderList(object):
 
         return settlement_list
 
-    # 決済中一覧（売）
+    # 決済中一覧（相対取引買）
     @staticmethod
-    def get_SettlementList_Sell(session, token_model, contract_name, exchange_contract_address, account_address):
+    def get_OTC_SettlementList(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
         exchange_address = to_checksum_address(exchange_contract_address)
         ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
-        # 指定したアカウントアドレスから発生している約定イベント（売：未決済）を抽出する
+        # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
         entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp, Agreement.buyer_address). \
             filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.seller_address == account_address). \
+            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
+            token_address = to_checksum_address(orderBook[2])
             token_detail = token_model.get(session=session, token_address=token_address)
             settlement_list.append({
                 'token': token_detail.__dict__,
@@ -188,7 +188,7 @@ class BaseOrderList(object):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': False,
+                    'is_buy': buyer_address == account_address,
                     'canceled': agreement[3],
                     'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
@@ -197,55 +197,9 @@ class BaseOrderList(object):
 
         return settlement_list
 
-    # 約定済一覧（買）
+    # 約定済一覧
     @staticmethod
-    def get_CompleteList_Buy(session, token_model, contract_name, exchange_contract_address, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(exchange_contract_address)
-        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
-
-        # 指定したアカウントアドレスから発生している約定イベント（買：決済済）を抽出する
-        entries = session.query(
-            Agreement.id,
-            Agreement.order_id,
-            Agreement.agreement_id,
-            Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.buyer_address == account_address). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
-
-        complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
-            if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-            else:
-                settlement_timestamp_jp = ''
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            token_detail = token_model.get(session=session, token_address=token_address)
-            complete_list.append({
-                'token': token_detail.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': True,
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'settlement_timestamp': settlement_timestamp_jp,
-                'sort_id': id
-            })
-
-        return complete_list
-
-    # 約定済一覧（売）
-    @staticmethod
-    def get_CompleteList_Sell(session, token_model, contract_name, exchange_contract_address, account_address):
+    def get_CompleteList(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
         exchange_address = to_checksum_address(exchange_contract_address)
         ExchangeContract = Contract.get_contract(contract_name, exchange_address)
@@ -256,14 +210,15 @@ class BaseOrderList(object):
             Agreement.order_id,
             Agreement.agreement_id,
             Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp). \
+            Agreement.settlement_timestamp,
+            Agreement.buyer_address). \
             filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.seller_address == account_address). \
+            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
             filter(Agreement.status == AgreementStatus.DONE.value). \
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in entries:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
@@ -280,7 +235,54 @@ class BaseOrderList(object):
                     'agreement_id': agreement_id,
                     'amount': agreement[1],
                     'price': agreement[2],
-                    'is_buy': False,
+                    'is_buy': buyer_address == account_address,
+                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                },
+                'settlement_timestamp': settlement_timestamp_jp,
+                'sort_id': id
+            })
+
+        return complete_list
+
+    # 約定済一覧（相対取引）
+    @staticmethod
+    def get_OTC_CompleteList(session, token_model, contract_name, exchange_contract_address, account_address):
+        # Exchange Contract
+        exchange_address = to_checksum_address(exchange_contract_address)
+        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
+
+        # 指定したアカウントアドレスから発生している約定イベント（売：決済済）を抽出する
+        entries = session.query(
+            Agreement.id,
+            Agreement.order_id,
+            Agreement.agreement_id,
+            Agreement.agreement_timestamp,
+            Agreement.settlement_timestamp,
+            Agreement.buyer_address). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
+            filter(Agreement.status == AgreementStatus.DONE.value). \
+            all()
+
+        complete_list = []
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in entries:
+            if settlement_timestamp is not None:
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+            else:
+                settlement_timestamp_jp = ''
+            orderBook = ExchangeContract.functions.getOrder(order_id).call()
+            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+            token_address = to_checksum_address(orderBook[2])
+            token_detail = token_model.get(session=session, token_address=token_address)
+            complete_list.append({
+                'token': token_detail.__dict__,
+                'agreement': {
+                    'exchange_address': exchange_address,
+                    'order_id': order_id,
+                    'agreement_id': agreement_id,
+                    'amount': agreement[1],
+                    'price': agreement[2],
+                    'is_buy': buyer_address == account_address,
                     'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 'settlement_timestamp': settlement_timestamp_jp,
@@ -318,15 +320,13 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
                     key=lambda x: x['sort_id']
                 )
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList_Buy(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                settlement_list.extend(self.get_SettlementList_Sell(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 settlement_list = sorted(
                     settlement_list,
                     key=lambda x: x['sort_id']
                 )
                 # complete_list
-                complete_list.extend(self.get_CompleteList_Buy(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                complete_list.extend(self.get_CompleteList_Sell(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 complete_list = sorted(
                     complete_list,
                     key=lambda x: x['sort_id']
@@ -374,15 +374,13 @@ class MembershipOrderList(BaseOrderList, BaseResource):
                     key=lambda x: x['sort_id']
                 )
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList_Buy(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                settlement_list.extend(self.get_SettlementList_Sell(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 settlement_list = sorted(
                     settlement_list,
                     key=lambda x: x['sort_id']
                 )
                 # complete_list
-                complete_list.extend(self.get_CompleteList_Buy(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                complete_list.extend(self.get_CompleteList_Sell(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 complete_list = sorted(
                     complete_list,
                     key=lambda x: x['sort_id']
@@ -430,15 +428,13 @@ class CouponOrderList(BaseOrderList, BaseResource):
                     key=lambda x: x['sort_id']
                 )
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList_Buy(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                settlement_list.extend(self.get_SettlementList_Sell(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 settlement_list = sorted(
                     settlement_list,
                     key=lambda x: x['sort_id']
                 )
                 # complete_list
-                complete_list.extend(self.get_CompleteList_Buy(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                complete_list.extend(self.get_CompleteList_Sell(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 complete_list = sorted(
                     complete_list,
                     key=lambda x: x['sort_id']
@@ -487,15 +483,13 @@ class ShareOrderList(BaseOrderList, BaseResource):
                 key=lambda x: x['sort_id']
             )
             # settlement_list
-            settlement_list.extend(self.get_SettlementList_Buy(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
-            settlement_list.extend(self.get_SettlementList_Sell(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
+            settlement_list.extend(self.get_OTC_SettlementList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
             settlement_list = sorted(
                 settlement_list,
                 key=lambda x: x['sort_id']
             )
             # complete_list
-            complete_list.extend(self.get_CompleteList_Buy(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
-            complete_list.extend(self.get_CompleteList_Sell(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
+            complete_list.extend(self.get_OTC_CompleteList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
             complete_list = sorted(
                 complete_list,
                 key=lambda x: x['sort_id']
