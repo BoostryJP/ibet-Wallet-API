@@ -42,6 +42,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -93,6 +94,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -144,6 +146,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -189,6 +192,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -234,6 +238,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -274,6 +279,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = sys.maxsize
         order.unique_order_id = exchange_address + '_' + str(sys.maxsize)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = sys.maxsize
         order.amount = sys.maxsize
@@ -326,6 +332,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43" + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -372,6 +379,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1000
         order.amount = 100
@@ -424,6 +432,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1000
         order.amount = 100
@@ -475,6 +484,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1000
         order.amount = 100
@@ -520,6 +530,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1000
         order.amount = 100
@@ -565,6 +576,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1000
         order.amount = 100
@@ -605,6 +617,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = sys.maxsize
         order.unique_order_id = exchange_address + '_' + str(sys.maxsize)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = sys.maxsize
         order.amount = sys.maxsize
@@ -657,6 +670,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43" + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1000
         order.amount = 100
@@ -697,6 +711,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -711,6 +726,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 2
         order.unique_order_id = exchange_address + '_' + str(2)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 999
         order.amount = 100
@@ -761,6 +777,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1000
         order.amount = 100
@@ -775,6 +792,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 2
         order.unique_order_id = exchange_address + '_' + str(2)
         order.account_address = account_address
+        order.counterpart_address = ''
         order.is_buy = True
         order.price = 1001
         order.amount = 100
@@ -830,6 +848,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 0
         order.unique_order_id = exchange_address + '_' + str(0)
         order.account_address = account_addresses[1]
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -844,6 +863,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 1
         order.unique_order_id = exchange_address + '_' + str(1)
         order.account_address = account_addresses[1]
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 2000
         order.amount = 100
@@ -858,6 +878,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 2
         order.unique_order_id = exchange_address + '_' + str(2)
         order.account_address = account_addresses[2]
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 3000
         order.amount = 100
@@ -872,6 +893,7 @@ class TestV2StraightBondOrderBook():
         order.order_id = 3
         order.unique_order_id = exchange_address + '_' + str(3)
         order.account_address = account_addresses[2]
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 6000
         order.amount = 100

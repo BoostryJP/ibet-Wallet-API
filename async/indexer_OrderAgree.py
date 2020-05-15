@@ -132,6 +132,7 @@ class DBSink:
             order.order_id = order_id
             order.unique_order_id = exchange_address + '_' + str(order_id)
             order.account_address = account_address
+            order.counterpart_address = ''
             order.is_buy = is_buy
             order.price = price
             order.amount = amount

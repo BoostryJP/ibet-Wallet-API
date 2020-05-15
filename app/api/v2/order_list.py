@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 from cerberus import Validator
 
+import falcon
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError
+from app.errors import InvalidParameterError, NotSupportedError
 from app import config
 from app.contracts import Contract
-from app.model import Order, Agreement, AgreementStatus, BondToken, MembershipToken, CouponToken
+from app.model import Order, Agreement, AgreementStatus, BondToken, MembershipToken, CouponToken, ShareToken
+from sqlalchemy import or_
+from app.utils.hooks import VerifySignature
 
 LOG = log.get_logger()
 
@@ -18,171 +21,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
-# ------------------------------
-# 注文一覧・約定一覧
-# ------------------------------
-class OrderList(BaseResource):
-    """
-    Handle for endpoint: /v2/OrderList/
-    """
-
-    def on_post(self, req, res):
-        LOG.info('v2.OrderList.OrderList')
-        session = req.context['session']
-
-        request_json = OrderList.validate(req)
-
-        '''
-        1) 注文一覧（order_list）
-        '''
-        order_list = []
-        for account_address in request_json['account_address_list']:
-            # BOND
-            if config.BOND_TOKEN_ENABLED is True:
-                try:
-                    order_list.extend(OrderList.get_StraightBond_OrderList(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            # MEMBERSHIP
-            if config.MEMBERSHIP_TOKEN_ENABLED is True:
-                try:
-                    order_list.extend(OrderList.get_Membership_OrderList(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            # COUPON
-            if config.COUPON_TOKEN_ENABLED is True:
-                try:
-                    order_list.extend(OrderList.get_Coupon_OrderList(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            order_list = sorted(
-                order_list,
-                key=lambda x: x['sort_id']
-            )
-
-        '''
-        2) 決済中一覧（settlement_list）
-        '''
-        settlement_list = []
-        for account_address in request_json['account_address_list']:
-            # BOND
-            if config.BOND_TOKEN_ENABLED is True:
-                # BOND_BUY
-                try:
-                    settlement_list.extend(OrderList.get_StraightBond_SettlementList_Buy(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-                # BOND_SELL
-                try:
-                    settlement_list.extend(OrderList.get_StraightBond_SettlementList_Sell(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            # MEMBERSHIP
-            if config.MEMBERSHIP_TOKEN_ENABLED is True:
-                # MEMBERSHIP_BUY
-                try:
-                    settlement_list.extend(OrderList.get_Membership_SettlementList_Buy(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-                # MEMBERSHIP_SELL
-                try:
-                    settlement_list.extend(OrderList.get_Membership_SettlementList_Sell(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            # COUPON
-            if config.COUPON_TOKEN_ENABLED is True:
-                # COUPON_BUY
-                try:
-                    settlement_list.extend(OrderList.get_Coupon_SettlementList_Buy(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-                # COUPON_SELL
-                try:
-                    settlement_list.extend(OrderList.get_Coupon_SettlementList_Sell(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            settlement_list = sorted(
-                settlement_list,
-                key=lambda x: x['sort_id']
-            )
-
-        '''
-        3) 約定済一覧（complete_list）
-        '''
-        complete_list = []
-        for account_address in request_json['account_address_list']:
-            # BOND
-            if config.BOND_TOKEN_ENABLED is True:
-                # BOND_BUY
-                try:
-                    complete_list.extend(OrderList.get_StraightBond_CompleteList_Buy(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-                # BOND_SELL
-                try:
-                    complete_list.extend(OrderList.get_StraightBond_CompleteList_Sell(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            # MEMBERSHIP
-            if config.MEMBERSHIP_TOKEN_ENABLED is True:
-                # MEMBERSHIP_BUY
-                try:
-                    complete_list.extend(OrderList.get_Membership_CompleteList_Buy(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-                # MEMBERSHIP_SELL
-                try:
-                    complete_list.extend(OrderList.get_Membership_CompleteList_Sell(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            # COUPON
-            if config.COUPON_TOKEN_ENABLED is True:
-                # COUPON_BUY
-                try:
-                    complete_list.extend(OrderList.get_Coupon_CompleteList_Buy(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-                # COUPON_SELL
-                try:
-                    complete_list.extend(OrderList.get_Coupon_CompleteList_Sell(session, account_address))
-                except Exception as err:
-                    LOG.error(err)
-                    pass
-
-            complete_list = sorted(
-                complete_list,
-                key=lambda x: x['sort_id']
-            )
-
-        response_json = {
-            'order_list': order_list,
-            'settlement_list': settlement_list,
-            'complete_list': complete_list
-        }
-
-        self.on_success(res, response_json)
+class BaseOrderList(object):
 
     @staticmethod
     def validate(req):
@@ -208,12 +47,12 @@ class OrderList(BaseResource):
 
         return request_json
 
-    # 注文一覧：普通社債トークン
+    # 注文一覧
     @staticmethod
-    def get_StraightBond_OrderList(session, account_address):
+    def get_OrderList(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
+        exchange_address = to_checksum_address(exchange_contract_address)
+        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
         entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
@@ -228,11 +67,12 @@ class OrderList(BaseResource):
             # 残注文ゼロの場合は以下の処理をSKIP
             if orderBook[2] != 0:
                 token_address = to_checksum_address(orderBook[1])
-                bondtoken = BondToken.get(session=session, token_address=token_address)
+                token_detail = token_model.get(session=session, token_address=token_address)
                 order_list.append({
-                    'token': bondtoken.__dict__,
+                    'token': token_detail.__dict__,
                     'order': {
                         'order_id': order_id,
+                        'counterpart_address': '',
                         'amount': orderBook[2],
                         'price': orderBook[3],
                         'is_buy': orderBook[4],
@@ -244,35 +84,35 @@ class OrderList(BaseResource):
 
         return order_list
 
-    # 注文一覧：会員権トークン
+    # 注文一覧
     @staticmethod
-    def get_Membership_OrderList(session, account_address):
+    def get_OTC_OrderList(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
+        exchange_address = to_checksum_address(exchange_contract_address)
+        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
         entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
-            filter(Order.account_address == account_address). \
+            filter(or_(Order.account_address == account_address, Order.counterpart_address == account_address)). \
             all()
 
         order_list = []
         for (id, order_id, order_timestamp) in entries:
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
-
             # 残注文ゼロの場合は以下の処理をSKIP
-            if orderBook[2] != 0:
-                token_address = to_checksum_address(orderBook[1])
-                membershiptoken = MembershipToken.get(session=session, token_address=token_address)
+            if orderBook[3] != 0:
+                token_address = to_checksum_address(orderBook[2])
+                token_detail = token_model.get(session=session, token_address=token_address)
                 order_list.append({
-                    'token': membershiptoken.__dict__,
+                    'token': token_detail.__dict__,
                     'order': {
                         'order_id': order_id,
-                        'amount': orderBook[2],
-                        'price': orderBook[3],
-                        'is_buy': orderBook[4],
+                        'counterpart_address': orderBook[1],
+                        'amount': orderBook[3],
+                        'price': orderBook[4],
+                        'is_buy': False,
                         'canceled': orderBook[6],
                         'order_timestamp': order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                     },
@@ -281,49 +121,12 @@ class OrderList(BaseResource):
 
         return order_list
 
-    # 注文一覧：クーポントークン
+    # 決済中一覧（買）
     @staticmethod
-    def get_Coupon_OrderList(session, account_address):
+    def get_SettlementList_Buy(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
-
-        # 指定したアカウントアドレスから発生している注文イベントを抽出する
-        entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
-            filter(Order.exchange_address == exchange_address). \
-            filter(Order.is_cancelled == False). \
-            filter(Order.account_address == account_address). \
-            all()
-
-        order_list = []
-        for (id, order_id, order_timestamp) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-
-            # 残注文ゼロの場合は以下の処理をSKIP
-            if orderBook[2] != 0:
-                token_address = to_checksum_address(orderBook[1])
-                coupontoken = CouponToken.get(session=session, token_address=token_address)
-                order_list.append({
-                    'token': coupontoken.__dict__,
-                    'order': {
-                        'order_id': order_id,
-                        'amount': orderBook[2],
-                        'price': orderBook[3],
-                        'is_buy': orderBook[4],
-                        'canceled': orderBook[6],
-                        'order_timestamp': order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                    },
-                    'sort_id': id
-                })
-
-        return order_list
-
-    # 決済中一覧：普通社債トークン（買）
-    @staticmethod
-    def get_StraightBond_SettlementList_Buy(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
+        exchange_address = to_checksum_address(exchange_contract_address)
+        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
         entries = session.\
@@ -338,9 +141,9 @@ class OrderList(BaseResource):
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
-            bondtoken = BondToken.get(session=session, token_address=token_address)
+            token_detail = token_model.get(session=session, token_address=token_address)
             settlement_list.append({
-                'token': bondtoken.__dict__,
+                'token': token_detail.__dict__,
                 'agreement': {
                     'exchange_address': exchange_address,
                     'order_id': order_id,
@@ -356,15 +159,12 @@ class OrderList(BaseResource):
 
         return settlement_list
 
-    # 決済中一覧：普通社債トークン（売）
+    # 決済中一覧（売）
     @staticmethod
-    def get_StraightBond_SettlementList_Sell(session, account_address):
-        exchange_address = to_checksum_address(
-            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
-
+    def get_SettlementList_Sell(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
-        ExchangeContract = Contract.get_contract(
-            'IbetStraightBondExchange', exchange_address)
+        exchange_address = to_checksum_address(exchange_contract_address)
+        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（売：未決済）を抽出する
         entries = session.\
@@ -379,9 +179,9 @@ class OrderList(BaseResource):
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
-            bondtoken = BondToken.get(session=session, token_address=token_address)
+            token_detail = token_model.get(session=session, token_address=token_address)
             settlement_list.append({
-                'token': bondtoken.__dict__,
+                'token': token_detail.__dict__,
                 'agreement': {
                     'exchange_address': exchange_address,
                     'order_id': order_id,
@@ -397,164 +197,12 @@ class OrderList(BaseResource):
 
         return settlement_list
 
-    # 決済中一覧：会員権トークン（買）
+    # 約定済一覧（買）
     @staticmethod
-    def get_Membership_SettlementList_Buy(session, account_address):
+    def get_CompleteList_Buy(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
-
-        # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.buyer_address == account_address). \
-            filter(Agreement.status == AgreementStatus.PENDING.value). \
-            all()
-
-        settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            membershiptoken = MembershipToken.get(session=session, token_address=token_address)
-            settlement_list.append({
-                'token': membershiptoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': True,
-                    'canceled': agreement[3],
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'sort_id': id
-            })
-
-        return settlement_list
-
-    # 決済中一覧：会員権トークン（売）
-    @staticmethod
-    def get_Membership_SettlementList_Sell(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
-
-        # 指定したアカウントアドレスから発生している約定イベント（売：未決済）を抽出する
-        entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.seller_address == account_address). \
-            filter(Agreement.status == AgreementStatus.PENDING.value). \
-            all()
-
-        settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            membershiptoken = MembershipToken.get(session=session, token_address=token_address)
-            settlement_list.append({
-                'token': membershiptoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': False,
-                    'canceled': agreement[3],
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'sort_id': id
-            })
-
-        return settlement_list
-
-    # 決済中一覧：クーポントークン（買）
-    @staticmethod
-    def get_Coupon_SettlementList_Buy(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
-
-        # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.buyer_address == account_address). \
-            filter(Agreement.status == AgreementStatus.PENDING.value). \
-            all()
-
-        settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            coupontoken = CouponToken.get(session=session, token_address=token_address)
-            settlement_list.append({
-                'token': coupontoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': True,
-                    'canceled': agreement[3],
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'sort_id': id
-            })
-
-        return settlement_list
-
-    # 決済中一覧：クーポントークン（売）
-    @staticmethod
-    def get_Coupon_SettlementList_Sell(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
-
-        # 指定したアカウントアドレスから発生している約定イベント（売：未決済）を抽出する
-        entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.seller_address == account_address). \
-            filter(Agreement.status == AgreementStatus.PENDING.value). \
-            all()
-
-        settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            coupontoken = CouponToken.get(session=session, token_address=token_address)
-            settlement_list.append({
-                'token': coupontoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': False,
-                    'canceled': agreement[3],
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'sort_id': id
-            })
-
-        return settlement_list
-
-    # 約定済一覧：普通社債トークン（買）
-    @staticmethod
-    def get_StraightBond_CompleteList_Buy(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
+        exchange_address = to_checksum_address(exchange_contract_address)
+        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：決済済）を抽出する
         entries = session.query(
@@ -577,9 +225,9 @@ class OrderList(BaseResource):
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
-            bondtoken = BondToken.get(session=session, token_address=token_address)
+            token_detail = token_model.get(session=session, token_address=token_address)
             complete_list.append({
-                'token': bondtoken.__dict__,
+                'token': token_detail.__dict__,
                 'agreement': {
                     'exchange_address': exchange_address,
                     'order_id': order_id,
@@ -595,12 +243,12 @@ class OrderList(BaseResource):
 
         return complete_list
 
-    # 約定済一覧：普通社債トークン（売）
+    # 約定済一覧（売）
     @staticmethod
-    def get_StraightBond_CompleteList_Sell(session, account_address):
+    def get_CompleteList_Sell(session, token_model, contract_name, exchange_contract_address, account_address):
         # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
+        exchange_address = to_checksum_address(exchange_contract_address)
+        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（売：決済済）を抽出する
         entries = session.query(
@@ -623,9 +271,9 @@ class OrderList(BaseResource):
             orderBook = ExchangeContract.functions.getOrder(order_id).call()
             agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
             token_address = to_checksum_address(orderBook[1])
-            bondtoken = BondToken.get(session=session, token_address=token_address)
+            token_detail = token_model.get(session=session, token_address=token_address)
             complete_list.append({
-                'token': bondtoken.__dict__,
+                'token': token_detail.__dict__,
                 'agreement': {
                     'exchange_address': exchange_address,
                     'order_id': order_id,
@@ -641,186 +289,225 @@ class OrderList(BaseResource):
 
         return complete_list
 
-    # 約定済一覧：会員権トークン（買）
-    @staticmethod
-    def get_Membership_CompleteList_Buy(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
+# ------------------------------
+# 注文一覧・約定一覧（普通社債）
+# ------------------------------
+class StraightBondOrderList(BaseOrderList, BaseResource):
+    """
+    Handle for endpoint: /v2/OrderList/StraightBond
+    """
 
-        # 指定したアカウントアドレスから発生している約定イベント（買：決済済）を抽出する
-        entries = session.query(
-            Agreement.id,
-            Agreement.order_id,
-            Agreement.agreement_id,
-            Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.buyer_address == account_address). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
+    def on_post(self, req, res):
+        LOG.info('v2.OrderList.StraightBond')
+        session = req.context['session']
 
+        # validate
+        request_json = self.validate(req)
+        if config.BOND_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
+        order_list = []
+        settlement_list = []
         complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
-            if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-            else:
-                settlement_timestamp_jp = ''
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            membershiptoken = MembershipToken.get(session=session, token_address=token_address)
-            complete_list.append({
-                'token': membershiptoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': True,
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'settlement_timestamp': settlement_timestamp_jp,
-                'sort_id': id
-            })
+        for account_address in request_json['account_address_list']:
+            try:
+                # order_list
+                order_list.extend(self.get_OrderList(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list = sorted(
+                    order_list,
+                    key=lambda x: x['sort_id']
+                )
+                # settlement_list
+                settlement_list.extend(self.get_SettlementList_Buy(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList_Sell(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list = sorted(
+                    settlement_list,
+                    key=lambda x: x['sort_id']
+                )
+                # complete_list
+                complete_list.extend(self.get_CompleteList_Buy(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList_Sell(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list = sorted(
+                    complete_list,
+                    key=lambda x: x['sort_id']
+                )
+            except Exception as err:
+                LOG.error(err)
+                pass
 
-        return complete_list
+        response_json = {
+            'order_list': order_list,
+            'settlement_list': settlement_list,
+            'complete_list': complete_list
+        }
 
-    # 約定済一覧：会員権トークン（売）
-    @staticmethod
-    def get_Membership_CompleteList_Sell(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
+        self.on_success(res, response_json)
 
-        # 指定したアカウントアドレスから発生している約定イベント（売：決済済）を抽出する
-        entries = session.query(
-            Agreement.id,
-            Agreement.order_id,
-            Agreement.agreement_id,
-            Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.seller_address == account_address). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
 
+# ------------------------------
+# 注文一覧・約定一覧（会員権）
+# ------------------------------
+class MembershipOrderList(BaseOrderList, BaseResource):
+    """
+    Handle for endpoint: /v2/OrderList/Membership
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v2.OrderList.Membership')
+        session = req.context['session']
+
+        # validate
+        request_json = self.validate(req)
+        if config.MEMBERSHIP_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
+        order_list = []
+        settlement_list = []
         complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
-            if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-            else:
-                settlement_timestamp_jp = ''
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            membershiptoken = MembershipToken.get(session=session, token_address=token_address)
-            complete_list.append({
-                'token': membershiptoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': False,
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'settlement_timestamp': settlement_timestamp_jp,
-                'sort_id': id
-            })
 
-        return complete_list
+        for account_address in request_json['account_address_list']:
+            try:
+                # order_list
+                order_list.extend(self.get_OrderList(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list = sorted(
+                    order_list,
+                    key=lambda x: x['sort_id']
+                )
+                # settlement_list
+                settlement_list.extend(self.get_SettlementList_Buy(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList_Sell(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list = sorted(
+                    settlement_list,
+                    key=lambda x: x['sort_id']
+                )
+                # complete_list
+                complete_list.extend(self.get_CompleteList_Buy(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList_Sell(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list = sorted(
+                    complete_list,
+                    key=lambda x: x['sort_id']
+                )
+            except Exception as err:
+                LOG.error(err)
+                pass
 
-    # 約定済一覧：クーポントークン（買）
-    @staticmethod
-    def get_Coupon_CompleteList_Buy(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
+        response_json = {
+            'order_list': order_list,
+            'settlement_list': settlement_list,
+            'complete_list': complete_list
+        }
 
-        # 指定したアカウントアドレスから発生している約定イベント（買：決済済）を抽出する
-        entries = session.query(
-            Agreement.id,
-            Agreement.order_id,
-            Agreement.agreement_id,
-            Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.buyer_address == account_address). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
+        self.on_success(res, response_json)
 
+
+# ------------------------------
+# 注文一覧・約定一覧（クーポン）
+# ------------------------------
+class CouponOrderList(BaseOrderList, BaseResource):
+    """
+    Handle for endpoint: /v2/OrderList/Coupon
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v2.OrderList.Coupon')
+        session = req.context['session']
+
+        # validate
+        request_json = self.validate(req)
+        if config.COUPON_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
+        order_list = []
+        settlement_list = []
         complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
-            if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-            else:
-                settlement_timestamp_jp = ''
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            coupontoken = CouponToken.get(session=session, token_address=token_address)
-            complete_list.append({
-                'token': coupontoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': True,
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'settlement_timestamp': settlement_timestamp_jp,
-                'sort_id': id
-            })
+        
+        for account_address in request_json['account_address_list']:
+            try:
+                # order_list
+                order_list.extend(self.get_OrderList(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list = sorted(
+                    order_list,
+                    key=lambda x: x['sort_id']
+                )
+                # settlement_list
+                settlement_list.extend(self.get_SettlementList_Buy(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList_Sell(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list = sorted(
+                    settlement_list,
+                    key=lambda x: x['sort_id']
+                )
+                # complete_list
+                complete_list.extend(self.get_CompleteList_Buy(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList_Sell(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list = sorted(
+                    complete_list,
+                    key=lambda x: x['sort_id']
+                )
+            except Exception as err:
+                LOG.error(err)
+                pass
 
-        return complete_list
+        response_json = {
+            'order_list': order_list,
+            'settlement_list': settlement_list,
+            'complete_list': complete_list
+        }
 
-    # 約定済一覧：クーポントークン（売）
-    @staticmethod
-    def get_Coupon_CompleteList_Sell(session, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
-        ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
+        self.on_success(res, response_json)
 
-        # 指定したアカウントアドレスから発生している約定イベント（買：決済済）を抽出する
-        entries = session.query(
-            Agreement.id,
-            Agreement.order_id,
-            Agreement.agreement_id,
-            Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.seller_address == account_address). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
 
+# ------------------------------
+# 注文一覧・約定一覧（株式）
+# ------------------------------
+class ShareOrderList(BaseOrderList, BaseResource):
+    """
+    Handle for endpoint: /v2/OrderList/Share
+    """
+
+    @falcon.before(VerifySignature())
+    def on_post(self, req, res):
+        LOG.info('v2.OrderList.Share')
+        session = req.context['session']
+
+        if config.SHARE_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
+        # リクエストからアドレスを抽出
+        address = to_checksum_address(req.context["address"])
+
+        order_list = []
+        settlement_list = []
         complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp) in entries:
-            if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-            else:
-                settlement_timestamp_jp = ''
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            coupontoken = CouponToken.get(session=session, token_address=token_address)
-            complete_list.append({
-                'token': coupontoken.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': False,
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'settlement_timestamp': settlement_timestamp_jp,
-                'sort_id': id
-            })
 
-        return complete_list
+        try:
+            # order_list
+            order_list.extend(self.get_OTC_OrderList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
+            order_list = sorted(
+                order_list,
+                key=lambda x: x['sort_id']
+            )
+            # settlement_list
+            settlement_list.extend(self.get_SettlementList_Buy(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
+            settlement_list.extend(self.get_SettlementList_Sell(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
+            settlement_list = sorted(
+                settlement_list,
+                key=lambda x: x['sort_id']
+            )
+            # complete_list
+            complete_list.extend(self.get_CompleteList_Buy(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
+            complete_list.extend(self.get_CompleteList_Sell(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
+            complete_list = sorted(
+                complete_list,
+                key=lambda x: x['sort_id']
+            )
+        except Exception as err:
+            LOG.error(err)
+            pass
+
+        response_json = {
+            'order_list': order_list,
+            'settlement_list': settlement_list,
+            'complete_list': complete_list
+        }
+
+        self.on_success(res, response_json)
