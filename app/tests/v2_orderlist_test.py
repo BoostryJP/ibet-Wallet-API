@@ -1515,8 +1515,18 @@ class TestV2OrderList_Share:
     # テスト対象API
     apiurl = "/v2/OrderList/Share"
     issuer = web3.eth.account.create()
+    issuer = {
+        'account_address': issuer.address,
+        'password': 'password',
+        'private_key': issuer.privateKey
+    }
     print(issuer)
     trader = web3.eth.account.create()
+    trader = {
+        'account_address': trader.address,
+        'password': 'password',
+        'private_key': trader.privateKey
+    }
     print(trader)
     
     @staticmethod
