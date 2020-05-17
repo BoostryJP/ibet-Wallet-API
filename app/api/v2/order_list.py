@@ -90,10 +90,10 @@ class BaseOrderList(object):
         ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している注文イベントを抽出する
+        # NOTE: 相対取引ではmakerならびにtaker(取引対象)の注文明細を返却する
         entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
-            # NOTE: 相対取引ではmakerならびに取引対象の注文明細を返却する
             filter(or_(Order.account_address == account_address, Order.counterpart_address == account_address)). \
             all()
 
