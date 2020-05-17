@@ -15,6 +15,7 @@ class Order(Base):
     order_id = Column(BigInteger, index=True)
     unique_order_id = Column(String(256), index=True)
     account_address = Column(String(42))
+    counterpart_address = Column(String(42))
     is_buy = Column(Boolean)
     price = Column(BigInteger)
     amount = Column(BigInteger)
@@ -33,6 +34,7 @@ class Order(Base):
         'exchange_address': str,
         'order_id': int,
         'account_address': str,
+        'counterpart_address': str,
         'is_buy': bool,
         'price': int,
         'amount': int,

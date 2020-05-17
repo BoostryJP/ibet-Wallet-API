@@ -82,7 +82,10 @@ class App(falcon.API):
         self.add_route('/v2/Position/Coupon/Consumptions', position.CouponConsumptions())
 
         # 注文一覧・約定一覧
-        self.add_route('/v2/OrderList', order_list.OrderList())
+        self.add_route('/v2/OrderList/StraightBond', order_list.StraightBondOrderList())
+        self.add_route('/v2/OrderList/Membership', order_list.MembershipOrderList())
+        self.add_route('/v2/OrderList/Coupon', order_list.CouponOrderList())
+        self.add_route('/v2/OrderList/Share', order_list.ShareOrderList())
 
         # 通知一覧
         self.add_route('/v2/Notifications', notification.Notifications())
