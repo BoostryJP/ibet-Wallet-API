@@ -1658,6 +1658,10 @@ class TestV2OrderList_Share:
         account = eth_account['issuer']
         counterpart = eth_account['trader']
 
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
         # Orderイベント情報を挿入
         order = Order()
         order.id = 1
@@ -1675,10 +1679,8 @@ class TestV2OrderList_Share:
         order.order_timestamp = '2019-06-17 00:00:00'
         session.add(order)
 
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            private_key=account['private_key']
-        )
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'token': {
@@ -1737,111 +1739,21 @@ class TestV2OrderList_Share:
             if order['token']['token_address'] == share_token['address']:
                 assert order['token'] == assumed_body['token']
                 assert order['order'] == assumed_body['order']
+
 
     # ＜正常系2＞
-    # 注文中あり（1件）、決済中なし、約定済なし
-    #  -> order_listが1件返却
-    # counterpartからのリクエストにおいてもorder_listが1件返却される
-    def test_share_orderlist_normal_2(self, client, session, shared_contract):
-        bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
-            TestV2OrderList_Share.set_env(shared_contract)
-        share_token, order_id, agreement_id = TestV2OrderList_Share.order_event(
-            share_exchange, personal_info, payment_gateway, token_list)
-
-        account = eth_account['issuer']
-        counterpart = eth_account['trader']
-
-        # Orderイベント情報を挿入
-        order = Order()
-        order.id = 1
-        order.token_address = share_token['address']
-        order.exchange_address = share_exchange['address']
-        order.order_id = order_id
-        order.unique_order_id = share_exchange['address'] + '_' + str(1)
-        order.account_address = account['account_address']
-        order.counterpart_address = counterpart['account_address']
-        order.is_buy = False
-        order.price = 1000
-        order.amount = 100
-        order.agent_address = eth_account['agent']['account_address']
-        order.is_cancelled = False
-        order.order_timestamp = '2019-06-17 00:00:00'
-        session.add(order)
-
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            private_key=counterpart['private_key']
-        )
-
-        assumed_body = {
-            'token': {
-                'token_address': share_token['address'],
-                'token_template': 'IbetShare',
-                'owner_address': eth_account['issuer']['account_address'],
-                'company_name': '',
-                'rsa_publickey': '',
-                'name': 'テスト株式',
-                'symbol': 'SHARE',
-                'total_supply': 1000000,
-                'issue_price': 1000,
-                'dividend_information': {
-                    'dividends': 1.01,
-                    'dividend_record_date': '20200401',
-                    'dividend_payment_date': '20200502'
-                },
-                'cancellation_date': '20200603',
-                'memo': 'メモ',
-                'transferable': True,
-                'offering_status': False,
-                'status': True,
-                'reference_urls': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'image_url': [],
-                'max_holding_quantity': 0,
-                'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
-                'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
-            },
-            'order': {
-                'order_id': order_id,
-                'counterpart_address': counterpart['account_address'] ,
-                'amount': 1000000,
-                'price': 1000,
-                'is_buy': False,
-                'canceled': False,
-                'order_timestamp': '2019/06/17 00:00:00'
-            }
-        }
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert len(resp.json['data']['order_list']) >= 1
-        for order in resp.json['data']['order_list']:
-            if order['token']['token_address'] == share_token['address']:
-                assert order['token'] == assumed_body['token']
-                assert order['order'] == assumed_body['order']
-
-
-    # ＜正常系3＞
     # 注文中なし、決済中あり（1件）、約定済なし
     #  -> settlement_listが1件返却
-    def test_share_orderlist_normal_3(self, client, session, shared_contract):
+    def test_share_orderlist_normal_2(self, client, session, shared_contract):
         bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Share.set_env(shared_contract)
 
         share_token, order_id, agreement_id = TestV2OrderList_Share.agreement_event(share_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
 
         # Agreementイベント情報を挿入
         agreement = Agreement()
@@ -1858,10 +1770,8 @@ class TestV2OrderList_Share:
         agreement.agreement_timestamp = '2019-06-17 12:00:00'
         session.add(agreement)
 
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            private_key=account['private_key']
-        )
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'token': {
@@ -1924,16 +1834,19 @@ class TestV2OrderList_Share:
                 assert order['token'] == assumed_body['token']
                 assert order['agreement'] == assumed_body['agreement']
 
-    # ＜正常系4＞
+    # ＜正常系3＞
     # 注文中なし、決済中なし、約定済あり（1件）
     #  -> complete_listが1件返却
-    def test_share_orderlist_normal_4(self, client, session, shared_contract):
+    def test_share_orderlist_normal_3(self, client, session, shared_contract):
         bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Share.set_env(shared_contract)
 
         share_token, order_id, agreement_id = TestV2OrderList_Share.settlement_event(share_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
 
         # Agreementイベント情報を挿入
         agreement = Agreement()
@@ -1951,10 +1864,8 @@ class TestV2OrderList_Share:
         agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
-        resp = client.simulate_auth_post(
-            self.apiurl,
-            private_key=account['private_key']
-        )
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'token': {
@@ -2019,9 +1930,91 @@ class TestV2OrderList_Share:
                 assert order['settlement_timestamp'] == assumed_body['settlement_timestamp']
 
 
+
     # ＜エラー系1＞
-    # HTTPメソッドが不正
+    # request-bodyなし
+    # -> 入力値エラー
     def test_share_orderlist_error_1(self, client):
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps({})
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': 'required field'
+            }
+        }
+
+    # ＜エラー系2＞
+    # headersなし
+    # -> 入力値エラー
+    def test_share_orderlist_error_2(self, client):
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # ＜エラー系3-1＞
+    # account_addressがアドレスフォーマットではない
+    # -> 入力値エラー
+    def test_share_orderlist_error_3_1(self, client):
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
+        request_params = {"account_address_list": [account_address]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # ＜エラー系3-2＞
+    # account_addressがstring以外
+    # -> 入力エラー
+    def test_share_orderlist_error_3_2(self, client):
+        account_address = 123456789123456789123456789123456789
+        request_params = {"account_address_list": [account_address]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': {
+                    '0': 'must be of string type'
+                }
+            }
+        }
+
+    # ＜エラー系4＞
+    # HTTPメソッドが不正
+    def test_share_orderlist_error_4(self, client):
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404

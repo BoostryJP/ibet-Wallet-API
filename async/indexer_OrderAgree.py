@@ -321,12 +321,14 @@ class Processor:
                     if args['amount'] > sys.maxsize:
                         pass
                     else:
-                        order_id = args['orderId']
-                        order_book = self.db.query(Order.id, Order.order_id, Order.is_buy). \
-                            filter(Order.order_id == order_id). \
-                            filter(Order.is_cancelled == False). \
-                            first()
-                        if order_book.is_buy:
+                        # IbetOTCExchangeの場合、is_buyが存在せずMake注文は全て売り注文
+                        # NOTE: 他商品がOTCExchangeを利用する場合修正が必要
+                        is_buy = False
+                        if  exchange_contract != self.share_exchange_contract:
+                            order_id = args['orderId']
+                            orderbook = exchange_contract.functions.getOrder(order_id).call()
+                            is_buy = orderbook[4]
+                        if is_buy:
                             counterpart_address = args['sellAddress']
                         else:
                             counterpart_address = args['buyAddress']

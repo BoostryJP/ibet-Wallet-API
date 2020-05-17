@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from cerberus import Validator
 
-import falcon
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
@@ -13,7 +12,6 @@ from app import config
 from app.contracts import Contract
 from app.model import Order, Agreement, AgreementStatus, BondToken, MembershipToken, CouponToken, ShareToken
 from sqlalchemy import or_
-from app.utils.hooks import VerifySignature
 
 LOG = log.get_logger()
 
@@ -460,43 +458,42 @@ class ShareOrderList(BaseOrderList, BaseResource):
     Handle for endpoint: /v2/OrderList/Share
     """
 
-    @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v2.OrderList.Share')
         session = req.context['session']
 
+        # validate
+        request_json = self.validate(req)
         if config.SHARE_TOKEN_ENABLED is False:
             raise NotSupportedError(method='POST', url=req.path)
-
-        # リクエストからアドレスを抽出
-        address = to_checksum_address(req.context["address"])
 
         order_list = []
         settlement_list = []
         complete_list = []
-
-        try:
-            # order_list
-            order_list.extend(self.get_OTC_OrderList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
-            order_list = sorted(
-                order_list,
-                key=lambda x: x['sort_id']
-            )
-            # settlement_list
-            settlement_list.extend(self.get_OTC_SettlementList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
-            settlement_list = sorted(
-                settlement_list,
-                key=lambda x: x['sort_id']
-            )
-            # complete_list
-            complete_list.extend(self.get_OTC_CompleteList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, address))
-            complete_list = sorted(
-                complete_list,
-                key=lambda x: x['sort_id']
-            )
-        except Exception as err:
-            LOG.error(err)
-            pass
+        
+        for account_address in request_json['account_address_list']:
+            try:
+                # order_list
+                order_list.extend(self.get_OTC_OrderList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list = sorted(
+                    order_list,
+                    key=lambda x: x['sort_id']
+                )
+                # settlement_list
+                settlement_list.extend(self.get_OTC_SettlementList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list = sorted(
+                    settlement_list,
+                    key=lambda x: x['sort_id']
+                )
+                # complete_list
+                complete_list.extend(self.get_OTC_CompleteList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list = sorted(
+                    complete_list,
+                    key=lambda x: x['sort_id']
+                )
+            except Exception as err:
+                LOG.error(err)
+                pass
 
         response_json = {
             'order_list': order_list,
