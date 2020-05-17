@@ -93,6 +93,7 @@ class BaseOrderList(object):
         entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
+            # NOTE: 相対取引ではmakerならびに取引対象(counterpart)の注文を返却する
             filter(or_(Order.account_address == account_address, Order.counterpart_address == account_address)). \
             all()
 
