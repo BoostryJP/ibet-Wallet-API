@@ -1885,6 +1885,8 @@ paths:
                           type: boolean
                         status:
                           type: boolean
+                        initial_offering_status:
+                          type: boolean
                         image_url:
                           type: array
                           items:
@@ -1979,6 +1981,8 @@ paths:
                         transferable:
                           type: boolean
                         status:
+                          type: boolean
+                        initial_offering_status:
                           type: boolean
                         image_url:
                           type: array
@@ -2702,6 +2706,8 @@ paths:
                               type: boolean
                             status:
                               type: boolean
+                            initial_offering_status:
+                              type: boolean
                             image_url:
                               type: array
                               items:
@@ -2780,6 +2786,8 @@ paths:
                             transferable:
                               type: boolean
                             status:
+                              type: boolean
+                            initial_offering_status:
                               type: boolean
                             image_url:
                               type: array
@@ -2861,6 +2869,8 @@ paths:
                             transferable:
                               type: boolean
                             status:
+                              type: boolean
+                            initial_offering_status:
                               type: boolean
                             image_url:
                               type: array
@@ -2978,6 +2988,8 @@ paths:
                               type: boolean
                             status:
                               type: boolean
+                            initial_offering_status:
+                              type: boolean
                             image_url:
                               type: array
                               items:
@@ -3056,6 +3068,8 @@ paths:
                             transferable:
                               type: boolean
                             status:
+                              type: boolean
+                            initial_offering_status:
                               type: boolean
                             image_url:
                               type: array
@@ -3137,6 +3151,8 @@ paths:
                             transferable:
                               type: boolean
                             status:
+                              type: boolean
+                            initial_offering_status:
                               type: boolean
                             image_url:
                               type: array
