@@ -181,7 +181,7 @@ class WatchStopOffering(Watcher):
 
 
 # イベント：取扱停止
-class WatchStopTreatment(Watcher):
+class WatchSuspend(Watcher):
     def __init__(self):
         super().__init__("ChangeStatus", {'filter': {'status': False}})
 
@@ -300,7 +300,7 @@ def main():
     watchers = [
         WatchStartOffering(),
         WatchStopOffering(),
-        WatchStopTreatment(),
+        WatchSuspend(),
         WatchApplyForOffering(),
         WatchTransfer(),
         WatchAllot(),
