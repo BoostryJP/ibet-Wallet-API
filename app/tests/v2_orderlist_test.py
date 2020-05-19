@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from app.model import Order, Agreement, AgreementStatus
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from .contract_modules import *
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -375,7 +373,7 @@ class TestV2OrderList_Bond:
         bond_exchange, membership_exchange, coupon_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Bond.set_env(shared_contract)
         bond_token, order_id, agreement_id = TestV2OrderList_Bond.settlement_event(
-                bond_exchange, personal_info, payment_gateway, token_list)
+            bond_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
@@ -1502,6 +1500,7 @@ class TestV2OrderList_Coupon:
             'description': 'method: GET, url: /v2/OrderList/Coupon'
         }
 
+
 """
 Share
 """
@@ -1514,7 +1513,7 @@ class TestV2OrderList_Share:
 
     # テスト対象API
     apiurl = "/v2/OrderList/Share"
-    
+
     @staticmethod
     def share_token_attribute(exchange, personal_info):
         attribute = {
@@ -1723,7 +1722,7 @@ class TestV2OrderList_Share:
             },
             'order': {
                 'order_id': order_id,
-                'counterpart_address': counterpart['account_address'] ,
+                'counterpart_address': counterpart['account_address'],
                 'amount': 1000000,
                 'price': 1000,
                 'is_buy': False,
@@ -1740,7 +1739,6 @@ class TestV2OrderList_Share:
                 assert order['token'] == assumed_body['token']
                 assert order['order'] == assumed_body['order']
 
-
     # ＜正常系2＞
     # 注文中なし、決済中あり（1件）、約定済なし
     #  -> settlement_listが1件返却
@@ -1748,7 +1746,8 @@ class TestV2OrderList_Share:
         bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Share.set_env(shared_contract)
 
-        share_token, order_id, agreement_id = TestV2OrderList_Share.agreement_event(share_exchange, personal_info, payment_gateway, token_list)
+        share_token, order_id, agreement_id = TestV2OrderList_Share.\
+            agreement_event(share_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
@@ -1841,7 +1840,8 @@ class TestV2OrderList_Share:
         bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Share.set_env(shared_contract)
 
-        share_token, order_id, agreement_id = TestV2OrderList_Share.settlement_event(share_exchange, personal_info, payment_gateway, token_list)
+        share_token, order_id, agreement_id = TestV2OrderList_Share.\
+            settlement_event(share_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
@@ -1928,8 +1928,6 @@ class TestV2OrderList_Share:
                 assert order['token'] == assumed_body['token']
                 assert order['agreement'] == assumed_body['agreement']
                 assert order['settlement_timestamp'] == assumed_body['settlement_timestamp']
-
-
 
     # ＜エラー系1＞
     # request-bodyなし
