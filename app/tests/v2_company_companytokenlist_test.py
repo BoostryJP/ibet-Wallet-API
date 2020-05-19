@@ -114,7 +114,6 @@ class TestV2CompanyCompanyTokenList:
         listing.token_address = token_address
         listing.owner_address = owner_address
         session.add(listing)
-        session.commit()
 
     @staticmethod
     def _set_env(shared_contract):
