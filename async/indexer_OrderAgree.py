@@ -72,7 +72,8 @@ class Sinks:
 class ConsoleSink:
     @staticmethod
     def on_new_order(transaction_hash, token_address, exchange_address,
-                     order_id, account_address, is_buy, price, amount, agent_address, order_timestamp):
+                     order_id, account_address, counterpart_address,
+                     is_buy, price, amount, agent_address, order_timestamp):
         LOG.info(
             "NewOrder: exchange_address={}, order_id={}".format(
                 exchange_address, order_id
@@ -197,28 +198,37 @@ class DBSink:
 class Processor:
     def __init__(self, web3, sink, db):
         self.web3 = web3
-        self.bond_exchange_contract = Contract.get_contract(
-            'IbetStraightBondExchange',
-            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
-        )
-        self.membership_exchange_contract = Contract.get_contract(
-            'IbetMembershipExchange',
-            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-        )
-        self.coupon_exchange_contract = Contract.get_contract(
-            'IbetCouponExchange',
-            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        )
-        self.share_exchange_contract = Contract.get_contract(
-            'IbetOTCExchange',
-            config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
-        )
-        self.exchange_list = [
-            self.bond_exchange_contract,
-            self.membership_exchange_contract,
-            self.coupon_exchange_contract,
-            self.share_exchange_contract
-        ]
+        self.exchange_list = []
+        # 債券取引コントラクト登録
+        if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
+            bond_exchange_contract = Contract.get_contract(
+                'IbetStraightBondExchange',
+                config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(bond_exchange_contract)
+        # 会員権取引コントラクト登録
+        if config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
+            membership_exchange_contract = Contract.get_contract(
+                'IbetMembershipExchange',
+                config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(membership_exchange_contract)
+        # クーポン取引コントラクト登録
+        if config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
+            coupon_exchange_contract = Contract.get_contract(
+                'IbetCouponExchange',
+                config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(coupon_exchange_contract)
+        # OTC取引コントラクト登録
+        if config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
+            self.share_exchange_contract = Contract.get_contract(
+                'IbetOTCExchange',
+                config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(self.share_exchange_contract)
+        else:
+            self.share_exchange_contract = ""
         self.sink = sink
         self.latest_block = web3.eth.blockNumber
         self.db = db
@@ -324,7 +334,7 @@ class Processor:
                         # IbetOTCExchangeの場合、is_buyが存在せずMake注文は全て売り注文
                         # NOTE: 他商品がOTCExchangeを利用する場合修正が必要
                         is_buy = False
-                        if  exchange_contract != self.share_exchange_contract:
+                        if exchange_contract != self.share_exchange_contract:
                             order_id = args['orderId']
                             orderbook = exchange_contract.functions.getOrder(order_id).call()
                             is_buy = orderbook[4]
