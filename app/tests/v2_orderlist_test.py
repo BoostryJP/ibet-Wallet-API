@@ -1746,8 +1746,8 @@ class TestV2OrderList_Share:
         bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Share.set_env(shared_contract)
 
-        share_token, order_id, agreement_id = TestV2OrderList_Share.agreement_event(share_exchange, personal_info,
-                                                                                    payment_gateway, token_list)
+        share_token, order_id, agreement_id = TestV2OrderList_Share.\
+            agreement_event(share_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
@@ -1840,8 +1840,8 @@ class TestV2OrderList_Share:
         bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Share.set_env(shared_contract)
 
-        share_token, order_id, agreement_id = TestV2OrderList_Share.settlement_event(share_exchange, personal_info,
-                                                                                     payment_gateway, token_list)
+        share_token, order_id, agreement_id = TestV2OrderList_Share.\
+            settlement_event(share_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
