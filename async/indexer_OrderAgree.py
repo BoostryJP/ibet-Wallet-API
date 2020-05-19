@@ -275,15 +275,27 @@ class Processor:
                             JST
                         )
                         if available_token is not None:
-                            # NOTE: 相対取引の場合、args[counterpartAddress]が存在し、args[isBuy]が存在しない。
+                            # NOTE: OTC取引の場合
+                            #   args[counterpartAddress]が存在する
+                            #   args[isBuy]が存在しない
+                            #   accountAddress -> ownerAddress
+                            if exchange_contract == self.share_exchange_contract:
+                                account_address = args["ownerAddress"]
+                                counterpart_address = args['counterpartAddress']
+                                is_buy = False
+                            else:
+                                account_address = args["accountAddress"]
+                                counterpart_address = ""
+                                is_buy = args["isBuy"]
+
                             self.sink.on_new_order(
                                 transaction_hash=transaction_hash,
                                 token_address=args['tokenAddress'],
                                 exchange_address=exchange_contract.address,
                                 order_id=args['orderId'],
-                                account_address=args['accountAddress'],
-                                counterpart_address=args['counterpartAddress'] if args.get('counterpartAddress') is not None else '',
-                                is_buy=args['isBuy'] if args.get('isBuy') is not None else False,
+                                account_address=account_address,
+                                counterpart_address=counterpart_address,
+                                is_buy=is_buy,
                                 price=args['price'],
                                 amount=args['amount'],
                                 agent_address=args['agentAddress'],
