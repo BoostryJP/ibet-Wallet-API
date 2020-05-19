@@ -15,7 +15,7 @@ if [ $SHARE_TOKEN_ENABLED = 1 ]; then
 fi
 
 if [ $MEMBERSHIP_TOKEN_ENABLED = 1 ]; then
-  python async/processor_Notifications_Membership_Exchange.py
+  python async/processor_Notifications_Membership_Exchange.py &
 fi
 
 if [ $COUPON_TOKEN_ENABLED = 1 ]; then
