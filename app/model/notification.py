@@ -131,7 +131,7 @@ class NotificationType(Enum):
     START_OFFERING = "StartOffering"
     STOP_OFFERING = "StopOffering"
     REDEEM = "Redeem"
-    STOP_TREATMENT = "StopTreatment"
+    SUSPEND = "Suspend"
     APPLY_FOR_OFFERING = "ApplyForOffering"
     ALLOT = "Allot"
     TRANSFER = "Transfer"

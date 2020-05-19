@@ -97,7 +97,7 @@ class Watcher:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
             self.filter_params["fromBlock"] = self.from_block
 
-            # 登録済みの債券リストを取得
+            # 登録済みの株式リストを取得
             if self.__class__.__name__ == "WatchTransfer":
                 share_token_list = self._get_share_token_all_list()
             else:
@@ -199,7 +199,7 @@ class WatchStopTreatment(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.STOP_TREATMENT.value
+            notification.notification_type = NotificationType.SUSPEND.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
