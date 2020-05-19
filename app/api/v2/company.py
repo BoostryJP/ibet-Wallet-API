@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 import requests
-import os
 
 from eth_utils import to_checksum_address
 from sqlalchemy import desc
@@ -11,8 +10,7 @@ from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing, BondToken, MembershipToken, CouponToken
-from app.model import ShareToken
+from app.model import Listing, BondToken, MembershipToken, CouponToken, ShareToken
 
 LOG = log.get_logger()
 
@@ -177,7 +175,7 @@ class CompanyTokenList(BaseResource):
         トークンModelの取得
 
         :param token_template: トークン種別
-        :return: 商品別トークンモデル
+        :return: 商品別のトークンモデル
         """
         if token_template == "IbetShare":
             return ShareToken
