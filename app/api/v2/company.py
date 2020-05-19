@@ -4,13 +4,15 @@ import requests
 import os
 
 from eth_utils import to_checksum_address
+from sqlalchemy import desc
 
 from app import log
 from app.api.common import BaseResource
 from app.errors import AppError, InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing
+from app.model import Listing, PrivateListing, BondToken, MembershipToken, CouponToken
+from app.model import ShareToken
 
 LOG = log.get_logger()
 
@@ -118,7 +120,7 @@ class CompanyTokenList(BaseResource):
     Handle for endpoint: /v2/Company/{eth_address}/Tokens
     """
 
-    def on_get(self, req, res, eth_address):
+    def on_get(self, req, res, eth_address=None):
         LOG.info('common.Company.CompanyTokenList')
 
         if not Web3.isAddress(eth_address):
@@ -127,20 +129,66 @@ class CompanyTokenList(BaseResource):
 
         session = req.context['session']
 
+        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
         # 取扱トークンリストを取得
-        listing_list = session.query(Listing).filter(Listing.owner_address == eth_address).all()
-        listing_list += session.query(PrivateListing).filter(PrivateListing.owner_address == eth_address).all()
+        available_list = session.query(Listing).\
+            filter(Listing.owner_address == eth_address).\
+            order_by(desc(Listing.id)).\
+            all()
 
-        # TokenListを降順に調べる(登録が新しい順)
-        listing_list.sort(key=lambda token: token.created, reverse=True)
+        token_list = []
+        for available_token in available_list:
+            token_address = to_checksum_address(available_token.token_address)
+            token_info = ListContract.functions.getTokenByAddress(token_address).call()
+            if token_info[0] != config.ZERO_ADDRSS:  # TokenListに公開されているもののみを対象とする
+                token_template = token_info[1]
+                if self.available_token_template(token_template):  # 取扱対象のトークン種別のみ対象とする
+                    token_model = self.get_token_model(token_template)
+                    token = token_model.get(session=session, token_address=token_address)
+                    token_list.append(token.__dict__)
+                else:
+                    continue
 
-        token_address_list = list(map(lambda listing: to_checksum_address(listing.token_address), listing_list))
+        self.on_success(res, token_list)
 
-        data = {
-           'token_list': token_address_list
-        }
+    @staticmethod
+    def available_token_template(token_template: str) -> bool:
+        """
+        取扱トークン種別判定
 
-        self.on_success(res, data)
+        :param token_template: トークン種別
+        :return: 判定結果（Boolean）
+        """
+        if token_template == "IbetShare":
+            return config.SHARE_TOKEN_ENABLED
+        elif token_template == "IbetStraightBond":
+            return config.BOND_TOKEN_ENABLED
+        elif token_template == "IbetMembership":
+            return config.MEMBERSHIP_TOKEN_ENABLED
+        elif token_template == "IbetCoupon":
+            return config.COUPON_TOKEN_ENABLED
+        else:
+            return False
+
+    @staticmethod
+    def get_token_model(token_template: str):
+        """
+        トークンModelの取得
+
+        :param token_template: トークン種別
+        :return: 商品別トークンモデル
+        """
+        if token_template == "IbetShare":
+            return ShareToken
+        elif token_template == "IbetStraightBond":
+            return BondToken
+        elif token_template == "IbetMembership":
+            return MembershipToken
+        elif token_template == "IbetCoupon":
+            return CouponToken
+        else:
+            return False
 
 
 # ------------------------------

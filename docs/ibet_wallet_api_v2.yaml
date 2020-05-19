@@ -400,11 +400,34 @@ paths:
                     type: string
                     example: OK
               data:
-                type: object
-                properties:
-                  token_list:
-                    type: array
-                    items:
+                type: array
+                items:
+                  type: object
+                  description: token object (IbetStraghtBond, IbetShare, IbetMembership, IbetCoupon)
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                    owner_address:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                    symbol:
+                      type: string
+                    total_supply:
+                      type: string
+                    image_url:
+                      type: string
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
                       type: string
   /PaymentAgent/{eth_address}:
     get:
@@ -2064,7 +2087,7 @@ paths:
       tags:
         - "OrderList"
       summary: "Straight Bond Order History (Bulk Get)"
-      operationId: "OrderList"
+      operationId: "StraightBondOrderList"
       parameters:
         - name: account_address_list
           in: query
@@ -2451,7 +2474,7 @@ paths:
       tags:
         - "OrderList"
       summary: "Share Order History (Bulk Get)"
-      operationId: "OrderList"
+      operationId: "ShareOrderList"
       parameters:
         - name: account_address_list
           in: query
@@ -2638,7 +2661,7 @@ paths:
       tags:
         - "OrderList"
       summary: "Membership Order History (Bulk Get)"
-      operationId: "OrderList"
+      operationId: "MembershipOrderList"
       parameters:
         - name: account_address_list
           in: query
@@ -2920,7 +2943,7 @@ paths:
       tags:
         - "OrderList"
       summary: "Share Order History (Bulk Get)"
-      operationId: "OrderList"
+      operationId: "CouponOrderList"
       parameters:
         - name: account_address_list
           in: query
