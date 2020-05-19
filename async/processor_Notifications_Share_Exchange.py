@@ -134,7 +134,7 @@ class WatchShareNewOrder(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = NotificationType.NEW_ORDER.value
             notification.priority = 0
-            notification.address = entry["args"]["accountAddress"]
+            notification.address = entry["args"]["ownerAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
@@ -175,7 +175,7 @@ class WatchShareCancelOrder(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = NotificationType.CANCEL_ORDER.value
             notification.priority = 0
-            notification.address = entry["args"]["accountAddress"]
+            notification.address = entry["args"]["ownerAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
