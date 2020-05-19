@@ -75,14 +75,17 @@ class App(falcon.API):
         self.add_route('/v2/Market/Agreement', market_information.GetAgreement())
 
         # 保有トークン一覧
-        self.add_route('/v2/Position/Share', position.ShareMyTokens())
         self.add_route('/v2/Position/StraightBond', position.StraightBondMyTokens())
+        self.add_route('/v2/Position/Share', position.ShareMyTokens())
         self.add_route('/v2/Position/Membership', position.MembershipMyTokens())
         self.add_route('/v2/Position/Coupon', position.CouponMyTokens())
         self.add_route('/v2/Position/Coupon/Consumptions', position.CouponConsumptions())
 
         # 注文一覧・約定一覧
-        self.add_route('/v2/OrderList', order_list.OrderList())
+        self.add_route('/v2/OrderList/StraightBond', order_list.StraightBondOrderList())
+        self.add_route('/v2/OrderList/Share', order_list.ShareOrderList())
+        self.add_route('/v2/OrderList/Membership', order_list.MembershipOrderList())
+        self.add_route('/v2/OrderList/Coupon', order_list.CouponOrderList())
 
         # 通知一覧
         self.add_route('/v2/Notifications', notification.Notifications())
