@@ -2,11 +2,13 @@
 # shellcheck disable=SC1090
 source ~/.bash_profile
 
-cd /app/ibet-Wallet-API
+#cd /app/ibet-Wallet-API
 
 python async/indexer_Transfer.py &
-python async/indexer_OrderAgree.py
+python async/indexer_OrderAgree.py &
 
 if [ $COUPON_TOKEN_ENABLED = 1 ]; then
-  python async/indexer_Consume_Coupon.py
+  python async/indexer_Consume_Coupon.py &
 fi
+
+tail -f /dev/null
