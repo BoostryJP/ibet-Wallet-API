@@ -223,8 +223,6 @@ class TestV2CouponMyTokens:
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     @staticmethod
@@ -234,8 +232,6 @@ class TestV2CouponMyTokens:
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1-1＞
@@ -292,8 +288,6 @@ class TestV2CouponMyTokens:
                 'status': True,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -366,8 +360,6 @@ class TestV2CouponMyTokens:
                 'status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -438,8 +430,6 @@ class TestV2CouponMyTokens:
                 'status': True,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -511,8 +501,6 @@ class TestV2CouponMyTokens:
                 'status': True,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -588,8 +576,6 @@ class TestV2CouponMyTokens:
                 'status': True,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -627,8 +613,6 @@ class TestV2CouponMyTokens:
                 'status': True,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -648,7 +632,6 @@ class TestV2CouponMyTokens:
                 count += 1
                 assert token == assumed_body_2
         assert count == 2
-
 
     # ＜正常系2-1＞
     # 残高あり、売注文中なし
@@ -704,8 +687,6 @@ class TestV2CouponMyTokens:
                 'status': True,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -776,8 +757,6 @@ class TestV2CouponMyTokens:
                 'status': True,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },

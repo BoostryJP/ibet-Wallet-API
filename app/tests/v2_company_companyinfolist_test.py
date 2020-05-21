@@ -51,8 +51,6 @@ class TestCompanyCompanyInfoList:
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # 正常系1-1： 登録済みのトークンアドレスに紐づく会社情報が返却される

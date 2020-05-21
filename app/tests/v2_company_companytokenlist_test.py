@@ -191,8 +191,6 @@ class TestV2CompanyCompanyTokenList:
                 'initial_offering_status': False,
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
-                'payment_method_credit_card': None,
-                'payment_method_bank': None,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -250,8 +248,6 @@ class TestV2CompanyCompanyTokenList:
                 'privacy_policy': 'プライバシーポリシー',
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
-                'payment_method_credit_card': None,
-                'payment_method_bank': None
             }
         ]
 
@@ -300,8 +296,6 @@ class TestV2CompanyCompanyTokenList:
                 ],
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
-                'payment_method_credit_card': None,
-                'payment_method_bank': None,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -352,8 +346,6 @@ class TestV2CompanyCompanyTokenList:
                 ],
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
-                'payment_method_credit_card': None,
-                'payment_method_bank': None,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -412,8 +404,6 @@ class TestV2CompanyCompanyTokenList:
                 ],
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
-                'payment_method_credit_card': None,
-                'payment_method_bank': None,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -440,8 +430,6 @@ class TestV2CompanyCompanyTokenList:
                 ],
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
-                'payment_method_credit_card': None,
-                'payment_method_bank': None,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }

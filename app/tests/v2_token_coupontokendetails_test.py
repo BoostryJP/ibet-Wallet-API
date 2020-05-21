@@ -14,14 +14,15 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
-class TestV2TokenCouponTokenDetails():
+class TestV2TokenCouponTokenDetails:
     """
     Test Case for v2.token.CouponTokenDetails
     """
 
     # テスト対象API
-    apiurl_base = '/v2/Token/Coupon/' # {contract_address}
+    apiurl_base = '/v2/Token/Coupon/'  # {contract_address}
 
+    @staticmethod
     def token_attribute(exchange_address):
         attribute = {
             'name': 'テストクーポン',
@@ -48,13 +49,12 @@ class TestV2TokenCouponTokenDetails():
             deploy_contract('TokenList', [], deployer['account_address'])
         return {'address': contract_address, 'abi': abi}
 
+    @staticmethod
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -105,8 +105,6 @@ class TestV2TokenCouponTokenDetails():
             ],
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
-            'payment_method_credit_card': True,
-            'payment_method_bank': True,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー'
         }
