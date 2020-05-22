@@ -140,6 +140,16 @@ class WatchShareNewOrder(Watcher):
             notification.metainfo = metadata
             db_session.merge(notification)
 
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = NotificationType.NEW_ORDER_COUNTERPART.value
+            notification.priority = 0
+            notification.address = entry["args"]["counterpartAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
 
 # イベント：注文取消
 class WatchShareCancelOrder(Watcher):
@@ -176,6 +186,16 @@ class WatchShareCancelOrder(Watcher):
             notification.notification_type = NotificationType.CANCEL_ORDER.value
             notification.priority = 0
             notification.address = entry["args"]["ownerAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = NotificationType.CANCEL_ORDER_COUNTERPART.value
+            notification.priority = 0
+            notification.address = entry["args"]["counterpartAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata

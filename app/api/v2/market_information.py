@@ -81,14 +81,18 @@ class GetAgreement(BaseResource):
 
     @staticmethod
     def exchange_contracts(exchange_address):
-        if exchange_address == to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS):
+        if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None and \
+                exchange_address == to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS):
             ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
-
-        elif exchange_address == to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS):
+        elif config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None and \
+                exchange_address == to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS):
             ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
-
-        elif exchange_address == to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS):
+        elif config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None and \
+                exchange_address == to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS):
             ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
+        elif config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None and \
+                exchange_address == to_checksum_address(config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS):
+            ExchangeContract = Contract.get_contract('IbetOTCExchange', exchange_address)
         else:
             description = 'Invalid Address'
             raise InvalidParameterError(description=description)

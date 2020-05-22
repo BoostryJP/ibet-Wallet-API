@@ -119,7 +119,9 @@ Index("notification_index_2", Notification.address, Notification.priority, Notif
 
 class NotificationType(Enum):
     NEW_ORDER = "NewOrder"
+    NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
     CANCEL_ORDER = "CancelOrder"
+    CANCEL_ORDER_COUNTERPART = "CancelOrderCounterpart"
     BUY_AGREEMENT = "BuyAgreement"
     BUY_SETTLEMENT_OK = "BuySettlementOK"
     BUY_SETTLEMENT_NG = "BuySettlementNG"
