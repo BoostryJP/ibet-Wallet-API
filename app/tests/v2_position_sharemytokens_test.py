@@ -4,10 +4,8 @@ import json
 from app import config
 from app.model import Listing, PrivateListing
 from .account_config import eth_account
-from .contract_modules import issue_share_token, register_share_list, membership_issue, membership_register_list, \
-    membership_offer, membership_get_latest_orderid, \
-    membership_take_buy, membership_get_latest_agreementid, \
-    membership_confirm_agreement, share_get_latest_orderid, share_offer, share_take_buy, share_confirm_agreement, \
+from .contract_modules import issue_share_token, register_share_list, \
+    share_get_latest_orderid, share_offer, share_take_buy, share_confirm_agreement, \
     register_personalinfo, share_get_latest_agreementid
 
 
@@ -113,10 +111,8 @@ class TestV2ShareMyTokens:
 
         # ＜決済業者オペレーション＞
         #   1）　決済
-        latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid)
-        membership_confirm_agreement(
-            agent, exchange, latest_orderid, latest_agreementid)
+        latest_agreementid = share_get_latest_agreementid(exchange, latest_orderid)
+        share_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション＞
         #   1) Make売
