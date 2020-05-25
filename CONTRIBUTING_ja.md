@@ -13,6 +13,8 @@
 ```
 postgres=# CREATE DATABASE ethcache OWNER ethuser;
 CREATE DATABASE
+postgres=# CREATE DATABASE ethcache_test OWNER ethuser;
+CREATE DATABASE
 ```
 
 ## 2. Python依存パッケージのインストール
