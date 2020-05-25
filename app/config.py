@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import configparser
 
 # basic setting
@@ -12,7 +13,12 @@ INI_FILE = os.path.join(
         '../conf/{}.ini'.format(APP_ENV))
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
-DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
+
+if 'pytest' in sys.modules:
+    # pytest実行時用DB
+    DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache_test'
+else:
+    DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
 
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 DB_AUTOCOMMIT = True
