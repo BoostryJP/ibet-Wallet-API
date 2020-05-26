@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 
 import falcon
 from cerberus import Validator
@@ -14,7 +14,6 @@ from app.model import Notification
 from app.utils.hooks import VerifySignature
 
 LOG = log.get_logger()
-JST = timezone(timedelta(hours=+9), "JST")
 
 # ------------------------------
 # 通知一覧

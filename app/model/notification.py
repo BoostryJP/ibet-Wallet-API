@@ -4,12 +4,9 @@ from enum import Enum
 from sqlalchemy import Column, Index, BigInteger, Sequence
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from app.model import Base
-
-UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 # 通知データをキャッシュするためのテーブル
