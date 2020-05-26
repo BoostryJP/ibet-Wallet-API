@@ -72,24 +72,16 @@ class Notification(Base):
         return "<Notification(notification_id='{}', notification_type='{}')>" \
             .format(self.notification_id, self.notification_type)
 
-    @staticmethod
-    def format_timestamp(datetime):
-        if datetime is None:
-            return None
-        # DBにはUTCで書き込まれているため、UTC -> JSTへの変換を実施
-        datetimejp = datetime.replace(tzinfo=UTC).astimezone(JST)
-        return datetimejp.strftime("%Y/%m/%d %H:%M:%S")
-
     def json(self):
         return {
             "notification_type": self.notification_type,
             "id": self.notification_id,
             "priority": self.priority,
-            "block_timestamp": Notification.format_timestamp(self.block_timestamp),
+            "block_timestamp": self.block_timestamp.strftime("%Y/%m/%d %H:%M:%S") if self.block_timestamp is not None else None,
             "is_read": self.is_read,
             "is_flagged": self.is_flagged,
             "is_deleted": self.is_deleted,
-            "deleted_at": Notification.format_timestamp(self.deleted_at),
+            "deleted_at": self.deleted_at.strftime("%Y/%m/%d %H:%M:%S") if self.deleted_at is not None else None,
             "args": self.args,
             "metainfo": self.metainfo,
             "account_address": self.address,

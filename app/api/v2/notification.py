@@ -100,7 +100,7 @@ class Notifications(BaseResource):
         if "is_deleted" in request_json:
             notification.is_deleted = request_json["is_deleted"]
             if request_json["is_deleted"]:
-                notification.deleted_at = datetime.now(tz=JST)
+                notification.deleted_at = datetime.utcnow()
             else:
                 notification.deleted_at = None
 
