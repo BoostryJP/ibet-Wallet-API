@@ -31,7 +31,7 @@ class TestNotification:
         n.is_flagged = False
         n.is_deleted = False
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0).replace(tzinfo=JST)  # JST時間として保存する
+        n.block_timestamp = datetime(2017, 6, 10, 10, 0, 0)
         n.args = {
             "hoge": "fuga",
         }
@@ -49,7 +49,7 @@ class TestNotification:
         n.is_flagged = False
         n.is_deleted = True
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 5, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.block_timestamp = datetime(2017, 5, 10, 10, 0, 0)
         n.args = {
             "hoge": "fuga",
         }
@@ -65,7 +65,7 @@ class TestNotification:
         n.is_flagged = True
         n.is_deleted = False
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 4, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.block_timestamp = datetime(2017, 4, 10, 10, 0, 0)
         n.args = {
             "hoge": "fuga",
         }
@@ -81,7 +81,7 @@ class TestNotification:
         n.is_flagged = False
         n.is_deleted = False
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 3, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.block_timestamp = datetime(2017, 3, 10, 10, 0, 0)
         n.args = {
             "hoge": "fuga",
         }
@@ -97,7 +97,7 @@ class TestNotification:
         n.is_flagged = False
         n.is_deleted = False
         n.deleted_at = None
-        n.block_timestamp = datetime(2017, 2, 10, 10, 0, 0).replace(tzinfo=JST)
+        n.block_timestamp = datetime(2017, 2, 10, 10, 0, 0)
         n.args = {
             "hoge": "fuga",
         }
