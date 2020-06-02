@@ -31,7 +31,7 @@ class TestV2TokenShareTokenDetails:
             'personalInfoAddress': personal_info_address,
             'totalSupply': 1000000,
             'issuePrice': 10000,
-            'dividends': 100,
+            'dividends': 101,
             'dividendRecordDate': '20200909',
             'dividendPaymentDate': '20201001',
             'cancellationDate': '20210101',
@@ -99,7 +99,7 @@ class TestV2TokenShareTokenDetails:
             'total_supply': 1000000,
             'issue_price': 10000,
             'dividend_information': {
-                'dividends': 100,
+                'dividends': 1.01,
                 'dividend_record_date': '20200909',
                 'dividend_payment_date': '20201001'
             },
