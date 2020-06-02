@@ -3646,6 +3646,8 @@ paths:
                           properties:
                             company_name:
                               type: string
+                            token_address:
+                              type: string  
                             token_name:
                               type: string
                             exchange_address:
@@ -3738,6 +3740,8 @@ paths:
                     type: object
                     properties:
                       company_name:
+                        type: string
+                      token_address:
                         type: string
                       token_name:
                         type: string
