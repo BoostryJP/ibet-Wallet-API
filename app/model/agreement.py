@@ -12,15 +12,17 @@ from app.utils import alchemy
 class Agreement(Base):
     __tablename__ = 'agreement'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    exchange_address = Column(String(256), primary_key=True)
+    transaction_hash = Column(String(66))
+    exchange_address = Column(String(42), primary_key=True)
     order_id = Column(BigInteger, primary_key=True)
     agreement_id = Column(BigInteger, primary_key=True)
     unique_order_id = Column(String(256), index=True)  # NOTE: exchange_address + '_' + str(order_id)
-    buyer_address = Column(String(256), index=True)
-    seller_address = Column(String(256), index=True)
-    counterpart_address = Column(String(256))
+    buyer_address = Column(String(42), index=True)
+    seller_address = Column(String(42), index=True)
+    counterpart_address = Column(String(42))
     amount = Column(BigInteger)
     status = Column(Integer)
+    agreement_timestamp = Column(DateTime, default=None)
     settlement_timestamp = Column(DateTime, default=None)
 
     def __repr__(self):

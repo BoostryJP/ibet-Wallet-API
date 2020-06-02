@@ -8,7 +8,8 @@ from app.tests.contract_modules import issue_bond_token, register_personalinfo, 
     offer_bond_token, get_latest_orderid, take_buy_bond_token, get_latest_agreementid, \
     membership_issue, membership_offer, membership_get_latest_orderid, membership_get_latest_agreementid, \
     membership_take_buy, issue_coupon_token, coupon_offer, coupon_get_latest_orderid, coupon_take_buy, \
-    coupon_get_latest_agreementid
+    coupon_get_latest_agreementid, issue_share_token, share_offer, share_get_latest_orderid, share_take_buy, \
+    share_get_latest_agreementid
 
 
 class TestV2GetAgreement:
@@ -20,7 +21,8 @@ class TestV2GetAgreement:
     apiurl = '/v2/Market/Agreement'
 
     # 約定イベントの作成（債券）
-    def _generate_agree_event_bond(self, exchange, personal_info, payment_gateway):
+    @staticmethod
+    def _generate_agree_event_bond(exchange, personal_info, payment_gateway):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
 
@@ -69,8 +71,51 @@ class TestV2GetAgreement:
 
         return token, latest_orderid, latest_agreementid
 
+    # 約定イベントの作成（株式）
+    @staticmethod
+    def _generate_agree_event_share(exchange, personal_info):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+
+        attribute = {
+            'name': 'テスト株式',
+            'symbol': 'SHARE',
+            'tradableExchange': exchange['address'],
+            'personalInfoAddress': personal_info['address'],
+            'issuePrice': 1000,
+            'totalSupply': 1000000,
+            'dividends': 101,
+            'dividendRecordDate': '20200401',
+            'dividendPaymentDate': '20200502',
+            'cancellationDate': '20200603',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー',
+            'memo': 'メモ',
+            'transferable': True
+        }
+
+        # ＜発行体オペレーション＞
+        #   1) 株式トークン発行
+        #   2) 株式トークンをトークンリストに登録
+        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
+        #   4) 募集（Make売）
+        token = issue_share_token(issuer, attribute)
+        register_personalinfo(issuer, personal_info)
+        share_offer(issuer, exchange, token, trader, 100, 1000)
+
+        # ＜投資家オペレーション＞
+        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
+        #   2) Take買
+        register_personalinfo(trader, personal_info)
+        latest_orderid = share_get_latest_orderid(exchange)
+        share_take_buy(trader, exchange, latest_orderid)
+        latest_agreementid = share_get_latest_agreementid(exchange, latest_orderid)
+
+        return token, latest_orderid, latest_agreementid
+
     # 約定イベントの作成（会員権）
-    def _generate_agree_event_membership(self, exchange):
+    @staticmethod
+    def _generate_agree_event_membership(exchange):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
 
@@ -100,7 +145,8 @@ class TestV2GetAgreement:
         return token, latest_orderid, latest_agreementid
 
     # 約定イベントの作成（クーポン）
-    def _generate_agree_event_coupon(self, exchange):
+    @staticmethod
+    def _generate_agree_event_coupon(exchange):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
 
@@ -186,7 +232,12 @@ class TestV2GetAgreement:
 
         _, order_id, agreement_id = self._generate_agree_event_bond(exchange, personal_info, payment_gateway)
         self._indexer_agreement(session, exchange, order_id, agreement_id)
+
+        # 環境変数設定
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
         request_params = {
             "order_id": order_id,
@@ -224,7 +275,12 @@ class TestV2GetAgreement:
 
         _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
         self._indexer_agreement(session, exchange, order_id, agreement_id)
+
+        # 環境変数設定
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
         request_params = {
             "order_id": order_id,
@@ -262,7 +318,56 @@ class TestV2GetAgreement:
 
         _, order_id, agreement_id = self._generate_agree_event_coupon(exchange)
         self._indexer_agreement(session, exchange, order_id, agreement_id)
+
+        # 環境変数設定
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+
+        request_params = {
+            "order_id": order_id,
+            "agreement_id": agreement_id,
+            "exchange_address": exchange['address']
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'amount': 100,
+            'canceled': False,
+            'counterpart': eth_account['trader']['account_address'],
+            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
+            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'paid': False,
+            'price': 1000
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['amount'] == assumed_body['amount']
+        assert resp.json['data']['canceled'] == assumed_body['canceled']
+        assert resp.json['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
+        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
+        assert resp.json['data']['paid'] == assumed_body['paid']
+        assert resp.json['data']['price'] == assumed_body['price']
+
+    # <Normal_4>
+    # Share
+    def test_normal_4(self, client, session, shared_contract):
+        exchange = shared_contract['IbetOTCExchange']
+        personal_info = shared_contract['PersonalInfo']
+
+        _, order_id, agreement_id = self._generate_agree_event_share(exchange, personal_info)
+        self._indexer_agreement(session, exchange, order_id, agreement_id)
+
+        # 環境変数設定
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
         request_params = {
             "order_id": order_id,
@@ -341,7 +446,7 @@ class TestV2GetAgreement:
     # 400
     def test_tick_error_3(self, client):
         request_params = {
-            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B', # アドレス長が短い
+            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B',  # アドレス長が短い
             'order_id': 2,
             'agreement_id': 102
         }

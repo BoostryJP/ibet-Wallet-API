@@ -31,7 +31,7 @@ class TestV2TokenShareTokenDetails:
             'personalInfoAddress': personal_info_address,
             'totalSupply': 1000000,
             'issuePrice': 10000,
-            'dividends': 100,
+            'dividends': 101,
             'dividendRecordDate': '20200909',
             'dividendPaymentDate': '20201001',
             'cancellationDate': '20210101',
@@ -97,10 +97,9 @@ class TestV2TokenShareTokenDetails:
             'name': 'テスト株式',
             'symbol': 'SHARE',
             'total_supply': 1000000,
-            'image_url': [],
             'issue_price': 10000,
             'dividend_information': {
-                'dividends': 100,
+                'dividends': 1.01,
                 'dividend_record_date': '20200909',
                 'dividend_payment_date': '20201001'
             },
@@ -110,6 +109,7 @@ class TestV2TokenShareTokenDetails:
                 {'id': 2, 'url': 'http://hogehoge/2'},
                 {'id': 3, 'url': 'http://hogehoge/3'}
             ],
+            'image_url': [],
             'offering_status': False,
             'memo':  'メモ',
             'max_holding_quantity': 1,

@@ -84,6 +84,10 @@ paths:
                     type: string
                   ibet_coupon_exchange_abi:
                     type: object
+                  ibet_otc_exchange_address:
+                    type: string
+                  ibet_otc_exchange_abi:
+                    type: object
                   agent_address:
                     type: string
   /Eth/TransactionCount/{eth_address}:
@@ -227,6 +231,31 @@ paths:
         - "ABI"
       summary: "StraightBond ABI"
       operationId: "StraightBondABI"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+  /ABI/Share:
+    get:
+      tags:
+        - "ABI"
+      summary: "Share ABI"
+      operationId: "ShareABI"
       responses:
         200:
           description: successful operation
@@ -400,11 +429,34 @@ paths:
                     type: string
                     example: OK
               data:
-                type: object
-                properties:
-                  token_list:
-                    type: array
-                    items:
+                type: array
+                items:
+                  type: object
+                  description: token object (IbetStraghtBond, IbetShare, IbetMembership, IbetCoupon)
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                    owner_address:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                    symbol:
+                      type: string
+                    total_supply:
+                      type: string
+                    image_url:
+                      type: string
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
                       type: string
   /PaymentAgent/{eth_address}:
     get:
@@ -705,6 +757,111 @@ paths:
                     id:
                       type: integer
                       description: cursor id
+  /Token/Share:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Share tokens"
+      operationId: "ShareTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                      example:
+                        IbetShare
+                    owner_address:
+                      type: string
+                      description: issuer address
+                    company_name:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                      description: token name
+                    symbol:
+                      type: string
+                      description: token symbol
+                    total_supply:
+                      type: integer
+                    issue_price:
+                      type: integer
+                    dividend_information:
+                      type: object
+                      properties:
+                        dividends:
+                          type: number
+                        dividend_record_date:
+                          type: string
+                        divicend_payment_date:
+                          type: string
+                    cancellation_date:
+                      type: string
+                    reference_urls:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          url:
+                            type: string
+                    image_url:
+                      type: array
+                    memo:
+                      type: string
+                    transferable:
+                      type: boolean
+                    offering_status:
+                      type: boolean
+                    status:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
+                      type: string
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    id:
+                      type: integer
+                      description: cursor id
   /Token/Membership:
     get:
       tags:
@@ -901,7 +1058,7 @@ paths:
     get:
       tags:
         - "Token"
-      summary: "List of StraightBond tokens"
+      summary: "StraightBond token details"
       operationId: "StraightBondTokenDetails"
       parameters:
         - name: "contract_address"
@@ -976,6 +1133,8 @@ paths:
                     type: string
                   interest_payment_date12:
                     type: string
+                  isRedeemed:
+                    type: boolean
                   redemption_date:
                     type: string
                   redemption_value:
@@ -1014,11 +1173,106 @@ paths:
                     type: string
                   transferable:
                     type: boolean
+  /Token/Share/{contract_address}:
+    get:
+      tags:
+        - "Token"
+      summary: "Share token details"
+      operationId: "ShareTokenDetails"
+      parameters:
+        - name: "contract_address"
+          in: "path"
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  token_address:
+                    type: string
+                  token_template:
+                    type: string
+                    example:
+                      IbetShare
+                  owner_address:
+                    type: string
+                    description: issuer address
+                  company_name:
+                    type: string
+                  rsa_publickey:
+                    type: string
+                  name:
+                    type: string
+                    description: token name
+                  symbol:
+                    type: string
+                    description: token symbol
+                  total_supply:
+                    type: integer
+                  issue_price:
+                    type: integer
+                  dividend_information:
+                    type: object
+                    properties:
+                      dividends:
+                        type: number
+                      dividend_record_date:
+                        type: string
+                      divicend_payment_date:
+                        type: string
+                  cancellation_date:
+                    type: string
+                  reference_urls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        url:
+                          type: string
+                  image_url:
+                    type: array
+                  memo:
+                    type: string
+                  transferable:
+                    type: boolean
+                  offering_status:
+                    type: boolean
+                  status:
+                    type: boolean
+                  contact_information:
+                    type: string
+                  privacy_policy:
+                    type: string
+                  max_holding_quantity:
+                    type: integer
+                  max_sell_amount:
+                    type: integer
+                  payment_method_credit_card:
+                    type: boolean
+                  payment_method_bank:
+                    type: boolean
   /Token/Membership/{contract_address}:
     get:
       tags:
         - "Token"
-      summary: "List of Membership tokens"
+      summary: "Membership token details"
       operationId: "MembershipTokenDetails"
       parameters:
         - name: "contract_address"
@@ -1104,7 +1358,7 @@ paths:
     get:
       tags:
         - "Token"
-      summary: "List of Coupon tokens"
+      summary: "Coupon token details"
       operationId: "CouponTokenDetails"
       parameters:
         - name: "contract_address"
@@ -1813,6 +2067,112 @@ paths:
                       type: integer
                     commitment:
                       type: integer
+  /Position/Share:
+    post:
+      tags:
+        - "Position"
+      summary: "Share Token Position (Bulk Get)"
+      operationId: "ShareMyTokens"
+      parameters:
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        token_template:
+                          type: string
+                          example:
+                            IbetShare
+                        owner_address:
+                          type: string
+                          description: issuer address
+                        company_name:
+                          type: string
+                        rsa_publickey:
+                          type: string
+                        name:
+                          type: string
+                          description: token name
+                        symbol:
+                          type: string
+                          description: token symbol
+                        total_supply:
+                          type: integer
+                        issue_price:
+                          type: integer
+                        dividend_information:
+                          type: object
+                          properties:
+                            dividends:
+                              type: number
+                            dividend_record_date:
+                              type: string
+                            divicend_payment_date:
+                              type: string
+                        cancellation_date:
+                          type: string
+                        reference_urls:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              url:
+                                type: string
+                        image_url:
+                          type: array
+                        memo:
+                          type: string
+                        transferable:
+                          type: boolean
+                        offering_status:
+                          type: boolean
+                        status:
+                          type: boolean
+                        contact_information:
+                          type: string
+                        privacy_policy:
+                          type: string
+                        max_holding_quantity:
+                          type: integer
+                        max_sell_amount:
+                          type: integer
+                        payment_method_credit_card:
+                          type: boolean
+                        payment_method_bank:
+                          type: boolean
+                    balance:
+                      type: integer
+                    commitment:
+                      type: integer
   /Position/Membership:
     post:
       tags:
@@ -1882,6 +2242,8 @@ paths:
                         transferable:
                           type: boolean
                         status:
+                          type: boolean
+                        initial_offering_status:
                           type: boolean
                         image_url:
                           type: array
@@ -1978,6 +2340,8 @@ paths:
                           type: boolean
                         status:
                           type: boolean
+                        initial_offering_status:
+                          type: boolean
                         image_url:
                           type: array
                           items:
@@ -2053,12 +2417,12 @@ paths:
                     value:
                       type: integer
                       description: consumption amount
-  /OrderList:
+  /OrderList/StraightBond:
     post:
       tags:
         - "OrderList"
-      summary: "Token Order History (Bulk Get)"
-      operationId: "OrderList"
+      summary: "Straight Bond Order History (Bulk Get)"
+      operationId: "StraightBondOrderList"
       parameters:
         - name: account_address_list
           in: query
@@ -2092,7 +2456,98 @@ paths:
                       properties:
                         token:
                           type: object
-                          description: token object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetStraightBond
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            face_value:
+                              type: integer
+                            interest_rate:
+                              type: number
+                            interest_payment_date1:
+                              type: string
+                            interest_payment_date2:
+                              type: string
+                            interest_payment_date3:
+                              type: string
+                            interest_payment_date4:
+                              type: string
+                            interest_payment_date5:
+                              type: string
+                            interest_payment_date6:
+                              type: string
+                            interest_payment_date7:
+                              type: string
+                            interest_payment_date8:
+                              type: string
+                            interest_payment_date9:
+                              type: string
+                            interest_payment_date10:
+                              type: string
+                            interest_payment_date11:
+                              type: string
+                            interest_payment_date12:
+                              type: string
+                            redemption_date:
+                              type: string
+                            redemption_value:
+                              type: integer
+                            return_date:
+                              type: string
+                            return_amount:
+                              type: string
+                            purpose:
+                              type: string
+                              description: purpose of issue
+                            transferable:
+                              type: boolean
+                            isRedeemed:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            certification:
+                              type: array
+                              items:
+                                type: string
+                            initial_offering_status:
+                              type: boolean
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
                         order:
                           type: object
                           properties:
@@ -2106,6 +2561,377 @@ paths:
                               type: boolean
                             canceled:
                               type: boolean
+                            order_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  settlement_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetStraightBond
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            face_value:
+                              type: integer
+                            interest_rate:
+                              type: number
+                            interest_payment_date1:
+                              type: string
+                            interest_payment_date2:
+                              type: string
+                            interest_payment_date3:
+                              type: string
+                            interest_payment_date4:
+                              type: string
+                            interest_payment_date5:
+                              type: string
+                            interest_payment_date6:
+                              type: string
+                            interest_payment_date7:
+                              type: string
+                            interest_payment_date8:
+                              type: string
+                            interest_payment_date9:
+                              type: string
+                            interest_payment_date10:
+                              type: string
+                            interest_payment_date11:
+                              type: string
+                            interest_payment_date12:
+                              type: string
+                            redemption_date:
+                              type: string
+                            redemption_value:
+                              type: integer
+                            return_date:
+                              type: string
+                            return_amount:
+                              type: string
+                            purpose:
+                              type: string
+                              description: purpose of issue
+                            transferable:
+                              type: boolean
+                            isRedeemed:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            certification:
+                              type: array
+                              items:
+                                type: string
+                            initial_offering_status:
+                              type: boolean
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  complete_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetStraightBond
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            face_value:
+                              type: integer
+                            interest_rate:
+                              type: number
+                            interest_payment_date1:
+                              type: string
+                            interest_payment_date2:
+                              type: string
+                            interest_payment_date3:
+                              type: string
+                            interest_payment_date4:
+                              type: string
+                            interest_payment_date5:
+                              type: string
+                            interest_payment_date6:
+                              type: string
+                            interest_payment_date7:
+                              type: string
+                            interest_payment_date8:
+                              type: string
+                            interest_payment_date9:
+                              type: string
+                            interest_payment_date10:
+                              type: string
+                            interest_payment_date11:
+                              type: string
+                            interest_payment_date12:
+                              type: string
+                            redemption_date:
+                              type: string
+                            redemption_value:
+                              type: integer
+                            return_date:
+                              type: string
+                            return_amount:
+                              type: string
+                            purpose:
+                              type: string
+                              description: purpose of issue
+                            transferable:
+                              type: boolean
+                            isRedeemed:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            certification:
+                              type: array
+                              items:
+                                type: string
+                            initial_offering_status:
+                              type: boolean
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        settlement_timestamp:
+                          type: string
+                          description: settlement timestamp
+                        sort_id:
+                          type: integer
+  /OrderList/Share:
+    post:
+      tags:
+        - "OrderList"
+      summary: "Share Order History (Bulk Get)"
+      operationId: "ShareOrderList"
+      parameters:
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  order_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetShare
+                            owner_address:
+                              type: string
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                            symbol:
+                              type: string
+                            total_supply:
+                              type: integer
+                            issue_price:
+                              type: integer
+                            dividend_information:
+                              type: object
+                              properties:
+                                dividends:
+                                  type: number
+                                dividend_record_date:
+                                  type: string
+                                  example:
+                                    20200930
+                                dividend_payment_date:
+                                  type: string
+                                  example:
+                                    20201231
+                            cancellation_date:
+                              type: string
+                            reference_urls:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            offering_status:
+                              type: boolean
+                            status:
+                              type: boolean
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        order:
+                          type: object
+                          properties:
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            order_timestamp:
+                              type: string
                         sort_id:
                           type: integer
                   settlement_list:
@@ -2131,6 +2957,8 @@ paths:
                               type: boolean
                             canceled:
                               type: boolean
+                            agreement_timestamp:
+                              type: string
                         sort_id:
                           type: integer
                   complete_list:
@@ -2156,9 +2984,575 @@ paths:
                               type: boolean
                             canceled:
                               type: boolean
+                            agreement_timestamp:
+                              type: string
                         settlement_timestamp:
                           type: string
-                          description: settlement timestamp (JST)
+                          description: settlement timestamp
+                        sort_id:
+                          type: integer
+  /OrderList/Membership:
+    post:
+      tags:
+        - "OrderList"
+      summary: "Membership Order History (Bulk Get)"
+      operationId: "MembershipOrderList"
+      parameters:
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  order_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetMembership
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        order:
+                          type: object
+                          properties:
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            order_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  settlement_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetMembership
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  complete_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetMembership
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        settlement_timestamp:
+                          type: string
+                          description: settlement timestamp
+                        sort_id:
+                          type: integer
+  /OrderList/Coupon:
+    post:
+      tags:
+        - "OrderList"
+      summary: "Share Order History (Bulk Get)"
+      operationId: "CouponOrderList"
+      parameters:
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  order_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetCoupon
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        order:
+                          type: object
+                          properties:
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            order_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  settlement_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetCoupon
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  complete_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetCoupon
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            payment_method_credit_card:
+                              type: boolean
+                            payment_method_bank:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        settlement_timestamp:
+                          type: string
+                          description: settlement timestamp
                         sort_id:
                           type: integer
   /Notifications:
@@ -2219,11 +3613,11 @@ paths:
                           example:
                             NewOrder
                           enum: [
-                            NewOrder,CancelOrder,
+                            NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
                             BuyAgreement,BuySettlementOK,BuySettlementNG,
                             SellAgreement,SellSettlementOK,SellSettlementNG,
-                            StartInitialOffering,StopInitialOffering,
-                            Redeem,ApplyForOffering,Allot,Transfer,
+                            StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
+                            Redeem,Suspend,ApplyForOffering,Allot,Transfer,
                             PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
                             PaymentAccountWarn,PaymentAccountBan
                           ]
@@ -2235,7 +3629,7 @@ paths:
                           type: integer
                         block_timestamp:
                           type: string
-                          description: block timestamp (JST)
+                          description: block timestamp
                         is_read:
                           type: boolean
                         is_flagged:
@@ -2244,7 +3638,7 @@ paths:
                           type: boolean
                         deleted_at:
                           type: string
-                          description: datetime of deletion (JST)
+                          description: datetime of deletion
                         args:
                           type: object
                         metainfo:
@@ -2328,7 +3722,7 @@ paths:
                     type: integer
                   block_timestamp:
                     type: string
-                    description: block timestamp (JST)
+                    description: block timestamp
                   is_read:
                     type: boolean
                   is_flagged:
@@ -2337,7 +3731,7 @@ paths:
                     type: boolean
                   deleted_at:
                     type: string
-                    description: datetime of deletion (JST)
+                    description: datetime of deletion
                   args:
                     type: object
                   metainfo:

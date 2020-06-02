@@ -21,6 +21,7 @@ class TestV2MembershipTick:
         o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
         o.order_id = 1
         o.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(1)
+        o.counterpart_address = ''
         o.price = 70
         o.amount = 5
         o.is_buy = True
@@ -32,6 +33,7 @@ class TestV2MembershipTick:
         o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
         o.order_id = 2
         o.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(2)
+        o.counterpart_address = ''
         o.price = 80
         o.amount = 5
         o.is_buy = True
@@ -71,6 +73,7 @@ class TestV2MembershipTick:
         o.token_address = '0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a'
         o.order_id = 1
         o.unique_order_id = '0x1234567890123456789012345678901234567890' + "_" + str(1)
+        o.counterpart_address = ''
         o.price = 70
         o.amount = 5
         o.is_buy = True

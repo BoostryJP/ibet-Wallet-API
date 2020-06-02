@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-
 import os
 import sys
+import time
+import logging
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
+from web3 import Web3
 
 path = os.path.join(os.path.dirname(__file__), '../')
 sys.path.append(path)
 
-import logging
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-import time
-from web3 import Web3
 from app import log
 from app import config
 from app.model import Agreement, AgreementStatus, Order, Listing
@@ -18,6 +18,7 @@ from app.contracts import Contract
 from web3.middleware import geth_poa_middleware
 
 from datetime import datetime, timezone, timedelta
+
 JST = timezone(timedelta(hours=+9), "JST")
 
 LOG = log.get_logger()
@@ -70,8 +71,9 @@ class Sinks:
 
 class ConsoleSink:
     @staticmethod
-    def on_new_order(token_address, exchange_address,
-                     order_id, account_address, is_buy, price, amount, agent_address):
+    def on_new_order(transaction_hash, token_address, exchange_address,
+                     order_id, account_address, counterpart_address,
+                     is_buy, price, amount, agent_address, order_timestamp):
         LOG.info(
             "NewOrder: exchange_address={}, order_id={}".format(
                 exchange_address, order_id
@@ -87,8 +89,8 @@ class ConsoleSink:
         )
 
     @staticmethod
-    def on_agree(exchange_address, order_id, agreement_id,
-                 buyer_address, seller_address, counterpart_address, amount):
+    def on_agree(transaction_hash, exchange_address, order_id, agreement_id,
+                 buyer_address, seller_address, counterpart_address, amount, agreement_timestamp):
         LOG.info(
             "Agree: exchange_address={}, orderId={}, agreementId={}".format(
                 exchange_address, order_id, agreement_id
@@ -119,35 +121,39 @@ class DBSink:
     def __init__(self, db):
         self.db = db
 
-    def on_new_order(self, token_address, exchange_address,
-                     order_id, account_address, is_buy,
-                     price, amount, agent_address):
+    def on_new_order(self, transaction_hash: str, token_address: str, exchange_address: str,
+                     order_id: int, account_address: str, counterpart_address: str, is_buy: bool, price: int, amount: int,
+                     agent_address: str, order_timestamp: datetime):
         order = self.__get_order(exchange_address, order_id)
         if order is None:
             order = Order()
+            order.transaction_hash = transaction_hash
             order.token_address = token_address
             order.exchange_address = exchange_address
             order.order_id = order_id
             order.unique_order_id = exchange_address + '_' + str(order_id)
             order.account_address = account_address
+            order.counterpart_address = counterpart_address
             order.is_buy = is_buy
             order.price = price
             order.amount = amount
             order.agent_address = agent_address
             order.is_cancelled = False
+            order.order_timestamp = order_timestamp
             self.db.merge(order)
 
-    def on_cancel_order(self, exchange_address, order_id):
+    def on_cancel_order(self, exchange_address: str, order_id: int):
         order = self.__get_order(exchange_address, order_id)
         if order is not None:
             order.is_cancelled = True
 
-    def on_agree(self, exchange_address, order_id, agreement_id,
-                 buyer_address, seller_address, counterpart_address, amount):
-        agreement = self.__get_agreement(
-            exchange_address, order_id, agreement_id)
+    def on_agree(self, transaction_hash: str, exchange_address: str, order_id: int, agreement_id: int,
+                 buyer_address: str, seller_address: str, counterpart_address: str,
+                 amount: int, agreement_timestamp: datetime):
+        agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is None:
             agreement = Agreement()
+            agreement.transaction_hash = transaction_hash
             agreement.exchange_address = exchange_address
             agreement.order_id = order_id
             agreement.agreement_id = agreement_id
@@ -157,16 +163,16 @@ class DBSink:
             agreement.counterpart_address = counterpart_address
             agreement.amount = amount
             agreement.status = AgreementStatus.PENDING.value
+            agreement.agreement_timestamp = agreement_timestamp
             self.db.merge(agreement)
 
-    def on_settlement_ok(self, exchange_address, order_id, agreement_id, settlement_timestamp):
-        agreement = self.__get_agreement(
-            exchange_address, order_id, agreement_id)
+    def on_settlement_ok(self, exchange_address: str, order_id: int, agreement_id: int, settlement_timestamp: datetime):
+        agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is not None:
             agreement.status = AgreementStatus.DONE.value
             agreement.settlement_timestamp = settlement_timestamp
 
-    def on_settlement_ng(self, exchange_address, order_id, agreement_id):
+    def on_settlement_ng(self, exchange_address: str, order_id: int, agreement_id: int):
         agreement = self.__get_agreement(
             exchange_address, order_id, agreement_id)
         if agreement is not None:
@@ -175,13 +181,13 @@ class DBSink:
     def flush(self):
         self.db.commit()
 
-    def __get_order(self, exchange_address, order_id):
+    def __get_order(self, exchange_address: str, order_id: int):
         return self.db.query(Order). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.order_id == order_id). \
             first()
 
-    def __get_agreement(self, exchange_address, order_id, agreement_id):
+    def __get_agreement(self, exchange_address: str, order_id: int, agreement_id: int):
         return self.db.query(Agreement). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.order_id == order_id). \
@@ -192,23 +198,37 @@ class DBSink:
 class Processor:
     def __init__(self, web3, sink, db):
         self.web3 = web3
-        self.bond_exchange_contract = Contract.get_contract(
-            'IbetStraightBondExchange',
-            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
-        )
-        self.membership_exchange_contract = Contract.get_contract(
-            'IbetMembershipExchange',
-            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-        )
-        self.coupon_exchange_contract = Contract.get_contract(
-            'IbetCouponExchange',
-            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        )
-        self.exchange_list = [
-            self.bond_exchange_contract,
-            self.membership_exchange_contract,
-            self.coupon_exchange_contract
-        ]
+        self.exchange_list = []
+        # 債券取引コントラクト登録
+        if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
+            bond_exchange_contract = Contract.get_contract(
+                'IbetStraightBondExchange',
+                config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(bond_exchange_contract)
+        # 会員権取引コントラクト登録
+        if config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
+            membership_exchange_contract = Contract.get_contract(
+                'IbetMembershipExchange',
+                config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(membership_exchange_contract)
+        # クーポン取引コントラクト登録
+        if config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
+            coupon_exchange_contract = Contract.get_contract(
+                'IbetCouponExchange',
+                config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(coupon_exchange_contract)
+        # OTC取引コントラクト登録
+        if config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
+            self.share_exchange_contract = Contract.get_contract(
+                'IbetOTCExchange',
+                config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+            )
+            self.exchange_list.append(self.share_exchange_contract)
+        else:
+            self.share_exchange_contract = ""
         self.sink = sink
         self.latest_block = web3.eth.blockNumber
         self.db = db
@@ -249,16 +269,37 @@ class Processor:
                     else:
                         available_token = self.db.query(Listing). \
                             filter(Listing.token_address == args['tokenAddress'])
+                        transaction_hash = event["transactionHash"].hex()
+                        order_timestamp = datetime.fromtimestamp(
+                            web3.eth.getBlock(event['blockNumber'])['timestamp'],
+                            JST
+                        )
                         if available_token is not None:
+                            # NOTE: OTC取引の場合
+                            #   args[counterpartAddress]が存在する
+                            #   args[isBuy]が存在しない
+                            #   accountAddress -> ownerAddress
+                            if exchange_contract == self.share_exchange_contract:
+                                account_address = args["ownerAddress"]
+                                counterpart_address = args['counterpartAddress']
+                                is_buy = False
+                            else:
+                                account_address = args["accountAddress"]
+                                counterpart_address = ""
+                                is_buy = args["isBuy"]
+
                             self.sink.on_new_order(
+                                transaction_hash=transaction_hash,
                                 token_address=args['tokenAddress'],
                                 exchange_address=exchange_contract.address,
                                 order_id=args['orderId'],
-                                account_address=args['accountAddress'],
-                                is_buy=args['isBuy'],
+                                account_address=account_address,
+                                counterpart_address=counterpart_address,
+                                is_buy=is_buy,
                                 price=args['price'],
                                 amount=args['amount'],
                                 agent_address=args['agentAddress'],
+                                order_timestamp=order_timestamp
                             )
 
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
@@ -302,14 +343,24 @@ class Processor:
                     if args['amount'] > sys.maxsize:
                         pass
                     else:
-                        order_id = args['orderId']
-                        orderbook = exchange_contract.functions.getOrder(order_id).call()
-                        is_buy = orderbook[4]
-                        counterpart_address = args['buyAddress']
+                        # IbetOTCExchangeの場合、is_buyが存在せずMake注文は全て売り注文
+                        # NOTE: 他商品がOTCExchangeを利用する場合修正が必要
+                        is_buy = False
+                        if exchange_contract != self.share_exchange_contract:
+                            order_id = args['orderId']
+                            orderbook = exchange_contract.functions.getOrder(order_id).call()
+                            is_buy = orderbook[4]
                         if is_buy:
                             counterpart_address = args['sellAddress']
-
+                        else:
+                            counterpart_address = args['buyAddress']
+                        transaction_hash = event["transactionHash"].hex()
+                        agreement_timestamp = datetime.fromtimestamp(
+                            web3.eth.getBlock(event['blockNumber'])['timestamp'],
+                            JST
+                        )
                         self.sink.on_agree(
+                            transaction_hash=transaction_hash,
                             exchange_address=exchange_contract.address,
                             order_id=args['orderId'],
                             agreement_id=args['agreementId'],
@@ -317,6 +368,7 @@ class Processor:
                             seller_address=args['sellAddress'],
                             counterpart_address=counterpart_address,
                             amount=args['amount'],
+                            agreement_timestamp=agreement_timestamp
                         )
 
                 self.web3.eth.uninstallFilter(event_filter.filter_id)

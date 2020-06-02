@@ -2,6 +2,9 @@
 from app.model import Order, Agreement, AgreementStatus
 from .contract_modules import *
 
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
 """
 Straight Bond
 """
@@ -9,11 +12,11 @@ Straight Bond
 
 class TestV2OrderList_Bond:
     """
-    Test Case for v2.order_list.OrderList
+    Test Case for v2.order_list.StraightBondOrderList.
     """
 
     # テスト対象API
-    apiurl = '/v2/OrderList/'
+    apiurl = '/v2/OrderList/StraightBond'
 
     @staticmethod
     def bond_token_attribute(exchange, personal_info):
@@ -176,11 +179,13 @@ class TestV2OrderList_Bond:
         order.order_id = order_id
         order.unique_order_id = bond_exchange['address'] + '_' + str(1)
         order.account_address = account['account_address']
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
         order.agent_address = eth_account['agent']['account_address']
         order.is_cancelled = False
+        order.order_timestamp = '2019-06-17 00:00:00'
         session.add(order)
 
         resp = client.simulate_post(
@@ -192,6 +197,7 @@ class TestV2OrderList_Bond:
                 'token_template': 'IbetStraightBond',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
                 'total_supply': 1000000,
@@ -237,10 +243,12 @@ class TestV2OrderList_Bond:
             },
             'order': {
                 'order_id': order_id,
+                'counterpart_address': '',
                 'amount': 1000000,
                 'price': 1000,
                 'is_buy': False,
-                'canceled': False
+                'canceled': False,
+                'order_timestamp': '2019/06/17 00:00:00'
             }
         }
 
@@ -280,6 +288,7 @@ class TestV2OrderList_Bond:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -291,6 +300,7 @@ class TestV2OrderList_Bond:
                 'token_template': 'IbetStraightBond',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
                 'total_supply': 1000000,
@@ -341,7 +351,8 @@ class TestV2OrderList_Bond:
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             }
         }
 
@@ -362,7 +373,7 @@ class TestV2OrderList_Bond:
         bond_exchange, membership_exchange, coupon_exchange, personal_info, payment_gateway, token_list = \
             TestV2OrderList_Bond.set_env(shared_contract)
         bond_token, order_id, agreement_id = TestV2OrderList_Bond.settlement_event(
-                bond_exchange, personal_info, payment_gateway, token_list)
+            bond_exchange, personal_info, payment_gateway, token_list)
 
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
@@ -381,6 +392,7 @@ class TestV2OrderList_Bond:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
@@ -393,6 +405,7 @@ class TestV2OrderList_Bond:
                 'token_template': 'IbetStraightBond',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト債券',
                 'symbol': 'BOND',
                 'total_supply': 1000000,
@@ -442,7 +455,8 @@ class TestV2OrderList_Bond:
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             },
             'settlement_timestamp': '2019/06/18 00:00:00'
         }
@@ -548,7 +562,7 @@ class TestV2OrderList_Bond:
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/OrderList'
+            'description': 'method: GET, url: /v2/OrderList/StraightBond'
         }
 
 
@@ -559,11 +573,11 @@ Membership
 
 class TestV2OrderList_Membership:
     """
-    Test Case for v2.order_list.OrderList
+    Test Case for v2.order_list.MembershipOrderList
     """
 
     # テスト対象API
-    apiurl = '/v2/OrderList/'
+    apiurl = '/v2/OrderList/Membership'
 
     @staticmethod
     def membership_token_attribute(exchange):
@@ -692,11 +706,13 @@ class TestV2OrderList_Membership:
         order.order_id = 1
         order.unique_order_id = membership_exchange['address'] + '_' + str(1)
         order.account_address = account['account_address']
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
         order.agent_address = eth_account['agent']['account_address']
         order.is_cancelled = False
+        order.order_timestamp = '2019-06-17 00:00:00'
         session.add(order)
 
         resp = client.simulate_post(
@@ -708,6 +724,7 @@ class TestV2OrderList_Membership:
                 'token_template': 'IbetMembership',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
                 'total_supply': 1000000,
@@ -732,10 +749,12 @@ class TestV2OrderList_Membership:
             },
             'order': {
                 'order_id': order_id,
+                'counterpart_address': '',
                 'amount': 1000000,
                 'price': 1000,
                 'is_buy': False,
-                'canceled': False
+                'canceled': False,
+                'order_timestamp': '2019/06/17 00:00:00'
             }
         }
 
@@ -777,6 +796,7 @@ class TestV2OrderList_Membership:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -788,6 +808,7 @@ class TestV2OrderList_Membership:
                 'token_template': 'IbetMembership',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
                 'total_supply': 1000000,
@@ -822,7 +843,8 @@ class TestV2OrderList_Membership:
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             }
         }
 
@@ -863,6 +885,7 @@ class TestV2OrderList_Membership:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
@@ -875,6 +898,7 @@ class TestV2OrderList_Membership:
                 'token_template': 'IbetMembership',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テスト会員権',
                 'symbol': 'MEMBERSHIP',
                 'total_supply': 1000000,
@@ -903,7 +927,8 @@ class TestV2OrderList_Membership:
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             },
             'settlement_timestamp': '2019/06/18 00:00:00'
         }
@@ -1009,7 +1034,7 @@ class TestV2OrderList_Membership:
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/OrderList'
+            'description': 'method: GET, url: /v2/OrderList/Membership'
         }
 
 
@@ -1020,11 +1045,11 @@ Coupon
 
 class TestV2OrderList_Coupon:
     """
-    Test Case for v2.order_list.OrderList
+    Test Case for v2.order_list.CouponOrderList
     """
 
     # テスト対象API
-    apiurl = '/v2/OrderList/'
+    apiurl = '/v2/OrderList/Coupon'
 
     @staticmethod
     def coupon_token_attribute(exchange):
@@ -1150,11 +1175,13 @@ class TestV2OrderList_Coupon:
         order.order_id = 1
         order.unique_order_id = coupon_exchange['address'] + '_' + str(1)
         order.account_address = account['account_address']
+        order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
         order.amount = 100
         order.agent_address = eth_account['agent']['account_address']
         order.is_cancelled = False
+        order.order_timestamp = '2019-06-17 00:00:00'
         session.add(order)
 
         resp = client.simulate_post(
@@ -1166,6 +1193,7 @@ class TestV2OrderList_Coupon:
                 'token_template': 'IbetCoupon',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
                 'total_supply': 1000000,
@@ -1190,10 +1218,12 @@ class TestV2OrderList_Coupon:
             },
             'order': {
                 'order_id': order_id,
+                'counterpart_address': '',
                 'amount': 1000000,
                 'price': 1000,
                 'is_buy': False,
-                'canceled': False
+                'canceled': False,
+                'order_timestamp': '2019/06/17 00:00:00'
             }
         }
 
@@ -1234,6 +1264,7 @@ class TestV2OrderList_Coupon:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         session.add(agreement)
 
         resp = client.simulate_post(
@@ -1245,6 +1276,7 @@ class TestV2OrderList_Coupon:
                 'token_template': 'IbetCoupon',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
                 'total_supply': 1000000,
@@ -1274,7 +1306,8 @@ class TestV2OrderList_Coupon:
                 'amount': 100,
                 'price': 1000,
                 'is_buy': True,
-                'canceled': False
+                'canceled': False,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             }
         }
 
@@ -1315,6 +1348,7 @@ class TestV2OrderList_Coupon:
         agreement.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
         agreement.settlement_timestamp = '2019-06-18 00:00:00'
         session.add(agreement)
 
@@ -1327,6 +1361,7 @@ class TestV2OrderList_Coupon:
                 'token_template': 'IbetCoupon',
                 'owner_address': eth_account['issuer']['account_address'],
                 'company_name': '',
+                'rsa_publickey': '',
                 'name': 'テストクーポン',
                 'symbol': 'COUPON',
                 'total_supply': 1000000,
@@ -1355,7 +1390,8 @@ class TestV2OrderList_Coupon:
                 'agreement_id': agreement_id,
                 'amount': 100,
                 'price': 1000,
-                'is_buy': True
+                'is_buy': True,
+                'agreement_timestamp': '2019/06/17 12:00:00'
             },
             'settlement_timestamp': '2019/06/18 00:00:00'
         }
@@ -1461,5 +1497,527 @@ class TestV2OrderList_Coupon:
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/OrderList'
+            'description': 'method: GET, url: /v2/OrderList/Coupon'
+        }
+
+
+"""
+Share
+"""
+
+
+class TestV2OrderList_Share:
+    """
+    Test Case for v2.order_list.ShareOrderList.
+    """
+
+    # テスト対象API
+    apiurl = "/v2/OrderList/Share"
+
+    @staticmethod
+    def share_token_attribute(exchange, personal_info):
+        attribute = {
+            'name': 'テスト株式',
+            'symbol': 'SHARE',
+            'tradableExchange': exchange['address'],
+            'personalInfoAddress': personal_info['address'],
+            'issuePrice': 1000,
+            'totalSupply': 1000000,
+            'dividends': 101,
+            'dividendRecordDate': '20200401',
+            'dividendPaymentDate': '20200502',
+            'cancellationDate': '20200603',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー',
+            'memo': 'メモ',
+            'transferable': True
+        }
+        return attribute
+
+    # 注文中明細の作成：発行体
+    @staticmethod
+    def order_event(share_exchange, personal_info, payment_gateway, token_list):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+
+        attribute = TestV2OrderList_Share.share_token_attribute(share_exchange, personal_info)
+
+        # ＜発行体オペレーション＞
+        #   1) 株式トークン発行
+        #   2) 株式トークンをトークンリストに登録
+        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
+        #   5) 募集
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+        register_personalinfo(issuer, personal_info)
+        register_payment_gateway(issuer, payment_gateway)
+        share_offer(issuer, share_exchange, share_token, trader, 1000000, 1000)
+
+        order_id = get_latest_orderid(share_exchange)
+        agreement_id = get_latest_agreementid(share_exchange, order_id)
+
+        return share_token, order_id, agreement_id
+
+    # 約定明細（決済中）の作成：投資家
+    @staticmethod
+    def agreement_event(share_exchange, personal_info, payment_gateway, token_list):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+
+        attribute = TestV2OrderList_Share.share_token_attribute(share_exchange, personal_info)
+
+        # ＜発行体オペレーション＞
+        #   1) 株式トークン発行
+        #   2) 株式トークンをトークンリストに登録
+        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
+        #   5) Make売り
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+        register_personalinfo(issuer, personal_info)
+        register_payment_gateway(issuer, payment_gateway)
+        share_offer(issuer, share_exchange, share_token, trader, 1000000, 1000)
+
+        # ＜投資家オペレーション＞
+        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
+        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
+        #   3) 買い注文
+        register_personalinfo(trader, personal_info)
+        register_payment_gateway(trader, payment_gateway)
+        order_id = get_latest_orderid(share_exchange)
+        share_take_buy(trader, share_exchange, order_id)
+        agreement_id = get_latest_agreementid(share_exchange, order_id)
+
+        return share_token, order_id, agreement_id
+
+    # 決済済明細の作成：決済業者
+    @staticmethod
+    def settlement_event(share_exchange, personal_info, payment_gateway, token_list):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+        agent = eth_account['agent']
+
+        attribute = TestV2OrderList_Share.share_token_attribute(share_exchange, personal_info)
+
+        # ＜発行体オペレーション＞
+        #   1) 株式トークン発行
+        #   2) 株式トークンをトークンリストに登録
+        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
+        #   5) Make売り
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+        register_personalinfo(issuer, personal_info)
+        register_payment_gateway(issuer, payment_gateway)
+        share_offer(issuer, share_exchange, share_token, trader, 1000000, 1000)
+
+        # ＜投資家オペレーション＞
+        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
+        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
+        #   3) 買い注文
+        register_personalinfo(trader, personal_info)
+        register_payment_gateway(trader, payment_gateway)
+        order_id = get_latest_orderid(share_exchange)
+        share_take_buy(trader, share_exchange, order_id)
+
+        # ＜決済業者オペレーション＞
+        agreement_id = get_latest_agreementid(share_exchange, order_id)
+        share_confirm_agreement(
+            agent, share_exchange, order_id, agreement_id)
+
+        return share_token, order_id, agreement_id
+
+    @staticmethod
+    def set_env(shared_contract):
+        bond_exchange = shared_contract['IbetStraightBondExchange']
+        membership_exchange = shared_contract['IbetMembershipExchange']
+        coupon_exchange = shared_contract['IbetCouponExchange']
+        share_exchange = shared_contract['IbetOTCExchange']
+        personal_info = shared_contract['PersonalInfo']
+        payment_gateway = shared_contract['PaymentGateway']
+        token_list = shared_contract['TokenList']
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = share_exchange['address']
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+        return bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list
+
+    # ＜正常系1＞
+    # 注文中あり（1件）、決済中なし、約定済なし
+    #  -> order_listが1件返却
+    # makerからのリクエストにおいてもorder_listが1件返却される
+    def test_share_orderlist_normal_1(self, client, session, shared_contract):
+        bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
+            TestV2OrderList_Share.set_env(shared_contract)
+        share_token, order_id, agreement_id = TestV2OrderList_Share.order_event(
+            share_exchange, personal_info, payment_gateway, token_list)
+
+        account = eth_account['issuer']
+        counterpart = eth_account['trader']
+
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        # Orderイベント情報を挿入
+        order = Order()
+        order.id = 1
+        order.token_address = share_token['address']
+        order.exchange_address = share_exchange['address']
+        order.order_id = order_id
+        order.unique_order_id = share_exchange['address'] + '_' + str(1)
+        order.account_address = account['account_address']
+        order.counterpart_address = counterpart['account_address']
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = eth_account['agent']['account_address']
+        order.is_cancelled = False
+        order.order_timestamp = '2019-06-17 00:00:00'
+        session.add(order)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': share_token['address'],
+                'token_template': 'IbetShare',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト株式',
+                'symbol': 'SHARE',
+                'total_supply': 1000000,
+                'issue_price': 1000,
+                'dividend_information': {
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
+                },
+                'cancellation_date': '20200603',
+                'memo': 'メモ',
+                'transferable': True,
+                'offering_status': False,
+                'status': True,
+                'reference_urls': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'image_url': [],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
+                'payment_method_credit_card': False,
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'order': {
+                'order_id': order_id,
+                'counterpart_address': counterpart['account_address'],
+                'amount': 1000000,
+                'price': 1000,
+                'is_buy': False,
+                'canceled': False,
+                'order_timestamp': '2019/06/17 00:00:00'
+            }
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['order_list']) >= 1
+        for order in resp.json['data']['order_list']:
+            if order['token']['token_address'] == share_token['address']:
+                assert order['token'] == assumed_body['token']
+                assert order['order'] == assumed_body['order']
+
+    # ＜正常系2＞
+    # 注文中なし、決済中あり（1件）、約定済なし
+    #  -> settlement_listが1件返却
+    def test_share_orderlist_normal_2(self, client, session, shared_contract):
+        bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
+            TestV2OrderList_Share.set_env(shared_contract)
+
+        share_token, order_id, agreement_id = TestV2OrderList_Share.\
+            agreement_event(share_exchange, personal_info, payment_gateway, token_list)
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = share_exchange['address']
+        agreement.unique_order_id = share_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.PENDING.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
+        session.add(agreement)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': share_token['address'],
+                'token_template': 'IbetShare',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト株式',
+                'symbol': 'SHARE',
+                'total_supply': 1000000,
+                'issue_price': 1000,
+                'dividend_information': {
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
+                },
+                'cancellation_date': '20200603',
+                'memo': 'メモ',
+                'transferable': True,
+                'offering_status': False,
+                'status': True,
+                'reference_urls': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'image_url': [],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
+                'payment_method_credit_card': False,
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'agreement': {
+                'exchange_address': share_exchange['address'],
+                'order_id': order_id,
+                'agreement_id': agreement_id,
+                'amount': 1000000,
+                'price': 1000,
+                'is_buy': True,
+                'canceled': False,
+                'agreement_timestamp': '2019/06/17 12:00:00'
+            }
+        }
+
+        # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['settlement_list']) >= 1
+        for order in resp.json['data']['settlement_list']:
+            if order['token']['token_address'] == share_token['address']:
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
+
+    # ＜正常系3＞
+    # 注文中なし、決済中なし、約定済あり（1件）
+    #  -> complete_listが1件返却
+    def test_share_orderlist_normal_3(self, client, session, shared_contract):
+        bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list = \
+            TestV2OrderList_Share.set_env(shared_contract)
+
+        share_token, order_id, agreement_id = TestV2OrderList_Share.\
+            settlement_event(share_exchange, personal_info, payment_gateway, token_list)
+
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        # Agreementイベント情報を挿入
+        agreement = Agreement()
+        agreement.id = 1
+        agreement.order_id = order_id
+        agreement.agreement_id = agreement_id
+        agreement.exchange_address = share_exchange['address']
+        agreement.unique_order_id = share_exchange['address'] + '_' + str(1)
+        agreement.buyer_address = account['account_address']
+        agreement.seller_address = ''
+        agreement.counterpart_address = ''
+        agreement.amount = 100
+        agreement.status = AgreementStatus.DONE.value
+        agreement.agreement_timestamp = '2019-06-17 12:00:00'
+        agreement.settlement_timestamp = '2019-06-18 00:00:00'
+        session.add(agreement)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': share_token['address'],
+                'token_template': 'IbetShare',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト株式',
+                'symbol': 'SHARE',
+                'total_supply': 1000000,
+                'issue_price': 1000,
+                'dividend_information': {
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
+                },
+                'cancellation_date': '20200603',
+                'memo': 'メモ',
+                'transferable': True,
+                'offering_status': False,
+                'status': True,
+                'reference_urls': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'image_url': [],
+                'max_holding_quantity': 0,
+                'max_sell_amount': 0,
+                'payment_method_credit_card': False,
+                'payment_method_bank': False,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'agreement': {
+                'exchange_address': share_exchange['address'],
+                'order_id': order_id,
+                'agreement_id': agreement_id,
+                'amount': 1000000,
+                'price': 1000,
+                'is_buy': True,
+                'agreement_timestamp': '2019/06/17 12:00:00'
+            },
+            'settlement_timestamp': '2019/06/18 00:00:00'
+        }
+
+        # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
+        # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json['data']['complete_list']) >= 1
+        for order in resp.json['data']['complete_list']:
+            if order['token']['token_address'] == share_token['address']:
+                assert order['token'] == assumed_body['token']
+                assert order['agreement'] == assumed_body['agreement']
+                assert order['settlement_timestamp'] == assumed_body['settlement_timestamp']
+
+    # ＜エラー系1＞
+    # request-bodyなし
+    # -> 入力値エラー
+    def test_share_orderlist_error_1(self, client):
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps({})
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': 'required field'
+            }
+        }
+
+    # ＜エラー系2＞
+    # headersなし
+    # -> 入力値エラー
+    def test_share_orderlist_error_2(self, client):
+        account = eth_account['trader']
+        request_params = {"account_address_list": [account['account_address']]}
+
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # ＜エラー系3-1＞
+    # account_addressがアドレスフォーマットではない
+    # -> 入力値エラー
+    def test_share_orderlist_error_3_1(self, client):
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
+        request_params = {"account_address_list": [account_address]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
+    # ＜エラー系3-2＞
+    # account_addressがstring以外
+    # -> 入力エラー
+    def test_share_orderlist_error_3_2(self, client):
+        account_address = 123456789123456789123456789123456789
+        request_params = {"account_address_list": [account_address]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': {
+                    '0': 'must be of string type'
+                }
+            }
+        }
+
+    # ＜エラー系4＞
+    # HTTPメソッドが不正
+    def test_share_orderlist_error_4(self, client):
+        resp = client.simulate_get(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v2/OrderList/Share'
         }

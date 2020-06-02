@@ -4,12 +4,9 @@ from enum import Enum
 from sqlalchemy import Column, Index, BigInteger, Sequence
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from app.model import Base
-
-UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 # 通知データをキャッシュするためのテーブル
@@ -72,24 +69,16 @@ class Notification(Base):
         return "<Notification(notification_id='{}', notification_type='{}')>" \
             .format(self.notification_id, self.notification_type)
 
-    @staticmethod
-    def format_timestamp(datetime):
-        if datetime is None:
-            return None
-        # DBにはUTCで書き込まれているため、UTC -> JSTへの変換を実施
-        datetimejp = datetime.replace(tzinfo=UTC).astimezone(JST)
-        return datetimejp.strftime("%Y/%m/%d %H:%M:%S")
-
     def json(self):
         return {
             "notification_type": self.notification_type,
             "id": self.notification_id,
             "priority": self.priority,
-            "block_timestamp": Notification.format_timestamp(self.block_timestamp),
+            "block_timestamp": self.block_timestamp.strftime("%Y/%m/%d %H:%M:%S") if self.block_timestamp is not None else None,
             "is_read": self.is_read,
             "is_flagged": self.is_flagged,
             "is_deleted": self.is_deleted,
-            "deleted_at": Notification.format_timestamp(self.deleted_at),
+            "deleted_at": self.deleted_at.strftime("%Y/%m/%d %H:%M:%S") if self.deleted_at is not None else None,
             "args": self.args,
             "metainfo": self.metainfo,
             "account_address": self.address,
@@ -119,7 +108,9 @@ Index("notification_index_2", Notification.address, Notification.priority, Notif
 
 class NotificationType(Enum):
     NEW_ORDER = "NewOrder"
+    NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
     CANCEL_ORDER = "CancelOrder"
+    CANCEL_ORDER_COUNTERPART = "CancelOrderCounterpart"
     BUY_AGREEMENT = "BuyAgreement"
     BUY_SETTLEMENT_OK = "BuySettlementOK"
     BUY_SETTLEMENT_NG = "BuySettlementNG"
@@ -128,7 +119,10 @@ class NotificationType(Enum):
     SELL_SETTLEMENT_NG = "SellSettlementNG"
     START_INITIAL_OFFERING = "StartInitialOffering"
     STOP_INITIAL_OFFERING = "StopInitialOffering"
+    START_OFFERING = "StartOffering"
+    STOP_OFFERING = "StopOffering"
     REDEEM = "Redeem"
+    SUSPEND = "Suspend"
     APPLY_FOR_OFFERING = "ApplyForOffering"
     ALLOT = "Allot"
     TRANSFER = "Transfer"
