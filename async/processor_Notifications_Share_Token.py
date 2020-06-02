@@ -139,6 +139,7 @@ class WatchStartOffering(Watcher):
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
                 "token_type": "IbetShare"
@@ -166,6 +167,7 @@ class WatchStopOffering(Watcher):
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
                 "token_type": "IbetShare"
@@ -193,6 +195,7 @@ class WatchSuspend(Watcher):
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
                 "token_type": "IbetShare"
@@ -220,6 +223,7 @@ class WatchApplyForOffering(Watcher):
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
                 "token_type": "IbetShare"
@@ -248,6 +252,7 @@ class WatchAllot(Watcher):
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
                 "token_type": "IbetShare"
@@ -280,6 +285,7 @@ class WatchTransfer(Watcher):
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
                 "token_type": "IbetShare"

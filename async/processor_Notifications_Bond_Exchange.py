@@ -120,6 +120,7 @@ class WatchBondNewOrder(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
@@ -156,6 +157,7 @@ class WatchBondCancelOrder(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
@@ -192,6 +194,7 @@ class WatchBondBuyAgreement(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
@@ -228,6 +231,7 @@ class WatchBondSellAgreement(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
@@ -264,6 +268,7 @@ class WatchBondBuySettlementOK(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
@@ -300,6 +305,7 @@ class WatchBondSellSettlementOK(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
@@ -336,6 +342,7 @@ class WatchBondBuySettlementNG(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
@@ -372,6 +379,7 @@ class WatchBondSellSettlementNG(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetStraightBond"
