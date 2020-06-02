@@ -31,7 +31,7 @@ class TestV2ShareMyTokens:
             'personalInfoAddress': personal_info['address'],
             'issuePrice': 1000,
             'totalSupply': 1000000,
-            'dividends': 101,
+            'dividends': 100,
             'dividendRecordDate': '20200401',
             'dividendPaymentDate': '20200502',
             'cancellationDate': '20200603',
@@ -81,7 +81,7 @@ class TestV2ShareMyTokens:
             'personalInfoAddress': personal_info['address'],
             'issuePrice': 1000,
             'totalSupply': 1000000,
-            'dividends': 101,
+            'dividends': 100,
             'dividendRecordDate': '20200401',
             'dividendPaymentDate': '20200502',
             'cancellationDate': '20200603',
@@ -134,7 +134,7 @@ class TestV2ShareMyTokens:
             'personalInfoAddress': personal_info['address'],
             'issuePrice': 1000,
             'totalSupply': 1000000,
-            'dividends': 101,
+            'dividends': 100,
             'dividendRecordDate': '20200401',
             'dividendPaymentDate': '20200502',
             'cancellationDate': '20200603',
@@ -244,9 +244,9 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
-                    'dividend_record_date': '20200401',
-                    'dividend_payment_date': '20200502'
+                    'dividends': 100,
+                    'dividendRecordDate': '20200401',
+                    'dividendPaymentDate': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
@@ -323,9 +323,9 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
-                    'dividend_record_date': '20200401',
-                    'dividend_payment_date': '20200502'
+                    'dividends': 100,
+                    'dividendRecordDate': '20200401',
+                    'dividendPaymentDate': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
@@ -440,9 +440,9 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
-                    'dividend_record_date': '20200401',
-                    'dividend_payment_date': '20200502'
+                    'dividends': 100,
+                    'dividendRecordDate': '20200401',
+                    'dividendPaymentDate': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
@@ -519,9 +519,9 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
-                    'dividend_record_date': '20200401',
-                    'dividend_payment_date': '20200502'
+                    'dividends': 100,
+                    'dividendRecordDate': '20200401',
+                    'dividendPaymentDate': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
@@ -603,9 +603,9 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
-                    'dividend_record_date': '20200401',
-                    'dividend_payment_date': '20200502'
+                    'dividends': 100,
+                    'dividendRecordDate': '20200401',
+                    'dividendPaymentDate': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
@@ -647,9 +647,9 @@ class TestV2ShareMyTokens:
                 'total_supply': 1000000,
                 'issue_price': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
-                    'dividend_record_date': '20200401',
-                    'dividend_payment_date': '20200502'
+                    'dividends': 100,
+                    'dividendRecordDate': '20200401',
+                    'dividendPaymentDate': '20200502'
                 },
                 'cancellation_date': '20200603',
                 'memo': 'メモ',
