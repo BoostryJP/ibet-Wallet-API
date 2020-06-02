@@ -143,6 +143,7 @@ class WatchTransfer(Watcher):
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
                 "token_type": "IbetCoupon"
