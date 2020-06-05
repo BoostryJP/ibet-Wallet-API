@@ -46,9 +46,13 @@ class App(falcon.API):
 
         # トークン一覧参照
         self.add_route('/v2/Token/StraightBond', token.StraightBondTokens())
+        self.add_route('/v2/Token/StraightBond/Address', token.StraightBondTokenAddresses())
         self.add_route('/v2/Token/Share', token.ShareTokens())
+        self.add_route('/v2/Token/Share/Address', token.ShareTokenAddresses())
         self.add_route('/v2/Token/Membership', token.MembershipTokens())
+        self.add_route('/v2/Token/Membership/Address', token.MembershipTokenAddresses())
         self.add_route('/v2/Token/Coupon', token.CouponTokens())
+        self.add_route('/v2/Token/Coupon/Address', token.CouponTokenAddresses())
 
         # トークン詳細参照
         self.add_route('/v2/Token/StraightBond/{contract_address}', token.StraightBondTokenDetails())

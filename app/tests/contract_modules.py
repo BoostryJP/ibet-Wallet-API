@@ -27,7 +27,7 @@ def register_personalinfo(invoker, personal_info):
     tx_hash = PersonalInfoContract.functions.register(
         issuer['account_address'], encrypted_info). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 決済用銀行口座情報登録
@@ -44,7 +44,7 @@ def register_payment_gateway(invoker, payment_gateway):
     tx_hash = PaymentGatewayContract.functions.register(
         agent['account_address'], encrypted_info). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
     # 2) 認可 from Agent
     web3.eth.defaultAccount = agent['account_address']
@@ -52,7 +52,7 @@ def register_payment_gateway(invoker, payment_gateway):
 
     tx_hash = PaymentGatewayContract.functions.approve(invoker['account_address']). \
         transact({'from': agent['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 取引参加者登録
@@ -123,7 +123,7 @@ def register_bond_list(invoker, bond_token, token_list):
     tx_hash = TokenListContract.functions.register(
         bond_token['address'], 'IbetStraightBond'). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 債券トークンの募集
@@ -142,7 +142,7 @@ def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
 
     tx_hash = TokenContract.functions.transfer(bond_exchange['address'], amount). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 債券トークンの売りMake注文
@@ -218,6 +218,7 @@ def bond_redeem(invoker, token):
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
+
 # 債券の譲渡可否変更
 def bond_change_transferable(invoker, token, transferable):
     web3.eth.defaultAccount = invoker['account_address']
@@ -266,7 +267,7 @@ def register_share_list(invoker, share_token, token_list):
     tx_hash = TokenListContract.functions.register(
         share_token['address'], 'IbetShare'). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
-    tx = web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
 
 # 株式トークンの関連URL追加
@@ -351,6 +352,17 @@ def share_confirm_agreement(invoker, exchange, order_id, agreement_id):
         get_contract('IbetOTCExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
         confirmAgreement(order_id, agreement_id). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 株式トークンの無効化
+def invalidate_share_token(invoker, token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    ShareTokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = ShareTokenContract.functions.setStatus(False). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
