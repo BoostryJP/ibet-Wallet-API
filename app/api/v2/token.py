@@ -40,7 +40,7 @@ class StraightBondTokens(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -55,8 +55,9 @@ class StraightBondTokens(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         for i in reversed(range(0, cursor)):  # NOTE:登録の新しい順になるようにする
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
 
             # TokenList-Contractからトークンの情報を取得する
@@ -71,6 +72,7 @@ class StraightBondTokens(BaseResource):
 
             if token_detail is not None:
                 token_list.append(token_detail)
+                count += 1
 
         self.on_success(res, token_list)
 
@@ -129,7 +131,7 @@ class StraightBondTokenAddresses(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -144,8 +146,9 @@ class StraightBondTokenAddresses(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         for i in reversed(range(0, cursor)):  # NOTE:登録の新しい順になるようにする
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
             token = ListContract.functions.getTokenByAddress(token_address).call()
@@ -154,6 +157,7 @@ class StraightBondTokenAddresses(BaseResource):
                 TokenContract = Contract.get_contract("IbetStraightBond", token_address)
                 if TokenContract.functions.isRedeemed().call() is False:  # 償還済みの場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
+                    count += 1
 
         self.on_success(res, token_list)
 
@@ -292,7 +296,7 @@ class ShareTokens(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -307,9 +311,10 @@ class ShareTokens(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         # TokenListを降順に調べる(登録が新しい順)
         for i in reversed(range(0, cursor)):
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
 
             # TokenList-Contractからトークンの情報を取得する
@@ -324,6 +329,7 @@ class ShareTokens(BaseResource):
             if token_detail is not None:
                 token_detail["id"] = i
                 token_list.append(token_detail)
+                count += 1
 
         self.on_success(res, token_list)
 
@@ -382,7 +388,7 @@ class ShareTokenAddresses(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -397,9 +403,10 @@ class ShareTokenAddresses(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         # TokenListを降順に調べる(登録が新しい順)
         for i in reversed(range(0, cursor)):
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
             token = ListContract.functions.getTokenByAddress(token_address).call()
@@ -408,6 +415,7 @@ class ShareTokenAddresses(BaseResource):
                 TokenContract = Contract.get_contract("IbetShare", token_address)
                 if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
+                    count += 1
 
         self.on_success(res, token_list)
 
@@ -547,7 +555,7 @@ class MembershipTokens(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -562,9 +570,10 @@ class MembershipTokens(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         # TokenListを降順に調べる(登録が新しい順)
         for i in reversed(range(0, cursor)):
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
 
             # TokenList-Contractからトークンの情報を取得する
@@ -580,6 +589,7 @@ class MembershipTokens(BaseResource):
             )
             if token_detail is not None:
                 token_list.append(token_detail)
+                count += 1
 
         self.on_success(res, token_list)
 
@@ -639,7 +649,7 @@ class MembershipTokenAddresses(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -654,8 +664,9 @@ class MembershipTokenAddresses(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         for i in reversed(range(0, cursor)):
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
             token = ListContract.functions.getTokenByAddress(token_address).call()
@@ -664,6 +675,7 @@ class MembershipTokenAddresses(BaseResource):
                 TokenContract = Contract.get_contract("IbetMembership", token_address)
                 if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
+                    count += 1
 
         self.on_success(res, token_list)
 
@@ -803,7 +815,7 @@ class CouponTokens(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -819,9 +831,10 @@ class CouponTokens(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         # TokenListを降順に調べる(登録が新しい順)
         for i in reversed(range(0, cursor)):
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
 
             # TokenList-Contractからトークンの情報を取得する
@@ -836,6 +849,7 @@ class CouponTokens(BaseResource):
             )
             if token_detail is not None:
                 token_list.append(token_detail)
+                count += 1
 
         self.on_success(res, token_list)
 
@@ -895,7 +909,7 @@ class CouponTokenAddresses(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).order_by(Listing.id).all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -911,8 +925,9 @@ class CouponTokenAddresses(BaseResource):
             limit = 10
 
         token_list = []
+        count = 0
         for i in reversed(range(0, cursor)):
-            if len(token_list) >= limit:
+            if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
             token = ListContract.functions.getTokenByAddress(token_address).call()
@@ -921,6 +936,7 @@ class CouponTokenAddresses(BaseResource):
                 TokenContract = Contract.get_contract("IbetCoupon", token_address)
                 if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
+                    count += 1
 
         self.on_success(res, token_list)
 
