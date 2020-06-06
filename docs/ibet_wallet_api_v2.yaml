@@ -757,12 +757,12 @@ paths:
                     id:
                       type: integer
                       description: cursor id
-  /Token/Share:
+  /Token/StraightBond/Address:
     get:
       tags:
         - "Token"
-      summary: "List of Share tokens"
-      operationId: "ShareTokens"
+      summary: "List of StraightBond token address"
+      operationId: "StraightBondTokenAddresses"
       parameters:
         - name: cursor
           in: query
@@ -794,266 +794,11 @@ paths:
                 items:
                   type: object
                   properties:
-                    token_address:
-                      type: string
-                    token_template:
-                      type: string
-                      example:
-                        IbetShare
-                    owner_address:
-                      type: string
-                      description: issuer address
-                    company_name:
-                      type: string
-                    rsa_publickey:
-                      type: string
-                    name:
-                      type: string
-                      description: token name
-                    symbol:
-                      type: string
-                      description: token symbol
-                    total_supply:
-                      type: integer
-                    issue_price:
-                      type: integer
-                    dividend_information:
-                      type: object
-                      properties:
-                        dividends:
-                          type: number
-                        dividend_record_date:
-                          type: string
-                        divicend_payment_date:
-                          type: string
-                    cancellation_date:
-                      type: string
-                    reference_urls:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          url:
-                            type: string
-                    image_url:
-                      type: array
-                    memo:
-                      type: string
-                    transferable:
-                      type: boolean
-                    offering_status:
-                      type: boolean
-                    status:
-                      type: boolean
-                    contact_information:
-                      type: string
-                    privacy_policy:
-                      type: string
-                    max_holding_quantity:
-                      type: integer
-                    max_sell_amount:
-                      type: integer
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
                     id:
                       type: integer
                       description: cursor id
-  /Token/Membership:
-    get:
-      tags:
-        - "Token"
-      summary: "List of Membership tokens"
-      operationId: "MembershipTokens"
-      parameters:
-        - name: cursor
-          in: query
-          description: "cursor: id of the last token displayed in the client application"
-          required: false
-          type: integer
-        - name: limit
-          in: query
-          description: "limit: number of items to fetch"
-          required: false
-          type: integer
-      responses:
-        200:
-          description: successful operation
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
-              data:
-                type: array
-                items:
-                  type: object
-                  properties:
                     token_address:
                       type: string
-                    token_template:
-                      type: string
-                      example:
-                        IbetMembership
-                    owner_address:
-                      type: string
-                      description: issuer address
-                    company_name:
-                      type: string
-                    rsa_publickey:
-                      type: string
-                    name:
-                      type: string
-                      description: token name
-                    symbol:
-                      type: string
-                      description: token symbol
-                    total_supply:
-                      type: integer
-                    details:
-                      type: string
-                    return_details:
-                      type: string
-                    expiration_date:
-                      type: string
-                    memo:
-                      type: string
-                    transferable:
-                      type: boolean
-                    status:
-                      type: boolean
-                    initial_offering_status:
-                      type: boolean
-                    image_url:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          url:
-                            type: string
-                    max_holding_quantity:
-                      type: integer
-                    max_sell_amount:
-                      type: integer
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
-                    contact_information:
-                      type: string
-                    privacy_policy:
-                      type: string
-                    id:
-                      type: integer
-                      description: cursor id
-  /Token/Coupon:
-    get:
-      tags:
-        - "Token"
-      summary: "List of Coupon tokens"
-      operationId: "CouponTokens"
-      parameters:
-        - name: cursor
-          in: query
-          description: "cursor: id of the last token displayed in the client application"
-          required: false
-          type: integer
-        - name: limit
-          in: query
-          description: "limit: number of items to fetch"
-          required: false
-          type: integer
-      responses:
-        200:
-          description: successful operation
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
-              data:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    token_address:
-                      type: string
-                    token_template:
-                      type: string
-                      example:
-                        IbetCoupon
-                    owner_address:
-                      type: string
-                      description: issuer address
-                    company_name:
-                      type: string
-                    rsa_publickey:
-                      type: string
-                    name:
-                      type: string
-                      description: token name
-                    symbol:
-                      type: string
-                      description: token symbol
-                    total_supply:
-                      type: integer
-                    details:
-                      type: string
-                    return_details:
-                      type: string
-                    expiration_date:
-                      type: string
-                    memo:
-                      type: string
-                    transferable:
-                      type: boolean
-                    status:
-                      type: boolean
-                    initial_offering_status:
-                      type: boolean
-                    image_url:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          url:
-                            type: string
-                    max_holding_quantity:
-                      type: integer
-                    max_sell_amount:
-                      type: integer
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
-                    contact_information:
-                      type: string
-                    privacy_policy:
-                      type: string
-                    id:
-                      type: integer
-                      description: cursor id
   /Token/StraightBond/{contract_address}:
     get:
       tags:
@@ -1173,6 +918,153 @@ paths:
                     type: string
                   transferable:
                     type: boolean
+  /Token/Share:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Share tokens"
+      operationId: "ShareTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                      example:
+                        IbetShare
+                    owner_address:
+                      type: string
+                      description: issuer address
+                    company_name:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                      description: token name
+                    symbol:
+                      type: string
+                      description: token symbol
+                    total_supply:
+                      type: integer
+                    issue_price:
+                      type: integer
+                    dividend_information:
+                      type: object
+                      properties:
+                        dividends:
+                          type: number
+                        dividend_record_date:
+                          type: string
+                        divicend_payment_date:
+                          type: string
+                    cancellation_date:
+                      type: string
+                    reference_urls:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          url:
+                            type: string
+                    image_url:
+                      type: array
+                    memo:
+                      type: string
+                    transferable:
+                      type: boolean
+                    offering_status:
+                      type: boolean
+                    status:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
+                      type: string
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    id:
+                      type: integer
+                      description: cursor id
+  /Token/Share/Address:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Share token address"
+      operationId: "ShareTokenAddresses"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: cursor id
+                    token_address:
+                      type: string
   /Token/Share/{contract_address}:
     get:
       tags:
@@ -1268,6 +1160,144 @@ paths:
                     type: boolean
                   payment_method_bank:
                     type: boolean
+  /Token/Membership:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Membership tokens"
+      operationId: "MembershipTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                      example:
+                        IbetMembership
+                    owner_address:
+                      type: string
+                      description: issuer address
+                    company_name:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                      description: token name
+                    symbol:
+                      type: string
+                      description: token symbol
+                    total_supply:
+                      type: integer
+                    details:
+                      type: string
+                    return_details:
+                      type: string
+                    expiration_date:
+                      type: string
+                    memo:
+                      type: string
+                    transferable:
+                      type: boolean
+                    status:
+                      type: boolean
+                    initial_offering_status:
+                      type: boolean
+                    image_url:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          url:
+                            type: string
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
+                      type: string
+                    id:
+                      type: integer
+                      description: cursor id
+  /Token/Membership/Address:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Membership token address"
+      operationId: "MembershipTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: cursor id
+                    token_address:
+                      type: string
   /Token/Membership/{contract_address}:
     get:
       tags:
@@ -1354,6 +1384,144 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
+  /Token/Coupon:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Coupon tokens"
+      operationId: "CouponTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    token_template:
+                      type: string
+                      example:
+                        IbetCoupon
+                    owner_address:
+                      type: string
+                      description: issuer address
+                    company_name:
+                      type: string
+                    rsa_publickey:
+                      type: string
+                    name:
+                      type: string
+                      description: token name
+                    symbol:
+                      type: string
+                      description: token symbol
+                    total_supply:
+                      type: integer
+                    details:
+                      type: string
+                    return_details:
+                      type: string
+                    expiration_date:
+                      type: string
+                    memo:
+                      type: string
+                    transferable:
+                      type: boolean
+                    status:
+                      type: boolean
+                    initial_offering_status:
+                      type: boolean
+                    image_url:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          url:
+                            type: string
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    payment_method_credit_card:
+                      type: boolean
+                    payment_method_bank:
+                      type: boolean
+                    contact_information:
+                      type: string
+                    privacy_policy:
+                      type: string
+                    id:
+                      type: integer
+                      description: cursor id
+  /Token/Coupon/Address:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Coupon token address"
+      operationId: "CouponTokens"
+      parameters:
+        - name: cursor
+          in: query
+          description: "cursor: id of the last token displayed in the client application"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "limit: number of items to fetch"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: cursor id
+                    token_address:
+                      type: string
   /Token/Coupon/{contract_address}:
     get:
       tags:
@@ -3646,6 +3814,8 @@ paths:
                           properties:
                             company_name:
                               type: string
+                            token_address:
+                              type: string  
                             token_name:
                               type: string
                             exchange_address:
@@ -3738,6 +3908,8 @@ paths:
                     type: object
                     properties:
                       company_name:
+                        type: string
+                      token_address:
                         type: string
                       token_name:
                         type: string

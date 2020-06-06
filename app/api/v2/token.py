@@ -55,8 +55,7 @@ class StraightBondTokens(BaseResource):
             limit = 10
 
         token_list = []
-        # TokenListを降順に調べる(登録が新しい順)
-        for i in reversed(range(0, cursor)):
+        for i in reversed(range(0, cursor)):  # NOTE:登録の新しい順になるようにする
             if len(token_list) >= limit:
                 break
 
@@ -72,6 +71,89 @@ class StraightBondTokens(BaseResource):
 
             if token_detail is not None:
                 token_list.append(token_detail)
+
+        self.on_success(res, token_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+
+# ------------------------------
+# [普通社債]公開中トークン一覧（トークンアドレス）
+# ------------------------------
+class StraightBondTokenAddresses(BaseResource):
+    """
+    Handle for endpoint: /v2/Token/StraightBond/Address
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res):
+        LOG.info('v2.token.StraightBondAddresses')
+
+        session = req.context["session"]
+
+        # Validation
+        request_json = self.validate(req)
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
+
+        if request_json['cursor'] is not None and request_json['cursor'] > list_length:
+            raise InvalidParameterError("cursor parameter must be less than token list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        if cursor is None:
+            cursor = list_length
+        limit = request_json['limit']
+        if limit is None:
+            limit = 10
+
+        token_list = []
+        for i in reversed(range(0, cursor)):  # NOTE:登録の新しい順になるようにする
+            if len(token_list) >= limit:
+                break
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions.getTokenByAddress(token_address).call()
+            if token[1] == 'IbetStraightBond':  # ibetStraightBond以外は処理をスキップ
+                # トークンコントラクトへの接続
+                TokenContract = Contract.get_contract("IbetStraightBond", token_address)
+                if TokenContract.functions.isRedeemed().call() is False:  # 償還済みの場合は処理をスキップ
+                    token_list.append({"id": i, "token_address": token_address})
 
         self.on_success(res, token_list)
 
@@ -242,6 +324,90 @@ class ShareTokens(BaseResource):
             if token_detail is not None:
                 token_detail["id"] = i
                 token_list.append(token_detail)
+
+        self.on_success(res, token_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+
+# ------------------------------
+# [株式]公開中トークン一覧（トークンアドレス）
+# ------------------------------
+class ShareTokenAddresses(BaseResource):
+    """
+    Handle for endpoint: /v2/Token/Share/Address
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res):
+        LOG.info('v2.token.ShareTokenAddresses')
+
+        session = req.context["session"]
+
+        # Validation
+        request_json = self.validate(req)
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
+
+        if request_json['cursor'] is not None and request_json['cursor'] > list_length:
+            raise InvalidParameterError("cursor parameter must be less than token list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        if cursor is None:
+            cursor = list_length
+        limit = request_json['limit']
+        if limit is None:
+            limit = 10
+
+        token_list = []
+        # TokenListを降順に調べる(登録が新しい順)
+        for i in reversed(range(0, cursor)):
+            if len(token_list) >= limit:
+                break
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions.getTokenByAddress(token_address).call()
+            if token[1] == 'IbetShare':  # ibetShare以外は処理をスキップ
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract("IbetShare", token_address)
+                if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
+                    token_list.append({"id": i, "token_address": token_address})
 
         self.on_success(res, token_list)
 
@@ -448,6 +614,90 @@ class MembershipTokens(BaseResource):
 
 
 # ------------------------------
+# [会員権]公開中トークン一覧（トークンアドレス）
+# ------------------------------
+class MembershipTokenAddresses(BaseResource):
+    """
+    Handle for endpoint: /v2/Token/Membership/Address
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res):
+        LOG.info('v2.token.MembershipTokenAddresses')
+
+        session = req.context["session"]
+
+        # Validation
+        request_json = MembershipTokens.validate(req)
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract(
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
+
+        if request_json['cursor'] is not None and request_json['cursor'] > list_length:
+            raise InvalidParameterError("cursor parameter must be less than token list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        if cursor is None:
+            cursor = list_length
+        limit = request_json['limit']
+        if limit is None:
+            limit = 10
+
+        token_list = []
+        for i in reversed(range(0, cursor)):
+            if len(token_list) >= limit:
+                break
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions.getTokenByAddress(token_address).call()
+            if token[1] == 'IbetMembership':  # ibetMembership以外は処理をスキップ
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract("IbetMembership", token_address)
+                if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
+                    token_list.append({"id": i, "token_address": token_address})
+
+        self.on_success(res, token_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+
+# ------------------------------
 # [会員権]トークン詳細
 # ------------------------------
 class MembershipTokenDetails(BaseResource):
@@ -586,6 +836,91 @@ class CouponTokens(BaseResource):
             )
             if token_detail is not None:
                 token_list.append(token_detail)
+
+        self.on_success(res, token_list)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+
+# ------------------------------
+# [クーポン]公開中トークン一覧（トークンアドレス）
+# ------------------------------
+class CouponTokenAddresses(BaseResource):
+    """
+    Handle for endpoint: /v2/Token/Coupon/Address
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res):
+        LOG.info('v2.token.CouponTokenAddresses')
+
+        session = req.context["session"]
+
+        # Validation
+        request_json = CouponTokens.validate(req)
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract(
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
+        # 取扱トークンリストを取得
+        available_tokens = session.query(Listing).all()
+        list_length = len(available_tokens)
+
+        if request_json['cursor'] is not None and request_json['cursor'] > list_length:
+            raise InvalidParameterError(
+                "cursor parameter must be less than token list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        if cursor is None:
+            cursor = list_length
+        limit = request_json['limit']
+        if limit is None:
+            limit = 10
+
+        token_list = []
+        for i in reversed(range(0, cursor)):
+            if len(token_list) >= limit:
+                break
+            token_address = to_checksum_address(available_tokens[i].token_address)
+            token = ListContract.functions.getTokenByAddress(token_address).call()
+            if token[1] == 'IbetCoupon':  # ibetCoupon以外は処理をスキップ
+                # Token-Contractへの接続
+                TokenContract = Contract.get_contract("IbetCoupon", token_address)
+                if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
+                    token_list.append({"id": i, "token_address": token_address})
 
         self.on_success(res, token_list)
 

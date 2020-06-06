@@ -17,7 +17,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
-class TestV2TokenMembershipTokens():
+class TestV2TokenMembershipTokens:
     """
     Test Case for v2.token.MembershipTokens
     """
@@ -25,6 +25,7 @@ class TestV2TokenMembershipTokens():
     # テスト対象API
     apiurl = '/v2/Token/Membership'
 
+    @staticmethod
     def token_attribute(exchange_address):
         attribute = {
             'name': 'テスト会員権',
@@ -45,12 +46,11 @@ class TestV2TokenMembershipTokens():
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal. \
-            unlockAccount(deployer['account_address'], deployer['password'])
-        contract_address, abi = Contract. \
-            deploy_contract('TokenList', [], deployer['account_address'])
+        web3.personal.unlockAccount(deployer['account_address'], deployer['password'])
+        contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
         return {'address': contract_address, 'abi': abi}
 
+    @staticmethod
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']

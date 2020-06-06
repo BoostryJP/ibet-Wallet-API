@@ -120,6 +120,7 @@ class WatchCouponNewOrder(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
@@ -156,6 +157,7 @@ class WatchCouponCancelOrder(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
@@ -192,6 +194,7 @@ class WatchCouponBuyAgreement(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
@@ -228,6 +231,7 @@ class WatchCouponSellAgreement(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
@@ -264,6 +268,7 @@ class WatchCouponBuySettlementOK(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
@@ -300,6 +305,7 @@ class WatchCouponSellSettlementOK(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
@@ -336,6 +342,7 @@ class WatchCouponBuySettlementNG(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
@@ -372,6 +379,7 @@ class WatchCouponSellSettlementNG(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"

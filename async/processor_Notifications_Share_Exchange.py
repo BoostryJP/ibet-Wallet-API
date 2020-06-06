@@ -125,6 +125,7 @@ class WatchShareNewOrder(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
@@ -176,6 +177,7 @@ class WatchShareCancelOrder(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
@@ -227,6 +229,7 @@ class WatchShareBuyAgreement(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
@@ -268,6 +271,7 @@ class WatchShareSellAgreement(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
@@ -309,6 +313,7 @@ class WatchShareBuySettlementOK(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
@@ -350,6 +355,7 @@ class WatchShareSellSettlementOK(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
@@ -391,6 +397,7 @@ class WatchShareBuySettlementNG(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
@@ -432,6 +439,7 @@ class WatchShareSellSettlementNG(Watcher):
 
             metadata = {
                 "company_name": company.corporate_name,
+                "token_address": token_address,
                 "token_name": token.name,
                 "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetShare"
