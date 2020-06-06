@@ -11,7 +11,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list, bond_change_transferable
+from .contract_modules import issue_bond_token, register_bond_list, bond_redeem
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -601,8 +601,9 @@ class TestV2TokenStraightBondTokens:
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
             TestV2TokenStraightBondTokens.list_token(session, bond_token)
-        # 1件目のtransferableをFalseに変更
-        bond_change_transferable(issuer, bond_list[0], False)
+
+        # 償還
+        bond_redeem(issuer, bond_list[0])
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -656,55 +657,6 @@ class TestV2TokenStraightBondTokens:
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
             'transferable': True
-        }, {
-            'id': 0,
-            'token_address': bond_list[0]['address'],
-            'token_template': 'IbetStraightBond',
-            'owner_address': issuer['account_address'],
-            'company_name': '',
-            'rsa_publickey': '',
-            'name': 'テスト債券',
-            'symbol': 'BOND',
-            'total_supply': 1000000,
-            'face_value': 10000,
-            'interest_rate': 0.0602,
-            'interest_payment_date1': '0101',
-            'interest_payment_date2': '0201',
-            'interest_payment_date3': '0301',
-            'interest_payment_date4': '0401',
-            'interest_payment_date5': '0501',
-            'interest_payment_date6': '0601',
-            'interest_payment_date7': '0701',
-            'interest_payment_date8': '0801',
-            'interest_payment_date9': '0901',
-            'interest_payment_date10': '1001',
-            'interest_payment_date11': '1101',
-            'interest_payment_date12': '1201',
-            'isRedeemed': False,
-            'redemption_date': '20191231',
-            'redemption_value': 10000,
-            'return_date': '20191231',
-            'return_amount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
-            'max_holding_quantity': 1,
-            'max_sell_amount': 1000,
-            'payment_method_credit_card': True,
-            'payment_method_bank': True,
-            'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー',
-            'transferable': False
         }]
 
         assert resp.status_code == 200

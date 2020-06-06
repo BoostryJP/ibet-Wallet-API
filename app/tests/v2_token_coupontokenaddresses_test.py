@@ -90,7 +90,9 @@ class TestV2TokenCouponTokenAddresses:
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
-        assumed_body = [token['address']]
+        assumed_body = [
+            {"id": 0, "token_address": token['address']}
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -123,8 +125,8 @@ class TestV2TokenCouponTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            issued_list[1]['address'],
-            issued_list[0]['address']
+            {"id": 1, "token_address": issued_list[1]['address']},
+            {"id": 0, "token_address": issued_list[0]['address']}
         ]
 
         assert resp.status_code == 200
@@ -158,8 +160,8 @@ class TestV2TokenCouponTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            issued_list[1]['address'],
-            issued_list[0]['address']
+            {"id": 1, "token_address": issued_list[1]['address']},
+            {"id": 0, "token_address": issued_list[0]['address']}
         ]
 
         assert resp.status_code == 200
@@ -193,7 +195,7 @@ class TestV2TokenCouponTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            issued_list[0]['address']
+            {"id": 0, "token_address": issued_list[0]['address']}
         ]
 
         assert resp.status_code == 200
@@ -227,7 +229,7 @@ class TestV2TokenCouponTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            issued_list[0]['address']
+            {"id": 0, "token_address": issued_list[0]['address']}
         ]
 
         assert resp.status_code == 200

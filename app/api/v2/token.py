@@ -153,7 +153,7 @@ class StraightBondTokenAddresses(BaseResource):
                 # トークンコントラクトへの接続
                 TokenContract = Contract.get_contract("IbetStraightBond", token_address)
                 if TokenContract.functions.isRedeemed().call() is False:  # 償還済みの場合は処理をスキップ
-                    token_list.append(token_address)
+                    token_list.append({"id": i, "token_address": token_address})
 
         self.on_success(res, token_list)
 
@@ -407,7 +407,7 @@ class ShareTokenAddresses(BaseResource):
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract("IbetShare", token_address)
                 if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
-                    token_list.append(token_address)
+                    token_list.append({"id": i, "token_address": token_address})
 
         self.on_success(res, token_list)
 
@@ -663,7 +663,7 @@ class MembershipTokenAddresses(BaseResource):
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract("IbetMembership", token_address)
                 if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
-                    token_list.append(token_address)
+                    token_list.append({"id": i, "token_address": token_address})
 
         self.on_success(res, token_list)
 
@@ -920,7 +920,7 @@ class CouponTokenAddresses(BaseResource):
                 # Token-Contractへの接続
                 TokenContract = Contract.get_contract("IbetCoupon", token_address)
                 if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
-                    token_list.append(token_address)
+                    token_list.append({"id": i, "token_address": token_address})
 
         self.on_success(res, token_list)
 
