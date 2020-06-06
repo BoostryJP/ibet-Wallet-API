@@ -11,7 +11,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list, bond_change_transferable, bond_redeem
+from .contract_modules import issue_bond_token, register_bond_list, bond_redeem
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -105,7 +105,9 @@ class TestV2TokenStraightBondTokenAddresses:
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
-        assumed_body = [bond_token["address"]]
+        assumed_body = [
+            {"id": 0, "token_address": bond_token["address"]}
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -139,8 +141,8 @@ class TestV2TokenStraightBondTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            bond_list[1]["address"],
-            bond_list[0]["address"]
+            {"id": 1, "token_address": bond_list[1]["address"]},
+            {"id": 0, "token_address": bond_list[0]["address"]}
         ]
 
         assert resp.status_code == 200
@@ -175,8 +177,8 @@ class TestV2TokenStraightBondTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            bond_list[1]["address"],
-            bond_list[0]["address"]
+            {"id": 1, "token_address": bond_list[1]["address"]},
+            {"id": 0, "token_address": bond_list[0]["address"]}
         ]
 
         assert resp.status_code == 200
@@ -211,7 +213,7 @@ class TestV2TokenStraightBondTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            bond_list[0]["address"]
+            {"id": 0, "token_address": bond_list[0]["address"]}
         ]
 
         assert resp.status_code == 200
@@ -246,7 +248,7 @@ class TestV2TokenStraightBondTokenAddresses:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = [
-            bond_list[0]["address"]
+            {"id": 0, "token_address": bond_list[0]["address"]}
         ]
 
         assert resp.status_code == 200
