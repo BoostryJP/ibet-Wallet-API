@@ -16,7 +16,7 @@ class NodeInfo(BaseResource):
     """
 
     def on_get(self, req, res):
-        LOG.info('common.nodeInfo.GetNodeInfo')
+        LOG.info('v2.nodeInfo.GetNodeInfo')
 
         contracts = json.load(open('data/contracts.json', 'r'))
 
