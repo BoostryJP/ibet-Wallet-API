@@ -15,17 +15,18 @@ from app.utils.hooks import VerifySignature
 
 LOG = log.get_logger()
 
+
 # ------------------------------
 # 通知一覧
 # ------------------------------
 class Notifications(BaseResource):
-    '''
+    """
     Handle for endpoint: /Notifications/
-    '''
+    """
 
     @falcon.before(VerifySignature())
     def on_get(self, req, res):
-        LOG.info('common.Notification.Notifications(GET)')
+        LOG.info('v2.notification.Notifications(GET)')
 
         session = req.context["session"]
 
@@ -52,7 +53,7 @@ class Notifications(BaseResource):
         else:
             query = query.order_by(desc(Notification.notification_id))
 
-        query = query.offset(request_json["cursor"]).\
+        query = query.offset(request_json["cursor"]). \
             limit(request_json["limit"])
 
         # 結果を抽出
@@ -69,7 +70,7 @@ class Notifications(BaseResource):
 
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('common.Notification.Notifications(POST)')
+        LOG.info('v2.notification.Notifications(POST)')
 
         session = req.context["session"]
 
@@ -80,8 +81,8 @@ class Notifications(BaseResource):
         address = to_checksum_address(req.context["address"])
 
         # データを更新
-        notification = session.query(Notification).\
-            filter(Notification.notification_id == request_json["id"]).\
+        notification = session.query(Notification). \
+            filter(Notification.notification_id == request_json["id"]). \
             first()
 
         if notification is None:
@@ -124,14 +125,14 @@ class Notifications(BaseResource):
             "cursor": {
                 "type": "integer",
                 "coerce": int,
-                "min":0,
+                "min": 0,
                 "required": False,
                 "nullable": True,
             },
             "limit": {
                 "type": "integer",
                 "coerce": int,
-                "min":0,
+                "min": 0,
                 "required": False,
                 "nullable": True,
             },
@@ -189,17 +190,18 @@ class Notifications(BaseResource):
 
         return validator.document
 
+
 # ------------------------------
 # 通知全件既読
 # ------------------------------
 class NotificationsRead(BaseResource):
-    '''
+    """
     Handle for endpoint: /Notifications/Read/
-    '''
+    """
 
     @falcon.before(VerifySignature())
     def on_post(self, req, res):
-        LOG.info('common.Notification.Read')
+        LOG.info('v2.notification.NotificationsRead')
 
         session = req.context["session"]
 
@@ -210,8 +212,8 @@ class NotificationsRead(BaseResource):
         address = to_checksum_address(req.context["address"])
 
         # データを更新
-        session.query(Notification).\
-            filter(Notification.address == address).\
+        session.query(Notification). \
+            filter(Notification.address == address). \
             update({'is_read': request_json["is_read"]})
         session.commit()
 
@@ -238,17 +240,18 @@ class NotificationsRead(BaseResource):
 
         return validator.document
 
+
 # ------------------------------
 # 通知一覧
 # ------------------------------
 class NotificationCount(BaseResource):
-    '''
+    """
     Handle for endpoint: /NotificationCount/
-    '''
+    """
 
     @falcon.before(VerifySignature())
     def on_get(self, req, res):
-        LOG.info("common.Notification.NotificationCount")
+        LOG.info("v2.notification.NotificationCount")
 
         session = req.context["session"]
 
@@ -259,10 +262,10 @@ class NotificationCount(BaseResource):
         address = to_checksum_address(req.context["address"])
 
         # 未読数を取得
-        count = session.query(Notification).\
-            filter(Notification.address == address).\
-            filter(Notification.is_read == False).\
-            filter(Notification.is_deleted == False).\
+        count = session.query(Notification). \
+            filter(Notification.address == address). \
+            filter(Notification.is_read == False). \
+            filter(Notification.is_deleted == False). \
             count()
 
         self.on_success(res, {

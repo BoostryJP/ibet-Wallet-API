@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 
-from sqlalchemy.orm.exc import NoResultFound
-from cerberus import Validator, ValidationError
-
+from cerberus import Validator
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -21,15 +18,16 @@ LOG = log.get_logger()
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
+
 # ------------------------------
 # 受領用銀行口座登録状況参照
 # ------------------------------
 class PaymentAccount(BaseResource):
-    '''
+    """
     Handle for endpoint: /User/PaymentAccount
-    '''
+    """
     def on_get(self, req, res):
-        LOG.info('common.User.PaymentAccount')
+        LOG.info('v2.user.PaymentAccount')
 
         request_json = PaymentAccount.validate(req)
 
@@ -59,8 +57,10 @@ class PaymentAccount(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = {'account_address': req.get_param('account_address'),
-                'agent_address': req.get_param('agent_address')}
+        request_json = {
+            'account_address': req.get_param('account_address'),
+            'agent_address': req.get_param('agent_address')
+        }
 
         validator = Validator({
             'account_address': {'type': 'string', 'empty': False, 'required': True},
@@ -83,11 +83,11 @@ class PaymentAccount(BaseResource):
 # 名簿用個人情報参照
 # ------------------------------
 class PersonalInfo(BaseResource):
-    '''
+    """
     Handle for endpoint: /User/PersonalInfo
-    '''
+    """
     def on_get(self, req, res):
-        LOG.info('common.User.PersonalInfo')
+        LOG.info('v2.user.PersonalInfo')
 
         request_json = PersonalInfo.validate(req)
 
@@ -117,8 +117,10 @@ class PersonalInfo(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = {'account_address': req.get_param('account_address'),
-                'owner_address': req.get_param('owner_address')}
+        request_json = {
+            'account_address': req.get_param('account_address'),
+            'owner_address': req.get_param('owner_address')
+        }
 
         validator = Validator({
             'account_address': {'type': 'string', 'empty': False, 'required': True},
@@ -136,15 +138,16 @@ class PersonalInfo(BaseResource):
 
         return request_json
 
+
 # ------------------------------
 # 住所検索（郵便番号）
 # ------------------------------
 class StreetAddress(BaseResource):
-    '''
+    """
     Handle for endpoint: /User/StreetAddress/{postal_code}
-    '''
+    """
     def on_get(self, req, res, postal_code):
-        LOG.info('common.User.StreetAddress')
+        LOG.info('v2.user.StreetAddress')
         postal_code = StreetAddress.validate(postal_code)
 
         street_address = []

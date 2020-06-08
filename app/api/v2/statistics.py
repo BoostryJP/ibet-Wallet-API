@@ -27,7 +27,7 @@ class Token(BaseResource):
     """
 
     def on_get(self, req, res, contract_address=None):
-        LOG.info('market_information.Statistics')
+        LOG.info('v2.statistics.Token')
 
         session = req.context["session"]
 

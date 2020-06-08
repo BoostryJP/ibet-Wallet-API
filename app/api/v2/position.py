@@ -384,7 +384,7 @@ class CouponConsumptions(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.Position.CouponConsumptions')
+        LOG.info('v2.position.CouponConsumptions')
         session = req.context['session']
 
         # 入力値チェック
