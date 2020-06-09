@@ -52,7 +52,7 @@ class TestV2TokenABI():
 
     # ＜異常系＞
     #   存在しないABI
-    def test_couponabi_normal(self, client, session, shared_contract):
+    def test_error(self, client, session, shared_contract):
         apiurl = self.apiurl_base + '/Unknown'
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)

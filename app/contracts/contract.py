@@ -10,24 +10,27 @@ from app import config
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
+
 class Contract:
 
     @staticmethod
     def get_contract(contract_name, address):
-        contracts = json.load(open('data/contracts.json', 'r'))
+        contract_file = f"app/contracts/json/{contract_name}.json"
+        contract_json = json.load(open(contract_file, 'r'))
         contract = web3.eth.contract(
             address=to_checksum_address(address),
-            abi=contracts[contract_name]['abi'],
+            abi=contract_json['abi'],
         )
         return contract
 
     @staticmethod
     def deploy_contract(contract_name, args, deployer):
-        contracts = json.load(open('data/contracts.json', 'r'))
+        contract_file = f"app/contracts/json/{contract_name}.json"
+        contract_json = json.load(open(contract_file, 'r'))
         contract = web3.eth.contract(
-            abi=contracts[contract_name]['abi'],
-            bytecode=contracts[contract_name]['bytecode'],
-            bytecode_runtime=contracts[contract_name]['bytecode_runtime'],
+            abi=contract_json['abi'],
+            bytecode=contract_json['bytecode'],
+            bytecode_runtime=contract_json['deployedBytecode'],
         )
 
         tx_hash = contract.deploy(
@@ -43,4 +46,4 @@ class Contract:
             if 'contractAddress' in tx.keys():
                 contract_address = tx['contractAddress']
 
-        return contract_address, contracts[contract_name]['abi']
+        return contract_address, contract_json['abi']
