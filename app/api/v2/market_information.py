@@ -34,7 +34,7 @@ class GetAgreement(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('market_information.GetAgreement')
+        LOG.info('v2.market_information.GetAgreement')
 
         session = req.context["session"]
 

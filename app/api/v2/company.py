@@ -30,7 +30,7 @@ class CompanyInfo(BaseResource):
     """
 
     def on_get(self, req, res, eth_address):
-        LOG.info('common.Company.CompanyInfo')
+        LOG.info('v2.company.CompanyInfo')
 
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'
@@ -66,7 +66,7 @@ class CompanyInfoList(BaseResource):
     """
 
     def on_get(self, req, res):
-        LOG.info('common.Company.CompanyInfoList')
+        LOG.info('v2.company.CompanyInfoList')
 
         session = req.context["session"]
 
@@ -119,7 +119,7 @@ class CompanyTokenList(BaseResource):
     """
 
     def on_get(self, req, res, eth_address=None):
-        LOG.info('common.Company.CompanyTokenList')
+        LOG.info('v2.company.CompanyTokenList')
 
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'
@@ -198,7 +198,7 @@ class PaymentAgentInfo(BaseResource):
     """
 
     def on_get(self, req, res, eth_address):
-        LOG.info('common.Company.PaymentAgent')
+        LOG.info('v2.company.PaymentAgent')
 
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'

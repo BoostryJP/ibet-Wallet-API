@@ -17,8 +17,8 @@ class StraightBondABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.StraightBondABI')
-        contracts = json.load(open('data/contracts.json', 'r'))
-        abi = contracts['IbetStraightBond']['abi']
+        ibet_straightbond_json = json.load(open("app/contracts/json/IbetStraightBond.json", "r"))
+        abi = ibet_straightbond_json['abi']
         self.on_success(res, abi)
 
 
@@ -32,8 +32,8 @@ class ShareABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.ShareABI')
-        contracts = json.load(open('data/contracts.json', 'r'))
-        abi = contracts['IbetShare']['abi']
+        ibet_share_json = json.load(open("app/contracts/json/IbetShare.json", "r"))
+        abi = ibet_share_json['abi']
         self.on_success(res, abi)
 
 
@@ -47,8 +47,8 @@ class MembershipABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.MembershipABI')
-        contracts = json.load(open('data/contracts.json', 'r'))
-        abi = contracts['IbetMembership']['abi']
+        ibet_membership_json = json.load(open("app/contracts/json/IbetMembership.json", "r"))
+        abi = ibet_membership_json['abi']
         self.on_success(res, abi)
 
 
@@ -62,6 +62,6 @@ class CouponABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.CouponABI')
-        contracts = json.load(open('data/contracts.json', 'r'))
-        abi = contracts['IbetCoupon']['abi']
+        ibet_coupon_json = json.load(open("app/contracts/json/IbetCoupon.json", "r"))
+        abi = ibet_coupon_json['abi']
         self.on_success(res, abi)

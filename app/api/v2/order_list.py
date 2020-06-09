@@ -299,7 +299,7 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.OrderList.StraightBond')
+        LOG.info('v2.order_list.StraightBondOrderList')
         session = req.context['session']
 
         # validate
@@ -352,7 +352,7 @@ class MembershipOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.OrderList.Membership')
+        LOG.info('v2.order_list.MembershipOrderList')
         session = req.context['session']
 
         # validate
@@ -406,7 +406,7 @@ class CouponOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.OrderList.Coupon')
+        LOG.info('v2.order_list.CouponOrderList')
         session = req.context['session']
 
         # validate
@@ -460,7 +460,7 @@ class ShareOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.OrderList.Share')
+        LOG.info('v2.order_list.ShareOrderList')
         session = req.context['session']
 
         # validate

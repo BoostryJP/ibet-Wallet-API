@@ -29,7 +29,7 @@ class GetTransactionCount(BaseResource):
     """
 
     def on_get(self, req, res, eth_address):
-        LOG.info('common.Eth.GetTransactionCount')
+        LOG.info('v2.eth.GetTransactionCount')
 
         try:
             eth_address = to_checksum_address(eth_address)
@@ -53,7 +53,7 @@ class SendRawTransaction(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('common.Eth.SendRawTransaction')
+        LOG.info('v2.eth.SendRawTransaction')
 
         session = req.context["session"]
 
@@ -151,7 +151,7 @@ class SendRawTransactionNoWait(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('common.Eth.SendRawTransactionNoWait')
+        LOG.info('v2.eth.SendRawTransactionNoWait')
 
         session = req.context["session"]
 
