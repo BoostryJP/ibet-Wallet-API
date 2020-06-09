@@ -1,0 +1,203 @@
+{
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_participant",
+          "type": "address"
+        }
+      ],
+      "name": "check",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "allSourcePaths": {
+    "15": "contracts/RegulatorService.sol"
+  },
+  "ast": {
+    "absolutePath": "contracts/RegulatorService.sol",
+    "exportedSymbols": {
+      "RegulatorService": [
+        11781
+      ]
+    },
+    "id": 11782,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 11772,
+        "literals": [
+          "solidity",
+          "^",
+          "0.4",
+          ".24"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:15"
+      },
+      {
+        "absolutePath": "contracts/Ownable.sol",
+        "file": "./Ownable.sol",
+        "id": 11773,
+        "nodeType": "ImportDirective",
+        "scope": 11782,
+        "sourceUnit": 11300,
+        "src": "26:23:15",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": "@title RegulatorService\u306e\u6a19\u6e96\u30a4\u30f3\u30bf\u30fc\u30d5\u30a7\u30fc\u30b9",
+        "fullyImplemented": false,
+        "id": 11781,
+        "linearizedBaseContracts": [
+          11781
+        ],
+        "name": "RegulatorService",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": null,
+            "documentation": "@notice \u53d6\u5f15\u53ef\u5426\u30c1\u30a7\u30c3\u30af\n @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306e\u30a2\u30c9\u30ec\u30b9\uff08EOA\uff09\n @return uint8 \u30ea\u30bf\u30fc\u30f3\u30b3\u30fc\u30c9\uff1a\u6210\u529f\uff080)",
+            "id": 11780,
+            "implemented": false,
+            "isConstructor": false,
+            "isDeclaredConst": true,
+            "modifiers": [],
+            "name": "check",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 11776,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 11775,
+                  "name": "_participant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 11780,
+                  "src": "328:20:15",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 11774,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "328:7:15",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "327:22:15"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 11779,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 11778,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 11780,
+                  "src": "395:5:15",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 11777,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "395:5:15",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "394:7:15"
+            },
+            "scope": 11781,
+            "src": "313:89:15",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 11782,
+        "src": "113:292:15"
+      }
+    ],
+    "src": "0:406:15"
+  },
+  "bytecode": "",
+  "bytecodeSha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+  "compiler": {
+    "evm_version": "byzantium",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "version": "0.4.25"
+  },
+  "contractName": "RegulatorService",
+  "coverageMap": {
+    "branches": {},
+    "statements": {}
+  },
+  "dependencies": [],
+  "deployedBytecode": "",
+  "deployedSourceMap": "",
+  "language": "Solidity",
+  "natspec": {
+    "methods": {
+      "check(address)": {
+        "notice": "\u53d6\u5f15\u53ef\u5426\u30c1\u30a7\u30c3\u30af",
+        "params": {
+          "_participant": "\u53d6\u5f15\u53c2\u52a0\u8005\u306e\u30a2\u30c9\u30ec\u30b9\uff08EOA\uff09"
+        },
+        "return": "uint8 \u30ea\u30bf\u30fc\u30f3\u30b3\u30fc\u30c9\uff1a\u6210\u529f\uff080)"
+      }
+    },
+    "title": "RegulatorService\u306e\u6a19\u6e96\u30a4\u30f3\u30bf\u30fc\u30d5\u30a7\u30fc\u30b9"
+  },
+  "offset": [
+    113,
+    405
+  ],
+  "opcodes": "",
+  "pcMap": {},
+  "sha1": "31331199dc6831336c0cb97a58e682ff8c1deebf",
+  "source": "pragma solidity ^0.4.24;\n\nimport \"./Ownable.sol\";\n\n\n/// @title RegulatorService\u306e\u6a19\u6e96\u30a4\u30f3\u30bf\u30fc\u30d5\u30a7\u30fc\u30b9\ncontract RegulatorService {\n\n    /// @notice \u53d6\u5f15\u53ef\u5426\u30c1\u30a7\u30c3\u30af\n    /// @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306e\u30a2\u30c9\u30ec\u30b9\uff08EOA\uff09\n    /// @return uint8 \u30ea\u30bf\u30fc\u30f3\u30b3\u30fc\u30c9\uff1a\u6210\u529f\uff080)\n    function check(address _participant)\n        public\n        view\n        returns (uint8);\n\n}\n",
+  "sourceMap": "",
+  "sourcePath": "contracts/RegulatorService.sol",
+  "type": "contract"
+}
