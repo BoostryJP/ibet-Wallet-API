@@ -236,8 +236,6 @@ class TestV2OrderList_Bond:
                 'initial_offering_status': False,
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -339,8 +337,6 @@ class TestV2OrderList_Bond:
                 'initial_offering_status': False,
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -444,8 +440,6 @@ class TestV2OrderList_Bond:
                 'initial_offering_status': False,
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -742,8 +736,6 @@ class TestV2OrderList_Membership:
                 ],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -831,8 +823,6 @@ class TestV2OrderList_Membership:
                 }],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -916,8 +906,6 @@ class TestV2OrderList_Membership:
                 ],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -1211,8 +1199,6 @@ class TestV2OrderList_Coupon:
                 ],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -1294,8 +1280,6 @@ class TestV2OrderList_Coupon:
                 ],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -1379,8 +1363,6 @@ class TestV2OrderList_Coupon:
                 ],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -1715,8 +1697,6 @@ class TestV2OrderList_Share:
                 'image_url': [],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -1806,8 +1786,6 @@ class TestV2OrderList_Share:
                 'image_url': [],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -1901,8 +1879,6 @@ class TestV2OrderList_Share:
                 'image_url': [],
                 'max_holding_quantity': 0,
                 'max_sell_amount': 0,
-                'payment_method_credit_card': False,
-                'payment_method_bank': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
