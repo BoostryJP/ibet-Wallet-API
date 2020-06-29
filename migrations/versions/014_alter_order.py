@@ -29,4 +29,3 @@ def downgrade(migrate_engine):
         Column("counterpart_address").drop(order)
     except sqlalchemy.exc.ProgrammingError as err:
         logging.warning(err)
-

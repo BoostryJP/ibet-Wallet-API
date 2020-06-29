@@ -23,8 +23,6 @@ class TokenBase:
     symbol: str
     total_supply: int
     image_url: object
-    payment_method_credit_card: bool
-    payment_method_bank: bool
     contact_information: str
     privacy_policy: str
 
@@ -55,8 +53,6 @@ class BondToken(TokenBase):
     initial_offering_status: bool
     max_holding_quantity: int
     max_sell_amount: int
-    payment_method_bank: bool
-    payment_method_credit_card: bool
 
     @staticmethod
     def get(session, token_address: str):
@@ -205,10 +201,6 @@ class BondToken(TokenBase):
             if hasattr(listed_token, "max_holding_quantity") else 0
         bondtoken.max_sell_amount = listed_token.max_sell_amount \
             if hasattr(listed_token, "max_sell_amount") else 0
-        bondtoken.payment_method_credit_card = listed_token.payment_method_credit_card \
-            if hasattr(listed_token, "payment_method_credit_card") else False
-        bondtoken.payment_method_bank = listed_token.payment_method_bank \
-            if hasattr(listed_token, "payment_method_bank") else False
         bondtoken.contact_information = contact_information
         bondtoken.privacy_policy = privacy_policy
 
@@ -314,10 +306,6 @@ class ShareToken(TokenBase):
             if hasattr(listed_token, "max_holding_quantity") else 0
         sharetoken.max_sell_amount = listed_token.max_sell_amount \
             if hasattr(listed_token, "max_sell_amount") else 0
-        sharetoken.payment_method_credit_card = listed_token.payment_method_credit_card \
-            if hasattr(listed_token, "payment_method_credit_card") else False
-        sharetoken.payment_method_bank = listed_token.payment_method_bank \
-            if hasattr(listed_token, "payment_method_bank") else False
 
         return sharetoken
 
@@ -414,10 +402,6 @@ class MembershipToken(TokenBase):
             if hasattr(listed_token, "max_holding_quantity") else 0
         membershiptoken.max_sell_amount = listed_token.max_sell_amount \
             if hasattr(listed_token, "max_sell_amount") else 0
-        membershiptoken.payment_method_credit_card = listed_token.payment_method_credit_card \
-            if hasattr(listed_token, "payment_method_credit_card") else False
-        membershiptoken.payment_method_bank = listed_token.payment_method_bank \
-            if hasattr(listed_token, "payment_method_bank") else False
         membershiptoken.contact_information = contact_information
         membershiptoken.privacy_policy = privacy_policy
 
@@ -509,10 +493,6 @@ class CouponToken(TokenBase):
             if hasattr(listed_token, "max_holding_quantity") else 0
         coupontoken.max_sell_amount = listed_token.max_sell_amount \
             if hasattr(listed_token, "max_sell_amount") else 0
-        coupontoken.payment_method_credit_card = listed_token.payment_method_credit_card \
-            if hasattr(listed_token, "payment_method_credit_card") else False
-        coupontoken.payment_method_bank = listed_token.payment_method_bank \
-            if hasattr(listed_token, "payment_method_bank") else False
         coupontoken.contact_information = contact_information
         coupontoken.privacy_policy = privacy_policy
 
