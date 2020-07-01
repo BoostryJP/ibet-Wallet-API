@@ -511,7 +511,6 @@ class StraightBondTick(BaseResource):
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
-                    filter(Order.is_cancelled == False). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -855,7 +854,6 @@ class MembershipTick(BaseResource):
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
-                    filter(Order.is_cancelled == False). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -1199,7 +1197,6 @@ class CouponTick(BaseResource):
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
-                    filter(Order.is_cancelled == False). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
