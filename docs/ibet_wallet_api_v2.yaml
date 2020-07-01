@@ -450,10 +450,6 @@ paths:
                       type: string
                     image_url:
                       type: string
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
                     contact_information:
                       type: string
                     privacy_policy:
@@ -744,10 +740,6 @@ paths:
                       type: integer
                     max_sell_amount:
                       type: integer
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
                     contact_information:
                       type: string
                     privacy_policy:
@@ -908,10 +900,6 @@ paths:
                     type: integer
                   max_sell_amount:
                     type: integer
-                  payment_method_credit_card:
-                    type: boolean
-                  payment_method_bank:
-                    type: boolean
                   contact_information:
                     type: string
                   privacy_policy:
@@ -1016,10 +1004,6 @@ paths:
                       type: integer
                     max_sell_amount:
                       type: integer
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
                     id:
                       type: integer
                       description: cursor id
@@ -1156,10 +1140,6 @@ paths:
                     type: integer
                   max_sell_amount:
                     type: integer
-                  payment_method_credit_card:
-                    type: boolean
-                  payment_method_bank:
-                    type: boolean
   /Token/Membership:
     get:
       tags:
@@ -1245,10 +1225,6 @@ paths:
                       type: integer
                     max_sell_amount:
                       type: integer
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
                     contact_information:
                       type: string
                     privacy_policy:
@@ -1376,10 +1352,6 @@ paths:
                     type: integer
                   max_sell_amount:
                     type: integer
-                  payment_method_credit_card:
-                    type: boolean
-                  payment_method_bank:
-                    type: boolean
                   contact_information:
                     type: string
                   privacy_policy:
@@ -1469,10 +1441,6 @@ paths:
                       type: integer
                     max_sell_amount:
                       type: integer
-                    payment_method_credit_card:
-                      type: boolean
-                    payment_method_bank:
-                      type: boolean
                     contact_information:
                       type: string
                     privacy_policy:
@@ -1600,10 +1568,6 @@ paths:
                     type: integer
                   max_sell_amount:
                     type: integer
-                  payment_method_credit_card:
-                    type: boolean
-                  payment_method_bank:
-                    type: boolean
                   contact_information:
                     type: string
                   privacy_policy:
@@ -2223,10 +2187,6 @@ paths:
                           type: integer
                         max_sell_amount:
                           type: integer
-                        payment_method_credit_card:
-                          type: boolean
-                        payment_method_bank:
-                          type: boolean
                         contact_information:
                           type: string
                         privacy_policy:
@@ -2333,10 +2293,6 @@ paths:
                           type: integer
                         max_sell_amount:
                           type: integer
-                        payment_method_credit_card:
-                          type: boolean
-                        payment_method_bank:
-                          type: boolean
                     balance:
                       type: integer
                     commitment:
@@ -2426,10 +2382,6 @@ paths:
                           type: integer
                         max_sell_amount:
                           type: integer
-                        payment_method_credit_card:
-                          type: boolean
-                        payment_method_bank:
-                          type: boolean
                         contact_information:
                           type: string
                         privacy_policy:
@@ -2523,10 +2475,6 @@ paths:
                           type: integer
                         max_sell_amount:
                           type: integer
-                        payment_method_credit_card:
-                          type: boolean
-                        payment_method_bank:
-                          type: boolean
                         contact_information:
                           type: string
                         privacy_policy:
@@ -2708,10 +2656,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -2824,10 +2768,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -2942,10 +2882,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -3077,10 +3013,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -3247,10 +3179,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -3328,10 +3256,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -3411,10 +3335,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -3529,10 +3449,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -3610,10 +3526,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:
@@ -3693,10 +3605,6 @@ paths:
                               type: integer
                             max_sell_amount:
                               type: integer
-                            payment_method_credit_card:
-                              type: boolean
-                            payment_method_bank:
-                              type: boolean
                             contact_information:
                               type: string
                             privacy_policy:

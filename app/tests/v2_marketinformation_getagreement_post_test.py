@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+
 from app import config
 from app.model import Agreement
 from app.tests.account_config import eth_account
@@ -10,7 +12,7 @@ from app.tests.contract_modules import issue_bond_token, register_personalinfo, 
     share_get_latest_agreementid
 
 
-class TestV2GetAgreement:
+class TestV2GetAgreementPost:
     """
     Test Case for v2.market_information.GetAgreement
     """
@@ -237,8 +239,14 @@ class TestV2GetAgreement:
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        request_params = {
+            "order_id": order_id,
+            "agreement_id": agreement_id,
+            "exchange_address": exchange['address']
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'amount': 100,
@@ -274,8 +282,14 @@ class TestV2GetAgreement:
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        request_params = {
+            "order_id": order_id,
+            "agreement_id": agreement_id,
+            "exchange_address": exchange['address']
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'amount': 100,
@@ -311,8 +325,14 @@ class TestV2GetAgreement:
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        request_params = {
+            "order_id": order_id,
+            "agreement_id": agreement_id,
+            "exchange_address": exchange['address']
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'amount': 100,
@@ -349,8 +369,14 @@ class TestV2GetAgreement:
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        request_params = {
+            "order_id": order_id,
+            "agreement_id": agreement_id,
+            "exchange_address": exchange['address']
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assumed_body = {
             'amount': 100,
@@ -377,25 +403,37 @@ class TestV2GetAgreement:
     ########################################################################################
 
     # Error_1
-    # 入力値エラー（query_stringなし）
+    # 入力値エラー（request-bodyなし）
     # 400
     def test_error_1(self, client):
-        query_string = ""
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps({})
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter'
+            'message': 'Invalid Parameter',
+            'description': {
+                'exchange_address': 'required field',
+                'agreement_id': 'required field',
+                'order_id': 'required field'
+            }
         }
 
     # Error_2
-    # 入力値エラー（exchange_addressの型誤り）
+    # 入力値エラー（headersなし）
     # 400
-    def test_error_2(self, client):
-        exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B'  # アドレス長が短い
-        query_string = f'order_id=2&agreement_id=102&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+    def test_tick_error_2(self, client):
+        request_params = {
+            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'order_id': 2,
+            'agreement_id': 102
+        }
+        headers = {}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
@@ -404,12 +442,18 @@ class TestV2GetAgreement:
         }
 
     # Error_3
-    # 入力値エラー（数値項目の型誤り）
+    # 入力値エラー（exchange_addressの型誤り）
     # 400
-    def test_error_3(self, client):
-        exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        query_string = f'order_id=aa&agreement_id=bb&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+    def test_tick_error_3(self, client):
+        request_params = {
+            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B',  # アドレス長が短い
+            'order_id': 2,
+            'agreement_id': 102
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
@@ -420,13 +464,16 @@ class TestV2GetAgreement:
     # Error_4
     # 指定した約定情報が存在しない
     # 400
-    def test_error_4(self, client):
-        exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        order_id = 999
-        agreement_id = 102
+    def test_tick_error_4(self, client):
+        request_params = {
+            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'order_id': 999,
+            'agreement_id': 102
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
@@ -436,20 +483,24 @@ class TestV2GetAgreement:
         }
 
     # Error_5
-    # exchangeアドレスが環境変数に未設定
+    # 指定した約定情報が存在しない
     # 400
-    def test_error_5(self, session, client):
-        exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        order_id = 2
-        agreement_id = 102
+    def test_tick_error_5(self, session, client):
+        request_params = {
+            'exchange_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'order_id': 2,
+            'agreement_id': 102
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
         self._indexer_agreement(
             session,
             {'address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'},
             2, 102
         )
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
