@@ -12,11 +12,24 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
 class Contract:
+    cache = {}  # コントラクト情報のキャッシュ
 
     @staticmethod
-    def get_contract(contract_name, address):
-        contract_file = f"app/contracts/json/{contract_name}.json"
-        contract_json = json.load(open(contract_file, 'r'))
+    def get_contract(contract_name: str, address: str):
+        """
+        コントラクト取得
+
+        :param contract_name: コントラクト名
+        :param address: コントラクトアドレス
+        :return: コントラクト
+        """
+        if contract_name in Contract.cache:
+            contract_json = Contract.cache[contract_name]
+        else:
+            contract_file = f"app/contracts/json/{contract_name}.json"
+            contract_json = json.load(open(contract_file, 'r'))
+            Contract.cache[contract_name] = contract_json
+
         contract = web3.eth.contract(
             address=to_checksum_address(address),
             abi=contract_json['abi'],
@@ -24,9 +37,22 @@ class Contract:
         return contract
 
     @staticmethod
-    def deploy_contract(contract_name, args, deployer):
-        contract_file = f"app/contracts/json/{contract_name}.json"
-        contract_json = json.load(open(contract_file, 'r'))
+    def deploy_contract(contract_name: str, args: dict, deployer: str):
+        """
+        コントラクトデプロイ
+
+        :param contract_name: コントラクト名
+        :param args: デプロイ時の引数
+        :param deployer: デプロイ実行者のアドレス
+        :return: コントラクト情報
+        """
+        if contract_name in Contract.cache:
+            contract_json = Contract.cache[contract_name]
+        else:
+            contract_file = f"app/contracts/json/{contract_name}.json"
+            contract_json = json.load(open(contract_file, 'r'))
+            Contract.cache[contract_name] = contract_json
+
         contract = web3.eth.contract(
             abi=contract_json['abi'],
             bytecode=contract_json['bytecode'],
