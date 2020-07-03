@@ -17,7 +17,7 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
-class TestV2TokenMembershipTokens():
+class TestV2TokenMembershipTokens:
     """
     Test Case for v2.token.MembershipTokens
     """
@@ -25,6 +25,7 @@ class TestV2TokenMembershipTokens():
     # テスト対象API
     apiurl = '/v2/Token/Membership'
 
+    @staticmethod
     def token_attribute(exchange_address):
         attribute = {
             'name': 'テスト会員権',
@@ -45,19 +46,16 @@ class TestV2TokenMembershipTokens():
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal. \
-            unlockAccount(deployer['account_address'], deployer['password'])
-        contract_address, abi = Contract. \
-            deploy_contract('TokenList', [], deployer['account_address'])
+        web3.personal.unlockAccount(deployer['account_address'], deployer['password'])
+        contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
         return {'address': contract_address, 'abi': abi}
 
+    @staticmethod
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -111,8 +109,6 @@ class TestV2TokenMembershipTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -176,8 +172,6 @@ class TestV2TokenMembershipTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }, {
@@ -204,8 +198,6 @@ class TestV2TokenMembershipTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -269,8 +261,6 @@ class TestV2TokenMembershipTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }, {
@@ -297,8 +287,6 @@ class TestV2TokenMembershipTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -361,8 +349,6 @@ class TestV2TokenMembershipTokens():
             ],
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
-            'payment_method_credit_card': True,
-            'payment_method_bank': True,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー'
         }]
@@ -424,8 +410,6 @@ class TestV2TokenMembershipTokens():
             ],
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
-            'payment_method_credit_card': True,
-            'payment_method_bank': True,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー'
         }]

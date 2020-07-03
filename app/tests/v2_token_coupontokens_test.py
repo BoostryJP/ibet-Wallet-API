@@ -11,14 +11,13 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import membership_issue, membership_register_list, membership_invalidate, \
-    issue_coupon_token, coupon_register_list, invalidate_coupon_token
+from .contract_modules import issue_coupon_token, coupon_register_list, invalidate_coupon_token
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
-class TestV2TokenCouponTokens():
+class TestV2TokenCouponTokens:
     """
     Test Case for v2.token.CouponTokens
     """
@@ -26,6 +25,7 @@ class TestV2TokenCouponTokens():
     # テスト対象API
     apiurl = '/v2/Token/Coupon'
 
+    @staticmethod
     def token_attribute(exchange_address):
         attribute = {
             'name': 'テストクーポン',
@@ -46,19 +46,16 @@ class TestV2TokenCouponTokens():
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal. \
-            unlockAccount(deployer['account_address'], deployer['password'])
-        contract_address, abi = Contract. \
-            deploy_contract('TokenList', [], deployer['account_address'])
+        web3.personal.unlockAccount(deployer['account_address'], deployer['password'])
+        contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
         return {'address': contract_address, 'abi': abi}
 
+    @staticmethod
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # ＜正常系1＞
@@ -74,9 +71,7 @@ class TestV2TokenCouponTokens():
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetCouponExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
@@ -112,8 +107,6 @@ class TestV2TokenCouponTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -137,12 +130,9 @@ class TestV2TokenCouponTokens():
 
         # データ準備：新規発行
         issued_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetCouponExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenCouponTokens. \
-                token_attribute(exchange_address)
+            attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
@@ -177,8 +167,6 @@ class TestV2TokenCouponTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }, {
@@ -205,8 +193,6 @@ class TestV2TokenCouponTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -230,9 +216,7 @@ class TestV2TokenCouponTokens():
 
         # データ準備：新規発行
         issued_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetCouponExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
             attribute = TestV2TokenCouponTokens. \
                 token_attribute(exchange_address)
@@ -270,8 +254,6 @@ class TestV2TokenCouponTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }, {
@@ -298,8 +280,6 @@ class TestV2TokenCouponTokens():
                 ],
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             }
@@ -323,12 +303,9 @@ class TestV2TokenCouponTokens():
 
         # データ準備：新規発行
         issued_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetCouponExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenCouponTokens. \
-                token_attribute(exchange_address)
+            attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
@@ -362,8 +339,6 @@ class TestV2TokenCouponTokens():
             ],
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
-            'payment_method_credit_card': True,
-            'payment_method_bank': True,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー'
         }]
@@ -386,12 +361,9 @@ class TestV2TokenCouponTokens():
 
         # データ準備：新規発行
         issued_list = []
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetCouponExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenCouponTokens. \
-                token_attribute(exchange_address)
+            attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
@@ -425,8 +397,6 @@ class TestV2TokenCouponTokens():
             ],
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
-            'payment_method_credit_card': True,
-            'payment_method_bank': True,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー'
         }]
@@ -448,11 +418,8 @@ class TestV2TokenCouponTokens():
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetCouponExchange']['address'])
-        attribute = TestV2TokenCouponTokens. \
-            token_attribute(exchange_address)
+        exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
+        attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
 

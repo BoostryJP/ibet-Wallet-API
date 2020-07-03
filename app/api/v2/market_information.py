@@ -33,13 +33,59 @@ class GetAgreement(BaseResource):
     Handle for endpoint: /v2/Market/Agreement
     """
 
-    def on_post(self, req, res):
-        LOG.info('market_information.GetAgreement')
+    def on_get(self, req, res):
+        LOG.info('v2.market_information.GetAgreement(GET)')
 
         session = req.context["session"]
 
         # 入力値チェック
-        request_json = GetAgreement.validate(req)
+        request_json = GetAgreement.validate_get(req)
+
+        # リクエストから情報を抽出
+        order_id = request_json['order_id']
+        agreement_id = request_json['agreement_id']
+        exchange_address = to_checksum_address(request_json['exchange_address'])
+
+        # 未決済の約定イベントの存在有無を確認
+        # DBにデータが存在しない場合は、入力値エラーを返す
+        # NOTE: コントラクトアクセスの負荷を下げるためにイベントの存在有無を先に確認している
+        agreement = session.query(Agreement). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(Agreement.order_id == order_id). \
+            filter(Agreement.agreement_id == agreement_id). \
+            filter(Agreement.status == AgreementStatus.PENDING.value). \
+            first()
+        if agreement is None:
+            raise InvalidParameterError('Data not found')
+
+        # 取引コントラクトに接続
+        ExchangeContract = GetAgreement.exchange_contracts(exchange_address)
+
+        # 約定情報の取得
+        # NOTE: 取引コントラクトから直近の情報を取得する
+        counterpart, amount, price, canceled, paid, expiry = \
+            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+
+        res_data = {
+            'counterpart': counterpart,
+            'buyer_address': agreement.buyer_address,  # 買い手EOA
+            'seller_address': agreement.seller_address,  # 売り手EOA
+            'amount': amount,  # 約定数量
+            'price': price,  # 約定単価
+            'canceled': canceled,  # 約定取消フラグ
+            'paid': paid,  # 支払済フラグ
+            'expiry': expiry  # 有効期限（unixtime）
+        }
+
+        self.on_success(res, res_data)
+
+    def on_post(self, req, res):
+        LOG.info('v2.market_information.GetAgreement')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        request_json = GetAgreement.validate_post(req)
 
         # リクエストから情報を抽出
         order_id = request_json['order_id']
@@ -100,7 +146,48 @@ class GetAgreement(BaseResource):
         return ExchangeContract
 
     @staticmethod
-    def validate(req):
+    def validate_get(req):
+        try:
+            request_json = {
+                "order_id": int(req.get_param("order_id")),
+                "agreement_id": int(req.get_param("agreement_id")),
+                "exchange_address": req.get_param("exchange_address")
+            }
+        except Exception:
+            raise InvalidParameterError()
+
+        validator = Validator({
+            'order_id': {
+                'type': 'integer',
+                'empty': False,
+                'required': True
+            },
+            'agreement_id': {
+                'type': 'integer',
+                'empty': False,
+                'required': True
+            },
+            'exchange_address': {
+                'type': 'string',
+                'schema': {'type': 'string'},
+                'empty': False,
+                'required': True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        try:
+            if not Web3.isAddress(request_json['exchange_address']):
+                raise InvalidParameterError
+        except:
+            raise InvalidParameterError
+
+        return request_json
+
+    @staticmethod
+    def validate_post(req):
         request_json = req.context['data']
         if request_json is None:
             raise InvalidParameterError
@@ -424,7 +511,6 @@ class StraightBondTick(BaseResource):
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
-                    filter(Order.is_cancelled == False). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -768,7 +854,6 @@ class MembershipTick(BaseResource):
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
-                    filter(Order.is_cancelled == False). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -1112,7 +1197,6 @@ class CouponTick(BaseResource):
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
                     filter(Agreement.status == 1). \
-                    filter(Order.is_cancelled == False). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 

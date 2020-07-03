@@ -1,0 +1,6096 @@
+{
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_participant",
+          "type": "address"
+        }
+      ],
+      "name": "getWhitelist",
+      "outputs": [
+        {
+          "name": "participant",
+          "type": "address"
+        },
+        {
+          "name": "locked",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_participant",
+          "type": "address"
+        },
+        {
+          "name": "_locked",
+          "type": "bool"
+        }
+      ],
+      "name": "register",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "_participant",
+          "type": "address"
+        }
+      ],
+      "name": "check",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "participant",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "locked",
+          "type": "bool"
+        }
+      ],
+      "name": "Register",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    }
+  ],
+  "allSourcePaths": {
+    "0": "contracts/ExchangeRegulatorService.sol",
+    "12": "contracts/Ownable.sol",
+    "15": "contracts/RegulatorService.sol"
+  },
+  "ast": {
+    "absolutePath": "contracts/ExchangeRegulatorService.sol",
+    "exportedSymbols": {
+      "ExchangeRegulatorService": [
+        148
+      ]
+    },
+    "id": 149,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1,
+        "literals": [
+          "solidity",
+          "^",
+          "0.4",
+          ".24"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:24:0"
+      },
+      {
+        "absolutePath": "contracts/Ownable.sol",
+        "file": "./Ownable.sol",
+        "id": 2,
+        "nodeType": "ImportDirective",
+        "scope": 149,
+        "sourceUnit": 11300,
+        "src": "26:23:0",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "contracts/RegulatorService.sol",
+        "file": "./RegulatorService.sol",
+        "id": 3,
+        "nodeType": "ImportDirective",
+        "scope": 149,
+        "sourceUnit": 11782,
+        "src": "50:32:0",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 4,
+              "name": "RegulatorService",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 11781,
+              "src": "220:16:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_RegulatorService_$11781",
+                "typeString": "contract RegulatorService"
+              }
+            },
+            "id": 5,
+            "nodeType": "InheritanceSpecifier",
+            "src": "220:16:0"
+          },
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 6,
+              "name": "Ownable",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 11299,
+              "src": "238:7:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_Ownable_$11299",
+                "typeString": "contract Ownable"
+              }
+            },
+            "id": 7,
+            "nodeType": "InheritanceSpecifier",
+            "src": "238:7:0"
+          }
+        ],
+        "contractDependencies": [
+          11299,
+          11781
+        ],
+        "contractKind": "contract",
+        "documentation": "@title Exchange\u306e\u53d6\u5f15\u53c2\u52a0\u8005\u5236\u9650\u30b5\u30fc\u30d3\u30b9\n @dev Exchange\u306e\u53d6\u5f15\u53c2\u52a0\u8005\u5236\u9650",
+        "fullyImplemented": true,
+        "id": 148,
+        "linearizedBaseContracts": [
+          148,
+          11299,
+          11781
+        ],
+        "name": "ExchangeRegulatorService",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "ExchangeRegulatorService.Participant",
+            "id": 12,
+            "members": [
+              {
+                "constant": false,
+                "id": 9,
+                "name": "participant",
+                "nodeType": "VariableDeclaration",
+                "scope": 12,
+                "src": "321:19:0",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                },
+                "typeName": {
+                  "id": 8,
+                  "name": "address",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "321:7:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 11,
+                "name": "locked",
+                "nodeType": "VariableDeclaration",
+                "scope": 12,
+                "src": "384:11:0",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_bool",
+                  "typeString": "bool"
+                },
+                "typeName": {
+                  "id": 10,
+                  "name": "bool",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "384:4:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              }
+            ],
+            "name": "Participant",
+            "nodeType": "StructDefinition",
+            "scope": 148,
+            "src": "292:129:0",
+            "visibility": "public"
+          },
+          {
+            "constant": true,
+            "id": 15,
+            "name": "CHECK_SUCCESS",
+            "nodeType": "VariableDeclaration",
+            "scope": 148,
+            "src": "454:40:0",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint8",
+              "typeString": "uint8"
+            },
+            "typeName": {
+              "id": 13,
+              "name": "uint8",
+              "nodeType": "ElementaryTypeName",
+              "src": "454:5:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint8",
+                "typeString": "uint8"
+              }
+            },
+            "value": {
+              "argumentTypes": null,
+              "hexValue": "30",
+              "id": 14,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "493:1:0",
+              "subdenomination": null,
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_0_by_1",
+                "typeString": "int_const 0"
+              },
+              "value": "0"
+            },
+            "visibility": "private"
+          },
+          {
+            "constant": true,
+            "id": 18,
+            "name": "CHECK_LOCKED",
+            "nodeType": "VariableDeclaration",
+            "scope": 148,
+            "src": "555:39:0",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint8",
+              "typeString": "uint8"
+            },
+            "typeName": {
+              "id": 16,
+              "name": "uint8",
+              "nodeType": "ElementaryTypeName",
+              "src": "555:5:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint8",
+                "typeString": "uint8"
+              }
+            },
+            "value": {
+              "argumentTypes": null,
+              "hexValue": "31",
+              "id": 17,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "593:1:0",
+              "subdenomination": null,
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_1_by_1",
+                "typeString": "int_const 1"
+              },
+              "value": "1"
+            },
+            "visibility": "private"
+          },
+          {
+            "constant": true,
+            "id": 21,
+            "name": "CHECK_NOT_REGISTERD",
+            "nodeType": "VariableDeclaration",
+            "scope": 148,
+            "src": "655:46:0",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint8",
+              "typeString": "uint8"
+            },
+            "typeName": {
+              "id": 19,
+              "name": "uint8",
+              "nodeType": "ElementaryTypeName",
+              "src": "655:5:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint8",
+                "typeString": "uint8"
+              }
+            },
+            "value": {
+              "argumentTypes": null,
+              "hexValue": "32",
+              "id": 20,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "700:1:0",
+              "subdenomination": null,
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_2_by_1",
+                "typeString": "int_const 2"
+              },
+              "value": "2"
+            },
+            "visibility": "private"
+          },
+          {
+            "constant": false,
+            "id": 25,
+            "name": "whitelist",
+            "nodeType": "VariableDeclaration",
+            "scope": 148,
+            "src": "776:41:0",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+              "typeString": "mapping(address => struct ExchangeRegulatorService.Participant)"
+            },
+            "typeName": {
+              "id": 24,
+              "keyType": {
+                "id": 22,
+                "name": "address",
+                "nodeType": "ElementaryTypeName",
+                "src": "784:7:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                }
+              },
+              "nodeType": "Mapping",
+              "src": "776:31:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+                "typeString": "mapping(address => struct ExchangeRegulatorService.Participant)"
+              },
+              "valueType": {
+                "contractScope": null,
+                "id": 23,
+                "name": "Participant",
+                "nodeType": "UserDefinedTypeName",
+                "referencedDeclaration": 12,
+                "src": "795:11:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_struct$_Participant_$12_storage_ptr",
+                  "typeString": "struct ExchangeRegulatorService.Participant"
+                }
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "anonymous": false,
+            "documentation": "\u53c2\u52a0\u8005\u767b\u9332\u6642\u30a4\u30d9\u30f3\u30c8",
+            "id": 31,
+            "name": "Register",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 30,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27,
+                  "indexed": true,
+                  "name": "participant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 31,
+                  "src": "878:27:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 26,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "878:7:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 29,
+                  "indexed": false,
+                  "name": "locked",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 31,
+                  "src": "907:11:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 28,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "907:4:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "877:42:0"
+            },
+            "src": "863:57:0"
+          },
+          {
+            "body": {
+              "id": 47,
+              "nodeType": "Block",
+              "src": "1136:128:0",
+              "statements": [
+                {
+                  "assignments": [],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 39,
+                      "name": "length",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 48,
+                      "src": "1146:11:0",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 38,
+                        "name": "uint",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1146:4:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 40,
+                  "initialValue": null,
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1146:11:0"
+                },
+                {
+                  "externalReferences": [
+                    {
+                      "length": {
+                        "declaration": 39,
+                        "isOffset": false,
+                        "isSlot": false,
+                        "src": "1190:6:0",
+                        "valueSize": 1
+                      }
+                    },
+                    {
+                      "_address": {
+                        "declaration": 33,
+                        "isOffset": false,
+                        "isSlot": false,
+                        "src": "1212:8:0",
+                        "valueSize": 1
+                      }
+                    }
+                  ],
+                  "id": 41,
+                  "nodeType": "InlineAssembly",
+                  "operations": "{\n    length := extcodesize(_address)\n}",
+                  "src": "1167:79:0"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "components": [
+                      {
+                        "argumentTypes": null,
+                        "commonType": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "id": 44,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "argumentTypes": null,
+                          "id": 42,
+                          "name": "length",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 39,
+                          "src": "1248:6:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": ">",
+                        "rightExpression": {
+                          "argumentTypes": null,
+                          "hexValue": "30",
+                          "id": 43,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "1255:1:0",
+                          "subdenomination": null,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        },
+                        "src": "1248:8:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      }
+                    ],
+                    "id": 45,
+                    "isConstant": false,
+                    "isInlineArray": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "TupleExpression",
+                    "src": "1247:10:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 37,
+                  "id": 46,
+                  "nodeType": "Return",
+                  "src": "1240:17:0"
+                }
+              ]
+            },
+            "documentation": "@dev \u30b3\u30f3\u30c8\u30e9\u30af\u30c8\u30a2\u30c9\u30ec\u30b9\u5224\u5b9a\n @param _address \u30a2\u30c9\u30ec\u30b9\n @return \u5224\u5b9a\u7d50\u679c",
+            "id": 48,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": true,
+            "modifiers": [],
+            "name": "isContract",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 34,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 33,
+                  "name": "_address",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 48,
+                  "src": "1062:16:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1062:7:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1061:18:0"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 37,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 36,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 48,
+                  "src": "1126:4:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 35,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1126:4:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1125:6:0"
+            },
+            "scope": 148,
+            "src": "1042:222:0",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "private"
+          },
+          {
+            "body": {
+              "id": 60,
+              "nodeType": "Block",
+              "src": "1404:62:0",
+              "statements": [
+                {
+                  "condition": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 53,
+                        "name": "_address",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 50,
+                        "src": "1429:8:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 52,
+                      "name": "isContract",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 48,
+                      "src": "1418:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_bool_$",
+                        "typeString": "function (address) view returns (bool)"
+                      }
+                    },
+                    "id": 54,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1418:20:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": null,
+                  "id": 58,
+                  "nodeType": "IfStatement",
+                  "src": "1414:34:0",
+                  "trueBody": {
+                    "expression": {
+                      "argumentTypes": null,
+                      "arguments": [],
+                      "expression": {
+                        "argumentTypes": [],
+                        "id": 55,
+                        "name": "revert",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [
+                          12232,
+                          12233
+                        ],
+                        "referencedDeclaration": 12232,
+                        "src": "1440:6:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_revert_pure$__$returns$__$",
+                          "typeString": "function () pure"
+                        }
+                      },
+                      "id": 56,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1440:8:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_tuple$__$",
+                        "typeString": "tuple()"
+                      }
+                    },
+                    "id": 57,
+                    "nodeType": "ExpressionStatement",
+                    "src": "1440:8:0"
+                  }
+                },
+                {
+                  "id": 59,
+                  "nodeType": "PlaceholderStatement",
+                  "src": "1458:1:0"
+                }
+              ]
+            },
+            "documentation": "@dev EOA\u30a2\u30c9\u30ec\u30b9\u30c1\u30a7\u30c3\u30af\n @param _address \u30c1\u30a7\u30c3\u30af\u5bfe\u8c61\u306e\u30a2\u30c9\u30ec\u30b9",
+            "id": 61,
+            "name": "onlyEOA",
+            "nodeType": "ModifierDefinition",
+            "parameters": {
+              "id": 51,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 50,
+                  "name": "_address",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61,
+                  "src": "1386:16:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 49,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1386:7:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1385:18:0"
+            },
+            "src": "1369:97:0",
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 92,
+              "nodeType": "Block",
+              "src": "1796:163:0",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 78,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "baseExpression": {
+                          "argumentTypes": null,
+                          "id": 73,
+                          "name": "whitelist",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 25,
+                          "src": "1806:9:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+                            "typeString": "mapping(address => struct ExchangeRegulatorService.Participant storage ref)"
+                          }
+                        },
+                        "id": 75,
+                        "indexExpression": {
+                          "argumentTypes": null,
+                          "id": 74,
+                          "name": "_participant",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 63,
+                          "src": "1816:12:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1806:23:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Participant_$12_storage",
+                          "typeString": "struct ExchangeRegulatorService.Participant storage ref"
+                        }
+                      },
+                      "id": 76,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "participant",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 9,
+                      "src": "1806:35:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 77,
+                      "name": "_participant",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 63,
+                      "src": "1844:12:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "1806:50:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 79,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1806:50:0"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 85,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "baseExpression": {
+                          "argumentTypes": null,
+                          "id": 80,
+                          "name": "whitelist",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 25,
+                          "src": "1866:9:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+                            "typeString": "mapping(address => struct ExchangeRegulatorService.Participant storage ref)"
+                          }
+                        },
+                        "id": 82,
+                        "indexExpression": {
+                          "argumentTypes": null,
+                          "id": 81,
+                          "name": "_participant",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 63,
+                          "src": "1876:12:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1866:23:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Participant_$12_storage",
+                          "typeString": "struct ExchangeRegulatorService.Participant storage ref"
+                        }
+                      },
+                      "id": 83,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "memberName": "locked",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 11,
+                      "src": "1866:30:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 84,
+                      "name": "_locked",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 65,
+                      "src": "1899:7:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "src": "1866:40:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 86,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1866:40:0"
+                },
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 88,
+                        "name": "_participant",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 63,
+                        "src": "1930:12:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 89,
+                        "name": "_locked",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 65,
+                        "src": "1944:7:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      ],
+                      "id": 87,
+                      "name": "Register",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 31,
+                      "src": "1921:8:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_bool_$returns$__$",
+                        "typeString": "function (address,bool)"
+                      }
+                    },
+                    "id": 90,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1921:31:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 91,
+                  "nodeType": "EmitStatement",
+                  "src": "1916:36:0"
+                }
+              ]
+            },
+            "documentation": "@notice \u53d6\u5f15\u53c2\u52a0\u8005\u767b\u9332\n @dev \u30b3\u30f3\u30c8\u30e9\u30af\u30c8\u30aa\u30fc\u30ca\u30fc\u306e\u307f\u5b9f\u884c\u53ef\u80fd\n @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9\n @param _locked \u30ed\u30c3\u30af\u72b6\u614b",
+            "id": 93,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": false,
+            "modifiers": [
+              {
+                "arguments": [],
+                "id": 68,
+                "modifierName": {
+                  "argumentTypes": null,
+                  "id": 67,
+                  "name": "onlyOwner",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 11273,
+                  "src": "1750:9:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_modifier$__$",
+                    "typeString": "modifier ()"
+                  }
+                },
+                "nodeType": "ModifierInvocation",
+                "src": "1750:11:0"
+              },
+              {
+                "arguments": [
+                  {
+                    "argumentTypes": null,
+                    "id": 70,
+                    "name": "_participant",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 63,
+                    "src": "1778:12:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  }
+                ],
+                "id": 71,
+                "modifierName": {
+                  "argumentTypes": null,
+                  "id": 69,
+                  "name": "onlyEOA",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 61,
+                  "src": "1770:7:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_modifier$_t_address_$",
+                    "typeString": "modifier (address)"
+                  }
+                },
+                "nodeType": "ModifierInvocation",
+                "src": "1770:21:0"
+              }
+            ],
+            "name": "register",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 66,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 63,
+                  "name": "_participant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 93,
+                  "src": "1691:20:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 62,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1691:7:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 65,
+                  "name": "_locked",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 93,
+                  "src": "1713:12:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 64,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1713:4:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1690:36:0"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 72,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1796:0:0"
+            },
+            "scope": 148,
+            "src": "1673:286:0",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 116,
+              "nodeType": "Block",
+              "src": "2286:115:0",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 107,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 102,
+                      "name": "participant",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 98,
+                      "src": "2296:11:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "baseExpression": {
+                          "argumentTypes": null,
+                          "id": 103,
+                          "name": "whitelist",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 25,
+                          "src": "2310:9:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+                            "typeString": "mapping(address => struct ExchangeRegulatorService.Participant storage ref)"
+                          }
+                        },
+                        "id": 105,
+                        "indexExpression": {
+                          "argumentTypes": null,
+                          "id": 104,
+                          "name": "_participant",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 95,
+                          "src": "2320:12:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "2310:23:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Participant_$12_storage",
+                          "typeString": "struct ExchangeRegulatorService.Participant storage ref"
+                        }
+                      },
+                      "id": 106,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "participant",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 9,
+                      "src": "2310:35:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "2296:49:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 108,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2296:49:0"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 114,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 109,
+                      "name": "locked",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 100,
+                      "src": "2355:6:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "baseExpression": {
+                          "argumentTypes": null,
+                          "id": 110,
+                          "name": "whitelist",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 25,
+                          "src": "2364:9:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+                            "typeString": "mapping(address => struct ExchangeRegulatorService.Participant storage ref)"
+                          }
+                        },
+                        "id": 112,
+                        "indexExpression": {
+                          "argumentTypes": null,
+                          "id": 111,
+                          "name": "_participant",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 95,
+                          "src": "2374:12:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "2364:23:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Participant_$12_storage",
+                          "typeString": "struct ExchangeRegulatorService.Participant storage ref"
+                        }
+                      },
+                      "id": 113,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "locked",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 11,
+                      "src": "2364:30:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "src": "2355:39:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 115,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2355:39:0"
+                }
+              ]
+            },
+            "documentation": "@notice \u53d6\u5f15\u53c2\u52a0\u8005\u53c2\u7167\n @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9\n @return participant \u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9\n @return \u30ed\u30c3\u30af\u72b6\u614b",
+            "id": 117,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": true,
+            "modifiers": [],
+            "name": "getWhitelist",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 96,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 95,
+                  "name": "_participant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 117,
+                  "src": "2181:20:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 94,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2181:7:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2180:22:0"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 101,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 98,
+                  "name": "participant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 117,
+                  "src": "2248:19:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 97,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2248:7:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 100,
+                  "name": "locked",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 117,
+                  "src": "2269:11:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 99,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2269:4:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2247:34:0"
+            },
+            "scope": 148,
+            "src": "2159:242:0",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 146,
+              "nodeType": "Block",
+              "src": "2644:243:0",
+              "statements": [
+                {
+                  "condition": {
+                    "argumentTypes": null,
+                    "expression": {
+                      "argumentTypes": null,
+                      "baseExpression": {
+                        "argumentTypes": null,
+                        "id": 124,
+                        "name": "whitelist",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 25,
+                        "src": "2658:9:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+                          "typeString": "mapping(address => struct ExchangeRegulatorService.Participant storage ref)"
+                        }
+                      },
+                      "id": 126,
+                      "indexExpression": {
+                        "argumentTypes": null,
+                        "id": 125,
+                        "name": "_participant",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 119,
+                        "src": "2668:12:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "2658:23:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Participant_$12_storage",
+                        "typeString": "struct ExchangeRegulatorService.Participant storage ref"
+                      }
+                    },
+                    "id": 127,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "locked",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 11,
+                    "src": "2658:30:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": null,
+                  "id": 131,
+                  "nodeType": "IfStatement",
+                  "src": "2654:80:0",
+                  "trueBody": {
+                    "id": 130,
+                    "nodeType": "Block",
+                    "src": "2690:44:0",
+                    "statements": [
+                      {
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 128,
+                          "name": "CHECK_LOCKED",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 18,
+                          "src": "2711:12:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint8",
+                            "typeString": "uint8"
+                          }
+                        },
+                        "functionReturnParameters": 123,
+                        "id": 129,
+                        "nodeType": "Return",
+                        "src": "2704:19:0"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": {
+                    "argumentTypes": null,
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 139,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "baseExpression": {
+                          "argumentTypes": null,
+                          "id": 132,
+                          "name": "whitelist",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 25,
+                          "src": "2748:9:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Participant_$12_storage_$",
+                            "typeString": "mapping(address => struct ExchangeRegulatorService.Participant storage ref)"
+                          }
+                        },
+                        "id": 134,
+                        "indexExpression": {
+                          "argumentTypes": null,
+                          "id": 133,
+                          "name": "_participant",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 119,
+                          "src": "2758:12:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "2748:23:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Participant_$12_storage",
+                          "typeString": "struct ExchangeRegulatorService.Participant storage ref"
+                        }
+                      },
+                      "id": 135,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "participant",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 9,
+                      "src": "2748:35:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "hexValue": "30",
+                          "id": 137,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "2795:1:0",
+                          "subdenomination": null,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          }
+                        ],
+                        "id": 136,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "2787:7:0",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": "address"
+                      },
+                      "id": 138,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "2787:10:0",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "2748:49:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": null,
+                  "id": 143,
+                  "nodeType": "IfStatement",
+                  "src": "2744:106:0",
+                  "trueBody": {
+                    "id": 142,
+                    "nodeType": "Block",
+                    "src": "2799:51:0",
+                    "statements": [
+                      {
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 140,
+                          "name": "CHECK_NOT_REGISTERD",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 21,
+                          "src": "2820:19:0",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint8",
+                            "typeString": "uint8"
+                          }
+                        },
+                        "functionReturnParameters": 123,
+                        "id": 141,
+                        "nodeType": "Return",
+                        "src": "2813:26:0"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 144,
+                    "name": "CHECK_SUCCESS",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 15,
+                    "src": "2867:13:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "functionReturnParameters": 123,
+                  "id": 145,
+                  "nodeType": "Return",
+                  "src": "2860:20:0"
+                }
+              ]
+            },
+            "documentation": "@notice \u53d6\u5f15\u53ef\u5426\u30c1\u30a7\u30c3\u30af\n @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306e\u30a2\u30c9\u30ec\u30b9\uff08EOA\uff09\n @return \u30c1\u30a7\u30c3\u30af\u7d50\u679c",
+            "id": 147,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": true,
+            "modifiers": [],
+            "name": "check",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 120,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 119,
+                  "name": "_participant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 147,
+                  "src": "2566:20:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 118,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2566:7:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2565:22:0"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 123,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 122,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 147,
+                  "src": "2633:5:0",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint8",
+                    "typeString": "uint8"
+                  },
+                  "typeName": {
+                    "id": 121,
+                    "name": "uint8",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2633:5:0",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint8",
+                      "typeString": "uint8"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2632:7:0"
+            },
+            "scope": 148,
+            "src": "2551:336:0",
+            "stateMutability": "view",
+            "superFunction": 11780,
+            "visibility": "public"
+          }
+        ],
+        "scope": 149,
+        "src": "183:2707:0"
+      }
+    ],
+    "src": "0:2891:0"
+  },
+  "bytecode": "608060405260008054600160a060020a031916331790556103c0806100256000396000f30060806040526004361061006c5763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166330edc0f581146100715780638da5cb5b146100b5578063ab01b469146100e6578063c23697a81461010e578063f2fde38b14610145575b600080fd5b34801561007d57600080fd5b50610092600160a060020a0360043516610166565b60408051600160a060020a03909316835290151560208301528051918290030190f35b3480156100c157600080fd5b506100ca6101a3565b60408051600160a060020a039092168252519081900360200190f35b3480156100f257600080fd5b5061010c600160a060020a036004351660243515156101b2565b005b34801561011a57600080fd5b5061012f600160a060020a0360043516610285565b6040805160ff9092168252519081900360200190f35b34801561015157600080fd5b5061010c600160a060020a03600435166102f8565b600160a060020a03908116600090815260016020526040902054908116917401000000000000000000000000000000000000000090910460ff1690565b600054600160a060020a031681565b600054600160a060020a031633146101c957600080fd5b816101d38161038c565b156101dd57600080fd5b600160a060020a038316600081815260016020908152604091829020805473ffffffffffffffffffffffffffffffffffffffff1916841774ff000000000000000000000000000000000000000019167401000000000000000000000000000000000000000087151590810291909117909155825190815291517fe5893cbe0f29b1ed4010af79004fcf5b6bdf713a7ccdc0b9e475e64ce2283df69281900390910190a2505050565b600160a060020a03811660009081526001602052604081205474010000000000000000000000000000000000000000900460ff16156102c6575060016102f3565b600160a060020a038281166000908152600160205260409020541615156102ef575060026102f3565b5060005b919050565b600054600160a060020a0316331461030f57600080fd5b600160a060020a038116151561032457600080fd5b60008054604051600160a060020a03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a36000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b6000903b11905600a165627a7a72305820967d69edcef11ef3355047f14b6760dc8fef5e1668ad5d16188f808eace12e8f0029",
+  "bytecodeSha1": "91a5cdd49a71715fc13c9c126fab582467dc7f0a",
+  "compiler": {
+    "evm_version": "byzantium",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "version": "0.4.25"
+  },
+  "contractName": "ExchangeRegulatorService",
+  "coverageMap": {
+    "branches": {
+      "0": {
+        "ExchangeRegulatorService.check": {
+          "12": [
+            2658,
+            2688,
+            false
+          ],
+          "13": [
+            2748,
+            2797,
+            false
+          ]
+        },
+        "ExchangeRegulatorService.register": {
+          "11": [
+            1418,
+            1438,
+            false
+          ]
+        }
+      },
+      "12": {
+        "Ownable.transferOwnership": {
+          "14": [
+            722,
+            744,
+            true
+          ]
+        }
+      },
+      "15": {}
+    },
+    "statements": {
+      "0": {
+        "ExchangeRegulatorService.check": {
+          "5": [
+            2704,
+            2723
+          ],
+          "6": [
+            2813,
+            2839
+          ]
+        },
+        "ExchangeRegulatorService.getWhitelist": {
+          "0": [
+            2296,
+            2345
+          ],
+          "1": [
+            2355,
+            2394
+          ]
+        },
+        "ExchangeRegulatorService.isContract": {
+          "10": [
+            1240,
+            1257
+          ]
+        },
+        "ExchangeRegulatorService.register": {
+          "2": [
+            1806,
+            1856
+          ],
+          "3": [
+            1866,
+            1906
+          ],
+          "4": [
+            1916,
+            1952
+          ]
+        }
+      },
+      "12": {
+        "Ownable.transferOwnership": {
+          "7": [
+            714,
+            745
+          ],
+          "8": [
+            755,
+            797
+          ],
+          "9": [
+            807,
+            823
+          ]
+        }
+      },
+      "15": {}
+    }
+  },
+  "dependencies": [
+    "Ownable",
+    "RegulatorService"
+  ],
+  "deployedBytecode": "60806040526004361061006c5763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166330edc0f581146100715780638da5cb5b146100b5578063ab01b469146100e6578063c23697a81461010e578063f2fde38b14610145575b600080fd5b34801561007d57600080fd5b50610092600160a060020a0360043516610166565b60408051600160a060020a03909316835290151560208301528051918290030190f35b3480156100c157600080fd5b506100ca6101a3565b60408051600160a060020a039092168252519081900360200190f35b3480156100f257600080fd5b5061010c600160a060020a036004351660243515156101b2565b005b34801561011a57600080fd5b5061012f600160a060020a0360043516610285565b6040805160ff9092168252519081900360200190f35b34801561015157600080fd5b5061010c600160a060020a03600435166102f8565b600160a060020a03908116600090815260016020526040902054908116917401000000000000000000000000000000000000000090910460ff1690565b600054600160a060020a031681565b600054600160a060020a031633146101c957600080fd5b816101d38161038c565b156101dd57600080fd5b600160a060020a038316600081815260016020908152604091829020805473ffffffffffffffffffffffffffffffffffffffff1916841774ff000000000000000000000000000000000000000019167401000000000000000000000000000000000000000087151590810291909117909155825190815291517fe5893cbe0f29b1ed4010af79004fcf5b6bdf713a7ccdc0b9e475e64ce2283df69281900390910190a2505050565b600160a060020a03811660009081526001602052604081205474010000000000000000000000000000000000000000900460ff16156102c6575060016102f3565b600160a060020a038281166000908152600160205260409020541615156102ef575060026102f3565b5060005b919050565b600054600160a060020a0316331461030f57600080fd5b600160a060020a038116151561032457600080fd5b60008054604051600160a060020a03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a36000805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b6000903b11905600a165627a7a72305820967d69edcef11ef3355047f14b6760dc8fef5e1668ad5d16188f808eace12e8f0029",
+  "deployedSourceMap": "183:2707:0:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2159:242;;8:9:-1;5:2;;;30:1;27;20:12;5:2;-1:-1;2159:242:0;-1:-1:-1;;;;;2159:242:0;;;;;;;;;-1:-1:-1;;;;;2159:242:0;;;;;;;;;;;;;;;;;;;;;124:20:12;;8:9:-1;5:2;;;30:1;27;20:12;5:2;124:20:12;;;;;;;;-1:-1:-1;;;;;124:20:12;;;;;;;;;;;;;;1673:286:0;;8:9:-1;5:2;;;30:1;27;20:12;5:2;-1:-1;1673:286:0;-1:-1:-1;;;;;1673:286:0;;;;;;;;;;;2551:336;;8:9:-1;5:2;;;30:1;27;20:12;5:2;-1:-1;2551:336:0;-1:-1:-1;;;;;2551:336:0;;;;;;;;;;;;;;;;;;;;;;;;622:208:12;;8:9:-1;5:2;;;30:1;27;20:12;5:2;-1:-1;622:208:12;-1:-1:-1;;;;;622:208:12;;;;;2159:242:0;-1:-1:-1;;;;;2310:23:0;;;2248:19;2310:23;;;:9;:23;;;;;:35;;;;;2364:30;;;;;;;2159:242::o;124:20:12:-;;;-1:-1:-1;;;;;124:20:12;;:::o;1673:286:0:-;467:5:12;;-1:-1:-1;;;;;467:5:12;453:10;:19;445:28;;;;;;1778:12:0;1418:20;1429:8;1418:10;:20::i;:::-;1414:34;;;1440:8;;;1414:34;-1:-1:-1;;;;;1806:23:0;;;;;;:9;:23;;;;;;;;;:50;;-1:-1:-1;;1806:50:0;;;-1:-1:-1;;1866:40:0;;;;;;;;;;;;;;;1921:31;;;;;;;;;;;;;;;;;483:1:12;1673:286:0;;:::o;2551:336::-;-1:-1:-1;;;;;2658:23:0;;2633:5;2658:23;;;:9;:23;;;;;:30;;;;;;2654:80;;;-1:-1:-1;593:1:0;2704:19;;2654:80;-1:-1:-1;;;;;2748:23:0;;;2795:1;2748:23;;;:9;:23;;;;;:35;;:49;2744:106;;;-1:-1:-1;700:1:0;2813:26;;2744:106;-1:-1:-1;493:1:0;2551:336;;;;:::o;622:208:12:-;467:5;;-1:-1:-1;;;;;467:5:12;453:10;:19;445:28;;;;;;-1:-1:-1;;;;;722:22:12;;;;714:31;;;;;;781:5;;;760:37;;-1:-1:-1;;;;;760:37:12;;;;781:5;;;760:37;;;807:5;:16;;-1:-1:-1;;807:16:12;-1:-1:-1;;;;;807:16:12;;;;;;;;;;622:208::o;1042:222:0:-;1126:4;1200:21;;1248:8;;1042:222::o",
+  "language": "Solidity",
+  "natspec": {
+    "methods": {
+      "check(address)": {
+        "notice": "\u53d6\u5f15\u53ef\u5426\u30c1\u30a7\u30c3\u30af",
+        "params": {
+          "_participant": "\u53d6\u5f15\u53c2\u52a0\u8005\u306e\u30a2\u30c9\u30ec\u30b9\uff08EOA\uff09"
+        },
+        "return": "\u30c1\u30a7\u30c3\u30af\u7d50\u679c"
+      },
+      "getWhitelist(address)": {
+        "notice": "\u53d6\u5f15\u53c2\u52a0\u8005\u53c2\u7167",
+        "params": {
+          "_participant": "\u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9"
+        },
+        "return": "participant \u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9\u30ed\u30c3\u30af\u72b6\u614b"
+      },
+      "register(address,bool)": {
+        "details": "\u30b3\u30f3\u30c8\u30e9\u30af\u30c8\u30aa\u30fc\u30ca\u30fc\u306e\u307f\u5b9f\u884c\u53ef\u80fd",
+        "notice": "\u53d6\u5f15\u53c2\u52a0\u8005\u767b\u9332",
+        "params": {
+          "_locked": "\u30ed\u30c3\u30af\u72b6\u614b",
+          "_participant": "\u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9"
+        }
+      },
+      "transferOwnership(address)": {
+        "details": "\u30aa\u30fc\u30ca\u30fc\u306e\u307f\u5b9f\u884c\u53ef\u80fd",
+        "notice": "\u30aa\u30fc\u30ca\u30fc\u5909\u66f4",
+        "params": {
+          "newOwner": "\u65b0\u3057\u3044\u30aa\u30fc\u30ca\u30fc"
+        }
+      }
+    },
+    "title": "Exchange\u306e\u53d6\u5f15\u53c2\u52a0\u8005\u5236\u9650\u30b5\u30fc\u30d3\u30b9"
+  },
+  "offset": [
+    183,
+    2890
+  ],
+  "opcodes": "PUSH1 0x80 PUSH1 0x40 MSTORE PUSH1 0x4 CALLDATASIZE LT PUSH2 0x6C JUMPI PUSH4 0xFFFFFFFF PUSH29 0x100000000000000000000000000000000000000000000000000000000 PUSH1 0x0 CALLDATALOAD DIV AND PUSH4 0x30EDC0F5 DUP2 EQ PUSH2 0x71 JUMPI DUP1 PUSH4 0x8DA5CB5B EQ PUSH2 0xB5 JUMPI DUP1 PUSH4 0xAB01B469 EQ PUSH2 0xE6 JUMPI DUP1 PUSH4 0xC23697A8 EQ PUSH2 0x10E JUMPI DUP1 PUSH4 0xF2FDE38B EQ PUSH2 0x145 JUMPI JUMPDEST PUSH1 0x0 DUP1 REVERT JUMPDEST CALLVALUE DUP1 ISZERO PUSH2 0x7D JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH2 0x92 PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB PUSH1 0x4 CALLDATALOAD AND PUSH2 0x166 JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB SWAP1 SWAP4 AND DUP4 MSTORE SWAP1 ISZERO ISZERO PUSH1 0x20 DUP4 ADD MSTORE DUP1 MLOAD SWAP2 DUP3 SWAP1 SUB ADD SWAP1 RETURN JUMPDEST CALLVALUE DUP1 ISZERO PUSH2 0xC1 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH2 0xCA PUSH2 0x1A3 JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB SWAP1 SWAP3 AND DUP3 MSTORE MLOAD SWAP1 DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 RETURN JUMPDEST CALLVALUE DUP1 ISZERO PUSH2 0xF2 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH2 0x10C PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB PUSH1 0x4 CALLDATALOAD AND PUSH1 0x24 CALLDATALOAD ISZERO ISZERO PUSH2 0x1B2 JUMP JUMPDEST STOP JUMPDEST CALLVALUE DUP1 ISZERO PUSH2 0x11A JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH2 0x12F PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB PUSH1 0x4 CALLDATALOAD AND PUSH2 0x285 JUMP JUMPDEST PUSH1 0x40 DUP1 MLOAD PUSH1 0xFF SWAP1 SWAP3 AND DUP3 MSTORE MLOAD SWAP1 DUP2 SWAP1 SUB PUSH1 0x20 ADD SWAP1 RETURN JUMPDEST CALLVALUE DUP1 ISZERO PUSH2 0x151 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST POP PUSH2 0x10C PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB PUSH1 0x4 CALLDATALOAD AND PUSH2 0x2F8 JUMP JUMPDEST PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB SWAP1 DUP2 AND PUSH1 0x0 SWAP1 DUP2 MSTORE PUSH1 0x1 PUSH1 0x20 MSTORE PUSH1 0x40 SWAP1 KECCAK256 SLOAD SWAP1 DUP2 AND SWAP2 PUSH21 0x10000000000000000000000000000000000000000 SWAP1 SWAP2 DIV PUSH1 0xFF AND SWAP1 JUMP JUMPDEST PUSH1 0x0 SLOAD PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB AND DUP2 JUMP JUMPDEST PUSH1 0x0 SLOAD PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB AND CALLER EQ PUSH2 0x1C9 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST DUP2 PUSH2 0x1D3 DUP2 PUSH2 0x38C JUMP JUMPDEST ISZERO PUSH2 0x1DD JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB DUP4 AND PUSH1 0x0 DUP2 DUP2 MSTORE PUSH1 0x1 PUSH1 0x20 SWAP1 DUP2 MSTORE PUSH1 0x40 SWAP2 DUP3 SWAP1 KECCAK256 DUP1 SLOAD PUSH20 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF NOT AND DUP5 OR PUSH21 0xFF0000000000000000000000000000000000000000 NOT AND PUSH21 0x10000000000000000000000000000000000000000 DUP8 ISZERO ISZERO SWAP1 DUP2 MUL SWAP2 SWAP1 SWAP2 OR SWAP1 SWAP2 SSTORE DUP3 MLOAD SWAP1 DUP2 MSTORE SWAP2 MLOAD PUSH32 0xE5893CBE0F29B1ED4010AF79004FCF5B6BDF713A7CCDC0B9E475E64CE2283DF6 SWAP3 DUP2 SWAP1 SUB SWAP1 SWAP2 ADD SWAP1 LOG2 POP POP POP JUMP JUMPDEST PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB DUP2 AND PUSH1 0x0 SWAP1 DUP2 MSTORE PUSH1 0x1 PUSH1 0x20 MSTORE PUSH1 0x40 DUP2 KECCAK256 SLOAD PUSH21 0x10000000000000000000000000000000000000000 SWAP1 DIV PUSH1 0xFF AND ISZERO PUSH2 0x2C6 JUMPI POP PUSH1 0x1 PUSH2 0x2F3 JUMP JUMPDEST PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB DUP3 DUP2 AND PUSH1 0x0 SWAP1 DUP2 MSTORE PUSH1 0x1 PUSH1 0x20 MSTORE PUSH1 0x40 SWAP1 KECCAK256 SLOAD AND ISZERO ISZERO PUSH2 0x2EF JUMPI POP PUSH1 0x2 PUSH2 0x2F3 JUMP JUMPDEST POP PUSH1 0x0 JUMPDEST SWAP2 SWAP1 POP JUMP JUMPDEST PUSH1 0x0 SLOAD PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB AND CALLER EQ PUSH2 0x30F JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB DUP2 AND ISZERO ISZERO PUSH2 0x324 JUMPI PUSH1 0x0 DUP1 REVERT JUMPDEST PUSH1 0x0 DUP1 SLOAD PUSH1 0x40 MLOAD PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB DUP1 DUP6 AND SWAP4 SWAP3 AND SWAP2 PUSH32 0x8BE0079C531659141344CD1FD0A4F28419497F9722A3DAAFE3B4186F6B6457E0 SWAP2 LOG3 PUSH1 0x0 DUP1 SLOAD PUSH20 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF NOT AND PUSH1 0x1 PUSH1 0xA0 PUSH1 0x2 EXP SUB SWAP3 SWAP1 SWAP3 AND SWAP2 SWAP1 SWAP2 OR SWAP1 SSTORE JUMP JUMPDEST PUSH1 0x0 SWAP1 EXTCODESIZE GT SWAP1 JUMP STOP LOG1 PUSH6 0x627A7A723058 KECCAK256 SWAP7 PUSH30 0x69EDCEF11EF3355047F14B6760DC8FEF5E1668AD5D16188F808EACE12E8F STOP 0x29 ",
+  "pcMap": {
+    "0": {
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x80"
+    },
+    "2": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x40"
+    },
+    "4": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "5": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x4"
+    },
+    "7": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "CALLDATASIZE",
+      "path": "0"
+    },
+    "8": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "LT",
+      "path": "0"
+    },
+    "9": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x6C"
+    },
+    "12": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "13": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH4",
+      "path": "0",
+      "value": "0xFFFFFFFF"
+    },
+    "18": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH29",
+      "path": "0",
+      "value": "0x100000000000000000000000000000000000000000000000000000000"
+    },
+    "48": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "50": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "CALLDATALOAD",
+      "path": "0"
+    },
+    "51": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "DIV",
+      "path": "0"
+    },
+    "52": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "53": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH4",
+      "path": "0",
+      "value": "0x30EDC0F5"
+    },
+    "58": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "59": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "EQ",
+      "path": "0"
+    },
+    "60": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x71"
+    },
+    "63": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "64": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "65": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH4",
+      "path": "0",
+      "value": "0x8DA5CB5B"
+    },
+    "70": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "EQ",
+      "path": "0"
+    },
+    "71": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0xB5"
+    },
+    "74": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "75": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "76": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH4",
+      "path": "0",
+      "value": "0xAB01B469"
+    },
+    "81": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "EQ",
+      "path": "0"
+    },
+    "82": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0xE6"
+    },
+    "85": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "86": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "87": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH4",
+      "path": "0",
+      "value": "0xC23697A8"
+    },
+    "92": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "EQ",
+      "path": "0"
+    },
+    "93": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x10E"
+    },
+    "96": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "97": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "98": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH4",
+      "path": "0",
+      "value": "0xF2FDE38B"
+    },
+    "103": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "EQ",
+      "path": "0"
+    },
+    "104": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x145"
+    },
+    "107": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "108": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "109": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "111": {
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "112": {
+      "first_revert": true,
+      "fn": null,
+      "offset": [
+        183,
+        2890
+      ],
+      "op": "REVERT",
+      "path": "0"
+    },
+    "113": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "114": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "CALLVALUE",
+      "path": "0"
+    },
+    "115": {
+      "op": "DUP1"
+    },
+    "116": {
+      "op": "ISZERO"
+    },
+    "117": {
+      "op": "PUSH2",
+      "value": "0x7D"
+    },
+    "120": {
+      "op": "JUMPI"
+    },
+    "121": {
+      "op": "PUSH1",
+      "value": "0x0"
+    },
+    "123": {
+      "op": "DUP1"
+    },
+    "124": {
+      "dev": "Cannot send ether to nonpayable function",
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "REVERT",
+      "path": "0"
+    },
+    "125": {
+      "op": "JUMPDEST"
+    },
+    "126": {
+      "op": "POP"
+    },
+    "127": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x92"
+    },
+    "130": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "132": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "134": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "136": {
+      "op": "EXP"
+    },
+    "137": {
+      "op": "SUB"
+    },
+    "138": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x4"
+    },
+    "140": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "CALLDATALOAD",
+      "path": "0"
+    },
+    "141": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "142": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x166"
+    },
+    "145": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "146": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "147": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x40"
+    },
+    "149": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "150": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "MLOAD",
+      "path": "0"
+    },
+    "151": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "153": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "155": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "157": {
+      "op": "EXP"
+    },
+    "158": {
+      "op": "SUB"
+    },
+    "159": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "160": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "SWAP4",
+      "path": "0"
+    },
+    "161": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "162": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "DUP4",
+      "path": "0"
+    },
+    "163": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "164": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "165": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "166": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "167": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x20"
+    },
+    "169": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "DUP4",
+      "path": "0"
+    },
+    "170": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "ADD",
+      "path": "0"
+    },
+    "171": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "172": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "173": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "MLOAD",
+      "path": "0"
+    },
+    "174": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "175": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "DUP3",
+      "path": "0"
+    },
+    "176": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "177": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "SUB",
+      "path": "0"
+    },
+    "178": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "ADD",
+      "path": "0"
+    },
+    "179": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "180": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "RETURN",
+      "path": "0"
+    },
+    "181": {
+      "offset": [
+        124,
+        144
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "182": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "CALLVALUE",
+      "path": "12"
+    },
+    "183": {
+      "op": "DUP1"
+    },
+    "184": {
+      "op": "ISZERO"
+    },
+    "185": {
+      "op": "PUSH2",
+      "value": "0xC1"
+    },
+    "188": {
+      "op": "JUMPI"
+    },
+    "189": {
+      "op": "PUSH1",
+      "value": "0x0"
+    },
+    "191": {
+      "op": "DUP1"
+    },
+    "192": {
+      "dev": "Cannot send ether to nonpayable function",
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "REVERT",
+      "path": "12"
+    },
+    "193": {
+      "op": "JUMPDEST"
+    },
+    "194": {
+      "offset": [
+        124,
+        144
+      ],
+      "op": "POP",
+      "path": "12"
+    },
+    "195": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "PUSH2",
+      "path": "12",
+      "value": "0xCA"
+    },
+    "198": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "PUSH2",
+      "path": "12",
+      "value": "0x1A3"
+    },
+    "201": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "JUMP",
+      "path": "12"
+    },
+    "202": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "203": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x40"
+    },
+    "205": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "DUP1",
+      "path": "12"
+    },
+    "206": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "MLOAD",
+      "path": "12"
+    },
+    "207": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "209": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "211": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "213": {
+      "op": "EXP"
+    },
+    "214": {
+      "op": "SUB"
+    },
+    "215": {
+      "offset": [
+        124,
+        144
+      ],
+      "op": "SWAP1",
+      "path": "12"
+    },
+    "216": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "SWAP3",
+      "path": "12"
+    },
+    "217": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "218": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "DUP3",
+      "path": "12"
+    },
+    "219": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "MSTORE",
+      "path": "12"
+    },
+    "220": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "MLOAD",
+      "path": "12"
+    },
+    "221": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "SWAP1",
+      "path": "12"
+    },
+    "222": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "DUP2",
+      "path": "12"
+    },
+    "223": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "SWAP1",
+      "path": "12"
+    },
+    "224": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "SUB",
+      "path": "12"
+    },
+    "225": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x20"
+    },
+    "227": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "ADD",
+      "path": "12"
+    },
+    "228": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "SWAP1",
+      "path": "12"
+    },
+    "229": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "RETURN",
+      "path": "12"
+    },
+    "230": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "231": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "CALLVALUE",
+      "path": "0"
+    },
+    "232": {
+      "op": "DUP1"
+    },
+    "233": {
+      "op": "ISZERO"
+    },
+    "234": {
+      "op": "PUSH2",
+      "value": "0xF2"
+    },
+    "237": {
+      "op": "JUMPI"
+    },
+    "238": {
+      "op": "PUSH1",
+      "value": "0x0"
+    },
+    "240": {
+      "op": "DUP1"
+    },
+    "241": {
+      "dev": "Cannot send ether to nonpayable function",
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "REVERT",
+      "path": "0"
+    },
+    "242": {
+      "op": "JUMPDEST"
+    },
+    "243": {
+      "op": "POP"
+    },
+    "244": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x10C"
+    },
+    "247": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "249": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "251": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "253": {
+      "op": "EXP"
+    },
+    "254": {
+      "op": "SUB"
+    },
+    "255": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x4"
+    },
+    "257": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "CALLDATALOAD",
+      "path": "0"
+    },
+    "258": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "259": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x24"
+    },
+    "261": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "CALLDATALOAD",
+      "path": "0"
+    },
+    "262": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "263": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "264": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x1B2"
+    },
+    "267": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "268": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "269": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "STOP",
+      "path": "0"
+    },
+    "270": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "271": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "CALLVALUE",
+      "path": "0"
+    },
+    "272": {
+      "op": "DUP1"
+    },
+    "273": {
+      "op": "ISZERO"
+    },
+    "274": {
+      "op": "PUSH2",
+      "value": "0x11A"
+    },
+    "277": {
+      "op": "JUMPI"
+    },
+    "278": {
+      "op": "PUSH1",
+      "value": "0x0"
+    },
+    "280": {
+      "op": "DUP1"
+    },
+    "281": {
+      "dev": "Cannot send ether to nonpayable function",
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "REVERT",
+      "path": "0"
+    },
+    "282": {
+      "op": "JUMPDEST"
+    },
+    "283": {
+      "op": "POP"
+    },
+    "284": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x12F"
+    },
+    "287": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "289": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "291": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "293": {
+      "op": "EXP"
+    },
+    "294": {
+      "op": "SUB"
+    },
+    "295": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x4"
+    },
+    "297": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "CALLDATALOAD",
+      "path": "0"
+    },
+    "298": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "299": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x285"
+    },
+    "302": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "303": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "304": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x40"
+    },
+    "306": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "307": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "MLOAD",
+      "path": "0"
+    },
+    "308": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0xFF"
+    },
+    "310": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "311": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SWAP3",
+      "path": "0"
+    },
+    "312": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "313": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "DUP3",
+      "path": "0"
+    },
+    "314": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "315": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "MLOAD",
+      "path": "0"
+    },
+    "316": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "317": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "318": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "319": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SUB",
+      "path": "0"
+    },
+    "320": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x20"
+    },
+    "322": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "ADD",
+      "path": "0"
+    },
+    "323": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "324": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "RETURN",
+      "path": "0"
+    },
+    "325": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "326": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "CALLVALUE",
+      "path": "12"
+    },
+    "327": {
+      "op": "DUP1"
+    },
+    "328": {
+      "op": "ISZERO"
+    },
+    "329": {
+      "op": "PUSH2",
+      "value": "0x151"
+    },
+    "332": {
+      "op": "JUMPI"
+    },
+    "333": {
+      "op": "PUSH1",
+      "value": "0x0"
+    },
+    "335": {
+      "op": "DUP1"
+    },
+    "336": {
+      "dev": "Cannot send ether to nonpayable function",
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "REVERT",
+      "path": "12"
+    },
+    "337": {
+      "op": "JUMPDEST"
+    },
+    "338": {
+      "op": "POP"
+    },
+    "339": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "PUSH2",
+      "path": "12",
+      "value": "0x10C"
+    },
+    "342": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "344": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "346": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "348": {
+      "op": "EXP"
+    },
+    "349": {
+      "op": "SUB"
+    },
+    "350": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x4"
+    },
+    "352": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "CALLDATALOAD",
+      "path": "12"
+    },
+    "353": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "354": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "PUSH2",
+      "path": "12",
+      "value": "0x2F8"
+    },
+    "357": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "JUMP",
+      "path": "12"
+    },
+    "358": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "359": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "361": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "363": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "365": {
+      "op": "EXP"
+    },
+    "366": {
+      "op": "SUB"
+    },
+    "367": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "SWAP1",
+      "path": "0",
+      "statement": 0
+    },
+    "368": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "369": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "370": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2248,
+        2267
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "372": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "373": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "374": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "375": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2319
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x1"
+    },
+    "377": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x20"
+    },
+    "379": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "380": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x40"
+    },
+    "382": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "383": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2333
+      ],
+      "op": "KECCAK256",
+      "path": "0"
+    },
+    "384": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2345
+      ],
+      "op": "SLOAD",
+      "path": "0"
+    },
+    "385": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2345
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "386": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2345
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "387": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2345
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "388": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2310,
+        2345
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "389": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2364,
+        2394
+      ],
+      "op": "PUSH21",
+      "path": "0",
+      "statement": 1,
+      "value": "0x10000000000000000000000000000000000000000"
+    },
+    "411": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2364,
+        2394
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "412": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2364,
+        2394
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "413": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2364,
+        2394
+      ],
+      "op": "DIV",
+      "path": "0"
+    },
+    "414": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2364,
+        2394
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0xFF"
+    },
+    "416": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2364,
+        2394
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "417": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        2364,
+        2394
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "418": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "jump": "o",
+      "offset": [
+        2159,
+        2401
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "419": {
+      "offset": [
+        124,
+        144
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "420": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x0"
+    },
+    "422": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "SLOAD",
+      "path": "12"
+    },
+    "423": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "425": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "427": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "429": {
+      "op": "EXP"
+    },
+    "430": {
+      "op": "SUB"
+    },
+    "431": {
+      "offset": [
+        124,
+        144
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "432": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "DUP2",
+      "path": "12"
+    },
+    "433": {
+      "fn": "ExchangeRegulatorService.getWhitelist",
+      "jump": "o",
+      "offset": [
+        124,
+        144
+      ],
+      "op": "JUMP",
+      "path": "12"
+    },
+    "434": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "435": {
+      "offset": [
+        467,
+        472
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x0"
+    },
+    "437": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        467,
+        472
+      ],
+      "op": "SLOAD",
+      "path": "12"
+    },
+    "438": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "440": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "442": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "444": {
+      "op": "EXP"
+    },
+    "445": {
+      "op": "SUB"
+    },
+    "446": {
+      "offset": [
+        467,
+        472
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "447": {
+      "offset": [
+        453,
+        463
+      ],
+      "op": "CALLER",
+      "path": "12"
+    },
+    "448": {
+      "offset": [
+        453,
+        472
+      ],
+      "op": "EQ",
+      "path": "12"
+    },
+    "449": {
+      "offset": [
+        445,
+        473
+      ],
+      "op": "PUSH2",
+      "path": "12",
+      "value": "0x1C9"
+    },
+    "452": {
+      "offset": [
+        445,
+        473
+      ],
+      "op": "JUMPI",
+      "path": "12"
+    },
+    "453": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x0"
+    },
+    "455": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "DUP1",
+      "path": "12"
+    },
+    "456": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "REVERT",
+      "path": "12"
+    },
+    "457": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "458": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1778,
+        1790
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "459": {
+      "offset": [
+        1418,
+        1438
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x1D3"
+    },
+    "462": {
+      "offset": [
+        1429,
+        1437
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "463": {
+      "offset": [
+        1418,
+        1428
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x38C"
+    },
+    "466": {
+      "jump": "i",
+      "offset": [
+        1418,
+        1438
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "467": {
+      "branch": 11,
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1418,
+        1438
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "468": {
+      "offset": [
+        1414,
+        1448
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "469": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1414,
+        1448
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x1DD"
+    },
+    "472": {
+      "branch": 11,
+      "offset": [
+        1414,
+        1448
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "473": {
+      "offset": [
+        1440,
+        1448
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "475": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1440,
+        1448
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "476": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1440,
+        1448
+      ],
+      "op": "REVERT",
+      "path": "0"
+    },
+    "477": {
+      "offset": [
+        1414,
+        1448
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "478": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "480": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "482": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "484": {
+      "op": "EXP"
+    },
+    "485": {
+      "op": "SUB"
+    },
+    "486": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "DUP4",
+      "path": "0",
+      "statement": 2
+    },
+    "487": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "488": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "490": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "491": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "492": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "493": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1815
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x1"
+    },
+    "495": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x20"
+    },
+    "497": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "498": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "499": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "500": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x40"
+    },
+    "502": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "503": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "DUP3",
+      "path": "0"
+    },
+    "504": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "505": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1829
+      ],
+      "op": "KECCAK256",
+      "path": "0"
+    },
+    "506": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1856
+      ],
+      "op": "DUP1",
+      "path": "0"
+    },
+    "507": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1856
+      ],
+      "op": "SLOAD",
+      "path": "0"
+    },
+    "508": {
+      "op": "PUSH20",
+      "value": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+    },
+    "529": {
+      "op": "NOT"
+    },
+    "530": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1856
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "531": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1856
+      ],
+      "op": "DUP5",
+      "path": "0"
+    },
+    "532": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1806,
+        1856
+      ],
+      "op": "OR",
+      "path": "0"
+    },
+    "533": {
+      "op": "PUSH21",
+      "value": "0xFF0000000000000000000000000000000000000000"
+    },
+    "555": {
+      "op": "NOT"
+    },
+    "556": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "AND",
+      "path": "0",
+      "statement": 3
+    },
+    "557": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "PUSH21",
+      "path": "0",
+      "value": "0x10000000000000000000000000000000000000000"
+    },
+    "579": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "DUP8",
+      "path": "0"
+    },
+    "580": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "581": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "582": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "583": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "584": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "MUL",
+      "path": "0"
+    },
+    "585": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "586": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "587": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "588": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "OR",
+      "path": "0"
+    },
+    "589": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "590": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "591": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1866,
+        1906
+      ],
+      "op": "SSTORE",
+      "path": "0"
+    },
+    "592": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "DUP3",
+      "path": "0",
+      "statement": 4
+    },
+    "593": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "MLOAD",
+      "path": "0"
+    },
+    "594": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "595": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "596": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "597": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "598": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "MLOAD",
+      "path": "0"
+    },
+    "599": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "PUSH32",
+      "path": "0",
+      "value": "0xE5893CBE0F29B1ED4010AF79004FCF5B6BDF713A7CCDC0B9E475E64CE2283DF6"
+    },
+    "632": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SWAP3",
+      "path": "0"
+    },
+    "633": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "634": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "635": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SUB",
+      "path": "0"
+    },
+    "636": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "637": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "638": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "ADD",
+      "path": "0"
+    },
+    "639": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "640": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1921,
+        1952
+      ],
+      "op": "LOG2",
+      "path": "0"
+    },
+    "641": {
+      "offset": [
+        483,
+        484
+      ],
+      "op": "POP",
+      "path": "12"
+    },
+    "642": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "POP",
+      "path": "0"
+    },
+    "643": {
+      "fn": "ExchangeRegulatorService.register",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "POP",
+      "path": "0"
+    },
+    "644": {
+      "fn": "ExchangeRegulatorService.register",
+      "jump": "o",
+      "offset": [
+        1673,
+        1959
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "645": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "646": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "648": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "650": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "652": {
+      "op": "EXP"
+    },
+    "653": {
+      "op": "SUB"
+    },
+    "654": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "655": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "656": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2633,
+        2638
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "658": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "659": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "660": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "661": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2667
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x1"
+    },
+    "663": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x20"
+    },
+    "665": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "666": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x40"
+    },
+    "668": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "669": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2681
+      ],
+      "op": "KECCAK256",
+      "path": "0"
+    },
+    "670": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2688
+      ],
+      "op": "SLOAD",
+      "path": "0"
+    },
+    "671": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2688
+      ],
+      "op": "PUSH21",
+      "path": "0",
+      "value": "0x10000000000000000000000000000000000000000"
+    },
+    "693": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2688
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "694": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2688
+      ],
+      "op": "DIV",
+      "path": "0"
+    },
+    "695": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2688
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0xFF"
+    },
+    "697": {
+      "branch": 12,
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2658,
+        2688
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "698": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2654,
+        2734
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "699": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2654,
+        2734
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x2C6"
+    },
+    "702": {
+      "branch": 12,
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2654,
+        2734
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "703": {
+      "op": "POP"
+    },
+    "704": {
+      "offset": [
+        593,
+        594
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x1"
+    },
+    "706": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2704,
+        2723
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "statement": 5,
+      "value": "0x2F3"
+    },
+    "709": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2704,
+        2723
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "710": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2654,
+        2734
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "711": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "713": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "715": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "717": {
+      "op": "EXP"
+    },
+    "718": {
+      "op": "SUB"
+    },
+    "719": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "DUP3",
+      "path": "0"
+    },
+    "720": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "721": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "722": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2795,
+        2796
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "724": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "725": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "DUP2",
+      "path": "0"
+    },
+    "726": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "727": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2757
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x1"
+    },
+    "729": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x20"
+    },
+    "731": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "MSTORE",
+      "path": "0"
+    },
+    "732": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x40"
+    },
+    "734": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "735": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2771
+      ],
+      "op": "KECCAK256",
+      "path": "0"
+    },
+    "736": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2783
+      ],
+      "op": "SLOAD",
+      "path": "0"
+    },
+    "737": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2783
+      ],
+      "op": "AND",
+      "path": "0"
+    },
+    "738": {
+      "branch": 13,
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2748,
+        2797
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "739": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2744,
+        2850
+      ],
+      "op": "ISZERO",
+      "path": "0"
+    },
+    "740": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2744,
+        2850
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "value": "0x2EF"
+    },
+    "743": {
+      "branch": 13,
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2744,
+        2850
+      ],
+      "op": "JUMPI",
+      "path": "0"
+    },
+    "744": {
+      "op": "POP"
+    },
+    "745": {
+      "offset": [
+        700,
+        701
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x2"
+    },
+    "747": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2813,
+        2839
+      ],
+      "op": "PUSH2",
+      "path": "0",
+      "statement": 6,
+      "value": "0x2F3"
+    },
+    "750": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2813,
+        2839
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "751": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2744,
+        2850
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "752": {
+      "op": "POP"
+    },
+    "753": {
+      "offset": [
+        493,
+        494
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "755": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "756": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SWAP2",
+      "path": "0"
+    },
+    "757": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "758": {
+      "fn": "ExchangeRegulatorService.check",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "POP",
+      "path": "0"
+    },
+    "759": {
+      "fn": "ExchangeRegulatorService.check",
+      "jump": "o",
+      "offset": [
+        2551,
+        2887
+      ],
+      "op": "JUMP",
+      "path": "0"
+    },
+    "760": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "761": {
+      "offset": [
+        467,
+        472
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x0"
+    },
+    "763": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        467,
+        472
+      ],
+      "op": "SLOAD",
+      "path": "12"
+    },
+    "764": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "766": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "768": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "770": {
+      "op": "EXP"
+    },
+    "771": {
+      "op": "SUB"
+    },
+    "772": {
+      "offset": [
+        467,
+        472
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "773": {
+      "offset": [
+        453,
+        463
+      ],
+      "op": "CALLER",
+      "path": "12"
+    },
+    "774": {
+      "offset": [
+        453,
+        472
+      ],
+      "op": "EQ",
+      "path": "12"
+    },
+    "775": {
+      "offset": [
+        445,
+        473
+      ],
+      "op": "PUSH2",
+      "path": "12",
+      "value": "0x30F"
+    },
+    "778": {
+      "offset": [
+        445,
+        473
+      ],
+      "op": "JUMPI",
+      "path": "12"
+    },
+    "779": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x0"
+    },
+    "781": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "DUP1",
+      "path": "12"
+    },
+    "782": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "REVERT",
+      "path": "12"
+    },
+    "783": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        445,
+        473
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "784": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "786": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "788": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "790": {
+      "op": "EXP"
+    },
+    "791": {
+      "op": "SUB"
+    },
+    "792": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        722,
+        744
+      ],
+      "op": "DUP2",
+      "path": "12",
+      "statement": 7
+    },
+    "793": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        722,
+        744
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "794": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        722,
+        744
+      ],
+      "op": "ISZERO",
+      "path": "12"
+    },
+    "795": {
+      "branch": 14,
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        722,
+        744
+      ],
+      "op": "ISZERO",
+      "path": "12"
+    },
+    "796": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        714,
+        745
+      ],
+      "op": "PUSH2",
+      "path": "12",
+      "value": "0x324"
+    },
+    "799": {
+      "branch": 14,
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        714,
+        745
+      ],
+      "op": "JUMPI",
+      "path": "12"
+    },
+    "800": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        714,
+        745
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x0"
+    },
+    "802": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        714,
+        745
+      ],
+      "op": "DUP1",
+      "path": "12"
+    },
+    "803": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        714,
+        745
+      ],
+      "op": "REVERT",
+      "path": "12"
+    },
+    "804": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        714,
+        745
+      ],
+      "op": "JUMPDEST",
+      "path": "12"
+    },
+    "805": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        781,
+        786
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "statement": 8,
+      "value": "0x0"
+    },
+    "807": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        781,
+        786
+      ],
+      "op": "DUP1",
+      "path": "12"
+    },
+    "808": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        781,
+        786
+      ],
+      "op": "SLOAD",
+      "path": "12"
+    },
+    "809": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "value": "0x40"
+    },
+    "811": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "MLOAD",
+      "path": "12"
+    },
+    "812": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "814": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "816": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "818": {
+      "op": "EXP"
+    },
+    "819": {
+      "op": "SUB"
+    },
+    "820": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "DUP1",
+      "path": "12"
+    },
+    "821": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "DUP6",
+      "path": "12"
+    },
+    "822": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "823": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "SWAP4",
+      "path": "12"
+    },
+    "824": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        781,
+        786
+      ],
+      "op": "SWAP3",
+      "path": "12"
+    },
+    "825": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        781,
+        786
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "826": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        781,
+        786
+      ],
+      "op": "SWAP2",
+      "path": "12"
+    },
+    "827": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "PUSH32",
+      "path": "12",
+      "value": "0x8BE0079C531659141344CD1FD0A4F28419497F9722A3DAAFE3B4186F6B6457E0"
+    },
+    "860": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "SWAP2",
+      "path": "12"
+    },
+    "861": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        760,
+        797
+      ],
+      "op": "LOG3",
+      "path": "12"
+    },
+    "862": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        812
+      ],
+      "op": "PUSH1",
+      "path": "12",
+      "statement": 9,
+      "value": "0x0"
+    },
+    "864": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "DUP1",
+      "path": "12"
+    },
+    "865": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SLOAD",
+      "path": "12"
+    },
+    "866": {
+      "op": "PUSH20",
+      "value": "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+    },
+    "887": {
+      "op": "NOT"
+    },
+    "888": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "889": {
+      "op": "PUSH1",
+      "value": "0x1"
+    },
+    "891": {
+      "op": "PUSH1",
+      "value": "0xA0"
+    },
+    "893": {
+      "op": "PUSH1",
+      "value": "0x2"
+    },
+    "895": {
+      "op": "EXP"
+    },
+    "896": {
+      "op": "SUB"
+    },
+    "897": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SWAP3",
+      "path": "12"
+    },
+    "898": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SWAP1",
+      "path": "12"
+    },
+    "899": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SWAP3",
+      "path": "12"
+    },
+    "900": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "AND",
+      "path": "12"
+    },
+    "901": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SWAP2",
+      "path": "12"
+    },
+    "902": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SWAP1",
+      "path": "12"
+    },
+    "903": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SWAP2",
+      "path": "12"
+    },
+    "904": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "OR",
+      "path": "12"
+    },
+    "905": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SWAP1",
+      "path": "12"
+    },
+    "906": {
+      "fn": "Ownable.transferOwnership",
+      "offset": [
+        807,
+        823
+      ],
+      "op": "SSTORE",
+      "path": "12"
+    },
+    "907": {
+      "fn": "Ownable.transferOwnership",
+      "jump": "o",
+      "offset": [
+        622,
+        830
+      ],
+      "op": "JUMP",
+      "path": "12"
+    },
+    "908": {
+      "fn": "ExchangeRegulatorService.isContract",
+      "offset": [
+        1042,
+        1264
+      ],
+      "op": "JUMPDEST",
+      "path": "0"
+    },
+    "909": {
+      "fn": "ExchangeRegulatorService.isContract",
+      "offset": [
+        1126,
+        1130
+      ],
+      "op": "PUSH1",
+      "path": "0",
+      "value": "0x0"
+    },
+    "911": {
+      "fn": "ExchangeRegulatorService.isContract",
+      "offset": [
+        1200,
+        1221
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "912": {
+      "fn": "ExchangeRegulatorService.isContract",
+      "offset": [
+        1200,
+        1221
+      ],
+      "op": "EXTCODESIZE",
+      "path": "0"
+    },
+    "913": {
+      "fn": "ExchangeRegulatorService.isContract",
+      "offset": [
+        1248,
+        1256
+      ],
+      "op": "GT",
+      "path": "0",
+      "statement": 10
+    },
+    "914": {
+      "fn": "ExchangeRegulatorService.isContract",
+      "offset": [
+        1248,
+        1256
+      ],
+      "op": "SWAP1",
+      "path": "0"
+    },
+    "915": {
+      "fn": "ExchangeRegulatorService.isContract",
+      "jump": "o",
+      "offset": [
+        1042,
+        1264
+      ],
+      "op": "JUMP",
+      "path": "0"
+    }
+  },
+  "sha1": "951b36e5a2f3a9eead0b2142995c2afd84f7ccdb",
+  "source": "pragma solidity ^0.4.24;\n\nimport \"./Ownable.sol\";\nimport \"./RegulatorService.sol\";\n\n\n/// @title Exchange\u306e\u53d6\u5f15\u53c2\u52a0\u8005\u5236\u9650\u30b5\u30fc\u30d3\u30b9\n/// @dev Exchange\u306e\u53d6\u5f15\u53c2\u52a0\u8005\u5236\u9650\ncontract ExchangeRegulatorService is RegulatorService, Ownable {\n\n    /// \u53d6\u5f15\u53c2\u52a0\u8005\u306e\u767b\u9332\u60c5\u5831\n    struct Participant {\n        address participant; // \u53d6\u5f15\u53c2\u52a0\u8005EOA\u30a2\u30c9\u30ec\u30b9\n        bool locked; // \u30ed\u30c3\u30af\u72b6\u614b\n    }\n\n    /// Check success code\n    uint8 constant private CHECK_SUCCESS = 0;\n\n    /// Check error reason : \u30a2\u30ab\u30a6\u30f3\u30c8\u30ed\u30c3\u30af\n    uint8 constant private CHECK_LOCKED = 1;\n\n    /// Check error reason : \u30a2\u30ab\u30a6\u30f3\u30c8\u672a\u767b\u9332\n    uint8 constant private CHECK_NOT_REGISTERD = 2;\n\n    /// \u8cfc\u5165\u53ef\u80fd\u8005\u60c5\u5831\n    /// whitelist[participantAddress]\n    mapping(address => Participant) whitelist;\n\n    /// \u53c2\u52a0\u8005\u767b\u9332\u6642\u30a4\u30d9\u30f3\u30c8\n    event Register(address indexed participant, bool locked);\n\n    /// @dev \u30b3\u30f3\u30c8\u30e9\u30af\u30c8\u30a2\u30c9\u30ec\u30b9\u5224\u5b9a\n    /// @param _address \u30a2\u30c9\u30ec\u30b9\n    /// @return \u5224\u5b9a\u7d50\u679c\n    function isContract(address _address)\n        private\n        view\n        returns (bool)\n    {\n        uint length;\n        assembly {\n            length := extcodesize(_address)\n        }\n        return (length>0);\n    }\n\n    /// @dev EOA\u30a2\u30c9\u30ec\u30b9\u30c1\u30a7\u30c3\u30af\n    /// @param _address \u30c1\u30a7\u30c3\u30af\u5bfe\u8c61\u306e\u30a2\u30c9\u30ec\u30b9\n    modifier onlyEOA(address _address) {\n        if (isContract(_address)) revert();\n        _;\n    }\n\n    /// @notice \u53d6\u5f15\u53c2\u52a0\u8005\u767b\u9332\n    /// @dev \u30b3\u30f3\u30c8\u30e9\u30af\u30c8\u30aa\u30fc\u30ca\u30fc\u306e\u307f\u5b9f\u884c\u53ef\u80fd\n    /// @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9\n    /// @param _locked \u30ed\u30c3\u30af\u72b6\u614b\n    function register(address _participant, bool _locked)\n        public\n        onlyOwner()\n        onlyEOA(_participant)\n    {\n        whitelist[_participant].participant = _participant;\n        whitelist[_participant].locked = _locked;\n        emit Register(_participant, _locked);\n    }\n\n    /// @notice \u53d6\u5f15\u53c2\u52a0\u8005\u53c2\u7167\n    /// @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9\n    /// @return participant \u53d6\u5f15\u53c2\u52a0\u8005\u306eEOA\u30a2\u30c9\u30ec\u30b9\n    /// @return \u30ed\u30c3\u30af\u72b6\u614b\n    function getWhitelist(address _participant)\n        public\n        view\n        returns (address participant, bool locked)\n    {\n        participant = whitelist[_participant].participant;\n        locked = whitelist[_participant].locked;\n    }\n\n    /// @notice \u53d6\u5f15\u53ef\u5426\u30c1\u30a7\u30c3\u30af\n    /// @param _participant \u53d6\u5f15\u53c2\u52a0\u8005\u306e\u30a2\u30c9\u30ec\u30b9\uff08EOA\uff09\n    /// @return \u30c1\u30a7\u30c3\u30af\u7d50\u679c\n    function check(address _participant)\n        public\n        view\n        returns (uint8)\n    {\n        if (whitelist[_participant].locked) {\n            return CHECK_LOCKED;\n        }\n\n        if (whitelist[_participant].participant == address(0)) {\n            return CHECK_NOT_REGISTERD;\n        }\n\n        return CHECK_SUCCESS;\n    }\n\n}\n",
+  "sourceMap": "183:2707:0:-;;;336:5:12;:18;;-1:-1:-1;;;;;;336:18:12;344:10;336:18;;;183:2707:0;;;;;;",
+  "sourcePath": "contracts/ExchangeRegulatorService.sol",
+  "type": "contract"
+}

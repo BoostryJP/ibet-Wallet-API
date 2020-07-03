@@ -175,8 +175,6 @@ class TestV2MembershipMyTokens:
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     @staticmethod
@@ -186,8 +184,6 @@ class TestV2MembershipMyTokens:
         listed_token.token_address = token['address']
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        listed_token.payment_method_credit_card = True
-        listed_token.payment_method_bank = True
         session.add(listed_token)
 
     # 正常系1
@@ -243,8 +239,6 @@ class TestV2MembershipMyTokens:
                 'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -316,8 +310,6 @@ class TestV2MembershipMyTokens:
                 'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -425,8 +417,6 @@ class TestV2MembershipMyTokens:
                 'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -498,8 +488,6 @@ class TestV2MembershipMyTokens:
                 'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -576,8 +564,6 @@ class TestV2MembershipMyTokens:
                 'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
@@ -614,8 +600,6 @@ class TestV2MembershipMyTokens:
                 'initial_offering_status': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
-                'payment_method_credit_card': True,
-                'payment_method_bank': True,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー'
             },
