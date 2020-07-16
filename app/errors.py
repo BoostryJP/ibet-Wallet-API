@@ -37,16 +37,10 @@ ERR_NOT_SUPPORTED = {
     'title': 'Not Supported'
 }
 
-ERR_USER_NOT_EXISTS = {
-    'status': falcon.HTTP_404,
-    'code': 21,
-    'title': 'User Not Exists'
-}
-
-ERR_PASSWORD_NOT_MATCH = {
+ERR_SUSPENDED_TOKEN = {
     'status': falcon.HTTP_400,
-    'code': 22,
-    'title': 'Password Not Match'
+    'code': 20,
+    'title': 'Suspended Token'
 }
 
 ERR_DATA_NOT_EXISTS = {
@@ -55,15 +49,11 @@ ERR_DATA_NOT_EXISTS = {
     'title': 'Data Not Exists'
 }
 
-ERR_ETH_VALUE_ERROR = {
-    'status': falcon.HTTP_400,
-    'code': 40,
-    'title': 'Eth ValueError'
-}
-
 
 class AppError(Exception):
-    def __init__(self, error=ERR_UNKNOWN, description=None):
+    def __init__(self, error=None, description=None):
+        if error is None:
+            error = ERR_UNKNOWN
         self.error = error
         self.error['description'] = description
 
@@ -95,12 +85,18 @@ class AppError(Exception):
 
 
 class InvalidParameterError(AppError):
+    """
+    400 ERROR: 無効なパラメータ
+    """
     def __init__(self, description=None):
         super().__init__(ERR_INVALID_PARAMETER)
         self.error['description'] = description
 
 
 class DatabaseError(AppError):
+    """
+    500 ERROR: データベースエラー
+    """
     def __init__(self, error, args=None, params=None):
         super().__init__(error)
         obj = OrderedDict()
@@ -110,31 +106,28 @@ class DatabaseError(AppError):
 
 
 class NotSupportedError(AppError):
+    """
+    404 ERROR: サポートしていないHTTPメソッド
+    """
     def __init__(self, method=None, url=None):
         super().__init__(ERR_NOT_SUPPORTED)
         if method and url:
             self.error['description'] = 'method: %s, url: %s' % (method, url)
 
 
-class UserNotExistsError(AppError):
-    def __init__(self, description=None):
-        super().__init__(ERR_USER_NOT_EXISTS)
-        self.error['description'] = description
-
-
-class PasswordNotMatch(AppError):
-    def __init__(self, description=None):
-        super().__init__(ERR_PASSWORD_NOT_MATCH)
-        self.error['description'] = description
-
-
 class DataNotExistsError(AppError):
+    """
+    404 ERROR: データが存在しない
+    """
     def __init__(self, description=None):
         super().__init__(ERR_DATA_NOT_EXISTS)
         self.error['description'] = description
 
 
-class EthValueError(AppError):
-    def __init__(self, code=None, message=None):
-        super().__init__(ERR_ETH_VALUE_ERROR)
-        self.error['description'] = 'code: %i, message: %s' % (code, message)
+class SuspendedTokenError(AppError):
+    """
+    400 ERROR: 取扱停止中のトークン
+    """
+    def __init__(self, description=None):
+        super().__init__(ERR_SUSPENDED_TOKEN)
+        self.error['description'] = description
