@@ -73,16 +73,17 @@ class SendRawTransaction(BaseResource):
 
             listed_token = session.query(Listing). \
                 filter(Listing.token_address == to_contract_address). \
-                all()
-            listed_token = listed_token + \
-                           session.query(PrivateListing). \
-                               filter(PrivateListing.token_address == to_contract_address). \
-                               all()
-            for token in listed_token:
-                token_contract = Contract.get_contract("IbetStandardTokenInterface", token.token_address)
-                status = token_contract.functions.status().call()
-                if status is False:
-                    raise SuspendedTokenError("Token is currently suspended")
+                first()
+            private_listed_token = session.query(PrivateListing).\
+                filter(PrivateListing.token_address == to_contract_address).\
+                first()
+            if listed_token is not None or private_listed_token is not None:
+                TokenContract = Contract.get_contract("IbetStandardTokenInterface", to_contract_address)
+                try:
+                    if TokenContract.functions.status().call() is False:
+                        raise SuspendedTokenError("Token is currently suspended")
+                except Exception as err:
+                    LOG.exception(f"{err}")
 
         # トランザクション送信
         result = []
@@ -192,16 +193,17 @@ class SendRawTransactionNoWait(BaseResource):
 
             listed_token = session.query(Listing). \
                 filter(Listing.token_address == to_contract_address). \
-                all()
-            listed_token = listed_token + \
-                           session.query(PrivateListing). \
-                               filter(PrivateListing.token_address == to_contract_address). \
-                               all()
-            for token in listed_token:
-                token_contract = Contract.get_contract("IbetStandardTokenInterface", token.token_address)
-                status = token_contract.functions.status().call()
-                if status is False:
-                    raise SuspendedTokenError("Token is currently suspended")
+                first()
+            private_listed_token = session.query(PrivateListing). \
+                filter(PrivateListing.token_address == to_contract_address). \
+                first()
+            if listed_token is not None or private_listed_token is not None:
+                TokenContract = Contract.get_contract("IbetStandardTokenInterface", to_contract_address)
+                try:
+                    if TokenContract.functions.status().call() is False:
+                        raise SuspendedTokenError("Token is currently suspended")
+                except Exception as err:
+                    LOG.exception(f"{err}")
 
         # トランザクション送信
         result = []
