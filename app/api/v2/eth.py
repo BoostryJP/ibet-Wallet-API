@@ -78,12 +78,10 @@ class SendRawTransaction(BaseResource):
                 filter(PrivateListing.token_address == to_contract_address).\
                 first()
             if listed_token is not None or private_listed_token is not None:
+                LOG.info(f"Token Address: {to_contract_address}")
                 TokenContract = Contract.get_contract("IbetStandardTokenInterface", to_contract_address)
-                try:
-                    if TokenContract.functions.status().call() is False:
-                        raise SuspendedTokenError("Token is currently suspended")
-                except Exception as err:
-                    LOG.exception(f"{err}")
+                if TokenContract.functions.status().call() is False:
+                    raise SuspendedTokenError("Token is currently suspended")
 
         # トランザクション送信
         result = []
