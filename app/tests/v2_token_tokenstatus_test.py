@@ -75,7 +75,7 @@ class TestV2TokenTokenStatus:
 
     # ＜正常系1＞
     #   データあり（取扱ステータス = True）
-    def test_straightbondstatus_normal_1(self, client, session, shared_contract):
+    def test_tokenstatus_normal_1(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -107,7 +107,7 @@ class TestV2TokenTokenStatus:
 
     # ＜正常系2＞
     #   データ有り（トークン無効化済み）
-    def test_straightbondstatus_normal_2(self, client, session, shared_contract):
+    def test_tokenstatus_normal_2(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -143,7 +143,7 @@ class TestV2TokenTokenStatus:
     # ＜エラー系1＞
     #   無効なコントラクトアドレス
     #   -> 400エラー
-    def test_straightbondstatus_error_1(self, client):
+    def test_tokenstatus_error_1(self, client):
         apiurl = self.apiurl_base.format(contract_address='0xabcd')
 
         query_string = ''
@@ -158,7 +158,7 @@ class TestV2TokenTokenStatus:
 
     # ＜エラー系2＞
     #   取扱トークン（DB）に情報が存在しない
-    def test_straightbondstatus_error_2(self, client, shared_contract):
+    def test_tokenstatus_error_2(self, client, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
