@@ -115,7 +115,7 @@ class TestV2TokenTokenStatus:
         token_list = TestV2TokenTokenStatus.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
-        # データ準備：会員権新規発行
+        # データ準備：債券新規発行
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         attribute = TestV2TokenTokenStatus.bond_token_attribute(exchange_address, personal_info)
