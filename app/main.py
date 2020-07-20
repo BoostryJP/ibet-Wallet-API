@@ -61,10 +61,7 @@ class App(falcon.API):
         self.add_route('/v2/Token/Coupon/{contract_address}', token.CouponTokenDetails())
 
         # トークン取扱ステータス参照
-        self.add_route('/v2/Token/StraightBond/{contract_address}/Status', token.StraightBondTokenStatus())
-        self.add_route('/v2/Token/Share/{contract_address}/Status', token.ShareTokenStatus())
-        self.add_route('/v2/Token/Membership/{contract_address}/Status', token.MembershipTokenStatus())
-        self.add_route('/v2/Token/Coupon/{contract_address}/Status', token.CouponTokenStatus())
+        self.add_route('/v2/Token/{contract_address}/Status', token.TokenStatus())
 
         # マーケット情報：オーダーブック
         self.add_route('/v2/Market/OrderBook/StraightBond', market_information.StraightBondOrderBook())

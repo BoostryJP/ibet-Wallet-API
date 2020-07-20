@@ -906,39 +906,6 @@ paths:
                     type: string
                   transferable:
                     type: boolean
-  /Token/StraightBond/{contract_address}/Status:
-    parameters:
-      - type: string
-        name: contract_address
-        in: path
-        required: true
-        description: token address
-    get:
-      tags:
-        - "Token"
-      summary: "StraightBond token status"
-      operationId: "StraightBondTokenStatus"
-      parameters: []
-      responses:
-        200:
-          description: successful operation
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
-              data:
-                type: object
-                properties:
-                  status:
-                    type: boolean
   /Token/Share:
     get:
       tags:
@@ -1177,39 +1144,6 @@ paths:
                     type: integer
                   max_sell_amount:
                     type: integer
-  /Token/Share/{contract_address}/Status:
-    parameters:
-      - type: string
-        name: contract_address
-        in: path
-        required: true
-        description: token address
-    get:
-      tags:
-        - "Token"
-      summary: "Share token status"
-      operationId: "ShareTokenStatus"
-      parameters: []
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
-              data:
-                type: object
-                properties:
-                  status:
-                    type: boolean
   /Token/Membership:
     get:
       tags:
@@ -1426,39 +1360,6 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
-  /Token/Membership/{contract_address}/Status:
-    parameters:
-      - type: string
-        name: contract_address
-        in: path
-        required: true
-        description: token address
-    get:
-      tags:
-        - "Token"
-      summary: "Membership token status"
-      operationId: "MembershipTokenStatus"
-      parameters: []
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: object
-            properties:
-              meta:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
-              data:
-                type: object
-                properties:
-                  status:
-                    type: boolean
   /Token/Coupon:
     get:
       tags:
@@ -1675,7 +1576,7 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
-  /Token/Coupon/{contract_address}/Status:
+  /Token/{contract_address}/Status:
     parameters:
       - type: string
         name: contract_address
@@ -1685,8 +1586,8 @@ paths:
     get:
       tags:
         - "Token"
-      summary: "Coupon token status"
-      operationId: "CouponTokenStatus"
+      summary: "Token status"
+      operationId: "TokenStatus"
       parameters: []
       responses:
         200:

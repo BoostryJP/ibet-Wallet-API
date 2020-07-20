@@ -16,6 +16,61 @@ LOG = log.get_logger()
 
 
 # ------------------------------
+# [共通]トークン取扱ステータス
+# ------------------------------
+class TokenStatus(BaseResource):
+    """
+    Handle for endpoint: /v2/Token/{contract_address}/Status
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    def on_get(self, req, res, contract_address=None):
+        LOG.info('v2.token.TokenStatus')
+
+        # 入力アドレスフォーマットチェック
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                description = 'invalid contract_address'
+                raise InvalidParameterError(description=description)
+        except:
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+
+        session = req.context["session"]
+
+        # 取扱トークンチェック
+        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
+        if listed_token is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        # TokenList-Contractへの接続
+        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+
+        # TokenList-Contractからトークンの情報を取得する
+        token_address = to_checksum_address(contract_address)
+        token = ListContract.functions.getTokenByAddress(token_address).call()
+
+        token_template = token[1]
+        try:
+            # Token-Contractへの接続
+            TokenContract = Contract.get_contract(token_template, token_address)
+            status = TokenContract.functions.status().call()
+        except Exception as e:
+            LOG.error(e)
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        response_json = {
+            'status': status
+        }
+        self.on_success(res, response_json)
+
+
+# ------------------------------
 # [普通社債]公開中トークン一覧
 # ------------------------------
 class StraightBondTokens(BaseResource):
@@ -269,64 +324,6 @@ class StraightBondTokenDetails(BaseResource):
             except Exception as e:
                 LOG.error(e)
                 return None
-
-
-# ------------------------------
-# [普通社債]トークン取扱ステータス
-# ------------------------------
-class StraightBondTokenStatus(BaseResource):
-    """
-    Handle for endpoint: /v2/Token/StraightBond/{contract_address}/Status
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-
-    def on_get(self, req, res, contract_address=None):
-        LOG.info('v2.token.StraightBondTokenStatus')
-
-        # 入力アドレスフォーマットチェック
-        try:
-            contract_address = to_checksum_address(contract_address)
-            if not Web3.isAddress(contract_address):
-                description = 'invalid contract_address'
-                raise InvalidParameterError(description=description)
-        except:
-            description = 'invalid contract_address'
-            raise InvalidParameterError(description=description)
-
-        session = req.context["session"]
-
-        # 取扱トークンチェック
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
-        if listed_token is None:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-
-        # TokenList-Contractからトークンの情報を取得する
-        token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
-
-        token_template = token[1]
-        if token_template == 'IbetStraightBond':
-            try:
-                # トークンコントラクトへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
-                is_redeemed = TokenContract.functions.isRedeemed().call()
-            except Exception as e:
-                LOG.error(e)
-                raise DataNotExistsError('contract_address: %s' % contract_address)
-        else:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        response_json = {
-            'status': not is_redeemed
-        }
-        self.on_success(res, response_json)
 
 
 # ------------------------------
@@ -585,64 +582,6 @@ class ShareTokenDetails(BaseResource):
             except Exception as e:
                 LOG.error(e)
                 return None
-
-
-# ------------------------------
-# [株式]トークン取扱ステータス
-# ------------------------------
-class ShareTokenStatus(BaseResource):
-    """
-    Handle for endpoint: /v2/Token/Share/{contract_address}/Status
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-
-    def on_get(self, req, res, contract_address=None):
-        LOG.info('v2.token.ShareTokenStatus')
-
-        # 入力アドレスフォーマットチェック
-        try:
-            contract_address = to_checksum_address(contract_address)
-            if not Web3.isAddress(contract_address):
-                description = 'invalid contract_address'
-                raise InvalidParameterError(description=description)
-        except:
-            description = 'invalid contract_address'
-            raise InvalidParameterError(description=description)
-
-        session = req.context["session"]
-
-        # 取扱トークン情報を取得
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
-        if listed_token is None:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-
-        # TokenList-Contractからトークンの情報を取得する
-        token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
-
-        token_template = token[1]
-        if token_template == 'IbetShare':
-            try:
-                # Token-Contractへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
-                status = TokenContract.functions.status().call()
-            except Exception as e:
-                LOG.error(e)
-                raise DataNotExistsError('contract_address: %s' % contract_address)
-        else:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        response_json = {
-            'status': status
-        }
-        self.on_success(res, response_json)
 
 
 # ------------------------------
@@ -906,64 +845,6 @@ class MembershipTokenDetails(BaseResource):
 
 
 # ------------------------------
-# [会員権]トークン取扱ステータス
-# ------------------------------
-class MembershipTokenStatus(BaseResource):
-    """
-    Handle for endpoint: /v2/Token/Membership/{contract_address}/Status
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-
-    def on_get(self, req, res, contract_address=None):
-        LOG.info('v2.token.MembershipTokenStatus')
-
-        # 入力アドレスフォーマットチェック
-        try:
-            contract_address = to_checksum_address(contract_address)
-            if not Web3.isAddress(contract_address):
-                description = 'invalid contract_address'
-                raise InvalidParameterError(description=description)
-        except:
-            description = 'invalid contract_address'
-            raise InvalidParameterError(description=description)
-
-        session = req.context["session"]
-
-        # 取扱トークンチェック
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
-        if listed_token is None:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-
-        # TokenList-Contractからトークンの情報を取得する
-        token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
-
-        token_template = token[1]
-        if token_template == 'IbetMembership':
-            try:
-                # Token-Contractへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
-                status = TokenContract.functions.status().call()
-            except Exception as e:
-                LOG.error(e)
-                raise DataNotExistsError('contract_address: %s' % contract_address)
-        else:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        response_json = {
-            'status': status
-        }
-        self.on_success(res, response_json)
-
-
-# ------------------------------
 # [クーポン]公開中トークン一覧
 # ------------------------------
 class CouponTokens(BaseResource):
@@ -1222,61 +1103,3 @@ class CouponTokenDetails(BaseResource):
             except Exception as e:
                 LOG.error(e)
                 return None
-
-
-# ------------------------------
-# [クーポン]トークン取扱ステータス
-# ------------------------------
-class CouponTokenStatus(BaseResource):
-    """
-    Handle for endpoint: /v2/Token/Coupon/{contract_address}/Status
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-
-    def on_get(self, req, res, contract_address=None):
-        LOG.info('v2.token.CouponTokenStatus')
-
-        # 入力アドレスフォーマットチェック
-        try:
-            contract_address = to_checksum_address(contract_address)
-            if not Web3.isAddress(contract_address):
-                description = 'invalid contract_address'
-                raise InvalidParameterError(description=description)
-        except:
-            description = 'invalid contract_address'
-            raise InvalidParameterError(description=description)
-
-        session = req.context["session"]
-
-        # 取扱トークンチェック
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
-        if listed_token is None:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-
-        # TokenList-Contractからトークンの情報を取得する
-        token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
-
-        token_template = token[1]
-        if token_template == 'IbetCoupon':
-            try:
-                # Token-Contractへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
-                status = TokenContract.functions.status().call()
-            except Exception as e:
-                LOG.error(e)
-                raise DataNotExistsError('contract_address: %s' % contract_address)
-        else:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
-
-        response_json = {
-            'status': status
-        }
-        self.on_success(res, response_json)
