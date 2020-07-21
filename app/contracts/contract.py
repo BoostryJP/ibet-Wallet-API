@@ -37,7 +37,7 @@ class Contract:
         return contract
 
     @staticmethod
-    def deploy_contract(contract_name: str, args: dict, deployer: str):
+    def deploy_contract(contract_name: str, args: list, deployer: str):
         """
         コントラクトデプロイ
 

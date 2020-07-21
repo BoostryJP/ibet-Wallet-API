@@ -231,6 +231,17 @@ def bond_change_transferable(invoker, token, transferable):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 債券の無効化
+def bond_invalidate(invoker, token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.setStatus(False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Share Token （株式）
 '''
