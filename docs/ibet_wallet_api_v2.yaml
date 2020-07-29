@@ -988,6 +988,8 @@ paths:
                             type: string
                     image_url:
                       type: array
+                      items:
+                        type: object
                     memo:
                       type: string
                     transferable:
@@ -1124,6 +1126,8 @@ paths:
                           type: string
                   image_url:
                     type: array
+                    items:
+                      type: object
                   memo:
                     type: string
                   transferable:
@@ -1237,7 +1241,7 @@ paths:
       tags:
         - "Token"
       summary: "List of Membership token address"
-      operationId: "MembershipTokens"
+      operationId: "MembershipTokenAddresses"
       parameters:
         - name: cursor
           in: query
@@ -1453,7 +1457,7 @@ paths:
       tags:
         - "Token"
       summary: "List of Coupon token address"
-      operationId: "CouponTokens"
+      operationId: "CouponTokenAddresses"
       parameters:
         - name: cursor
           in: query
@@ -1572,6 +1576,39 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
+  /Token/{contract_address}/Status:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    get:
+      tags:
+        - "Token"
+      summary: "Token status"
+      operationId: "TokenStatus"
+      parameters: []
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  status:
+                    type: boolean
   /Market/OrderBook/StraightBond:
     post:
       tags:
@@ -2008,11 +2045,70 @@ paths:
                           amount:
                             type: integer
   /Market/Agreement:
-    post:
+    get:
       tags:
         - "Market"
       summary: "Agreement Details"
       operationId: "GetAgreement"
+      parameters:
+        - name: order_id
+          in: query
+          description: order id
+          required: true
+          type: integer
+          allowEmptyValue: false
+        - name: agreement_id
+          in: query
+          description: agreement id
+          required: true
+          type: integer
+          allowEmptyValue: false
+        - name: exchange_address
+          in: query
+          description: exchange address
+          required: true
+          type: string
+          allowEmptyValue: false
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  counterpart:
+                    type: string
+                  buyer_address:
+                    type: string
+                  seller_address:
+                    type: string
+                  amount:
+                    type: integer
+                  price:
+                    type: integer
+                  canceled:
+                    type: boolean
+                  paid:
+                    type: boolean
+                  expiry:
+                    type: string
+                    description: expiry (unixtime)
+    post:
+      tags:
+        - "Market"
+      summary: "Agreement Details"
+      operationId: "GetAgreementPost"
       parameters:
         - name: order_id
           in: query
@@ -2277,6 +2373,8 @@ paths:
                                 type: string
                         image_url:
                           type: array
+                          items:
+                            type: object
                         memo:
                           type: string
                         transferable:
