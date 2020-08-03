@@ -61,6 +61,12 @@ class SendRawTransaction(BaseResource):
         request_json = SendRawTransaction.validate(req)
         raw_tx_hex_list = request_json['raw_tx_hex_list']
 
+        # TokenList Contract
+        ListContract = Contract.get_contract(
+            'TokenList',
+            config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
+
         # トークン取扱状態チェック
         # トランザクション送信前にトークンの取扱状態をチェックする
         for raw_tx_hex in raw_tx_hex_list:
@@ -79,9 +85,15 @@ class SendRawTransaction(BaseResource):
                 first()
             if listed_token is not None or private_listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
-                TokenContract = Contract.get_contract("IbetStandardTokenInterface", to_contract_address)
-                if TokenContract.functions.status().call() is False:
-                    raise SuspendedTokenError("Token is currently suspended")
+                try:
+                    token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
+                    if token_attribute[1] != "":
+                        TokenContract = Contract.get_contract(token_attribute[1], to_contract_address)
+                        if TokenContract.functions.status().call() is False:
+                            raise SuspendedTokenError("Token is currently suspended")
+                except Exception as err:
+                    LOG.warning(f"Could not get token status: {err}")
+                    continue
 
         # トランザクション送信
         result = []
