@@ -85,15 +85,15 @@ class SendRawTransaction(BaseResource):
                 first()
             if listed_token is not None or private_listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
-                try:
-                    token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
-                    if token_attribute[1] != "":
+                token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
+                if token_attribute[1] != "":
+                    try:
                         TokenContract = Contract.get_contract(token_attribute[1], to_contract_address)
-                        if TokenContract.functions.status().call() is False:
-                            raise SuspendedTokenError("Token is currently suspended")
-                except Exception as err:
-                    LOG.warning(f"Could not get token status: {err}")
-                    continue
+                    except Exception as err:
+                        LOG.warning(f"Could not get token status: {err}")
+                        continue
+                    if TokenContract.functions.status().call() is False:
+                        raise SuspendedTokenError("Token is currently suspended")
 
         # トランザクション送信
         result = []
@@ -215,15 +215,15 @@ class SendRawTransactionNoWait(BaseResource):
                 first()
             if listed_token is not None or private_listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
-                try:
-                    token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
-                    if token_attribute[1] != "":
+                token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
+                if token_attribute[1] != "":
+                    try:
                         TokenContract = Contract.get_contract(token_attribute[1], to_contract_address)
-                        if TokenContract.functions.status().call() is False:
-                            raise SuspendedTokenError("Token is currently suspended")
-                except Exception as err:
-                    LOG.warning(f"Could not get token status: {err}")
-                    continue
+                    except Exception as err:
+                        LOG.warning(f"Could not get token status: {err}")
+                        continue
+                    if TokenContract.functions.status().call() is False:
+                        raise SuspendedTokenError("Token is currently suspended")
 
         # トランザクション送信
         result = []
