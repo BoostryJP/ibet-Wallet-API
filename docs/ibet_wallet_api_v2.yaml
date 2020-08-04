@@ -3736,8 +3736,8 @@ paths:
       summary: "Notification List"
       operationId: "GetNotifications"
       parameters:
-        - name: X-ibet-Signature
-          in: header
+        - name: address
+          in: query
           required: true
           type: string
         - name: cursor
@@ -3839,26 +3839,24 @@ paths:
       summary: "Update Notification"
       operationId: "PostNotifications"
       parameters:
-        - name: X-ibet-Signature
-          in: header
-          required: true
-          type: string
-        - name: id
-          in: query
-          required: true
-          type: string
-        - name: is_read
-          in: query
-          required: false
-          type: boolean
-        - name: is_flagged
-          in: query
-          required: false
-          type: boolean
-        - name: is_deleted
-          in: query
-          required: false
-          type: boolean
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              id:
+                type: string
+              is_read:
+                type: boolean
+              is_flagged:
+                type: boolean
+              is_deleted:
+                type: boolean
+            required:
+              - address
+              - id
       responses:
         200:
           description: successful operation
@@ -3935,14 +3933,18 @@ paths:
       summary: "Mark all notifications as read"
       operationId: "NotificationsRead"
       parameters:
-        - name: X-ibet-Signature
-          in: header
-          required: true
-          type: string
-        - name: is_read
-          in: query
-          required: false
-          type: boolean
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              is_read:
+                type: boolean
+            required:
+              - address
+              - is_read
       responses:
         200:
           description: successful operation
@@ -3965,8 +3967,8 @@ paths:
       summary: "Get the number of unread notifications"
       operationId: "NotificationCount"
       parameters:
-        - name: X-ibet-Signature
-          in: header
+        - name: address
+          in: query
           required: true
           type: string
       responses:
