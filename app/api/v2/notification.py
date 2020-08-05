@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
-
-import falcon
 from cerberus import Validator
+from datetime import datetime
 from eth_utils import to_checksum_address
 from sqlalchemy import desc
 from web3 import Web3
@@ -11,7 +9,6 @@ from app import log
 from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError
 from app.model import Notification
-from app.utils.hooks import VerifySignature
 
 LOG = log.get_logger()
 
@@ -24,7 +21,6 @@ class Notifications(BaseResource):
     Handle for endpoint: /Notifications/
     """
 
-    @falcon.before(VerifySignature())
     def on_get(self, req, res):
         LOG.info('v2.notification.Notifications(GET)')
 
@@ -34,7 +30,7 @@ class Notifications(BaseResource):
         request_json = Notifications.validate_get(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context["address"])
+        address = to_checksum_address(request_json["address"])
 
         # クエリを設定
         query = session.query(Notification). \
@@ -68,7 +64,6 @@ class Notifications(BaseResource):
 
         self.on_success(res, {"notifications": notification_list})
 
-    @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v2.notification.Notifications(POST)')
 
@@ -78,7 +73,7 @@ class Notifications(BaseResource):
         request_json = Notifications.validate_post(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context["address"])
+        address = to_checksum_address(request_json["address"])
 
         # データを更新
         notification = session.query(Notification). \
@@ -115,6 +110,7 @@ class Notifications(BaseResource):
     @staticmethod
     def validate_get(req):
         request_json = {
+            "address": req.get_param("address"),
             "cursor": req.get_param("cursor", default="0"),
             "limit": req.get_param("limit", default="10"),
             "sort": req.get_param("sort"),
@@ -122,6 +118,11 @@ class Notifications(BaseResource):
         }
 
         validator = Validator({
+            "address": {
+                "type": "string",
+                "required": True,
+                "empty": False,
+            },
             "cursor": {
                 "type": "integer",
                 "coerce": int,
@@ -151,7 +152,7 @@ class Notifications(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(req.context["address"]):
+        if not Web3.isAddress(request_json["address"]):
             raise InvalidParameterError
 
         return validator.document
@@ -163,6 +164,11 @@ class Notifications(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
+            "address": {
+                "type": "string",
+                "required": True,
+                "empty": False,
+            },
             "id": {
                 "type": "string",
                 "required": True,
@@ -185,7 +191,7 @@ class Notifications(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(req.context["address"]):
+        if not Web3.isAddress(request_json["address"]):
             raise InvalidParameterError
 
         return validator.document
@@ -199,7 +205,6 @@ class NotificationsRead(BaseResource):
     Handle for endpoint: /Notifications/Read/
     """
 
-    @falcon.before(VerifySignature())
     def on_post(self, req, res):
         LOG.info('v2.notification.NotificationsRead')
 
@@ -209,7 +214,7 @@ class NotificationsRead(BaseResource):
         request_json = NotificationsRead.validate_post(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context["address"])
+        address = to_checksum_address(request_json["address"])
 
         # データを更新
         session.query(Notification). \
@@ -226,6 +231,11 @@ class NotificationsRead(BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
+            "address": {
+                "type": "string",
+                "required": True,
+                "empty": False,
+            },
             "is_read": {
                 "type": "boolean",
                 "required": True,
@@ -235,7 +245,7 @@ class NotificationsRead(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(req.context["address"]):
+        if not Web3.isAddress(request_json["address"]):
             raise InvalidParameterError
 
         return validator.document
@@ -249,17 +259,16 @@ class NotificationCount(BaseResource):
     Handle for endpoint: /NotificationCount/
     """
 
-    @falcon.before(VerifySignature())
     def on_get(self, req, res):
         LOG.info("v2.notification.NotificationCount")
 
         session = req.context["session"]
 
         # 入力値チェック
-        NotificationCount.validate(req)
+        request_json = NotificationCount.validate(req)
 
         # リクエストから情報を抽出
-        address = to_checksum_address(req.context["address"])
+        address = to_checksum_address(request_json["address"])
 
         # 未読数を取得
         count = session.query(Notification). \
@@ -274,7 +283,22 @@ class NotificationCount(BaseResource):
 
     @staticmethod
     def validate(req):
-        if not Web3.isAddress(req.context["address"]):
+        request_json = {
+            "address": req.get_param("address"),
+        }
+
+        validator = Validator({
+            "address": {
+                "type": "string",
+                "required": True,
+                "empty": False,
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if not Web3.isAddress(request_json["address"]):
             raise InvalidParameterError
 
-        return {}
+        return validator.document

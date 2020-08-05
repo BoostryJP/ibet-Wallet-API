@@ -12,7 +12,6 @@ from app.middleware import JSONTranslator, DatabaseSessionManager
 from app.database import db_session, init_session, engine
 from app import config
 from app.contracts import Contract
-from app.testutil.auth_client import TestAuthClient
 
 from .account_config import eth_account
 
@@ -26,7 +25,7 @@ def client():
 
     init_session()
     middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
-    return TestAuthClient(App(middleware=middleware))
+    return testing.TestClient(App(middleware=middleware))
 
 
 @pytest.fixture(scope='session')

@@ -1,5 +1,6 @@
-from app.model import Notification
 from datetime import datetime, timedelta, timezone
+
+from app.model import Notification
 
 JST = timezone(timedelta(hours=+9), "JST")
 
@@ -8,10 +9,8 @@ class TestNotification:
     # テスト対象API
     apiurl = "/v2/Notifications"
 
-    private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
 
-    private_key_2 = "0000000000000000000000000000000000000000000000000000000000000002"
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
     # HACK: updateでcommitされてしまう対策
@@ -115,7 +114,7 @@ class TestNotification:
     def test_get_notification_normal_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl, private_key=TestNotification.private_key)
+        resp = client.simulate_get(self.apiurl, params={"address": TestNotification.address})
 
         assumed_body = [
             {
@@ -180,10 +179,12 @@ class TestNotification:
     def test_get_notification_normal_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
-            params={"status": "flagged"},
-            private_key=TestNotification.private_key
+            params={
+                "address": TestNotification.address,
+                "status": "flagged"
+            }
         )
 
         assumed_body = [
@@ -214,12 +215,12 @@ class TestNotification:
     def test_get_notification_normal_3(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
             params={
+                "address": TestNotification.address,
                 "status": "deleted",
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         assumed_body = [
@@ -250,10 +251,12 @@ class TestNotification:
     def test_get_notification_normal_4(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
-            params={"sort": "priority"},
-            private_key=TestNotification.private_key
+            params={
+                "address": TestNotification.address,
+                "sort": "priority"
+            },
         )
 
         assumed_body = [
@@ -319,12 +322,12 @@ class TestNotification:
     def test_get_notification_normal_5(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
             params={
+                "address": TestNotification.address,
                 "cursor": "1",
             },
-            private_key=TestNotification.private_key
         )
 
         assumed_body = [
@@ -372,13 +375,13 @@ class TestNotification:
     def test_get_notification_normal_6(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
             params={
+                "address": TestNotification.address,
                 "cursor": "1",
                 "limit": "1",
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         assumed_body = [
@@ -409,9 +412,9 @@ class TestNotification:
     def test_get_notification_normal_7(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
-            private_key=TestNotification.private_key_2
+            params={"address": TestNotification.address_2}
         )
 
         assumed_body = []
@@ -424,13 +427,13 @@ class TestNotification:
     def test_get_notification_error_1_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
             params={
+                "address": TestNotification.address,
                 "cursor": "-1",
                 "limit": "1",
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         assert resp.status_code == 400
@@ -445,13 +448,13 @@ class TestNotification:
     def test_get_notification_error_1_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
             params={
+                "address": TestNotification.address,
                 "cursor": "0.1",
                 "limit": "1",
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         assert resp.status_code == 400
@@ -471,13 +474,13 @@ class TestNotification:
     def test_get_notification_error_2_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
             params={
+                "address": TestNotification.address,
                 "cursor": "1",
                 "limit": "-1",
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         assert resp.status_code == 400
@@ -492,13 +495,13 @@ class TestNotification:
     def test_get_notification_error_2_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(
+        resp = client.simulate_get(
             self.apiurl,
             params={
+                "address": TestNotification.address,
                 "cursor": "1",
                 "limit": "0.1",
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         assert resp.status_code == 400
@@ -513,6 +516,42 @@ class TestNotification:
             }
         }
 
+    # ＜エラー系3-1＞
+    # addressなし
+    def test_get_notification_error_3_1(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+            }
+        )
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'address': ['null value not allowed', 'must be of string type']}
+        }
+
+    # ＜エラー系3-2＞
+    # address形式が不正
+    def test_get_notification_error_3_2(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "address": "0x11"
+            }
+        )
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
+
     # ---------------------------------------------------------------------------
     # POST
     # ---------------------------------------------------------------------------
@@ -523,13 +562,13 @@ class TestNotification:
         self._insert_test_data(session)
 
         notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotification.address,
                 "id": notification_id,
                 "is_flagged": True,
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         n = session.query(Notification). \
@@ -564,14 +603,14 @@ class TestNotification:
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotification.address,
                 "id": notification_id,
                 "is_flagged": False,
                 "is_read": True,
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         n = session.query(Notification). \
@@ -606,13 +645,13 @@ class TestNotification:
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotification.address,
                 "id": notification_id,
                 "is_deleted": True,
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         n = session.query(Notification). \
@@ -631,22 +670,22 @@ class TestNotification:
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
-        client.simulate_auth_post(
+        client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotification.address,
                 "id": notification_id,
                 "is_deleted": True,
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotification.address,
                 "id": notification_id,
                 "is_deleted": False,
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         n = session.query(Notification). \
@@ -661,17 +700,17 @@ class TestNotification:
 
     # ＜異常系1-1＞
     # 権限なしパターン。重要フラグの更新
-    def test_post_notification_fail_1(self, client, session):
+    def test_post_notification_fail_1_1(self, client, session):
         self._insert_test_data(session)
 
         notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotification.address_2,
                 "id": notification_id,
                 "is_flagged": True,
-            },
-            private_key=TestNotification.private_key_2
+            }
         )
 
         assert resp.status_code == 400
@@ -679,18 +718,61 @@ class TestNotification:
 
     # ＜異常系1-2＞
     # 存在しない通知の更新
-    def test_post_notification_fail_2(self, client, session):
+    def test_post_notification_fail_1_2(self, client, session):
         self._insert_test_data(session)
 
         notification_id = "0x00000021034100000000000003"
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotification.address,
                 "id": notification_id,
                 "is_flagged": True,
-            },
-            private_key=TestNotification.private_key
+            }
         )
 
         assert resp.status_code == 404
         assert resp.json["meta"]["code"] == 30
+
+    # ＜異常系2-1＞
+    # addressなし
+    def test_post_notification_fail_2_1(self, client, session):
+        self._insert_test_data(session)
+
+        notification_id = "0x00000021034300000000000000"
+        resp = client.simulate_post(
+            self.apiurl,
+            json={
+                "address": "",
+                "id": notification_id,
+                "is_flagged": True,
+            }
+        )
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'address': 'empty values not allowed'}
+        }
+
+    # ＜異常系2-2＞
+    # address形式が不正
+    def test_post_notification_fail_2_2(self, client, session):
+        self._insert_test_data(session)
+
+        notification_id = "0x00000021034300000000000000"
+        resp = client.simulate_post(
+            self.apiurl,
+            json={
+                "address": "0xabc",
+                "id": notification_id,
+                "is_flagged": True,
+            }
+        )
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+        }

@@ -8,13 +8,11 @@ class TestNotificationRead:
     # テスト対象API
     apiurl = "/v2/Notifications/Read"
 
-    private_key_1 = "0000000000000000000000000000000000000000000000000000000000000001"
     address_1 = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
 
-    private_key_2 = "0000000000000000000000000000000000000000000000000000000000000002"
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
-    private_key_3 = "0000000000000000000000000000000000000000000000000000000000000003"
+    address_3 = "0x6813Eb9362372EEF6200f3b1dbC3f819671cBA69"
 
     # HACK: updateでcommitされてしまう対策
     def teardown_method(self, method):
@@ -113,12 +111,12 @@ class TestNotificationRead:
     def test_post_notification_read_normal_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotificationRead.address_1,
                 "is_read": True,
             },
-            private_key=TestNotificationRead.private_key_1
         )
 
         notification_1_list = \
@@ -146,12 +144,12 @@ class TestNotificationRead:
     def test_post_notification_read_normal_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotificationRead.address_1,
                 "is_read": False,
-            },
-            private_key=TestNotificationRead.private_key_1
+            }
         )
 
         notification_list = session.query(Notification).all()
@@ -167,12 +165,12 @@ class TestNotificationRead:
     def test_post_notification_read_normal_3(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": TestNotificationRead.address_3,
                 "is_read": True,
             },
-            private_key=TestNotificationRead.private_key_3
         )
 
         assert resp.status_code == 200
@@ -182,12 +180,12 @@ class TestNotificationRead:
     def test_post_notification_read_error_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf,
                 "is_read": "True",
-            },
-            private_key=TestNotificationRead.private_key_1
+            }
         )
 
         assert resp.status_code == 400
@@ -195,6 +193,7 @@ class TestNotificationRead:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
+                'address': 'must be of string type',
                 'is_read': 'must be of boolean type'
             }
         }
@@ -204,12 +203,12 @@ class TestNotificationRead:
     def test_post_notification_read_error_2(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_post(
+        resp = client.simulate_post(
             self.apiurl,
             json={
+                "address": "",
                 "is_read": None,
-            },
-            private_key=TestNotificationRead.private_key_1
+            }
         )
 
         assert resp.status_code == 400
@@ -217,6 +216,26 @@ class TestNotificationRead:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
+                'address': 'empty values not allowed',
                 'is_read': ['null value not allowed', 'must be of boolean type']
             }
+        }
+
+    # ＜エラー系3＞
+    #   入力値エラー：アドレス形式誤り
+    def test_post_notification_read_error_3(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_post(
+            self.apiurl,
+            json={
+                "address": "0x123",
+                "is_read": True,
+            }
+        )
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
         }

@@ -6,7 +6,6 @@ class TestNotificationCount:
     # テスト対象API
     apiurl = "/v2/NotificationCount"
 
-    private_key = "0000000000000000000000000000000000000000000000000000000000000001"
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
 
     def _insert_test_data(self, session):
@@ -97,7 +96,7 @@ class TestNotificationCount:
     def test_notificationcount_normal_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_auth_get(self.apiurl, private_key=TestNotificationCount.private_key)
+        resp = client.simulate_get(self.apiurl, params={"address": TestNotificationCount.address})
 
         assumed_body = {
             "unread_counts": 2,
@@ -109,7 +108,7 @@ class TestNotificationCount:
     # ＜正常系1-2＞
     # 未読カウントが0の場合
     def test_notificationcount_normal_2(self, client, session):
-        resp = client.simulate_auth_get(self.apiurl, private_key=TestNotificationCount.private_key)
+        resp = client.simulate_get(self.apiurl, params={"address": TestNotificationCount.address})
 
         assumed_body = {
             "unread_counts": 0,
@@ -117,3 +116,32 @@ class TestNotificationCount:
 
         assert resp.status_code == 200
         assert resp.json["data"] == assumed_body
+
+    # ＜エラー系1＞
+    #   入力値エラー：必須入力値
+    def test_notificationcount_error_1(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_get(self.apiurl, params={})
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'address': ['null value not allowed', 'must be of string type']
+            }
+        }
+
+    # ＜エラー系2＞
+    #   入力値エラー：アドレス形式誤り
+    def test_notificationcount_error_2(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_get(self.apiurl, params={"address": "0x123"})
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter'
+        }
