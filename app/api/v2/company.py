@@ -192,6 +192,7 @@ class CompanyTokenList(BaseResource):
 # ------------------------------
 # 決済代行業者情報参照
 # ------------------------------
+# 後方互換性用API. 代替は CompanyInfo
 class PaymentAgentInfo(BaseResource):
     """
     Handle for endpoint: /PaymentAgent/{eth_address}
@@ -207,10 +208,10 @@ class PaymentAgentInfo(BaseResource):
         isExist = False
         try:
             if config.APP_ENV == 'local':
-                company_list = json.load(open('data/payment_agent_list.json', 'r'))
+                company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
-                    requests.get(config.PAYMENT_AGENT_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
         except Exception as err:
             LOG.error('Failed To Get Data: %s', err)
             raise AppError

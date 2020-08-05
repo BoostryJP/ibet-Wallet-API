@@ -355,10 +355,6 @@ paths:
                     type: string
                   corporate_name:
                     type: string
-                  enode:
-                    type: string
-                  ip_address:
-                    type: string
                   rsa_publickey:
                     type: string
                   homepage:
@@ -392,10 +388,6 @@ paths:
                     address:
                       type: string
                     corporate_name:
-                      type: string
-                    enode:
-                      type: string
-                    ip_address:
                       type: string
                     rsa_publickey:
                       type: string
@@ -456,9 +448,11 @@ paths:
                       type: string
   /PaymentAgent/{eth_address}:
     get:
+      deprecated: true
       tags:
         - "PaymentAgent"
       summary: "Payment Agent Information"
+      description: "Deprecated. This operation may be removed in a future version. Use GET /Company/{eth_address} instead."
       operationId: "PaymentAgent"
       parameters:
         - name: "eth_address"
@@ -487,10 +481,6 @@ paths:
                   address:
                     type: string
                   corporate_name:
-                    type: string
-                  enode:
-                    type: string
-                  ip_address:
                     type: string
                   rsa_publickey:
                     type: string
