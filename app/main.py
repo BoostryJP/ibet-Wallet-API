@@ -36,6 +36,7 @@ class App(falcon.API):
         self.add_route('/v2/Company/{eth_address}', company.CompanyInfo())
         self.add_route('/v2/Companies', company.CompanyInfoList())
         self.add_route('/v2/Company/{eth_address}/Tokens', company.CompanyTokenList())
+        self.add_route('/v2/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
 
         # トークンABI参照
         self.add_route('/v2/ABI/StraightBond', token_abi.StraightBondABI())

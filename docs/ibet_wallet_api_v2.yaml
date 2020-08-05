@@ -19,6 +19,8 @@ tags:
   description: "Contract ABI"
 - name: "Company"
   description: "Issuer Information"
+- name: "PaymentAgent"
+  description: "Payment Agent Information"
 - name: "User"
   description: "User Information"
 - name: "Token"
@@ -444,6 +446,46 @@ paths:
                       type: string
                     privacy_policy:
                       type: string
+  /PaymentAgent/{eth_address}:
+    get:
+      deprecated: true
+      tags:
+        - "PaymentAgent"
+      summary: "Payment Agent Information"
+      description: "Deprecated. This operation may be removed in a future version. Use GET /Company/{eth_address} instead."
+      operationId: "PaymentAgent"
+      parameters:
+        - name: "eth_address"
+          in: "path"
+          description: "address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  corporate_name:
+                    type: string
+                  rsa_publickey:
+                    type: string
+                  homepage:
+                    type: string
   /User/PaymentAccount:
     get:
       tags:

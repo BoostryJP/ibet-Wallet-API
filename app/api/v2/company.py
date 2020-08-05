@@ -187,3 +187,38 @@ class CompanyTokenList(BaseResource):
             return CouponToken
         else:
             return False
+
+
+# ------------------------------
+# 決済代行業者情報参照
+# ------------------------------
+# 後方互換性用API. 代替は CompanyInfo
+class PaymentAgentInfo(BaseResource):
+    """
+    Handle for endpoint: /PaymentAgent/{eth_address}
+    """
+
+    def on_get(self, req, res, eth_address):
+        LOG.info('v2.company.PaymentAgent')
+
+        if not Web3.isAddress(eth_address):
+            description = 'invalid eth_address'
+            raise InvalidParameterError(description=description)
+
+        isExist = False
+        try:
+            if config.APP_ENV == 'local':
+                company_list = json.load(open('data/company_list.json', 'r'))
+            else:
+                company_list = \
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+        except Exception as err:
+            LOG.error('Failed To Get Data: %s', err)
+            raise AppError
+
+        for company_info in company_list:
+            if to_checksum_address(company_info['address']) == to_checksum_address(eth_address):
+                isExist = True
+                self.on_success(res, company_info)
+        if not isExist:
+            raise DataNotExistsError('eth_address: %s' % eth_address)
