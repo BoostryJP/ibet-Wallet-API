@@ -31,8 +31,6 @@ class CompanyList:
         company_default = {
             "address": "",
             "corporate_name": "",
-            "enode": "",
-            "ip_address": "",
             "rsa_publickey": "",
             "homepage": ""
         }
