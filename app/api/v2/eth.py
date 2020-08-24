@@ -26,7 +26,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # ------------------------------
 class GetTransactionCount(BaseResource):
     """
-    Handle for endpoint: /Eth/TransactionCount/{eth_address}
+    Endpoint: /Eth/TransactionCount/{eth_address}
     """
 
     def on_get(self, req, res, eth_address=None):
@@ -50,7 +50,7 @@ class GetTransactionCount(BaseResource):
 # ------------------------------
 class SendRawTransaction(BaseResource):
     """
-    Handle for endpoint: /Eth/SendRawTransaction
+    Endpoint: /Eth/SendRawTransaction
     """
 
     def on_post(self, req, res):
@@ -180,7 +180,7 @@ class SendRawTransaction(BaseResource):
 # ------------------------------
 class SendRawTransactionNoWait(BaseResource):
     """
-    Handle for endpoint: /v2/Eth/SendRawTransactionNoWait
+    Endpoint: /v2/Eth/SendRawTransactionNoWait
     """
 
     def on_post(self, req, res):

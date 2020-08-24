@@ -27,7 +27,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # ------------------------------
 class ShareMyTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Position/Share
+    Endpoint: /v2/Position/Share
     """
 
     def on_post(self, req, res):
@@ -112,7 +112,7 @@ class ShareMyTokens(BaseResource):
 # ------------------------------
 class StraightBondMyTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Position/StraightBond
+    Endpoint: /v2/Position/StraightBond
     """
 
     def on_post(self, req, res):
@@ -201,7 +201,7 @@ class StraightBondMyTokens(BaseResource):
 # ------------------------------
 class MembershipMyTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Position/Membership
+    Endpoint: /v2/Position/Membership
     """
 
     def on_post(self, req, res):
@@ -290,7 +290,7 @@ class MembershipMyTokens(BaseResource):
 # ------------------------------
 class CouponMyTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Position/Coupon
+    Endpoint: /v2/Position/Coupon
     """
 
     def on_post(self, req, res):
@@ -380,7 +380,7 @@ class CouponMyTokens(BaseResource):
 # ------------------------------
 class CouponConsumptions(BaseResource):
     """
-    Handle for endpoint: /v2/Position/Coupon/Consumptions
+    Endpoint: /v2/Position/Coupon/Consumptions
     """
 
     def on_post(self, req, res):

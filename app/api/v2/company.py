@@ -26,7 +26,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # ------------------------------
 class CompanyInfo(BaseResource):
     """
-    Handle for endpoint: /Company/{eth_address}
+    Endpoint: /Company/{eth_address}
     """
 
     def on_get(self, req, res, eth_address):
@@ -62,7 +62,7 @@ class CompanyInfo(BaseResource):
 # ------------------------------
 class CompanyInfoList(BaseResource):
     """
-    Handle for endpoint: /v2/Companies
+    Endpoint: /v2/Companies
     """
 
     def on_get(self, req, res):
@@ -115,7 +115,7 @@ class CompanyInfoList(BaseResource):
 # ------------------------------
 class CompanyTokenList(BaseResource):
     """
-    Handle for endpoint: /v2/Company/{eth_address}/Tokens
+    Endpoint: /v2/Company/{eth_address}/Tokens
     """
 
     def on_get(self, req, res, eth_address=None):
@@ -195,7 +195,7 @@ class CompanyTokenList(BaseResource):
 # 後方互換性用API. 代替は CompanyInfo
 class PaymentAgentInfo(BaseResource):
     """
-    Handle for endpoint: /PaymentAgent/{eth_address}
+    Endpoint: /PaymentAgent/{eth_address}
     """
 
     def on_get(self, req, res, eth_address):

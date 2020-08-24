@@ -24,7 +24,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # ------------------------------
 class Token(BaseResource):
     """
-    Handle for endpoint: /v2/Statistics/Token/{contract_address}
+    Endpoint: /v2/Statistics/Token/{contract_address}
     """
 
     def on_get(self, req, res, contract_address=None):

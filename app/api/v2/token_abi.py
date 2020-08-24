@@ -12,7 +12,7 @@ LOG = log.get_logger()
 # ------------------------------
 class StraightBondABI(BaseResource):
     """
-    Handle for endpoint: /v2/ABI/StraightBond
+    Endpoint: /v2/ABI/StraightBond
     """
 
     def on_get(self, req, res):
@@ -27,7 +27,7 @@ class StraightBondABI(BaseResource):
 # ------------------------------
 class ShareABI(BaseResource):
     """
-    Handle for endpoint: /v2/ABI/Share
+    Endpoint: /v2/ABI/Share
     """
 
     def on_get(self, req, res):
@@ -42,7 +42,7 @@ class ShareABI(BaseResource):
 # ------------------------------
 class MembershipABI(BaseResource):
     """
-    Handle for endpoint: /v2/ABI/Membership
+    Endpoint: /v2/ABI/Membership
     """
 
     def on_get(self, req, res):
@@ -57,7 +57,7 @@ class MembershipABI(BaseResource):
 # ------------------------------
 class CouponABI(BaseResource):
     """
-    Handle for endpoint: /v2/ABI/Coupon
+    Endpoint: /v2/ABI/Coupon
     """
 
     def on_get(self, req, res):
