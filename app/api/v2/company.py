@@ -29,7 +29,7 @@ class CompanyInfo(BaseResource):
     Endpoint: /Company/{eth_address}
     """
 
-    def on_get(self, req, res, eth_address):
+    def on_get(self, req, res, eth_address=None):
         LOG.info('v2.company.CompanyInfo')
 
         if not Web3.isAddress(eth_address):
@@ -82,7 +82,7 @@ class CompanyInfoList(BaseResource):
             raise AppError
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).filter(Listing.is_public == True).all()
 
         # 取扱トークンのownerAddressと会社リストを突合
         listing_owner_list = []
@@ -132,6 +132,7 @@ class CompanyTokenList(BaseResource):
         # 取扱トークンリストを取得
         available_list = session.query(Listing).\
             filter(Listing.owner_address == eth_address).\
+            filter(Listing.is_public == True).\
             order_by(desc(Listing.id)).\
             all()
 
@@ -198,7 +199,7 @@ class PaymentAgentInfo(BaseResource):
     Endpoint: /PaymentAgent/{eth_address}
     """
 
-    def on_get(self, req, res, eth_address):
+    def on_get(self, req, res, eth_address=None):
         LOG.info('v2.company.PaymentAgent')
 
         if not Web3.isAddress(eth_address):

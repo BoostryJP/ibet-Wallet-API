@@ -12,7 +12,7 @@ from app import log
 from app.api.common import BaseResource
 from app.errors import InvalidParameterError, SuspendedTokenError
 from app import config
-from app.model import ExecutableContract, Listing, PrivateListing
+from app.model import ExecutableContract, Listing
 from app.contracts import Contract
 
 LOG = log.get_logger()
@@ -80,10 +80,8 @@ class SendRawTransaction(BaseResource):
             listed_token = session.query(Listing). \
                 filter(Listing.token_address == to_contract_address). \
                 first()
-            private_listed_token = session.query(PrivateListing).\
-                filter(PrivateListing.token_address == to_contract_address).\
-                first()
-            if listed_token is not None or private_listed_token is not None:
+
+            if listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
                 token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
                 if token_attribute[1] != "":
@@ -210,10 +208,8 @@ class SendRawTransactionNoWait(BaseResource):
             listed_token = session.query(Listing). \
                 filter(Listing.token_address == to_contract_address). \
                 first()
-            private_listed_token = session.query(PrivateListing). \
-                filter(PrivateListing.token_address == to_contract_address). \
-                first()
-            if listed_token is not None or private_listed_token is not None:
+
+            if listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
                 token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
                 if token_attribute[1] != "":

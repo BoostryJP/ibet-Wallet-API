@@ -14,7 +14,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, PrivateListing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon
+from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon
 
 LOG = log.get_logger()
 
@@ -48,8 +48,6 @@ class ShareMyTokens(BaseResource):
         )
 
         listed_tokens = session.query(Listing).all()
-        listed_tokens = listed_tokens + session.query(PrivateListing).all()
-
         position_list = []
         for _account_address in request_json['account_address_list']:
             # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
@@ -136,7 +134,6 @@ class StraightBondMyTokens(BaseResource):
         )
 
         listed_tokens = session.query(Listing).all()
-        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -225,7 +222,6 @@ class MembershipMyTokens(BaseResource):
         )
 
         listed_tokens = session.query(Listing).all()
-        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:
@@ -314,7 +310,6 @@ class CouponMyTokens(BaseResource):
         )
 
         listed_tokens = session.query(Listing).all()
-        listed_tokens = listed_tokens + session.query(PrivateListing).all()
 
         position_list = []
         for _account_address in request_json['account_address_list']:

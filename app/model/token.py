@@ -8,7 +8,7 @@ from eth_utils import to_checksum_address
 from app import config
 from app import log
 from app.contracts import Contract
-from app.model import Listing, PrivateListing
+from app.model import Listing
 
 LOG = log.get_logger()
 
@@ -154,8 +154,6 @@ class BondToken(TokenBase):
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
-        if listed_token is None:
-            listed_token = session.query(PrivateListing).filter(PrivateListing.token_address == token_address).first()
 
         # 第三者認定（Sign）のイベント情報を検索する
         # NOTE:現状項目未使用であるため空のリストを返す
@@ -271,8 +269,6 @@ class ShareToken(TokenBase):
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
-        if listed_token is None:
-            listed_token = session.query(PrivateListing).filter(PrivateListing.token_address == token_address).first()
 
         sharetoken = ShareToken()
         sharetoken.token_address = token_address
@@ -374,8 +370,6 @@ class MembershipToken(TokenBase):
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
-        if listed_token is None:
-            listed_token = session.query(PrivateListing).filter(PrivateListing.token_address == token_address).first()
 
         membershiptoken = MembershipToken()
         membershiptoken.token_address = token_address
@@ -464,9 +458,6 @@ class CouponToken(TokenBase):
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
-        if listed_token is None:
-            listed_token = session.query(PrivateListing).filter(
-                PrivateListing.token_address == token_address).first()
 
         coupontoken = CouponToken()
         coupontoken.token_address = token_address

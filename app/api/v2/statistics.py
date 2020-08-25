@@ -9,7 +9,7 @@ from eth_utils import to_checksum_address
 from app import log
 from app.api.common import BaseResource
 from app.contracts import Contract
-from app.model import Position, Listing, PrivateListing
+from app.model import Position, Listing
 from app.errors import InvalidParameterError, DataNotExistsError
 from app import config
 
@@ -43,9 +43,8 @@ class Token(BaseResource):
             raise InvalidParameterError(description=description)
 
         # 発行体アドレス取得
-        row = session.query(Listing.owner_address).filter(Listing.token_address == contract_address). \
-            union_all(
-            session.query(PrivateListing.owner_address).filter(PrivateListing.token_address == contract_address)). \
+        row = session.query(Listing.owner_address).\
+            filter(Listing.token_address == contract_address).\
             first()
         if row is not None:
             owner_address = row[0]

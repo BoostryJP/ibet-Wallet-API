@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 
 from sqlalchemy import Column
-from sqlalchemy import DateTime, func
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy import DateTime
+from sqlalchemy.ext.declarative import declarative_base
 
 from app import log
 from app.utils import alchemy
@@ -11,8 +12,8 @@ LOG = log.get_logger()
 
 
 class BaseModel(object):
-    created = Column(DateTime, default=func.now())
-    modified = Column(DateTime, default=func.now(), onupdate=func.now())
+    created = Column(DateTime, default=datetime.utcnow)
+    modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @classmethod
     def find_one(cls, session, id):
