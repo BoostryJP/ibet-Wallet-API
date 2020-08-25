@@ -2,7 +2,7 @@
 import json
 
 from app import config
-from app.model import Listing, PrivateListing
+from app.model import Listing
 from .account_config import eth_account
 from .contract_modules import issue_share_token, register_share_list, \
     share_get_latest_orderid, share_offer, share_take_buy, share_confirm_agreement, \
@@ -188,17 +188,17 @@ class TestV2ShareMyTokens:
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
-        listed_token.id = 1
         listed_token.token_address = token['address']
+        listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
 
     @staticmethod
     def list_private_token(session, token):
-        listed_token = PrivateListing()
-        listed_token.id = 1
+        listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.is_public = False
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)

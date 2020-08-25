@@ -247,7 +247,7 @@ def shared_contract():
 
 
 # テーブルの自動作成・自動削除
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def db(request):
     from app.model import Base
     Base.metadata.create_all(engine)

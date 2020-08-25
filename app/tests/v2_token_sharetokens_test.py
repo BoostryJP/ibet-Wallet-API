@@ -59,6 +59,7 @@ class TestV2TokenShareTokens:
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
@@ -516,7 +517,7 @@ class TestV2TokenShareTokens:
     # ＜エラー系2-4＞
     # cursorがint最大値
     # -> 入力エラー
-    def test_sharelist_error_2_4(self, client):
+    def test_sharelist_error_2_4(self, client, session):
         max_value = str(sys.maxsize)
         query_string = 'cursor=' + max_value + '&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)

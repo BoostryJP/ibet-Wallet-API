@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from app.model import Listing, PrivateListing
+from app.model import Listing
 from .contract_modules import *
 
 
@@ -7,7 +7,7 @@ class TestV2CouponMyTokens:
     """
     Test Case for v2.position.CouponMyTokens
     """
-    
+
     # テスト対象API
     apiurl = '/v2/Position/Coupon'
 
@@ -219,17 +219,17 @@ class TestV2CouponMyTokens:
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
-        listed_token.id = 1
         listed_token.token_address = token['address']
+        listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
 
     @staticmethod
     def list_private_token(session, token):
-        listed_token = PrivateListing()
-        listed_token.id = 1
+        listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.is_public = False
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
@@ -632,7 +632,6 @@ class TestV2CouponMyTokens:
                 count += 1
                 assert token == assumed_body_2
         assert count == 2
-
 
     # ＜正常系2-1＞
     # 残高あり、売注文中なし

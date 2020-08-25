@@ -35,6 +35,7 @@ class TestV2StatisticsToken:
     def list_token(session, token, issuer):
         listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         listed_token.owner_address = issuer['account_address']
@@ -203,7 +204,7 @@ class TestV2StatisticsToken:
     # Error_2
     # 存在しないコントラクトアドレス
     # 404
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         error_address = '0xb9058D42bA2a08C512B1333684F3A94aCa6a6be4'
         apiurl = self.apiurl_base + error_address
 

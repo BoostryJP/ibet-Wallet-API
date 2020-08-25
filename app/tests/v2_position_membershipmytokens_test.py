@@ -2,7 +2,7 @@
 import json
 
 from app import config
-from app.model import Listing, PrivateListing
+from app.model import Listing
 
 from .account_config import eth_account
 from .contract_modules import membership_issue, membership_register_list, \
@@ -171,17 +171,17 @@ class TestV2MembershipMyTokens:
     @staticmethod
     def list_token(session, token):
         listed_token = Listing()
-        listed_token.id = 1
         listed_token.token_address = token['address']
+        listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
 
     @staticmethod
     def list_private_token(session, token):
-        listed_token = PrivateListing()
-        listed_token.id = 1
+        listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.is_public = False
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
@@ -620,7 +620,6 @@ class TestV2MembershipMyTokens:
                 assert token == assumed_body_2
 
         assert count == 2
-
 
     # エラー系1
     # 入力値エラー（request-bodyなし）

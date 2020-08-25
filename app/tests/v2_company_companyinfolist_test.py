@@ -49,6 +49,7 @@ class TestCompanyCompanyInfoList:
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
@@ -96,7 +97,7 @@ class TestCompanyCompanyInfoList:
         assert resp.json['data'] == assumed_body
 
     # 正常系1-2： listing対象とcompanylistが突合されず0件リターン
-    def test_normal_1_2(self, client, shared_contract, mocked_company_list):
+    def test_normal_1_2(self, client, shared_contract, mocked_company_list, session):
         # テスト用アカウント
         issuerList = [eth_account['issuer'], eth_account['deployer']]
 

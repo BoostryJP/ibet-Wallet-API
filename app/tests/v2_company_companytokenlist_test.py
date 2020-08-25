@@ -112,6 +112,7 @@ class TestV2CompanyCompanyTokenList:
     def _insert_listing(session, token_address, owner_address):
         listing = Listing()
         listing.token_address = token_address
+        listing.is_public = True
         listing.owner_address = owner_address
         session.add(listing)
 
@@ -441,7 +442,7 @@ class TestV2CompanyCompanyTokenList:
 
     # Normal_6
     # データ0件
-    def test_normal_6(self, client):
+    def test_normal_6(self, client, session):
         issuer = eth_account['issuer']
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
