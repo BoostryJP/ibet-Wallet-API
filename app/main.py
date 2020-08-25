@@ -6,9 +6,9 @@ from app.middleware import JSONTranslator, DatabaseSessionManager
 from app.database import db_session, init_session
 
 from app.api.common import base
-
-from app.api.v2 import token_abi, notification, eth, company, user, nodeInfo, token, market_information, \
-    position, order_list, statistics
+from app.api.v2 import admin
+from app.api.v2 import token_abi, notification, eth, company, user, nodeInfo, \
+    token, market_information, position, order_list, statistics
 
 
 from app.errors import AppError
@@ -26,6 +26,10 @@ class App(falcon.API):
         """
         Version 2
         """
+
+        # 管理者向け
+        self.add_route('/v2/Admin/Tokens', admin.Tokens())
+        self.add_route('/v2/Admin/Token/{contract_address}', admin.Token())
 
         # トランザクション
         self.add_route('/v2/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())

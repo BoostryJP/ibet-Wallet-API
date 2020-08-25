@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-0.14-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-0.15-blue.svg?cacheSeconds=2592000" />
   <a href="https:/doc.com" target="_blank">
     <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
   </a>

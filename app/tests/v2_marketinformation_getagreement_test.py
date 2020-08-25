@@ -420,7 +420,7 @@ class TestV2GetAgreement:
     # Error_4
     # 指定した約定情報が存在しない
     # 400
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         order_id = 999
         agreement_id = 102

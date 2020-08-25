@@ -26,10 +26,10 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # ------------------------------
 class CompanyInfo(BaseResource):
     """
-    Handle for endpoint: /Company/{eth_address}
+    Endpoint: /Company/{eth_address}
     """
 
-    def on_get(self, req, res, eth_address):
+    def on_get(self, req, res, eth_address=None):
         LOG.info('v2.company.CompanyInfo')
 
         if not Web3.isAddress(eth_address):
@@ -62,7 +62,7 @@ class CompanyInfo(BaseResource):
 # ------------------------------
 class CompanyInfoList(BaseResource):
     """
-    Handle for endpoint: /v2/Companies
+    Endpoint: /v2/Companies
     """
 
     def on_get(self, req, res):
@@ -82,7 +82,7 @@ class CompanyInfoList(BaseResource):
             raise AppError
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(Listing).filter(Listing.is_public == True).all()
 
         # 取扱トークンのownerAddressと会社リストを突合
         listing_owner_list = []
@@ -115,7 +115,7 @@ class CompanyInfoList(BaseResource):
 # ------------------------------
 class CompanyTokenList(BaseResource):
     """
-    Handle for endpoint: /v2/Company/{eth_address}/Tokens
+    Endpoint: /v2/Company/{eth_address}/Tokens
     """
 
     def on_get(self, req, res, eth_address=None):
@@ -132,6 +132,7 @@ class CompanyTokenList(BaseResource):
         # 取扱トークンリストを取得
         available_list = session.query(Listing).\
             filter(Listing.owner_address == eth_address).\
+            filter(Listing.is_public == True).\
             order_by(desc(Listing.id)).\
             all()
 
@@ -192,12 +193,13 @@ class CompanyTokenList(BaseResource):
 # ------------------------------
 # 決済代行業者情報参照
 # ------------------------------
+# 後方互換性用API. 代替は CompanyInfo
 class PaymentAgentInfo(BaseResource):
     """
-    Handle for endpoint: /PaymentAgent/{eth_address}
+    Endpoint: /PaymentAgent/{eth_address}
     """
 
-    def on_get(self, req, res, eth_address):
+    def on_get(self, req, res, eth_address=None):
         LOG.info('v2.company.PaymentAgent')
 
         if not Web3.isAddress(eth_address):
@@ -207,10 +209,10 @@ class PaymentAgentInfo(BaseResource):
         isExist = False
         try:
             if config.APP_ENV == 'local':
-                company_list = json.load(open('data/payment_agent_list.json', 'r'))
+                company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
-                    requests.get(config.PAYMENT_AGENT_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
+                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
         except Exception as err:
             LOG.error('Failed To Get Data: %s', err)
             raise AppError

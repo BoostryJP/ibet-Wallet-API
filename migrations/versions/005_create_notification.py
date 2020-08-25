@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import datetime
 
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
@@ -21,8 +22,8 @@ table = Table(
     Column("block_timestamp", DateTime),
     Column("args", JSON),
     Column("metainfo", JSON),
-    Column("created", DateTime, default=func.now()),
-    Column("modified", DateTime, default=func.now(), onupdate=func.now())
+    Column("created", DateTime, default=datetime.utcnow),
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 )
 
 notification_index_1 = Index(

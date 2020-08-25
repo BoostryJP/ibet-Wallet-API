@@ -11,6 +11,8 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 basePath: "/v2"
 tags:
+- name: "Admin"
+  description: "API for System Administrator"
 - name: "NodeInfo"
   description: "Blockchain Node Settings"
 - name: "Eth"
@@ -39,6 +41,207 @@ schemes:
 - "https"
 - "http"
 paths:
+  /Admin/Tokens:
+    get:
+      tags:
+        - "Admin"
+      summary: List All Listed Tokens
+      operationId: "TokensGET"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    token_address:
+                      type: string
+                    is_public:
+                      type: boolean
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
+                    owner_address:
+                      type: string
+                    created:
+                      type: string
+                      description: Create Datetime (JST)
+    post:
+      tags:
+        - "Admin"
+      summary: List a Token
+      operationId: "TokensPOST"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: contract_address
+          in: query
+          description: "contract address"
+          required: true
+          type: string
+        - name: is_public
+          in: query
+          required: true
+          type: boolean
+        - name: max_holding_quantity
+          in: query
+          required: false
+          type: integer
+        - name: max_sell_amount
+          in: query
+          required: false
+          type: integer
+        - name: owner_address
+          in: query
+          description: "token owner address"
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+  /Admin/Token/{contract_address}:
+    get:
+      tags:
+        - "Admin"
+      summary: Retrieve a Listed Token
+      operationId: "TokenGET"
+      parameters:
+        - name: "contract_address"
+          in: "path"
+          description: "Contract Address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  token_address:
+                    type: string
+                  is_public:
+                    type: boolean
+                  max_holding_quantity:
+                    type: integer
+                  max_sell_amount:
+                    type: integer
+                  owner_address:
+                    type: string
+                  created:
+                    type: string
+                    description: Create Datetime (JST)
+    post:
+      tags:
+        - "Admin"
+      summary: Update a Listed Token
+      operationId: "TokenPOST"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: is_public
+          in: query
+          required: false
+          type: boolean
+        - name: max_holding_quantity
+          in: query
+          required: false
+          type: integer
+        - name: max_sell_amount
+          in: query
+          required: false
+          type: integer
+        - name: owner_address
+          in: query
+          description: "token owner address"
+          required: false
+          type: string
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+    delete:
+      tags:
+        - "Admin"
+      summary: Delete a Listed Token
+      operationId: "TokenDELETE"
+      parameters:
+        - name: "contract_address"
+          in: "path"
+          description: "Contract Address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
   /NodeInfo:
     get:
       tags:
@@ -355,10 +558,6 @@ paths:
                     type: string
                   corporate_name:
                     type: string
-                  enode:
-                    type: string
-                  ip_address:
-                    type: string
                   rsa_publickey:
                     type: string
                   homepage:
@@ -392,10 +591,6 @@ paths:
                     address:
                       type: string
                     corporate_name:
-                      type: string
-                    enode:
-                      type: string
-                    ip_address:
                       type: string
                     rsa_publickey:
                       type: string
@@ -456,9 +651,11 @@ paths:
                       type: string
   /PaymentAgent/{eth_address}:
     get:
+      deprecated: true
       tags:
         - "PaymentAgent"
       summary: "Payment Agent Information"
+      description: "Deprecated. This operation may be removed in a future version. Use GET /Company/{eth_address} instead."
       operationId: "PaymentAgent"
       parameters:
         - name: "eth_address"
@@ -487,10 +684,6 @@ paths:
                   address:
                     type: string
                   corporate_name:
-                    type: string
-                  enode:
-                    type: string
-                  ip_address:
                     type: string
                   rsa_publickey:
                     type: string
@@ -3736,8 +3929,8 @@ paths:
       summary: "Notification List"
       operationId: "GetNotifications"
       parameters:
-        - name: X-ibet-Signature
-          in: header
+        - name: address
+          in: query
           required: true
           type: string
         - name: cursor
@@ -3839,26 +4032,24 @@ paths:
       summary: "Update Notification"
       operationId: "PostNotifications"
       parameters:
-        - name: X-ibet-Signature
-          in: header
-          required: true
-          type: string
-        - name: id
-          in: query
-          required: true
-          type: string
-        - name: is_read
-          in: query
-          required: false
-          type: boolean
-        - name: is_flagged
-          in: query
-          required: false
-          type: boolean
-        - name: is_deleted
-          in: query
-          required: false
-          type: boolean
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              id:
+                type: string
+              is_read:
+                type: boolean
+              is_flagged:
+                type: boolean
+              is_deleted:
+                type: boolean
+            required:
+              - address
+              - id
       responses:
         200:
           description: successful operation
@@ -3935,14 +4126,18 @@ paths:
       summary: "Mark all notifications as read"
       operationId: "NotificationsRead"
       parameters:
-        - name: X-ibet-Signature
-          in: header
-          required: true
-          type: string
-        - name: is_read
-          in: query
-          required: false
-          type: boolean
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              address:
+                type: string
+              is_read:
+                type: boolean
+            required:
+              - address
+              - is_read
       responses:
         200:
           description: successful operation
@@ -3965,8 +4160,8 @@ paths:
       summary: "Get the number of unread notifications"
       operationId: "NotificationCount"
       parameters:
-        - name: X-ibet-Signature
-          in: header
+        - name: address
+          in: query
           required: true
           type: string
       responses:
