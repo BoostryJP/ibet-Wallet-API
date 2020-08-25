@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import datetime
 
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
@@ -16,8 +17,8 @@ table = Table(
     Column("from_address", String(42)),
     Column("to_address", String(42)),
     Column("value", BigInteger),
-    Column("created", DateTime, default=func.now()),
-    Column("modified", DateTime, default=func.now(), onupdate=func.now())
+    Column("created", DateTime, default=datetime.utcnow),
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 )
 
 

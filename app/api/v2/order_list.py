@@ -295,7 +295,7 @@ class BaseOrderList(object):
 # ------------------------------
 class StraightBondOrderList(BaseOrderList, BaseResource):
     """
-    Handle for endpoint: /v2/OrderList/StraightBond
+    Endpoint: /v2/OrderList/StraightBond
     """
 
     def on_post(self, req, res):
@@ -348,7 +348,7 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
 # ------------------------------
 class MembershipOrderList(BaseOrderList, BaseResource):
     """
-    Handle for endpoint: /v2/OrderList/Membership
+    Endpoint: /v2/OrderList/Membership
     """
 
     def on_post(self, req, res):
@@ -402,7 +402,7 @@ class MembershipOrderList(BaseOrderList, BaseResource):
 # ------------------------------
 class CouponOrderList(BaseOrderList, BaseResource):
     """
-    Handle for endpoint: /v2/OrderList/Coupon
+    Endpoint: /v2/OrderList/Coupon
     """
 
     def on_post(self, req, res):
@@ -456,7 +456,7 @@ class CouponOrderList(BaseOrderList, BaseResource):
 # ------------------------------
 class ShareOrderList(BaseOrderList, BaseResource):
     """
-    Handle for endpoint: /v2/OrderList/Share
+    Endpoint: /v2/OrderList/Share
     """
 
     def on_post(self, req, res):

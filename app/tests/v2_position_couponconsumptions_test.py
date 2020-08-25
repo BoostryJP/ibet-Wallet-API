@@ -32,7 +32,7 @@ class TestV2CouponConsumptions():
 
     # ＜正常系1＞
     #  クーポン消費（0件）
-    def test_couponconsumptions_normal_1(self, client):
+    def test_couponconsumptions_normal_1(self, client, session):
         request_params = {
             "token_address": "0x0000000000000000000000000000000000000000",
             "account_address_list": ["0x16f39D63d156f9abCe0a9aB46F751E2eFdEB040f"]

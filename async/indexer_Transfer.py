@@ -16,7 +16,7 @@ sys.path.append(path)
 
 from app import log
 from app import config
-from app.model import Listing, PrivateListing, Position, Transfer
+from app.model import Listing, Position, Transfer
 from app.contracts import Contract
 
 LOG = log.get_logger()
@@ -131,7 +131,6 @@ class Processor:
         self.token_list = []
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
-        listed_tokens = listed_tokens + self.db.query(PrivateListing).all()
         for listed_token in listed_tokens:
             token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
             if token_info[1] == "IbetCoupon":

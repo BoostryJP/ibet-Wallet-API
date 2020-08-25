@@ -17,7 +17,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import log
 from app import config
-from app.model import Listing, PrivateListing, ConsumeCoupon
+from app.model import Listing, ConsumeCoupon
 from app.contracts import Contract
 
 from datetime import datetime, timezone, timedelta
@@ -106,7 +106,6 @@ class Processor:
         self.token_list = []
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
-        listed_tokens = listed_tokens + self.db.query(PrivateListing).all()
         for listed_token in listed_tokens:
             token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
             if token_info[1] == "IbetCoupon":

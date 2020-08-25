@@ -30,7 +30,7 @@ Common
 # ------------------------------
 class GetAgreement(BaseResource):
     """
-    Handle for endpoint: /v2/Market/Agreement
+    Endpoint: /v2/Market/Agreement
     """
 
     def on_get(self, req, res):
@@ -233,7 +233,7 @@ Straight Bond
 # ------------------------------
 class StraightBondOrderBook(BaseResource):
     """
-    Handle for endpoint: /v2/Market/OrderBook/StraightBond
+    Endpoint: /v2/Market/OrderBook/StraightBond
     """
 
     def on_post(self, req, res):
@@ -430,7 +430,7 @@ class StraightBondOrderBook(BaseResource):
 # ------------------------------
 class StraightBondLastPrice(BaseResource):
     """
-    Handle for endpoint: /v2/Market/LastPrice/StraightBond
+    Endpoint: /v2/Market/LastPrice/StraightBond
     """
 
     def on_post(self, req, res):
@@ -492,7 +492,7 @@ class StraightBondLastPrice(BaseResource):
 # ------------------------------
 class StraightBondTick(BaseResource):
     """
-    Handle for endpoint: /v2/Market/Tick/StraightBond
+    Endpoint: /v2/Market/Tick/StraightBond
     """
 
     def on_post(self, req, res):
@@ -574,7 +574,7 @@ Membership
 # ------------------------------
 class MembershipOrderBook(BaseResource):
     """
-    Handle for endpoint: /v2/Market/OrderBook/Membership
+    Endpoint: /v2/Market/OrderBook/Membership
     """
 
     def on_post(self, req, res):
@@ -771,7 +771,7 @@ class MembershipOrderBook(BaseResource):
 # ------------------------------
 class MembershipLastPrice(BaseResource):
     """
-    Handle for endpoint: /v2/Market/LastPrice/Membership
+    Endpoint: /v2/Market/LastPrice/Membership
     """
 
     def on_post(self, req, res):
@@ -834,7 +834,7 @@ class MembershipLastPrice(BaseResource):
 # ------------------------------
 class MembershipTick(BaseResource):
     """
-    Handle for endpoint: /v2/Market/Tick/Membership
+    Endpoint: /v2/Market/Tick/Membership
     """
 
     def on_post(self, req, res):
@@ -917,7 +917,7 @@ Coupon
 # ------------------------------
 class CouponOrderBook(BaseResource):
     """
-    Handle for endpoint: /v2/Market/OrderBook/Coupon
+    Endpoint: /v2/Market/OrderBook/Coupon
     """
 
     def on_post(self, req, res):
@@ -1114,7 +1114,7 @@ class CouponOrderBook(BaseResource):
 # ------------------------------
 class CouponLastPrice(BaseResource):
     """
-    Handle for endpoint: /v2/Market/LastPrice/Coupon
+    Endpoint: /v2/Market/LastPrice/Coupon
     """
 
     def on_post(self, req, res):
@@ -1177,7 +1177,7 @@ class CouponLastPrice(BaseResource):
 # ------------------------------
 class CouponTick(BaseResource):
     """
-    Handle for endpoint: /v2/Market/Tick/Coupon
+    Endpoint: /v2/Market/Tick/Coupon
     """
 
     def on_post(self, req, res):

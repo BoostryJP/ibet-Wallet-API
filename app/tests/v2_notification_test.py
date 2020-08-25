@@ -13,11 +13,6 @@ class TestNotification:
 
     address_2 = "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
 
-    # HACK: updateでcommitされてしまう対策
-    def teardown_method(self, method):
-        self.session.query(Notification).delete()
-        self.session.commit()
-
     def _insert_test_data(self, session):
         self.session = session  # HACK: updateでcommitされてしまう対策
 

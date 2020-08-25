@@ -18,7 +18,7 @@ LOG = log.get_logger()
 # ------------------------------
 class Notifications(BaseResource):
     """
-    Handle for endpoint: /Notifications/
+    Endpoint: /Notifications/
     """
 
     def on_get(self, req, res):
@@ -202,7 +202,7 @@ class Notifications(BaseResource):
 # ------------------------------
 class NotificationsRead(BaseResource):
     """
-    Handle for endpoint: /Notifications/Read/
+    Endpoint: /Notifications/Read/
     """
 
     def on_post(self, req, res):
@@ -256,7 +256,7 @@ class NotificationsRead(BaseResource):
 # ------------------------------
 class NotificationCount(BaseResource):
     """
-    Handle for endpoint: /NotificationCount/
+    Endpoint: /NotificationCount/
     """
 
     def on_get(self, req, res):

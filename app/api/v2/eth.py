@@ -12,7 +12,7 @@ from app import log
 from app.api.common import BaseResource
 from app.errors import InvalidParameterError, SuspendedTokenError
 from app import config
-from app.model import ExecutableContract, Listing, PrivateListing
+from app.model import ExecutableContract, Listing
 from app.contracts import Contract
 
 LOG = log.get_logger()
@@ -26,7 +26,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # ------------------------------
 class GetTransactionCount(BaseResource):
     """
-    Handle for endpoint: /Eth/TransactionCount/{eth_address}
+    Endpoint: /Eth/TransactionCount/{eth_address}
     """
 
     def on_get(self, req, res, eth_address=None):
@@ -50,7 +50,7 @@ class GetTransactionCount(BaseResource):
 # ------------------------------
 class SendRawTransaction(BaseResource):
     """
-    Handle for endpoint: /Eth/SendRawTransaction
+    Endpoint: /Eth/SendRawTransaction
     """
 
     def on_post(self, req, res):
@@ -80,10 +80,8 @@ class SendRawTransaction(BaseResource):
             listed_token = session.query(Listing). \
                 filter(Listing.token_address == to_contract_address). \
                 first()
-            private_listed_token = session.query(PrivateListing).\
-                filter(PrivateListing.token_address == to_contract_address).\
-                first()
-            if listed_token is not None or private_listed_token is not None:
+
+            if listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
                 token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
                 if token_attribute[1] != "":
@@ -180,7 +178,7 @@ class SendRawTransaction(BaseResource):
 # ------------------------------
 class SendRawTransactionNoWait(BaseResource):
     """
-    Handle for endpoint: /v2/Eth/SendRawTransactionNoWait
+    Endpoint: /v2/Eth/SendRawTransactionNoWait
     """
 
     def on_post(self, req, res):
@@ -210,10 +208,8 @@ class SendRawTransactionNoWait(BaseResource):
             listed_token = session.query(Listing). \
                 filter(Listing.token_address == to_contract_address). \
                 first()
-            private_listed_token = session.query(PrivateListing). \
-                filter(PrivateListing.token_address == to_contract_address). \
-                first()
-            if listed_token is not None or private_listed_token is not None:
+
+            if listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
                 token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
                 if token_attribute[1] != "":

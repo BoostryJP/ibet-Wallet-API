@@ -16,11 +16,11 @@ LOG = log.get_logger()
 
 
 # ------------------------------
-# [共通]トークン取扱ステータス
+# [トークン管理]トークン取扱ステータス
 # ------------------------------
 class TokenStatus(BaseResource):
     """
-    Handle for endpoint: /v2/Token/{contract_address}/Status
+    Endpoint: /v2/Token/{contract_address}/Status
     """
 
     def __init__(self):
@@ -75,7 +75,7 @@ class TokenStatus(BaseResource):
 # ------------------------------
 class StraightBondTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Token/StraightBond
+    Endpoint: /v2/Token/StraightBond
     """
 
     def __init__(self):
@@ -95,7 +95,10 @@ class StraightBondTokens(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -166,7 +169,7 @@ class StraightBondTokens(BaseResource):
 # ------------------------------
 class StraightBondTokenAddresses(BaseResource):
     """
-    Handle for endpoint: /v2/Token/StraightBond/Address
+    Endpoint: /v2/Token/StraightBond/Address
     """
 
     def __init__(self):
@@ -186,7 +189,10 @@ class StraightBondTokenAddresses(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -251,7 +257,7 @@ class StraightBondTokenAddresses(BaseResource):
 # ------------------------------
 class StraightBondTokenDetails(BaseResource):
     """
-    Handle for endpoint: /v2/Token/StraightBond/{contract_address}
+    Endpoint: /v2/Token/StraightBond/{contract_address}
     """
 
     def __init__(self):
@@ -275,7 +281,10 @@ class StraightBondTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address).\
+            filter(Listing.is_public == True).\
+            first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
@@ -331,7 +340,7 @@ class StraightBondTokenDetails(BaseResource):
 # ------------------------------
 class ShareTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Share
+    Endpoint: /v2/Token/Share
     """
 
     def __init__(self):
@@ -351,7 +360,10 @@ class ShareTokens(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -423,7 +435,7 @@ class ShareTokens(BaseResource):
 # ------------------------------
 class ShareTokenAddresses(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Share/Address
+    Endpoint: /v2/Token/Share/Address
     """
 
     def __init__(self):
@@ -443,7 +455,10 @@ class ShareTokenAddresses(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -509,7 +524,7 @@ class ShareTokenAddresses(BaseResource):
 # ------------------------------
 class ShareTokenDetails(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Share/{contract_address}
+    Endpoint: /v2/Token/Share/{contract_address}
     """
 
     def __init__(self):
@@ -533,7 +548,10 @@ class ShareTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークン情報を取得
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address). \
+            filter(Listing.is_public == True). \
+            first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
@@ -589,7 +607,7 @@ class ShareTokenDetails(BaseResource):
 # ------------------------------
 class MembershipTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Membership
+    Endpoint: /v2/Token/Membership
     """
 
     def __init__(self):
@@ -610,7 +628,10 @@ class MembershipTokens(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -683,7 +704,7 @@ class MembershipTokens(BaseResource):
 # ------------------------------
 class MembershipTokenAddresses(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Membership/Address
+    Endpoint: /v2/Token/Membership/Address
     """
 
     def __init__(self):
@@ -704,7 +725,10 @@ class MembershipTokenAddresses(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -769,7 +793,7 @@ class MembershipTokenAddresses(BaseResource):
 # ------------------------------
 class MembershipTokenDetails(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Membership/{contract_address}
+    Endpoint: /v2/Token/Membership/{contract_address}
     """
 
     def __init__(self):
@@ -793,7 +817,10 @@ class MembershipTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address).\
+            filter(Listing.is_public == True).\
+            first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
@@ -849,7 +876,7 @@ class MembershipTokenDetails(BaseResource):
 # ------------------------------
 class CouponTokens(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Coupon
+    Endpoint: /v2/Token/Coupon
     """
 
     def __init__(self):
@@ -870,7 +897,10 @@ class CouponTokens(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -943,7 +973,7 @@ class CouponTokens(BaseResource):
 # ------------------------------
 class CouponTokenAddresses(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Coupon/Address
+    Endpoint: /v2/Token/Coupon/Address
     """
 
     def __init__(self):
@@ -964,7 +994,10 @@ class CouponTokenAddresses(BaseResource):
             'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).order_by(Listing.id).all()
+        available_tokens = session.query(Listing).\
+            filter(Listing.is_public == True).\
+            order_by(Listing.id).\
+            all()
         list_length = len(available_tokens)
 
         if request_json['cursor'] is not None and request_json['cursor'] > list_length:
@@ -1030,7 +1063,7 @@ class CouponTokenAddresses(BaseResource):
 # ------------------------------
 class CouponTokenDetails(BaseResource):
     """
-    Handle for endpoint: /v2/Token/Coupon/{contract_address}
+    Endpoint: /v2/Token/Coupon/{contract_address}
     """
 
     def __init__(self):
@@ -1054,7 +1087,10 @@ class CouponTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
-        listed_token = session.query(Listing).filter(Listing.token_address == contract_address).first()
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address).\
+            filter(Listing.is_public == True).\
+            first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
