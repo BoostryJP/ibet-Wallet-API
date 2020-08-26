@@ -140,7 +140,7 @@ class CompanyTokenList(BaseResource):
         for available_token in available_list:
             token_address = to_checksum_address(available_token.token_address)
             token_info = ListContract.functions.getTokenByAddress(token_address).call()
-            if token_info[0] != config.ZERO_ADDRSS:  # TokenListに公開されているもののみを対象とする
+            if token_info[0] != config.ZERO_ADDRESS:  # TokenListに公開されているもののみを対象とする
                 token_template = token_info[1]
                 if self.available_token_template(token_template):  # 取扱対象のトークン種別のみ対象とする
                     token_model = self.get_token_model(token_template)
