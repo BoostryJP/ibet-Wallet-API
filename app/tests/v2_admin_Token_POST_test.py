@@ -90,32 +90,10 @@ class TestAdminTokenPOST:
             'message': 'Invalid Parameter'
         }
 
-    # ＜Error_2_1＞
-    # contract_addressのフォーマット誤り
-    # 400（InvalidParameterError）
-    def test_error_2_1(self, client, session):
-        request_params = {
-            "is_public": False,
-            "max_holding_quantity": 200,
-            "max_sell_amount": 25000,
-            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590"
-        }
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-        apiurl = self.apiurl_base + "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7"  # アドレスが短い
-        resp = client.simulate_post(apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': 'Invalid contract address'
-        }
-
-    # ＜Error_2_2＞
+    # ＜Error_2＞
     # owner_addressのフォーマット誤り
     # 400（InvalidParameterError）
-    def test_error_2_2(self, client, session):
+    def test_error_2_1(self, client, session):
         request_params = {
             "is_public": False,
             "max_holding_quantity": 200,
@@ -134,10 +112,10 @@ class TestAdminTokenPOST:
             'description': 'Invalid owner address'
         }
 
-    # ＜Error_2_3＞
+    # ＜Error_2_2＞
     # 入力値の型誤り
     # 400（InvalidParameterError）
-    def test_error_2_3(self, client, session):
+    def test_error_2_2(self, client, session):
         request_params = {
             "is_public": "False",
             "max_holding_quantity": "200",
@@ -161,6 +139,31 @@ class TestAdminTokenPOST:
             }
         }
 
+    # ＜Error_2_3＞
+    # 最小値チェック
+    # 400（InvalidParameterError）
+    def test_error_2_3(self, client, session):
+        request_params = {
+            "is_public": False,
+            "max_holding_quantity": -1,
+            "max_sell_amount": -1,
+            "owner_address": "0x34C987DDe783EfbFe1E573727165E6c15D660590"
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        apiurl = self.apiurl_base + self.default_token["token_address"]
+        resp = client.simulate_post(apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'max_holding_quantity': 'min value is 0',
+                'max_sell_amount': 'min value is 0'
+            }
+        }
+
     # <Error_3>
     # 更新対象のレコードが存在しない
     # 404
@@ -179,6 +182,5 @@ class TestAdminTokenPOST:
         assert resp.status_code == 404
         assert resp.json['meta'] == {
             'code': 30,
-            'message': 'Data Not Exists',
-            'description': 'Record does not exist'
+            'message': 'Data Not Exists'
         }

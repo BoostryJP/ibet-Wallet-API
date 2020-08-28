@@ -197,6 +197,31 @@ class TestAdminTokensPOST:
             }
         }
 
+    # ＜Error_3_4＞
+    # 最小値チェック
+    # 400（InvalidParameterError）
+    def test_error_3_4(self, client, session):
+        request_params = {
+            "contract_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
+            "is_public": True,
+            "max_holding_quantity": -1,
+            "max_sell_amount": -1,
+            "owner_address": "0x56f63dc2351BeC560a429f0C646d64Ca718e11D6"
+        }
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'max_holding_quantity': 'min value is 0',
+                'max_sell_amount': 'min value is 0'
+            }
+        }
+
     # <Error_4>
     # 指定のcontract_addressのレコードが listing テーブルに既に登録済
     def test_error_4(self, client, session):
