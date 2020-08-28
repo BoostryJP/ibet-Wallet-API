@@ -42,3 +42,16 @@ class TestAdminTokensGET:
         del resp_body["id"]
         del resp_body["created"]
         assert resp_body == token
+
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # <Error_1>
+    # データなし
+    def test_error_1(self, client, session):
+        apiurl = self.apiurl_base + "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b"
+        resp = client.simulate_get(apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json["meta"] == {'code': 30, 'message': 'Data Not Exists'}

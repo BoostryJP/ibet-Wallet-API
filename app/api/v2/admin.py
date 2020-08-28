@@ -108,10 +108,12 @@ class Tokens(BaseResource):
             "max_holding_quantity": {
                 "type": "integer",
                 "required": False,
+                "min": 0
             },
             "max_sell_amount": {
                 "type": "integer",
                 "required": False,
+                "min": 0
             },
             "owner_address": {
                 "type": "string",
@@ -164,7 +166,11 @@ class Token(BaseResource):
         token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
             first()
-        res_body = token.json()
+
+        if token is not None:
+            res_body = token.json()
+        else:
+            raise DataNotExistsError()
 
         self.on_success(res, res_body)
 
@@ -179,19 +185,11 @@ class Token(BaseResource):
         # 入力値チェック
         request_json = self.validate(req)
 
-        # contract_addressのフォーマットチェック
-        try:
-            if not Web3.isAddress(contract_address):
-                raise InvalidParameterError("Invalid contract address")
-        except Exception as err:
-            LOG.warning(f"invalid contract address: {err}")
-            raise InvalidParameterError("Invalid contract address")
-
         # 更新対象レコードを取得
         # 更新対象のレコードが存在しない場合は404エラーを返す
         token = session.query(Listing).filter(Listing.token_address == contract_address).first()
         if token is None:
-            raise DataNotExistsError("Record does not exist")
+            raise DataNotExistsError()
 
         # レコードの更新
         is_public = request_json["is_public"] if "is_public" in request_json \
@@ -226,10 +224,12 @@ class Token(BaseResource):
             "max_holding_quantity": {
                 "type": "integer",
                 "required": False,
+                "min": 0
             },
             "max_sell_amount": {
                 "type": "integer",
                 "required": False,
+                "min": 0
             },
             "owner_address": {
                 "type": "string",
@@ -258,14 +258,6 @@ class Token(BaseResource):
         LOG.info("v2.token.Token(DELETE)")
 
         session = req.context["session"]
-
-        # contract_addressのフォーマットチェック
-        try:
-            if not Web3.isAddress(contract_address):
-                raise InvalidParameterError("Invalid contract address")
-        except Exception as err:
-            LOG.warning(f"invalid contract address: {err}")
-            raise InvalidParameterError("Invalid contract address")
 
         try:
             session.query(Listing).filter(Listing.token_address == contract_address).delete()
