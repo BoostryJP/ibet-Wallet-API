@@ -97,17 +97,34 @@ def issue_bond_token(invoker, attribute):
 
     arguments = [
         attribute['name'], attribute['symbol'], attribute['totalSupply'],
-        attribute['tradableExchange'],
-        attribute['faceValue'], attribute['interestRate'], interestPaymentDate,
+        attribute['faceValue'],
         attribute['redemptionDate'], attribute['redemptionValue'],
         attribute['returnDate'], attribute['returnAmount'],
-        attribute['purpose'], attribute['memo'],
-        attribute['contactInformation'], attribute['privacyPolicy'],
-        attribute['personalInfoAddress']
+        attribute['purpose']
     ]
 
     contract_address, abi = Contract.deploy_contract(
-        'IbetStraightBond', arguments, invoker['account_address'])
+        'IbetStraightBond',
+        arguments,
+        invoker['account_address']
+    )
+
+    # その他項目の更新
+    TokenContract = Contract.get_contract('IbetStraightBond', contract_address)
+    TokenContract.functions.setTradableExchange(attribute['tradableExchange']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setInterestRate(attribute['interestRate']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setInterestPaymentDate(interestPaymentDate). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setMemo(attribute['memo']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setContactInformation(attribute['contactInformation']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setPrivacyPolicy(attribute['privacyPolicy']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setPersonalInfoAddress(attribute['personalInfoAddress']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
 
     return {'address': contract_address, 'abi': abi}
 
