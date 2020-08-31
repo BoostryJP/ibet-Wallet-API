@@ -12,7 +12,7 @@ LOG = log.get_logger()
 # ------------------------------
 class NodeInfo(BaseResource):
     """
-    Handle for endpoint: /NodeInfo
+    Endpoint: /NodeInfo
     """
 
     def on_get(self, req, res):

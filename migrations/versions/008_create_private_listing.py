@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import datetime
 
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
@@ -16,8 +17,8 @@ table = Table(
     Column("max_sell_amount", BigInteger),
     Column("payment_method_credit_card", Boolean),
     Column("payment_method_bank", Boolean),
-    Column("created", DateTime, default=func.now()),
-    Column("modified", DateTime, default=func.now(), onupdate=func.now())
+    Column("created", DateTime, default=datetime.utcnow),
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 )
 
 

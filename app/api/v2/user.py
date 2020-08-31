@@ -24,7 +24,7 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 # ------------------------------
 class PaymentAccount(BaseResource):
     """
-    Handle for endpoint: /User/PaymentAccount
+    Endpoint: /User/PaymentAccount
     """
     def on_get(self, req, res):
         LOG.info('v2.user.PaymentAccount')
@@ -84,7 +84,7 @@ class PaymentAccount(BaseResource):
 # ------------------------------
 class PersonalInfo(BaseResource):
     """
-    Handle for endpoint: /User/PersonalInfo
+    Endpoint: /User/PersonalInfo
     """
     def on_get(self, req, res):
         LOG.info('v2.user.PersonalInfo')
@@ -144,7 +144,7 @@ class PersonalInfo(BaseResource):
 # ------------------------------
 class StreetAddress(BaseResource):
     """
-    Handle for endpoint: /User/StreetAddress/{postal_code}
+    Endpoint: /User/StreetAddress/{postal_code}
     """
     def on_get(self, req, res, postal_code):
         LOG.info('v2.user.StreetAddress')

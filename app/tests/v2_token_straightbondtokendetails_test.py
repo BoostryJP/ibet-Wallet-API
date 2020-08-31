@@ -69,6 +69,7 @@ class TestV2TokenStraightBondTokenDetails:
     def list_token(session, token):
         listed_token = Listing()
         listed_token.token_address = token['address']
+        listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
@@ -162,7 +163,7 @@ class TestV2TokenStraightBondTokenDetails:
 
     # ＜エラー系2＞
     #   取扱トークン（DB）に情報が存在しない
-    def test_straightbonddetails_error_2(self, client, shared_contract):
+    def test_straightbonddetails_error_2(self, client, shared_contract, session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
