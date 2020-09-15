@@ -67,6 +67,9 @@ class App(falcon.API):
         # トークン取扱ステータス参照
         self.add_route('/v2/Token/{contract_address}/Status', token.TokenStatus())
 
+        # トークン保有者一覧参照
+        self.add_route('/v2/Token/{contract_address}/Holders', token.TokenHolders())
+
         # マーケット情報：オーダーブック
         self.add_route('/v2/Market/OrderBook/StraightBond', market_information.StraightBondOrderBook())
         self.add_route('/v2/Market/OrderBook/Membership', market_information.MembershipOrderBook())
