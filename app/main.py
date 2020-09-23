@@ -29,6 +29,7 @@ class App(falcon.API):
 
         # 管理者向け
         self.add_route('/v2/Admin/Tokens', admin.Tokens())
+        self.add_route('/v2/Admin/Tokens/Type', admin.TokenType())
         self.add_route('/v2/Admin/Token/{contract_address}', admin.Token())
 
         # トランザクション
