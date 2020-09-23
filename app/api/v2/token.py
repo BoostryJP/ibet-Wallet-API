@@ -10,7 +10,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, Position
+from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, Position, Transfer
 
 LOG = log.get_logger()
 
@@ -113,6 +113,49 @@ class TokenHolders(BaseResource):
                 "account_address": holder.account_address,
                 "amount": holder.balance
             })
+
+        self.on_success(res, resp_body)
+
+
+# ------------------------------
+# [トークン管理]トークン移転履歴
+# ------------------------------
+class TransferHistory(BaseResource):
+    """
+    Endpoint: /v2/Token/{contract_address}/TransferHistory
+    """
+
+    def on_get(self, req, res, contract_address=None):
+        LOG.info('v2.token.TransferHistory')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                description = 'invalid contract_address'
+                raise InvalidParameterError(description=description)
+        except:
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+
+        # 取扱トークンチェック
+        listed_token = session.query(Listing). \
+            filter(Listing.token_address == contract_address). \
+            first()
+        if listed_token is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        # 移転履歴取得
+        transfer_history = session.query(Transfer). \
+            filter(Transfer.token_address == contract_address). \
+            order_by(Transfer.id). \
+            all()
+
+        resp_body = []
+        for transfer_event in transfer_history:
+            resp_body.append(transfer_event.json())
 
         self.on_success(res, resp_body)
 

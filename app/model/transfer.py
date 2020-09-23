@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy import Column
 from sqlalchemy import String, BigInteger
+from datetime import datetime, timedelta, timezone
 
 from app.model import Base
+
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
 
 class Transfer(Base):
@@ -21,6 +25,27 @@ class Transfer(Base):
     def __repr__(self):
         return "<Transfer(transaction_hash='%s', token_address='%s', from_address='%s', to_address='%s', value='%d')>" % \
                (self.transaction_hash, self.token_address, self.from_address, self.to_address, self.value)
+
+    @staticmethod
+    def format_timestamp(_datetime: datetime) -> str:
+        """UTCからJSTへ変換
+        :param _datetime:
+        :return:
+        """
+        if _datetime is None:
+            return ""
+        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
+        return datetime_jp.strftime("%Y/%m/%d %H:%M:%S")
+
+    def json(self):
+        return {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": self.value,
+            "created": self.format_timestamp(self.created),
+        }
 
     FIELDS = {
         'id': int,

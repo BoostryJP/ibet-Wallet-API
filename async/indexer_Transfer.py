@@ -2,6 +2,7 @@
 import os
 import sys
 import time
+from datetime import datetime, timezone, timedelta
 import logging
 
 from sqlalchemy import create_engine
@@ -18,6 +19,8 @@ from app import log
 from app import config
 from app.model import Listing, Position, Transfer
 from app.contracts import Contract
+
+JST = timezone(timedelta(hours=+9), "JST")
 
 LOG = log.get_logger()
 log_fmt = 'PROCESSOR-POSITION [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
@@ -54,7 +57,9 @@ class Sinks:
 class ConsoleSink:
     @staticmethod
     def on_transfer(transaction_hash, token_address,
-                    from_account_address, from_account_balance, to_account_address, to_account_balance, value):
+                    from_account_address, from_account_balance,
+                    to_account_address, to_account_balance,
+                    value, event_created):
         LOG.info(
             "Transfer: transaction_hash={}, token_address={}, from_account_address={}, to_account_address={}".format(
                 transaction_hash, token_address, from_account_address, to_account_address
@@ -70,7 +75,9 @@ class DBSink:
         self.db = db
 
     def on_transfer(self, transaction_hash, token_address,
-                    from_account_address, from_account_balance, to_account_address, to_account_balance, value):
+                    from_account_address, from_account_balance,
+                    to_account_address, to_account_balance,
+                    value, event_created):
         # From-Account の残高情報を更新
         from_position = self.__get_position_record(token_address, from_account_address)
         if from_position is None:
@@ -102,6 +109,7 @@ class DBSink:
             transfer.from_address = from_account_address
             transfer.to_address = to_account_address
             transfer.value = value
+            transfer.created = event_created
             self.db.merge(transfer)
 
     def flush(self):
@@ -126,6 +134,9 @@ class Processor:
         self.latest_block = web3.eth.blockNumber
         self.db = db
         self.token_list = []
+
+    def gen_block_timestamp(self, event):
+        return datetime.fromtimestamp(web3.eth.getBlock(event["blockNumber"])["timestamp"], JST)
 
     def get_token_list(self):
         self.token_list = []
@@ -176,6 +187,7 @@ class Processor:
                     if args['value'] > sys.maxsize:
                         pass
                     else:
+                        event_created = self.gen_block_timestamp(event=event)
                         self.sink.on_transfer(
                             transaction_hash=event["transactionHash"].hex(),
                             token_address=to_checksum_address(token.address),
@@ -183,7 +195,8 @@ class Processor:
                             from_account_balance=from_account_balance,
                             to_account_address=args["to"],
                             to_account_balance=to_account_balance,
-                            value=args["value"]
+                            value=args["value"],
+                            event_created=event_created
                         )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
