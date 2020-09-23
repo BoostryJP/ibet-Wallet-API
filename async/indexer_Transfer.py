@@ -110,6 +110,7 @@ class DBSink:
             transfer.to_address = to_account_address
             transfer.value = value
             transfer.created = event_created
+            transfer.modified = event_created
             self.db.merge(transfer)
 
     def flush(self):
