@@ -29,6 +29,7 @@ class App(falcon.API):
 
         # 管理者向け
         self.add_route('/v2/Admin/Tokens', admin.Tokens())
+        self.add_route('/v2/Admin/Tokens/Type', admin.TokenType())
         self.add_route('/v2/Admin/Token/{contract_address}', admin.Token())
 
         # トランザクション
@@ -69,6 +70,9 @@ class App(falcon.API):
 
         # トークン保有者一覧参照
         self.add_route('/v2/Token/{contract_address}/Holders', token.TokenHolders())
+
+        # トークン移転履歴
+        self.add_route('/v2/Token/{contract_address}/TransferHistory', token.TransferHistory())
 
         # マーケット情報：オーダーブック
         self.add_route('/v2/Market/OrderBook/StraightBond', market_information.StraightBondOrderBook())
