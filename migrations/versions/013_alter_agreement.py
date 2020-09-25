@@ -22,11 +22,15 @@ def upgrade(migrate_engine):
         col.create(agreement)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
     col = Column("agreement_timestamp", DateTime, default=None)
     try:
         col.create(agreement)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
+        logging.warning(err)
+    except Exception as err:
         logging.warning(err)
 
 

@@ -17,6 +17,8 @@ def upgrade(migrate_engine):
         col.create(listing)
     except sqlalchemy.exc.ProgrammingError as err:
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
 
 def downgrade(migrate_engine):
@@ -26,4 +28,6 @@ def downgrade(migrate_engine):
     try:
         Column("is_public").drop(listing)
     except sqlalchemy.exc.ProgrammingError as err:
+        logging.warning(err)
+    except Exception as err:
         logging.warning(err)

@@ -47,6 +47,8 @@ def upgrade(migrate_engine):
         table.create()
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にTBLが存在する場合はWARNINGを出力する
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
 
 # Downgrade

@@ -17,12 +17,16 @@ def upgrade(migrate_engine):
         col.create(listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
     private_listing_table = Table("private_listing", meta)
     col = Column("owner_address", String(256))
     try:
         col.create(private_listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
+        logging.warning(err)
+    except Exception as err:
         logging.warning(err)
 
 
@@ -34,9 +38,13 @@ def downgrade(migrate_engine):
         Column("owner_address").drop(listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが削除されている場合はWARNINGを出力する
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
     private_listing_table = Table("private_listing", meta)
     try:
         Column("owner_address").drop(private_listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが削除されている場合はWARNINGを出力する
+        logging.warning(err)
+    except Exception as err:
         logging.warning(err)

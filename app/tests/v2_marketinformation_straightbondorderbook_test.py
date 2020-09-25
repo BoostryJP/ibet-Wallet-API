@@ -140,7 +140,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -186,7 +185,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -232,7 +230,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -326,7 +323,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
         order.order_id = 1
@@ -373,7 +369,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -426,7 +421,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -478,7 +472,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -524,7 +517,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -570,7 +562,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -664,7 +655,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
         order.order_id = 1
@@ -705,7 +695,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -771,7 +760,6 @@ class TestV2StraightBondOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -786,7 +774,6 @@ class TestV2StraightBondOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 2
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 2
@@ -842,7 +829,6 @@ class TestV2StraightBondOrderBook():
 
         # Orderの情報を挿入
         order = Order()
-        order.id = 0
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 0
@@ -857,7 +843,6 @@ class TestV2StraightBondOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -872,7 +857,6 @@ class TestV2StraightBondOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 2
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 2
@@ -887,7 +871,6 @@ class TestV2StraightBondOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 3
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 3

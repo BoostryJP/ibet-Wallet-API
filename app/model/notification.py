@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys
 from enum import Enum
+from sqlalchemy import create_engine
 from sqlalchemy import Column, Index, BigInteger, Sequence
 from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 
 from datetime import datetime
 
+from app import config
 from app.model import Base
+
+URI = config.DATABASE_URL
+engine = create_engine(URI, echo=False)
 
 
 # 通知データをキャッシュするためのテーブル
@@ -14,18 +19,21 @@ from app.model import Base
 class Notification(Base):
     __tablename__ = 'notification'
 
-    # レコードIDのシーケンス
-    notification_id_seq = Sequence(
-        "notification_id_seq",
-        start=1,
-        increment=1,
-        minvalue=1,
-        maxvalue=sys.maxsize,
-        cache=1
-    )
-
     # レコードID
-    id = Column(BigInteger, server_default=Sequence("notification_id_seq").next_value(), autoincrement=True)
+    if engine.name == 'mysql':
+        # NOTE:MySQLの場合はSEQ機能が利用できない
+        id = Column(BigInteger, autoincrement=True)
+    else:
+        # レコードIDのシーケンス
+        notification_id_seq = Sequence(
+            "notification_id_seq",
+            start=1,
+            increment=1,
+            minvalue=1,
+            maxvalue=sys.maxsize,
+            cache=1
+        )
+        id = Column(BigInteger, server_default=Sequence("notification_id_seq").next_value(), autoincrement=True)
 
     # 通知ID
     # Spec: 0x | <blockNumber> | <transactionIndex> | <logIndex> | <optionType>
