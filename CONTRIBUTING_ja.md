@@ -3,7 +3,7 @@
 ## 0. 開発推奨環境
 
 * OS: macOS 10.14 (Mojave)
-* PostgreSQL: 10.11
+* PostgreSQL: 10.1 or MySQL: 5.7
 * Python: 3.6.8
 
 ## 1. PostgreSQL
