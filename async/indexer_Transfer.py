@@ -154,6 +154,9 @@ class Processor:
             elif token_info[1] == "IbetStraightBond":
                 token_contract = Contract.get_contract('IbetStraightBond', listed_token.token_address)
                 self.token_list.append(token_contract)
+            elif token_info[1] == "IbetShare":
+                token_contract = Contract.get_contract('IbetShare', listed_token.token_address)
+                self.token_list.append(token_contract)
 
     def initial_sync(self):
         self.get_token_list()
