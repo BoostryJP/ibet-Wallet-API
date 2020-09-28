@@ -17,6 +17,8 @@ def upgrade(migrate_engine):
         private_listing.drop()
     except sqlalchemy.exc.ProgrammingError as err:
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
 
 def downgrade(migrate_engine):
@@ -34,4 +36,6 @@ def downgrade(migrate_engine):
     try:
         private_listing.create()
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にTBLが存在する場合はWARNINGを出力する
+        logging.warning(err)
+    except Exception as err:
         logging.warning(err)

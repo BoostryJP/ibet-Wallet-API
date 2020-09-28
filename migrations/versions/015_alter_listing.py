@@ -18,6 +18,8 @@ def upgrade(migrate_engine):
         Column("payment_method_bank").drop(listing)
     except sqlalchemy.exc.ProgrammingError as err:
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
 
 def downgrade(migrate_engine):
@@ -30,9 +32,13 @@ def downgrade(migrate_engine):
         col.create(listing)
     except sqlalchemy.exc.ProgrammingError as err:
         logging.warning(err)
+    except Exception as err:
+        logging.warning(err)
 
     col = Column("payment_method_bank", Boolean)
     try:
         col.create(listing)
     except sqlalchemy.exc.ProgrammingError as err:
+        logging.warning(err)
+    except Exception as err:
         logging.warning(err)
