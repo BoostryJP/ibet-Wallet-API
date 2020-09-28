@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import sys
+import time
 
 from eth_utils import to_checksum_address
 
@@ -141,7 +142,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -187,7 +187,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -233,7 +232,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -327,7 +325,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
         order.order_id = 1
@@ -373,7 +370,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -426,7 +422,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -472,7 +467,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -518,7 +512,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -612,7 +605,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = "0xE6E8eb2F31Fd906F2681EB0a65610bfe92cf6c43"
         order.order_id = 1
@@ -653,7 +645,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -668,7 +659,6 @@ class TestV2CouponOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 2
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 2
@@ -719,7 +709,6 @@ class TestV2CouponOrderBook():
 
         # テストデータを挿入
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -734,7 +723,6 @@ class TestV2CouponOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 2
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 2
@@ -790,7 +778,6 @@ class TestV2CouponOrderBook():
 
         # Orderの情報を挿入
         order = Order()
-        order.id = 0
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 0
@@ -805,7 +792,6 @@ class TestV2CouponOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 1
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 1
@@ -820,7 +806,6 @@ class TestV2CouponOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 2
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 2
@@ -835,7 +820,6 @@ class TestV2CouponOrderBook():
         session.add(order)
 
         order = Order()
-        order.id = 3
         order.token_address = token_address
         order.exchange_address = exchange_address
         order.order_id = 3
@@ -856,7 +840,6 @@ class TestV2CouponOrderBook():
         agreement.exchange_address = exchange_address
         agreement.unique_order_id = exchange_address + '_' + str(1)
         agreement.counterpart_address = account_addresses[2]
-        order.counterpart_address = ''
         agreement.amount = 100
         agreement.status = AgreementStatus.PENDING.value
         session.add(agreement)
