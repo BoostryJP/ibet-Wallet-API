@@ -8,7 +8,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list, bond_redeem
+from .contract_modules import issue_bond_token, register_bond_list, bond_redeem, bond_invalidate
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -192,7 +192,7 @@ class TestV2TokenStraightBondTokenDetails:
         }
 
     # ＜エラー系3＞
-    #   トークン償還（データなし）
+    #   トークン無効化（データなし）
     #   -> 404エラー
     def test_straightbonddetails_error_3(self, client, session, shared_contract):
         # テスト用アカウント
@@ -213,7 +213,7 @@ class TestV2TokenStraightBondTokenDetails:
         TestV2TokenStraightBondTokenDetails.list_token(session, token)
 
         # Tokenの無効化
-        bond_redeem(issuer, token)
+        bond_invalidate(issuer, token)
 
         apiurl = self.apiurl_base + token['address']
         query_string = ''
