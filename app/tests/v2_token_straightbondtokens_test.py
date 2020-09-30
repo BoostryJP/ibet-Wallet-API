@@ -11,7 +11,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list, bond_redeem
+from .contract_modules import issue_bond_token, register_bond_list, bond_redeem, bond_invalidate
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -587,8 +587,8 @@ class TestV2TokenStraightBondTokens:
             # 取扱トークンデータ挿入
             TestV2TokenStraightBondTokens.list_token(session, bond_token)
 
-        # 償還
-        bond_redeem(issuer, bond_list[0])
+        # Tokenの無効化
+        bond_invalidate(issuer, bond_list[0])
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
