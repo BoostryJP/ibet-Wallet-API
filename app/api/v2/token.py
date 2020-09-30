@@ -412,8 +412,8 @@ class StraightBondTokenDetails(BaseResource):
             try:
                 # トークンコントラクトへの接続
                 TokenContract = Contract.get_contract(token_template, token_address)
-                # 償還済みのトークンはリストに返さない
-                if TokenContract.functions.isRedeemed().call():
+                # 取扱停止銘柄はリストに返さない
+                if not TokenContract.functions.status().call():
                     return None
                 bondtoken = BondToken.get(session=session, token_address=token_address)
                 bondtoken = bondtoken.__dict__
