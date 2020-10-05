@@ -4,6 +4,7 @@ from cerberus import Validator
 from web3 import Web3
 
 from app import log
+from app import config
 from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError, AppError
 from app.model import Listing, ExecutableContract
@@ -142,6 +143,31 @@ class Tokens(BaseResource):
             raise InvalidParameterError("Invalid owner address")
 
         return request_json
+
+
+# ------------------------------
+# [管理]取扱トークン種別
+# ------------------------------
+class TokenType(BaseResource):
+    """
+    Endpoint: /v2/Admin/Tokens/Type
+      - GET: 取扱トークン種別
+    """
+
+    ########################################
+    # GET
+    ########################################
+    def on_get(self, req, res):
+        LOG.info("v2.token.TokenType")
+
+        res_body = {
+            "IbetStraightBond": config.BOND_TOKEN_ENABLED,
+            "IbetShare": config.SHARE_TOKEN_ENABLED,
+            "IbetMembership": config.MEMBERSHIP_TOKEN_ENABLED,
+            "IbetCoupon": config.COUPON_TOKEN_ENABLED
+        }
+
+        self.on_success(res, res_body)
 
 
 # ------------------------------

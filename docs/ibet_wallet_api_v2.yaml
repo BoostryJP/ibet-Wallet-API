@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "2.0.0"
+  version: "0.16.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -129,6 +129,38 @@ paths:
                   message:
                     type: string
                     example: OK
+  /Admin/Tokens/Type:
+    get:
+      tags:
+        - "Admin"
+      summary: Available status by token type
+      operationId: "TokenType"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  IbetStraightBond:
+                    type: boolean
+                  IbetShare:
+                    type: boolean
+                  IbetMembership:
+                    type: boolean
+                  IbetCoupon:
+                    type: boolean
   /Admin/Token/{contract_address}:
     get:
       tags:
@@ -184,6 +216,11 @@ paths:
       produces:
         - "application/json"
       parameters:
+        - name: "contract_address"
+          in: "path"
+          description: "Contract Address"
+          required: true
+          type: "string"
         - name: is_public
           in: query
           required: false
@@ -1802,6 +1839,153 @@ paths:
                 properties:
                   status:
                     type: boolean
+  /Token/{contract_address}/Holders:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    get:
+      tags:
+        - "Token"
+      summary: "Token holders"
+      operationId: "TokenHolders"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    account_address:
+                      type: string
+                    amount:
+                      type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 88
+                  message:
+                    type: string
+                    example: Invalid Parameter
+                  description:
+                    description: Error Reason
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 30
+                  message:
+                    type: string
+                    example: Data Not Exists
+                  description:
+                    description: Error Reason
+  /Token/{contract_address}/TransferHistory:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    get:
+      tags:
+        - "Token"
+      summary: "Token Transfer History"
+      operationId: "TransferHistory"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    transaction_hash:
+                      type: string
+                    token_address:
+                      type: string
+                    from_address:
+                      type: string
+                    to_address:
+                      type: string
+                    value:
+                      type: integer
+                    created:
+                      type: string
+                      description: block_timestamp when Transfer log was emitted (JST)
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 88
+                  message:
+                    type: string
+                    example: Invalid Parameter
+                  description:
+                    description: Error Reason
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 30
+                  message:
+                    type: string
+                    example: Data Not Exists
+                  description:
+                    description: Error Reason
   /Market/OrderBook/StraightBond:
     post:
       tags:

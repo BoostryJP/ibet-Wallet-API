@@ -10,7 +10,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken
+from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, Position, Transfer
 
 LOG = log.get_logger()
 
@@ -68,6 +68,96 @@ class TokenStatus(BaseResource):
             'status': status
         }
         self.on_success(res, response_json)
+
+
+# ------------------------------
+# [トークン管理]トークン保有者一覧
+# ------------------------------
+class TokenHolders(BaseResource):
+    """
+    Endpoint: /v2/Token/{contract_address}/Holders
+    """
+
+    def on_get(self, req, res, contract_address=None):
+        LOG.info('v2.token.TokenHolders')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                description = 'invalid contract_address'
+                raise InvalidParameterError(description=description)
+        except:
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+
+        # 取扱トークンチェック
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address).\
+            first()
+        if listed_token is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        # 保有者情報取得
+        holders = session.query(Position). \
+            filter(Position.token_address == contract_address). \
+            filter(Position.balance > 0). \
+            all()
+
+        resp_body = []
+        for holder in holders:
+            resp_body.append({
+                "token_address": holder.token_address,
+                "account_address": holder.account_address,
+                "amount": holder.balance
+            })
+
+        self.on_success(res, resp_body)
+
+
+# ------------------------------
+# [トークン管理]トークン移転履歴
+# ------------------------------
+class TransferHistory(BaseResource):
+    """
+    Endpoint: /v2/Token/{contract_address}/TransferHistory
+    """
+
+    def on_get(self, req, res, contract_address=None):
+        LOG.info('v2.token.TransferHistory')
+
+        session = req.context["session"]
+
+        # 入力値チェック
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                description = 'invalid contract_address'
+                raise InvalidParameterError(description=description)
+        except:
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+
+        # 取扱トークンチェック
+        listed_token = session.query(Listing). \
+            filter(Listing.token_address == contract_address). \
+            first()
+        if listed_token is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        # 移転履歴取得
+        transfer_history = session.query(Transfer). \
+            filter(Transfer.token_address == contract_address). \
+            order_by(Transfer.id). \
+            all()
+
+        resp_body = []
+        for transfer_event in transfer_history:
+            resp_body.append(transfer_event.json())
+
+        self.on_success(res, resp_body)
 
 
 # ------------------------------
@@ -322,8 +412,8 @@ class StraightBondTokenDetails(BaseResource):
             try:
                 # トークンコントラクトへの接続
                 TokenContract = Contract.get_contract(token_template, token_address)
-                # 償還済みのトークンはリストに返さない
-                if TokenContract.functions.isRedeemed().call():
+                # 取扱停止銘柄はリストに返さない
+                if not TokenContract.functions.status().call():
                     return None
                 bondtoken = BondToken.get(session=session, token_address=token_address)
                 bondtoken = bondtoken.__dict__

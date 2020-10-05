@@ -3,6 +3,8 @@ source ~/.bash_profile
 
 cd /app/ibet-Wallet-API
 
+sleep 10
+
 # test
 pytest -v --cov=app/api/ --cov-report=xml --cov-branch
 

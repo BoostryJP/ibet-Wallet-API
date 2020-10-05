@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys
-
-from sqlalchemy import create_engine, Sequence
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from app import log
@@ -33,7 +31,10 @@ def init_session():
     db_session.configure(bind=engine)
 
     from app.model import Notification
-    Notification.notification_id_seq.create(bind=engine)
+
+    if engine.name != "mysql":
+        # NOTE:MySQLの場合はSEQ機能が利用できない
+        Notification.notification_id_seq.create(bind=engine)
 
     from app.model import Base
     Base.metadata.create_all(engine)
