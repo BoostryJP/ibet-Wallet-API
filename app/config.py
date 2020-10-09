@@ -67,3 +67,4 @@ elif NETWORK == "IBETFIN":
         COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list/company_list.json'
     else:
         COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list-dev/company_list.json'
+COMPANY_LIST_LOCAL_MODE = True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
