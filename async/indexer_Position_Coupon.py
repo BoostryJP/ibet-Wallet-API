@@ -2,7 +2,6 @@
 import os
 import sys
 import time
-from datetime import datetime, timezone, timedelta
 import logging
 
 from sqlalchemy import create_engine
@@ -17,13 +16,11 @@ sys.path.append(path)
 
 from app import log
 from app import config
-from app.model import Listing, Transfer
+from app.model import Listing, Position
 from app.contracts import Contract
 
-JST = timezone(timedelta(hours=+9), "JST")
-
 LOG = log.get_logger()
-log_fmt = 'PROCESSOR-POSITION [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
+log_fmt = 'INDEXER-POSITION-COUPON [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
 logging.basicConfig(format=log_fmt)
 
 # 設定の取得
@@ -45,9 +42,9 @@ class Sinks:
     def register(self, _sink):
         self.sinks.append(_sink)
 
-    def on_transfer(self, *args, **kwargs):
+    def on_position(self, *args, **kwargs):
         for _sink in self.sinks:
-            _sink.on_transfer(*args, **kwargs)
+            _sink.on_position(*args, **kwargs)
 
     def flush(self, *args, **kwargs):
         for _sink in self.sinks:
@@ -56,14 +53,10 @@ class Sinks:
 
 class ConsoleSink:
     @staticmethod
-    def on_transfer(transaction_hash, token_address,
-                    from_account_address, to_account_address,
-                    value, event_created):
-        LOG.info(
-            "Transfer: transaction_hash={}, token_address={}, from_account_address={}, to_account_address={}".format(
-                transaction_hash, token_address, from_account_address, to_account_address
-            )
-        )
+    def on_position(token_address, account_address, balance):
+        LOG.info("Position updated (Coupon): token_address={}, account_address={}, balance={}".format(
+            token_address, account_address, balance
+        ))
 
     def flush(self):
         return
@@ -73,31 +66,26 @@ class DBSink:
     def __init__(self, db):
         self.db = db
 
-    def on_transfer(self, transaction_hash, token_address,
-                    from_account_address, to_account_address, value, event_created):
-        """Transferイベントの同期
+    def on_position(self, token_address: str, account_address: str, balance: int):
+        """残高更新
 
-        :param transaction_hash: トランザクションハッシュ
         :param token_address: token address
-        :param from_account_address: from address
-        :param to_account_address: to address
-        :param value: 移転数量
-        :param event_created: 移転日時（block timestamp）
+        :param account_address: account address
+        :param balance: 更新後の残高
         :return: None
         """
-        transfer = self.db.query(Transfer). \
-            filter(Transfer.transaction_hash == transaction_hash). \
+        position = self.db.query(Position). \
+            filter(Position.token_address == token_address). \
+            filter(Position.account_address == account_address). \
             first()
-        if transfer is None:
-            transfer = Transfer()
-            transfer.transaction_hash = transaction_hash
-            transfer.token_address = token_address
-            transfer.from_address = from_account_address
-            transfer.to_address = to_account_address
-            transfer.value = value
-            transfer.created = event_created
-            transfer.modified = event_created
-            self.db.merge(transfer)
+        if position is None:
+            position = Position()
+            position.token_address = token_address
+            position.account_address = account_address
+            position.balance = balance
+        else:
+            position.balance = balance
+        self.db.merge(position)
 
     def flush(self):
         self.db.commit()
@@ -107,12 +95,9 @@ class Processor:
     def __init__(self, _web3, _sink, _db):
         self.web3 = _web3
         self.sink = _sink
-        self.latest_block = web3.eth.blockNumber
+        self.latest_block = _web3.eth.blockNumber
         self.db = _db
         self.token_list = []
-
-    def gen_block_timestamp(self, event):
-        return datetime.fromtimestamp(web3.eth.getBlock(event["blockNumber"])["timestamp"], JST)
 
     def get_token_list(self):
         self.token_list = []
@@ -122,15 +107,6 @@ class Processor:
             token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
             if token_info[1] == "IbetCoupon":
                 token_contract = Contract.get_contract('IbetCoupon', listed_token.token_address)
-                self.token_list.append(token_contract)
-            elif token_info[1] == "IbetMembership":
-                token_contract = Contract.get_contract('IbetMembership', listed_token.token_address)
-                self.token_list.append(token_contract)
-            elif token_info[1] == "IbetStraightBond":
-                token_contract = Contract.get_contract('IbetStraightBond', listed_token.token_address)
-                self.token_list.append(token_contract)
-            elif token_info[1] == "IbetShare":
-                token_contract = Contract.get_contract('IbetShare', listed_token.token_address)
                 self.token_list.append(token_contract)
 
     def initial_sync(self):
@@ -145,12 +121,18 @@ class Processor:
         self.__sync_all(self.latest_block + 1, blockTo)
         self.latest_block = blockTo
 
-    def __sync_all(self, block_from, block_to):
+    def __sync_all(self, block_from: int, block_to: int):
         LOG.debug("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
         self.sink.flush()
 
-    def __sync_transfer(self, block_from, block_to):
+    def __sync_transfer(self, block_from: int, block_to: int):
+        """Transferイベントの同期
+
+        :param block_from: From ブロック
+        :param block_to: To ブロック
+        :return: None
+        """
         for token in self.token_list:
             try:
                 event_filter = token.eventFilter(
@@ -161,18 +143,20 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
-                    if args['value'] > sys.maxsize:
-                        pass
-                    else:
-                        event_created = self.gen_block_timestamp(event=event)
-                        self.sink.on_transfer(
-                            transaction_hash=event["transactionHash"].hex(),
-                            token_address=to_checksum_address(token.address),
-                            from_account_address=args["from"],
-                            to_account_address=args["to"],
-                            value=args["value"],
-                            event_created=event_created
-                        )
+                    from_account_balance = token.functions.balanceOf(args["from"]).call()
+                    to_account_balance = token.functions.balanceOf(args["to"]).call()
+                    # from address
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=args["from"],
+                        balance=from_account_balance
+                    )
+                    # to address
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=args["to"],
+                        balance=to_account_balance,
+                    )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
