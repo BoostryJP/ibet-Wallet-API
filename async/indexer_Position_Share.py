@@ -147,18 +147,20 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
-                    from_account_balance = token.functions.balanceOf(args["from"]).call()
-                    to_account_balance = token.functions.balanceOf(args["to"]).call()
                     # from address
+                    from_account = args.get("from", config.ZERO_ADDRESS)
+                    from_account_balance = token.functions.balanceOf(from_account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
-                        account_address=args["from"],
+                        account_address=from_account,
                         balance=from_account_balance
                     )
                     # to address
+                    to_account = args.get("to", config.ZERO_ADDRESS)
+                    to_account_balance = token.functions.balanceOf(to_account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
-                        account_address=args["to"],
+                        account_address=to_account,
                         balance=to_account_balance,
                     )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
@@ -183,10 +185,11 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
-                    balance = token.functions.balanceOf(args["from"]).call()
+                    account = args.get("from", config.ZERO_ADDRESS)
+                    balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
-                        account_address=args["from"],
+                        account_address=account,
                         balance=balance
                     )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
@@ -211,10 +214,11 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
-                    balance = token.functions.balanceOf(args["to"]).call()
+                    account = args.get("to", config.ZERO_ADDRESS)
+                    balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
-                        account_address=args["to"],
+                        account_address=account,
                         balance=balance
                     )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
@@ -239,10 +243,11 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
-                    balance = token.functions.balanceOf(args["target_address"]).call()
+                    account = args.get("target_address", config.ZERO_ADDRESS)
+                    balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
-                        account_address=args["target_address"],
+                        account_address=account,
                         balance=balance
                     )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
@@ -267,10 +272,11 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
-                    balance = token.functions.balanceOf(args["target_address"]).call()
+                    account = args.get("target_address", config.ZERO_ADDRESS)
+                    balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
-                        account_address=args["target_address"],
+                        account_address=account,
                         balance=balance
                     )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)

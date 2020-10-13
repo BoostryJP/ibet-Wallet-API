@@ -142,16 +142,19 @@ class Processor:
                     args = event['args']
                     transaction_hash = event['transactionHash'].hex()
                     block_timestamp = datetime.fromtimestamp(web3.eth.getBlock(event['blockNumber'])['timestamp'], JST)
-                    if args['value'] > sys.maxsize:
+                    amount = args.get("value", 0)
+                    consumer = args.get("consumer", config.ZERO_ADDRESS)
+                    if amount > sys.maxsize:
                         pass
                     else:
-                        self.sink.on_consume(
-                            transaction_hash=transaction_hash,
-                            token_address=to_checksum_address(token.address),
-                            account_address=args['consumer'],
-                            amount=args['value'],
-                            block_timestamp=block_timestamp
-                        )
+                        if consumer != config.ZERO_ADDRESS:
+                            self.sink.on_consume(
+                                transaction_hash=transaction_hash,
+                                token_address=to_checksum_address(token.address),
+                                account_address=consumer,
+                                amount=amount,
+                                block_timestamp=block_timestamp
+                            )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.error(e)

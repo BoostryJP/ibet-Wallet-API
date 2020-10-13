@@ -4,8 +4,9 @@ source ~/.bash_profile
 
 cd /app/ibet-Wallet-API
 
+python async/indexer_DEX.py &
+
 python async/indexer_Transfer.py &
-python async/indexer_OrderAgree.py &
 
 if [ $SHARE_TOKEN_ENABLED = 1 ]; then
   python async/indexer_Position_Share.py &

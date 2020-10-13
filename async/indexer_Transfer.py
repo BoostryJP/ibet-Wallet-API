@@ -161,16 +161,17 @@ class Processor:
                 )
                 for event in event_filter.get_all_entries():
                     args = event['args']
-                    if args['value'] > sys.maxsize:
+                    value = args.get("value", 0)
+                    if value > sys.maxsize:
                         pass
                     else:
                         event_created = self.gen_block_timestamp(event=event)
                         self.sink.on_transfer(
                             transaction_hash=event["transactionHash"].hex(),
                             token_address=to_checksum_address(token.address),
-                            from_account_address=args["from"],
-                            to_account_address=args["to"],
-                            value=args["value"],
+                            from_account_address=args.get("from", config.ZERO_ADDRESS),
+                            to_account_address=args.get("to", config.ZERO_ADDRESS),
+                            value=value,
                             event_created=event_created
                         )
                 self.web3.eth.uninstallFilter(event_filter.filter_id)
