@@ -66,7 +66,7 @@ class BondToken(TokenBase):
 
         # 企業リストの情報を取得する
         company_list = []
-        if config.APP_ENV == 'local':
+        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
             company_list = json.load(open('data/company_list.json', 'r'))
         else:
             try:
@@ -230,7 +230,7 @@ class ShareToken(TokenBase):
 
         # 企業リストの情報を取得する
         company_list = []
-        if config.APP_ENV == 'local':
+        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
             company_list = json.load(open('data/company_list.json', 'r'))
         else:
             try:
@@ -329,7 +329,7 @@ class MembershipToken(TokenBase):
 
         # 企業リストの情報を取得する
         company_list = []
-        if config.APP_ENV == 'local':
+        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
             company_list = json.load(open('data/company_list.json', 'r'))
         else:
             try:
@@ -417,7 +417,7 @@ class CouponToken(TokenBase):
     def get(session, token_address: str):
         # 企業リストの情報を取得する
         company_list = []
-        if config.APP_ENV == 'local':
+        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
             company_list = json.load(open('data/company_list.json', 'r'))
         else:
             try:

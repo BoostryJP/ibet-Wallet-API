@@ -39,7 +39,7 @@ class CompanyInfo(BaseResource):
         isExist = False
 
         try:
-            if config.APP_ENV == 'local':
+            if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
                 company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
@@ -72,7 +72,7 @@ class CompanyInfoList(BaseResource):
 
         # 会社リストを取得
         try:
-            if config.APP_ENV == 'local':
+            if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
                 company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
@@ -208,7 +208,7 @@ class PaymentAgentInfo(BaseResource):
 
         isExist = False
         try:
-            if config.APP_ENV == 'local':
+            if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
                 company_list = json.load(open('data/company_list.json', 'r'))
             else:
                 company_list = \
