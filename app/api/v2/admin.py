@@ -1,4 +1,22 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed onan "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 from cerberus import Validator
 
 from web3 import Web3
@@ -6,6 +24,7 @@ from web3 import Web3
 from app import log
 from app import config
 from app.api.common import BaseResource
+from app.contracts import Contract
 from app.errors import InvalidParameterError, DataNotExistsError, AppError
 from app.model import Listing, ExecutableContract
 
@@ -67,11 +86,22 @@ class Tokens(BaseResource):
         if _executable_contract is not None:
             raise InvalidParameterError("contract_address already exist")
 
+        # token情報をTokenListコントラクトから取得
+        ListContract = Contract.get_contract(
+            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+            
+        token = ListContract.functions.getTokenByAddress(
+            contract_address).call()
+        # contract_addressの有効性チェック
+        if token[1] is None or token[1] not in self.available_token_template():
+            raise InvalidParameterError("contract_address is invalid token address")
+
+        owner_address = token[2]
+        
         # 新規レコードの登録
         is_public = request_json["is_public"]
         max_holding_quantity = request_json["max_holding_quantity"] if "max_holding_quantity" in request_json else None
         max_sell_amount = request_json["max_sell_amount"] if "max_sell_amount" in request_json else None
-        owner_address = request_json["owner_address"]
 
         listing = Listing()
         listing.token_address = contract_address
@@ -116,11 +146,6 @@ class Tokens(BaseResource):
                 "required": False,
                 "min": 0
             },
-            "owner_address": {
-                "type": "string",
-                "required": True,
-                "nullable": False
-            }
         })
 
         if not validator.validate(request_json):
@@ -134,15 +159,25 @@ class Tokens(BaseResource):
             LOG.warning(f"invalid contract address: {err}")
             raise InvalidParameterError("Invalid contract address")
 
-        # owner_addressのフォーマットチェック
-        try:
-            if not Web3.isAddress(request_json["owner_address"]):
-                raise InvalidParameterError("Invalid owner address")
-        except Exception as err:
-            LOG.warning(f"invalid owner address: {err}")
-            raise InvalidParameterError("Invalid owner address")
-
         return request_json
+
+    @staticmethod
+    def available_token_template():
+        """
+        利用可能なtoken_templateをlistで返却
+
+        :return: 利用可能なtoken_templateリスト
+        """
+        available_token_template_list = []
+        if config.BOND_TOKEN_ENABLED:
+            available_token_template_list.append("IbetStraightBond")
+        if config.SHARE_TOKEN_ENABLED:
+            available_token_template_list.append("IbetShare")
+        if config.MEMBERSHIP_TOKEN_ENABLED:
+            available_token_template_list.append("IbetMembership")
+        if config.COUPON_TOKEN_ENABLED:
+            available_token_template_list.append("IbetCoupon")
+        return available_token_template_list
 
 
 # ------------------------------

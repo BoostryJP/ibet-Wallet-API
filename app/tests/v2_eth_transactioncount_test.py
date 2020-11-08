@@ -1,7 +1,23 @@
-# -*- coding: utf-8 -*-
-import pytest
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed onan "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 import json
-import os
 
 from web3 import Web3
 
@@ -9,7 +25,7 @@ from app import config
 from .account_config import eth_account
 
 
-class TestEthTransactionCount():
+class TestEthTransactionCount:
 
     # テスト対象API
     apiurl_base = '/v2/Eth/TransactionCount/'
@@ -33,7 +49,7 @@ class TestEthTransactionCount():
     # ＜正常系2＞
     # トランザクション実行済みのアドレス
     # -> nonce = （ブロックを直接参照した情報と一致）
-    def test_transactioncount_normal_2(self, client, shared_contract):
+    def test_transactioncount_normal_2(self, client):
         # deployerのアドレス
         eth_address = eth_account['deployer']['account_address']
 
