@@ -1,4 +1,22 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed onan "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 import json
 import sys
 
@@ -8,7 +26,8 @@ from app.model import Order, Agreement, AgreementStatus
 from .account_config import eth_account
 from app import config
 
-class TestV2StraightBondOrderBook():
+
+class TestV2StraightBondOrderBook:
     """
     Test Case for v2.market_information.StraightBondOrderBook
     """
@@ -349,7 +368,6 @@ class TestV2StraightBondOrderBook():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
-
 
     # ＜正常系2-1-1＞
     # 未約定＆未キャンセルの買い注文が1件存在
@@ -982,7 +1000,7 @@ class TestV2StraightBondOrderBook():
 
     # エラー系3-1：入力値エラー（token_addressがアドレスフォーマットではない）
     def test_orderbook_error_3_1(self, client):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  #アドレスが短い
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレスが短い
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange_address
@@ -1041,7 +1059,7 @@ class TestV2StraightBondOrderBook():
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  #アドレスが短い
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
 
         request_params = {
             "token_address": token_address,

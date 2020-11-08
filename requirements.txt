@@ -41,5 +41,4 @@ sqlalchemy-migrate==0.13.0
 toolz==0.9.0
 web3==4.8.2
 websockets==5.0
-boto3==1.9.84
 PyMySQL==0.10.1
