@@ -28,7 +28,7 @@ from app.tests.contract_modules import issue_bond_token, register_personalinfo, 
     share_get_latest_agreementid
 
 
-class TestV2GetAgreement:
+class TestV2GetAgreementGet:
     """
     Test Case for v2.market_information.GetAgreement
     """

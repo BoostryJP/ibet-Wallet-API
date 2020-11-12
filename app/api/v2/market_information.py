@@ -57,21 +57,20 @@ class GetAgreement(BaseResource):
         session = req.context["session"]
 
         # 入力値チェック
-        request_json = GetAgreement.validate_get(req)
+        request_json = self.validate_get(req)
 
         # リクエストから情報を抽出
         order_id = request_json['order_id']
         agreement_id = request_json['agreement_id']
         exchange_address = to_checksum_address(request_json['exchange_address'])
 
-        # 未決済の約定イベントの存在有無を確認
+        # 約定イベントの存在有無を確認
         # DBにデータが存在しない場合は、入力値エラーを返す
-        # NOTE: コントラクトアクセスの負荷を下げるためにイベントの存在有無を先に確認している
+        # NOTE: 処理負荷を下げるためにDBにインデックスされた情報からイベントの存在有無を先に確認している
         agreement = session.query(Agreement). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.order_id == order_id). \
             filter(Agreement.agreement_id == agreement_id). \
-            filter(Agreement.status == AgreementStatus.PENDING.value). \
             first()
         if agreement is None:
             raise InvalidParameterError('Data not found')
@@ -103,21 +102,20 @@ class GetAgreement(BaseResource):
         session = req.context["session"]
 
         # 入力値チェック
-        request_json = GetAgreement.validate_post(req)
+        request_json = self.validate_post(req)
 
         # リクエストから情報を抽出
         order_id = request_json['order_id']
         agreement_id = request_json['agreement_id']
         exchange_address = to_checksum_address(request_json['exchange_address'])
 
-        # 未決済の約定イベントの存在有無を確認
+        # 約定イベントの存在有無を確認
         # DBにデータが存在しない場合は、入力値エラーを返す
-        # NOTE: コントラクトアクセスの負荷を下げるためにイベントの存在有無を先に確認している
+        # NOTE: 処理負荷を下げるためにDBにインデックスされた情報からイベントの存在有無を先に確認している
         agreement = session.query(Agreement). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(Agreement.order_id == order_id). \
             filter(Agreement.agreement_id == agreement_id). \
-            filter(Agreement.status == AgreementStatus.PENDING.value). \
             first()
         if agreement is None:
             raise InvalidParameterError('Data not found')
