@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import falcon
 
 from app import log
-from app.middleware import JSONTranslator, DatabaseSessionManager
+from app.middleware import JSONTranslator, DatabaseSessionManager, CORSMiddleware
 from app.database import db_session, init_session
 
 from app.api.common import base
@@ -151,5 +151,6 @@ class App(falcon.API):
 
 
 init_session()
-middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
+middleware = [JSONTranslator(), DatabaseSessionManager(
+    db_session), CORSMiddleware()]
 application = App(middleware=middleware)

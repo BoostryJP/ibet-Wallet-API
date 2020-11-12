@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from .session_manager import DatabaseSessionManager
-from .translator import JSONTranslator
-from .cors import CORSMiddleware
+class CORSMiddleware:
+    def process_request(self, req, resp):
+        resp.set_header('Access-Control-Allow-Origin', '*')
+        resp.set_header("Access-Control-Allow-Headers", '*')
