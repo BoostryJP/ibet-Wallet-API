@@ -389,9 +389,9 @@ class StraightBondTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
-            filter(Listing.is_public == True).\
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -656,9 +656,9 @@ class ShareTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークン情報を取得
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address). \
-            filter(Listing.is_public == True). \
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -925,9 +925,9 @@ class MembershipTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
-            filter(Listing.is_public == True).\
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -1195,9 +1195,9 @@ class CouponTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
-            filter(Listing.is_public == True).\
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
