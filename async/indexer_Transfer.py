@@ -64,27 +64,12 @@ class Sinks:
         self.sinks.append(_sink)
 
     def on_transfer(self, *args, **kwargs):
-        for _sink in self.sinks:
-            _sink.on_transfer(*args, **kwargs)
+        for sink in self.sinks:
+            sink.on_transfer(*args, **kwargs)
 
     def flush(self, *args, **kwargs):
-        for _sink in self.sinks:
-            _sink.flush(*args, **kwargs)
-
-
-class ConsoleSink:
-    @staticmethod
-    def on_transfer(transaction_hash, token_address,
-                    from_account_address, to_account_address,
-                    value, event_created):
-        LOG.info(
-            "Transfer: transaction_hash={}, token_address={}, from_account_address={}, to_account_address={}".format(
-                transaction_hash, token_address, from_account_address, to_account_address
-            )
-        )
-
-    def flush(self):
-        return
+        for sink in self.sinks:
+            sink.flush(*args, **kwargs)
 
 
 class DBSink:
@@ -107,6 +92,7 @@ class DBSink:
             filter(Transfer.transaction_hash == transaction_hash). \
             first()
         if transfer is None:
+            LOG.info(f"Transfer: transaction_hash={transaction_hash}")
             transfer = Transfer()
             transfer.transaction_hash = transaction_hash
             transfer.token_address = token_address
@@ -122,11 +108,10 @@ class DBSink:
 
 
 class Processor:
-    def __init__(self, _web3, _sink, _db):
-        self.web3 = _web3
-        self.sink = _sink
+    def __init__(self, sink, db):
+        self.sink = sink
         self.latest_block = web3.eth.blockNumber
-        self.db = _db
+        self.db = db
         self.token_list = []
 
     def gen_block_timestamp(self, event):
@@ -192,16 +177,14 @@ class Processor:
                             value=value,
                             event_created=event_created
                         )
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
-                pass
 
 
-sink = Sinks()
-sink.register(ConsoleSink())
-sink.register(DBSink(db_session))
-processor = Processor(web3, sink, db_session)
+_sink = Sinks()
+_sink.register(DBSink(db_session))
+processor = Processor(_sink, db_session)
 
 processor.initial_sync()
 while True:

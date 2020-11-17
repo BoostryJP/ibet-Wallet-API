@@ -73,19 +73,6 @@ class Sinks:
             sink.flush(*args, **kwargs)
 
 
-class ConsoleSink:
-    @staticmethod
-    def on_consume(transaction_hash, token_address, account_address, amount, block_timestamp):
-        LOG.info(
-            "Consume: transaction_hash={}, token_address={}, account_address={}, amount={}".format(
-                transaction_hash, token_address, account_address, amount
-            )
-        )
-
-    def flush(self):
-        return
-
-
 class DBSink:
     def __init__(self, db):
         self.db = db
@@ -93,6 +80,7 @@ class DBSink:
     def on_consume(self, transaction_hash, token_address, account_address, amount, block_timestamp):
         consume_coupon = self.__get_record(transaction_hash, token_address, account_address)
         if consume_coupon is None:
+            LOG.info(f"Consume: transaction_hash={transaction_hash}")
             consume_coupon = ConsumeCoupon()
             consume_coupon.transaction_hash = transaction_hash
             consume_coupon.token_address = token_address
@@ -113,8 +101,7 @@ class DBSink:
 
 
 class Processor:
-    def __init__(self, web3, sink, db):
-        self.web3 = web3
+    def __init__(self, sink, db):
         self.sink = sink
         self.latest_block = web3.eth.blockNumber
         self.db = db
@@ -173,16 +160,14 @@ class Processor:
                                 amount=amount,
                                 block_timestamp=block_timestamp
                             )
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
-                LOG.error(e)
-                pass
+                LOG.exception(e)
 
 
-sink = Sinks()
-sink.register(ConsoleSink())
-sink.register(DBSink(db_session))
-processor = Processor(web3, sink, db_session)
+_sink = Sinks()
+_sink.register(DBSink(db_session))
+processor = Processor(_sink, db_session)
 
 processor.initial_sync()
 while True:

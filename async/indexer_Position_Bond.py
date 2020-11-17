@@ -61,23 +61,12 @@ class Sinks:
         self.sinks.append(_sink)
 
     def on_position(self, *args, **kwargs):
-        for _sink in self.sinks:
-            _sink.on_position(*args, **kwargs)
+        for sink in self.sinks:
+            sink.on_position(*args, **kwargs)
 
     def flush(self, *args, **kwargs):
-        for _sink in self.sinks:
-            _sink.flush(*args, **kwargs)
-
-
-class ConsoleSink:
-    @staticmethod
-    def on_position(token_address, account_address, balance):
-        LOG.info("Position updated (Bond): token_address={}, account_address={}, balance={}".format(
-            token_address, account_address, balance
-        ))
-
-    def flush(self):
-        return
+        for sink in self.sinks:
+            sink.flush(*args, **kwargs)
 
 
 class DBSink:
@@ -97,6 +86,7 @@ class DBSink:
             filter(Position.account_address == account_address). \
             first()
         if position is None:
+            LOG.info(f"Position created (Bond): token_address={token_address}, account_address={account_address}")
             position = Position()
             position.token_address = token_address
             position.account_address = account_address
@@ -110,11 +100,10 @@ class DBSink:
 
 
 class Processor:
-    def __init__(self, _web3, _sink, _db):
-        self.web3 = _web3
-        self.sink = _sink
-        self.latest_block = _web3.eth.blockNumber
-        self.db = _db
+    def __init__(self, sink, db):
+        self.sink = sink
+        self.latest_block = web3.eth.blockNumber
+        self.db = db
         self.token_list = []
 
     def get_token_list(self):
@@ -180,10 +169,9 @@ class Processor:
                         account_address=to_account,
                         balance=to_account_balance,
                     )
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
-                pass
 
     def __sync_lock(self, block_from: int, block_to: int):
         """Lockイベントの同期
@@ -209,10 +197,9 @@ class Processor:
                         account_address=account,
                         balance=balance
                     )
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
-                pass
 
     def __sync_unlock(self, block_from: int, block_to: int):
         """Unlockイベントの同期
@@ -238,10 +225,9 @@ class Processor:
                         account_address=account,
                         balance=balance
                     )
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
-                pass
 
     def __sync_issue(self, block_from: int, block_to: int):
         """Issueイベントの同期
@@ -267,16 +253,14 @@ class Processor:
                         account_address=account,
                         balance=balance
                     )
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
-                pass
 
 
-sink = Sinks()
-sink.register(ConsoleSink())
-sink.register(DBSink(db_session))
-processor = Processor(web3, sink, db_session)
+_sink = Sinks()
+_sink.register(DBSink(db_session))
+processor = Processor(_sink, db_session)
 
 processor.initial_sync()
 while True:
