@@ -131,6 +131,7 @@ class Processor:
     def __sync_all(self, block_from: int, block_to: int):
         LOG.debug("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
+        self.__sync_consume(block_from, block_to)
         self.sink.flush()
 
     def __sync_transfer(self, block_from: int, block_to: int):
@@ -165,6 +166,34 @@ class Processor:
                         token_address=to_checksum_address(token.address),
                         account_address=to_account,
                         balance=to_account_balance,
+                    )
+                web3.eth.uninstallFilter(event_filter.filter_id)
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_consume(self, block_from: int, block_to: int):
+        """Consumeイベントの同期
+
+        :param block_from: From ブロック
+        :param block_to: To ブロック
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                event_filter = token.eventFilter(
+                    'Consume', {
+                        'fromBlock': block_from,
+                        'toBlock': block_to,
+                    }
+                )
+                for event in event_filter.get_all_entries():
+                    args = event['args']
+                    consumer_address = args.get("consumer", config.ZERO_ADDRESS)
+                    consumer_balance = token.functions.balanceOf(consumer_address).call()
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=consumer_address,
+                        balance=consumer_balance
                     )
                 web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
