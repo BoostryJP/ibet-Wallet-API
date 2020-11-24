@@ -1,8 +1,26 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed onan "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 import falcon
 
 from app import log
-from app.middleware import JSONTranslator, DatabaseSessionManager
+from app.middleware import JSONTranslator, DatabaseSessionManager, CORSMiddleware
 from app.database import db_session, init_session
 
 from app.api.common import base
@@ -133,5 +151,6 @@ class App(falcon.API):
 
 
 init_session()
-middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
+middleware = [JSONTranslator(), DatabaseSessionManager(
+    db_session), CORSMiddleware()]
 application = App(middleware=middleware)

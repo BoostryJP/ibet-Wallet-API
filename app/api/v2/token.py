@@ -1,4 +1,22 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed onan "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 from cerberus import Validator
 
 from web3 import Web3
@@ -371,9 +389,9 @@ class StraightBondTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
-            filter(Listing.is_public == True).\
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -638,9 +656,9 @@ class ShareTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークン情報を取得
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address). \
-            filter(Listing.is_public == True). \
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -907,9 +925,9 @@ class MembershipTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
-            filter(Listing.is_public == True).\
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -1177,9 +1195,9 @@ class CouponTokenDetails(BaseResource):
         session = req.context["session"]
 
         # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
-            filter(Listing.is_public == True).\
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)

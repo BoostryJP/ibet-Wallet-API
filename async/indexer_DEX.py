@@ -1,4 +1,22 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed onan "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 import os
 import sys
 import time
@@ -69,54 +87,6 @@ class Sinks:
             sink.flush(*args, **kwargs)
 
 
-class ConsoleSink:
-    @staticmethod
-    def on_new_order(transaction_hash, token_address, exchange_address,
-                     order_id, account_address, counterpart_address,
-                     is_buy, price, amount, agent_address, order_timestamp):
-        LOG.info(
-            "NewOrder: exchange_address={}, order_id={}".format(
-                exchange_address, order_id
-            )
-        )
-
-    @staticmethod
-    def on_cancel_order(exchange_address, order_id):
-        LOG.info(
-            "CancelOrder: exchange_address={}, order_id={}".format(
-                exchange_address, order_id
-            )
-        )
-
-    @staticmethod
-    def on_agree(transaction_hash, exchange_address, order_id, agreement_id,
-                 buyer_address, seller_address, counterpart_address, amount, agreement_timestamp):
-        LOG.info(
-            "Agree: exchange_address={}, orderId={}, agreementId={}".format(
-                exchange_address, order_id, agreement_id
-            )
-        )
-
-    @staticmethod
-    def on_settlement_ok(exchange_address, order_id, agreement_id, settlement_timestamp):
-        LOG.info(
-            "SettlementOK: exchange_address={}, orderId={}, agreementId={}".format(
-                exchange_address, order_id, agreement_id
-            )
-        )
-
-    @staticmethod
-    def on_settlement_ng(exchange_address, order_id, agreement_id):
-        LOG.info(
-            "SettlementNG: exchange_address={}, orderId={}, agreementId={}".format(
-                exchange_address, order_id, agreement_id
-            )
-        )
-
-    def flush(self):
-        return
-
-
 class DBSink:
     def __init__(self, db):
         self.db = db
@@ -126,6 +96,7 @@ class DBSink:
                      agent_address: str, order_timestamp: datetime):
         order = self.__get_order(exchange_address, order_id)
         if order is None:
+            LOG.info(f"NewOrder: exchange_address={exchange_address}, order_id={order_id}")
             order = Order()
             order.transaction_hash = transaction_hash
             order.token_address = token_address
@@ -145,6 +116,7 @@ class DBSink:
     def on_cancel_order(self, exchange_address: str, order_id: int):
         order = self.__get_order(exchange_address, order_id)
         if order is not None:
+            LOG.info(f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}")
             order.is_cancelled = True
 
     def on_agree(self, transaction_hash: str, exchange_address: str, order_id: int, agreement_id: int,
@@ -152,6 +124,7 @@ class DBSink:
                  amount: int, agreement_timestamp: datetime):
         agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is None:
+            LOG.info(f"Agree: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement = Agreement()
             agreement.transaction_hash = transaction_hash
             agreement.exchange_address = exchange_address
@@ -169,13 +142,14 @@ class DBSink:
     def on_settlement_ok(self, exchange_address: str, order_id: int, agreement_id: int, settlement_timestamp: datetime):
         agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is not None:
+            LOG.info(f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement.status = AgreementStatus.DONE.value
             agreement.settlement_timestamp = settlement_timestamp
 
     def on_settlement_ng(self, exchange_address: str, order_id: int, agreement_id: int):
-        agreement = self.__get_agreement(
-            exchange_address, order_id, agreement_id)
+        agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is not None:
+            LOG.info(f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement.status = AgreementStatus.CANCELED.value
 
     def flush(self):
@@ -196,8 +170,7 @@ class DBSink:
 
 
 class Processor:
-    def __init__(self, web3, sink, db):
-        self.web3 = web3
+    def __init__(self, sink, db):
         self.exchange_list = []
         # 債券取引コントラクト登録
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
@@ -301,12 +274,9 @@ class Processor:
                                 agent_address=args['agentAddress'],
                                 order_timestamp=order_timestamp
                             )
-
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
-
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
-                LOG.error(e)
-                pass
+                LOG.exception(e)
 
     def __sync_cancel_order(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -322,12 +292,9 @@ class Processor:
                         exchange_address=exchange_contract.address,
                         order_id=event['args']['orderId']
                     )
-
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
-
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
-                LOG.error(e)
-                pass
+                LOG.exception(e)
 
     def __sync_agree(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -370,12 +337,9 @@ class Processor:
                             amount=args['amount'],
                             agreement_timestamp=agreement_timestamp
                         )
-
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
-
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
-                LOG.error(e)
-                pass
+                LOG.exception(e)
 
     def __sync_settlement_ok(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -398,12 +362,9 @@ class Processor:
                         agreement_id=args['agreementId'],
                         settlement_timestamp=settlement_timestamp
                     )
-
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
-
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
-                LOG.error(e)
-                pass
+                LOG.exception(e)
 
     def __sync_settlement_ng(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -421,18 +382,14 @@ class Processor:
                         order_id=args['orderId'],
                         agreement_id=args['agreementId']
                     )
-
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
-
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
-                LOG.error(e)
-                pass
+                LOG.exception(e)
 
 
-sink = Sinks()
-sink.register(ConsoleSink())
-sink.register(DBSink(db_session))
-processor = Processor(web3, sink, db_session)
+_sink = Sinks()
+_sink.register(DBSink(db_session))
+processor = Processor(_sink, db_session)
 
 processor.initial_sync()
 while True:

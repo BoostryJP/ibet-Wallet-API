@@ -1,4 +1,22 @@
-# -*- coding: utf-8 -*-
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed onan "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+
 import os
 import sys
 import time
@@ -43,23 +61,12 @@ class Sinks:
         self.sinks.append(_sink)
 
     def on_position(self, *args, **kwargs):
-        for _sink in self.sinks:
-            _sink.on_position(*args, **kwargs)
+        for sink in self.sinks:
+            sink.on_position(*args, **kwargs)
 
     def flush(self, *args, **kwargs):
-        for _sink in self.sinks:
-            _sink.flush(*args, **kwargs)
-
-
-class ConsoleSink:
-    @staticmethod
-    def on_position(token_address, account_address, balance):
-        LOG.info("Position updated (Coupon): token_address={}, account_address={}, balance={}".format(
-            token_address, account_address, balance
-        ))
-
-    def flush(self):
-        return
+        for sink in self.sinks:
+            sink.flush(*args, **kwargs)
 
 
 class DBSink:
@@ -79,6 +86,7 @@ class DBSink:
             filter(Position.account_address == account_address). \
             first()
         if position is None:
+            LOG.info(f"Position created (Coupon): token_address={token_address}, account_address={account_address}")
             position = Position()
             position.token_address = token_address
             position.account_address = account_address
@@ -92,11 +100,10 @@ class DBSink:
 
 
 class Processor:
-    def __init__(self, _web3, _sink, _db):
-        self.web3 = _web3
-        self.sink = _sink
-        self.latest_block = _web3.eth.blockNumber
-        self.db = _db
+    def __init__(self, sink, db):
+        self.sink = sink
+        self.latest_block = web3.eth.blockNumber
+        self.db = db
         self.token_list = []
 
     def get_token_list(self):
@@ -124,6 +131,7 @@ class Processor:
     def __sync_all(self, block_from: int, block_to: int):
         LOG.debug("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
+        self.__sync_consume(block_from, block_to)
         self.sink.flush()
 
     def __sync_transfer(self, block_from: int, block_to: int):
@@ -159,16 +167,42 @@ class Processor:
                         account_address=to_account,
                         balance=to_account_balance,
                     )
-                self.web3.eth.uninstallFilter(event_filter.filter_id)
+                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
-                pass
+
+    def __sync_consume(self, block_from: int, block_to: int):
+        """Consumeイベントの同期
+
+        :param block_from: From ブロック
+        :param block_to: To ブロック
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                event_filter = token.eventFilter(
+                    'Consume', {
+                        'fromBlock': block_from,
+                        'toBlock': block_to,
+                    }
+                )
+                for event in event_filter.get_all_entries():
+                    args = event['args']
+                    consumer_address = args.get("consumer", config.ZERO_ADDRESS)
+                    consumer_balance = token.functions.balanceOf(consumer_address).call()
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=consumer_address,
+                        balance=consumer_balance
+                    )
+                web3.eth.uninstallFilter(event_filter.filter_id)
+            except Exception as e:
+                LOG.exception(e)
 
 
-sink = Sinks()
-sink.register(ConsoleSink())
-sink.register(DBSink(db_session))
-processor = Processor(web3, sink, db_session)
+_sink = Sinks()
+_sink.register(DBSink(db_session))
+processor = Processor(_sink, db_session)
 
 processor.initial_sync()
 while True:
