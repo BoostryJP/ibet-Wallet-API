@@ -24,11 +24,11 @@ RUN_MODE=${RUN_MODE:-server}
 cd /app/ibet-Wallet-API
 
 if [ "${RUN_MODE}" == "server" ]; then
-  ./bin/run_server.sh start
+  ./bin/healthcheck_server.sh start
 elif [ "${RUN_MODE}" == "indexer" ]; then
-  ./bin/run_indexer.sh
+  ./bin/healthcheck_indexer.sh
 elif [ "${RUN_MODE}" == "processor_notification" ]; then
-  ./bin/run_processor_notification.sh
+  ./bin/healthcheck_processor_notification.sh
 else
   echo "RUN_MODE is invalid value." >&2
   exit 1
