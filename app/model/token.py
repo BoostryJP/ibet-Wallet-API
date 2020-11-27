@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import json
 from decimal import Decimal
+from datetime import datetime, timedelta
 
 import requests
 from eth_utils import to_checksum_address
@@ -72,6 +73,9 @@ class BondToken(TokenBase):
     max_holding_quantity: int
     max_sell_amount: int
 
+    # トークン情報のキャッシュ
+    cache = {}
+
     @staticmethod
     def get(session, token_address: str):
         """
@@ -82,6 +86,32 @@ class BondToken(TokenBase):
         :return: BondToken
         """
 
+        certification = []  # NOTE:現状項目未使用であるため空のリストを返す
+
+        # IbetStraightBond コントラクトへの接続
+        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
+
+        # キャッシュを利用する場合
+        if config.TOKEN_CACHE:
+            if token_address in BondToken.cache:
+                token_cache = BondToken.cache[token_address]
+                if token_cache.get("expiration_datetime") > datetime.utcnow():
+                    # キャッシュ情報を取得
+                    bondtoken = token_cache["token"]
+                    # キャッシュ情報以外の情報を取得
+                    isRedeemed = TokenContract.functions.isRedeemed().call()
+                    transferable = TokenContract.functions.transferable().call()
+                    initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
+                    bondtoken.isRedeemed = isRedeemed
+                    bondtoken.transferable = transferable
+                    bondtoken.initial_offering_status = initial_offering_status
+                    bondtoken.certification = certification
+                    return bondtoken
+
+        # キャッシュ未利用の場合
+        # または、キャッシュに情報が存在しない場合
+        # または、キャッシュの有効期限が切れている場合
+
         # 企業リストの情報を取得する
         company_list = []
         if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
@@ -91,10 +121,6 @@ class BondToken(TokenBase):
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
                 LOG.err("Failed to get company list: ", err)
-                pass
-
-        # IbetStraightBond コントラクトへの接続
-        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
 
         # Contractから情報を取得する
         name = TokenContract.functions.name().call()
@@ -118,7 +144,8 @@ class BondToken(TokenBase):
         interest_payment_date12 = ''
         try:
             interest_payment_date = json.loads(
-                interest_payment_date_string.replace("'", '"').replace('True', 'true').replace('False', 'false'))
+                interest_payment_date_string.replace("'", '"').replace('True', 'true').replace('False', 'false')
+            )
             if 'interestPaymentDate1' in interest_payment_date:
                 interest_payment_date1 = interest_payment_date['interestPaymentDate1']
             if 'interestPaymentDate2' in interest_payment_date:
@@ -145,7 +172,6 @@ class BondToken(TokenBase):
                 interest_payment_date12 = interest_payment_date['interestPaymentDate12']
         except Exception as err:
             LOG.warning("Failed to load interestPaymentDate: ", err)
-            pass
 
         redemption_date = TokenContract.functions.redemptionDate().call()
         redemption_value = TokenContract.functions.redemptionValue().call()
@@ -173,9 +199,6 @@ class BondToken(TokenBase):
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
 
-        # 第三者認定（Sign）のイベント情報を検索する
-        # NOTE:現状項目未使用であるため空のリストを返す
-        certification = []
         bondtoken = BondToken()
         bondtoken.token_address = token_address
         bondtoken.token_template = 'IbetStraightBond'
@@ -204,21 +227,27 @@ class BondToken(TokenBase):
         bondtoken.return_date = return_date
         bondtoken.return_amount = return_amount
         bondtoken.purpose = purpose
-        bondtoken.isRedeemed = isRedeemed
-        bondtoken.transferable = transferable
         bondtoken.image_url = [
             {'id': 1, 'url': image_url_1},
             {'id': 2, 'url': image_url_2},
             {'id': 3, 'url': image_url_3}
         ]
-        bondtoken.certification = certification
-        bondtoken.initial_offering_status = initial_offering_status
         bondtoken.max_holding_quantity = listed_token.max_holding_quantity \
             if hasattr(listed_token, "max_holding_quantity") else 0
         bondtoken.max_sell_amount = listed_token.max_sell_amount \
             if hasattr(listed_token, "max_sell_amount") else 0
         bondtoken.contact_information = contact_information
         bondtoken.privacy_policy = privacy_policy
+        bondtoken.isRedeemed = isRedeemed
+        bondtoken.transferable = transferable
+        bondtoken.initial_offering_status = initial_offering_status
+        bondtoken.certification = certification
+
+        if config.TOKEN_CACHE:
+            BondToken.cache[token_address] = {
+                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                "token": bondtoken
+            }
 
         return bondtoken
 
@@ -236,6 +265,9 @@ class ShareToken(TokenBase):
     max_holding_quantity: int
     max_sell_amount: int
 
+    # トークン情報のキャッシュ
+    cache = {}
+
     @staticmethod
     def get(session, token_address: str):
         """
@@ -246,6 +278,29 @@ class ShareToken(TokenBase):
         :return: ShareToken
         """
 
+        # IbetShare コントラクトへの接続
+        TokenContract = Contract.get_contract("IbetShare", token_address)
+
+        # キャッシュを利用する場合
+        if config.TOKEN_CACHE:
+            if token_address in ShareToken.cache:
+                token_cache = ShareToken.cache[token_address]
+                if token_cache.get("expiration_datetime") > datetime.utcnow():
+                    # キャッシュ情報を取得
+                    sharetoken = token_cache["token"]
+                    # キャッシュ情報以外の情報を取得
+                    transferable = TokenContract.functions.transferable().call()
+                    offering_status = TokenContract.functions.offeringStatus().call()
+                    status = TokenContract.functions.status().call()
+                    sharetoken.transferable = transferable
+                    sharetoken.offering_status = offering_status
+                    sharetoken.status = status
+                    return sharetoken
+
+        # キャッシュ未利用の場合
+        # または、キャッシュに情報が存在しない場合
+        # または、キャッシュの有効期限が切れている場合
+
         # 企業リストの情報を取得する
         company_list = []
         if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
@@ -255,10 +310,6 @@ class ShareToken(TokenBase):
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
                 LOG.err("Failed to get company list: ", err)
-                pass
-
-        # IbetShare コントラクトへの接続
-        TokenContract = Contract.get_contract("IbetShare", token_address)
 
         owner_address = TokenContract.functions.owner().call()
         name = TokenContract.functions.name().call()
@@ -321,6 +372,12 @@ class ShareToken(TokenBase):
         sharetoken.max_sell_amount = listed_token.max_sell_amount \
             if hasattr(listed_token, "max_sell_amount") else 0
 
+        if config.TOKEN_CACHE:
+            ShareToken.cache[token_address] = {
+                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                "token": sharetoken
+            }
+
         return sharetoken
 
 
@@ -335,6 +392,9 @@ class MembershipToken(TokenBase):
     max_holding_quantity: int
     max_sell_amount: int
 
+    # トークン情報のキャッシュ
+    cache = {}
+
     @staticmethod
     def get(session, token_address: str):
         """
@@ -345,6 +405,29 @@ class MembershipToken(TokenBase):
         :return: MembershipToken
         """
 
+        # Token-Contractへの接続
+        TokenContract = Contract.get_contract('IbetMembership', token_address)
+
+        # キャッシュを利用する場合
+        if config.TOKEN_CACHE:
+            if token_address in MembershipToken.cache:
+                token_cache = MembershipToken.cache[token_address]
+                if token_cache.get("expiration_datetime") > datetime.utcnow():
+                    # キャッシュ情報を取得
+                    membershiptoken = token_cache["token"]
+                    # キャッシュ情報以外の情報を取得
+                    transferable = TokenContract.functions.transferable().call()
+                    status = TokenContract.functions.status().call()
+                    initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
+                    membershiptoken.transferable = transferable
+                    membershiptoken.status = status
+                    membershiptoken.initial_offering_status = initial_offering_status
+                    return membershiptoken
+
+        # キャッシュ未利用の場合
+        # または、キャッシュに情報が存在しない場合
+        # または、キャッシュの有効期限が切れている場合
+
         # 企業リストの情報を取得する
         company_list = []
         if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
@@ -354,10 +437,6 @@ class MembershipToken(TokenBase):
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
                 LOG.err("Failed to get company list: ", err)
-                pass
-
-        # Token-Contractへの接続
-        TokenContract = Contract.get_contract('IbetMembership', token_address)
 
         # Token-Contractから情報を取得する
         name = TokenContract.functions.name().call()
@@ -375,7 +454,6 @@ class MembershipToken(TokenBase):
         image_url_3 = TokenContract.functions.image_urls(2).call()
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
-
         owner_address = TokenContract.functions.owner().call()
 
         # 企業リストから、企業名を取得する
@@ -417,6 +495,12 @@ class MembershipToken(TokenBase):
         membershiptoken.contact_information = contact_information
         membershiptoken.privacy_policy = privacy_policy
 
+        if config.TOKEN_CACHE:
+            MembershipToken.cache[token_address] = {
+                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                "token": membershiptoken
+            }
+
         return membershiptoken
 
 
@@ -431,8 +515,42 @@ class CouponToken(TokenBase):
     max_holding_quantity: int
     max_sell_amount: int
 
+    # トークン情報のキャッシュ
+    cache = {}
+
     @staticmethod
     def get(session, token_address: str):
+        """
+        クーポントークン属性情報取得
+
+        :param session: DB session
+        :param token_address: トークンアドレス
+        :return: CouponToken
+        """
+
+        # Token-Contractへの接続
+        TokenContract = Contract.get_contract('IbetCoupon', token_address)
+
+        # キャッシュを利用する場合
+        if config.TOKEN_CACHE:
+            if token_address in CouponToken.cache:
+                token_cache = CouponToken.cache[token_address]
+                if token_cache.get("expiration_datetime") > datetime.utcnow():
+                    # キャッシュ情報を取得
+                    coupontoken = token_cache["token"]
+                    # キャッシュ情報以外の情報を取得
+                    transferable = TokenContract.functions.transferable().call()
+                    status = TokenContract.functions.status().call()
+                    initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
+                    coupontoken.transferable = transferable
+                    coupontoken.status = status
+                    coupontoken.initial_offering_status = initial_offering_status
+                    return coupontoken
+
+        # キャッシュ未利用の場合
+        # または、キャッシュに情報が存在しない場合
+        # または、キャッシュの有効期限が切れている場合
+
         # 企業リストの情報を取得する
         company_list = []
         if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
@@ -442,10 +560,6 @@ class CouponToken(TokenBase):
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
                 LOG.err("Failed to get company list: ", err)
-                pass
-
-        # Token-Contractへの接続
-        TokenContract = Contract.get_contract('IbetCoupon', token_address)
 
         # Token-Contractから情報を取得する
         name = TokenContract.functions.name().call()
@@ -463,7 +577,6 @@ class CouponToken(TokenBase):
         image_url_3 = TokenContract.functions.image_urls(2).call()
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
-
         owner_address = TokenContract.functions.owner().call()
 
         # 企業リストから、企業名を取得する
@@ -504,5 +617,11 @@ class CouponToken(TokenBase):
             if hasattr(listed_token, "max_sell_amount") else 0
         coupontoken.contact_information = contact_information
         coupontoken.privacy_policy = privacy_policy
+
+        if config.TOKEN_CACHE:
+            CouponToken.cache[token_address] = {
+                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                "token": coupontoken
+            }
 
         return coupontoken
