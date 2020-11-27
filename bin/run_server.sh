@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright BOOSTRY Co., Ltd.
 #
@@ -19,18 +19,26 @@
 
 source ~/.bash_profile
 
-RUN_MODE=${RUN_MODE:-server}
-
 cd /app/ibet-Wallet-API
 
-if [ "${RUN_MODE}" == "server" ]; then
-  ./bin/run_server.sh start
-elif [ "${RUN_MODE}" == "indexer" ]; then
-  ./bin/run_indexer.sh
-elif [ "${RUN_MODE}" == "processor_notification" ]; then
-  ./bin/run_processor_notification.sh
-else
-  echo "RUN_MODE is invalid value." >&2
-  exit 1
-fi
+function start () {
+    #source .venv/bin/activate
+    gunicorn -b 0.0.0.0:5000 --reload app.main:application --timeout 30 --workers=$WORKER_COUNT --max-requests 500 --max-requests-jitter 200 -k gevent
+}
 
+function stop () {
+    ps -ef | grep gunicorn | awk '{print $2}' | xargs kill -9
+}
+
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    *)
+    echo "Usage: run_server.sh {start|stop}"
+    exit 1
+esac
