@@ -21,7 +21,7 @@ import os
 import sys
 import configparser
 
-# Basic Settings
+# 基本設定
 BRAND_NAME = 'ibet-Wallet-API'
 
 APP_ENV = os.environ.get('APP_ENV') or 'local'
@@ -43,9 +43,8 @@ BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
 
 REQUEST_TIMEOUT = (3.0, 7.5)
 
-# Database Settings
-if 'pytest' in sys.modules:
-    # pytest実行時用DB
+# データベース設定
+if 'pytest' in sys.modules:  # 単体テスト実行時
     DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache_test'
 else:
     DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
@@ -53,16 +52,16 @@ else:
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 DB_AUTOCOMMIT = True
 
-# Log Settings
+# ログ設定
 LOG_LEVEL = CONFIG['logging']['level']
 
-# Token Type
+# 取扱トークン種別
 BOND_TOKEN_ENABLED = False if os.environ.get('BOND_TOKEN_ENABLED') == '0' else True
 MEMBERSHIP_TOKEN_ENABLED = False if os.environ.get('MEMBERSHIP_TOKEN_ENABLED') == '0' else True
 COUPON_TOKEN_ENABLED = False if os.environ.get('COUPON_TOKEN_ENABLED') == '0' else True
 SHARE_TOKEN_ENABLED = False if os.environ.get('SHARE_TOKEN_ENABLED') == '0' else True
 
-# Default Addresses
+# 各種デフォルトアドレス設定
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 AGENT_ADDRESS = os.environ.get('AGENT_ADDRESS')
 IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = os.environ.get('IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS')
@@ -73,7 +72,7 @@ PAYMENT_GATEWAY_CONTRACT_ADDRESS = os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDR
 PERSONAL_INFO_CONTRACT_ADDRESS = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
 TOKEN_LIST_CONTRACT_ADDRESS = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
 
-# Consortium Company List
+# コンソーシアム企業リスト設定
 NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
 if NETWORK == "IBET":
     if APP_ENV == 'live':
@@ -86,3 +85,7 @@ elif NETWORK == "IBETFIN":
     else:
         COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list-dev/company_list.json'
 COMPANY_LIST_LOCAL_MODE = True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
+
+# トークン情報のキャッシュ
+TOKEN_CACHE = False if os.environ.get("TOKEN_CACHE") == "0" else True
+TOKEN_CACHE_TTL = int(os.environ.get("TOKEN_CACHE_TTL")) if os.environ.get("TOKEN_CACHE_TTL") else 43200
