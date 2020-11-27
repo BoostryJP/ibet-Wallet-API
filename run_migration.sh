@@ -21,4 +21,8 @@ source ~/.bash_profile
 cd /app/ibet-Wallet-API
 cd ./migrations
 
+if [ "$1" = "init" ]; then
+  python manage.py version_control
+fi
+
 python manage.py upgrade
