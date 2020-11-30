@@ -26,7 +26,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list, bond_invalidate
+from .contract_modules import issue_bond_token, register_bond_list, bond_invalidate, bond_untransferable
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -93,7 +93,7 @@ class TestV2TokenTokenStatus:
         session.add(listed_token)
 
     # ＜正常系1＞
-    #   データあり（取扱ステータス = True）
+    #   データあり（取扱ステータス = True, 譲渡可否 = True）
     def test_tokenstatus_normal_1(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
@@ -117,7 +117,8 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
-            'status': True
+            'status': True,
+            'transferable': True
         }
 
         assert resp.status_code == 200
@@ -152,7 +153,44 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
-            'status': False
+            'status': False,
+            'transferable': True
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系3＞
+    #   データあり（取扱ステータス = True, 譲渡可否 = False）
+    def test_tokenstatus_normal_3(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：債券新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV2TokenTokenStatus.bond_token_attribute(exchange_address, personal_info)
+        bond_token = issue_bond_token(issuer, attribute)
+        register_bond_list(issuer, bond_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, bond_token)
+
+        # Tokenの譲渡不可
+        bond_untransferable(issuer, bond_token)
+
+        apiurl = self.apiurl_base.format(contract_address=bond_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': True,
+            'transferable': False
         }
 
         assert resp.status_code == 200
