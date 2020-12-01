@@ -26,7 +26,12 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list, bond_invalidate, bond_untransferable
+from .contract_modules import (issue_bond_token, register_bond_list, bond_invalidate, bond_untransferable, \
+                               issue_share_token, register_share_list, invalidate_share_token,
+                               untransferable_share_token, membership_issue, \
+                               membership_register_list, membership_invalidate, membership_untransferable,
+                               issue_coupon_token, \
+                               coupon_register_list, invalidate_coupon_token, untransferable_coupon_token)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -64,12 +69,66 @@ class TestV2TokenTokenStatus:
             'redemptionDate': '20191231',
             'redemptionValue': 10000,
             'returnDate': '20191231',
-            'returnAmount': '商品券をプレゼント',
-            'purpose': '新商品の開発資金として利用。',
-            'memo': 'メモ',
-            'contactInformation': '問い合わせ先',
-            'privacyPolicy': 'プライバシーポリシー',
+            'returnAmount': 'BOND商品券をプレゼント',
+            'purpose': 'BOND新商品の開発資金として利用。',
+            'memo': 'BONDメモ',
+            'contactInformation': 'BOND問い合わせ先',
+            'privacyPolicy': 'BONDプライバシーポリシー',
             'personalInfoAddress': personal_info_address
+        }
+        return attribute
+
+    @staticmethod
+    def share_token_attribute(exchange_address, personal_info_address):
+        attribute = {
+            'name': 'テスト株式',
+            'symbol': 'SHARE',
+            'tradableExchange': exchange_address,
+            'personalInfoAddress': personal_info_address,
+            'issuePrice': 100001,
+            'totalSupply': 1000001,
+            'dividends': 1000,
+            'dividendRecordDate': '20201001',
+            'dividendPaymentDate': '20201002',
+            'cancellationDate': '20201003',
+            'contactInformation': 'SHARE商品の補足',
+            'privacyPolicy': 'SHAREプライバシーポリシー',
+            'memo': 'SHAREメモ',
+            'transferable': True
+        }
+        return attribute
+
+    @staticmethod
+    def membership_token_attribute(exchange_address):
+        attribute = {
+            'name': 'テスト会員権',
+            'symbol': 'MEMBERSHIP',
+            'initialSupply': 102,
+            'tradableExchange': exchange_address,
+            'details': 'MEMBERSHIP詳細',
+            'returnDetails': 'MEMBERSHIP特典詳細',
+            'expirationDate': '20201101',
+            'memo': 'MEMBERSHIPメモ',
+            'transferable': True,
+            'contactInformation': 'MEMBERSHIP商品の補足',
+            'privacyPolicy': 'MEMBERSHIPプライバシーポリシー',
+        }
+        return attribute
+
+    @staticmethod
+    def coupon_token_attribute(exchange_address):
+        attribute = {
+            'name': 'テストクーポン',
+            'symbol': 'COUPON',
+            'totalSupply': 100003,
+            'tradableExchange': exchange_address,
+            'details': 'COUPON詳細',
+            'returnDetails': 'COUPON特典詳細',
+            'memo': 'COUPONメモ',
+            'expirationDate': '20201101',
+            'transferable': True,
+            'contactInformation': 'COUPON商品の補足',
+            'privacyPolicy': 'COUPONプライバシーポリシー',
         }
         return attribute
 
@@ -93,7 +152,7 @@ class TestV2TokenTokenStatus:
         session.add(listed_token)
 
     # ＜正常系1＞
-    #   データあり（取扱ステータス = True, 譲渡可否 = True）
+    #   債券：データあり（取扱ステータス = True, 譲渡可否 = True）
     def test_tokenstatus_normal_1(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
@@ -126,7 +185,7 @@ class TestV2TokenTokenStatus:
         assert resp.json['data'] == assumed_body
 
     # ＜正常系2＞
-    #   データ有り（トークン無効化済み）
+    #   債券：データ有り（トークン無効化済み）
     def test_tokenstatus_normal_2(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
@@ -162,7 +221,7 @@ class TestV2TokenTokenStatus:
         assert resp.json['data'] == assumed_body
 
     # ＜正常系3＞
-    #   データあり（取扱ステータス = True, 譲渡可否 = False）
+    #   債券：データあり（取扱ステータス = True, 譲渡可否 = False）
     def test_tokenstatus_normal_3(self, client, session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
@@ -197,8 +256,317 @@ class TestV2TokenTokenStatus:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+    # ＜正常系4＞
+    #   株式：データあり（取扱ステータス = True, 譲渡可否 = True）
+    def test_tokenstatus_normal_4(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：株式新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV2TokenTokenStatus.share_token_attribute(exchange_address, personal_info)
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, share_token)
+
+        apiurl = self.apiurl_base.format(contract_address=share_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': True,
+            'transferable': True
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系5＞
+    #   株式：データ有り（トークン無効化済み）
+    def test_tokenstatus_normal_5(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：株式新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV2TokenTokenStatus.share_token_attribute(exchange_address, personal_info)
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, share_token)
+
+        # Tokenの無効化
+        invalidate_share_token(issuer, share_token)
+
+        apiurl = self.apiurl_base.format(contract_address=share_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': False,
+            'transferable': True
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系6＞
+    #   株式：データあり（取扱ステータス = True, 譲渡可否 = False）
+    def test_tokenstatus_normal_6(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：株式新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV2TokenTokenStatus.share_token_attribute(exchange_address, personal_info)
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, share_token)
+
+        # Tokenの譲渡不可
+        untransferable_share_token(issuer, share_token)
+
+        apiurl = self.apiurl_base.format(contract_address=share_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': True,
+            'transferable': False
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系7＞
+    #   会員権：データあり（取扱ステータス = True, 譲渡可否 = True）
+    def test_tokenstatus_normal_7(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：会員権新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        attribute = TestV2TokenTokenStatus.membership_token_attribute(exchange_address)
+        membership_token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, membership_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, membership_token)
+
+        apiurl = self.apiurl_base.format(contract_address=membership_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': True,
+            'transferable': True
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系8＞
+    #   会員権：データ有り（トークン無効化済み）
+    def test_tokenstatus_normal_8(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：会員権新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        attribute = TestV2TokenTokenStatus.membership_token_attribute(exchange_address)
+        membership_token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, membership_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, membership_token)
+
+        # Tokenの無効化
+        membership_invalidate(issuer, membership_token)
+
+        apiurl = self.apiurl_base.format(contract_address=membership_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': False,
+            'transferable': True
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系9＞
+    #   会員権：データあり（取扱ステータス = True, 譲渡可否 = False）
+    def test_tokenstatus_normal_9(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：会員権新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        attribute = TestV2TokenTokenStatus.membership_token_attribute(exchange_address)
+        membership_token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, membership_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, membership_token)
+
+        # Tokenの譲渡不可
+        membership_untransferable(issuer, membership_token)
+
+        apiurl = self.apiurl_base.format(contract_address=membership_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': True,
+            'transferable': False
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系10＞
+    #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = True）
+    def test_tokenstatus_normal_10(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：クーポン新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        attribute = TestV2TokenTokenStatus.coupon_token_attribute(exchange_address)
+        coupon_token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, coupon_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, coupon_token)
+
+        apiurl = self.apiurl_base.format(contract_address=coupon_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': True,
+            'transferable': True
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系11＞
+    #   クーポン：データ有り（トークン無効化済み）
+    def test_tokenstatus_normal_11(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：クーポン新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        attribute = TestV2TokenTokenStatus.coupon_token_attribute(exchange_address)
+        coupon_token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, coupon_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, coupon_token)
+
+        # Tokenの無効化
+        invalidate_coupon_token(issuer, coupon_token)
+
+        apiurl = self.apiurl_base.format(contract_address=coupon_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': False,
+            'transferable': True
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系12＞
+    #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = False）
+    def test_tokenstatus_normal_12(self, client, session, shared_contract):
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenTokenStatus.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：クーポン新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        attribute = TestV2TokenTokenStatus.coupon_token_attribute(exchange_address)
+        coupon_token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, coupon_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, coupon_token)
+
+        # Tokenの譲渡不可
+        untransferable_coupon_token(issuer, coupon_token)
+
+        apiurl = self.apiurl_base.format(contract_address=coupon_token['address'])
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assumed_body = {
+            'status': True,
+            'transferable': False
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜エラー系1＞
-    #   無効なコントラクトアドレス
+    #   無効なコントラクトアドレス（不正な形式）
     #   -> 400エラー
     def test_tokenstatus_error_1(self, client):
         apiurl = self.apiurl_base.format(contract_address='0xabcd')
@@ -241,4 +609,25 @@ class TestV2TokenTokenStatus:
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + token['address']
+        }
+
+    # ＜エラー系3＞
+    #   無効なコントラクトアドレス（TokenInterfaceを継承しているが譲渡可否を持たないコントラクト）
+    #   -> 404エラー
+    def test_tokenstatus_error_3(self, client, session, shared_contract):
+        otc_exchange = shared_contract['IbetOTCExchange']
+
+        # 取扱トークンデータ挿入
+        TestV2TokenTokenStatus.list_token(session, otc_exchange)
+
+        apiurl = self.apiurl_base.format(contract_address=otc_exchange['address'])
+
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 30,
+            'message': 'Data Not Exists',
+            'description': 'contract_address: ' + otc_exchange['address']
         }
