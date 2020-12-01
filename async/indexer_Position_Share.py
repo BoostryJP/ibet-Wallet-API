@@ -118,14 +118,14 @@ class Processor:
 
     def initial_sync(self):
         self.get_token_list()
-        # 10,000ブロックずつ同期処理を行う
-        _to_block = 9999
+        # 1,000,000ブロックずつ同期処理を行う
+        _to_block = 999999
         _from_block = 0
-        if self.latest_block > 9999:
+        if self.latest_block > 999999:
             while _to_block < self.latest_block:
                 self.__sync_all(_from_block, _to_block)
-                _to_block += 10000
-                _from_block += 10000
+                _to_block += 1000000
+                _from_block += 1000000
             self.__sync_all(_from_block, self.latest_block)
         else:
             self.__sync_all(_from_block, self.latest_block)

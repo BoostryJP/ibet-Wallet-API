@@ -107,11 +107,11 @@ class Watcher:
             _latest_block = web3.eth.blockNumber
 
             # レスポンスタイムアウト抑止
-            # 最新のブロックナンバーと fromBlock の差が 10,000 以上の場合は
-            # toBlock に fromBlock + 9,999 を設定
-            if _latest_block - self.from_block >= 10000:
-                self.filter_params["toBlock"] = self.from_block + 9999
-                _next_from = self.from_block + 10000
+            # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
+            # toBlock に fromBlock + 999,999 を設定
+            if _latest_block - self.from_block >= 1000000:
+                self.filter_params["toBlock"] = self.from_block + 999999
+                _next_from = self.from_block + 1000000
             else:
                 self.filter_params["toBlock"] = _latest_block
                 _next_from = _latest_block + 1
