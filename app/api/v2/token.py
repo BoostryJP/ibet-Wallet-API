@@ -78,12 +78,14 @@ class TokenStatus(BaseResource):
             # Token-Contractへの接続
             TokenContract = Contract.get_contract(token_template, token_address)
             status = TokenContract.functions.status().call()
+            transferable = TokenContract.functions.transferable().call()
         except Exception as e:
             LOG.error(e)
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         response_json = {
-            'status': status
+            'status': status,
+            'transferable': transferable
         }
         self.on_success(res, response_json)
 

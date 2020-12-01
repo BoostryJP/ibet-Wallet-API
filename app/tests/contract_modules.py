@@ -277,6 +277,17 @@ def bond_invalidate(invoker, token):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 債券の譲渡不可
+def bond_untransferable(invoker, token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.setTransferable(False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Share Token （株式）
 '''
@@ -413,6 +424,17 @@ def invalidate_share_token(invoker, token):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 株式トークンの譲渡不可
+def untransferable_share_token(invoker, token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    ShareTokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = ShareTokenContract.functions.setTransferable(False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Coupon Token （クーポン）
 '''
@@ -471,6 +493,20 @@ def invalidate_coupon_token(invoker, coupon_token):
 
     tx_hash = CouponTokenContract.functions. \
         setStatus(False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# クーポントークンの譲渡不可
+def untransferable_coupon_token(invoker, coupon_token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+
+    CouponTokenContract = Contract.get_contract(
+        'IbetCoupon', coupon_token['address'])
+
+    tx_hash = CouponTokenContract.functions. \
+        setTransferable(False). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -609,6 +645,19 @@ def membership_invalidate(invoker, token):
 
     tx_hash = TokenContract.functions. \
         setStatus(False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 会員権Tokenの譲渡不可
+def membership_untransferable(invoker, token):
+    web3.eth.defaultAccount = invoker['account_address']
+    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
+    TokenContract = Contract. \
+        get_contract('IbetMembership', token['address'])
+
+    tx_hash = TokenContract.functions. \
+        setTransferable(False). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
