@@ -99,15 +99,30 @@ class Watcher:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
 
             self.filter_params["fromBlock"] = self.from_block
+
+            # 最新のブロックナンバーを取得
+            _latest_block = web3.eth.blockNumber
+
+            # レスポンスタイムアウト抑止
+            # 最新のブロックナンバーと fromBlock の差が 10,000 以上の場合は
+            # toBlock に fromBlock + 9,999 を設定
+            if _latest_block - self.from_block >= 10000:
+                self.filter_params["toBlock"] = self.from_block + 9999
+                _next_from = self.from_block + 10000
+            else:
+                self.filter_params["toBlock"] = _latest_block
+                _next_from = _latest_block + 1
+
             event_filter = self.contract.eventFilter(self.filter_name, self.filter_params)
             entries = event_filter.get_all_entries()
             web3.eth.uninstallFilter(event_filter.filter_id)
-            if len(entries) == 0:
-                return
-            # DB登録
-            self.watch(entries)
-            self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
-            db_session.commit()
+            if len(entries) > 0:
+                self.watch(entries)
+                db_session.commit()
+
+            self.from_block = _next_from
+        except Exception as err:  # Exceptionが発生した場合は処理を継続
+            LOG.error(err)
         finally:
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
