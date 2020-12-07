@@ -199,4 +199,4 @@ processor = Processor(_sink, db_session)
 processor.initial_sync()
 while True:
     processor.sync_new_logs()
-    time.sleep(10)
+    time.sleep(5)
