@@ -120,7 +120,7 @@ class BondToken(TokenBase):
             try:
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
-                LOG.err("Failed to get company list: ", err)
+                LOG.exception(f"Failed to get company list: {err}")
 
         # Contractから情報を取得する
         name = TokenContract.functions.name().call()
@@ -309,7 +309,7 @@ class ShareToken(TokenBase):
             try:
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
-                LOG.err("Failed to get company list: ", err)
+                LOG.exception(f"Failed to get company list: {err}")
 
         owner_address = TokenContract.functions.owner().call()
         name = TokenContract.functions.name().call()
@@ -436,7 +436,7 @@ class MembershipToken(TokenBase):
             try:
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
-                LOG.err("Failed to get company list: ", err)
+                LOG.exception(f"Failed to get company list: {err}")
 
         # Token-Contractから情報を取得する
         name = TokenContract.functions.name().call()
@@ -559,7 +559,7 @@ class CouponToken(TokenBase):
             try:
                 company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
             except Exception as err:
-                LOG.err("Failed to get company list: ", err)
+                LOG.exception(f"Failed to get company list: {err}")
 
         # Token-Contractから情報を取得する
         name = TokenContract.functions.name().call()
