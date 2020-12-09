@@ -81,6 +81,9 @@ class GetAgreement(BaseResource):
         taker_address, amount, price, canceled, paid, expiry = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
 
+        if taker_address == config.ZERO_ADDRESS:
+            raise InvalidParameterError('Data not found')
+
         if is_buy:
             buyer_address = maker_address
             seller_address = taker_address
