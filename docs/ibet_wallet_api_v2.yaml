@@ -2464,50 +2464,35 @@ paths:
               data:
                 type: object
                 properties:
+                  token_address:
+                    type: string
+                    description: token address
                   counterpart:
                     type: string
+                    description: taker account address
                   buyer_address:
                     type: string
+                    description: buyer account address
                   seller_address:
                     type: string
+                    description: seller account address
                   amount:
                     type: integer
+                    description: agreement token amount
                   price:
                     type: integer
+                    description: agreement price
                   canceled:
                     type: boolean
+                    description: agreement canceled status
                   paid:
                     type: boolean
+                    description: agreement payment status
                   expiry:
                     type: string
                     description: expiry (unixtime)
-    post:
-      tags:
-        - "Market"
-      summary: "Agreement Details"
-      operationId: "GetAgreementPost"
-      parameters:
-        - name: order_id
-          in: query
-          description: order id
-          required: true
-          type: integer
-          allowEmptyValue: false
-        - name: agreement_id
-          in: query
-          description: agreement id
-          required: true
-          type: integer
-          allowEmptyValue: false
-        - name: exchange_address
-          in: query
-          description: exchange address
-          required: true
-          type: string
-          allowEmptyValue: false
-      responses:
-        200:
-          description: successful operation
+        400:
+          description: Invalid Parameter Error
           schema:
             type: object
             properties:
@@ -2516,30 +2501,14 @@ paths:
                 properties:
                   code:
                     type: string
-                    example: 200
+                    description: error code
+                    example: 1
                   message:
                     type: string
-                    example: OK
-              data:
-                type: object
-                properties:
-                  counterpart:
-                    type: string
-                  buyer_address:
-                    type: string
-                  seller_address:
-                    type: string
-                  amount:
-                    type: integer
-                  price:
-                    type: integer
-                  canceled:
-                    type: boolean
-                  paid:
-                    type: boolean
-                  expiry:
-                    type: string
-                    description: expiry (unixtime)
+                    description: error message
+                    example: Invalid Parameter
+                  description:
+                    description: error reason
   /Position/StraightBond:
     post:
       tags:

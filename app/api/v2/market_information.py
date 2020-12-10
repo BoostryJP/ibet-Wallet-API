@@ -28,7 +28,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import Order, Agreement, AgreementStatus
+from app.model import Order, Agreement
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
@@ -52,86 +52,50 @@ class GetAgreement(BaseResource):
     """
 
     def on_get(self, req, res):
-        LOG.info('v2.market_information.GetAgreement(GET)')
-
-        session = req.context["session"]
-
-        # 入力値チェック
-        request_json = self.validate_get(req)
-
-        # リクエストから情報を抽出
-        order_id = request_json['order_id']
-        agreement_id = request_json['agreement_id']
-        exchange_address = to_checksum_address(request_json['exchange_address'])
-
-        # 約定イベントの存在有無を確認
-        # DBにデータが存在しない場合は、入力値エラーを返す
-        # NOTE: 処理負荷を下げるためにDBにインデックスされた情報からイベントの存在有無を先に確認している
-        agreement = session.query(Agreement). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.order_id == order_id). \
-            filter(Agreement.agreement_id == agreement_id). \
-            first()
-        if agreement is None:
-            raise InvalidParameterError('Data not found')
-
-        # 取引コントラクトに接続
-        ExchangeContract = GetAgreement.exchange_contracts(exchange_address)
-
-        # 約定情報の取得
-        # NOTE: 取引コントラクトから直近の情報を取得する
-        counterpart, amount, price, canceled, paid, expiry = \
-            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-
-        res_data = {
-            'counterpart': counterpart,
-            'buyer_address': agreement.buyer_address,  # 買い手EOA
-            'seller_address': agreement.seller_address,  # 売り手EOA
-            'amount': amount,  # 約定数量
-            'price': price,  # 約定単価
-            'canceled': canceled,  # 約定取消フラグ
-            'paid': paid,  # 支払済フラグ
-            'expiry': expiry  # 有効期限（unixtime）
-        }
-
-        self.on_success(res, res_data)
-
-    def on_post(self, req, res):
         LOG.info('v2.market_information.GetAgreement')
 
-        session = req.context["session"]
-
         # 入力値チェック
-        request_json = self.validate_post(req)
+        request_json = self.validate(req)
 
         # リクエストから情報を抽出
         order_id = request_json['order_id']
         agreement_id = request_json['agreement_id']
         exchange_address = to_checksum_address(request_json['exchange_address'])
 
-        # 約定イベントの存在有無を確認
-        # DBにデータが存在しない場合は、入力値エラーを返す
-        # NOTE: 処理負荷を下げるためにDBにインデックスされた情報からイベントの存在有無を先に確認している
-        agreement = session.query(Agreement). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.order_id == order_id). \
-            filter(Agreement.agreement_id == agreement_id). \
-            first()
-        if agreement is None:
+        # 取引コントラクトに接続
+        ExchangeContract, exchange = self.exchange_contracts(exchange_address)
+
+        # 注文情報の取得
+        if exchange != 'IbetOTCExchange':
+            maker_address, token_address, _, _, is_buy, _, _ = \
+                ExchangeContract.functions.getOrder(order_id).call()
+        else:
+            maker_address, _, token_address, _, _, _, _ = \
+                ExchangeContract.functions.getOrder(order_id).call()
+            is_buy = False
+
+        if maker_address == config.ZERO_ADDRESS:
             raise InvalidParameterError('Data not found')
 
-        # 取引コントラクトに接続
-        ExchangeContract = GetAgreement.exchange_contracts(exchange_address)
-
         # 約定情報の取得
-        # NOTE: 取引コントラクトから直近の情報を取得する
-        counterpart, amount, price, canceled, paid, expiry = \
+        taker_address, amount, price, canceled, paid, expiry = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
 
+        if taker_address == config.ZERO_ADDRESS:
+            raise InvalidParameterError('Data not found')
+
+        if is_buy:
+            buyer_address = maker_address
+            seller_address = taker_address
+        else:
+            buyer_address = taker_address
+            seller_address = maker_address
+
         res_data = {
-            'counterpart': counterpart,
-            'buyer_address': agreement.buyer_address,  # 買い手EOA
-            'seller_address': agreement.seller_address,  # 売り手EOA
+            'token_address': token_address,  # トークンアドレス
+            'counterpart': taker_address,  # Takerのアドレス
+            'buyer_address': buyer_address,  # 買い手EOA
+            'seller_address': seller_address,  # 売り手EOA
             'amount': amount,  # 約定数量
             'price': price,  # 約定単価
             'canceled': canceled,  # 約定取消フラグ
@@ -146,23 +110,26 @@ class GetAgreement(BaseResource):
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS):
             ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
+            exchange = 'IbetStraightBondExchange'
         elif config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS):
             ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
+            exchange = 'IbetMembershipExchange'
         elif config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS):
             ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
+            exchange = 'IbetCouponExchange'
         elif config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS):
             ExchangeContract = Contract.get_contract('IbetOTCExchange', exchange_address)
+            exchange = 'IbetOTCExchange'
         else:
-            description = 'Invalid Address'
-            raise InvalidParameterError(description=description)
+            raise InvalidParameterError(description='Invalid Address')
 
-        return ExchangeContract
+        return ExchangeContract, exchange
 
     @staticmethod
-    def validate_get(req):
+    def validate(req):
         try:
             request_json = {
                 "order_id": int(req.get_param("order_id")),
@@ -201,42 +168,6 @@ class GetAgreement(BaseResource):
             raise InvalidParameterError
 
         return request_json
-
-    @staticmethod
-    def validate_post(req):
-        request_json = req.context['data']
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            'order_id': {
-                'type': 'integer',
-                'empty': False,
-                'required': True
-            },
-            'agreement_id': {
-                'type': 'integer',
-                'empty': False,
-                'required': True
-            },
-            'exchange_address': {
-                'type': 'string',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        try:
-            if not Web3.isAddress(request_json['exchange_address']):
-                raise InvalidParameterError
-        except:
-            raise InvalidParameterError
-
-        return validator.document
 
 
 """
