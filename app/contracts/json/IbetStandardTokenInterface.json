@@ -258,8 +258,5 @@
       "name": "ChangeStatus",
       "type": "event"
     }
-  ],
-  "contractName": "IbetStandardTokenInterface",
-  "sha1": "569ef288413f814362add41c4aa0d2d809f07e07",
-  "type": "interface"
+  ]
 }
