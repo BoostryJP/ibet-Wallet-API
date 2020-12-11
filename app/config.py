@@ -25,30 +25,46 @@ import configparser
 BRAND_NAME = 'ibet-Wallet-API'
 
 APP_ENV = os.environ.get('APP_ENV') or 'local'
-INI_FILE = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    '../conf/{}.ini'.format(APP_ENV)
-)
+
+# コンソーシアム企業リスト設定
+NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
+if NETWORK == "IBET":
+    if APP_ENV == 'live':
+        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list/company_list.json'
+    else:
+        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list-dev/company_list.json'
+elif NETWORK == "IBETFIN":
+    if APP_ENV == 'live':
+        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list/company_list.json'
+    else:
+        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list-dev/company_list.json'
+COMPANY_LIST_LOCAL_MODE = True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
+
+# 環境設定読み込み
+if APP_ENV != "live":
+    INI_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"../conf/{APP_ENV}.ini")
+else:
+    if NETWORK == "IBET":  # ibet
+        INI_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"../conf/live.ini")
+    else:  # ibet for Fin
+        INI_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"../conf/live_fin.ini")
 CONFIG = configparser.ConfigParser()
 CONFIG.read(INI_FILE)
 
+# Web3設定
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
 WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
 
+# サーバ設定
 WORKER_COUNT = int(os.environ.get("WORKER_COUNT")) if os.environ.get("WORKER_COUNT") else 8
-SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL")) if os.environ.get("SLEEP_INTERVAL") else 3
-
-BASIC_AUTH_USER = os.environ.get('BASIC_AUTH_USER')
-BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
-
 REQUEST_TIMEOUT = (3.0, 7.5)
+SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL")) if os.environ.get("SLEEP_INTERVAL") else 3
 
 # データベース設定
 if 'pytest' in sys.modules:  # 単体テスト実行時
     DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache_test'
 else:
     DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
-
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 DB_AUTOCOMMIT = True
 
@@ -72,20 +88,10 @@ PAYMENT_GATEWAY_CONTRACT_ADDRESS = os.environ.get('PAYMENT_GATEWAY_CONTRACT_ADDR
 PERSONAL_INFO_CONTRACT_ADDRESS = os.environ.get('PERSONAL_INFO_CONTRACT_ADDRESS')
 TOKEN_LIST_CONTRACT_ADDRESS = os.environ.get('TOKEN_LIST_CONTRACT_ADDRESS')
 
-# コンソーシアム企業リスト設定
-NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
-if NETWORK == "IBET":
-    if APP_ENV == 'live':
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list/company_list.json'
-    else:
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list-dev/company_list.json'
-elif NETWORK == "IBETFIN":
-    if APP_ENV == 'live':
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list/company_list.json'
-    else:
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list-dev/company_list.json'
-COMPANY_LIST_LOCAL_MODE = True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
-
 # トークン情報のキャッシュ
 TOKEN_CACHE = False if os.environ.get("TOKEN_CACHE") == "0" else True
 TOKEN_CACHE_TTL = int(os.environ.get("TOKEN_CACHE_TTL")) if os.environ.get("TOKEN_CACHE_TTL") else 43200
+
+# テスト用設定：Locust
+BASIC_AUTH_USER = os.environ.get('BASIC_AUTH_USER')
+BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
