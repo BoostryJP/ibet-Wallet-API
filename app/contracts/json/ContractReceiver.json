@@ -22,8 +22,5 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ],
-  "contractName": "ContractReceiver",
-  "sha1": "d3f882c1f2ffe22f0196e8609d0f15441fd0f1f6",
-  "type": "interface"
+  ]
 }
