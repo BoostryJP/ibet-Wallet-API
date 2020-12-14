@@ -17,11 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import logging
-
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+from migrations.log import LOG
 
 meta = MetaData()
 
@@ -29,25 +28,17 @@ meta = MetaData()
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
 
-    order = Table("order", meta, autoload=True)
-
-    col = Column("counterpart_address", String(42))
     try:
-        col.create(order)
+        order = Table("order", meta, autoload=True)
+        Column("counterpart_address", String(42)).create(order)
     except sqlalchemy.exc.ProgrammingError as err:
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
 
 
 def downgrade(migrate_engine):
     meta.bind = migrate_engine
-
-    order = Table("order", meta, autoload=True)
-
     try:
+        order = Table("order", meta, autoload=True)
         Column("counterpart_address").drop(order)
     except sqlalchemy.exc.ProgrammingError as err:
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)

@@ -17,44 +17,29 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import logging
-
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+from migrations.log import LOG
 
 meta = MetaData()
 
 
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
-
-    private_listing = Table("private_listing", meta, autoload=True)
-
     try:
+        private_listing = Table("private_listing", meta, autoload=True)
         Column("payment_method_credit_card").drop(private_listing)
         Column("payment_method_bank").drop(private_listing)
     except sqlalchemy.exc.ProgrammingError as err:
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
 
 
 def downgrade(migrate_engine):
     meta.bind = migrate_engine
-
-    private_listing = Table("private_listing", meta, autoload=True)
-
-    col = Column("payment_method_credit_card", Boolean)
     try:
-        col.create(private_listing)
+        private_listing = Table("private_listing", meta, autoload=True)
+        Column("payment_method_credit_card", Boolean).create(private_listing)
+        Column("payment_method_bank", Boolean).create(private_listing)
     except sqlalchemy.exc.ProgrammingError as err:
-        logging.warning(err)
-
-    col = Column("payment_method_bank", Boolean)
-    try:
-        col.create(private_listing)
-    except sqlalchemy.exc.ProgrammingError as err:
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
