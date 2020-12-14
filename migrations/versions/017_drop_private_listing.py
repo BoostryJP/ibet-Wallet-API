@@ -17,26 +17,22 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import logging
 from datetime import datetime
-
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+from migrations.log import LOG
 
 meta = MetaData()
 
 
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
-
-    private_listing = Table("private_listing", meta, autoload=True)
     try:
+        private_listing = Table("private_listing", meta, autoload=True)
         private_listing.drop()
     except sqlalchemy.exc.ProgrammingError as err:
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
 
 
 def downgrade(migrate_engine):
@@ -54,6 +50,4 @@ def downgrade(migrate_engine):
     try:
         private_listing.create()
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にTBLが存在する場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)

@@ -17,11 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import logging
-
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+from migrations.log import LOG
 
 meta = MetaData()
 
@@ -29,40 +28,30 @@ meta = MetaData()
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
 
-    listing_table = Table("listing", meta)
-    col = Column("owner_address", String(256))
     try:
-        col.create(listing_table)
+        listing_table = Table("listing", meta)
+        Column("owner_address", String(256)).create(listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
 
-    private_listing_table = Table("private_listing", meta)
-    col = Column("owner_address", String(256))
     try:
-        col.create(private_listing_table)
+        private_listing_table = Table("private_listing", meta)
+        Column("owner_address", String(256)).create(private_listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
 
 
 def downgrade(migrate_engine):
     meta.bind = migrate_engine
 
-    listing_table = Table("listing", meta)
     try:
+        listing_table = Table("listing", meta)
         Column("owner_address").drop(listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが削除されている場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
 
-    private_listing_table = Table("private_listing", meta)
     try:
+        private_listing_table = Table("private_listing", meta)
         Column("owner_address").drop(private_listing_table)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが削除されている場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
