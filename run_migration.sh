@@ -25,4 +25,6 @@ if [ "$1" = "init" ]; then
   python manage.py version_control
 fi
 
-python manage.py upgrade
+if [ "$1" = "" ]; then
+  python manage.py upgrade
+fi

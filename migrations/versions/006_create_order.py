@@ -17,12 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import logging
 from datetime import datetime
 
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+from migrations.log import LOG
 
 
 # Table定義
@@ -51,9 +51,7 @@ def upgrade(migrate_engine):
     try:
         table.create()
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にTBLが存在する場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
 
 
 # Downgrade
