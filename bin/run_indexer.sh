@@ -43,4 +43,6 @@ if [ $COUPON_TOKEN_ENABLED = 1 ]; then
   python async/indexer_Position_Coupon.py &
 fi
 
+echo "<STARTUP> Service started successfully" &
+
 tail -f /dev/null

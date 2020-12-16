@@ -151,6 +151,7 @@ class App(falcon.API):
 
 
 init_session()
-middleware = [JSONTranslator(), DatabaseSessionManager(
-    db_session), CORSMiddleware()]
+middleware = [JSONTranslator(), DatabaseSessionManager(db_session), CORSMiddleware()]
 application = App(middleware=middleware)
+
+LOG.info("<STARTUP> Service started successfully")

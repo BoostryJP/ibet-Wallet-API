@@ -41,4 +41,6 @@ if [ "$COUPON_TOKEN_ENABLED" = 1 ]; then
   python async/processor_Notifications_Coupon_Exchange.py &
 fi
 
+echo "<STARTUP> Service started successfully" &
+
 tail -f /dev/null
