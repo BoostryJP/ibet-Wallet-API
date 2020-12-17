@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import os
 import sys
-import logging
 from concurrent.futures import ThreadPoolExecutor
 import time
 from datetime import datetime, timezone, timedelta
@@ -31,7 +30,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
-from app import log
+
 from app import config
 from app.model import Notification, NotificationType
 from app.contracts import Contract
@@ -39,12 +38,10 @@ from async.lib.token import TokenFactory
 from async.lib.company_list import CompanyListFactory
 from async.lib.token_list import TokenList
 from async.lib.misc import wait_all_futures
+import log
 
 JST = timezone(timedelta(hours=+9), "JST")
-
-LOG = log.get_logger()
-log_fmt = 'PROCESSOR-Notifications_PaymentGateway [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
-logging.basicConfig(format=log_fmt)
+LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-PAYMENTGATEWAY")
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -233,6 +230,8 @@ def main():
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
+    LOG.info("Service started successfully")
+
     while True:
         start_time = time.time()
 
