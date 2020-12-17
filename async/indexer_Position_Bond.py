@@ -20,7 +20,6 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-import logging
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -32,14 +31,13 @@ from eth_utils import to_checksum_address
 path = os.path.join(os.path.dirname(__file__), '../')
 sys.path.append(path)
 
-from app import log
 from app import config
 from app.model import Listing, Position
 from app.contracts import Contract
+import log
 
-LOG = log.get_logger()
-log_fmt = 'INDEXER-POSITION-BOND [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
-logging.basicConfig(format=log_fmt)
+process_name = "INDEXER-POSITION-BOND"
+LOG = log.get_logger(process_name=process_name)
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -129,6 +127,7 @@ class Processor:
             self.__sync_all(_from_block, self.latest_block)
         else:
             self.__sync_all(_from_block, self.latest_block)
+        LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         self.get_token_list()
@@ -271,6 +270,7 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
+LOG.info("Service started successfully")
 
 processor.initial_sync()
 while True:

@@ -20,28 +20,26 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-import logging
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
 
 path = os.path.join(os.path.dirname(__file__), '../')
 sys.path.append(path)
 
-from app import log
 from app import config
 from app.model import Agreement, AgreementStatus, Order, Listing
 from app.contracts import Contract
-from web3.middleware import geth_poa_middleware
+import log
 
 from datetime import datetime, timezone, timedelta
 
 JST = timezone(timedelta(hours=+9), "JST")
 
-LOG = log.get_logger()
-log_fmt = 'INDEXER-OrderAgree [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
-logging.basicConfig(format=log_fmt)
+process_name = "INDEXER-DEX"
+LOG = log.get_logger(process_name=process_name)
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -218,6 +216,7 @@ class Processor:
             self.__sync_all(_from_block, self.latest_block)
         else:
             self.__sync_all(_from_block, self.latest_block)
+        LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         blockTo = web3.eth.blockNumber
@@ -400,6 +399,7 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
+LOG.info("Service started successfully")
 
 processor.initial_sync()
 while True:
