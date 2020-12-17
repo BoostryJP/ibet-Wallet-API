@@ -17,27 +17,20 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from web3 import Web3
-from app import config
+import sys
+import logging
 
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
-# Account Address
-eth_account = {
-    'deployer': {
-        'account_address': web3.eth.accounts[0],
-        'password': 'password'
-    },
-    'issuer': {
-        'account_address': web3.eth.accounts[1],
-        'password': 'password'
-    },
-    'agent': {
-        'account_address': web3.eth.accounts[2],
-        'password': 'password'
-    },
-    'trader': {
-        'account_address': web3.eth.accounts[3],
-        'password': 'password'
-    }
-}
+def get_logger(process_name: str = None):
+    LOG = logging.getLogger('Processor')
+    LOG.propagate = False
+
+    LOG_FORMAT = f'[%(asctime)s] [{process_name}] [%(process)d] [%(levelname)s] %(message)s'
+    TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S %z'
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(LOG_FORMAT, TIMESTAMP_FORMAT)
+    stream_handler.setFormatter(formatter)
+    LOG.addHandler(stream_handler)
+
+    return LOG

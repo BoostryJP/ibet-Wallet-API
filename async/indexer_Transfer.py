@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -21,7 +21,6 @@ import os
 import sys
 import time
 from datetime import datetime, timezone, timedelta
-import logging
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -33,16 +32,15 @@ from eth_utils import to_checksum_address
 path = os.path.join(os.path.dirname(__file__), '../')
 sys.path.append(path)
 
-from app import log
 from app import config
 from app.model import Listing, Transfer
 from app.contracts import Contract
+import log
 
 JST = timezone(timedelta(hours=+9), "JST")
 
-LOG = log.get_logger()
-log_fmt = 'PROCESSOR-POSITION [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
-logging.basicConfig(format=log_fmt)
+process_name = "PROCESSOR-POSITION"
+LOG = log.get_logger(process_name=process_name)
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -149,6 +147,7 @@ class Processor:
             self.__sync_all(_from_block, self.latest_block)
         else:
             self.__sync_all(_from_block, self.latest_block)
+        LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         self.get_token_list()
@@ -195,6 +194,7 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
+LOG.info("Service started successfully")
 
 processor.initial_sync()
 while True:
