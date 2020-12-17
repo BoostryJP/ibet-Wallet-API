@@ -39,7 +39,7 @@ import log
 
 JST = timezone(timedelta(hours=+9), "JST")
 
-process_name = "PROCESSOR-POSITION"
+process_name = "INDEXER-TRANSFER"
 LOG = log.get_logger(process_name=process_name)
 
 # 設定の取得
