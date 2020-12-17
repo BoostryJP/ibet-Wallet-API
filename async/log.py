@@ -20,7 +20,8 @@ SPDX-License-Identifier: Apache-2.0
 import sys
 import logging
 
-def get_logger(process_name:str = None):
+
+def get_logger(process_name: str = None):
     LOG = logging.getLogger('Processor')
     LOG.propagate = False
 
