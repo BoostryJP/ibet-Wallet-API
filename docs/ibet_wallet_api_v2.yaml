@@ -337,11 +337,18 @@ paths:
       summary: "Transaction count for the specified eth_address"
       operationId: "TransactionCount"
       parameters:
-        - name: "eth_address"
-          in: "path"
-          description: "address"
+        - name: eth_address
+          in: path
+          description: address
           required: true
-          type: "string"
+          type: string
+        - name: block_identifier
+          in: query
+          description: block identifier
+          required: false
+          enum:
+            - [latest, earliest, pending]
+          type: string
       responses:
         200:
           description: successful operation
