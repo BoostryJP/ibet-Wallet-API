@@ -173,7 +173,7 @@ class SendRawTransaction(BaseResource):
 
             # 実行結果を確認
             try:
-                tx = web3.eth.waitForTransactionReceipt(tx_hash, 30)
+                tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=5)
             except Exception as err:
                 # NOTE: eth.waitForTransactionReceiptは本来はExceptionではなくNoneを返す仕様だが、
                 #       バグでExceptionを返すようになっているため対応しておく
