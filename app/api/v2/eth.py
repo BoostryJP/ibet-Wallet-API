@@ -29,7 +29,7 @@ from hexbytes import HexBytes
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, SuspendedTokenError
+from app.errors import InvalidParameterError, SuspendedTokenError, DataNotExistsError
 from app import config
 from app.model import ExecutableContract, Listing
 from app.contracts import Contract
@@ -290,14 +290,21 @@ class SendRawTransactionNoWait(BaseResource):
 
             # ブロックチェーンノードに送信
             try:
-                web3.eth.sendRawTransaction(raw_tx_hex)
+                transaction_hash = web3.eth.sendRawTransaction(raw_tx_hex)
             except ValueError as err:
                 result.append({
                     'id': i + 1,
                     'status': 0,
+                    'transaction_hash': None
                 })
                 LOG.error(f"Send transaction failed: {err}")
                 continue
+
+            result.append({
+                'id': i + 1,
+                'status': 1,
+                'transaction_hash': transaction_hash
+            })
 
         self.on_success(res, result)
 
@@ -317,6 +324,60 @@ class SendRawTransactionNoWait(BaseResource):
                     'required': True,
                     'empty': False,
                 }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return request_json
+
+
+# ------------------------------
+# waitForTransactionReceipt
+# ------------------------------
+class WaitForTransactionReceipt(BaseResource):
+    """
+    Endpoint: /Eth/WaitForTransactionReceipt
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v2.eth.WaitForTransactionReceipt')
+
+        request_json = self.validate(req)
+        transaction_hash = request_json.get("transaction_hash")
+        timeout = request_json.get("timeout", 5)
+
+        # transaction receipt の監視
+        try:
+            tx = web3.eth.waitForTransactionReceipt(
+                transaction_hash=transaction_hash,
+                timeout=timeout
+            )
+        except Exception as err:
+            raise DataNotExistsError
+
+        if tx is None:
+            raise DataNotExistsError
+
+        self.on_success(res)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "transaction_hash": {
+                "type": "string",
+                "required": True,
+                "empty": False,
+            },
+            "timeout": {
+                "type": "integer",
+                "min": 1,
+                "max": 30
             }
         })
 
