@@ -22,7 +22,7 @@ $ pip install -r requirements.txt
 
 You can start (or stop) the API server with:
 ```
-$ ./bin/run.sh start(stop)
+$ ./bin/run_server.sh start(stop)
 ```
 
 ## Running the tests
