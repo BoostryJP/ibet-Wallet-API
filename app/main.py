@@ -54,6 +54,7 @@ class App(falcon.API):
         self.add_route('/v2/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
         self.add_route('/v2/Eth/SendRawTransaction', eth.SendRawTransaction())
         self.add_route('/v2/Eth/SendRawTransactionNoWait', eth.SendRawTransactionNoWait())
+        self.add_route('/v2/Eth/WaitForTransactionReceipt', eth.WaitForTransactionReceipt())
 
         # 会社情報
         self.add_route('/v2/Company/{eth_address}', company.CompanyInfo())
