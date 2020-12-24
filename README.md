@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-0.18-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-1.0-blue.svg?cacheSeconds=2592000" />
   <a href="https:/doc.com" target="_blank">
     <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
   </a>
@@ -22,7 +22,7 @@ $ pip install -r requirements.txt
 
 You can start (or stop) the API server with:
 ```
-$ ./bin/run.sh start(stop)
+$ ./bin/run_server.sh start(stop)
 ```
 
 ## Running the tests

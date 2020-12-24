@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -17,11 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-import logging
-
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
 from migrate import *
+from migrations.log import LOG
 
 meta = MetaData()
 
@@ -29,37 +28,48 @@ meta = MetaData()
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
 
-    order = Table("order", meta, autoload=True)
-    order.c.token_address.alter(type=String(42), index=True)
-    order.c.exchange_address.alter(type=String(42), index=True)
-    order.c.account_address.alter(type=String(42))
-    order.c.agent_address.alter(type=String(42))
-
-    col = Column("transaction_hash", String(66))
     try:
-        col.create(order)
-    except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        order = Table("order", meta, autoload=True)
+        order.c.token_address.alter(type=String(42), index=True)
+        order.c.exchange_address.alter(type=String(42), index=True)
+        order.c.account_address.alter(type=String(42))
+        order.c.agent_address.alter(type=String(42))
+    except sqlalchemy.exc.ProgrammingError as err:
+        LOG.warning(err.orig)
 
-    col = Column("order_timestamp", DateTime, default=None)
     try:
-        col.create(order)
+        order = Table("order", meta, autoload=True)
+        Column("transaction_hash", String(66)).create(order)
     except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
-        logging.warning(err)
-    except Exception as err:
-        logging.warning(err)
+        LOG.warning(err.orig)
+
+    try:
+        order = Table("order", meta, autoload=True)
+        Column("order_timestamp", DateTime, default=None).create(order)
+    except sqlalchemy.exc.ProgrammingError as err:  # NOTE: 既にカラムが存在する場合はWARNINGを出力する
+        LOG.warning(err.orig)
 
 
 def downgrade(migrate_engine):
     meta.bind = migrate_engine
 
-    order = Table("order", meta, autoload=True)
-    order.c.token_address.alter(type=String(256), index=True)
-    order.c.exchange_address.alter(type=String(256), index=True)
-    order.c.account_address.alter(type=String(256))
-    order.c.agent_address.alter(type=String(256))
+    try:
+        order = Table("order", meta, autoload=True)
+        order.c.token_address.alter(type=String(256), index=True)
+        order.c.exchange_address.alter(type=String(256), index=True)
+        order.c.account_address.alter(type=String(256))
+        order.c.agent_address.alter(type=String(256))
+    except sqlalchemy.exc.ProgrammingError as err:
+        LOG.warning(err.orig)
 
-    Column("transaction_hash").drop(order)
-    Column("order_timestamp").drop(order)
+    try:
+        order = Table("order", meta, autoload=True)
+        Column("transaction_hash").drop(order)
+    except sqlalchemy.exc.ProgrammingError as err:
+        LOG.warning(err.orig)
+
+    try:
+        order = Table("order", meta, autoload=True)
+        Column("order_timestamp").drop(order)
+    except sqlalchemy.exc.ProgrammingError as err:
+        LOG.warning(err.orig)

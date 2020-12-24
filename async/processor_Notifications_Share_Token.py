@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 
 import os
 import sys
-import logging
 from concurrent.futures import ThreadPoolExecutor
 import time
 from datetime import datetime, timezone, timedelta
@@ -31,19 +30,17 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
-from app import log
+
 from app import config
 from app.model import Notification, NotificationType, Listing
 from app.contracts import Contract
 from async.lib.company_list import CompanyListFactory
 from async.lib.token_list import TokenList
 from async.lib.misc import wait_all_futures
+import log
 
 JST = timezone(timedelta(hours=+9), "JST")
-
-LOG = log.get_logger()
-log_fmt = 'PROCESSOR-Notifications_share_Token [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
-logging.basicConfig(format=log_fmt)
+LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-SHARE-TOKEN")
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -112,6 +109,7 @@ class Watcher:
         start_time = time.time()
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
+
             self.filter_params["fromBlock"] = self.from_block
 
             # 登録済みの株式リストを取得
@@ -119,6 +117,19 @@ class Watcher:
                 share_token_list = self._get_share_token_all_list()
             else:
                 share_token_list = self._get_share_token_public_list()
+
+            # 最新のブロックナンバーを取得
+            _latest_block = web3.eth.blockNumber
+
+            # レスポンスタイムアウト抑止
+            # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
+            # toBlock に fromBlock + 999,999 を設定
+            if _latest_block - self.from_block >= 1000000:
+                self.filter_params["toBlock"] = self.from_block + 999999
+                _next_from = self.from_block + 1000000
+            else:
+                self.filter_params["toBlock"] = _latest_block
+                _next_from = _latest_block + 1
 
             # イベント処理
             for share_token in share_token_list:
@@ -128,16 +139,14 @@ class Watcher:
                     event_filter = share_contract.eventFilter(self.filter_name, self.filter_params)
                     entries = event_filter.get_all_entries()
                     web3.eth.uninstallFilter(event_filter.filter_id)
-                except Exception as e:
-                    LOG.warning(e)
+                except Exception as err:  # Exception が発生した場合は処理を継続
+                    LOG.error(err)
                     continue
-                if len(entries) == 0:  # イベントが0件の場合は何も処理しない
-                    continue
-                else:
-                    # DB登録
+                if len(entries) > 0:
                     self.db_merge(share_contract, entries)
-                    self.from_block = max(map(lambda e: e["blockNumber"], entries)) + 1
                     db_session.commit()
+
+            self.from_block = _next_from
         finally:
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
@@ -330,6 +339,8 @@ def main():
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
+    LOG.info("Service started successfully")
+
     while True:
         start_time = time.time()
 

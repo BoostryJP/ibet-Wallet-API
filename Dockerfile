@@ -65,8 +65,9 @@ RUN chown -R apl:apl /app/ibet-Wallet-API && \
 RUN unzip /app/ibet-Wallet-API/data/zip_code.zip -d /app/ibet-Wallet-API/data/
 RUN unzip /app/ibet-Wallet-API/data/zip_code_jigyosyo.zip -d /app/ibet-Wallet-API/data/
 USER apl
-COPY run.sh /app/
+COPY run.sh healthcheck.sh /app/
 
 EXPOSE 5000
 
 CMD /app/run.sh
+HEALTHCHECK --interval=10s CMD /app/healthcheck.sh

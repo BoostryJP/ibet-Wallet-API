@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from app.model import Listing
+from app.model import Listing, Transfer
 from .contract_modules import *
 
 
@@ -178,6 +178,12 @@ class TestV2CouponMyTokens:
     # クーポントークンの保有0、売注文中0の状態を作成（過去の保有状態）
     @staticmethod
     def create_zero(exchange, token_list):
+        """クーポントークンの保有0、売注文中0の状態（過去に保有）
+
+        :param exchange: Exchangeコントラクト
+        :param token_list: TokenListコントラクト
+        :return:
+        """
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -211,10 +217,8 @@ class TestV2CouponMyTokens:
 
         # ＜決済業者オペレーション①＞
         #   1）　決済
-        latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid)
-        coupon_confirm_agreement(
-            agent, exchange, latest_orderid, latest_agreementid)
+        latest_agreementid = coupon_get_latest_agreementid(exchange, latest_orderid)
+        coupon_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション②＞
         #   1) Make売
@@ -227,12 +231,18 @@ class TestV2CouponMyTokens:
 
         # ＜決済業者オペレーション②＞
         #   1）　決済
-        latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid)
-        coupon_confirm_agreement(
-            agent, exchange, latest_orderid, latest_agreementid)
+        latest_agreementid = coupon_get_latest_agreementid(exchange, latest_orderid)
+        coupon_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         return token
+
+    @staticmethod
+    def insert_transfer_record(session, token_address, from_address, to_address):
+        record = Transfer()
+        record.token_address = token_address
+        record.from_address = from_address
+        record.to_address = to_address
+        session.add(record)
 
     @staticmethod
     def list_token(session, token):
@@ -791,7 +801,7 @@ class TestV2CouponMyTokens:
                 assert token == assumed_body
 
     # ＜正常系2-3＞
-    # 残高なし、売注文中なし
+    # 残高なし、売注文中なし（過去の保有履歴あり）
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
     #   →　決済代行：決済①
     #       →　投資家：Make売　→　発行体：Take買
@@ -799,14 +809,25 @@ class TestV2CouponMyTokens:
     def test_coupon_position_normal_2_3(self, client, session, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
+        issuer = eth_account['issuer']
         account = eth_account['trader']
 
+        # 残高ゼロの状態を再現
         token = TestV2CouponMyTokens.create_zero(exchange, token_list)
         token_address = token['address']
+
+        # トークン移転履歴（保有履歴）の挿入
+        self.insert_transfer_record(
+            session=session,
+            token_address=token['address'],
+            from_address=issuer['account_address'],
+            to_address=account['account_address']
+        )
 
         # 取扱トークンデータ挿入
         TestV2CouponMyTokens.list_token(session, token)
 
+        # 環境変数設定
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -814,18 +835,55 @@ class TestV2CouponMyTokens:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client. \
-            simulate_post(self.apiurl, headers=headers, body=request_body)
+        # テスト対象API呼び出し
+        resp = client.simulate_post(
+            self.apiurl,
+            headers=headers,
+            body=request_body
+        )
 
+        # 結果検証
+        assumed_body = {
+            'token': {
+                'token_address': token_address,
+                'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 1000000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'memo': 'クーポンメモ欄',
+                'expiration_date': '20191231',
+                'transferable': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'initial_offering_status': False,
+                'status': True,
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 0,
+            'commitment': 0,
+            'used': 0
+        }
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-
-        # リスト0件の確認
-        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
-                count = 1
-        assert count == 0
+                assert token == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_coupon_position_error_1(self, client):

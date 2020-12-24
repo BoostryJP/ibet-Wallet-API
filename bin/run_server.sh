@@ -9,13 +9,17 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed onan "AS IS" BASIS,
+# software distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
+
+source ~/.bash_profile
+
+cd /app/ibet-Wallet-API
 
 function start () {
     #source .venv/bin/activate
@@ -35,6 +39,6 @@ case "$1" in
         stop
         ;;
     *)
-    echo "Usage: run.sh {start|stop}"
+    echo "Usage: run_server.sh {start|stop}"
     exit 1
 esac

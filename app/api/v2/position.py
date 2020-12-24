@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -32,7 +32,7 @@ from app.api.common import BaseResource
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon
+from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon, Transfer
 
 LOG = log.get_logger()
 
@@ -345,8 +345,16 @@ class CouponMyTokens(BaseResource):
                         commitment = CouponExchangeContract.functions.commitmentOf(owner, token_address).call()
                         used = CouponTokenContract.functions.usedOf(owner).call()
 
-                        # 残高、残注文、使用済数量がゼロではない場合、詳細情報を取得する
-                        if balance == 0 and commitment == 0 and used == 0:
+                        # 移転履歴TBLからトークンの受領履歴を検索
+                        # NOTE: TBLの情報は実際の移転状態とタイムラグがある
+                        received_history = session.query(Transfer). \
+                            filter(Transfer.token_address == token.token_address). \
+                            filter(Transfer.to_address == owner). \
+                            first()
+
+                        # 残高がゼロではない or 残注文がゼロではない or
+                        # 使用済数量がゼロではない or 受領履歴がゼロ件ではない 場合、詳細情報を取得する
+                        if balance == 0 and commitment == 0 and used == 0 and received_history is None:
                             continue
                         else:
                             coupontoken = CouponToken.get(session=session, token_address=token_address)
@@ -407,9 +415,9 @@ class CouponConsumptions(BaseResource):
         _coupon_address = to_checksum_address(request_json['token_address'])
         coupon_consumptions = []
         for _account_address in request_json['account_address_list']:
-            consumptions = session.query(ConsumeCoupon).\
-                filter(ConsumeCoupon.token_address == _coupon_address).\
-                filter(ConsumeCoupon.account_address == _account_address).\
+            consumptions = session.query(ConsumeCoupon). \
+                filter(ConsumeCoupon.token_address == _coupon_address). \
+                filter(ConsumeCoupon.account_address == _account_address). \
                 all()
             for consumption in consumptions:
                 coupon_consumptions.append({

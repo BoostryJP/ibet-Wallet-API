@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -21,6 +21,7 @@ from cerberus import Validator
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from eth_typing import ChecksumAddress
 
 from eth_utils import to_checksum_address
 from rlp import decode
@@ -47,7 +48,7 @@ class GetTransactionCount(BaseResource):
     Endpoint: /Eth/TransactionCount/{eth_address}
     """
 
-    def on_get(self, req, res, eth_address=None):
+    def on_get(self, req, res, eth_address: ChecksumAddress = None):
         LOG.info('v2.eth.GetTransactionCount')
 
         try:
@@ -55,12 +56,38 @@ class GetTransactionCount(BaseResource):
         except ValueError:
             raise InvalidParameterError
 
-        nonce = web3.eth.getTransactionCount(to_checksum_address(eth_address))
+        # 入力値チェック
+        request_json = self.validate(req)
+
+        nonce = web3.eth.getTransactionCount(
+            to_checksum_address(eth_address),
+            block_identifier=request_json["block_identifier"]
+        )
         gasprice = web3.eth.gasPrice
         chainid = config.WEB3_CHAINID
 
         eth_info = {'nonce': nonce, 'gasprice': gasprice, 'chainid': chainid}
         self.on_success(res, eth_info)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            "block_identifier": req.get_param("block_identifier", default=None),
+        }
+
+        validator = Validator({
+            "block_identifier": {
+                "type": "string",
+                "required": False,
+                "nullable": True,
+                "allowed": ["latest", "earliest", "pending"]
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
 
 
 # ------------------------------
@@ -146,7 +173,7 @@ class SendRawTransaction(BaseResource):
 
             # 実行結果を確認
             try:
-                tx = web3.eth.waitForTransactionReceipt(tx_hash, 30)
+                tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=5)
             except Exception as err:
                 # NOTE: eth.waitForTransactionReceiptは本来はExceptionではなくNoneを返す仕様だが、
                 #       バグでExceptionを返すようになっているため対応しておく

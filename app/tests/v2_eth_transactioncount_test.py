@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -29,6 +29,10 @@ class TestEthTransactionCount:
 
     # テスト対象API
     apiurl_base = '/v2/Eth/TransactionCount/'
+
+    ###########################################################################
+    # Normal
+    ###########################################################################
 
     # ＜正常系1＞
     # トランザクション未実行のアドレス
@@ -65,6 +69,29 @@ class TestEthTransactionCount:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+    # ＜正常系3＞
+    # block_identifier = "pending"
+    def test_transactioncount_normal_3(self, client):
+        # deployerのアドレス
+        eth_address = eth_account['deployer']['account_address']
+
+        apiurl = self.apiurl_base + eth_address
+        query_string = "block_identifier=pending"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+        nonce = web3.eth.getTransactionCount(eth_address)
+
+        assumed_body = {'chainid': '2017', 'gasprice': 0, 'nonce': nonce}
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    ###########################################################################
+    # Error
+    ###########################################################################
+
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
@@ -100,3 +127,24 @@ class TestEthTransactionCount:
         resp = client.simulate_get(apiurl)
 
         assert resp.status_code == 404
+
+    # ＜エラー系4＞
+    # トランザクション実行済みのアドレス
+    # block_identifier に取り得る値以外
+    # -> 400
+    def test_transactioncount_error_4(self, client):
+        # 任意のアドレス
+        some_account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
+
+        apiurl = self.apiurl_base + some_account_address
+        query_string = "block_identifier=hoge"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'block_identifier': 'unallowed value hoge'
+            }
+        }

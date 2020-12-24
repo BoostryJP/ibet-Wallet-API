@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from app import config
-from app.model import Agreement
 from app.tests.account_config import eth_account
 from app.tests.contract_modules import issue_bond_token, register_personalinfo, register_payment_gateway, \
     offer_bond_token, get_latest_orderid, take_buy_bond_token, get_latest_agreementid, \
@@ -37,6 +36,7 @@ class TestV2GetAgreementGet:
     apiurl = '/v2/Market/Agreement'
 
     # 約定イベントの作成（債券）
+    # 発行体：Make売、投資家：Take買
     @staticmethod
     def _generate_agree_event_bond(exchange, personal_info, payment_gateway):
         issuer = eth_account['issuer']
@@ -88,6 +88,7 @@ class TestV2GetAgreementGet:
         return token, latest_orderid, latest_agreementid
 
     # 約定イベントの作成（株式）
+    # 発行体：Make売、投資家：Take買
     @staticmethod
     def _generate_agree_event_share(exchange, personal_info):
         issuer = eth_account['issuer']
@@ -130,6 +131,7 @@ class TestV2GetAgreementGet:
         return token, latest_orderid, latest_agreementid
 
     # 約定イベントの作成（会員権）
+    # 発行体：Make売、投資家：Take買
     @staticmethod
     def _generate_agree_event_membership(exchange):
         issuer = eth_account['issuer']
@@ -161,6 +163,7 @@ class TestV2GetAgreementGet:
         return token, latest_orderid, latest_agreementid
 
     # 約定イベントの作成（クーポン）
+    # 発行体：Make売、投資家：Take買
     @staticmethod
     def _generate_agree_event_coupon(exchange):
         issuer = eth_account['issuer']
@@ -191,63 +194,18 @@ class TestV2GetAgreementGet:
 
         return token, latest_orderid, latest_agreementid
 
-    # 約定情報の挿入
-    def _indexer_agreement(self, session, exchange, order_id, agreement_id):
-        self.session = session
-
-        # Agreement Record
-        a = Agreement()
-        a.order_id = order_id
-        a.agreement_id = agreement_id
-        a.exchange_address = exchange['address']
-        a.unique_order_id = exchange['address'] + "_" + str(order_id)
-        a.buyer_address = '0x2e98E5e4098d838900509703FA8ee220E31eEdEE'
-        a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        a.amount = 3
-        a.status = 0
-        a.settlement_timestamp = '2019-11-13 16:23:14.183706'
-        a.created = '2019-11-13 16:26:14.183706'
-        session.add(a)
-
-        a = Agreement()
-        a.order_id = 2
-        a.agreement_id = 102
-        a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        a.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(2)
-        a.buyer_address = '0x2e98E5e4098d838900509703FA8ee220E31eEdEE'
-        a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        a.amount = 3
-        a.status = 0
-        a.settlement_timestamp = '2019-11-13 16:24:14.183706'
-        a.created = '2019-11-13 16:26:14.183706'
-        session.add(a)
-
-        a = Agreement()
-        a.order_id = order_id
-        a.agreement_id = agreement_id
-        a.exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'  # NOTE: Exchangeアドレスのみ異なる
-        a.unique_order_id = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb' + "_" + str(1)
-        a.buyer_address = '0x2e98E5e4098d838900509703FA8ee220E31eEdEE'
-        a.seller_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        a.amount = 3
-        a.status = 0
-        a.settlement_timestamp = '2019-11-13 16:23:14.183706'
-        a.created = '2019-11-13 16:26:14.183706'
-        session.add(a)
-
     ########################################################################################
     # Normal
     ########################################################################################
 
     # <Normal_1>
     # StraightBond
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client, shared_contract):
         exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
 
         _, order_id, agreement_id = self._generate_agree_event_bond(exchange, personal_info, payment_gateway)
-        self._indexer_agreement(session, exchange, order_id, agreement_id)
 
         # 環境変数設定
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
@@ -262,8 +220,8 @@ class TestV2GetAgreementGet:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
-            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'buyer_address': eth_account['trader']['account_address'],
+            'seller_address': eth_account['issuer']['account_address'],
             'paid': False,
             'price': 1000
         }
@@ -280,11 +238,10 @@ class TestV2GetAgreementGet:
 
     # <Normal_2>
     # Membership
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client, shared_contract):
         exchange = shared_contract['IbetMembershipExchange']
 
         _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
-        self._indexer_agreement(session, exchange, order_id, agreement_id)
 
         # 環境変数設定
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
@@ -299,8 +256,8 @@ class TestV2GetAgreementGet:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
-            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'buyer_address': eth_account['trader']['account_address'],
+            'seller_address': eth_account['issuer']['account_address'],
             'paid': False,
             'price': 1000
         }
@@ -317,11 +274,10 @@ class TestV2GetAgreementGet:
 
     # <Normal_3>
     # Coupon
-    def test_normal_3(self, client, session, shared_contract):
+    def test_normal_3(self, client, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
 
         _, order_id, agreement_id = self._generate_agree_event_coupon(exchange)
-        self._indexer_agreement(session, exchange, order_id, agreement_id)
 
         # 環境変数設定
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
@@ -336,8 +292,8 @@ class TestV2GetAgreementGet:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
-            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'buyer_address': eth_account['trader']['account_address'],
+            'seller_address': eth_account['issuer']['account_address'],
             'paid': False,
             'price': 1000
         }
@@ -354,12 +310,11 @@ class TestV2GetAgreementGet:
 
     # <Normal_4>
     # Share
-    def test_normal_4(self, client, session, shared_contract):
+    def test_normal_4(self, client, shared_contract):
         exchange = shared_contract['IbetOTCExchange']
         personal_info = shared_contract['PersonalInfo']
 
         _, order_id, agreement_id = self._generate_agree_event_share(exchange, personal_info)
-        self._indexer_agreement(session, exchange, order_id, agreement_id)
 
         # 環境変数設定
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
@@ -374,8 +329,8 @@ class TestV2GetAgreementGet:
             'amount': 100,
             'canceled': False,
             'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': '0x2e98E5e4098d838900509703FA8ee220E31eEdEE',
-            'seller_address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb',
+            'buyer_address': eth_account['trader']['account_address'],
+            'seller_address': eth_account['issuer']['account_address'],
             'paid': False,
             'price': 1000
         }
@@ -438,12 +393,23 @@ class TestV2GetAgreementGet:
     # Error_4
     # 指定した約定情報が存在しない
     # 400
-    def test_error_4(self, client, session):
-        exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
-        order_id = 999
-        agreement_id = 102
+    def test_error_4(self, client, shared_contract):
+        exchange = shared_contract['IbetStraightBondExchange']
+        personal_info = shared_contract['PersonalInfo']
+        payment_gateway = shared_contract['PaymentGateway']
 
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
+        _, order_id, agreement_id = self._generate_agree_event_bond(exchange, personal_info, payment_gateway)
+        not_exist_order_id = 999
+        not_exist_agreement_id = 999
+
+        # 環境変数設定
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+
+        query_string = f'order_id={not_exist_order_id}&agreement_id={not_exist_agreement_id}&' \
+                       f'exchange_address={exchange["address"]}'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 400
@@ -456,15 +422,10 @@ class TestV2GetAgreementGet:
     # Error_5
     # exchangeアドレスが環境変数に未設定
     # 400
-    def test_error_5(self, session, client):
+    def test_error_5(self, client):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         order_id = 2
         agreement_id = 102
-        self._indexer_agreement(
-            session,
-            {'address': '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'},
-            2, 102
-        )
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
         resp = client.simulate_get(self.apiurl, query_string=query_string)

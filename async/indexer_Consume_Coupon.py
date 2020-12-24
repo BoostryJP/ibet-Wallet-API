@@ -8,7 +8,7 @@ You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed onan "AS IS" BASIS,
+software distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
@@ -20,11 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import os
 import sys
 import time
-
-path = os.path.join(os.path.dirname(__file__), '../')
-sys.path.append(path)
-
-import logging
+from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -33,17 +29,18 @@ from web3 import Web3
 from eth_utils import to_checksum_address
 from web3.middleware import geth_poa_middleware
 
-from app import log
+path = os.path.join(os.path.dirname(__file__), '../')
+sys.path.append(path)
+
 from app import config
 from app.model import Listing, ConsumeCoupon
 from app.contracts import Contract
+import log
 
-from datetime import datetime, timezone, timedelta
 JST = timezone(timedelta(hours=+9), "JST")
 
-LOG = log.get_logger()
-log_fmt = 'INDEXER-Consume-Coupon [%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
-logging.basicConfig(format=log_fmt)
+process_name = "INDEXER-CONSUME-COUPON"
+LOG = log.get_logger(process_name=process_name)
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -119,7 +116,18 @@ class Processor:
 
     def initial_sync(self):
         self.get_token_list()
-        self.__sync_all(0, self.latest_block)
+        # 1,000,000ブロックずつ同期処理を行う
+        _to_block = 999999
+        _from_block = 0
+        if self.latest_block > 999999:
+            while _to_block < self.latest_block:
+                self.__sync_all(_from_block, _to_block)
+                _to_block += 1000000
+                _from_block += 1000000
+            self.__sync_all(_from_block, self.latest_block)
+        else:
+            self.__sync_all(_from_block, self.latest_block)
+        LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         self.get_token_list()
@@ -168,6 +176,7 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
+LOG.info("Service started successfully")
 
 processor.initial_sync()
 while True:

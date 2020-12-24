@@ -34,7 +34,7 @@ export WORKER_COUNT=8
 * サーバ起動
 ```
 $ cd ibet-Wallet-API
-$ ./bin/run.sh start
+$ ./bin/run_server.sh start
 ```
 
 ## 4. テストの実行
