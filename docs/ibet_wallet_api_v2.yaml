@@ -472,6 +472,25 @@ paths:
                       example:
                         1
                       description: success:1, error(ValueError):0
+                    transaction_hash:
+                      type: string
+                      description: transaction hash
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 88
+                  message:
+                    type: string
+                    example: Invalid Parameter
+                  description:
+                    description: Error Reason
   /Eth/WaitForTransactionReceipt:
     post:
       tags:
