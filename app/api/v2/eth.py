@@ -303,7 +303,7 @@ class SendRawTransactionNoWait(BaseResource):
             result.append({
                 'id': i + 1,
                 'status': 1,
-                'transaction_hash': transaction_hash
+                'transaction_hash': transaction_hash.hex()
             })
 
         self.on_success(res, result)
