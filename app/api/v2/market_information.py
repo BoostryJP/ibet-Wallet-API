@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from sqlalchemy import func
 from sqlalchemy import desc
+from sqlalchemy import and_
 from cerberus import Validator
 
 from web3 import Web3
@@ -28,7 +29,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import Order, Agreement
+from app.model import Order, Agreement, AgreementStatus
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
@@ -218,7 +219,8 @@ class StraightBondOrderBook(BaseResource):
                     func.sum(Agreement.amount)). \
                     outerjoin(
                     Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
+                    and_(Order.unique_order_id == Agreement.unique_order_id,
+                         Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(
                     Order.order_id, Order.amount,
                     Order.price, Order.exchange_address,
@@ -272,7 +274,8 @@ class StraightBondOrderBook(BaseResource):
                     func.sum(Agreement.amount)). \
                     outerjoin(
                     Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
+                    and_(Order.unique_order_id == Agreement.unique_order_id,
+                         Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(
                     Order.order_id, Order.amount,
                     Order.price, Order.exchange_address,
@@ -457,7 +460,7 @@ class StraightBondTick(BaseResource):
                 entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
-                    filter(Agreement.status == 1). \
+                    filter(Agreement.status == AgreementStatus.DONE.value). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -559,7 +562,8 @@ class MembershipOrderBook(BaseResource):
                     func.sum(Agreement.amount)). \
                     outerjoin(
                     Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
+                    and_(Order.unique_order_id == Agreement.unique_order_id,
+                         Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(
                     Order.order_id, Order.amount,
                     Order.price, Order.exchange_address,
@@ -613,7 +617,8 @@ class MembershipOrderBook(BaseResource):
                     func.sum(Agreement.amount)). \
                     outerjoin(
                     Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
+                    and_(Order.unique_order_id == Agreement.unique_order_id,
+                         Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(
                     Order.order_id, Order.amount,
                     Order.price, Order.exchange_address,
@@ -800,7 +805,7 @@ class MembershipTick(BaseResource):
                 entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
-                    filter(Agreement.status == 1). \
+                    filter(Agreement.status == AgreementStatus.DONE.value). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -902,7 +907,8 @@ class CouponOrderBook(BaseResource):
                     func.sum(Agreement.amount)). \
                     outerjoin(
                     Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
+                    and_(Order.unique_order_id == Agreement.unique_order_id,
+                         Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(
                     Order.order_id, Order.amount,
                     Order.price, Order.exchange_address,
@@ -956,7 +962,8 @@ class CouponOrderBook(BaseResource):
                     func.sum(Agreement.amount)). \
                     outerjoin(
                     Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
+                    and_(Order.unique_order_id == Agreement.unique_order_id,
+                         Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(
                     Order.order_id, Order.amount,
                     Order.price, Order.exchange_address,
@@ -1143,7 +1150,7 @@ class CouponTick(BaseResource):
                 entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
-                    filter(Agreement.status == 1). \
+                    filter(Agreement.status == AgreementStatus.DONE.value). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
