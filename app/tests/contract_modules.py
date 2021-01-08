@@ -18,9 +18,11 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 import json
+import time
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from eth_utils import to_checksum_address
 
 from app import config
 from app.contracts import Contract
@@ -299,16 +301,36 @@ def issue_share_token(invoker, attribute):
     web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     arguments = [
-        attribute['name'], attribute['symbol'], 
-        attribute['tradableExchange'], attribute['personalInfoAddress'],
+        attribute['name'], attribute['symbol'],
         attribute['issuePrice'], attribute['totalSupply'], attribute['dividends'],
         attribute['dividendRecordDate'], attribute['dividendPaymentDate'],
-        attribute['cancellationDate'], attribute['contactInformation'], 
-        attribute['privacyPolicy'], attribute['memo'], attribute['transferable']
+        attribute['cancellationDate']
     ]
 
     contract_address, abi = Contract.deploy_contract(
         'IbetShare', arguments, invoker['account_address'])
+
+    TokenContract = Contract.get_contract('IbetShare', contract_address)
+    if 'tradableExchange' in attribute:
+        TokenContract.functions.setTradableExchange(to_checksum_address(attribute['tradableExchange'])). \
+            transact({'from': invoker['account_address'], 'gas': 4000000})
+    if 'personalInfoAddress' in attribute:
+        TokenContract.functions.setPersonalInfoAddress(to_checksum_address(attribute['personalInfoAddress'])). \
+            transact({'from': invoker['account_address'], 'gas': 4000000})
+    if 'contactInformation' in attribute:
+        TokenContract.functions.setContactInformation(attribute['contactInformation']). \
+            transact({'from': invoker['account_address'], 'gas': 4000000})
+    if 'privacyPolicy' in attribute:
+        TokenContract.functions.setPrivacyPolicy(attribute['privacyPolicy']). \
+            transact({'from': invoker['account_address'], 'gas': 4000000})
+    if 'memo' in attribute:
+        TokenContract.functions.setMemo(attribute['memo']). \
+            transact({'from': invoker['account_address'], 'gas': 4000000})
+    if 'transferable' in attribute:
+        TokenContract.functions.setTransferable(attribute['transferable']). \
+            transact({'from': invoker['account_address'], 'gas': 4000000})
+
+    time.sleep(3)
 
     return {'address': contract_address, 'abi': abi}
 

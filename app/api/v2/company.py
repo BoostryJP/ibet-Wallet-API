@@ -107,7 +107,7 @@ class CompanyInfoList(BaseResource):
         for token in available_tokens:
             try:
                 token_address = to_checksum_address(token.token_address)
-                token_contract = Contract.get_contract('IbetStandardTokenInterface', token_address)
+                token_contract = Contract.get_contract('Ownable', token_address)
                 owner_address = token_contract.functions.owner().call()
                 listing_owner_list.append(owner_address)
             except Exception as e:
