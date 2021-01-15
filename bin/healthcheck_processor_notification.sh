@@ -17,8 +17,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-PROC_LIST="${PROC_LIST} async/processor_Block_Sync_Status.py"
-
 if [ "${BOND_TOKEN_ENABLED}" = 1 ]; then
   PROC_LIST="${PROC_LIST} async/processor_Notifications_Bond_Token.py"
   PROC_LIST="${PROC_LIST} async/processor_Notifications_Bond_Exchange.py"

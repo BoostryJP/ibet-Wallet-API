@@ -29,6 +29,8 @@ $ pip install -r requirements.txt
 
 ```
 export WORKER_COUNT=8
+# Ganache への接続時に設定
+export BLOCK_GENERATION_SPEED_THRESHOLD=0
 ```
 
 * サーバ起動
