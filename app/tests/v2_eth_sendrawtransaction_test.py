@@ -183,7 +183,7 @@ class TestEthSendRawTransaction():
         assert resp.json['meta'] == {
             'code': 503,
             'message': 'Service Unavailable',
-            'description': 'Block synchronization has stopped',
+            'description': 'Block synchronization is down',
         }
 
 
@@ -344,5 +344,5 @@ class TestEthSendRawTransactionNoWait():
         assert resp.json['meta'] == {
             'code': 503,
             'message': 'Service Unavailable',
-            'description': 'Block synchronization has stopped',
+            'description': 'Block synchronization is down',
         }
