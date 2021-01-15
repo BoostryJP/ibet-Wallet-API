@@ -140,6 +140,7 @@ class App(falcon.API):
 
         # ノード情報
         self.add_route('/v2/NodeInfo', nodeInfo.NodeInfo())
+        self.add_route('/v2/NodeInfo/BlockSyncStatus', nodeInfo.BlockSyncStatus())
 
         # 統計値
         self.add_route('/v2/Statistics/Token/{contract_address}', statistics.Token())
