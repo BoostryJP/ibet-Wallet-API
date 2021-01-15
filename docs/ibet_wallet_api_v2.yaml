@@ -330,6 +330,32 @@ paths:
                     type: object
                   agent_address:
                     type: string
+  /NodeInfo/BlockSyncStatus:
+    get:
+      tags:
+        - "NodeInfo"
+      summary: "Block synchronization status of the connected blockchain node"
+      operationId: "NodeInfoBlockSyncStatus"
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              meta:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 200
+                  message:
+                    type: string
+                    example: OK
+              data:
+                type: object
+                properties:
+                  is_synced:
+                    type: boolean
   /Eth/TransactionCount/{eth_address}:
     get:
       tags:
@@ -424,6 +450,20 @@ paths:
                       example:
                         1
                       description: execution success:1, execution failure:0
+        503:
+          description: service unavailable
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: 503
+              message:
+                type: string
+                example: Service Unavailable
+              description:
+                type: string
+                example: Error Reason
   /Eth/SendRawTransactionNoWait:
     post:
       tags:
@@ -491,6 +531,20 @@ paths:
                     example: Invalid Parameter
                   description:
                     description: Error Reason
+        503:
+          description: service unavailable
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: 503
+              message:
+                type: string
+                example: Service Unavailable
+              description:
+                type: string
+                example: Error Reason
   /Eth/WaitForTransactionReceipt:
     post:
       tags:

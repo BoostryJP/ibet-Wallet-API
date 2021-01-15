@@ -22,6 +22,8 @@ source ~/.bash_profile
 
 cd /app/ibet-Wallet-API
 
+python async/processor_Block_Sync_Status.py &
+
 if [ "$BOND_TOKEN_ENABLED" = 1 ]; then
   python async/processor_Notifications_Bond_Token.py &
   python async/processor_Notifications_Bond_Exchange.py &

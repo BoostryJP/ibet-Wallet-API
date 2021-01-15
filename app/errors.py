@@ -66,6 +66,12 @@ ERR_DATA_NOT_EXISTS = {
     'title': 'Data Not Exists'
 }
 
+ERR_SERVICE_UNAVAILABLE = {
+    'status': falcon.HTTP_503,
+    'code': 503,
+    'title': 'Service Unavailable'
+}
+
 
 class AppError(Exception):
     def __init__(self, error=None, description=None):
@@ -147,4 +153,13 @@ class SuspendedTokenError(AppError):
     """
     def __init__(self, description=None):
         super().__init__(ERR_SUSPENDED_TOKEN)
+        self.error['description'] = description
+
+
+class ServiceUnavailable(AppError):
+    """
+    503 ERROR: サービス利用不可
+    """
+    def __init__(self, description=None):
+        super().__init__(ERR_SERVICE_UNAVAILABLE)
         self.error['description'] = description
