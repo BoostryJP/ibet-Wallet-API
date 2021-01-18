@@ -22,6 +22,7 @@ import json
 from app import config
 from app import log
 from app.api.common import BaseResource
+from app.model.node import Node
 
 LOG = log.get_logger()
 
@@ -61,3 +62,23 @@ class NodeInfo(BaseResource):
         }
 
         self.on_success(res, nodeInfo)
+
+
+# ------------------------------
+# ブロック同期情報
+# ------------------------------
+class BlockSyncStatus(BaseResource):
+    """
+    Endpoint: /NodeInfo/BlockSyncStatus
+    """
+
+    def on_get(self, req, res):
+        LOG.info('v2.nodeInfo.GetBlockSyncStatus')
+
+        session = req.context["session"]
+
+        node = session.query(Node).first()
+
+        self.on_success(res, {
+            "is_synced": node.is_synced
+        })

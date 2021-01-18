@@ -29,10 +29,11 @@ from hexbytes import HexBytes
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, SuspendedTokenError, DataNotExistsError
+from app.errors import InvalidParameterError, SuspendedTokenError, DataNotExistsError, ServiceUnavailable
 from app import config
 from app.model import ExecutableContract, Listing
 from app.contracts import Contract
+from app.model.node import Node
 
 LOG = log.get_logger()
 
@@ -137,6 +138,12 @@ class SendRawTransaction(BaseResource):
                         continue
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
+
+        # ブロック生成状態チェック
+        # ブロックが生成されない状態だと nonce が正しい値にならないのでエラーで返す。
+        block = session.query(Node).first()
+        if block is None or not block.is_synced:
+            raise ServiceUnavailable("Block synchronization is down")
 
         # トランザクション送信
         result = []
@@ -265,6 +272,12 @@ class SendRawTransactionNoWait(BaseResource):
                         continue
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
+
+        # ブロック生成状態チェック
+        # ブロックが生成されない状態だと nonce が正しい値にならないのでエラーで返す。
+        node = session.query(Node).first()
+        if node is None or not node.is_synced:
+            raise ServiceUnavailable("Block synchronization is down")
 
         # トランザクション送信
         result = []
