@@ -30,7 +30,7 @@ from eth_utils import to_checksum_address
 from app import log
 from app.api.common import BaseResource
 from app.model import Order, Agreement, AgreementStatus
-from app.errors import InvalidParameterError
+from app.errors import InvalidParameterError, NotSupportedError
 from app import config
 from app.contracts import Contract
 
@@ -54,6 +54,12 @@ class GetAgreement(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.market_information.GetAgreement')
+
+        if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None and \
+                config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None and \
+                config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None and \
+                config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='GET', url=req.path)
 
         # 入力値チェック
         request_json = self.validate(req)
@@ -188,6 +194,9 @@ class StraightBondOrderBook(BaseResource):
         LOG.info('v2.market_information.StraightBondOrderBook')
         session = req.context['session']
 
+        if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # 入力値チェック
         request_json = StraightBondOrderBook.validate(req)
 
@@ -213,8 +222,10 @@ class StraightBondOrderBook(BaseResource):
                 #  5) 指定したアカウントアドレス以外
                 #
                 # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)).\
-                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id,
+                                              Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
@@ -231,7 +242,8 @@ class StraightBondOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
                     outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
@@ -251,8 +263,10 @@ class StraightBondOrderBook(BaseResource):
                 #  4) 指値以下
                 #
                 # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
-                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id,
+                                              Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
@@ -267,7 +281,8 @@ class StraightBondOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以上
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
                     outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
@@ -350,6 +365,9 @@ class StraightBondLastPrice(BaseResource):
     def on_post(self, req, res):
         LOG.info('v2.market_information.StraightBondLastPrice')
 
+        if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         request_json = StraightBondLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
@@ -411,6 +429,9 @@ class StraightBondTick(BaseResource):
 
     def on_post(self, req, res):
         LOG.info('v2.market_information.StraightBondTick')
+
+        if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
 
         request_json = StraightBondTick.validate(req)
 
@@ -495,6 +516,9 @@ class MembershipOrderBook(BaseResource):
         LOG.info('v2.market_information.MembershipOrderBook')
         session = req.context['session']
 
+        if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # 入力値チェック
         request_json = MembershipOrderBook.validate(req)
 
@@ -520,8 +544,10 @@ class MembershipOrderBook(BaseResource):
                 #  5) 指定したアカウントアドレス以外
                 #
                 # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
-                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id,
+                                              Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
@@ -538,7 +564,8 @@ class MembershipOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
                     outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
@@ -558,8 +585,10 @@ class MembershipOrderBook(BaseResource):
                 #  4) 指値以下
                 #
                 # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
-                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id,
+                                              Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
@@ -574,7 +603,8 @@ class MembershipOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以上
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
                     outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
@@ -657,6 +687,9 @@ class MembershipLastPrice(BaseResource):
     def on_post(self, req, res):
         LOG.info('v2.market_information.MembershipLastPrice')
 
+        if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         request_json = MembershipLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
@@ -719,6 +752,9 @@ class MembershipTick(BaseResource):
 
     def on_post(self, req, res):
         LOG.info('v2.market_information.MembershipTick')
+
+        if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
 
         request_json = MembershipTick.validate(req)
 
@@ -804,6 +840,9 @@ class CouponOrderBook(BaseResource):
         LOG.info('v2.market_information.CouponOrderBook')
         session = req.context['session']
 
+        if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # 入力値チェック
         request_json = CouponOrderBook.validate(req)
 
@@ -829,8 +868,10 @@ class CouponOrderBook(BaseResource):
                 #  5) 指定したアカウントアドレス以外
                 #
                 # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
-                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id,
+                                              Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
@@ -847,7 +888,8 @@ class CouponOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
                     outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
@@ -867,8 +909,10 @@ class CouponOrderBook(BaseResource):
                 #  4) 指値以下
                 #
                 # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
-                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id,
+                                              Agreement.status != AgreementStatus.CANCELED.value)). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
@@ -883,7 +927,8 @@ class CouponOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以上
-                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address,
+                                       Order.account_address, func.sum(Agreement.amount)). \
                     outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
                     group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
@@ -966,6 +1011,9 @@ class CouponLastPrice(BaseResource):
     def on_post(self, req, res):
         LOG.info('v2.market_information.CouponLastPrice')
 
+        if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         request_json = CouponLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
@@ -1028,6 +1076,9 @@ class CouponTick(BaseResource):
 
     def on_post(self, req, res):
         LOG.info('v2.market_information.CouponTick')
+
+        if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
 
         request_json = CouponTick.validate(req)
 

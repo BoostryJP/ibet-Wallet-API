@@ -236,6 +236,7 @@ class TestV2ShareMyTokens:
         # 取扱トークンデータ挿入
         TestV2ShareMyTokens.list_token(session, token)
 
+        config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -297,11 +298,11 @@ class TestV2ShareMyTokens:
                 assert token == assumed_body
         assert count == 1
 
-    # 正常系2
+    # 正常系2-1
     # 残高あり、売注文中あり
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
     #   →　決済代行：決済　→　投資家：Make売
-    def test_share_position_normal_2(self, client, session, shared_contract):
+    def test_share_position_normal_2_1(self, client, session, shared_contract):
         exchange = shared_contract['IbetOTCExchange']
         token_list = shared_contract['TokenList']
         personal_info = shared_contract['PersonalInfo']
@@ -313,6 +314,7 @@ class TestV2ShareMyTokens:
         # 取扱トークンデータ挿入
         TestV2ShareMyTokens.list_token(session, token)
 
+        config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -375,6 +377,85 @@ class TestV2ShareMyTokens:
                 assert token == assumed_body
         assert count == 1
 
+    # 正常系2-2
+    # 残高あり、exchangeアドレス未設定
+    # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
+    #   →　決済代行：決済　→　投資家：Make売
+    def test_share_position_normal_2_2(self, client, session, shared_contract):
+        exchange = shared_contract['IbetOTCExchange']
+        token_list = shared_contract['TokenList']
+        personal_info = shared_contract['PersonalInfo']
+        account = eth_account['trader']
+
+        token = TestV2ShareMyTokens.create_commitment(exchange, personal_info, token_list)
+        token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV2ShareMyTokens.list_token(session, token)
+
+        config.SHARE_TOKEN_ENABLED = True
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client. \
+            simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token_address,
+                'token_template': 'IbetShare',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト株式',
+                'symbol': 'SHARE',
+                'total_supply': 1000000,
+                'issue_price': 1000,
+                'dividend_information': {
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200401',
+                    'dividend_payment_date': '20200502'
+                },
+                'cancellation_date': '20200603',
+                'memo': 'メモ',
+                'transferable': True,
+                'offering_status': False,
+                'status': True,
+                'reference_urls': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'image_url': [],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+
+            'balance': 50,
+            'commitment': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address:
+                count = 1
+                assert token == assumed_body
+        assert count == 1
+
     # 正常系3
     # 残高なし、売注文中なし
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
@@ -393,6 +474,7 @@ class TestV2ShareMyTokens:
         # 取扱トークンデータ挿入
         TestV2ShareMyTokens.list_token(session, token)
 
+        config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -428,6 +510,7 @@ class TestV2ShareMyTokens:
         # 取扱トークンデータ挿入
         TestV2ShareMyTokens.list_private_token(session, token)
 
+        config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -505,6 +588,7 @@ class TestV2ShareMyTokens:
         TestV2ShareMyTokens.list_token(session, token)
         TestV2ShareMyTokens.list_private_token(session, token)
 
+        config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -587,6 +671,7 @@ class TestV2ShareMyTokens:
         TestV2ShareMyTokens.list_token(session, token_1)
         TestV2ShareMyTokens.list_private_token(session, token_2)
 
+        config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -700,6 +785,8 @@ class TestV2ShareMyTokens:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
+        config.SHARE_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -721,6 +808,8 @@ class TestV2ShareMyTokens:
         headers = {}
         request_body = json.dumps(request_params)
 
+        config.SHARE_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -738,6 +827,8 @@ class TestV2ShareMyTokens:
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.SHARE_TOKEN_ENABLED = True
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -757,6 +848,8 @@ class TestV2ShareMyTokens:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.SHARE_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -769,4 +862,19 @@ class TestV2ShareMyTokens:
                     '0': 'must be of string type'
                 }
             }
+        }
+
+    # エラー系4
+    # 取扱トークン対象外
+    def test_share_position_error_4(self, client):
+
+        config.SHARE_TOKEN_ENABLED = False
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Position/Share'
         }

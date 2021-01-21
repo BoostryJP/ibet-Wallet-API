@@ -25,7 +25,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, DataNotExistsError
+from app.errors import InvalidParameterError, DataNotExistsError, NotSupportedError
 from app import config
 from app.contracts import Contract
 from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, Position, Transfer
@@ -198,6 +198,9 @@ class StraightBondTokens(BaseResource):
 
         session = req.context["session"]
 
+        if config.BOND_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # Validation
         request_json = StraightBondTokens.validate(req)
 
@@ -292,6 +295,9 @@ class StraightBondTokenAddresses(BaseResource):
 
         session = req.context["session"]
 
+        if config.BOND_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # Validation
         request_json = self.validate(req)
 
@@ -378,6 +384,9 @@ class StraightBondTokenDetails(BaseResource):
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.StraightBondTokenDetails')
 
+        if config.BOND_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # 入力アドレスフォーマットチェック
         try:
             contract_address = to_checksum_address(contract_address)
@@ -462,6 +471,9 @@ class ShareTokens(BaseResource):
         LOG.info('v2.token.ShareTokens')
 
         session = req.context["session"]
+
+        if config.SHARE_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
 
         # Validation
         request_json = ShareTokens.validate(req)
@@ -558,6 +570,9 @@ class ShareTokenAddresses(BaseResource):
 
         session = req.context["session"]
 
+        if config.SHARE_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # Validation
         request_json = self.validate(req)
 
@@ -645,6 +660,9 @@ class ShareTokenDetails(BaseResource):
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.ShareTokenDetails')
 
+        if config.SHARE_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # 入力アドレスフォーマットチェック
         try:
             contract_address = to_checksum_address(contract_address)
@@ -729,6 +747,9 @@ class MembershipTokens(BaseResource):
         LOG.info('v2.token.MembershipTokens')
 
         session = req.context["session"]
+
+        if config.MEMBERSHIP_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
 
         # Validation
         request_json = MembershipTokens.validate(req)
@@ -827,6 +848,9 @@ class MembershipTokenAddresses(BaseResource):
 
         session = req.context["session"]
 
+        if config.MEMBERSHIP_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # Validation
         request_json = MembershipTokens.validate(req)
 
@@ -914,6 +938,9 @@ class MembershipTokenDetails(BaseResource):
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.MembershipTokenDetails')
 
+        if config.MEMBERSHIP_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # 入力アドレスフォーマットチェック
         try:
             contract_address = to_checksum_address(contract_address)
@@ -998,6 +1025,9 @@ class CouponTokens(BaseResource):
         LOG.info('v2.token.CouponTokens')
 
         session = req.context["session"]
+
+        if config.COUPON_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
 
         # Validation
         request_json = CouponTokens.validate(req)
@@ -1096,6 +1126,9 @@ class CouponTokenAddresses(BaseResource):
 
         session = req.context["session"]
 
+        if config.COUPON_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         # Validation
         request_json = CouponTokens.validate(req)
 
@@ -1183,6 +1216,9 @@ class CouponTokenDetails(BaseResource):
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.CouponTokenDetails')
+
+        if config.COUPON_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
 
         # 入力アドレスフォーマットチェック
         try:
