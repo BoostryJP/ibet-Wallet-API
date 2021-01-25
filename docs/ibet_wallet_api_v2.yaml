@@ -54,14 +54,7 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -121,14 +114,14 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Admin/Tokens/Type:
     get:
       tags:
@@ -142,14 +135,7 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -180,14 +166,7 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -206,6 +185,13 @@ paths:
                   created:
                     type: string
                     description: Create Datetime (JST)
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
     post:
       tags:
         - "Admin"
@@ -245,14 +231,21 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
     delete:
       tags:
         - "Admin"
@@ -271,14 +264,7 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
   /NodeInfo:
     get:
       tags:
@@ -287,19 +273,12 @@ paths:
       operationId: "NodeInfo"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -338,19 +317,12 @@ paths:
       operationId: "NodeInfoBlockSyncStatus"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -377,19 +349,12 @@ paths:
           type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -402,6 +367,13 @@ paths:
                   chainid:
                     type: string
                     example: 2017
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Eth/SendRawTransaction:
     post:
       tags:
@@ -422,19 +394,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -450,20 +415,20 @@ paths:
                       example:
                         1
                       description: execution success:1, execution failure:0
-        503:
-          description: service unavailable
+        400:
+          description: Invalid Parameter Error or Suspended Token
           schema:
             type: object
             properties:
-              code:
-                type: string
-                example: 503
-              message:
-                type: string
-                example: Service Unavailable
-              description:
-                type: string
-                example: Error Reason
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        503:
+          description: Service Unavailable
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/503ServiceUnavailable"
   /Eth/SendRawTransactionNoWait:
     post:
       tags:
@@ -484,19 +449,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -516,35 +474,19 @@ paths:
                       type: string
                       description: transaction hash
         400:
-          description: Invalid Parameter Error
+          description: Invalid Parameter Error or Suspended Token
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 88
-                  message:
-                    type: string
-                    example: Invalid Parameter
-                  description:
-                    description: Error Reason
+                $ref: "#/definitions/400InvalidParameterError"
         503:
-          description: service unavailable
+          description: Service Unavailable
           schema:
             type: object
             properties:
-              code:
-                type: string
-                example: 503
-              message:
-                type: string
-                example: Service Unavailable
-              description:
-                type: string
-                example: Error Reason
+              meta:
+                $ref: "#/definitions/503ServiceUnavailable"
   /Eth/WaitForTransactionReceipt:
     post:
       tags:
@@ -570,51 +512,26 @@ paths:
           maximum: 30
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
         400:
           description: Invalid Parameter Error
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 88
-                  message:
-                    type: string
-                    example: Invalid Parameter
-                  description:
-                    description: Error Reason
+                $ref: "#/definitions/400InvalidParameterError"
         404:
           description: Not Found Error
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 30
-                  message:
-                    type: string
-                    example: Data Not Exists
-                  description:
-                    description: Error Reason
+                $ref: "#/definitions/404NotFoundError"
   /ABI/StraightBond:
     get:
       tags:
@@ -623,19 +540,12 @@ paths:
       operationId: "StraightBondABI"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -648,19 +558,12 @@ paths:
       operationId: "ShareABI"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -673,19 +576,12 @@ paths:
       operationId: "MembershipABI"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
   /ABI/Coupon:
@@ -696,19 +592,12 @@ paths:
       operationId: "CouponABI"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
   /Company/{eth_address}:
@@ -725,19 +614,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -749,6 +631,20 @@ paths:
                     type: string
                   homepage:
                     type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Companies:
     get:
       tags:
@@ -757,19 +653,12 @@ paths:
       operationId: "Companies"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -797,19 +686,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -836,6 +718,13 @@ paths:
                       type: string
                     privacy_policy:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /PaymentAgent/{eth_address}:
     get:
       deprecated: true
@@ -852,19 +741,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -876,6 +758,20 @@ paths:
                     type: string
                   homepage:
                     type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /User/PaymentAccount:
     get:
       tags:
@@ -884,19 +780,12 @@ paths:
       operationId: "PaymentAccount"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -907,6 +796,13 @@ paths:
                   approval_status:
                     type: integer
                     description: approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /User/PersonalInfo:
     get:
       tags:
@@ -915,19 +811,12 @@ paths:
       operationId: "PersonalInfo"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -938,6 +827,13 @@ paths:
                     description: link address
                   registered:
                     type: boolean
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /User/StreetAddress/{postal_code}:
     get:
       tags:
@@ -952,19 +848,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1004,6 +893,20 @@ paths:
                       type: string
                       example:
                         岩本町
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/StraightBond:
     get:
       tags:
@@ -1023,19 +926,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1129,6 +1025,13 @@ paths:
                     id:
                       type: integer
                       description: cursor id
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/StraightBond/Address:
     get:
       tags:
@@ -1148,19 +1051,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1171,6 +1067,13 @@ paths:
                       description: cursor id
                     token_address:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/StraightBond/{contract_address}:
     get:
       tags:
@@ -1185,19 +1088,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -1286,6 +1182,20 @@ paths:
                     type: string
                   transferable:
                     type: boolean
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/Share:
     get:
       tags:
@@ -1305,19 +1215,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1389,6 +1292,13 @@ paths:
                     id:
                       type: integer
                       description: cursor id
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/Share/Address:
     get:
       tags:
@@ -1408,19 +1318,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1431,6 +1334,13 @@ paths:
                       description: cursor id
                     token_address:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/Share/{contract_address}:
     get:
       tags:
@@ -1445,19 +1355,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -1524,6 +1427,20 @@ paths:
                     type: integer
                   max_sell_amount:
                     type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/Membership:
     get:
       tags:
@@ -1543,19 +1460,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1616,6 +1526,13 @@ paths:
                     id:
                       type: integer
                       description: cursor id
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/Membership/Address:
     get:
       tags:
@@ -1635,19 +1552,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1658,6 +1568,13 @@ paths:
                       description: cursor id
                     token_address:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/Membership/{contract_address}:
     get:
       tags:
@@ -1672,19 +1589,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -1740,6 +1650,20 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/Coupon:
     get:
       tags:
@@ -1759,19 +1683,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1832,6 +1749,13 @@ paths:
                     id:
                       type: integer
                       description: cursor id
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/Coupon/Address:
     get:
       tags:
@@ -1851,19 +1775,12 @@ paths:
           type: integer
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -1874,6 +1791,13 @@ paths:
                       description: cursor id
                     token_address:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Token/Coupon/{contract_address}:
     get:
       tags:
@@ -1888,19 +1812,12 @@ paths:
           type: "string"
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -1956,6 +1873,20 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/{contract_address}/Status:
     parameters:
       - type: string
@@ -1971,24 +1902,31 @@ paths:
       parameters: []
       responses:
         200:
-          description: "successful operation"
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
                   status:
                     type: boolean
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/{contract_address}/Holders:
     parameters:
       - type: string
@@ -2003,19 +1941,12 @@ paths:
       operationId: "TokenHolders"
       responses:
         200:
-          description: "successful operation"
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2033,32 +1964,14 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 88
-                  message:
-                    type: string
-                    example: Invalid Parameter
-                  description:
-                    description: Error Reason
+                $ref: "#/definitions/400InvalidParameterError"
         404:
           description: Not Found Error
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 30
-                  message:
-                    type: string
-                    example: Data Not Exists
-                  description:
-                    description: Error Reason
+                $ref: "#/definitions/404NotFoundError"
   /Token/{contract_address}/TransferHistory:
     parameters:
       - type: string
@@ -2073,19 +1986,12 @@ paths:
       operationId: "TransferHistory"
       responses:
         200:
-          description: "successful operation"
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2110,32 +2016,14 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 88
-                  message:
-                    type: string
-                    example: Invalid Parameter
-                  description:
-                    description: Error Reason
+                $ref: "#/definitions/400InvalidParameterError"
         404:
           description: Not Found Error
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 30
-                  message:
-                    type: string
-                    example: Data Not Exists
-                  description:
-                    description: Error Reason
+                $ref: "#/definitions/404NotFoundError"
   /Market/OrderBook/StraightBond:
     post:
       tags:
@@ -2161,19 +2049,12 @@ paths:
           enum: [buy,sell]
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2187,6 +2068,13 @@ paths:
                       type: integer
                     account_address:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/OrderBook/Membership:
     post:
       tags:
@@ -2212,19 +2100,12 @@ paths:
           enum: [buy,sell]
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2238,6 +2119,13 @@ paths:
                       type: integer
                     account_address:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/OrderBook/Coupon:
     post:
       tags:
@@ -2263,19 +2151,12 @@ paths:
           enum: [buy,sell]
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2289,6 +2170,13 @@ paths:
                       type: integer
                     account_address:
                       type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/LastPrice/StraightBond:
     post:
       tags:
@@ -2305,19 +2193,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2327,6 +2208,13 @@ paths:
                       type: string
                     last_price:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/LastPrice/Membership:
     post:
       tags:
@@ -2343,19 +2231,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2365,6 +2246,13 @@ paths:
                       type: string
                     last_price:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/LastPrice/Coupon:
     post:
       tags:
@@ -2381,19 +2269,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2403,6 +2284,13 @@ paths:
                       type: string
                     last_price:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/Tick/StraightBond:
     post:
       tags:
@@ -2419,19 +2307,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2459,6 +2340,13 @@ paths:
                             type: integer
                           amount:
                             type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/Tick/Membership:
     post:
       tags:
@@ -2475,19 +2363,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2515,6 +2396,13 @@ paths:
                             type: integer
                           amount:
                             type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/Tick/Coupon:
     post:
       tags:
@@ -2531,19 +2419,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2571,6 +2452,13 @@ paths:
                             type: integer
                           amount:
                             type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Market/Agreement:
     get:
       tags:
@@ -2598,19 +2486,12 @@ paths:
           allowEmptyValue: false
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -2647,18 +2528,7 @@ paths:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    description: error code
-                    example: 1
-                  message:
-                    type: string
-                    description: error message
-                    example: Invalid Parameter
-                  description:
-                    description: error reason
+                $ref: "#/definitions/400InvalidParameterError"
   /Position/StraightBond:
     post:
       tags:
@@ -2675,19 +2545,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2787,6 +2650,13 @@ paths:
                       type: integer
                     commitment:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Position/Share:
     post:
       tags:
@@ -2803,19 +2673,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2891,6 +2754,13 @@ paths:
                       type: integer
                     commitment:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Position/Membership:
     post:
       tags:
@@ -2907,19 +2777,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -2984,6 +2847,13 @@ paths:
                       type: integer
                     commitment:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Position/Coupon:
     post:
       tags:
@@ -3000,19 +2870,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 items:
@@ -3079,6 +2942,13 @@ paths:
                       type: integer
                     used:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Position/Coupon/Consumptions:
     post:
       tags:
@@ -3100,19 +2970,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: array
                 description: sorted by block_timestamp
@@ -3127,6 +2990,13 @@ paths:
                     value:
                       type: integer
                       description: consumption amount
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /OrderList/StraightBond:
     post:
       tags:
@@ -3143,19 +3013,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -3502,6 +3365,20 @@ paths:
                           description: settlement timestamp
                         sort_id:
                           type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /OrderList/Share:
     post:
       tags:
@@ -3518,19 +3395,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -3685,6 +3555,20 @@ paths:
                           description: settlement timestamp
                         sort_id:
                           type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /OrderList/Membership:
     post:
       tags:
@@ -3701,19 +3585,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -3955,6 +3832,20 @@ paths:
                           description: settlement timestamp
                         sort_id:
                           type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /OrderList/Coupon:
     post:
       tags:
@@ -3971,19 +3862,12 @@ paths:
             type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -4225,6 +4109,20 @@ paths:
                           description: settlement timestamp
                         sort_id:
                           type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Notifications:
     get:
       tags:
@@ -4257,19 +4155,12 @@ paths:
           enum: ["flagged","deleted"]
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -4329,6 +4220,13 @@ paths:
                           type: string
                         sort_id:
                           type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
     post:
       tags:
         - "Notification"
@@ -4355,19 +4253,12 @@ paths:
               - id
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
@@ -4422,6 +4313,20 @@ paths:
                     type: string
                   sort_id:
                     type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Notifications/Read:
     post:
       tags:
@@ -4443,19 +4348,19 @@ paths:
               - is_read
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /NotificationCount:
     get:
       tags:
@@ -4469,24 +4374,24 @@ paths:
           type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
                   unread_counts:
                     type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
   /Statistics/Token/{contract_address}:
     get:
       tags:
@@ -4500,21 +4405,100 @@ paths:
           type: string
       responses:
         200:
-          description: successful operation
+          description: Successful Operation
           schema:
             type: object
             properties:
               meta:
-                type: object
-                properties:
-                  code:
-                    type: string
-                    example: 200
-                  message:
-                    type: string
-                    example: OK
+                $ref: "#/definitions/200Success"
               data:
                 type: object
                 properties:
                   holders_count:
                     type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+definitions:
+  200Success:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Processing Result Code
+        example: 200
+      message:
+        type: string
+        description: Processing Result Message
+        example: OK
+  400InvalidParameterError:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: Error Code
+        example: 88
+      message:
+        type: string
+        description: Error Message
+        example: Invalid Parameter
+      description:
+        type: string
+        description: Error Reason
+        example: Invalid owner address
+  404NotFoundError:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: Error Code
+        example: 30
+      message:
+        type: string
+        description: Error Reason
+        example: Data Not Exists
+      description:
+        type: string
+        description: Error Reason
+        example: "contract_address: 0xe6A75581C7299c75392a63BCF18a3618B30ff765"
+  404NotSupportedError:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: Error Code
+        example: 10
+      message:
+        type: string
+        description: Error Reason
+        example: Not Supported
+      description:
+        type: string
+        description: Error Reason
+        example: "method: POST, url: /v2/Token/Share"
+  503ServiceUnavailable:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: Error Code
+        example: 503
+      message:
+        type: string
+        description: Error Reason
+        example: Service Unavailable
+      description:
+        type: string
+        description: Error Reason
+        example: Block synchronization is down
