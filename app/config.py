@@ -54,6 +54,8 @@ CONFIG.read(INI_FILE)
 # Web3設定
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
 WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
+TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT")) \
+    if os.environ.get("TRANSACTION_WAIT_TIMEOUT") else 120
 
 # サーバ設定
 WORKER_COUNT = int(os.environ.get("WORKER_COUNT")) if os.environ.get("WORKER_COUNT") else 8
