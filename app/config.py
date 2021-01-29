@@ -54,11 +54,22 @@ CONFIG.read(INI_FILE)
 # Web3設定
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
 WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
+TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT")) \
+    if os.environ.get("TRANSACTION_WAIT_TIMEOUT") else 120
 
 # サーバ設定
 WORKER_COUNT = int(os.environ.get("WORKER_COUNT")) if os.environ.get("WORKER_COUNT") else 8
 REQUEST_TIMEOUT = (3.0, 7.5)
 SLEEP_INTERVAL = int(os.environ.get("SLEEP_INTERVAL")) if os.environ.get("SLEEP_INTERVAL") else 3
+
+# プロセッサ設定
+# ブロック同期状態監視間隔 (秒)
+BLOCK_SYNC_STATUS_SLEEP_INTERVAL = int(os.environ.get("BLOCK_SYNC_STATUS_SLEEP_INTERVAL", SLEEP_INTERVAL))
+# ブロック同期状態の判定に使用する監視データの数
+BLOCK_SYNC_STATUS_CALC_PERIOD = int(os.environ.get("BLOCK_SYNC_STATUS_CALC_PERIOD", 5))
+# ブロック同期停止と判断するブロック生成速度のしきい値 (%)
+# NOTE: Quorum Validator 4台中1台がクラッシュ障害状態のとき、ブロック生成速度は 20% 〜 35% ぐらいになる
+BLOCK_GENERATION_SPEED_THRESHOLD = int(os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD", 10))
 
 # データベース設定
 if 'pytest' in sys.modules:  # 単体テスト実行時

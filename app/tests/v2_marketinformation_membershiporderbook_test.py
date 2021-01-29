@@ -778,10 +778,10 @@ class TestV2MembershipOrderBook():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-    # ＜正常系4＞
-    # 約定済み（※部分約定含む）の注文が複数存在
+    # ＜正常系4-1＞
+    # 約定済み（※部分約定,約定否認含む）の売り注文が複数存在:アカウントアドレス指定
     #  -> 未約定のOrderBookリストが返却される
-    def test_membershiporderbook_normal_4(self, client, session):
+    def test_membershiporderbook_normal_4_1(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
@@ -799,7 +799,7 @@ class TestV2MembershipOrderBook():
         order.exchange_address = exchange_address
         order.order_id = 0
         order.unique_order_id = exchange_address + '_' + str(0)
-        order.account_address = account_addresses[1]
+        order.account_address = account_addresses[0]
         order.counterpart_address = ''
         order.is_buy = False
         order.price = 1000
@@ -841,7 +841,7 @@ class TestV2MembershipOrderBook():
         order.exchange_address = exchange_address
         order.order_id = 3
         order.unique_order_id = exchange_address + '_' + str(3)
-        order.account_address = account_addresses[2]
+        order.account_address = account_addresses[1]
         order.counterpart_address = ''
         order.is_buy = False
         order.price = 6000
@@ -866,9 +866,39 @@ class TestV2MembershipOrderBook():
         agreement.agreement_id = 0
         agreement.exchange_address = exchange_address
         agreement.unique_order_id = exchange_address + '_' + str(2)
-        agreement.counterpart_address = account_addresses[1]
+        agreement.counterpart_address = account_addresses[2]
         agreement.amount = 50
         agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 10
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 1
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 20
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 2
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 70
+        agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
         request_body = {
@@ -879,10 +909,296 @@ class TestV2MembershipOrderBook():
 
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [{
+            "order_id": 2,
+            "price": 3000,
+            "amount": 50,
+            "account_address": account_addresses[2],
+        }, {
+            "order_id": 3,
+            "price": 6000,
+            "amount": 70,
+            "account_address": account_addresses[1],
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系4-2＞
+    # 約定済み（※部分約定,約定否認含む）の買い注文が複数存在:アカウントアドレス指定
+    #  -> 未約定のOrderBookリストが返却される
+    def test_membershiporderbook_normal_4_2(self, client, session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        account_addresses = [
+            "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
+            "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
+            "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
+        ]
+        agent_address = eth_account['agent']['account_address']
+
+        # Orderの情報を挿入
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 0
+        order.unique_order_id = exchange_address + '_' + str(0)
+        order.account_address = account_addresses[0]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
+        order.account_address = account_addresses[1]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 2000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 2
+        order.unique_order_id = exchange_address + '_' + str(2)
+        order.account_address = account_addresses[2]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 3000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 3
+        order.unique_order_id = exchange_address + '_' + str(3)
+        order.account_address = account_addresses[1]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 6000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        # Agreementの情報を挿入
+        agreement = Agreement()
+        agreement.order_id = 1
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(1)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 100
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 2
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(2)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 50
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 10
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 1
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 20
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 2
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 70
+        agreement.status = AgreementStatus.CANCELED.value
+        session.add(agreement)
+
+        request_body = {
+            "token_address": token_address,
+            "order_type": "sell",
+            "account_address": account_addresses[0],
+        }
+
+        resp = client.simulate_post(self.apiurl, json=request_body)
+        assumed_body = [{
+            "order_id": 2,
+            "price": 3000,
+            "amount": 50,
+            "account_address": account_addresses[2],
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系4-3＞
+    # 約定済み（※部分約定,約定否認含む）の売り注文が複数存在:アカウントアドレス指定なし
+    #  -> 未約定のOrderBookリストが返却される
+    def test_membershiporderbook_normal_4_3(self, client, session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        account_addresses = [
+            "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
+            "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
+            "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
+        ]
+        agent_address = eth_account['agent']['account_address']
+
+        # Orderの情報を挿入
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 0
+        order.unique_order_id = exchange_address + '_' + str(0)
+        order.account_address = account_addresses[0]
+        order.counterpart_address = ''
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
+        order.account_address = account_addresses[1]
+        order.counterpart_address = ''
+        order.is_buy = False
+        order.price = 2000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 2
+        order.unique_order_id = exchange_address + '_' + str(2)
+        order.account_address = account_addresses[2]
+        order.counterpart_address = ''
+        order.is_buy = False
+        order.price = 3000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 3
+        order.unique_order_id = exchange_address + '_' + str(3)
+        order.account_address = account_addresses[1]
+        order.counterpart_address = ''
+        order.is_buy = False
+        order.price = 6000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        # Agreementの情報を挿入
+        agreement = Agreement()
+        agreement.order_id = 1
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(1)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 100
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 2
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(2)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 50
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 10
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 1
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 20
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 2
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 70
+        agreement.status = AgreementStatus.CANCELED.value
+        session.add(agreement)
+
+        request_body = {
+            "token_address": token_address,
+            "order_type": "buy",
+        }
+
+        resp = client.simulate_post(self.apiurl, json=request_body)
+        assumed_body = [{
             "order_id": 0,
             "price": 1000,
             "amount": 100,
-            "account_address": account_addresses[1],
+            "account_address": account_addresses[0],
         }, {
             "order_id": 2,
             "price": 3000,
@@ -891,8 +1207,153 @@ class TestV2MembershipOrderBook():
         }, {
             "order_id": 3,
             "price": 6000,
-            "amount": 100,
+            "amount": 70,
+            "account_address": account_addresses[1],
+        }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系4-4＞
+    # 約定済み（※部分約定,約定否認含む）の買い注文が複数存在:アカウントアドレス指定なし
+    #  -> 未約定のOrderBookリストが返却される
+    def test_membershiporderbook_normal_4_4(self, client, session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = \
+            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        account_addresses = [
+            "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
+            "0x31b98d14007bdee637298086988a0bbd31184523",  # 注文者1
+            "0x52c3a9b0f293cac8c1baabe5b62524a71211a616"  # 注文者2
+        ]
+        agent_address = eth_account['agent']['account_address']
+
+        # Orderの情報を挿入
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 0
+        order.unique_order_id = exchange_address + '_' + str(0)
+        order.account_address = account_addresses[0]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
+        order.account_address = account_addresses[1]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 2000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 2
+        order.unique_order_id = exchange_address + '_' + str(2)
+        order.account_address = account_addresses[2]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 3000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 3
+        order.unique_order_id = exchange_address + '_' + str(3)
+        order.account_address = account_addresses[1]
+        order.counterpart_address = ''
+        order.is_buy = True
+        order.price = 6000
+        order.amount = 100
+        order.agent_address = agent_address
+        order.is_cancelled = False
+        session.add(order)
+
+        # Agreementの情報を挿入
+        agreement = Agreement()
+        agreement.order_id = 1
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(1)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 100
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 2
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(2)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 50
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 0
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 10
+        agreement.status = AgreementStatus.PENDING.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 1
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 20
+        agreement.status = AgreementStatus.DONE.value
+        session.add(agreement)
+
+        agreement = Agreement()
+        agreement.order_id = 3
+        agreement.agreement_id = 2
+        agreement.exchange_address = exchange_address
+        agreement.unique_order_id = exchange_address + '_' + str(3)
+        agreement.counterpart_address = account_addresses[2]
+        agreement.amount = 70
+        agreement.status = AgreementStatus.CANCELED.value
+        session.add(agreement)
+
+        request_body = {
+            "token_address": token_address,
+            "order_type": "sell",
+        }
+
+        resp = client.simulate_post(self.apiurl, json=request_body)
+        assumed_body = [{
+            "order_id": 2,
+            "price": 3000,
+            "amount": 50,
             "account_address": account_addresses[2],
+        }, {
+            "order_id": 0,
+            "price": 1000,
+            "amount": 100,
+            "account_address": account_addresses[0],
         }]
 
         assert resp.status_code == 200

@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from sqlalchemy import func
 from sqlalchemy import desc
+from sqlalchemy import and_
 from cerberus import Validator
 
 from web3 import Web3
@@ -28,7 +29,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import Order, Agreement
+from app.model import Order, Agreement, AgreementStatus
 from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
@@ -195,9 +196,7 @@ class StraightBondOrderBook(BaseResource):
 
         # 注文を抽出
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
-        exchange_address = \
-            to_checksum_address(
-                config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
+        exchange_address = to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
@@ -212,17 +211,11 @@ class StraightBondOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                #
+                # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)).\
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == False). \
@@ -230,7 +223,6 @@ class StraightBondOrderBook(BaseResource):
                     filter(Order.account_address != account_address). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
             else:  # 売注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -239,17 +231,9 @@ class StraightBondOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == True). \
@@ -257,7 +241,6 @@ class StraightBondOrderBook(BaseResource):
                     filter(Order.account_address != account_address). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
         else:
             if is_buy:  # 買注文
                 # ＜抽出条件＞
@@ -266,24 +249,17 @@ class StraightBondOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以下
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                #
+                # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == False). \
                     filter(Order.is_cancelled == False). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
             else:  # 売注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -291,17 +267,9 @@ class StraightBondOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以上
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == True). \
@@ -316,7 +284,6 @@ class StraightBondOrderBook(BaseResource):
             # 残存注文数量 = 発注数量 - 約定済み数量
             if not (agreement_amount is None):
                 amount -= int(agreement_amount)
-
             # 残注文ありの注文のみを抽出する
             if amount <= 0:
                 continue
@@ -457,7 +424,7 @@ class StraightBondTick(BaseResource):
                 entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
-                    filter(Agreement.status == 1). \
+                    filter(Agreement.status == AgreementStatus.DONE.value). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -536,9 +503,7 @@ class MembershipOrderBook(BaseResource):
 
         # 注文を抽出
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
-        exchange_address = \
-            to_checksum_address(
-                config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
+        exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
@@ -553,17 +518,11 @@ class MembershipOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                #
+                # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == False). \
@@ -571,7 +530,6 @@ class MembershipOrderBook(BaseResource):
                     filter(Order.account_address != account_address). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
             else:  # 売注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -580,17 +538,9 @@ class MembershipOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == True). \
@@ -598,7 +548,6 @@ class MembershipOrderBook(BaseResource):
                     filter(Order.account_address != account_address). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
         else:
             if is_buy:  # 買注文
                 # ＜抽出条件＞
@@ -607,24 +556,17 @@ class MembershipOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以下
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                #
+                # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == False). \
                     filter(Order.is_cancelled == False). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
             else:  # 売注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -632,17 +574,9 @@ class MembershipOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以上
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == True). \
@@ -657,7 +591,6 @@ class MembershipOrderBook(BaseResource):
             # 残存注文数量 = 発注数量 - 約定済み数量
             if not (agreement_amount is None):
                 amount -= int(agreement_amount)
-
             # 残注文ありの注文のみを抽出する
             if amount <= 0:
                 continue
@@ -800,7 +733,7 @@ class MembershipTick(BaseResource):
                 entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
-                    filter(Agreement.status == 1). \
+                    filter(Agreement.status == AgreementStatus.DONE.value). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 
@@ -879,9 +812,7 @@ class CouponOrderBook(BaseResource):
 
         # 注文を抽出
         is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
-        exchange_address = \
-            to_checksum_address(
-                config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
+        exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
@@ -896,17 +827,11 @@ class CouponOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以下
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                #
+                # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == False). \
@@ -914,7 +839,6 @@ class CouponOrderBook(BaseResource):
                     filter(Order.account_address != account_address). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
             else:  # 売注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -923,17 +847,9 @@ class CouponOrderBook(BaseResource):
                 #  3) 未キャンセル
                 #  4) 指値以上
                 #  5) 指定したアカウントアドレス以外
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == True). \
@@ -941,7 +857,6 @@ class CouponOrderBook(BaseResource):
                     filter(Order.account_address != account_address). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
         else:
             if is_buy:  # 買注文
                 # ＜抽出条件＞
@@ -950,24 +865,17 @@ class CouponOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以下
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                #
+                # NOTE:DEXでは約定取消時に売注文中状態に戻すため、約定数量には取消分を含めていない
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, and_(Order.unique_order_id == Agreement.unique_order_id, Agreement.status != AgreementStatus.CANCELED.value)). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == False). \
                     filter(Order.is_cancelled == False). \
                     filter(Order.agent_address == config.AGENT_ADDRESS). \
                     all()
-
             else:  # 売注文
                 # ＜抽出条件＞
                 #  1) Token Addressが指定したものと同じ
@@ -975,17 +883,9 @@ class CouponOrderBook(BaseResource):
                 #               売り注文をしたい場合 => 買い注文を抽出
                 #  3) 未キャンセル
                 #  4) 指値以上
-                orders = session.query(
-                    Order.order_id, Order.amount, Order.price,
-                    Order.exchange_address, Order.account_address,
-                    func.sum(Agreement.amount)). \
-                    outerjoin(
-                    Agreement,
-                    Order.unique_order_id == Agreement.unique_order_id). \
-                    group_by(
-                    Order.order_id, Order.amount,
-                    Order.price, Order.exchange_address,
-                    Order.account_address). \
+                orders = session.query(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address, func.sum(Agreement.amount)). \
+                    outerjoin(Agreement, Order.unique_order_id == Agreement.unique_order_id). \
+                    group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
                     filter(Order.exchange_address == exchange_address). \
                     filter(Order.token_address == token_address). \
                     filter(Order.is_buy == True). \
@@ -1000,7 +900,6 @@ class CouponOrderBook(BaseResource):
             # 残存注文数量 = 発注数量 - 約定済み数量
             if not (agreement_amount is None):
                 amount -= int(agreement_amount)
-
             # 残注文ありの注文のみを抽出する
             if amount <= 0:
                 continue
@@ -1143,7 +1042,7 @@ class CouponTick(BaseResource):
                 entries = session.query(Agreement, Order). \
                     join(Order, Agreement.unique_order_id == Order.unique_order_id). \
                     filter(Order.token_address == token). \
-                    filter(Agreement.status == 1). \
+                    filter(Agreement.status == AgreementStatus.DONE.value). \
                     order_by(desc(Agreement.settlement_timestamp)). \
                     all()
 

@@ -19,6 +19,14 @@ SPDX-License-Identifier: Apache-2.0
 
 import json
 
+from app.model.node import Node
+
+
+def insert_node_data(session, is_synced):
+    node = Node()
+    node.is_synced = is_synced
+    session.add(node)
+
 
 class TestEthSendRawTransaction():
     # テスト対象API
@@ -26,7 +34,9 @@ class TestEthSendRawTransaction():
 
     # ＜正常系1＞
     # 入力リストが空
-    def test_sendraw_normal_1(self, client):
+    def test_sendraw_normal_1(self, client, session):
+        insert_node_data(session, is_synced=True)
+
         request_params = {"raw_tx_hex_list": []}
 
         headers = {'Content-Type': 'application/json'}
@@ -140,7 +150,9 @@ class TestEthSendRawTransaction():
     # ＜エラー系6：ステータスコードは200＞
     # 入力値が正しくない（rawtransactionではない）
     # -> status = 0
-    def test_sendraw_error_6(self, client):
+    def test_sendraw_error_6(self, client, session):
+        insert_node_data(session, is_synced=True)
+
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
@@ -154,6 +166,26 @@ class TestEthSendRawTransaction():
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == [{'id': 1, 'status': 0}]
 
+    # ＜エラー系7＞
+    # ブロック同期停止中
+    def test_sendraw_error_7(self, client, session):
+        insert_node_data(session, is_synced=False)
+
+        raw_tx_1 = 'raw_tx_1'
+        request_params = {'raw_tx_hex_list': [raw_tx_1]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+        assert resp.status_code == 503
+        assert resp.json['meta'] == {
+            'code': 503,
+            'message': 'Service Unavailable',
+            'description': 'Block synchronization is down',
+        }
+
 
 # sendRawTransaction API (No Wait)
 # /v2/Eth/SendRawTransactionNoWait
@@ -163,7 +195,9 @@ class TestEthSendRawTransactionNoWait():
 
     # ＜正常系1＞
     # 入力リストが空
-    def test_sendraw_normal_1(self, client):
+    def test_sendraw_normal_1(self, client, session):
+        insert_node_data(session, is_synced=True)
+
         request_params = {"raw_tx_hex_list": []}
 
         headers = {'Content-Type': 'application/json'}
@@ -277,7 +311,9 @@ class TestEthSendRawTransactionNoWait():
     # ＜エラー系6：ステータスコードは200＞
     # 入力値が正しくない（rawtransactionではない）
     # -> status = 0
-    def test_sendraw_error_6(self, client):
+    def test_sendraw_error_6(self, client, session):
+        insert_node_data(session, is_synced=True)
+
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
@@ -290,3 +326,23 @@ class TestEthSendRawTransactionNoWait():
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == [{'id': 1, 'status': 0}]
+
+    # ＜エラー系7＞
+    # ブロック同期停止中
+    def test_sendraw_error_7(self, client, session):
+        insert_node_data(session, is_synced=False)
+
+        raw_tx_1 = 'raw_tx_1'
+        request_params = {'raw_tx_hex_list': [raw_tx_1]}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+        assert resp.status_code == 503
+        assert resp.json['meta'] == {
+            'code': 503,
+            'message': 'Service Unavailable',
+            'description': 'Block synchronization is down',
+        }

@@ -29,10 +29,11 @@ from hexbytes import HexBytes
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, SuspendedTokenError
+from app.errors import InvalidParameterError, SuspendedTokenError, DataNotExistsError, ServiceUnavailable
 from app import config
 from app.model import ExecutableContract, Listing
 from app.contracts import Contract
+from app.model.node import Node
 
 LOG = log.get_logger()
 
@@ -138,6 +139,12 @@ class SendRawTransaction(BaseResource):
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
 
+        # ブロック生成状態チェック
+        # ブロックが生成されない状態だと nonce が正しい値にならないのでエラーで返す。
+        block = session.query(Node).first()
+        if block is None or not block.is_synced:
+            raise ServiceUnavailable("Block synchronization is down")
+
         # トランザクション送信
         result = []
         for i, raw_tx_hex in enumerate(raw_tx_hex_list):
@@ -173,7 +180,7 @@ class SendRawTransaction(BaseResource):
 
             # 実行結果を確認
             try:
-                tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=5)
+                tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
             except Exception as err:
                 # NOTE: eth.waitForTransactionReceiptは本来はExceptionではなくNoneを返す仕様だが、
                 #       バグでExceptionを返すようになっているため対応しておく
@@ -266,6 +273,12 @@ class SendRawTransactionNoWait(BaseResource):
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
 
+        # ブロック生成状態チェック
+        # ブロックが生成されない状態だと nonce が正しい値にならないのでエラーで返す。
+        node = session.query(Node).first()
+        if node is None or not node.is_synced:
+            raise ServiceUnavailable("Block synchronization is down")
+
         # トランザクション送信
         result = []
         for i, raw_tx_hex in enumerate(raw_tx_hex_list):
@@ -290,14 +303,21 @@ class SendRawTransactionNoWait(BaseResource):
 
             # ブロックチェーンノードに送信
             try:
-                web3.eth.sendRawTransaction(raw_tx_hex)
+                transaction_hash = web3.eth.sendRawTransaction(raw_tx_hex)
             except ValueError as err:
                 result.append({
                     'id': i + 1,
                     'status': 0,
+                    'transaction_hash': None
                 })
                 LOG.error(f"Send transaction failed: {err}")
                 continue
+
+            result.append({
+                'id': i + 1,
+                'status': 1,
+                'transaction_hash': transaction_hash.hex()
+            })
 
         self.on_success(res, result)
 
@@ -317,6 +337,60 @@ class SendRawTransactionNoWait(BaseResource):
                     'required': True,
                     'empty': False,
                 }
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return request_json
+
+
+# ------------------------------
+# waitForTransactionReceipt
+# ------------------------------
+class WaitForTransactionReceipt(BaseResource):
+    """
+    Endpoint: /Eth/WaitForTransactionReceipt
+    """
+
+    def on_post(self, req, res):
+        LOG.info('v2.eth.WaitForTransactionReceipt')
+
+        request_json = self.validate(req)
+        transaction_hash = request_json.get("transaction_hash")
+        timeout = request_json.get("timeout", 5)
+
+        # transaction receipt の監視
+        try:
+            tx = web3.eth.waitForTransactionReceipt(
+                transaction_hash=transaction_hash,
+                timeout=timeout
+            )
+        except Exception as err:
+            raise DataNotExistsError
+
+        if tx is None:
+            raise DataNotExistsError
+
+        self.on_success(res)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "transaction_hash": {
+                "type": "string",
+                "required": True,
+                "empty": False,
+            },
+            "timeout": {
+                "type": "integer",
+                "min": 1,
+                "max": 30
             }
         })
 

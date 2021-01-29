@@ -17,4 +17,5 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-curl -D - -s -o /dev/null http://127.0.0.1:5000/ | grep "HTTP/1.1 200 OK"
+curl -D - -s -o /dev/null http://127.0.0.1:5000/ | grep "HTTP/1.1 200 OK" || exit 1
+ps -ef | grep -v grep | grep "async/processor_Block_Sync_Status.py" || exit 1
