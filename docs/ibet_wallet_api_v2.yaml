@@ -414,7 +414,7 @@ paths:
                       type: integer
                       example:
                         1
-                      description: execution success:1, execution failure:0
+                      description: execution failure:0, execution success:1, execution success(pending transaction):2
         400:
           description: Invalid Parameter Error or Suspended Token
           schema:
@@ -469,7 +469,7 @@ paths:
                       type: integer
                       example:
                         1
-                      description: success:1, error(ValueError):0
+                      description: execution failure:0, execution success:1
                     transaction_hash:
                       type: string
                       description: transaction hash
