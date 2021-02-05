@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import datetime
 
 from sqlalchemy import *
 from sqlalchemy.exc import ProgrammingError
@@ -28,6 +29,8 @@ table = Table(
     "node", meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("is_synced", Boolean(), index=True),
+    Column("created", DateTime, default=datetime.utcnow),
+    Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 )
 
 

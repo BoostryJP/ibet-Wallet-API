@@ -21,6 +21,8 @@ from cerberus import Validator
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.utils.threads import Timeout
+from eth_account import Account
 from eth_typing import ChecksumAddress
 
 from eth_utils import to_checksum_address
@@ -180,23 +182,42 @@ class SendRawTransaction(BaseResource):
 
             # 実行結果を確認
             try:
-                tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=5)
-            except Exception as err:
-                # NOTE: eth.waitForTransactionReceiptは本来はExceptionではなくNoneを返す仕様だが、
-                #       バグでExceptionを返すようになっているため対応しておく
-                LOG.error(f"Transaction failed: {err}")
-                tx = None
+                tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
+            except Timeout as err:  # タイムアウトエラーの場合
 
-            if tx is None:
+                status = 2  # execution success(pending transaction)
+
+                # pendingに昇格せずqueuedに滞留したままのトランザクションはエラーとする
+                try:
+                    from_address = Account.recoverTransaction(raw_tx_hex)
+                except Exception as err:
+                    result.append({'id': i + 1, 'status': 0})
+                    LOG.error(f"get sender address from signed transaction failed: {err}")
+                    continue
+                nonce = int("0x0" if raw_tx[0].hex() == "" else raw_tx[0].hex(), 16)
+                txpool_inspect = web3.txpool.inspect
+                if from_address in txpool_inspect.queued:
+                    if str(nonce) in txpool_inspect.queued[from_address]:
+                        status = 0  # execution failure
+
+                result.append({
+                    'id': i + 1,
+                    'status': status,
+                })
+                LOG.warning(f"Transaction receipt timeout: {err}")
+                continue
+            except Exception as err:
                 result.append({
                     'id': i + 1,
                     'status': 0,
                 })
-            else:
-                result.append({
-                    'id': i + 1,
-                    'status': tx['status'],
-                })
+                LOG.error(f"Transaction failed: {err}")
+                continue
+
+            result.append({
+                'id': i + 1,
+                'status': tx['status'],
+            })
 
         self.on_success(res, result)
 
