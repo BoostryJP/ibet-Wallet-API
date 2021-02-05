@@ -77,6 +77,7 @@ class TestV2CouponLastPrice:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -102,6 +103,7 @@ class TestV2CouponLastPrice:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
 
@@ -123,6 +125,7 @@ class TestV2CouponLastPrice:
         exchange = shared_contract['IbetCouponExchange']
         token = TestV2CouponLastPrice.generate_agree_event(exchange)
         token_address = token['address']
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
 
@@ -147,6 +150,10 @@ class TestV2CouponLastPrice:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -163,6 +170,10 @@ class TestV2CouponLastPrice:
     def test_coupon_lastprice_error_2(self, client):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
+
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
         headers = {}
         request_body = json.dumps(request_params)
@@ -181,6 +192,10 @@ class TestV2CouponLastPrice:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         headers = {}
         request_body = json.dumps(request_params)
 
@@ -195,6 +210,11 @@ class TestV2CouponLastPrice:
 
     # エラー系4：HTTPメソッドが不正
     def test_coupon_lastprice_error_4(self, client):
+
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -202,4 +222,35 @@ class TestV2CouponLastPrice:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/Market/LastPrice/Coupon'
+        }
+
+    # エラー系5：取扱トークン対象外
+    def test_coupon_lastprice_error_5(self, client):
+
+        config.COUPON_TOKEN_ENABLED = False
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/LastPrice/Coupon'
+        }
+
+    # エラー系6：exchangeアドレス未設定
+    def test_coupon_lastprice_error_6(self, client):
+
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/LastPrice/Coupon'
         }

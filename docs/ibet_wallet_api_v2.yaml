@@ -1032,6 +1032,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/StraightBond/Address:
     get:
       tags:
@@ -1074,6 +1081,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/StraightBond/{contract_address}:
     get:
       tags:
@@ -1190,7 +1204,7 @@ paths:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
         404:
-          description: Not Found Error
+          description: Not Found Error or Not Supported Error
           schema:
             type: object
             properties:
@@ -1299,6 +1313,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Share/Address:
     get:
       tags:
@@ -1341,6 +1362,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Share/{contract_address}:
     get:
       tags:
@@ -1435,7 +1463,7 @@ paths:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
         404:
-          description: Not Found Error
+          description: Not Found Error or Not Supported Error
           schema:
             type: object
             properties:
@@ -1533,6 +1561,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Membership/Address:
     get:
       tags:
@@ -1575,6 +1610,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Membership/{contract_address}:
     get:
       tags:
@@ -1658,7 +1700,7 @@ paths:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
         404:
-          description: Not Found Error
+          description: Not Found Error or Not Supported Error
           schema:
             type: object
             properties:
@@ -1756,6 +1798,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Coupon/Address:
     get:
       tags:
@@ -1798,6 +1847,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Coupon/{contract_address}:
     get:
       tags:
@@ -1881,7 +1937,7 @@ paths:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
         404:
-          description: Not Found Error
+          description: Not Found Error or Not Supported Error
           schema:
             type: object
             properties:
@@ -2075,6 +2131,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/OrderBook/Membership:
     post:
       tags:
@@ -2126,6 +2189,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/OrderBook/Coupon:
     post:
       tags:
@@ -2177,6 +2247,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/LastPrice/StraightBond:
     post:
       tags:
@@ -2215,6 +2292,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/LastPrice/Membership:
     post:
       tags:
@@ -2253,6 +2337,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/LastPrice/Coupon:
     post:
       tags:
@@ -2291,6 +2382,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/Tick/StraightBond:
     post:
       tags:
@@ -2347,6 +2445,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/Tick/Membership:
     post:
       tags:
@@ -2403,6 +2508,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/Tick/Coupon:
     post:
       tags:
@@ -2459,6 +2571,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Market/Agreement:
     get:
       tags:
@@ -2529,6 +2648,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Position/StraightBond:
     post:
       tags:
@@ -2657,6 +2783,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Position/Share:
     post:
       tags:
@@ -2761,6 +2894,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Position/Membership:
     post:
       tags:
@@ -2854,6 +2994,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Position/Coupon:
     post:
       tags:
@@ -2949,6 +3096,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Position/Coupon/Consumptions:
     post:
       tags:
@@ -2997,6 +3151,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /OrderList/StraightBond:
     post:
       tags:

@@ -218,6 +218,7 @@ class TestV2MembershipMyTokens:
         # 取扱トークンデータ挿入
         TestV2MembershipMyTokens.list_token(session, token)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -274,11 +275,11 @@ class TestV2MembershipMyTokens:
                 assert token == assumed_body
         assert count == 1
 
-    # 正常系2
+    # 正常系2-1
     # 残高あり、売注文中あり
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
     #   →　決済代行：決済　→　投資家：Make売
-    def test_membership_position_normal_2(self, client, session, shared_contract):
+    def test_membership_position_normal_2_1(self, client, session, shared_contract):
         exchange = shared_contract['IbetMembershipExchange']
         token_list = shared_contract['TokenList']
         account = eth_account['trader']
@@ -289,6 +290,7 @@ class TestV2MembershipMyTokens:
         # 取扱トークンデータ挿入
         TestV2MembershipMyTokens.list_token(session, token)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -345,6 +347,78 @@ class TestV2MembershipMyTokens:
                 assert token == assumed_body
         assert count == 1
 
+    # 正常系2-2
+    # 残高あり、exchangeアドレス未設定
+    # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
+    #   →　決済代行：決済　→　投資家：Make売
+    def test_membership_position_normal_2_2(self, client, session, shared_contract):
+        exchange = shared_contract['IbetMembershipExchange']
+        token_list = shared_contract['TokenList']
+        account = eth_account['trader']
+
+        token = TestV2MembershipMyTokens.create_commitment(exchange, token_list)
+        token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV2MembershipMyTokens.list_token(session, token)
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client. \
+            simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token_address,
+                'token_template': 'IbetMembership',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'initial_offering_status': False,
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 50,
+            'commitment': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+
+        count = 0
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address:
+                count = 1
+                assert token == assumed_body
+        assert count == 1
+
     # 正常系3
     # 残高なし、売注文中なし
     # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
@@ -362,6 +436,7 @@ class TestV2MembershipMyTokens:
         # 取扱トークンデータ挿入
         TestV2MembershipMyTokens.list_token(session, token)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -396,6 +471,7 @@ class TestV2MembershipMyTokens:
         # 取扱トークンデータ挿入
         TestV2MembershipMyTokens.list_private_token(session, token)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -467,6 +543,7 @@ class TestV2MembershipMyTokens:
         TestV2MembershipMyTokens.list_token(session, token)
         TestV2MembershipMyTokens.list_private_token(session, token)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -543,6 +620,7 @@ class TestV2MembershipMyTokens:
         TestV2MembershipMyTokens.list_token(session, token_1)
         TestV2MembershipMyTokens.list_private_token(session, token_2)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -645,6 +723,8 @@ class TestV2MembershipMyTokens:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -666,6 +746,8 @@ class TestV2MembershipMyTokens:
         headers = {}
         request_body = json.dumps(request_params)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -683,6 +765,8 @@ class TestV2MembershipMyTokens:
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -702,6 +786,8 @@ class TestV2MembershipMyTokens:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -714,4 +800,19 @@ class TestV2MembershipMyTokens:
                     '0': 'must be of string type'
                 }
             }
+        }
+
+    # エラー系4
+    # 取扱トークン対象外
+    def test_membership_position_error_4(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = False
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Position/Membership'
         }

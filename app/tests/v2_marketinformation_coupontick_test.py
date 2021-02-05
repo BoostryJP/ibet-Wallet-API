@@ -107,6 +107,7 @@ class TestV2CouponTick:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -129,6 +130,10 @@ class TestV2CouponTick:
         request_body = json.dumps(request_params)
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
+
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -163,6 +168,10 @@ class TestV2CouponTick:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -181,6 +190,10 @@ class TestV2CouponTick:
         headers = {}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -198,6 +211,10 @@ class TestV2CouponTick:
         headers = {}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -209,6 +226,11 @@ class TestV2CouponTick:
 
     # エラー系4：HTTPメソッドが不正
     def test_coupon_tick_error_4(self, client):
+
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -216,4 +238,35 @@ class TestV2CouponTick:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/Market/Tick/Coupon'
+        }
+
+    # エラー系5：取扱トークン対象外
+    def test_coupon_tick_error_5(self, client):
+
+        config.COUPON_TOKEN_ENABLED = False
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/Tick/Coupon'
+        }
+
+    # エラー系6：exchangeアドレス未設定
+    def test_coupon_tick_error_5(self, client):
+
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/Tick/Coupon'
         }

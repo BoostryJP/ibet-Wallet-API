@@ -29,7 +29,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError
+from app.errors import InvalidParameterError, NotSupportedError
 from app import config
 from app.contracts import Contract
 from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon, Transfer
@@ -53,6 +53,9 @@ class ShareMyTokens(BaseResource):
 
         session = req.context["session"]
 
+        if config.SHARE_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # 入力値チェック
         request_json = ShareMyTokens.validate(req)
 
@@ -60,10 +63,12 @@ class ShareMyTokens(BaseResource):
         ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # Exchange Contract
-        ExchangeContract = Contract.get_contract(
-            'IbetOTCExchange',
-            config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
-        )
+        ExchangeContract = None
+        if config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
+            ExchangeContract = Contract.get_contract(
+                'IbetOTCExchange',
+                config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+            )
 
         listed_tokens = session.query(Listing).all()
         position_list = []
@@ -79,7 +84,13 @@ class ShareMyTokens(BaseResource):
                     TokenContract = Contract.get_contract('IbetShare', token_address)
                     try:
                         balance = TokenContract.functions.balanceOf(owner).call()
-                        commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        if ExchangeContract is not None:
+                            commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        else:
+                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
+                            # NOTE: 残高もゼロの場合は後続処理で取得対象外となる
+                            commitment = 0
+
                         # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                         # Note: 現状は、株式トークンの場合、残高・残注文ゼロの場合は詳細情報を
                         #       返さない仕様としている。
@@ -136,6 +147,9 @@ class StraightBondMyTokens(BaseResource):
 
         session = req.context["session"]
 
+        if config.BOND_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # 入力値チェック
         request_json = StraightBondMyTokens.validate(req)
 
@@ -146,10 +160,12 @@ class StraightBondMyTokens(BaseResource):
         )
 
         # Bond Exchange Contract
-        BondExchangeContract = Contract.get_contract(
-            'IbetStraightBondExchange',
-            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
-        )
+        BondExchangeContract = None
+        if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
+            BondExchangeContract = Contract.get_contract(
+                'IbetStraightBondExchange',
+                config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+            )
 
         listed_tokens = session.query(Listing).all()
 
@@ -166,7 +182,12 @@ class StraightBondMyTokens(BaseResource):
                     BondTokenContract = Contract.get_contract('IbetStraightBond', token_address)
                     try:
                         balance = BondTokenContract.functions.balanceOf(owner).call()
-                        commitment = BondExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        if BondExchangeContract is not None:
+                            commitment = BondExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        else:
+                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
+                            # NOTE: 残高もゼロの場合は後続処理で取得対象外となる
+                            commitment = 0
 
                         # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                         # Note: 現状は、債券トークンの場合、残高・残注文ゼロの場合は詳細情報を
@@ -224,6 +245,9 @@ class MembershipMyTokens(BaseResource):
 
         session = req.context["session"]
 
+        if config.MEMBERSHIP_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # 入力値チェック
         request_json = MembershipMyTokens.validate(req)
 
@@ -234,10 +258,12 @@ class MembershipMyTokens(BaseResource):
         )
 
         # Exchange Contract
-        ExchangeContract = Contract.get_contract(
-            'IbetMembershipExchange',
-            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
-        )
+        ExchangeContract = None
+        if config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
+            ExchangeContract = Contract.get_contract(
+                'IbetMembershipExchange',
+                config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
+            )
 
         listed_tokens = session.query(Listing).all()
 
@@ -254,7 +280,12 @@ class MembershipMyTokens(BaseResource):
                     TokenContract = Contract.get_contract('IbetMembership', token_address)
                     try:
                         balance = TokenContract.functions.balanceOf(owner).call()
-                        commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        if ExchangeContract is not None:
+                            commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        else:
+                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
+                            # NOTE: 残高もゼロの場合は後続処理で取得対象外となる
+                            commitment = 0
 
                         # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
                         # Note: 現状は、会員権トークンの場合、残高・残注文ゼロの場合は詳細情報を
@@ -312,6 +343,9 @@ class CouponMyTokens(BaseResource):
 
         session = req.context["session"]
 
+        if config.COUPON_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # 入力値チェック
         request_json = CouponMyTokens.validate(req)
 
@@ -322,10 +356,12 @@ class CouponMyTokens(BaseResource):
         )
 
         # Coupon Exchange Contract
-        CouponExchangeContract = Contract.get_contract(
-            'IbetCouponExchange',
-            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        )
+        CouponExchangeContract = None
+        if config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
+            CouponExchangeContract = Contract.get_contract(
+                'IbetCouponExchange',
+                config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+            )
 
         listed_tokens = session.query(Listing).all()
 
@@ -342,7 +378,12 @@ class CouponMyTokens(BaseResource):
                     CouponTokenContract = Contract.get_contract('IbetCoupon', token_address)
                     try:
                         balance = CouponTokenContract.functions.balanceOf(owner).call()
-                        commitment = CouponExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        if CouponExchangeContract is not None:
+                            commitment = CouponExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        else:
+                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
+                            # NOTE: 残高、使用済数量、受領履歴もゼロの場合は後続処理で取得対象外となる
+                            commitment = 0
                         used = CouponTokenContract.functions.usedOf(owner).call()
 
                         # 移転履歴TBLからトークンの受領履歴を検索
@@ -407,6 +448,9 @@ class CouponConsumptions(BaseResource):
     def on_post(self, req, res):
         LOG.info('v2.position.CouponConsumptions')
         session = req.context['session']
+
+        if config.COUPON_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='POST', url=req.path)
 
         # 入力値チェック
         request_json = CouponConsumptions.validate(req)

@@ -79,6 +79,7 @@ class TestV2TokenCouponTokenDetails:
     # ＜正常系1＞
     #   データあり
     def test_coupondetails_normal_1(self, client, session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -136,6 +137,7 @@ class TestV2TokenCouponTokenDetails:
     #   無効なコントラクトアドレス
     #   -> 400エラー
     def test_coupondetails_error_1(self, client):
+        config.COUPON_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '0xabcd'
 
         query_string = ''
@@ -151,6 +153,7 @@ class TestV2TokenCouponTokenDetails:
     # ＜エラー系2＞
     #   取扱トークン（DB）に情報が存在しない
     def test_coupondetails_error_2(self, client, shared_contract, session):
+        config.COUPON_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -182,6 +185,7 @@ class TestV2TokenCouponTokenDetails:
     # ＜エラー系3＞
     #   トークン無効化（データなし）
     def test_coupondetails_error_3(self, client, session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -212,4 +216,17 @@ class TestV2TokenCouponTokenDetails:
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + token['address']
+        }
+
+    # ＜エラー系4＞
+    #  取扱トークン対象外
+    def test_error_4(self, client):
+        config.COUPON_TOKEN_ENABLED = False
+        resp = client.simulate_get(self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765")
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v2/Token/Coupon/0xe6A75581C7299c75392a63BCF18a3618B30ff765'
         }

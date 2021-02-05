@@ -280,6 +280,7 @@ class TestV2CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV2CouponMyTokens.list_token(session, coupon_token)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -351,6 +352,7 @@ class TestV2CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV2CouponMyTokens.list_token(session, coupon_token)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -422,6 +424,7 @@ class TestV2CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV2CouponMyTokens.list_private_token(session, coupon_token)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -493,6 +496,7 @@ class TestV2CouponMyTokens:
         TestV2CouponMyTokens.list_token(session, coupon_token)
         TestV2CouponMyTokens.list_private_token(session, coupon_token)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -568,6 +572,7 @@ class TestV2CouponMyTokens:
         TestV2CouponMyTokens.list_token(session, coupon_token_1)
         TestV2CouponMyTokens.list_private_token(session, coupon_token_2)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -675,6 +680,7 @@ class TestV2CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV2CouponMyTokens.list_token(session, token)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
@@ -745,6 +751,7 @@ class TestV2CouponMyTokens:
         # 取扱トークンデータ挿入
         TestV2CouponMyTokens.list_token(session, token)
 
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
@@ -828,6 +835,7 @@ class TestV2CouponMyTokens:
         TestV2CouponMyTokens.list_token(session, token)
 
         # 環境変数設定
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
@@ -885,10 +893,82 @@ class TestV2CouponMyTokens:
             if token['token']['token_address'] == token_address:
                 assert token == assumed_body
 
+    # ＜正常系2-4＞
+    # 残高あり、exchangeアドレス未設定
+    # 発行体：新規発行　→　発行体：募集（Make売）　→　投資家：Take買
+    #   →　決済代行：決済　→　投資家：Make売
+    def test_coupon_position_normal_2_4(self, client, session, shared_contract):
+        exchange = shared_contract['IbetCouponExchange']
+        token_list = shared_contract['TokenList']
+        account = eth_account['trader']
+
+        token = TestV2CouponMyTokens.create_commitment(exchange, token_list)
+        token_address = token['address']
+
+        # 取扱トークンデータ挿入
+        TestV2CouponMyTokens.list_token(session, token)
+
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        request_params = {"account_address_list": [account['account_address']]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client. \
+            simulate_post(self.apiurl, headers=headers, body=request_body)
+
+        assumed_body = {
+            'token': {
+                'token_address': token_address,
+                'token_template': 'IbetCoupon',
+                'owner_address': eth_account['issuer']['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 1000000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'memo': 'クーポンメモ欄',
+                'expiration_date': '20191231',
+                'transferable': True,
+                'image_url': [{
+                    'id': 1,
+                    'url': ''
+                }, {
+                    'id': 2,
+                    'url': ''
+                }, {
+                    'id': 3,
+                    'url': ''
+                }],
+                'initial_offering_status': False,
+                'status': True,
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー'
+            },
+            'balance': 50,
+            'commitment': 0,
+            'used': 0
+        }
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+
+        for token in resp.json['data']:
+            if token['token']['token_address'] == token_address:
+                assert token == assumed_body
+
     # エラー系1：入力値エラー（request-bodyなし）
     def test_coupon_position_error_1(self, client):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
+
+        config.COUPON_TOKEN_ENABLED = True
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -910,6 +990,8 @@ class TestV2CouponMyTokens:
         headers = {}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -926,6 +1008,8 @@ class TestV2CouponMyTokens:
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.COUPON_TOKEN_ENABLED = True
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -944,6 +1028,8 @@ class TestV2CouponMyTokens:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -956,4 +1042,18 @@ class TestV2CouponMyTokens:
                     '0': 'must be of string type'
                 }
             }
+        }
+
+    # エラー系4：取扱トークン対象外
+    def test_coupon_position_error_3_2(self, client):
+
+        config.COUPON_TOKEN_ENABLED = False
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Position/Coupon'
         }
