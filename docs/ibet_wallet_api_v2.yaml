@@ -4308,7 +4308,7 @@ paths:
           in: query
           required: false
           type: string
-          enum: ["id","priority"]
+          enum: ["id","priority","is_flagged"]
         - name: status
           in: query
           required: false

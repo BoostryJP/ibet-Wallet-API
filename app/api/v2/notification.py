@@ -64,6 +64,8 @@ class Notifications(BaseResource):
 
         if request_json["sort"] == "priority":
             query = query.order_by(desc(Notification.priority), desc(Notification.notification_id))
+        elif request_json["sort"] == "is_flagged":
+            query = query.order_by(desc(Notification.is_flagged), desc(Notification.notification_id))
         else:
             query = query.order_by(desc(Notification.notification_id))
 
