@@ -146,8 +146,9 @@ class BaseOrderList(object):
         ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp, Agreement.buyer_address). \
+        entries = session. \
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp,
+                  Agreement.buyer_address). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
@@ -184,8 +185,9 @@ class BaseOrderList(object):
         ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
         # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session.\
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp, Agreement.buyer_address). \
+        entries = session. \
+            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp,
+                  Agreement.buyer_address). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
@@ -308,6 +310,7 @@ class BaseOrderList(object):
 
         return complete_list
 
+
 # ------------------------------
 # 注文一覧・約定一覧（普通社債）
 # ------------------------------
@@ -320,10 +323,11 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
         LOG.info('v2.order_list.StraightBondOrderList')
         session = req.context['session']
 
+        if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # validate
         request_json = self.validate(req)
-        if config.BOND_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
 
         order_list = []
         settlement_list = []
@@ -331,19 +335,23 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
         for account_address in request_json['account_address_list']:
             try:
                 # order_list
-                order_list.extend(self.get_OrderList(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list.extend(self.get_OrderList(session, BondToken, 'IbetStraightBondExchange',
+                                                     config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 order_list = sorted(
                     order_list,
                     key=lambda x: x['sort_id']
                 )
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList(session, BondToken, 'IbetStraightBondExchange',
+                                                               config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                                                               account_address))
                 settlement_list = sorted(
                     settlement_list,
                     key=lambda x: x['sort_id']
                 )
                 # complete_list
-                complete_list.extend(self.get_CompleteList(session, BondToken, 'IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList(session, BondToken, 'IbetStraightBondExchange',
+                                                           config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 complete_list = sorted(
                     complete_list,
                     key=lambda x: x['sort_id']
@@ -373,10 +381,11 @@ class MembershipOrderList(BaseOrderList, BaseResource):
         LOG.info('v2.order_list.MembershipOrderList')
         session = req.context['session']
 
+        if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # validate
         request_json = self.validate(req)
-        if config.MEMBERSHIP_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
 
         order_list = []
         settlement_list = []
@@ -385,19 +394,24 @@ class MembershipOrderList(BaseOrderList, BaseResource):
         for account_address in request_json['account_address_list']:
             try:
                 # order_list
-                order_list.extend(self.get_OrderList(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list.extend(self.get_OrderList(session, MembershipToken, 'IbetMembershipExchange',
+                                                     config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 order_list = sorted(
                     order_list,
                     key=lambda x: x['sort_id']
                 )
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList(session, MembershipToken, 'IbetMembershipExchange',
+                                                               config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                                                               account_address))
                 settlement_list = sorted(
                     settlement_list,
                     key=lambda x: x['sort_id']
                 )
                 # complete_list
-                complete_list.extend(self.get_CompleteList(session, MembershipToken, 'IbetMembershipExchange', config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList(session, MembershipToken, 'IbetMembershipExchange',
+                                                           config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                                                           account_address))
                 complete_list = sorted(
                     complete_list,
                     key=lambda x: x['sort_id']
@@ -427,31 +441,36 @@ class CouponOrderList(BaseOrderList, BaseResource):
         LOG.info('v2.order_list.CouponOrderList')
         session = req.context['session']
 
+        if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # validate
         request_json = self.validate(req)
-        if config.COUPON_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
 
         order_list = []
         settlement_list = []
         complete_list = []
-        
+
         for account_address in request_json['account_address_list']:
             try:
                 # order_list
-                order_list.extend(self.get_OrderList(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list.extend(self.get_OrderList(session, CouponToken, 'IbetCouponExchange',
+                                                     config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 order_list = sorted(
                     order_list,
                     key=lambda x: x['sort_id']
                 )
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_SettlementList(session, CouponToken, 'IbetCouponExchange',
+                                                               config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                                                               account_address))
                 settlement_list = sorted(
                     settlement_list,
                     key=lambda x: x['sort_id']
                 )
                 # complete_list
-                complete_list.extend(self.get_CompleteList(session, CouponToken, 'IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_CompleteList(session, CouponToken, 'IbetCouponExchange',
+                                                           config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 complete_list = sorted(
                     complete_list,
                     key=lambda x: x['sort_id']
@@ -481,31 +500,37 @@ class ShareOrderList(BaseOrderList, BaseResource):
         LOG.info('v2.order_list.ShareOrderList')
         session = req.context['session']
 
+        if config.SHARE_TOKEN_ENABLED is False or config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method='POST', url=req.path)
+
         # validate
         request_json = self.validate(req)
-        if config.SHARE_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
 
         order_list = []
         settlement_list = []
         complete_list = []
-        
+
         for account_address in request_json['account_address_list']:
             try:
                 # order_list
-                order_list.extend(self.get_OTC_OrderList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                order_list.extend(self.get_OTC_OrderList(session, ShareToken, 'IbetOTCExchange',
+                                                         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
                 order_list = sorted(
                     order_list,
                     key=lambda x: x['sort_id']
                 )
                 # settlement_list
-                settlement_list.extend(self.get_OTC_SettlementList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                settlement_list.extend(self.get_OTC_SettlementList(session, ShareToken, 'IbetOTCExchange',
+                                                                   config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+                                                                   account_address))
                 settlement_list = sorted(
                     settlement_list,
                     key=lambda x: x['sort_id']
                 )
                 # complete_list
-                complete_list.extend(self.get_OTC_CompleteList(session, ShareToken, 'IbetOTCExchange', config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
+                complete_list.extend(self.get_OTC_CompleteList(session, ShareToken, 'IbetOTCExchange',
+                                                               config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+                                                               account_address))
                 complete_list = sorted(
                     complete_list,
                     key=lambda x: x['sort_id']

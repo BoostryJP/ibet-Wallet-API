@@ -22,8 +22,6 @@ source ~/.bash_profile
 
 cd /app/ibet-Wallet-API
 
-python async/indexer_DEX.py &
-
 python async/indexer_Transfer.py &
 
 if [ $SHARE_TOKEN_ENABLED = 1 ]; then
@@ -41,6 +39,13 @@ fi
 if [ $COUPON_TOKEN_ENABLED = 1 ]; then
   python async/indexer_Consume_Coupon.py &
   python async/indexer_Position_Coupon.py &
+fi
+
+if [ -z "${IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS}" -a \
+  -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" -a \
+  -z "${IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS}" -a \
+  -z "${IBET_CP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
+  python async/indexer_DEX.py &
 fi
 
 tail -f /dev/null

@@ -169,6 +169,10 @@ class TestV2OrderList_Bond:
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
         token_list = shared_contract['TokenList']
+        config.BOND_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED= True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
@@ -488,6 +492,7 @@ class TestV2OrderList_Bond:
     # request-bodyなし
     # -> 入力値エラー
     def test_orderlist_error_1(self, client):
+        config.BOND_TOKEN_ENABLED = True
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -507,6 +512,7 @@ class TestV2OrderList_Bond:
     # headersなし
     # -> 入力値エラー
     def test_orderlist_error_2(self, client):
+        config.BOND_TOKEN_ENABLED = True
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
@@ -526,6 +532,7 @@ class TestV2OrderList_Bond:
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
     def test_orderlist_error_3_1(self, client):
+        config.BOND_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
@@ -545,6 +552,7 @@ class TestV2OrderList_Bond:
     # account_addressがstring以外
     # -> 入力エラー
     def test_orderlist_error_3_2(self, client):
+        config.BOND_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
 
@@ -568,6 +576,7 @@ class TestV2OrderList_Bond:
     # ＜エラー系4＞
     # HTTPメソッドが不正
     def test_orderlist_error_4(self, client):
+        config.BOND_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -575,6 +584,33 @@ class TestV2OrderList_Bond:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/OrderList/StraightBond'
+        }
+
+    # ＜エラー系5＞
+    # 取扱トークン対象外(ENABLED=false)
+    def test_orderlist_error_5(self, client):
+        config.BOND_TOKEN_ENABLED = False
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/StraightBond'
+        }
+
+    # ＜エラー系6＞
+    # exchangeアドレス未設定
+    def test_orderlist_error_6(self, client):
+        config.BOND_TOKEN_ENABLED = True
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/StraightBond'
         }
 
 
@@ -689,6 +725,10 @@ class TestV2OrderList_Membership:
         membership_exchange = shared_contract['IbetMembershipExchange']
         coupon_exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
+        config.BOND_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED= True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
@@ -954,6 +994,7 @@ class TestV2OrderList_Membership:
     # request-bodyなし
     # -> 入力値エラー
     def test_membership_orderlist_error_1(self, client):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -973,6 +1014,7 @@ class TestV2OrderList_Membership:
     # headersなし
     # -> 入力値エラー
     def test_membership_orderlist_error_2(self, client):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
@@ -992,6 +1034,7 @@ class TestV2OrderList_Membership:
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
     def test_membership_orderlist_error_3_1(self, client):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
@@ -1011,6 +1054,7 @@ class TestV2OrderList_Membership:
     # account_addressがstring以外
     # -> 入力エラー
     def test_membership_orderlist_error_3_2(self, client):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
 
@@ -1034,6 +1078,7 @@ class TestV2OrderList_Membership:
     # ＜エラー系4＞
     # HTTPメソッドが不正
     def test_membership_orderlist_error_4(self, client):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -1041,6 +1086,33 @@ class TestV2OrderList_Membership:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/OrderList/Membership'
+        }
+
+    # ＜エラー系5＞
+    # 取扱トークン対象外(ENABLED=false)
+    def test_membership_orderlist_error_5(self, client):
+        config.MEMBERSHIP_TOKEN_ENABLED = False
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/Membership'
+        }
+
+    # ＜エラー系6＞
+    # exchangeアドレス未設定
+    def test_membership_orderlist_error_6(self, client):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/Membership'
         }
 
 
@@ -1152,6 +1224,10 @@ class TestV2OrderList_Coupon:
         membership_exchange = shared_contract['IbetMembershipExchange']
         coupon_exchange = shared_contract['IbetCouponExchange']
         token_list = shared_contract['TokenList']
+        config.BOND_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED= True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
@@ -1411,6 +1487,7 @@ class TestV2OrderList_Coupon:
     # request-bodyなし
     # -> 入力値エラー
     def test_coupon_orderlist_error_1(self, client):
+        config.COUPON_TOKEN_ENABLED = True
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -1430,6 +1507,7 @@ class TestV2OrderList_Coupon:
     # headersなし
     # -> 入力値エラー
     def test_coupon_orderlist_error_2(self, client):
+        config.COUPON_TOKEN_ENABLED = True
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
@@ -1449,6 +1527,7 @@ class TestV2OrderList_Coupon:
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
     def test_coupon_orderlist_error_3_1(self, client):
+        config.COUPON_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
@@ -1468,6 +1547,7 @@ class TestV2OrderList_Coupon:
     # account_addressがstring以外
     # -> 入力エラー
     def test_coupon_orderlist_error_3_2(self, client):
+        config.COUPON_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
 
@@ -1491,6 +1571,7 @@ class TestV2OrderList_Coupon:
     # ＜エラー系4＞
     # HTTPメソッドが不正
     def test_coupon_orderlist_error_4(self, client):
+        config.COUPON_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -1498,6 +1579,33 @@ class TestV2OrderList_Coupon:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/OrderList/Coupon'
+        }
+
+    # ＜エラー系5＞
+    # 取扱トークン対象外(ENABLED=false)
+    def test_coupon_orderlist_error_5(self, client):
+        config.COUPON_TOKEN_ENABLED = False
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/Coupon'
+        }
+
+    # ＜エラー系6＞
+    # exchangeアドレス未設定
+    def test_coupon_orderlist_error_6(self, client):
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/Coupon'
         }
 
 
@@ -1637,6 +1745,10 @@ class TestV2OrderList_Share:
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
         token_list = shared_contract['TokenList']
+        config.BOND_TOKEN_ENABLED = True
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        config.SHARE_TOKEN_ENABLED= True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
@@ -1927,6 +2039,7 @@ class TestV2OrderList_Share:
     # request-bodyなし
     # -> 入力値エラー
     def test_share_orderlist_error_1(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -1946,6 +2059,7 @@ class TestV2OrderList_Share:
     # headersなし
     # -> 入力値エラー
     def test_share_orderlist_error_2(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
@@ -1965,6 +2079,7 @@ class TestV2OrderList_Share:
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
     def test_share_orderlist_error_3_1(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
@@ -1984,6 +2099,7 @@ class TestV2OrderList_Share:
     # account_addressがstring以外
     # -> 入力エラー
     def test_share_orderlist_error_3_2(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
 
@@ -2007,6 +2123,7 @@ class TestV2OrderList_Share:
     # ＜エラー系4＞
     # HTTPメソッドが不正
     def test_share_orderlist_error_4(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -2014,4 +2131,31 @@ class TestV2OrderList_Share:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/OrderList/Share'
+        }
+
+    # ＜エラー系5＞
+    # 取扱トークン対象外(ENABLED=false)
+    def test_share_orderlist_error_5(self, client):
+        config.SHARE_TOKEN_ENABLED = False
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/Share'
+        }
+
+    # ＜エラー系6＞
+    # exchangeアドレス未設定
+    def test_share_orderlist_error_6(self, client):
+        config.SHARE_TOKEN_ENABLED = True
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/OrderList/Share'
         }

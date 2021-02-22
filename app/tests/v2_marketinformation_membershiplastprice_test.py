@@ -77,6 +77,7 @@ class TestV2MembershipLastPrice:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -102,6 +103,7 @@ class TestV2MembershipLastPrice:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
 
@@ -123,6 +125,7 @@ class TestV2MembershipLastPrice:
         exchange = shared_contract['IbetMembershipExchange']
         token = TestV2MembershipLastPrice.generate_agree_event(exchange)
         token_address = token['address']
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             exchange['address']
 
@@ -144,6 +147,11 @@ class TestV2MembershipLastPrice:
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_membership_lastprice_error_1(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -164,6 +172,10 @@ class TestV2MembershipLastPrice:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         headers = {}
         request_body = json.dumps(request_params)
 
@@ -181,6 +193,10 @@ class TestV2MembershipLastPrice:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         headers = {}
         request_body = json.dumps(request_params)
 
@@ -195,6 +211,11 @@ class TestV2MembershipLastPrice:
 
     # エラー系4：HTTPメソッドが不正
     def test_membership_lastprice_error_4(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -202,4 +223,35 @@ class TestV2MembershipLastPrice:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/Market/LastPrice/Membership'
+        }
+
+    # エラー系5：取扱トークン対象外
+    def test_membership_lastprice_error_5(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = False
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/LastPrice/Membership'
+        }
+
+    # エラー系5：exchangeアドレス未設定
+    def test_membership_lastprice_error_5(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/LastPrice/Membership'
         }

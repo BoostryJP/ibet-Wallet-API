@@ -19,8 +19,9 @@ SPDX-License-Identifier: Apache-2.0
 
 import json
 
-from app import log
+from app import log, config
 from app.api.common import BaseResource
+from app.errors import NotSupportedError
 
 LOG = log.get_logger()
 
@@ -35,6 +36,10 @@ class StraightBondABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.StraightBondABI')
+
+        if config.BOND_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         ibet_straightbond_json = json.load(open("app/contracts/json/IbetStraightBond.json", "r"))
         abi = ibet_straightbond_json['abi']
         self.on_success(res, abi)
@@ -50,6 +55,10 @@ class ShareABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.ShareABI')
+
+        if config.SHARE_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         ibet_share_json = json.load(open("app/contracts/json/IbetShare.json", "r"))
         abi = ibet_share_json['abi']
         self.on_success(res, abi)
@@ -65,6 +74,10 @@ class MembershipABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.MembershipABI')
+
+        if config.MEMBERSHIP_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         ibet_membership_json = json.load(open("app/contracts/json/IbetMembership.json", "r"))
         abi = ibet_membership_json['abi']
         self.on_success(res, abi)
@@ -80,6 +93,10 @@ class CouponABI(BaseResource):
 
     def on_get(self, req, res):
         LOG.info('v2.token_abi.CouponABI')
+
+        if config.COUPON_TOKEN_ENABLED is False:
+            raise NotSupportedError(method='GET', url=req.path)
+
         ibet_coupon_json = json.load(open("app/contracts/json/IbetCoupon.json", "r"))
         abi = ibet_coupon_json['abi']
         self.on_success(res, abi)

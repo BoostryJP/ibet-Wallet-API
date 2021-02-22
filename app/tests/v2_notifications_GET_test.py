@@ -24,8 +24,9 @@ from app.model import Notification
 JST = timezone(timedelta(hours=+9), "JST")
 
 
-class TestNotification:
-    # テスト対象API
+class TestNotificationsGet:
+
+    # Test API
     apiurl = "/v2/Notifications"
 
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
@@ -119,16 +120,16 @@ class TestNotification:
 
         session.commit()
 
-    # ---------------------------------------------------------------------------
-    # GET
-    # ---------------------------------------------------------------------------
-
-    # ＜正常系1-1＞
-    # 全ての通知を表示
-    def test_get_notification_normal_1(self, client, session):
+    ###########################################################################
+    # Normal
+    ###########################################################################
+    
+    # <Normal_1>
+    # List all notifications
+    def test_normal_1(self, client, session):
         self._insert_test_data(session)
 
-        resp = client.simulate_get(self.apiurl, params={"address": TestNotification.address})
+        resp = client.simulate_get(self.apiurl, params={"address": self.address})
 
         assumed_body = [
             {
@@ -188,15 +189,15 @@ class TestNotification:
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
-    # ＜正常系1-2＞
-    # フラグ済みの通知のみ表示
-    def test_get_notification_normal_2(self, client, session):
+    # <Normal_2>
+    # List only flagged notifications
+    def test_normal_2(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "status": "flagged"
             }
         )
@@ -224,15 +225,15 @@ class TestNotification:
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
-    # ＜正常系1-3＞
-    # 削除済みの通知のみ表示
-    def test_get_notification_normal_3(self, client, session):
+    # <Normal_3>
+    # List only deleted notifications
+    def test_normal_3(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "status": "deleted",
             }
         )
@@ -260,15 +261,15 @@ class TestNotification:
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
-    # ＜正常系1-4＞
-    # 優先度順にソート
-    def test_get_notification_normal_4(self, client, session):
+    # <Normal_4_1>
+    # Sort by priority
+    def test_normal_4_1(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "sort": "priority"
             },
         )
@@ -331,15 +332,86 @@ class TestNotification:
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
-    # ＜正常系1-5＞
-    # 全ての通知を表示 + カーソル使用
-    def test_get_notification_normal_5(self, client, session):
+    # <Normal_4_2>
+    # Sort by flagged
+    def test_normal_4_2(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
+                "sort": "is_flagged"
+            },
+        )
+
+        assumed_body = [
+            {
+                "notification_type": "SampleNotification3",
+                "id": "0x00000011034000000000000000",
+                "sort_id": 1,
+                "priority": 2,
+                "block_timestamp": "2017/04/10 10:00:00",
+                "is_read": False,
+                "is_flagged": True,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+            },
+            {
+                "notification_type": "SampleNotification1",
+                "id": "0x00000021034300000000000000",
+                "sort_id": 2,
+                "priority": 1,
+                "block_timestamp": "2017/06/10 10:00:00",
+                "is_read": True,
+                "is_flagged": False,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                    "aaa": "bbb"
+                },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+            },
+            {
+                "notification_type": "SampleNotification5",
+                "id": "0x00000001034000000000000000",
+                "sort_id": 3,
+                "priority": 0,
+                "block_timestamp": "2017/02/10 10:00:00",
+                "is_read": False,
+                "is_flagged": False,
+                "is_deleted": False,
+                "deleted_at": None,
+                "args": {
+                    "hoge": "fuga",
+                },
+                "metainfo": {
+                },
+                "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+            },
+        ]
+
+        assert resp.status_code == 200
+        assert resp.json["data"]["notifications"] == assumed_body
+
+    # <Normal_5>
+    # Set cursor
+    def test_normal_5(self, client, session):
+        self._insert_test_data(session)
+
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "address": self.address,
                 "cursor": "1",
             },
         )
@@ -384,15 +456,15 @@ class TestNotification:
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
-    # ＜正常系1-6＞
-    # 全ての通知を表示 + カーソル使用 + リミット使用
-    def test_get_notification_normal_6(self, client, session):
+    # <Normal_6>
+    # Set cursor and limit
+    def test_normal_6(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "cursor": "1",
                 "limit": "1",
             }
@@ -421,14 +493,14 @@ class TestNotification:
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
-    # ＜正常系1-7＞
-    # 0件データの場合
-    def test_get_notification_normal_7(self, client, session):
+    # <Normal_7>
+    # Zero data
+    def test_normal_7(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
-            params={"address": TestNotification.address_2}
+            params={"address": self.address_2}
         )
 
         assumed_body = []
@@ -436,15 +508,19 @@ class TestNotification:
         assert resp.status_code == 200
         assert resp.json["data"]["notifications"] == assumed_body
 
-    # ＜エラー系1-1＞
-    # cursorがマイナス
-    def test_get_notification_error_1_1(self, client, session):
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # <Error_1_1>
+    # Invalid Parameter (cursor is minus)
+    def test_error_1_1(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "cursor": "-1",
                 "limit": "1",
             }
@@ -457,15 +533,15 @@ class TestNotification:
             'description': {'cursor': 'min value is 0'}
         }
 
-    # ＜エラー系1-2＞
-    # cursorが小数
-    def test_get_notification_error_1_2(self, client, session):
+    # <Error_1_2>
+    # Invalid Parameter (cursor is not an integer)
+    def test_error_1_2(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "cursor": "0.1",
                 "limit": "1",
             }
@@ -483,15 +559,15 @@ class TestNotification:
             }
         }
 
-    # ＜エラー系2-1＞
-    # limitがマイナス
-    def test_get_notification_error_2_1(self, client, session):
+    # <Error_2_1>
+    # Invalid Parameter (limit is minus)
+    def test_error_2_1(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "cursor": "1",
                 "limit": "-1",
             }
@@ -504,15 +580,15 @@ class TestNotification:
             'description': {'limit': 'min value is 0'}
         }
 
-    # ＜エラー系2-2＞
-    # limitが小数
-    def test_get_notification_error_2_2(self, client, session):
+    # <Error_2_2>
+    # Invalid Parameter (limit is not an integer)
+    def test_error_2_2(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": TestNotification.address,
+                "address": self.address,
                 "cursor": "1",
                 "limit": "0.1",
             }
@@ -530,9 +606,9 @@ class TestNotification:
             }
         }
 
-    # ＜エラー系3-1＞
-    # addressなし
-    def test_get_notification_error_3_1(self, client, session):
+    # <Error_3_1>
+    # Invalid Parameter (address is null)
+    def test_error_3_1(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
@@ -548,9 +624,9 @@ class TestNotification:
             'description': {'address': ['null value not allowed', 'must be of string type']}
         }
 
-    # ＜エラー系3-2＞
-    # address形式が不正
-    def test_get_notification_error_3_2(self, client, session):
+    # <Error_3_2>
+    # Invalid Parameter (invalid address)
+    def test_error_3_2(self, client, session):
         self._insert_test_data(session)
 
         resp = client.simulate_get(
@@ -564,229 +640,4 @@ class TestNotification:
         assert resp.json["meta"] == {
             'code': 88,
             'message': 'Invalid Parameter'
-        }
-
-    # ---------------------------------------------------------------------------
-    # POST
-    # ---------------------------------------------------------------------------
-
-    # ＜正常系1-1＞
-    # 重要フラグの更新
-    def test_post_notification_normal_1(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": TestNotification.address,
-                "id": notification_id,
-                "is_flagged": True,
-            }
-        )
-
-        n = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
-
-        assumed_body = {
-            "notification_type": "SampleNotification1",
-            "id": "0x00000021034300000000000000",
-            "priority": 1,
-            "block_timestamp": "2017/06/10 10:00:00",
-            "is_read": True,
-            "is_flagged": True,
-            "is_deleted": False,
-            "deleted_at": None,
-            "args": {
-                "hoge": "fuga",
-            },
-            "metainfo": {
-                "aaa": "bbb"
-            },
-            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
-        }
-
-        assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
-        assert n.is_flagged == True
-
-    # ＜正常系1-2＞
-    # 重要フラグ・既読フラグの更新
-    def test_post_notification_normal_2(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000011034000000000000000"
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": TestNotification.address,
-                "id": notification_id,
-                "is_flagged": False,
-                "is_read": True,
-            }
-        )
-
-        n = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
-
-        assumed_body = {
-            "notification_type": "SampleNotification3",
-            "id": "0x00000011034000000000000000",
-            "priority": 2,
-            "block_timestamp": "2017/04/10 10:00:00",
-            "is_read": True,
-            "is_flagged": False,
-            "is_deleted": False,
-            "deleted_at": None,
-            "args": {
-                "hoge": "fuga",
-            },
-            "metainfo": {
-            },
-            "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
-        }
-
-        assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
-        assert n.is_flagged == False
-        assert n.is_read == True
-
-    # ＜正常系1-3＞
-    # 削除フラグの更新（オン）
-    def test_post_notification_normal_3(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000011034000000000000000"
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": TestNotification.address,
-                "id": notification_id,
-                "is_deleted": True,
-            }
-        )
-
-        n = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
-
-        assert resp.status_code == 200
-        assert n.is_read == False
-        assert n.is_flagged == True
-        assert n.is_deleted == True
-        assert n.deleted_at is not None
-
-    # ＜正常系1-3＞
-    # 削除フラグの更新（オン→オフ）
-    def test_post_notification_normal_4(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000011034000000000000000"
-        client.simulate_post(
-            self.apiurl,
-            json={
-                "address": TestNotification.address,
-                "id": notification_id,
-                "is_deleted": True,
-            }
-        )
-
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": TestNotification.address,
-                "id": notification_id,
-                "is_deleted": False,
-            }
-        )
-
-        n = session.query(Notification). \
-            filter(Notification.notification_id == notification_id). \
-            first()
-
-        assert resp.status_code == 200
-        assert n.is_read == False
-        assert n.is_flagged == True
-        assert n.is_deleted == False
-        assert n.deleted_at is None
-
-    # ＜異常系1-1＞
-    # 権限なしパターン。重要フラグの更新
-    def test_post_notification_fail_1_1(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": TestNotification.address_2,
-                "id": notification_id,
-                "is_flagged": True,
-            }
-        )
-
-        assert resp.status_code == 400
-        assert resp.json["meta"]["code"] == 88
-
-    # ＜異常系1-2＞
-    # 存在しない通知の更新
-    def test_post_notification_fail_1_2(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000021034100000000000003"
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": TestNotification.address,
-                "id": notification_id,
-                "is_flagged": True,
-            }
-        )
-
-        assert resp.status_code == 404
-        assert resp.json["meta"]["code"] == 30
-
-    # ＜異常系2-1＞
-    # addressなし
-    def test_post_notification_fail_2_1(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": "",
-                "id": notification_id,
-                "is_flagged": True,
-            }
-        )
-
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'address': 'empty values not allowed'}
-        }
-
-    # ＜異常系2-2＞
-    # address形式が不正
-    def test_post_notification_fail_2_2(self, client, session):
-        self._insert_test_data(session)
-
-        notification_id = "0x00000021034300000000000000"
-        resp = client.simulate_post(
-            self.apiurl,
-            json={
-                "address": "0xabc",
-                "id": notification_id,
-                "is_flagged": True,
-            }
-        )
-
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
         }

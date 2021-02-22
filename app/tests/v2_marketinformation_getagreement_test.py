@@ -420,12 +420,18 @@ class TestV2GetAgreementGet:
         }
 
     # Error_5
-    # exchangeアドレスが環境変数に未設定
+    # exchangeアドレスが環境変数の値と異なる
     # 400
-    def test_error_5(self, client):
+    def test_error_5(self, client, shared_contract):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         order_id = 2
         agreement_id = 102
+
+        # 環境変数設定
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = shared_contract['IbetStraightBondExchange']['address']
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -435,4 +441,28 @@ class TestV2GetAgreementGet:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': 'Invalid Address'
+        }
+
+    # Error_6
+    # exchangeアドレスが未設定
+    # 404
+    def test_error_6(self, client):
+        exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
+        order_id = 2
+        agreement_id = 102
+
+        # 環境変数設定
+        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+
+        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v2/Market/Agreement'
         }

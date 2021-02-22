@@ -26,7 +26,7 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_share_token, register_share_list, register_share_reference_url
+from .contract_modules import issue_share_token, register_share_list, register_share_reference_url, invalidate_share_token
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_stack.inject(geth_poa_middleware, layer=0)
@@ -82,6 +82,7 @@ class TestV2TokenShareTokenDetails:
     # ＜正常系1＞
     #   データあり
     def test_sharedetails_normal_1(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -145,6 +146,7 @@ class TestV2TokenShareTokenDetails:
     #   無効なコントラクトアドレス
     #   -> 400エラー
     def test_sharedetails_error_1(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '0xabcd'
 
         query_string = ''
@@ -161,6 +163,7 @@ class TestV2TokenShareTokenDetails:
     # ＜エラー系2＞
     #   取扱トークン（DB）に情報が存在しない
     def test_sharedetails_error_2(self, client, shared_contract, session):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -186,4 +189,54 @@ class TestV2TokenShareTokenDetails:
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + token['address']
+        }
+
+    # ＜エラー系3＞
+    #   トークン無効化（データなし）
+    def test_sharedetails_error_3(self, client, session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenShareTokenDetails.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：株式新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV2TokenShareTokenDetails.share_token_attribute(exchange_address, personal_info)
+        share_token = issue_share_token(issuer, attribute)
+        url_list = ['http://hogehoge/1', 'http://hogehoge/2', 'http://hogehoge/3']
+        register_share_reference_url(issuer, share_token, url_list)
+        register_share_list(issuer, share_token, token_list)
+
+        # 取扱トークンデータ挿入
+        TestV2TokenShareTokenDetails.list_token(session, share_token)
+
+        # トークン無効化
+        invalidate_share_token(issuer, share_token)
+
+        apiurl = self.apiurl_base + share_token['address']
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 30,
+            'message': 'Data Not Exists',
+            'description': 'contract_address: ' + share_token['address']
+        }
+
+    # ＜エラー系3＞
+    #  取扱トークン対象外
+    def test_sharedetails_error_4(self, client):
+        config.SHARE_TOKEN_ENABLED = False
+        resp = client.simulate_get(self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765")
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v2/Token/Share/0xe6A75581C7299c75392a63BCF18a3618B30ff765'
         }

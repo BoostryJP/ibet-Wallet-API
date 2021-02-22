@@ -100,6 +100,7 @@ class TestV2TokenStraightBondTokens:
     # cursor=設定なし、 limit=設定なし
     # -> 1件返却
     def test_bondlist_normal_1(self, client, session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -173,6 +174,7 @@ class TestV2TokenStraightBondTokens:
     # cursor=設定なし、 limit=設定なし
     # -> 登録が新しい順にリストが返却
     def test_bondlist_normal_2(self, client, session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -299,6 +301,7 @@ class TestV2TokenStraightBondTokens:
     # cursor=2、 limit=2
     # -> 登録が新しい順にリストが返却（2件）
     def test_bondlist_normal_3(self, client, session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -426,6 +429,7 @@ class TestV2TokenStraightBondTokens:
     # cursor=1、 limit=1
     # -> 登録が新しい順にリストが返却（1件）
     def test_bondlist_normal_4(self, client, session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -506,6 +510,7 @@ class TestV2TokenStraightBondTokens:
     # cursor=1、 limit=2
     # -> 登録が新しい順にリストが返却（1件）
     def test_bondlist_normal_5(self, client, session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -586,6 +591,7 @@ class TestV2TokenStraightBondTokens:
     # cursor=2、 limit=2
     # -> 1件目のみtransferableを不可に変更
     def test_bondlist_normal_6(self, client, session, shared_contract):
+        config.BOND_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -668,6 +674,7 @@ class TestV2TokenStraightBondTokens:
     # HTTPメソッド不正
     # -> 404エラー
     def test_bondlist_error_1(self, client):
+        config.BOND_TOKEN_ENABLED = True
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -685,6 +692,7 @@ class TestV2TokenStraightBondTokens:
     # cursorに文字が含まれる
     # -> 入力エラー
     def test_bondlist_error_2_1(self, client):
+        config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=a&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -704,6 +712,7 @@ class TestV2TokenStraightBondTokens:
     # cursorが負値
     # -> 入力エラー
     def test_bondlist_error_2_2(self, client):
+        config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=-1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -718,6 +727,7 @@ class TestV2TokenStraightBondTokens:
     # cursorが小数
     # -> 入力エラー
     def test_bondlist_error_2_3(self, client):
+        config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=0.1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -737,6 +747,7 @@ class TestV2TokenStraightBondTokens:
     # cursorがint最大値
     # -> 入力エラー
     def test_bondlist_error_2_4(self, client, session):
+        config.BOND_TOKEN_ENABLED = True
         max_value = str(sys.maxsize)
         query_string = 'cursor=' + max_value + '&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -771,6 +782,7 @@ class TestV2TokenStraightBondTokens:
     # limitが負値
     # -> 入力エラー
     def test_bondlist_error_3_2(self, client):
+        config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=1&limit=-1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -785,6 +797,7 @@ class TestV2TokenStraightBondTokens:
     # limitが小数
     # -> 入力エラー
     def test_bondlist_error_3_3(self, client):
+        config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=1&limit=0.1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -798,4 +811,17 @@ class TestV2TokenStraightBondTokens:
                     'must be of integer type'
                 ]
             }
+        }
+
+    # ＜エラー系4＞
+    #  取扱トークン対象外
+    def test_bondlist_error_4(self, client):
+        config.BOND_TOKEN_ENABLED = False
+        resp = client.simulate_get(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v2/Token/StraightBond'
         }
