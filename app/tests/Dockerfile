@@ -6,6 +6,7 @@ RUN mkdir -p /app/ibet-Wallet-API/
 # install packages
 RUN apk update \
  && apk add --no-cache --virtual .build-deps \
+      unzip \
       make \
       gcc \
       g++ \
