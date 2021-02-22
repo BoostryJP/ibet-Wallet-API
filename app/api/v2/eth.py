@@ -102,25 +102,25 @@ class SendRawTransaction(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.eth.SendRawTransaction')
+        LOG.info("v2.eth.SendRawTransaction")
 
         session = req.context["session"]
 
         request_json = SendRawTransaction.validate(req)
-        raw_tx_hex_list = request_json['raw_tx_hex_list']
+        raw_tx_hex_list = request_json["raw_tx_hex_list"]
 
-        # TokenList Contract
+        # Get TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList',
+            "TokenList",
             config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
-        # トークン取扱状態チェック
-        # トランザクション送信前にトークンの取扱状態をチェックする
+        # Check token status
+        # NOTE: Check the token status before sending a transaction.
         for raw_tx_hex in raw_tx_hex_list:
             try:
                 raw_tx = decode(HexBytes(raw_tx_hex))
-                to_contract_address = to_checksum_address('0x' + raw_tx[3].hex())
+                to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
             except Exception as err:
                 LOG.info(f"RLP decoding failed: {err}")
                 continue
@@ -141,57 +141,64 @@ class SendRawTransaction(BaseResource):
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
 
-        # ブロック生成状態チェック
-        # ブロックが生成されない状態だと nonce が正しい値にならないのでエラーで返す。
+        # Check block synchronization state
+        # NOTE: If the block is out of sync, the nonce is not the correct value.
         block = session.query(Node).first()
         if block is None or not block.is_synced:
             raise ServiceUnavailable("Block synchronization is down")
 
-        # トランザクション送信
+        # Send transaction
         result = []
         for i, raw_tx_hex in enumerate(raw_tx_hex_list):
-            # 実行コントラクトのアドレスを取得
+            # Get the contract address of the execution target.
             try:
                 raw_tx = decode(HexBytes(raw_tx_hex))
-                to_contract_address = to_checksum_address('0x' + raw_tx[3].hex())
+                to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
                 LOG.info(raw_tx)
             except Exception as err:
-                result.append({'id': i + 1, 'status': 0})
+                result.append({"id": i + 1, "status": 0})
                 LOG.error(f"RLP decoding failed: {err}")
                 continue
 
-            # 実行可能コントラクトであることをチェック
+            # Check that contract is executable
             executable_contract = session.query(ExecutableContract). \
                 filter(to_contract_address == ExecutableContract.contract_address). \
                 first()
             if executable_contract is None:
-                result.append({'id': i + 1, 'status': 0})
-                LOG.error('Not executable')
-                continue
+                # If it is not a default contract, return error status.
+                if to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS and \
+                        to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS:
+                    result.append({"id": i + 1, "status": 0})
+                    LOG.error("Not executable")
+                    continue
 
-            # ブロックチェーンノードに送信
+            # Send raw transaction
             try:
                 tx_hash = web3.eth.sendRawTransaction(raw_tx_hex)
             except ValueError as err:
                 result.append({
-                    'id': i + 1,
-                    'status': 0,
+                    "id": i + 1,
+                    "status": 0,
                 })
                 LOG.error(f"Send transaction failed: {err}")
                 continue
 
-            # 実行結果を確認
+            # Handling a transaction execution result
             try:
                 tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
-            except Timeout as err:  # タイムアウトエラーの場合
+            except Timeout as err:
+                status = 2  # execution success (pending transaction)
 
-                status = 2  # execution success(pending transaction)
-
-                # pendingに昇格せずqueuedに滞留したままのトランザクションはエラーとする
+                # Transactions that are not promoted to pending and remain in the queued state
+                # will return an error status.
                 try:
                     from_address = Account.recoverTransaction(raw_tx_hex)
                 except Exception as err:
-                    result.append({'id': i + 1, 'status': 0})
+                    result.append({"id": i + 1, "status": 0})
                     LOG.error(f"get sender address from signed transaction failed: {err}")
                     continue
                 nonce = int("0x0" if raw_tx[0].hex() == "" else raw_tx[0].hex(), 16)
@@ -201,41 +208,41 @@ class SendRawTransaction(BaseResource):
                         status = 0  # execution failure
 
                 result.append({
-                    'id': i + 1,
-                    'status': status,
+                    "id": i + 1,
+                    "status": status,
                 })
                 LOG.warning(f"Transaction receipt timeout: {err}")
                 continue
             except Exception as err:
                 result.append({
-                    'id': i + 1,
-                    'status': 0,
+                    "id": i + 1,
+                    "status": 0,
                 })
                 LOG.error(f"Transaction failed: {err}")
                 continue
 
             result.append({
-                'id': i + 1,
-                'status': tx['status'],
+                "id": i + 1,
+                "status": tx["status"],
             })
 
         self.on_success(res, result)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'raw_tx_hex_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "raw_tx_hex_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })
@@ -255,25 +262,25 @@ class SendRawTransactionNoWait(BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.eth.SendRawTransactionNoWait')
+        LOG.info("v2.eth.SendRawTransactionNoWait")
 
         session = req.context["session"]
 
         request_json = SendRawTransactionNoWait.validate(req)
-        raw_tx_hex_list = request_json['raw_tx_hex_list']
+        raw_tx_hex_list = request_json["raw_tx_hex_list"]
 
-        # TokenList Contract
+        # Get TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList',
+            "TokenList",
             config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
-        # トークン取扱状態チェック
-        # トランザクション送信前にトークンの取扱状態をチェックする
+        # Check token status
+        # NOTE: Check the token status before sending a transaction.
         for raw_tx_hex in raw_tx_hex_list:
             try:
                 raw_tx = decode(HexBytes(raw_tx_hex))
-                to_contract_address = to_checksum_address('0x' + raw_tx[3].hex())
+                to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
             except Exception as err:
                 LOG.info(f"RLP decoding failed: {err}")
                 continue
@@ -294,69 +301,76 @@ class SendRawTransactionNoWait(BaseResource):
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
 
-        # ブロック生成状態チェック
-        # ブロックが生成されない状態だと nonce が正しい値にならないのでエラーで返す。
+        # Check block synchronization state
+        # NOTE: If the block is out of sync, the nonce is not the correct value.
         node = session.query(Node).first()
         if node is None or not node.is_synced:
             raise ServiceUnavailable("Block synchronization is down")
 
-        # トランザクション送信
+        # Send transaction
         result = []
         for i, raw_tx_hex in enumerate(raw_tx_hex_list):
-            # 実行コントラクトのアドレスを取得
+            # Get the contract address of the execution target.
             try:
                 raw_tx = decode(HexBytes(raw_tx_hex))
-                to_contract_address = to_checksum_address('0x' + raw_tx[3].hex())
+                to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
                 LOG.info(raw_tx)
             except Exception as err:
-                result.append({'id': i + 1, 'status': 0})
+                result.append({"id": i + 1, "status": 0})
                 LOG.error(f"RLP decoding failed: {err}")
                 continue
 
-            # 実行可能コントラクトであることをチェック
+            # Check that contract is executable
             executable_contract = session.query(ExecutableContract). \
                 filter(to_contract_address == ExecutableContract.contract_address). \
                 first()
             if executable_contract is None:
-                result.append({'id': i + 1, 'status': 0})
-                LOG.error('Not executable')
-                continue
+                # If it is not a default contract, return error status.
+                if to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS and \
+                        to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS:
+                    result.append({"id": i + 1, "status": 0})
+                    LOG.error("Not executable")
+                    continue
 
-            # ブロックチェーンノードに送信
+            # Send raw transaction
             try:
                 transaction_hash = web3.eth.sendRawTransaction(raw_tx_hex)
             except ValueError as err:
                 result.append({
-                    'id': i + 1,
-                    'status': 0,
-                    'transaction_hash': None
+                    "id": i + 1,
+                    "status": 0,
+                    "transaction_hash": None
                 })
                 LOG.error(f"Send transaction failed: {err}")
                 continue
 
             result.append({
-                'id': i + 1,
-                'status': 1,
-                'transaction_hash': transaction_hash.hex()
+                "id": i + 1,
+                "status": 1,
+                "transaction_hash": transaction_hash.hex()
             })
 
         self.on_success(res, result)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'raw_tx_hex_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "raw_tx_hex_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })

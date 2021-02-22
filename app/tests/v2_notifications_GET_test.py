@@ -26,7 +26,7 @@ JST = timezone(timedelta(hours=+9), "JST")
 
 class TestNotificationsGet:
 
-    # Target API
+    # Test API
     apiurl = "/v2/Notifications"
 
     address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"

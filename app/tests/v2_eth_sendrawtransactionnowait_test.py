@@ -20,12 +20,8 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from web3 import Web3
-from web3.datastructures import AttributeDict
 from web3.middleware import geth_poa_middleware
-from web3.utils.threads import Timeout
 from eth_utils import to_checksum_address
-from unittest.mock import MagicMock
-from unittest import mock
 
 from app import config
 from app.contracts import Contract
@@ -71,10 +67,12 @@ def executable_contract_token(session, contract):
     session.add(executable_contract)
 
 
-class TestEthSendRawTransaction:
+# sendRawTransaction API (No Wait)
+# /v2/Eth/SendRawTransactionNoWait
+class TestEthSendRawTransactionNoWait:
 
     # Test API
-    apiurl = '/v2/Eth/SendRawTransaction/'
+    apiurl = '/v2/Eth/SendRawTransactionNoWait/'
 
     ###########################################################################
     # Normal
@@ -83,9 +81,9 @@ class TestEthSendRawTransaction:
     # <Normal_1>
     # Input list is empty
     def test_normal_1(self, client, session):
+        config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         insert_node_data(session, is_synced=True)
 
-        config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         request_params = {"raw_tx_hex_list": []}
 
         headers = {'Content-Type': 'application/json'}
@@ -158,10 +156,11 @@ class TestEthSendRawTransaction:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 1
-        }]
+        assert len(resp.json['data']) == 1
+        resp_data = resp.json['data'][0]
+        assert resp_data["id"] == 1
+        assert resp_data["status"] == 1
+        assert resp_data["transaction_hash"] is not None
 
     # <Normal_3>
     # Input list exists (multiple entries)
@@ -263,90 +262,15 @@ class TestEthSendRawTransaction:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 1
-        }, {
-            "id": 2,
-            "status": 1
-        }]
-
-    # <Normal_4>
-    # pending transaction
-    def test_normal_4(self, client, session):
-        insert_node_data(session, is_synced=True)
-
-        # トークンリスト登録
-        tokenlist = tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
-        issuer = eth_account['issuer']
-        coupontoken_1 = issue_coupon_token(issuer, {
-            "name": "name_test1",
-            "symbol": "symbol_test1",
-            "totalSupply": 1000000,
-            "tradableExchange": config.ZERO_ADDRESS,
-            "details": "details_test1",
-            "returnDetails": "returnDetails_test1",
-            "memo": "memo_test1",
-            "expirationDate": "20211201",
-            "transferable": True,
-            "contactInformation": "contactInformation_test1",
-            "privacyPolicy": "privacyPolicy_test1"
-        })
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
-
-        # Listing,実行可能コントラクト登録
-        listing_token(session, coupontoken_1)
-        executable_contract_token(session, coupontoken_1)
-
-        token_contract_1 = web3.eth.contract(
-            address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
-        )
-
-        local_account_1 = web3.eth.account.create()
-
-        # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        tx = token_contract_1.functions.consume(10).buildTransaction({
-            "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
-        })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
-
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        # タイムアウト
-        # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Timeout())), mock.patch(
-                "web3.txpool.TxPool.inspect", AttributeDict({
-                    "pending": AttributeDict({
-                        to_checksum_address(local_account_1.address): AttributeDict({
-                            str(tx["nonce"]): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
-                        })
-                    }),
-                    "queued": AttributeDict({})
-                })):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 2
-        }]
+        assert len(resp.json['data']) == 2
+        resp_data = resp.json['data'][0]
+        assert resp_data["id"] == 1
+        assert resp_data["status"] == 1
+        assert resp_data["transaction_hash"] is not None
+        resp_data = resp.json['data'][1]
+        assert resp_data["id"] == 2
+        assert resp_data["status"] == 1
+        assert resp_data["transaction_hash"] is not None
 
     ###########################################################################
     # Error
@@ -362,7 +286,7 @@ class TestEthSendRawTransaction:
         assert resp.json['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: GET, url: /v2/Eth/SendRawTransaction'
+            'description': 'method: GET, url: /v2/Eth/SendRawTransactionNoWait'
         }
 
     # <Error_2>
@@ -406,7 +330,7 @@ class TestEthSendRawTransaction:
         }
 
     # <Error_4>
-    # Input values are incorrect (not a list type)
+    # Input values are incorrect (not a list)
     # -> 400 InvalidParameterError
     def test_error_4(self, client):
         raw_tx_1 = "some_raw_tx_1"
@@ -431,7 +355,6 @@ class TestEthSendRawTransaction:
     # Input values are incorrect (not a string type)
     # -> 400 InvalidParameterError
     def test_error_5(self, client):
-        config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         raw_tx_1 = 1234
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
@@ -665,227 +588,8 @@ class TestEthSendRawTransaction:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 0
-        }]
-
-    # <Error_11>
-    # waitForTransactionReceipt error
-    def test_error_11(self, client, session):
-        insert_node_data(session, is_synced=True)
-
-        # トークンリスト登録
-        tokenlist = tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
-        issuer = eth_account['issuer']
-        coupontoken_1 = issue_coupon_token(issuer, {
-            "name": "name_test1",
-            "symbol": "symbol_test1",
-            "totalSupply": 1000000,
-            "tradableExchange": config.ZERO_ADDRESS,
-            "details": "details_test1",
-            "returnDetails": "returnDetails_test1",
-            "memo": "memo_test1",
-            "expirationDate": "20211201",
-            "transferable": True,
-            "contactInformation": "contactInformation_test1",
-            "privacyPolicy": "privacyPolicy_test1"
-        })
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
-
-        # Listing,実行可能コントラクト登録
-        listing_token(session, coupontoken_1)
-        executable_contract_token(session, coupontoken_1)
-
-        token_contract_1 = web3.eth.contract(
-            address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
-        )
-
-        local_account_1 = web3.eth.account.create()
-
-        # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        tx = token_contract_1.functions.consume(10).buildTransaction({
-            "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
-        })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
-
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        # waitForTransactionReceiptエラー
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Exception())):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 0
-        }]
-
-    # <Error_12>
-    # recoverTransaction error
-    def test_error_12(self, client, session):
-        insert_node_data(session, is_synced=True)
-
-        # トークンリスト登録
-        tokenlist = tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
-        issuer = eth_account['issuer']
-        coupontoken_1 = issue_coupon_token(issuer, {
-            "name": "name_test1",
-            "symbol": "symbol_test1",
-            "totalSupply": 1000000,
-            "tradableExchange": config.ZERO_ADDRESS,
-            "details": "details_test1",
-            "returnDetails": "returnDetails_test1",
-            "memo": "memo_test1",
-            "expirationDate": "20211201",
-            "transferable": True,
-            "contactInformation": "contactInformation_test1",
-            "privacyPolicy": "privacyPolicy_test1"
-        })
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
-
-        # Listing,実行可能コントラクト登録
-        listing_token(session, coupontoken_1)
-        executable_contract_token(session, coupontoken_1)
-
-        token_contract_1 = web3.eth.contract(
-            address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
-        )
-
-        local_account_1 = web3.eth.account.create()
-
-        # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        tx = token_contract_1.functions.consume(10).buildTransaction({
-            "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
-        })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
-
-        # waitForTransactionReceiptエラー
-        mock.patch.object(web3.eth, "waitForTransactionReceipt", MagicMock(side_effect=Timeout()))
-        mock.patch.object(web3.eth.account, "recoverTransaction", MagicMock(side_effect=Exception()))
-
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        # タイムアウト
-        # recoverTransactionエラー
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Timeout())), mock.patch(
-                "eth_account.Account.recoverTransaction", MagicMock(side_effect=Exception())):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 0
-        }]
-
-    # <Error_13>
-    # Transaction timeout, no transition to pending
-    def test_error_13(self, client, session):
-        insert_node_data(session, is_synced=True)
-
-        # トークンリスト登録
-        tokenlist = tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
-        issuer = eth_account['issuer']
-        coupontoken_1 = issue_coupon_token(issuer, {
-            "name": "name_test1",
-            "symbol": "symbol_test1",
-            "totalSupply": 1000000,
-            "tradableExchange": config.ZERO_ADDRESS,
-            "details": "details_test1",
-            "returnDetails": "returnDetails_test1",
-            "memo": "memo_test1",
-            "expirationDate": "20211201",
-            "transferable": True,
-            "contactInformation": "contactInformation_test1",
-            "privacyPolicy": "privacyPolicy_test1"
-        })
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
-
-        # Listing,実行可能コントラクト登録
-        listing_token(session, coupontoken_1)
-        executable_contract_token(session, coupontoken_1)
-
-        token_contract_1 = web3.eth.contract(
-            address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
-        )
-
-        local_account_1 = web3.eth.account.create()
-
-        # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        tx = token_contract_1.functions.consume(10).buildTransaction({
-            "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
-        })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
-
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        # タイムアウト
-        # queuedに滞留
-        # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Timeout())), mock.patch(
-                "web3.txpool.TxPool.inspect", AttributeDict({
-                    "pending": AttributeDict({}),
-                    "queued": AttributeDict({
-                        to_checksum_address(local_account_1.address): AttributeDict({
-                            str(tx["nonce"]): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
-                        })
-                    })
-                })):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 0
-        }]
+        assert len(resp.json['data']) == 1
+        resp_data = resp.json['data'][0]
+        assert resp_data["id"] == 1
+        assert resp_data["status"] == 0
+        assert resp_data["transaction_hash"] is None
