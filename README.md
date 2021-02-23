@@ -14,6 +14,20 @@
   </a>
 </p>
 
+## About this repository
+
+ibe-Wallet-API is an API service that provides various utilities to help you build Wallet services on [ibet network](https://github.com/BoostryJP/ibet-Network).
+
+It supports the tokens developed by [ibet-SmartContract](https://github.com/BoostryJP/ibet-SmartContract).
+
+## Supported contract version
+
+* ibet-SmartContract: version 1.1.0
+
+## Prerequisites
+
+Set up an execution environment of Python 3.6 or higher.
+
 ## Starting and Stopping the Server
 Install packages
 ```
@@ -35,3 +49,11 @@ You can run the tests with:
 ```
 $ pytest app/tests/
 ```
+
+## License
+
+ibet-Wallet-API is licensed under the Apache License, Version 2.0.
+
+## Sponsors
+
+[BOOSTRY Co., Ltd.](https://boostry.co.jp/)
