@@ -51,6 +51,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -102,6 +103,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -153,6 +155,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -198,6 +201,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -243,6 +247,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -283,6 +288,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -336,6 +342,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -381,6 +388,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -433,6 +441,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -478,6 +487,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -523,6 +533,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -563,6 +574,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -616,6 +628,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -656,6 +669,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -720,6 +734,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent_address = eth_account['agent']['account_address']
@@ -785,6 +800,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
@@ -931,6 +947,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
@@ -1072,6 +1089,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
@@ -1222,6 +1240,7 @@ class TestV2CouponOrderBook:
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
             "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",  # client
@@ -1364,6 +1383,7 @@ class TestV2CouponOrderBook:
     def test_coupon_orderbook_error_1(self, client):
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
@@ -1386,6 +1406,7 @@ class TestV2CouponOrderBook:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
@@ -1412,6 +1433,7 @@ class TestV2CouponOrderBook:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレスが短い
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
@@ -1438,6 +1460,7 @@ class TestV2CouponOrderBook:
         token_address = 123456789123456789123456789123456789
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
@@ -1467,6 +1490,7 @@ class TestV2CouponOrderBook:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
 
@@ -1493,6 +1517,7 @@ class TestV2CouponOrderBook:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = 123456789123456789123456789123456789
 
@@ -1522,6 +1547,7 @@ class TestV2CouponOrderBook:
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
@@ -1548,6 +1574,10 @@ class TestV2CouponOrderBook:
 
     # エラー系6：HTTPメソッドが不正
     def test_coupon_orderbook_error_6(self, client):
+        exchange_address = \
+            to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -1555,4 +1585,32 @@ class TestV2CouponOrderBook:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/Market/OrderBook/Coupon'
+        }
+
+    # エラー系7：取扱トークン対象外
+    def test_coupon_orderbook_error_7(self, client):
+        exchange_address = \
+            to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = False
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/OrderBook/Coupon'
+        }
+
+    # エラー系8：exchangeアドレス未設定
+    def test_coupon_orderbook_error_8(self, client):
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/OrderBook/Coupon'
         }

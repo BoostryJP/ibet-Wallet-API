@@ -107,6 +107,7 @@ class TestV2MembershipTick:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -127,6 +128,11 @@ class TestV2MembershipTick:
         request_params = {"address_list": ["0xa4CEe3b909751204AA151860ebBE8E7A851c2A1a"]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -163,6 +169,10 @@ class TestV2MembershipTick:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -181,6 +191,10 @@ class TestV2MembershipTick:
         headers = {}
         request_body = json.dumps(request_params)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -198,6 +212,10 @@ class TestV2MembershipTick:
         headers = {}
         request_body = json.dumps(request_params)
 
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -209,6 +227,11 @@ class TestV2MembershipTick:
 
     # エラー系4：HTTPメソッドが不正
     def test_membership_tick_error_4(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -216,4 +239,35 @@ class TestV2MembershipTick:
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /v2/Market/Tick/Membership'
+        }
+
+    # エラー系5：取扱トークン対象外
+    def test_membership_tick_error_5(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = False
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
+            "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/Tick/Membership'
+        }
+
+    # エラー系6：exchangeアドレス未設定
+    def test_membership_tick_error_6(self, client):
+
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Market/Tick/Membership'
         }

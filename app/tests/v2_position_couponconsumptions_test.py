@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from .account_config import eth_account
+from app import config
 from app.model import ConsumeCoupon
 
 
@@ -58,6 +59,9 @@ class TestV2CouponConsumptions:
         }
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 200
@@ -79,6 +83,9 @@ class TestV2CouponConsumptions:
         }
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 200
@@ -107,6 +114,9 @@ class TestV2CouponConsumptions:
         }
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 200
@@ -125,6 +135,9 @@ class TestV2CouponConsumptions:
     def test_couponconsumptions_error_1(self, client):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
+
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -145,6 +158,9 @@ class TestV2CouponConsumptions:
         request_params = {}
         headers = {}
         request_body = json.dumps(request_params)
+
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -168,6 +184,8 @@ class TestV2CouponConsumptions:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -190,6 +208,8 @@ class TestV2CouponConsumptions:
         }
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
+
+        config.COUPON_TOKEN_ENABLED = True
 
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
@@ -215,6 +235,8 @@ class TestV2CouponConsumptions:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -238,6 +260,8 @@ class TestV2CouponConsumptions:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
+        config.COUPON_TOKEN_ENABLED = True
+
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
@@ -248,4 +272,19 @@ class TestV2CouponConsumptions:
             'description': {
                 'account_address_list': {'0': 'must be of string type'}
             }
+        }
+
+    # ＜エラー系4-2＞
+    #  取扱トークン対象外
+    def test_couponconsumptions_error_5(self, client):
+
+        config.COUPON_TOKEN_ENABLED = False
+
+        resp = client.simulate_post(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: POST, url: /v2/Position/Coupon/Consumptions'
         }

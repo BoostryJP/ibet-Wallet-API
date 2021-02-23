@@ -92,6 +92,7 @@ class TestV2TokenShareTokenAddresses:
     # cursor=設定なし、 limit=設定なし
     # -> 1件返却
     def test_normal_1(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -127,6 +128,7 @@ class TestV2TokenShareTokenAddresses:
     # cursor=設定なし、 limit=設定なし
     # -> 登録が新しい順にリストが返却
     def test_normal_2(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -163,6 +165,7 @@ class TestV2TokenShareTokenAddresses:
     # cursor=2、 limit=2
     # -> 登録が新しい順にリストが返却（2件）
     def test_normal_3(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -199,6 +202,7 @@ class TestV2TokenShareTokenAddresses:
     # cursor=1、 limit=1
     # -> 登録が新しい順にリストが返却（1件）
     def test_normal_4(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -234,6 +238,7 @@ class TestV2TokenShareTokenAddresses:
     # cursor=1、 limit=2
     # -> 登録が新しい順にリストが返却（1件）
     def test_normal_5(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -269,6 +274,7 @@ class TestV2TokenShareTokenAddresses:
     # cursor=設定なし、 limit=設定なし
     # -> 0件返却
     def test_normal_6(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -308,6 +314,7 @@ class TestV2TokenShareTokenAddresses:
     # HTTPメソッド不正
     # -> 404エラー
     def test_sharelist_error_1(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -325,6 +332,7 @@ class TestV2TokenShareTokenAddresses:
     # cursorに文字が含まれる
     # -> 入力エラー
     def test_sharelist_error_2_1(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         query_string = 'cursor=a&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -344,6 +352,7 @@ class TestV2TokenShareTokenAddresses:
     # cursorが負値
     # -> 入力エラー
     def test_sharelist_error_2_2(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         query_string = 'cursor=-1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -358,6 +367,7 @@ class TestV2TokenShareTokenAddresses:
     # cursorが小数
     # -> 入力エラー
     def test_sharelist_error_2_3(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         query_string = 'cursor=0.1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -377,6 +387,7 @@ class TestV2TokenShareTokenAddresses:
     # cursorがint最大値
     # -> 入力エラー
     def test_sharelist_error_2_4(self, client, session):
+        config.SHARE_TOKEN_ENABLED = True
         max_value = str(sys.maxsize)
         query_string = 'cursor=' + max_value + '&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -392,6 +403,7 @@ class TestV2TokenShareTokenAddresses:
     # limitに文字が含まれる
     # -> 入力エラー
     def test_sharelist_error_3_1(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         query_string = 'cursor=1&limit=a'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -411,6 +423,7 @@ class TestV2TokenShareTokenAddresses:
     # limitが負値
     # -> 入力エラー
     def test_sharelist_error_3_2(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         query_string = 'cursor=1&limit=-1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -425,6 +438,7 @@ class TestV2TokenShareTokenAddresses:
     # limitが小数
     # -> 入力エラー
     def test_sharelist_error_3_3(self, client):
+        config.SHARE_TOKEN_ENABLED = True
         query_string = 'cursor=1&limit=0.1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -438,4 +452,17 @@ class TestV2TokenShareTokenAddresses:
                     'must be of integer type'
                 ]
             }
+        }
+
+    # ＜エラー系4＞
+    #  取扱トークン対象外
+    def test_sharelist_error_4(self, client):
+        config.SHARE_TOKEN_ENABLED = False
+        resp = client.simulate_get(self.apiurl)
+
+        assert resp.status_code == 404
+        assert resp.json['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
+            'description': 'method: GET, url: /v2/Token/Share/Address'
         }
