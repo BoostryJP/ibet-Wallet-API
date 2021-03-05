@@ -36,10 +36,10 @@ if [ "${COUPON_TOKEN_ENABLED}" = 1 ]; then
   PROC_LIST="${PROC_LIST} async/indexer_Position_Coupon.py"
 fi
 
-if [ -z "${IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS}" -a \
-  -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" -a \
-  -z "${IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS}" -a \
-  -z "${IBET_CP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
+if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -a \
+  -n "$IBET_SB_EXCHANGE_CONTRACT_ADDRESS" -a \
+  -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" -a \
+  -n "$IBET_CP_EXCHANGE_CONTRACT_ADDRESS" ]; then
   PROC_LIST="${PROC_LIST} async/indexer_DEX.py"
 fi
 
@@ -50,4 +50,3 @@ for i in ${PROC_LIST}; do
     exit 1
   fi
 done
-
