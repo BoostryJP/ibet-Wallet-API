@@ -41,9 +41,9 @@ if [ $COUPON_TOKEN_ENABLED = 1 ]; then
   python async/indexer_Position_Coupon.py &
 fi
 
-if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -a \
-  -n "$IBET_SB_EXCHANGE_CONTRACT_ADDRESS" -a \
-  -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" -a \
+if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -o \
+  -n "$IBET_SB_EXCHANGE_CONTRACT_ADDRESS" -o \
+  -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" -o \
   -n "$IBET_CP_EXCHANGE_CONTRACT_ADDRESS" ]; then
   python async/indexer_DEX.py &
 fi
