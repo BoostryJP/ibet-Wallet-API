@@ -37,29 +37,26 @@ RUN apt-get update -q \
 RUN apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # install pyenv
-RUN git clone https://github.com/pyenv/pyenv.git
-RUN mkdir -p /home/apl \
- && mv /pyenv /home/apl/.pyenv/ \
- && chown -R apl:apl /home/apl
-
+RUN git clone https://github.com/pyenv/pyenv.git /home/apl/.pyenv
+RUN chown -R apl:apl /home/apl
 USER apl
 RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~apl/.bash_profile \
  && echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~apl/.bash_profile \
  && echo 'eval "$(pyenv init -)"' >> ~apl/.bash_profile \
  && echo 'export LANG=ja_JP.utf8' >> ~apl/.bash_profile
 
-# install python & package
+# install python
 RUN . ~/.bash_profile \
  && pyenv install 3.6.13 \
  && pyenv global 3.6.13 \
  && pip install --upgrade pip
 
-# requirements 1
+# install python packages 1
 COPY requirements.txt /app/requirements.txt
 RUN . ~/.bash_profile \
  && pip install -r /app/requirements.txt
 
-# requirements 2
+# install python packages 2
 COPY app/tests/requirements.txt /app/requirements2.txt
 RUN . ~/.bash_profile \
  && pip install -r /app/requirements2.txt
