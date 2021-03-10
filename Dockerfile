@@ -1,31 +1,27 @@
-FROM python:3.6-alpine3.13
+FROM python:3.6-slim-buster
 
 # make application directory
 RUN mkdir -p /app/ibet-Wallet-API/
 
-# install packages
-RUN apk update \
- && apk add --no-cache --virtual .build-deps \
-      unzip \
-      make \
-      gcc \
-      g++ \
-      musl-dev \
-      postgresql-dev \
-      libffi-dev \
-      autoconf \
-      automake \
-      inotify-tools \
-      libtool \
-      gmp-dev \
-      curl
-
 # add apl user/group
-# NOTE: '/bin/bash' was added when 'libtool' installed.
-RUN addgroup -g 1000 apl \
- && adduser -G apl -D -s /bin/bash -u 1000 apl \
+RUN groupadd -g 1000 apl \
+ && useradd -g apl -s /bin/bash -u 1000 -p apl apl \
  && echo 'apl ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
- && chown -R apl:apl /app
+ && chown -R apl:apl /app \
+ && mkdir -p /home/apl \
+ && chown -R apl:apl /home/apl
+
+# install packages
+RUN apt-get update -q \
+ && apt-get install -y --no-install-recommends \
+ unzip \
+ curl \
+ build-essential \
+ libssl-dev
+
+# remove unnessesory package files
+RUN apt clean \
+ && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # install python packages
 USER apl
