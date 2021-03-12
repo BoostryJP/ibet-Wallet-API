@@ -12,7 +12,7 @@ info:
 basePath: "/v2"
 tags:
 - name: "Admin"
-  description: "API for System Administrator"
+  description: "System Environment Settings"
 - name: "NodeInfo"
   description: "Blockchain Node Settings"
 - name: "Eth"
