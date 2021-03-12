@@ -124,9 +124,10 @@ class Processor:
                 self.__sync_all(_from_block, _to_block)
                 _to_block += 1000000
                 _from_block += 1000000
-            self.__sync_all(_from_block, self.latest_block)
+            self.__init_sync_all(_from_block, self.latest_block)
         else:
-            self.__sync_all(_from_block, self.latest_block)
+            self.__init_sync_all(_from_block, self.latest_block)
+        self.sink.flush()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
@@ -136,6 +137,10 @@ class Processor:
             return
         self.__sync_all(self.latest_block + 1, blockTo)
         self.latest_block = blockTo
+
+    def __init_sync_all(self, block_from: int, block_to: int):
+        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        self.__sync_transfer(block_from, block_to)
 
     def __sync_all(self, block_from: int, block_to: int):
         LOG.debug("syncing from={}, to={}".format(block_from, block_to))
