@@ -45,7 +45,7 @@ class App(falcon.API):
         Version 2
         """
 
-        # 管理者向け
+        # システム環境設定
         self.add_route('/v2/Admin/Tokens', admin.Tokens())
         self.add_route('/v2/Admin/Tokens/Type', admin.TokenType())
         self.add_route('/v2/Admin/Token/{contract_address}', admin.Token())
