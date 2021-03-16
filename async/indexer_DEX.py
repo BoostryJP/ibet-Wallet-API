@@ -210,7 +210,7 @@ class Processor:
         _from_block = 0
         if self.latest_block > 999999:
             while _to_block < self.latest_block:
-                self.__sync_all(_from_block, _to_block)
+                self.__init_sync_all(_from_block, _to_block)
                 _to_block += 1000000
                 _from_block += 1000000
             self.__init_sync_all(_from_block, self.latest_block)
