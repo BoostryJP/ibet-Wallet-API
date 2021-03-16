@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "1.2.0"
+  version: "21.3.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -12,7 +12,7 @@ info:
 basePath: "/v2"
 tags:
 - name: "Admin"
-  description: "API for System Administrator"
+  description: "System Environment Settings"
 - name: "NodeInfo"
   description: "Blockchain Node Settings"
 - name: "Eth"
@@ -3158,6 +3158,144 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/404NotSupportedError"
+  /OrderList/{token_address}:
+    post:
+      tags:
+        - "OrderList"
+      summary: "Order History filtered by token (Bulk Get)"
+      operationId: "OrderList"
+      parameters:
+        - name: token_address
+          in: path
+          required: true
+          type: string
+          description: token address
+        - name: "exchange_contract_name"
+          in: "query"
+          description: DEX contract name
+          required: true
+          type: "string"
+          enum: ["IbetStraightBondExchange", "IbetMembershipExchange", "IbetCouponExchange"]
+        - name: account_address_list
+          in: query
+          description: account address list
+          required: true
+          type: array
+          items:
+            type: string
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  order_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                        order:
+                          type: object
+                          properties:
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            order_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  settlement_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        sort_id:
+                          type: integer
+                  complete_list:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token:
+                          type: object
+                          properties:
+                            token_address:
+                              type: string
+                        agreement:
+                          type: object
+                          properties:
+                            exchange_address:
+                              type: string
+                            order_id:
+                              type: integer
+                            amount:
+                              type: integer
+                            price:
+                              type: integer
+                            is_buy:
+                              type: boolean
+                            canceled:
+                              type: boolean
+                            agreement_timestamp:
+                              type: string
+                        settlement_timestamp:
+                          type: string
+                          description: settlement timestamp
+                        sort_id:
+                          type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /OrderList/StraightBond:
     post:
       tags:
@@ -4617,7 +4755,7 @@ definitions:
       description:
         type: string
         description: Error Reason
-        example: Invalid owner address
+        example: ""
   404NotFoundError:
     type: object
     properties:
@@ -4632,7 +4770,7 @@ definitions:
       description:
         type: string
         description: Error Reason
-        example: "contract_address: 0xe6A75581C7299c75392a63BCF18a3618B30ff765"
+        example: ""
   404NotSupportedError:
     type: object
     properties:
@@ -4647,7 +4785,7 @@ definitions:
       description:
         type: string
         description: Error Reason
-        example: "method: POST, url: /v2/Token/Share"
+        example: ""
   503ServiceUnavailable:
     type: object
     properties:
