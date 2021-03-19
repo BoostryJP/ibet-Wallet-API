@@ -809,6 +809,22 @@ paths:
         - "User"
       summary: "Registration status to PersonalInfo Contract"
       operationId: "PersonalInfo"
+      parameters:
+        - name: personal_info_address
+          in: query
+          description: PersonalInfo contract address
+          required: false
+          type: string
+        - name: account_address
+          in: query
+          description: account address
+          required: true
+          type: string
+        - name: owner_address
+          in: query
+          description: owner(issuer) address
+          required: true
+          type: string
       responses:
         200:
           description: Successful Operation
@@ -834,79 +850,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
-  /User/StreetAddress/{postal_code}:
-    get:
-      tags:
-        - "User"
-      summary: "Search address by zip code (Japan)"
-      operationId: "StreetAddress"
-      parameters:
-        - name: "postal_code"
-          in: "path"
-          description: "postal code"
-          required: true
-          type: "string"
-      responses:
-        200:
-          description: Successful Operation
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: "#/definitions/200Success"
-              data:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    jis_code:
-                      type: string
-                      description: jis code
-                      example:
-                        13101
-                    zip_code:
-                      type: string
-                      example:
-                        1010032
-                      description: zip code
-                    prefecture_name_kana:
-                      type: string
-                      example:
-                        ﾄｳｷｮｳﾄ
-                    city_name_kana:
-                      type: string
-                      example:
-                        ﾁﾖﾀﾞｸ
-                    town_name_kana:
-                      type: string
-                      example:
-                        ｲﾜﾓﾄﾁｮｳ
-                    prefecture_name:
-                      type: string
-                      example:
-                        東京都
-                    city_name:
-                      type: string
-                      example:
-                        千代田区
-                    town_name:
-                      type: string
-                      example:
-                        岩本町
-        400:
-          description: Invalid Parameter Error
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: "#/definitions/400InvalidParameterError"
         404:
-          description: Not Found Error
+          description: Not Supported Error
           schema:
             type: object
             properties:
               meta:
-                $ref: "#/definitions/404NotFoundError"
+                $ref: "#/definitions/404NotSupportedError"
   /Token/StraightBond:
     get:
       tags:

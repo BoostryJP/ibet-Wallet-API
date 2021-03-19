@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 
 from app import config
@@ -26,158 +25,176 @@ from .contract_modules import register_personalinfo
 
 class TestPersonalInfo:
 
-    # テスト対象API
-    apiurl = '/v2/User/PersonalInfo'
+    # Target API
+    apiurl = "/v2/User/PersonalInfo"
 
-    # ＜正常系1＞
-    # 通常参照（登録済）
-    def test_personalinfo_normal_1(self, client, shared_contract):
-        # テスト用アカウント
-        trader = eth_account['trader']
-        issuer = eth_account['issuer']
+    ###########################################################################
+    # Normal
+    ###########################################################################
 
-        # 投資家名簿用個人情報コントラクト（PersonalInfo）
-        personal_info = shared_contract['PersonalInfo']
-        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info['address']
+    # Normal_1_1
+    # Registered
+    # environment variable (default)
+    def test_normal_1_1(self, client, shared_contract):
+        trader = eth_account["trader"]["account_address"]
+        issuer = eth_account["issuer"]["account_address"]
 
-        # データ準備：情報登録
-        register_personalinfo(trader, personal_info)
+        # Get PersonalInfo contract address
+        personal_info = shared_contract["PersonalInfo"]
+        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info["address"]
 
-        # 検索用クエリ
-        query_string = 'account_address=' + trader['account_address'] + \
-            '&owner_address=' + issuer['account_address']
+        # Prepare data
+        register_personalinfo(eth_account["trader"], personal_info)
 
+        # Request target API
+        query_string = f"account_address={trader}&owner_address={issuer}"
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
+        # Assertion
         assumed_body = {
-            'account_address': trader['account_address'],
-            'owner_address': issuer['account_address'],
-            'registered': True
+            "account_address": trader,
+            "owner_address": issuer,
+            "registered": True
         }
-
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json["data"] == assumed_body
 
-    # ＜正常系2＞
-    # 通常参照（登録なし）
-    def test_personalinfo_normal_2(self, client, shared_contract):
-        # テスト用アカウント（traderは任意のアドレス）
+    # Normal_1_2
+    # Registered
+    # query parameter
+    def test_normal_1_2(self, client, shared_contract):
+        trader = eth_account["trader"]["account_address"]
+        issuer = eth_account["issuer"]["account_address"]
+
+        # Get PersonalInfo contract address
+        personal_info = shared_contract["PersonalInfo"]
+        _personal_info_address = personal_info["address"]
+
+        # Prepare data
+        register_personalinfo(eth_account["trader"], personal_info)
+
+        # Request target API
+        query_string = f"account_address={trader}&" \
+                       f"owner_address={issuer}&" \
+                       f"personal_info_address{_personal_info_address}"
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        # Assertion
+        assumed_body = {
+            "account_address": trader,
+            "owner_address": issuer,
+            "registered": True
+        }
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json["data"] == assumed_body
+
+    # Normal_2
+    # Not registered
+    def test_normal_2(self, client, shared_contract):
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
-        issuer = eth_account['issuer']['account_address']
+        issuer = eth_account["issuer"]["account_address"]
 
-        # 投資家名簿用個人情報コントラクト（PersonalInfo）
-        personal_info = shared_contract['PersonalInfo']
-        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info['address']
+        # Get PersonalInfo contract address
+        personal_info = shared_contract["PersonalInfo"]
+        config.PERSONAL_INFO_CONTRACT_ADDRESS = personal_info["address"]
 
-        # 検索用クエリ
-        query_string = 'account_address=' + trader + \
-            '&owner_address=' + issuer
-
+        # Request target API
+        query_string = f"account_address={trader}&owner_address={issuer}"
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
+        # Assertion
         assumed_body = {
-            'account_address': trader,
-            'owner_address': issuer,
-            'registered': False
+            "account_address": trader,
+            "owner_address": issuer,
+            "registered": False
         }
-
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json["data"] == assumed_body
 
-    # ＜エラー系1＞
-    # HTTPメソッド不正
-    # -> 404エラー
-    def test_personalinfo_error_1(self, client):
-        headers = {'Content-Type': 'application/json'}
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # Error_1
+    # Unsupported HTTP method
+    # 404: Not Supported
+    def test_error_1(self, client):
+        headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
+        # Request target API
         resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+            self.apiurl,
+            headers=headers,
+            body=request_body
+        )
 
+        # Assertion
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: POST, url: /v2/User/PersonalInfo'
+        assert resp.json["meta"] == {
+            "code": 10,
+            "message": "Not Supported",
+            "description": "method: POST, url: /v2/User/PersonalInfo"
         }
 
-    # ＜エラー系2-1＞
-    # 入力エラー
-    # account_addressが未設定
-    def test_personalinfo_error_2_1(self, client):
-        # テスト用アカウント
-        issuer = eth_account['issuer']
-
-        query_string = 'owner_address=' + issuer['account_address']
-
+    # Error_2_1
+    # Invalid parameter: null value
+    # 400
+    def test_error_2_1(self, client):
+        # Request target API
+        query_string = ""
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
+        # Assertion
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'account_address':
-                ['null value not allowed', 'must be of string type']
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": {
+                "account_address": [
+                    "null value not allowed",
+                    "must be of string type"
+                ],
+                "owner_address": [
+                    "null value not allowed",
+                    "must be of string type"
+                ]
             }
         }
 
-    # ＜エラー系2-2＞
-    # 入力エラー
-    # account_addressのアドレスフォーマットが正しくない
-    def test_personalinfo_error_2_2(self, client):
-        # テスト用アカウント
-        trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い
-        issuer = eth_account['issuer']
+    # Error_2_2
+    # Invalid parameter: invalid account address
+    def test_error_2_2(self, client):
+        trader = eth_account["issuer"]["account_address"][:-1]  # short address
+        issuer = eth_account["issuer"]["account_address"]
 
-        query_string = 'account_address=' + trader + \
-            '&owner_address=' + issuer['account_address']
-
+        # Request target API
+        query_string = f"account_address={trader}&owner_address={issuer}"
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
+        # Assertion
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter"
         }
 
-    # ＜エラー系3-1＞
-    # 入力エラー
-    # owner_addressが未設定
-    def test_personalinfo_error_3_1(self, client):
-        # テスト用アカウント
-        trader = eth_account['trader']['account_address']
+    # Error_2_3
+    # Invalid parameter: invalid owner address
+    def test_error_2_3(self, client):
+        trader = eth_account["trader"]["account_address"]
+        issuer = eth_account["issuer"]["account_address"][:-1]  # short address
 
-        query_string = 'account_address=' + trader
-
+        # Request target API
+        query_string = f"account_address={trader}&owner_address={issuer}"
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
+        # Assertion
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'owner_address':
-                ['null value not allowed', 'must be of string type']
-            }
-        }
-
-    # ＜エラー系3-2＞
-    # owner_addressのアドレスフォーマットが正しくない
-    def test_personalinfo_error_3_2(self, client):
-        # テスト用アカウント
-        trader = eth_account['trader']['account_address']
-        issuer = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い
-
-        query_string = 'account_address=' + trader + \
-            '&owner_address=' + issuer
-
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter"
         }
