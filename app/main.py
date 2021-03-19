@@ -123,7 +123,6 @@ class App(falcon.API):
         # User Information
         self.add_route('/v2/User/PaymentAccount', user.PaymentAccount())
         self.add_route('/v2/User/PersonalInfo', user.PersonalInfo())
-        self.add_route('/v2/User/StreetAddress/{postal_code}', user.StreetAddress())
 
         # Statistics
         self.add_route('/v2/Statistics/Token/{contract_address}', statistics.Token())

@@ -1,13 +1,13 @@
+!.gitkeep
+
 __pycache__/
 .cache/
 .venv/
 .pytest_cache/
-.vscode
 .project
-data/zip_code/*
-data/zip_code_jigyosyo/*
-scripts/input_file/*
-!.gitkeep
+
+# VSCode
+.vscode
 
 # Intellij
 .idea
