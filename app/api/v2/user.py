@@ -42,30 +42,30 @@ class PaymentAccount(BaseResource):
     Endpoint: /User/PaymentAccount
     """
     def on_get(self, req, res):
-        LOG.info('v2.user.PaymentAccount')
+        LOG.info("v2.user.PaymentAccount")
 
         request_json = PaymentAccount.validate(req)
 
         PaymentGatewayContract = Contract.get_contract(
-            'PaymentGateway', config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
+            "PaymentGateway", config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
 
         # 口座登録・承認状況を参照
         account_info = PaymentGatewayContract.functions.payment_accounts(
-            to_checksum_address(request_json['account_address']),
-            to_checksum_address(request_json['agent_address'])
+            to_checksum_address(request_json["account_address"]),
+            to_checksum_address(request_json["agent_address"])
         ).call()
 
-        if account_info[0] == '0x0000000000000000000000000000000000000000':
+        if account_info[0] == "0x0000000000000000000000000000000000000000":
             response_json = {
-                'account_address': request_json['account_address'],
-                'agent_address': request_json['agent_address'],
-                'approval_status': 0
+                "account_address": request_json["account_address"],
+                "agent_address": request_json["agent_address"],
+                "approval_status": 0
             }
         else:
             response_json = {
-                'account_address': account_info[0],
-                'agent_address': account_info[1],
-                'approval_status': account_info[3]
+                "account_address": account_info[0],
+                "agent_address": account_info[1],
+                "approval_status": account_info[3]
             }
 
         self.on_success(res, response_json)
@@ -73,22 +73,22 @@ class PaymentAccount(BaseResource):
     @staticmethod
     def validate(req):
         request_json = {
-            'account_address': req.get_param('account_address'),
-            'agent_address': req.get_param('agent_address')
+            "account_address": req.get_param("account_address"),
+            "agent_address": req.get_param("agent_address")
         }
 
         validator = Validator({
-            'account_address': {'type': 'string', 'empty': False, 'required': True},
-            'agent_address': {'type': 'string', 'empty': False, 'required': True}
+            "account_address": {"type": "string", "empty": False, "required": True},
+            "agent_address": {"type": "string", "empty": False, "required": True}
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['account_address']):
+        if not Web3.isAddress(request_json["account_address"]):
             raise InvalidParameterError
 
-        if not Web3.isAddress(request_json['agent_address']):
+        if not Web3.isAddress(request_json["agent_address"]):
             raise InvalidParameterError
 
         return request_json
@@ -102,30 +102,38 @@ class PersonalInfo(BaseResource):
     Endpoint: /User/PersonalInfo
     """
     def on_get(self, req, res):
-        LOG.info('v2.user.PersonalInfo')
+        LOG.info("v2.user.PersonalInfo")
 
+        # Validation
         request_json = PersonalInfo.validate(req)
 
-        # PersonalInfo Contract
+        # Get PersonalInfo contract
+        if request_json["personal_info_address"] is not None:
+            _personal_info_address = request_json["personal_info_address"]
+        else:
+            _personal_info_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
         PersonalInfoContract = Contract.get_contract(
-            'PersonalInfo', config.PERSONAL_INFO_CONTRACT_ADDRESS)
+            contract_name="PersonalInfo",
+            address=_personal_info_address
+        )
 
+        # Get registration status of personal information
         info = PersonalInfoContract.functions.personal_info(
-            to_checksum_address(request_json['account_address']),
-            to_checksum_address(request_json['owner_address'])
+            to_checksum_address(request_json["account_address"]),
+            to_checksum_address(request_json["owner_address"])
         ).call()
 
-        if info[0] == '0x0000000000000000000000000000000000000000':
+        if info[0] == config.ZERO_ADDRESS:
             response_json = {
-                'account_address': request_json['account_address'],
-                'owner_address': request_json['owner_address'],
-                'registered': False
+                "account_address": request_json["account_address"],
+                "owner_address": request_json["owner_address"],
+                "registered": False
             }
         else:
             response_json = {
-                'account_address': info[0],
-                'owner_address': info[1],
-                'registered': True
+                "account_address": info[0],
+                "owner_address": info[1],
+                "registered": True
             }
 
         self.on_success(res, response_json)
@@ -133,23 +141,39 @@ class PersonalInfo(BaseResource):
     @staticmethod
     def validate(req):
         request_json = {
-            'account_address': req.get_param('account_address'),
-            'owner_address': req.get_param('owner_address')
+            "personal_info_address": req.get_param("personal_info_address"),
+            "account_address": req.get_param("account_address"),
+            "owner_address": req.get_param("owner_address")
         }
 
         validator = Validator({
-            'account_address': {'type': 'string', 'empty': False, 'required': True},
-            'owner_address': {'type': 'string', 'empty': False, 'required': True}
+            "personal_info_address": {
+                "type": "string",
+                "required": False,
+                "nullable": True
+            },
+            "account_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
+            },
+            "owner_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
+            }
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['account_address']):
+        if request_json["personal_info_address"] is not None and not Web3.isAddress(request_json["account_address"]):
             raise InvalidParameterError
 
-        if not Web3.isAddress(request_json['owner_address']):
+        if not Web3.isAddress(request_json["account_address"]):
+            raise InvalidParameterError
+
+        if not Web3.isAddress(request_json["owner_address"]):
             raise InvalidParameterError
 
         return request_json
-
