@@ -809,6 +809,22 @@ paths:
         - "User"
       summary: "Registration status to PersonalInfo Contract"
       operationId: "PersonalInfo"
+      parameters:
+        - name: personal_info_address
+          in: query
+          description: PersonalInfo contract address
+          required: false
+          type: string
+        - name: account_address
+          in: query
+          description: account address
+          required: true
+          type: string
+        - name: owner_address
+          in: query
+          description: owner(issuer) address
+          required: true
+          type: string
       responses:
         200:
           description: Successful Operation
@@ -834,6 +850,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/StraightBond:
     get:
       tags:
