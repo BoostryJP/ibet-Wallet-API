@@ -16,9 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-import json
-
 from cerberus import Validator
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -27,7 +24,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, DataNotExistsError
+from app.errors import InvalidParameterError
 from app import config
 from app.contracts import Contract
 
@@ -45,30 +42,30 @@ class PaymentAccount(BaseResource):
     Endpoint: /User/PaymentAccount
     """
     def on_get(self, req, res):
-        LOG.info('v2.user.PaymentAccount')
+        LOG.info("v2.user.PaymentAccount")
 
         request_json = PaymentAccount.validate(req)
 
         PaymentGatewayContract = Contract.get_contract(
-            'PaymentGateway', config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
+            "PaymentGateway", config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
 
         # 口座登録・承認状況を参照
         account_info = PaymentGatewayContract.functions.payment_accounts(
-            to_checksum_address(request_json['account_address']),
-            to_checksum_address(request_json['agent_address'])
+            to_checksum_address(request_json["account_address"]),
+            to_checksum_address(request_json["agent_address"])
         ).call()
 
-        if account_info[0] == '0x0000000000000000000000000000000000000000':
+        if account_info[0] == "0x0000000000000000000000000000000000000000":
             response_json = {
-                'account_address': request_json['account_address'],
-                'agent_address': request_json['agent_address'],
-                'approval_status': 0
+                "account_address": request_json["account_address"],
+                "agent_address": request_json["agent_address"],
+                "approval_status": 0
             }
         else:
             response_json = {
-                'account_address': account_info[0],
-                'agent_address': account_info[1],
-                'approval_status': account_info[3]
+                "account_address": account_info[0],
+                "agent_address": account_info[1],
+                "approval_status": account_info[3]
             }
 
         self.on_success(res, response_json)
@@ -76,22 +73,22 @@ class PaymentAccount(BaseResource):
     @staticmethod
     def validate(req):
         request_json = {
-            'account_address': req.get_param('account_address'),
-            'agent_address': req.get_param('agent_address')
+            "account_address": req.get_param("account_address"),
+            "agent_address": req.get_param("agent_address")
         }
 
         validator = Validator({
-            'account_address': {'type': 'string', 'empty': False, 'required': True},
-            'agent_address': {'type': 'string', 'empty': False, 'required': True}
+            "account_address": {"type": "string", "empty": False, "required": True},
+            "agent_address": {"type": "string", "empty": False, "required": True}
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['account_address']):
+        if not Web3.isAddress(request_json["account_address"]):
             raise InvalidParameterError
 
-        if not Web3.isAddress(request_json['agent_address']):
+        if not Web3.isAddress(request_json["agent_address"]):
             raise InvalidParameterError
 
         return request_json
@@ -105,30 +102,38 @@ class PersonalInfo(BaseResource):
     Endpoint: /User/PersonalInfo
     """
     def on_get(self, req, res):
-        LOG.info('v2.user.PersonalInfo')
+        LOG.info("v2.user.PersonalInfo")
 
+        # Validation
         request_json = PersonalInfo.validate(req)
 
-        # PersonalInfo Contract
+        # Get PersonalInfo contract
+        if request_json["personal_info_address"] is not None:
+            _personal_info_address = request_json["personal_info_address"]
+        else:
+            _personal_info_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
         PersonalInfoContract = Contract.get_contract(
-            'PersonalInfo', config.PERSONAL_INFO_CONTRACT_ADDRESS)
+            contract_name="PersonalInfo",
+            address=_personal_info_address
+        )
 
+        # Get registration status of personal information
         info = PersonalInfoContract.functions.personal_info(
-            to_checksum_address(request_json['account_address']),
-            to_checksum_address(request_json['owner_address'])
+            to_checksum_address(request_json["account_address"]),
+            to_checksum_address(request_json["owner_address"])
         ).call()
 
-        if info[0] == '0x0000000000000000000000000000000000000000':
+        if info[0] == config.ZERO_ADDRESS:
             response_json = {
-                'account_address': request_json['account_address'],
-                'owner_address': request_json['owner_address'],
-                'registered': False
+                "account_address": request_json["account_address"],
+                "owner_address": request_json["owner_address"],
+                "registered": False
             }
         else:
             response_json = {
-                'account_address': info[0],
-                'owner_address': info[1],
-                'registered': True
+                "account_address": info[0],
+                "owner_address": info[1],
+                "registered": True
             }
 
         self.on_success(res, response_json)
@@ -136,69 +141,39 @@ class PersonalInfo(BaseResource):
     @staticmethod
     def validate(req):
         request_json = {
-            'account_address': req.get_param('account_address'),
-            'owner_address': req.get_param('owner_address')
+            "personal_info_address": req.get_param("personal_info_address"),
+            "account_address": req.get_param("account_address"),
+            "owner_address": req.get_param("owner_address")
         }
 
         validator = Validator({
-            'account_address': {'type': 'string', 'empty': False, 'required': True},
-            'owner_address': {'type': 'string', 'empty': False, 'required': True}
+            "personal_info_address": {
+                "type": "string",
+                "required": False,
+                "nullable": True
+            },
+            "account_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
+            },
+            "owner_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
+            }
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['account_address']):
+        if request_json["personal_info_address"] is not None and not Web3.isAddress(request_json["account_address"]):
             raise InvalidParameterError
 
-        if not Web3.isAddress(request_json['owner_address']):
+        if not Web3.isAddress(request_json["account_address"]):
+            raise InvalidParameterError
+
+        if not Web3.isAddress(request_json["owner_address"]):
             raise InvalidParameterError
 
         return request_json
-
-
-# ------------------------------
-# 住所検索（郵便番号）
-# ------------------------------
-class StreetAddress(BaseResource):
-    """
-    Endpoint: /User/StreetAddress/{postal_code}
-    """
-    def on_get(self, req, res, postal_code):
-        LOG.info('v2.user.StreetAddress')
-        postal_code = StreetAddress.validate(postal_code)
-
-        street_address = []
-        street_address_jigyosyo = []
-
-        try:
-            street_address = \
-                json.load(open('data/zip_code/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
-        except FileNotFoundError:
-            pass
-
-        try:
-            street_address_jigyosyo = \
-                json.load(open('data/zip_code_jigyosyo/%s/%s.json' % (postal_code[0:3], postal_code), 'r'))
-        except FileNotFoundError:
-            pass
-
-        if street_address == [] and street_address_jigyosyo == []:
-            raise DataNotExistsError('postal_code: %s' % postal_code)
-
-        street_address.extend(street_address_jigyosyo)
-
-        self.on_success(res, street_address)
-
-    @staticmethod
-    def validate(postal_code):
-        request = {'postal_code': postal_code}
-
-        validator = Validator({
-            'postal_code': {'type': 'string', 'regex': '^[0-9]{7}$'}
-        })
-
-        if not validator.validate(request):
-            raise InvalidParameterError('postal_code: %s' % postal_code)
-
-        return postal_code

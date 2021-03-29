@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from cerberus import Validator
 
 from web3 import Web3
@@ -40,275 +39,536 @@ web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 class BaseOrderList(object):
 
     @staticmethod
-    def validate(req):
-        request_json = req.context['data']
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            'account_address_list': {
-                'type': 'list',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        for account_address in request_json['account_address_list']:
-            if not Web3.isAddress(account_address):
-                raise InvalidParameterError
-
-        return request_json
-
-    # 注文一覧
-    @staticmethod
-    def get_OrderList(session, token_model, contract_name, exchange_contract_address, account_address):
-        # Exchange Contract
+    def get_order_list(
+            session, token_model,
+            exchange_contract_name, exchange_contract_address,
+            account_address
+    ):
+        """List all orders from the account (DEX)"""
+        # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
+        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
 
-        # 指定したアカウントアドレスから発生している注文イベントを抽出する
-        entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
+        # Filter order events that are generated from account_address
+        _order_events = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
             filter(Order.account_address == account_address). \
             all()
 
         order_list = []
-        for (id, order_id, order_timestamp) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            # 残注文ゼロの場合は以下の処理をSKIP
-            if orderBook[2] != 0:
-                token_address = to_checksum_address(orderBook[1])
-                token_detail = token_model.get(session=session, token_address=token_address)
-                order_list.append({
-                    'token': token_detail.__dict__,
-                    'order': {
-                        'order_id': order_id,
-                        'counterpart_address': '',
-                        'amount': orderBook[2],
-                        'price': orderBook[3],
-                        'is_buy': orderBook[4],
-                        'canceled': orderBook[6],
-                        'order_timestamp': order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+        for (id, order_id, order_timestamp) in _order_events:
+            order_book = exchange_contract.functions.getOrder(order_id).call()
+            # If there are no remaining orders, skip this process
+            if order_book[2] != 0:
+                _order = {
+                    "order": {
+                        "order_id": order_id,
+                        "counterpart_address": "",
+                        "amount": order_book[2],
+                        "price": order_book[3],
+                        "is_buy": order_book[4],
+                        "canceled": order_book[6],
+                        "order_timestamp": order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                     },
-                    'sort_id': id
-                })
+                    "sort_id": id
+                }
+                if token_model is not None:
+                    token_detail = token_model.get(
+                        session=session,
+                        token_address=to_checksum_address(order_book[1])
+                    )
+                    _order["token"] = token_detail.__dict__
+
+                order_list.append(_order)
 
         return order_list
 
-    # 注文一覧
     @staticmethod
-    def get_OTC_OrderList(session, token_model, contract_name, exchange_contract_address, account_address):
-        # Exchange Contract
+    def get_settlement_list(
+            session, token_model,
+            exchange_contract_name, exchange_contract_address,
+            account_address
+    ):
+        """List all orders in process of settlement (DEX)"""
+        # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
+        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
 
-        # 指定したアカウントアドレスから発生している注文イベントを抽出する
-        # NOTE: 相対取引ではmakerならびにtaker(取引対象)の注文明細を返却する
-        entries = session.query(Order.id, Order.order_id, Order.order_timestamp). \
+        # Filter agreement events (settlement not completed) generated from account_address
+        _agreement_events = session.query(
+                Agreement.id, Agreement.order_id, Agreement.agreement_id,
+                Agreement.agreement_timestamp, Agreement.buyer_address). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
+            filter(Agreement.status == AgreementStatus.PENDING.value). \
+            all()
+
+        settlement_list = []
+        for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in _agreement_events:
+            order_book = exchange_contract.functions.getOrder(order_id).call()
+            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            _settlement = {
+                "agreement": {
+                    "exchange_address": exchange_contract_address,
+                    "order_id": order_id,
+                    "agreement_id": agreement_id,
+                    "amount": agreement[1],
+                    "price": agreement[2],
+                    "is_buy": buyer_address == account_address,
+                    "canceled": agreement[3],
+                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                },
+                "sort_id": id
+            }
+            if token_model is not None:
+                token_detail = token_model.get(
+                    session=session,
+                    token_address=to_checksum_address(order_book[1])
+                )
+                _settlement["token"] = token_detail.__dict__
+
+            settlement_list.append(_settlement)
+
+        return settlement_list
+
+    @staticmethod
+    def get_complete_list(
+            session, token_model,
+            exchange_contract_name, exchange_contract_address,
+            account_address
+    ):
+        """List all orders that have been settled (DEX)"""
+        # Get exchange contract
+        exchange_address = to_checksum_address(exchange_contract_address)
+        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
+
+        # Filter agreement events (settlement completed) generated from account_address
+        _agreement_events = session.query(
+                Agreement.id, Agreement.order_id, Agreement.agreement_id,
+                Agreement.agreement_timestamp, Agreement.settlement_timestamp, Agreement.buyer_address). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
+            filter(Agreement.status == AgreementStatus.DONE.value). \
+            all()
+
+        complete_list = []
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in _agreement_events:
+            if settlement_timestamp is not None:
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+            else:
+                settlement_timestamp_jp = ""
+            order_book = exchange_contract.functions.getOrder(order_id).call()
+            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            _complete = {
+                "agreement": {
+                    "exchange_address": exchange_contract_address,
+                    "order_id": order_id,
+                    "agreement_id": agreement_id,
+                    "amount": agreement[1],
+                    "price": agreement[2],
+                    "is_buy": buyer_address == account_address,
+                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                },
+                "settlement_timestamp": settlement_timestamp_jp,
+                "sort_id": id
+            }
+            if token_model is not None:
+                token_detail = token_model.get(
+                    session=session,
+                    token_address=to_checksum_address(order_book[1])
+                )
+                _complete["token"] = token_detail.__dict__
+
+            complete_list.append(_complete)
+
+        return complete_list
+
+    @staticmethod
+    def get_otc_order_list(
+            session, token_model,
+            exchange_contract_name, exchange_contract_address,
+            account_address
+    ):
+        """List all orders from the account (OTC)"""
+        # Get exchange contract
+        exchange_address = to_checksum_address(exchange_contract_address)
+        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
+
+        # Filter order events that are generated from account_address
+        # NOTE: Filter the order events for maker or taker(counterpart)
+        _order_events = session.query(Order.id, Order.order_id, Order.order_timestamp). \
             filter(Order.exchange_address == exchange_address). \
             filter(Order.is_cancelled == False). \
             filter(or_(Order.account_address == account_address, Order.counterpart_address == account_address)). \
             all()
 
         order_list = []
-        for (id, order_id, order_timestamp) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            # 残注文ゼロの場合は以下の処理をSKIP
-            if orderBook[3] != 0:
-                token_address = to_checksum_address(orderBook[2])
-                token_detail = token_model.get(session=session, token_address=token_address)
-                order_list.append({
-                    'token': token_detail.__dict__,
-                    'order': {
-                        'order_id': order_id,
-                        'counterpart_address': orderBook[1],
-                        'amount': orderBook[3],
-                        'price': orderBook[4],
-                        'is_buy': False,
-                        'canceled': orderBook[6],
-                        'order_timestamp': order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+        for (id, order_id, order_timestamp) in _order_events:
+            order_book = exchange_contract.functions.getOrder(order_id).call()
+            # If there are no remaining orders, skip this process
+            if order_book[3] != 0:
+                _order = {
+                    "order": {
+                        "order_id": order_id,
+                        "counterpart_address": order_book[1],
+                        "amount": order_book[3],
+                        "price": order_book[4],
+                        "is_buy": False,
+                        "canceled": order_book[6],
+                        "order_timestamp": order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                     },
-                    'sort_id': id
-                })
+                    "sort_id": id
+                }
+                if token_model is not None:
+                    token_detail = token_model.get(
+                        session=session,
+                        token_address=to_checksum_address(order_book[2])
+                    )
+                    _order["token"] = token_detail.__dict__
+
+                order_list.append(_order)
 
         return order_list
 
-    # 決済中一覧
     @staticmethod
-    def get_SettlementList(session, token_model, contract_name, exchange_contract_address, account_address):
-        # Exchange Contract
+    def get_otc_settlement_list(
+            session, token_model,
+            exchange_contract_name, exchange_contract_address,
+            account_address
+    ):
+        """List all orders in process of settlement (OTC)"""
+        # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
+        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
 
-        # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session. \
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp,
-                  Agreement.buyer_address). \
+        # Filter agreement events (settlement not completed) generated from account_address
+        _agreement_events = session.query(
+                Agreement.id, Agreement.order_id, Agreement.agreement_id,
+                Agreement.agreement_timestamp, Agreement.buyer_address). \
             filter(Agreement.exchange_address == exchange_address). \
             filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            token_detail = token_model.get(session=session, token_address=token_address)
-            settlement_list.append({
-                'token': token_detail.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': buyer_address == account_address,
-                    'canceled': agreement[3],
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+        for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in _agreement_events:
+            order_book = exchange_contract.functions.getOrder(order_id).call()
+            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            _settlement = {
+                "agreement": {
+                    "exchange_address": exchange_contract_address,
+                    "order_id": order_id,
+                    "agreement_id": agreement_id,
+                    "amount": agreement[1],
+                    "price": agreement[2],
+                    "is_buy": buyer_address == account_address,
+                    "canceled": agreement[3],
+                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
-                'sort_id': id
-            })
+                "sort_id": id
+            }
+            if token_model is not None:
+                token_detail = token_model.get(
+                    session=session,
+                    token_address=to_checksum_address(order_book[2])
+                )
+                _settlement["token"] = token_detail.__dict__
+
+            settlement_list.append(_settlement)
 
         return settlement_list
 
-    # 決済中一覧（相対取引買）
     @staticmethod
-    def get_OTC_SettlementList(session, token_model, contract_name, exchange_contract_address, account_address):
-        # Exchange Contract
+    def get_otc_complete_list(
+            session, token_model,
+            exchange_contract_name, exchange_contract_address,
+            account_address
+    ):
+        """List all orders that have been settled (DEX)"""
+        # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
+        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
 
-        # 指定したアカウントアドレスから発生している約定イベント（買：未決済）を抽出する
-        entries = session. \
-            query(Agreement.id, Agreement.order_id, Agreement.agreement_id, Agreement.agreement_timestamp,
-                  Agreement.buyer_address). \
+        # Filter agreement events (settlement completed) generated from account_address
+        _agreement_events = session.query(
+                Agreement.id, Agreement.order_id, Agreement.agreement_id,
+                Agreement.agreement_timestamp, Agreement.settlement_timestamp, Agreement.buyer_address). \
             filter(Agreement.exchange_address == exchange_address). \
+            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
+            filter(Agreement.status == AgreementStatus.DONE.value). \
+            all()
+
+        complete_list = []
+        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in _agreement_events:
+            if settlement_timestamp is not None:
+                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+            else:
+                settlement_timestamp_jp = ""
+            order_book = exchange_contract.functions.getOrder(order_id).call()
+            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            _complete = {
+                "agreement": {
+                    "exchange_address": exchange_contract_address,
+                    "order_id": order_id,
+                    "agreement_id": agreement_id,
+                    "amount": agreement[1],
+                    "price": agreement[2],
+                    "is_buy": buyer_address == account_address,
+                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                },
+                "settlement_timestamp": settlement_timestamp_jp,
+                "sort_id": id
+            }
+            if token_model is not None:
+                token_detail = token_model.get(
+                    session=session,
+                    token_address=to_checksum_address(order_book[2])
+                )
+                _complete["token"] = token_detail.__dict__
+
+            complete_list.append(_complete)
+
+        return complete_list
+
+    @staticmethod
+    def get_order_list_filtered_by_token(
+            session, token_address, exchange_contract_name, account_address
+    ):
+        """List orders from accounts filtered by token address (DEX)"""
+
+        # Filter order events that are generated from account_address
+        _order_events = session.query(Order.id, Order.exchange_address, Order.order_id, Order.order_timestamp). \
+            filter(Order.token_address == token_address). \
+            filter(Order.is_cancelled == False). \
+            filter(Order.account_address == account_address). \
+            all()
+
+        order_list = []
+        for (id, exchange_contract_address, order_id, order_timestamp) in _order_events:
+            exchange_contract = Contract.get_contract(
+                contract_name=exchange_contract_name,
+                address=exchange_contract_address
+            )
+            order_book = exchange_contract.functions.getOrder(order_id).call()
+            # If there are no remaining orders, skip this process
+            if order_book[2] != 0:
+                _order = {
+                    "token": {
+                        "token_address": token_address
+                    },
+                    "order": {
+                        "order_id": order_id,
+                        "counterpart_address": "",
+                        "amount": order_book[2],
+                        "price": order_book[3],
+                        "is_buy": order_book[4],
+                        "canceled": order_book[6],
+                        "order_timestamp": order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                    },
+                    "sort_id": id
+                }
+                order_list.append(_order)
+
+        return order_list
+
+    @staticmethod
+    def get_settlement_list_filtered_by_token(
+            session, token_address, exchange_contract_name, account_address
+    ):
+        """List all orders in process of settlement (DEX)"""
+
+        # Filter agreement events (settlement not completed) generated from account_address
+        _agreement_events = session.query(
+                Agreement.id, Agreement.exchange_address, Agreement.order_id, Agreement.agreement_id,
+                Agreement.agreement_timestamp, Agreement.buyer_address). \
+            outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id). \
+            filter(Order.token_address == token_address). \
             filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in entries:
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[2])
-            token_detail = token_model.get(session=session, token_address=token_address)
-            settlement_list.append({
-                'token': token_detail.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': buyer_address == account_address,
-                    'canceled': agreement[3],
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+        for (id, exchange_contract_address, order_id, agreement_id, agreement_timestamp, buyer_address) in _agreement_events:
+            exchange_contract = Contract.get_contract(
+                contract_name=exchange_contract_name,
+                address=exchange_contract_address
+            )
+            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            _settlement = {
+                "token": {
+                    "token_address": token_address
                 },
-                'sort_id': id
-            })
+                "agreement": {
+                    "exchange_address": exchange_contract_address,
+                    "order_id": order_id,
+                    "agreement_id": agreement_id,
+                    "amount": agreement[1],
+                    "price": agreement[2],
+                    "is_buy": buyer_address == account_address,
+                    "canceled": agreement[3],
+                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                },
+                "sort_id": id
+            }
+            settlement_list.append(_settlement)
 
         return settlement_list
 
-    # 約定済一覧
     @staticmethod
-    def get_CompleteList(session, token_model, contract_name, exchange_contract_address, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(exchange_contract_address)
-        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
+    def get_complete_list_filtered_by_token(
+            session, token_address, exchange_contract_name, account_address
+    ):
+        """List all orders that have been settled (DEX)"""
 
-        # 指定したアカウントアドレスから発生している約定イベント（売：決済済）を抽出する
-        entries = session.query(
-            Agreement.id,
-            Agreement.order_id,
-            Agreement.agreement_id,
-            Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp,
-            Agreement.buyer_address). \
-            filter(Agreement.exchange_address == exchange_address). \
+        # Filter agreement events (settlement completed) generated from account_address
+        _agreement_events = session.query(
+                Agreement.id, Agreement.exchange_address, Agreement.order_id, Agreement.agreement_id,
+                Agreement.agreement_timestamp, Agreement.settlement_timestamp, Agreement.buyer_address). \
+            outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id). \
             filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
+            filter(Order.token_address == token_address). \
             filter(Agreement.status == AgreementStatus.DONE.value). \
             all()
 
         complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in entries:
+        for (id, exchange_contract_address, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in _agreement_events:
             if settlement_timestamp is not None:
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
-                settlement_timestamp_jp = ''
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[1])
-            token_detail = token_model.get(session=session, token_address=token_address)
-            complete_list.append({
-                'token': token_detail.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': buyer_address == account_address,
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                settlement_timestamp_jp = ""
+            exchange_contract = Contract.get_contract(
+                contract_name=exchange_contract_name,
+                address=exchange_contract_address
+            )
+            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            _complete = {
+                "token": {
+                    "token_address": token_address
                 },
-                'settlement_timestamp': settlement_timestamp_jp,
-                'sort_id': id
-            })
+                "agreement": {
+                    "exchange_address": exchange_contract_address,
+                    "order_id": order_id,
+                    "agreement_id": agreement_id,
+                    "amount": agreement[1],
+                    "price": agreement[2],
+                    "is_buy": buyer_address == account_address,
+                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
+                },
+                "settlement_timestamp": settlement_timestamp_jp,
+                "sort_id": id
+            }
+            complete_list.append(_complete)
 
         return complete_list
 
-    # 約定済一覧（相対取引）
-    @staticmethod
-    def get_OTC_CompleteList(session, token_model, contract_name, exchange_contract_address, account_address):
-        # Exchange Contract
-        exchange_address = to_checksum_address(exchange_contract_address)
-        ExchangeContract = Contract.get_contract(contract_name, exchange_address)
 
-        # 指定したアカウントアドレスから発生している約定イベント（売：決済済）を抽出する
-        entries = session.query(
-            Agreement.id,
-            Agreement.order_id,
-            Agreement.agreement_id,
-            Agreement.agreement_timestamp,
-            Agreement.settlement_timestamp,
-            Agreement.buyer_address). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
+# ------------------------------
+# 注文一覧・約定一覧
+# ------------------------------
+class OrderList(BaseOrderList, BaseResource):
+    """
+    Endpoint: /v2/OrderList/{token_address}
+    """
 
+    def on_post(self, req, res, token_address: str = None):
+        LOG.info("v2.order_list.OrderList")
+        session = req.context["session"]
+
+        # path validation
+        try:
+            token_address = to_checksum_address(token_address)
+            if not Web3.isAddress(token_address):
+                description = "invalid token_address"
+                raise InvalidParameterError(description=description)
+        except:
+            description = "invalid token_address"
+            raise InvalidParameterError(description=description)
+
+        # input validate
+        request_json = self.validate(req)
+
+        order_list = []
+        settlement_list = []
         complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in entries:
-            if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-            else:
-                settlement_timestamp_jp = ''
-            orderBook = ExchangeContract.functions.getOrder(order_id).call()
-            agreement = ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
-            token_address = to_checksum_address(orderBook[2])
-            token_detail = token_model.get(session=session, token_address=token_address)
-            complete_list.append({
-                'token': token_detail.__dict__,
-                'agreement': {
-                    'exchange_address': exchange_address,
-                    'order_id': order_id,
-                    'agreement_id': agreement_id,
-                    'amount': agreement[1],
-                    'price': agreement[2],
-                    'is_buy': buyer_address == account_address,
-                    'agreement_timestamp': agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                'settlement_timestamp': settlement_timestamp_jp,
-                'sort_id': id
-            })
+        for account_address in request_json["account_address_list"]:
+            try:
+                # order_list
+                order_list.extend(
+                    self.get_order_list_filtered_by_token(
+                        session=session,
+                        token_address=token_address,
+                        exchange_contract_name=request_json["exchange_contract_name"],
+                        account_address=account_address
+                    )
+                )
+                order_list = sorted(order_list, key=lambda x: x["sort_id"])
 
-        return complete_list
+                # settlement_list
+                settlement_list.extend(
+                    self.get_settlement_list_filtered_by_token(
+                        session=session,
+                        token_address=token_address,
+                        exchange_contract_name=request_json["exchange_contract_name"],
+                        account_address=account_address
+                    )
+                )
+                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
+
+                # complete_list
+                complete_list.extend(
+                    self.get_complete_list_filtered_by_token(
+                        session=session,
+                        token_address=token_address,
+                        exchange_contract_name=request_json["exchange_contract_name"],
+                        account_address=account_address
+                    )
+                )
+                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
+            except Exception as err:
+                LOG.exception(err)
+
+        response_json = {
+            "order_list": order_list,
+            "settlement_list": settlement_list,
+            "complete_list": complete_list
+        }
+
+        self.on_success(res, response_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context["data"]
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "exchange_contract_name": {
+                "type": "string",
+                "required": True,
+                "nullable": False,
+                "allowed": [
+                    "IbetStraightBondExchange",
+                    "IbetMembershipExchange",
+                    "IbetCouponExchange"
+                ]
+            },
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json["account_address_list"]:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError("invalid account address")
+
+        return request_json
 
 
 # ------------------------------
@@ -320,11 +580,11 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.order_list.StraightBondOrderList')
-        session = req.context['session']
+        LOG.info("v2.order_list.StraightBondOrderList")
+        session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         # validate
         request_json = self.validate(req)
@@ -332,41 +592,77 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
         order_list = []
         settlement_list = []
         complete_list = []
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             try:
                 # order_list
-                order_list.extend(self.get_OrderList(session, BondToken, 'IbetStraightBondExchange',
-                                                     config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                order_list = sorted(
-                    order_list,
-                    key=lambda x: x['sort_id']
+                order_list.extend(
+                    self.get_order_list(
+                        session=session,
+                        token_model=BondToken,
+                        exchange_contract_name="IbetStraightBondExchange",
+                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                order_list = sorted(order_list, key=lambda x: x["sort_id"])
+
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList(session, BondToken, 'IbetStraightBondExchange',
-                                                               config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                                                               account_address))
-                settlement_list = sorted(
-                    settlement_list,
-                    key=lambda x: x['sort_id']
+                settlement_list.extend(
+                    self.get_settlement_list(
+                        session=session,
+                        token_model=BondToken,
+                        exchange_contract_name="IbetStraightBondExchange",
+                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
+
                 # complete_list
-                complete_list.extend(self.get_CompleteList(session, BondToken, 'IbetStraightBondExchange',
-                                                           config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                complete_list = sorted(
-                    complete_list,
-                    key=lambda x: x['sort_id']
+                complete_list.extend(
+                    self.get_complete_list(
+                        session=session,
+                        token_model=BondToken,
+                        exchange_contract_name="IbetStraightBondExchange",
+                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
             except Exception as err:
-                LOG.error(err)
-                pass
+                LOG.exception(err)
 
         response_json = {
-            'order_list': order_list,
-            'settlement_list': settlement_list,
-            'complete_list': complete_list
+            "order_list": order_list,
+            "settlement_list": settlement_list,
+            "complete_list": complete_list
         }
 
         self.on_success(res, response_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context["data"]
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json["account_address_list"]:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
 
 
 # ------------------------------
@@ -378,11 +674,11 @@ class MembershipOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.order_list.MembershipOrderList')
-        session = req.context['session']
+        LOG.info("v2.order_list.MembershipOrderList")
+        session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         # validate
         request_json = self.validate(req)
@@ -391,42 +687,77 @@ class MembershipOrderList(BaseOrderList, BaseResource):
         settlement_list = []
         complete_list = []
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             try:
                 # order_list
-                order_list.extend(self.get_OrderList(session, MembershipToken, 'IbetMembershipExchange',
-                                                     config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                order_list = sorted(
-                    order_list,
-                    key=lambda x: x['sort_id']
+                order_list.extend(
+                    self.get_order_list(
+                        session=session,
+                        token_model=MembershipToken,
+                        exchange_contract_name="IbetMembershipExchange",
+                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                order_list = sorted(order_list, key=lambda x: x["sort_id"])
+
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList(session, MembershipToken, 'IbetMembershipExchange',
-                                                               config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                                                               account_address))
-                settlement_list = sorted(
-                    settlement_list,
-                    key=lambda x: x['sort_id']
+                settlement_list.extend(
+                    self.get_settlement_list(
+                        session=session,
+                        token_model=MembershipToken,
+                        exchange_contract_name="IbetMembershipExchange",
+                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
+
                 # complete_list
-                complete_list.extend(self.get_CompleteList(session, MembershipToken, 'IbetMembershipExchange',
-                                                           config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                                                           account_address))
-                complete_list = sorted(
-                    complete_list,
-                    key=lambda x: x['sort_id']
+                complete_list.extend(
+                    self.get_complete_list(
+                        session=session,
+                        token_model=MembershipToken,
+                        exchange_contract_name="IbetMembershipExchange",
+                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
             except Exception as err:
-                LOG.error(err)
-                pass
+                LOG.exception(err)
 
         response_json = {
-            'order_list': order_list,
-            'settlement_list': settlement_list,
-            'complete_list': complete_list
+            "order_list": order_list,
+            "settlement_list": settlement_list,
+            "complete_list": complete_list
         }
 
         self.on_success(res, response_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context["data"]
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json["account_address_list"]:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
 
 
 # ------------------------------
@@ -438,11 +769,11 @@ class CouponOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.order_list.CouponOrderList')
-        session = req.context['session']
+        LOG.info("v2.order_list.CouponOrderList")
+        session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         # validate
         request_json = self.validate(req)
@@ -451,41 +782,77 @@ class CouponOrderList(BaseOrderList, BaseResource):
         settlement_list = []
         complete_list = []
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             try:
                 # order_list
-                order_list.extend(self.get_OrderList(session, CouponToken, 'IbetCouponExchange',
-                                                     config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                order_list = sorted(
-                    order_list,
-                    key=lambda x: x['sort_id']
+                order_list.extend(
+                    self.get_order_list(
+                        session=session,
+                        token_model=CouponToken,
+                        exchange_contract_name="IbetCouponExchange",
+                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                order_list = sorted(order_list, key=lambda x: x["sort_id"])
+
                 # settlement_list
-                settlement_list.extend(self.get_SettlementList(session, CouponToken, 'IbetCouponExchange',
-                                                               config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                                                               account_address))
-                settlement_list = sorted(
-                    settlement_list,
-                    key=lambda x: x['sort_id']
+                settlement_list.extend(
+                    self.get_settlement_list(
+                        session=session,
+                        token_model=CouponToken,
+                        exchange_contract_name="IbetCouponExchange",
+                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
+
                 # complete_list
-                complete_list.extend(self.get_CompleteList(session, CouponToken, 'IbetCouponExchange',
-                                                           config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                complete_list = sorted(
-                    complete_list,
-                    key=lambda x: x['sort_id']
+                complete_list.extend(
+                    self.get_complete_list(
+                        session=session,
+                        token_model=CouponToken,
+                        exchange_contract_name="IbetCouponExchange",
+                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
             except Exception as err:
-                LOG.error(err)
-                pass
+                LOG.exception(err)
 
         response_json = {
-            'order_list': order_list,
-            'settlement_list': settlement_list,
-            'complete_list': complete_list
+            "order_list": order_list,
+            "settlement_list": settlement_list,
+            "complete_list": complete_list
         }
 
         self.on_success(res, response_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context["data"]
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json["account_address_list"]:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json
 
 
 # ------------------------------
@@ -497,11 +864,11 @@ class ShareOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res):
-        LOG.info('v2.order_list.ShareOrderList')
-        session = req.context['session']
+        LOG.info("v2.order_list.ShareOrderList")
+        session = req.context["session"]
 
         if config.SHARE_TOKEN_ENABLED is False or config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         # validate
         request_json = self.validate(req)
@@ -510,39 +877,74 @@ class ShareOrderList(BaseOrderList, BaseResource):
         settlement_list = []
         complete_list = []
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             try:
                 # order_list
-                order_list.extend(self.get_OTC_OrderList(session, ShareToken, 'IbetOTCExchange',
-                                                         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS, account_address))
-                order_list = sorted(
-                    order_list,
-                    key=lambda x: x['sort_id']
+                order_list.extend(
+                    self.get_otc_order_list(
+                        session=session,
+                        token_model=ShareToken,
+                        exchange_contract_name="IbetOTCExchange",
+                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                order_list = sorted(order_list, key=lambda x: x["sort_id"])
+
                 # settlement_list
-                settlement_list.extend(self.get_OTC_SettlementList(session, ShareToken, 'IbetOTCExchange',
-                                                                   config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                                                                   account_address))
-                settlement_list = sorted(
-                    settlement_list,
-                    key=lambda x: x['sort_id']
+                settlement_list.extend(
+                    self.get_otc_settlement_list(
+                        session=session,
+                        token_model=ShareToken,
+                        exchange_contract_name="IbetOTCExchange",
+                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
+
                 # complete_list
-                complete_list.extend(self.get_OTC_CompleteList(session, ShareToken, 'IbetOTCExchange',
-                                                               config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                                                               account_address))
-                complete_list = sorted(
-                    complete_list,
-                    key=lambda x: x['sort_id']
+                complete_list.extend(
+                    self.get_otc_complete_list(
+                        session=session,
+                        token_model=ShareToken,
+                        exchange_contract_name="IbetOTCExchange",
+                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
                 )
+                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
             except Exception as err:
-                LOG.error(err)
-                pass
+                LOG.exception(err)
 
         response_json = {
-            'order_list': order_list,
-            'settlement_list': settlement_list,
-            'complete_list': complete_list
+            "order_list": order_list,
+            "settlement_list": settlement_list,
+            "complete_list": complete_list
         }
 
         self.on_success(res, response_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context["data"]
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
+            }
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        for account_address in request_json["account_address_list"]:
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError
+
+        return request_json

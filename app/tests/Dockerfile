@@ -54,19 +54,21 @@ RUN . ~/.bash_profile \
 # install python packages 1
 COPY requirements.txt /app/requirements.txt
 RUN . ~/.bash_profile \
- && pip install -r /app/requirements.txt
+ && pip install -r /app/requirements.txt \
+ && rm -f /app/requirements.txt
 
 # install python packages 2
 COPY app/tests/requirements.txt /app/requirements2.txt
 RUN . ~/.bash_profile \
- && pip install -r /app/requirements2.txt
+ && pip install -r /app/requirements2.txt \
+ && rm -f /app/requirements2.txt
 
 # deploy app
 USER root
 COPY . /app/ibet-Wallet-API/
-RUN chown -R apl:apl /app/ibet-Wallet-API && \
-    chmod 755 /app/ibet-Wallet-API
-RUN unzip /app/ibet-Wallet-API/data/zip_code.zip -d /app/ibet-Wallet-API/data/
+RUN chown -R apl:apl /app/ibet-Wallet-API \
+ && find /app/ibet-Wallet-API/ -type d -name __pycache__ | xargs rm -fr \
+ && chmod 755 /app/ibet-Wallet-API
 
 USER apl
 CMD /app/ibet-Wallet-API/app/tests/qa.sh
