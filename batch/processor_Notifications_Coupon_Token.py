@@ -34,9 +34,9 @@ sys.path.append(path)
 from app import config
 from app.model import Notification, NotificationType, Listing
 from app.contracts import Contract
-from async.lib.company_list import CompanyListFactory
-from async.lib.token_list import TokenList
-from async.lib.misc import wait_all_futures
+from batch.lib.company_list import CompanyListFactory
+from batch.lib.token_list import TokenList
+from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
