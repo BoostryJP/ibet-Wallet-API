@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 
 from web3 import Web3
@@ -25,13 +24,20 @@ from eth_utils import to_checksum_address
 
 from app import config
 from app.contracts import Contract
-from app.model import Listing, ExecutableContract
+from app.model import (
+    Listing,
+    ExecutableContract
+)
 from app.model.node import Node
+
 from .account_config import eth_account
-from .contract_modules import issue_coupon_token, coupon_register_list
+from .contract_modules import (
+    issue_coupon_token,
+    coupon_register_list
+)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 def insert_node_data(session, is_synced):
@@ -43,9 +49,6 @@ def insert_node_data(session, is_synced):
 def tokenlist_contract():
     issuer = eth_account['issuer']
     web3.eth.defaultAccount = issuer['account_address']
-    web3.personal.unlockAccount(
-        issuer['account_address'], issuer['password'])
-
     contract_address, abi = Contract.deploy_contract(
         'TokenList', [], issuer['account_address'])
 
@@ -136,7 +139,6 @@ class TestEthSendRawTransactionNoWait:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -214,7 +216,6 @@ class TestEthSendRawTransactionNoWait:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
             {
                 "from": to_checksum_address(issuer["account_address"]),
@@ -454,7 +455,6 @@ class TestEthSendRawTransactionNoWait:
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000
         })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 

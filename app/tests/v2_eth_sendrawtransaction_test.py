@@ -16,26 +16,29 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
+from unittest.mock import MagicMock
+from unittest import mock
 
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.middleware import geth_poa_middleware
-from web3.utils.threads import Timeout
+from web3.exceptions import TimeExhausted
 from eth_utils import to_checksum_address
-from unittest.mock import MagicMock
-from unittest import mock
 
 from app import config
 from app.contracts import Contract
 from app.model import Listing, ExecutableContract
 from app.model.node import Node
+
 from .account_config import eth_account
-from .contract_modules import issue_coupon_token, coupon_register_list
+from .contract_modules import (
+    issue_coupon_token,
+    coupon_register_list
+)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 def insert_node_data(session, is_synced):
@@ -47,9 +50,6 @@ def insert_node_data(session, is_synced):
 def tokenlist_contract():
     issuer = eth_account['issuer']
     web3.eth.defaultAccount = issuer['account_address']
-    web3.personal.unlockAccount(
-        issuer['account_address'], issuer['password'])
-
     contract_address, abi = Contract.deploy_contract(
         'TokenList', [], issuer['account_address'])
 
@@ -138,7 +138,6 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -215,7 +214,6 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
             {
                 "from": to_checksum_address(issuer["account_address"]),
@@ -312,7 +310,6 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -329,8 +326,8 @@ class TestEthSendRawTransaction:
 
         # タイムアウト
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Timeout())), mock.patch(
-                "web3.txpool.TxPool.inspect", AttributeDict({
+        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
+                "web3.geth.GethTxPool.inspect", AttributeDict({
                     "pending": AttributeDict({
                         to_checksum_address(local_account_1.address): AttributeDict({
                             str(tx["nonce"]): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
@@ -531,7 +528,6 @@ class TestEthSendRawTransaction:
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000
         })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -711,7 +707,6 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -779,7 +774,6 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -791,7 +785,7 @@ class TestEthSendRawTransaction:
         signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
 
         # waitForTransactionReceiptエラー
-        mock.patch.object(web3.eth, "waitForTransactionReceipt", MagicMock(side_effect=Timeout()))
+        mock.patch.object(web3.eth, "waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted()))
         mock.patch.object(web3.eth.account, "recoverTransaction", MagicMock(side_effect=Exception()))
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
@@ -800,7 +794,7 @@ class TestEthSendRawTransaction:
 
         # タイムアウト
         # recoverTransactionエラー
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Timeout())), mock.patch(
+        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
                 "eth_account.Account.recoverTransaction", MagicMock(side_effect=Exception())):
             resp = client.simulate_post(
                 self.apiurl, headers=headers, body=request_body)
@@ -853,7 +847,6 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        web3.personal.unlockAccount(to_checksum_address(issuer["account_address"]), issuer["password"], 60)
         tx_hash = web3.eth.sendTransaction(pre_tx)
         web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -871,8 +864,8 @@ class TestEthSendRawTransaction:
         # タイムアウト
         # queuedに滞留
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Timeout())), mock.patch(
-                "web3.txpool.TxPool.inspect", AttributeDict({
+        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
+                "web3.geth.GethTxPool.inspect", AttributeDict({
                     "pending": AttributeDict({}),
                     "queued": AttributeDict({
                         to_checksum_address(local_account_1.address): AttributeDict({

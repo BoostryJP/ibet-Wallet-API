@@ -16,23 +16,43 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import (
+    geth_poa_middleware,
+    local_filter_middleware
+)
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session
+)
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app import config
-from app.model import Notification, NotificationType, Listing
+from app.config import (
+    WEB3_HTTP_PROVIDER,
+    DATABASE_URL,
+    WORKER_COUNT,
+    SLEEP_INTERVAL,
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    COMPANY_LIST_URL
+)
+from app.model import (
+    Notification,
+    NotificationType,
+    Listing
+)
 from app.contracts import Contract
 from batch.lib.company_list import CompanyListFactory
 from batch.lib.token_list import TokenList
@@ -42,25 +62,27 @@ import log
 JST = timezone(timedelta(hours=+9), "JST")
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-COUPON-TOKEN")
 
-# 設定の取得
-WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
-URI = config.DATABASE_URL
-WORKER_COUNT = int(config.WORKER_COUNT)
-SLEEP_INTERVAL = int(config.SLEEP_INTERVAL)
+WORKER_COUNT = int(WORKER_COUNT)
+SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
-# 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-engine = create_engine(URI, echo=False)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.add(local_filter_middleware)
+
+engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
-company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
+
+company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
-list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+list_contract = Contract.get_contract(
+    contract_name="TokenList",
+    address=TOKEN_LIST_CONTRACT_ADDRESS
+)
 token_list = TokenList(list_contract)
 
 
@@ -88,7 +110,7 @@ class Watcher:
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == 'IbetCoupon':
+            elif token_list.get_token(registered_token.token_address)[1] == "IbetCoupon":
                 res.append(registered_token)
         return res
 
@@ -98,7 +120,7 @@ class Watcher:
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == 'IbetCoupon':
+            elif token_list.get_token(registered_token.token_address)[1] == "IbetCoupon":
                 res.append(registered_token)
         return res
 
@@ -109,16 +131,20 @@ class Watcher:
         start_time = time.time()
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
+
             self.filter_params["fromBlock"] = self.from_block
+
+            # 最新のブロックナンバーを取得
+            _latest_block = web3.eth.blockNumber
+            if self.from_block > _latest_block:
+                LOG.info(f"[{self.__class__.__name__}]: skip processing")
+                return
 
             # 登録済みの債券リストを取得
             if self.__class__.__name__ == "WatchTransfer":
                 coupon_token_list = self._get_coupon_token_all_list()
             else:
                 coupon_token_list = self._get_coupon_token_public_list()
-
-            # 最新のブロックナンバーを取得
-            _latest_block = web3.eth.blockNumber
 
             # レスポンスタイムアウト抑止
             # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
@@ -133,10 +159,16 @@ class Watcher:
             # イベント処理
             for coupon_token in coupon_token_list:
                 try:
-                    coupon_contract = Contract.get_contract('IbetCoupon', coupon_token.token_address)
-                    event_filter = coupon_contract.eventFilter(self.filter_name, self.filter_params)
+                    coupon_contract = Contract.get_contract(
+                        contract_name="IbetCoupon",
+                        address=coupon_token.token_address
+                    )
+                    _event = getattr(coupon_contract.events, self.filter_name)
+                    _build_filter = _event.build_filter()
+                    _build_filter.fromBlock = self.filter_params["fromBlock"]
+                    _build_filter.toBlock = self.filter_params["toBlock"]
+                    event_filter = _build_filter.deploy(web3)
                     entries = event_filter.get_all_entries()
-                    web3.eth.uninstallFilter(event_filter.filter_id)
                 except Exception as err:  # Exception が発生した場合は処理を継続
                     LOG.error(err)
                     continue

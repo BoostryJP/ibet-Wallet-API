@@ -13,7 +13,7 @@ from eth_utils import to_checksum_address
 from app import config
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 to_address = '0x08fed8aa9c22ca593dc0fb251e5d8329018854cc'
 
