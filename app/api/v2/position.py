@@ -16,28 +16,32 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from datetime import timezone, timedelta
 
-JST = timezone(timedelta(hours=+9), 'JST')
-
 from cerberus import Validator
-
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, NotSupportedError
+from app.errors import (
+    InvalidParameterError,
+    NotSupportedError
+)
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon, Transfer
+from app.model import (
+    Listing,
+    BondToken,
+    ShareToken,
+    MembershipToken,
+    CouponToken,
+    ConsumeCoupon,
+    Transfer
+)
 
 LOG = log.get_logger()
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+JST = timezone(timedelta(hours=+9), 'JST')
 
 
 # ------------------------------

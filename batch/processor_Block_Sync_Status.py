@@ -50,7 +50,7 @@ EXPECTED_BLOCKS_PER_SEC = 1
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)

@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 import time
 
@@ -26,18 +25,16 @@ from eth_utils import to_checksum_address
 
 from app import config
 from app.contracts import Contract
-
 from .account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 # 名簿用個人情報登録
 # NOTE: issuer address に対する情報の公開を行う
 def register_personalinfo(invoker, personal_info):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     PersonalInfoContract = Contract.get_contract(
         'PersonalInfo', personal_info['address'])
@@ -57,7 +54,6 @@ def register_payment_gateway(invoker, payment_gateway):
 
     # 1) 登録 from Invoker
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     agent = eth_account['agent']
     encrypted_info = 'some_encrypted_info'
@@ -68,7 +64,6 @@ def register_payment_gateway(invoker, payment_gateway):
 
     # 2) 認可 from Agent
     web3.eth.defaultAccount = agent['account_address']
-    web3.personal.unlockAccount(agent['account_address'], agent['password'])
 
     tx_hash = PaymentGatewayContract.functions.approve(invoker['account_address']). \
         transact({'from': agent['account_address'], 'gas': 4000000})
@@ -78,7 +73,6 @@ def register_payment_gateway(invoker, payment_gateway):
 # 取引参加者登録
 def register_exchange_regulator(invoker, exchange_regulator_service, account_address):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     ExchangeRegulatorService = \
         Contract.get_contract('ExchangeRegulatorService', exchange_regulator_service['address'])
@@ -96,7 +90,6 @@ Straight Bond Token （普通社債）
 # 債券トークンの発行
 def issue_bond_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     interestPaymentDate = json.dumps(
         {
@@ -155,7 +148,6 @@ def register_bond_list(invoker, bond_token, token_list):
         'TokenList', token_list['address'])
 
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     tx_hash = TokenListContract.functions.register(
         bond_token['address'], 'IbetStraightBond'). \
@@ -172,7 +164,6 @@ def offer_bond_token(invoker, bond_exchange, bond_token, amount, price):
 # 取引コントラクトに債券トークンをチャージ
 def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     TokenContract = Contract.get_contract(
         'IbetStraightBond', bond_token['address'])
@@ -185,7 +176,6 @@ def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
 # 債券トークンの売りMake注文
 def make_sell_bond_token(invoker, bond_exchange, bond_token, amount, price):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     ExchangeContract = Contract.get_contract(
         'IbetStraightBondExchange', bond_exchange['address'])
@@ -201,7 +191,6 @@ def make_sell_bond_token(invoker, bond_exchange, bond_token, amount, price):
 # 債券トークンの買いTake注文
 def take_buy_bond_token(invoker, bond_exchange, order_id, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     ExchangeContract = Contract.get_contract(
         'IbetStraightBondExchange', bond_exchange['address'])
@@ -233,7 +222,6 @@ def get_latest_agreementid(bond_exchange, order_id):
 # 債券約定の資金決済
 def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     ExchangeContract = Contract.get_contract(
         'IbetStraightBondExchange', bond_exchange['address'])
@@ -247,7 +235,6 @@ def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
 # 債券の償還
 def bond_redeem(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
 
@@ -259,7 +246,6 @@ def bond_redeem(invoker, token):
 # 債券の譲渡可否変更
 def bond_change_transferable(invoker, token, transferable):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
 
@@ -271,7 +257,6 @@ def bond_change_transferable(invoker, token, transferable):
 # 債券の無効化
 def bond_invalidate(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
     tx_hash = TokenContract.functions.setStatus(False). \
@@ -282,7 +267,6 @@ def bond_invalidate(invoker, token):
 # 債券の譲渡不可
 def bond_untransferable(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
     tx_hash = TokenContract.functions.setTransferable(False). \
@@ -298,7 +282,6 @@ Share Token （株式）
 # 株式トークンの発行
 def issue_share_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     arguments = [
         attribute['name'], attribute['symbol'],
@@ -341,7 +324,6 @@ def register_share_list(invoker, share_token, token_list):
         'TokenList', token_list['address'])
 
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     tx_hash = TokenListContract.functions.register(
         share_token['address'], 'IbetShare'). \
@@ -352,7 +334,6 @@ def register_share_list(invoker, share_token, token_list):
 # 株式トークンの関連URL追加
 def register_share_reference_url(invoker, token, url_list):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     TokenContract = Contract.get_contract('IbetShare', token['address'])
     i = 0
@@ -372,7 +353,6 @@ def share_offer(invoker, exchange, token, counterpart, amount, price):
 # 取引コントラクトに株式トークンをチャージ
 def share_transfer_to_exchange(invoker, exchange, token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     TokenContract = Contract. \
         get_contract('IbetShare', token['address'])
     tx_hash = TokenContract.functions. \
@@ -384,7 +364,6 @@ def share_transfer_to_exchange(invoker, exchange, token, amount):
 # 株式Tokenの売りMake注文
 def share_make_sell(invoker, exchange, token, counterpart, amount, price):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetOTCExchange', exchange['address'])
     agent = eth_account['agent']
@@ -397,7 +376,6 @@ def share_make_sell(invoker, exchange, token, counterpart, amount, price):
 # 株式権Tokenの買いTake注文
 def share_take_buy(invoker, exchange, order_id):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetOTCExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
@@ -426,7 +404,6 @@ def share_get_latest_agreementid(exchange, order_id):
 # 株式約定の資金決済
 def share_confirm_agreement(invoker, exchange, order_id, agreement_id):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetOTCExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
@@ -438,8 +415,6 @@ def share_confirm_agreement(invoker, exchange, order_id, agreement_id):
 # 株式トークンの無効化
 def invalidate_share_token(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     ShareTokenContract = Contract.get_contract('IbetShare', token['address'])
     tx_hash = ShareTokenContract.functions.setStatus(False). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
@@ -449,8 +424,6 @@ def invalidate_share_token(invoker, token):
 # 株式トークンの譲渡不可
 def untransferable_share_token(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     ShareTokenContract = Contract.get_contract('IbetShare', token['address'])
     tx_hash = ShareTokenContract.functions.setTransferable(False). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
@@ -465,7 +438,6 @@ Coupon Token （クーポン）
 # クーポントークンの発行
 def issue_coupon_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
 
     arguments = [
         attribute['name'], attribute['symbol'], attribute['totalSupply'],
@@ -474,7 +446,6 @@ def issue_coupon_token(invoker, attribute):
         attribute['expirationDate'], attribute['transferable'],
         attribute['contactInformation'], attribute['privacyPolicy']
     ]
-
     contract_address, abi = Contract.deploy_contract(
         'IbetCoupon', arguments, invoker['account_address'])
 
@@ -483,12 +454,9 @@ def issue_coupon_token(invoker, attribute):
 
 # クーポンTokenの公開リスト登録
 def coupon_register_list(invoker, token, token_list):
+    web3.eth.defaultAccount = invoker['account_address']
     TokenListContract = Contract. \
         get_contract('TokenList', token_list['address'])
-
-    web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     tx_hash = TokenListContract.functions. \
         register(token['address'], 'IbetCoupon'). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
@@ -498,7 +466,6 @@ def coupon_register_list(invoker, token, token_list):
 # クーポントークンの割当
 def transfer_coupon_token(invoker, coupon_token, to, value):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     coupon_contract = Contract.get_contract('IbetCoupon', coupon_token['address'])
     tx_hash = coupon_contract.functions.transfer(to, value). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
@@ -508,8 +475,6 @@ def transfer_coupon_token(invoker, coupon_token, to, value):
 # クーポントークンの無効化
 def invalidate_coupon_token(invoker, coupon_token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     CouponTokenContract = Contract.get_contract(
         'IbetCoupon', coupon_token['address'])
 
@@ -522,8 +487,6 @@ def invalidate_coupon_token(invoker, coupon_token):
 # クーポントークンの譲渡不可
 def untransferable_coupon_token(invoker, coupon_token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     CouponTokenContract = Contract.get_contract(
         'IbetCoupon', coupon_token['address'])
 
@@ -536,8 +499,6 @@ def untransferable_coupon_token(invoker, coupon_token):
 # クーポントークンの消費
 def consume_coupon_token(invoker, coupon_token, value):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     CouponTokenContract = Contract.get_contract(
         'IbetCoupon', coupon_token['address'])
 
@@ -556,7 +517,6 @@ def coupon_offer(invoker, exchange, token, amount, price):
 # クーポンDEXコントラクトにクーポントークンをデポジット
 def coupon_transfer_to_exchange(invoker, exchange, token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     TokenContract = Contract. \
         get_contract('IbetCoupon', token['address'])
     tx_hash = TokenContract.functions. \
@@ -568,7 +528,6 @@ def coupon_transfer_to_exchange(invoker, exchange, token, amount):
 # クーポントークンの売りMake注文
 def coupon_make_sell(invoker, exchange, token, amount, price):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetCouponExchange', exchange['address'])
     agent = eth_account['agent']
@@ -581,7 +540,6 @@ def coupon_make_sell(invoker, exchange, token, amount, price):
 # クーポントークンの買いTake注文
 def coupon_take_buy(invoker, exchange, order_id, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetCouponExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
@@ -610,7 +568,6 @@ def coupon_get_latest_agreementid(exchange, order_id):
 # 決済承認
 def coupon_confirm_agreement(invoker, exchange, order_id, agreement_id):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetCouponExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
@@ -627,8 +584,6 @@ Membership Token （会員権）
 # 会員権Tokenの発行
 def membership_issue(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     arguments = [
         attribute['name'], attribute['symbol'], attribute['initialSupply'],
         attribute['tradableExchange'],
@@ -637,21 +592,16 @@ def membership_issue(invoker, attribute):
         attribute['transferable'],
         attribute['contactInformation'], attribute['privacyPolicy']
     ]
-
     contract_address, abi = Contract. \
         deploy_contract('IbetMembership', arguments, invoker['account_address'])
-
     return {'address': contract_address, 'abi': abi}
 
 
 # 会員権Tokenの公開リスト登録
 def membership_register_list(invoker, token, token_list):
+    web3.eth.defaultAccount = invoker['account_address']
     TokenListContract = Contract. \
         get_contract('TokenList', token_list['address'])
-
-    web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
-
     tx_hash = TokenListContract.functions. \
         register(token['address'], 'IbetMembership'). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
@@ -661,7 +611,6 @@ def membership_register_list(invoker, token, token_list):
 # 会員権Tokenの無効化
 def membership_invalidate(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     TokenContract = Contract. \
         get_contract('IbetMembership', token['address'])
 
@@ -674,7 +623,6 @@ def membership_invalidate(invoker, token):
 # 会員権Tokenの譲渡不可
 def membership_untransferable(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     TokenContract = Contract. \
         get_contract('IbetMembership', token['address'])
 
@@ -693,7 +641,6 @@ def membership_offer(invoker, exchange, token, amount, price):
 # 会員権DEXコントラクトに会員権Tokenをデポジット
 def membership_transfer_to_exchange(invoker, exchange, token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     TokenContract = Contract. \
         get_contract('IbetMembership', token['address'])
     tx_hash = TokenContract.functions. \
@@ -705,7 +652,6 @@ def membership_transfer_to_exchange(invoker, exchange, token, amount):
 # 会員権Tokenの売りMake注文
 def membership_make_sell(invoker, exchange, token, amount, price):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetMembershipExchange', exchange['address'])
     agent = eth_account['agent']
@@ -718,7 +664,6 @@ def membership_make_sell(invoker, exchange, token, amount, price):
 # 会員権Tokenの買いTake注文
 def membership_take_buy(invoker, exchange, order_id, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetMembershipExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
@@ -747,7 +692,6 @@ def membership_get_latest_agreementid(exchange, order_id):
 # 会員権約定の資金決済
 def membership_confirm_agreement(invoker, exchange, order_id, agreement_id):
     web3.eth.defaultAccount = invoker['account_address']
-    web3.personal.unlockAccount(invoker['account_address'], invoker['password'])
     ExchangeContract = Contract. \
         get_contract('IbetMembershipExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \

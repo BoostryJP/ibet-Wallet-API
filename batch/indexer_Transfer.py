@@ -16,23 +16,36 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import os
 import sys
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session
+)
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+from web3.middleware import (
+    geth_poa_middleware,
+    local_filter_middleware
+)
 from eth_utils import to_checksum_address
 
-path = os.path.join(os.path.dirname(__file__), '../')
+path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app import config
+from app.config import (
+    WEB3_HTTP_PROVIDER,
+    DATABASE_URL,
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    ZERO_ADDRESS
+)
 from app.model import Listing, Transfer
 from app.contracts import Contract
 import log
@@ -42,14 +55,11 @@ JST = timezone(timedelta(hours=+9), "JST")
 process_name = "INDEXER-TRANSFER"
 LOG = log.get_logger(process_name=process_name)
 
-# 設定の取得
-WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
-URI = config.DATABASE_URL
-
-# 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-engine = create_engine(URI, echo=False)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.add(local_filter_middleware)
+
+engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
 
@@ -117,21 +127,21 @@ class Processor:
 
     def get_token_list(self):
         self.token_list = []
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        ListContract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
         for listed_token in listed_tokens:
             token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
             if token_info[1] == "IbetCoupon":
-                token_contract = Contract.get_contract('IbetCoupon', listed_token.token_address)
+                token_contract = Contract.get_contract("IbetCoupon", listed_token.token_address)
                 self.token_list.append(token_contract)
             elif token_info[1] == "IbetMembership":
-                token_contract = Contract.get_contract('IbetMembership', listed_token.token_address)
+                token_contract = Contract.get_contract("IbetMembership", listed_token.token_address)
                 self.token_list.append(token_contract)
             elif token_info[1] == "IbetStraightBond":
-                token_contract = Contract.get_contract('IbetStraightBond', listed_token.token_address)
+                token_contract = Contract.get_contract("IbetStraightBond", listed_token.token_address)
                 self.token_list.append(token_contract)
             elif token_info[1] == "IbetShare":
-                token_contract = Contract.get_contract('IbetShare', listed_token.token_address)
+                token_contract = Contract.get_contract("IbetShare", listed_token.token_address)
                 self.token_list.append(token_contract)
 
     def initial_sync(self):
@@ -165,14 +175,12 @@ class Processor:
     def __sync_transfer(self, block_from, block_to):
         for token in self.token_list:
             try:
-                event_filter = token.eventFilter(
-                    'Transfer', {
-                        'fromBlock': block_from,
-                        'toBlock': block_to,
-                    }
-                )
+                _build_filter = token.events.Transfer.build_filter()
+                _build_filter.fromBlock = block_from
+                _build_filter.toBlock = block_to
+                event_filter = _build_filter.deploy(web3)
                 for event in event_filter.get_all_entries():
-                    args = event['args']
+                    args = event["args"]
                     value = args.get("value", 0)
                     if value > sys.maxsize:
                         pass
@@ -181,12 +189,11 @@ class Processor:
                         self.sink.on_transfer(
                             transaction_hash=event["transactionHash"].hex(),
                             token_address=to_checksum_address(token.address),
-                            from_account_address=args.get("from", config.ZERO_ADDRESS),
-                            to_account_address=args.get("to", config.ZERO_ADDRESS),
+                            from_account_address=args.get("from", ZERO_ADDRESS),
+                            to_account_address=args.get("to", ZERO_ADDRESS),
                             value=value,
                             event_created=event_created
                         )
-                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
 
