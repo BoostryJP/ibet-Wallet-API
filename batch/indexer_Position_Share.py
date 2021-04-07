@@ -36,9 +36,15 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 from app.config import (
-    WEB3_HTTP_PROVIDER, DATABASE_URL, TOKEN_LIST_CONTRACT_ADDRESS, ZERO_ADDRESS
+    WEB3_HTTP_PROVIDER,
+    DATABASE_URL,
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    ZERO_ADDRESS
 )
-from app.model import Listing, Position
+from app.model import (
+    Listing,
+    Position
+)
 from app.contracts import Contract
 import log
 
