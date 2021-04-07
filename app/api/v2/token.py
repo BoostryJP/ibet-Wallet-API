@@ -16,19 +16,29 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from cerberus import Validator
-
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, DataNotExistsError, NotSupportedError
+from app.errors import (
+    InvalidParameterError,
+    DataNotExistsError,
+    NotSupportedError
+)
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, Position, Transfer
+from app.model import (
+    Listing,
+    BondToken,
+    ShareToken,
+    MembershipToken,
+    CouponToken,
+    Position,
+    Transfer
+)
 
 LOG = log.get_logger()
 
@@ -44,7 +54,7 @@ class TokenStatus(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.TokenStatus')
@@ -191,7 +201,7 @@ class StraightBondTokens(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.StraightBondTokens')
@@ -288,7 +298,7 @@ class StraightBondTokenAddresses(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.StraightBondAddresses')
@@ -379,7 +389,7 @@ class StraightBondTokenDetails(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.StraightBondTokenDetails')
@@ -465,7 +475,7 @@ class ShareTokens(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.ShareTokens')
@@ -563,7 +573,7 @@ class ShareTokenAddresses(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.ShareTokenAddresses')
@@ -655,7 +665,7 @@ class ShareTokenDetails(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.ShareTokenDetails')
@@ -741,7 +751,7 @@ class MembershipTokens(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.MembershipTokens')
@@ -841,7 +851,7 @@ class MembershipTokenAddresses(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.MembershipTokenAddresses')
@@ -933,7 +943,7 @@ class MembershipTokenDetails(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.MembershipTokenDetails')
@@ -1019,7 +1029,7 @@ class CouponTokens(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.CouponTokens')
@@ -1119,7 +1129,7 @@ class CouponTokenAddresses(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res):
         LOG.info('v2.token.CouponTokenAddresses')
@@ -1212,7 +1222,7 @@ class CouponTokenDetails(BaseResource):
     def __init__(self):
         super().__init__()
         self.web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        self.web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.CouponTokenDetails')

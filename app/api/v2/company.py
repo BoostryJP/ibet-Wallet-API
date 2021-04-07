@@ -16,27 +16,31 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 import requests
 
 from eth_utils import to_checksum_address
 from sqlalchemy import desc
+from web3 import Web3
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import AppError, InvalidParameterError, DataNotExistsError
+from app.errors import (
+    AppError,
+    InvalidParameterError,
+    DataNotExistsError
+)
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, MembershipToken, CouponToken, ShareToken
+from app.model import (
+    Listing,
+    BondToken,
+    MembershipToken,
+    CouponToken,
+    ShareToken
+)
 
 LOG = log.get_logger()
-
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
 
 # ------------------------------
