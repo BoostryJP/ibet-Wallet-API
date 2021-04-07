@@ -4,7 +4,7 @@
 
 * OS: macOS 10.14 (Mojave)
 * PostgreSQL: 10.13 or MySQL: 5.7
-* Python: 3.6.8
+* Python: 3.8.7
 
 ## 1. PostgreSQL
 

@@ -32,7 +32,7 @@ sys.path.append(path)
 
 from app import config
 from app.model.node import Node
-from async.lib.misc import wait_all_futures
+from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")

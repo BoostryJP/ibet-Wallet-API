@@ -34,13 +34,13 @@ sys.path.append(path)
 from app import config
 from app.model import Notification, NotificationType, Listing
 from app.contracts import Contract
-from async.lib.company_list import CompanyListFactory
-from async.lib.token_list import TokenList
-from async.lib.misc import wait_all_futures
+from batch.lib.company_list import CompanyListFactory
+from batch.lib.token_list import TokenList
+from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
-LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-SHARE-TOKEN")
+LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-BOND-TOKEN")
 
 # 設定の取得
 WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
@@ -82,23 +82,23 @@ class Watcher:
     def _gen_block_timestamp(self, entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def _get_share_token_public_list(self):
+    def _get_bond_token_public_list(self):
         res = []
         registered_token_list = db_session.query(Listing).filter(Listing.is_public == True).all()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == 'IbetShare':
+            elif token_list.get_token(registered_token.token_address)[1] == 'IbetStraightBond':
                 res.append(registered_token)
         return res
 
-    def _get_share_token_all_list(self):
+    def _get_bond_token_all_list(self):
         res = []
         registered_token_list = db_session.query(Listing).all()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == 'IbetShare':
+            elif token_list.get_token(registered_token.token_address)[1] == 'IbetStraightBond':
                 res.append(registered_token)
         return res
 
@@ -112,11 +112,11 @@ class Watcher:
 
             self.filter_params["fromBlock"] = self.from_block
 
-            # 登録済みの株式リストを取得
+            # 登録済みの債券リストを取得
             if self.__class__.__name__ == "WatchTransfer":
-                share_token_list = self._get_share_token_all_list()
+                bond_token_list = self._get_bond_token_all_list()
             else:
-                share_token_list = self._get_share_token_public_list()
+                bond_token_list = self._get_bond_token_public_list()
 
             # 最新のブロックナンバーを取得
             _latest_block = web3.eth.blockNumber
@@ -132,18 +132,17 @@ class Watcher:
                 _next_from = _latest_block + 1
 
             # イベント処理
-            for share_token in share_token_list:
+            for bond_token in bond_token_list:
                 try:
-                    # イベント取得
-                    share_contract = Contract.get_contract('IbetShare', share_token.token_address)
-                    event_filter = share_contract.eventFilter(self.filter_name, self.filter_params)
+                    bond_contract = Contract.get_contract('IbetStraightBond', bond_token.token_address)
+                    event_filter = bond_contract.eventFilter(self.filter_name, self.filter_params)
                     entries = event_filter.get_all_entries()
                     web3.eth.uninstallFilter(event_filter.filter_id)
                 except Exception as err:  # Exception が発生した場合は処理を継続
                     LOG.error(err)
                     continue
                 if len(entries) > 0:
-                    self.db_merge(share_contract, entries)
+                    self.db_merge(bond_contract, entries)
                     db_session.commit()
 
             self.from_block = _next_from
@@ -153,9 +152,9 @@ class Watcher:
 
 
 # イベント：募集申込開始
-class WatchStartOffering(Watcher):
+class WatchStartInitialOffering(Watcher):
     def __init__(self):
-        super().__init__("ChangeOfferingStatus", {'filter': {'status': True}})
+        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': True}})
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
@@ -168,11 +167,11 @@ class WatchStartOffering(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetShare"
+                "token_type": "IbetStraightBond"
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.START_OFFERING.value
+            notification.notification_type = NotificationType.START_INITIAL_OFFERING.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -181,9 +180,9 @@ class WatchStartOffering(Watcher):
 
 
 # イベント：募集申込終了
-class WatchStopOffering(Watcher):
+class WatchStopInitialOffering(Watcher):
     def __init__(self):
-        super().__init__("ChangeOfferingStatus", {'filter': {'status': False}})
+        super().__init__("ChangeInitialOfferingStatus", {'filter': {'status': False}})
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
@@ -196,11 +195,11 @@ class WatchStopOffering(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetShare"
+                "token_type": "IbetStraightBond"
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.STOP_OFFERING.value
+            notification.notification_type = NotificationType.STOP_INITIAL_OFFERING.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -208,10 +207,10 @@ class WatchStopOffering(Watcher):
             db_session.merge(notification)
 
 
-# イベント：取扱停止
-class WatchSuspend(Watcher):
+# イベント：償還
+class WatchRedeem(Watcher):
     def __init__(self):
-        super().__init__("ChangeStatus", {'filter': {'status': False}})
+        super().__init__("Redeem", {})
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
@@ -224,11 +223,11 @@ class WatchSuspend(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetShare"
+                "token_type": "IbetStraightBond"
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.SUSPEND.value
+            notification.notification_type = NotificationType.REDEEM.value
             notification.priority = 0
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
@@ -252,7 +251,7 @@ class WatchApplyForOffering(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetShare"
+                "token_type": "IbetStraightBond"
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -281,7 +280,7 @@ class WatchAllot(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetShare"
+                "token_type": "IbetStraightBond"
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -314,7 +313,7 @@ class WatchTransfer(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetShare"
+                "token_type": "IbetStraightBond"
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
@@ -330,9 +329,9 @@ class WatchTransfer(Watcher):
 # メイン処理
 def main():
     watchers = [
-        WatchStartOffering(),
-        WatchStopOffering(),
-        WatchSuspend(),
+        WatchStartInitialOffering(),
+        WatchStopInitialOffering(),
+        WatchRedeem(),
         WatchApplyForOffering(),
         WatchTransfer(),
         WatchAllot(),

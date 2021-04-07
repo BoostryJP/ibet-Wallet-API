@@ -18,29 +18,29 @@
 # SPDX-License-Identifier: Apache-2.0
 
 if [ "${BOND_TOKEN_ENABLED}" = 1 ]; then
-  PROC_LIST="${PROC_LIST} async/processor_Notifications_Bond_Token.py"
+  PROC_LIST="${PROC_LIST} batch/processor_Notifications_Bond_Token.py"
   if [ ! -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    PROC_LIST="${PROC_LIST} async/processor_Notifications_Bond_Exchange.py"
+    PROC_LIST="${PROC_LIST} batch/processor_Notifications_Bond_Exchange.py"
   fi
 fi
 
 if [ "${SHARE_TOKEN_ENABLED}" = 1 ]; then
-  PROC_LIST="${PROC_LIST} async/processor_Notifications_Share_Token.py"
+  PROC_LIST="${PROC_LIST} batch/processor_Notifications_Share_Token.py"
   if [ ! -z "${IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    PROC_LIST="${PROC_LIST} async/processor_Notifications_Share_Exchange.py"
+    PROC_LIST="${PROC_LIST} batch/processor_Notifications_Share_Exchange.py"
   fi
 fi
 
 if [ "${MEMBERSHIP_TOKEN_ENABLED}" = 1 ]; then
   if [ ! -z "${IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    PROC_LIST="${PROC_LIST} async/processor_Notifications_Membership_Exchange.py"
+    PROC_LIST="${PROC_LIST} batch/processor_Notifications_Membership_Exchange.py"
   fi
 fi
 
 if [ "${COUPON_TOKEN_ENABLED}" = 1 ]; then
-  PROC_LIST="${PROC_LIST} async/processor_Notifications_Coupon_Token.py"
+  PROC_LIST="${PROC_LIST} batch/processor_Notifications_Coupon_Token.py"
   if [ ! -z "${IBET_CP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    PROC_LIST="${PROC_LIST} async/processor_Notifications_Coupon_Exchange.py"
+    PROC_LIST="${PROC_LIST} batch/processor_Notifications_Coupon_Exchange.py"
   fi
 fi
 
