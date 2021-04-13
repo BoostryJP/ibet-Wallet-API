@@ -29,7 +29,7 @@ from .token import (
     MembershipToken,
     CouponToken
 )
-from .transfer import Transfer
+from .idx_transfer import IDXTransfer
 from .node import Node
 from .idx_order import IDXOrder
 from .idx_agreement import (
