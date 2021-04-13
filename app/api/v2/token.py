@@ -37,7 +37,7 @@ from app.model import (
     MembershipToken,
     CouponToken,
     IDXPosition,
-    Transfer
+    IDXTransfer
 )
 
 LOG = log.get_logger()
@@ -178,9 +178,9 @@ class TransferHistory(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # 移転履歴取得
-        transfer_history = session.query(Transfer). \
-            filter(Transfer.token_address == contract_address). \
-            order_by(Transfer.id). \
+        transfer_history = session.query(IDXTransfer). \
+            filter(IDXTransfer.token_address == contract_address). \
+            order_by(IDXTransfer.id). \
             all()
 
         resp_body = []

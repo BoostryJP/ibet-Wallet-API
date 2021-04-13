@@ -37,7 +37,7 @@ from app.model import (
     MembershipToken,
     CouponToken,
     IDXConsumeCoupon,
-    Transfer
+    IDXTransfer
 )
 
 LOG = log.get_logger()
@@ -392,9 +392,9 @@ class CouponMyTokens(BaseResource):
 
                         # 移転履歴TBLからトークンの受領履歴を検索
                         # NOTE: TBLの情報は実際の移転状態とタイムラグがある
-                        received_history = session.query(Transfer). \
-                            filter(Transfer.token_address == token.token_address). \
-                            filter(Transfer.to_address == owner). \
+                        received_history = session.query(IDXTransfer). \
+                            filter(IDXTransfer.token_address == token.token_address). \
+                            filter(IDXTransfer.to_address == owner). \
                             first()
 
                         # 残高がゼロではない or 残注文がゼロではない or

@@ -46,7 +46,10 @@ from app.config import (
     TOKEN_LIST_CONTRACT_ADDRESS,
     ZERO_ADDRESS
 )
-from app.model import Listing, Transfer
+from app.model import (
+    Listing,
+    IDXTransfer
+)
 from app.contracts import Contract
 import log
 
@@ -96,12 +99,12 @@ class DBSink:
         :param event_created: 移転日時（block timestamp）
         :return: None
         """
-        transfer = self.db.query(Transfer). \
-            filter(Transfer.transaction_hash == transaction_hash). \
+        transfer = self.db.query(IDXTransfer). \
+            filter(IDXTransfer.transaction_hash == transaction_hash). \
             first()
         if transfer is None:
             LOG.info(f"Transfer: transaction_hash={transaction_hash}")
-            transfer = Transfer()
+            transfer = IDXTransfer()
             transfer.transaction_hash = transaction_hash
             transfer.token_address = token_address
             transfer.from_address = from_account_address
