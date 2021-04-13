@@ -43,7 +43,7 @@ from app.config import (
 )
 from app.model import (
     Listing,
-    Position
+    IDXPosition
 )
 from app.contracts import Contract
 import log
@@ -88,13 +88,13 @@ class DBSink:
         :param balance: 更新後の残高
         :return: None
         """
-        position = self.db.query(Position). \
-            filter(Position.token_address == token_address). \
-            filter(Position.account_address == account_address). \
+        position = self.db.query(IDXPosition). \
+            filter(IDXPosition.token_address == token_address). \
+            filter(IDXPosition.account_address == account_address). \
             first()
         if position is None:
             LOG.info(f"Position created (Bond): token_address={token_address}, account_address={account_address}")
-            position = Position()
+            position = IDXPosition()
             position.token_address = token_address
             position.account_address = account_address
             position.balance = balance

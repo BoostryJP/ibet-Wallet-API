@@ -36,7 +36,7 @@ from app.model import (
     ShareToken,
     MembershipToken,
     CouponToken,
-    ConsumeCoupon,
+    IDXConsumeCoupon,
     Transfer
 )
 
@@ -463,9 +463,9 @@ class CouponConsumptions(BaseResource):
         _coupon_address = to_checksum_address(request_json['token_address'])
         coupon_consumptions = []
         for _account_address in request_json['account_address_list']:
-            consumptions = session.query(ConsumeCoupon). \
-                filter(ConsumeCoupon.token_address == _coupon_address). \
-                filter(ConsumeCoupon.account_address == _account_address). \
+            consumptions = session.query(IDXConsumeCoupon). \
+                filter(IDXConsumeCoupon.token_address == _coupon_address). \
+                filter(IDXConsumeCoupon.account_address == _account_address). \
                 all()
             for consumption in consumptions:
                 coupon_consumptions.append({

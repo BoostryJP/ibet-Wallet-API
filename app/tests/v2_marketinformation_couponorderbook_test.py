@@ -16,16 +16,18 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 import sys
 
 from eth_utils import to_checksum_address
 
-from app.model import Order, Agreement, AgreementStatus
-
-from .account_config import eth_account
 from app import config
+from app.model import (
+    IDXOrder as Order,
+    IDXAgreement as Agreement,
+    AgreementStatus
+)
+from app.tests.account_config import eth_account
 
 
 class TestV2CouponOrderBook:

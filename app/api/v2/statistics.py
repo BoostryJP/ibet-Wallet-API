@@ -24,7 +24,7 @@ from app import log
 from app.api.common import BaseResource
 from app.contracts import Contract
 from app.model import (
-    Position,
+    IDXPosition,
     Listing
 )
 from app.errors import (
@@ -73,10 +73,10 @@ class Token(BaseResource):
 
         # 保有者数取得
         holders_count = session.query(func.count()). \
-            filter(Position.token_address == contract_address). \
-            filter(Position.account_address != owner_address). \
-            filter(Position.account_address != dex_address). \
-            filter(Position.balance > 0). \
+            filter(IDXPosition.token_address == contract_address). \
+            filter(IDXPosition.account_address != owner_address). \
+            filter(IDXPosition.account_address != dex_address). \
+            filter(IDXPosition.balance > 0). \
             first()
 
         res_data = {

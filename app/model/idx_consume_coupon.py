@@ -16,33 +16,40 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-from sqlalchemy import Column
-from sqlalchemy import String, BigInteger
+from sqlalchemy import (
+    Column,
+    String,
+    BigInteger,
+    DateTime
+)
 
 from app.model import Base
 
 
-class Position(Base):
-    """
-    トークン保有残高
-    """
-    __tablename__ = 'position'
+class IDXConsumeCoupon(Base):
+    """Coupon Consume Events (INDEX)"""
+    __tablename__ = "consume_coupon"
 
+    # Sequence Id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Transaction Hash
+    transaction_hash = Column(String(66), index=True)
+    # Token Address
     token_address = Column(String(42), index=True)
-    account_address = Column(String(42))
-    balance = Column(BigInteger)
-
-    def __repr__(self):
-        return "<Position(token_address='%s', account_address='%s', balance='%d')>" % \
-               (self.token_address, self.account_address, self.balance)
+    # Account Address
+    account_address = Column(String(42), index=True)
+    # Consume Amount
+    amount = Column(BigInteger)
+    # Block Timestamp (datetime)
+    block_timestamp = Column(DateTime, default=None)
 
     FIELDS = {
-        'id': int,
-        'token_address': str,
-        'account_address': str,
-        'balance': int,
+        "id": int,
+        "transaction_hash": str,
+        "token_address": str,
+        "account_address": str,
+        "amount": int,
+        "block_timestamp": str
     }
 
     FIELDS.update(Base.FIELDS)

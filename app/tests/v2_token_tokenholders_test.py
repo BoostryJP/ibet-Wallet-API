@@ -16,8 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-from app.model import Position, Listing
+from app.model import (
+    IDXPosition,
+    Listing
+)
 
 
 class TestV2TokenHolders:
@@ -39,7 +41,7 @@ class TestV2TokenHolders:
 
     @staticmethod
     def insert_position(session, position: dict):
-        _position = Position()
+        _position = IDXPosition()
         _position.token_address = position["token_address"]
         _position.account_address = position["account_address"]
         _position.balance = position["balance"]
