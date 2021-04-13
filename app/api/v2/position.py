@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from datetime import timezone, timedelta
-
 from cerberus import Validator
 from web3 import Web3
 from eth_utils import to_checksum_address
@@ -41,16 +39,11 @@ from app.model import (
 )
 
 LOG = log.get_logger()
-JST = timezone(timedelta(hours=+9), 'JST')
 
 
-# ------------------------------
-# [株式]保有トークン一覧
-# ------------------------------
+# /Position/Share
 class ShareMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/Share
-    """
+    """保有一覧参照（Share）"""
 
     def on_post(self, req, res):
         LOG.info('v2.position.ShareMyTokens')
@@ -138,13 +131,9 @@ class ShareMyTokens(BaseResource):
         return request_json
 
 
-# ------------------------------
-# [普通社債]保有トークン一覧
-# ------------------------------
+# /Position/StraightBond
 class StraightBondMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/StraightBond
-    """
+    """保有一覧参照（StraightBond）"""
 
     def on_post(self, req, res):
         LOG.info('v2.position.StraightBondMyTokens')
@@ -236,13 +225,9 @@ class StraightBondMyTokens(BaseResource):
         return request_json
 
 
-# ------------------------------
-# [会員権]保有トークン一覧
-# ------------------------------
+# /Position/Membership
 class MembershipMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/Membership
-    """
+    """保有一覧参照（Membership）"""
 
     def on_post(self, req, res):
         LOG.info('v2.position.MembershipMyTokens')
@@ -334,13 +319,9 @@ class MembershipMyTokens(BaseResource):
         return request_json
 
 
-# ------------------------------
-# [クーポン]保有トークン一覧
-# ------------------------------
+# /Position/Coupon
 class CouponMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/Coupon
-    """
+    """保有一覧参照（Coupon）"""
 
     def on_post(self, req, res):
         LOG.info('v2.position.CouponMyTokens')
@@ -441,13 +422,9 @@ class CouponMyTokens(BaseResource):
         return request_json
 
 
-# ------------------------------
-# [クーポン]消費履歴
-# ------------------------------
+# /Position/Coupon/Consumptions
 class CouponConsumptions(BaseResource):
-    """
-    Endpoint: /v2/Position/Coupon/Consumptions
-    """
+    """Coupon消費履歴参照"""
 
     def on_post(self, req, res):
         LOG.info('v2.position.CouponConsumptions')
