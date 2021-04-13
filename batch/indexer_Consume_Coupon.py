@@ -48,7 +48,7 @@ from app.config import (
 )
 from app.model import (
     Listing, 
-    ConsumeCoupon
+    IDXConsumeCoupon
 )
 from app.contracts import Contract
 import log
@@ -91,7 +91,7 @@ class DBSink:
         consume_coupon = self.__get_record(transaction_hash, token_address, account_address)
         if consume_coupon is None:
             LOG.info(f"Consume: transaction_hash={transaction_hash}")
-            consume_coupon = ConsumeCoupon()
+            consume_coupon = IDXConsumeCoupon()
             consume_coupon.transaction_hash = transaction_hash
             consume_coupon.token_address = token_address
             consume_coupon.account_address = account_address
@@ -103,10 +103,10 @@ class DBSink:
         self.db.commit()
 
     def __get_record(self, transaction_hash, token_address, account_address):
-        return self.db.query(ConsumeCoupon). \
-            filter(ConsumeCoupon.transaction_hash == transaction_hash). \
-            filter(ConsumeCoupon.token_address == token_address). \
-            filter(ConsumeCoupon.account_address == account_address). \
+        return self.db.query(IDXConsumeCoupon). \
+            filter(IDXConsumeCoupon.transaction_hash == transaction_hash). \
+            filter(IDXConsumeCoupon.token_address == token_address). \
+            filter(IDXConsumeCoupon.account_address == account_address). \
             first()
 
 

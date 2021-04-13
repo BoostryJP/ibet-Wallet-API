@@ -16,12 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from eth_utils import to_checksum_address
 
-from app.model import Position, Listing
-from .account_config import eth_account
-from .contract_modules import issue_coupon_token
+from app.model import IDXPosition, Listing
+from app.tests.account_config import eth_account
+from app.tests.contract_modules import issue_coupon_token
 
 
 class TestV2StatisticsToken:
@@ -61,7 +60,7 @@ class TestV2StatisticsToken:
 
     @staticmethod
     def insert_position(session, token_address, account_address, balance):
-        position = Position()
+        position = IDXPosition()
         position.token_address = token_address
         position.account_address = account_address
         position.balance = balance

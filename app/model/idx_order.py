@@ -16,49 +16,65 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-from sqlalchemy import Column, DateTime
-from sqlalchemy import String, BigInteger, Boolean
+from sqlalchemy import (
+    Column,
+    DateTime,
+    String,
+    BigInteger,
+    Boolean
+)
 
 from app.model import Base
 from app.utils import alchemy
 
 
-class Order(Base):
-    __tablename__ = 'order'
+class IDXOrder(Base):
+    """DEX Order Events (INDEX)"""
+    __tablename__ = "order"
+
+    # Sequence Id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Transaction Hash
     transaction_hash = Column(String(66))
+    # Token Address
     token_address = Column(String(42), index=True)
+    # Exchange(DEX) Address
     exchange_address = Column(String(42), index=True)
+    # Order Id
     order_id = Column(BigInteger, index=True)
+    # Unique Order Id: exchange_address + "_" + str(order_id)
     unique_order_id = Column(String(256), index=True)
+    # Account Address
     account_address = Column(String(42))
+    # Counterpart Address
     counterpart_address = Column(String(42))
+    # Buy/Sell
     is_buy = Column(Boolean)
+    # Order Price
     price = Column(BigInteger)
+    # Order Amount (quantity)
     amount = Column(BigInteger)
+    # Paying Agent Address
     agent_address = Column(String(42))
+    # Cancellation Status
     is_cancelled = Column(Boolean)
+    # Order Timestamp (datetime)
     order_timestamp = Column(DateTime, default=None)
 
-    def __repr__(self):
-        return "<Order(exchange_address='%s', order_id='%d')>" % \
-               (self.exchange_address, self.order_id)
-
     FIELDS = {
-        'id': int,
-        'transaction_hash': str,
-        'token_address': str,
-        'exchange_address': str,
-        'order_id': int,
-        'account_address': str,
-        'counterpart_address': str,
-        'is_buy': bool,
-        'price': int,
-        'amount': int,
-        'agent_address': str,
-        'is_cancelled': bool,
-        'order_timestamp': alchemy.datetime_to_timestamp,
+        "id": int,
+        "transaction_hash": str,
+        "token_address": str,
+        "exchange_address": str,
+        "order_id": int,
+        "account_address": str,
+        "counterpart_address": str,
+        "is_buy": bool,
+        "price": int,
+        "amount": int,
+        "agent_address": str,
+        "is_cancelled": bool,
+        "order_timestamp": alchemy.datetime_to_timestamp,
     }
 
     FIELDS.update(Base.FIELDS)

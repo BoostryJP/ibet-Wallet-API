@@ -17,12 +17,12 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from app.model import (
-    Order,
-    Agreement,
+    IDXOrder as Order,
+    IDXAgreement as Agreement,
     AgreementStatus
 )
 
-from .contract_modules import *
+from app.tests.contract_modules import *
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)

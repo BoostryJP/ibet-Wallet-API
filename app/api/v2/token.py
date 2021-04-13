@@ -36,7 +36,7 @@ from app.model import (
     ShareToken,
     MembershipToken,
     CouponToken,
-    Position,
+    IDXPosition,
     Transfer
 )
 
@@ -131,9 +131,9 @@ class TokenHolders(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # 保有者情報取得
-        holders = session.query(Position). \
-            filter(Position.token_address == contract_address). \
-            filter(Position.balance > 0). \
+        holders = session.query(IDXPosition). \
+            filter(IDXPosition.token_address == contract_address). \
+            filter(IDXPosition.balance > 0). \
             all()
 
         resp_body = []

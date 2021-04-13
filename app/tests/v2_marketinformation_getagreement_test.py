@@ -16,15 +16,32 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from app import config
 from app.tests.account_config import eth_account
-from app.tests.contract_modules import issue_bond_token, register_personalinfo, register_payment_gateway, \
-    offer_bond_token, get_latest_orderid, take_buy_bond_token, get_latest_agreementid, \
-    membership_issue, membership_offer, membership_get_latest_orderid, membership_get_latest_agreementid, \
-    membership_take_buy, issue_coupon_token, coupon_offer, coupon_get_latest_orderid, coupon_take_buy, \
-    coupon_get_latest_agreementid, issue_share_token, share_offer, share_get_latest_orderid, share_take_buy, \
+from app.tests.contract_modules import (
+    register_personalinfo,
+    register_payment_gateway,
+    issue_bond_token,
+    offer_bond_token,
+    get_latest_orderid,
+    take_buy_bond_token,
+    get_latest_agreementid,
+    membership_issue,
+    membership_offer,
+    membership_get_latest_orderid,
+    membership_get_latest_agreementid,
+    membership_take_buy,
+    issue_coupon_token,
+    coupon_offer,
+    coupon_get_latest_orderid,
+    coupon_take_buy,
+    coupon_get_latest_agreementid,
+    issue_share_token,
+    share_offer,
+    share_get_latest_orderid,
+    share_take_buy,
     share_get_latest_agreementid
+)
 
 
 class TestV2GetAgreementGet:
