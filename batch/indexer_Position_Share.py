@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Optional
 import os
 import sys
 import time
@@ -80,12 +81,14 @@ class DBSink:
     def __init__(self, db):
         self.db = db
 
-    def on_position(self, token_address: str, account_address: str, balance: int):
+    def on_position(self, token_address: str, account_address: str,
+                    balance: Optional[int] = None, pending_transfer: Optional[int] = None):
         """Update Position data in DB
 
         :param token_address: token address
         :param account_address: account address
         :param balance: updated balance
+        :param pending_transfer: updated pending_transfer
         :return: None
         """
         position = self.db.query(IDXPosition). \
@@ -98,8 +101,12 @@ class DBSink:
             position.token_address = token_address
             position.account_address = account_address
             position.balance = balance
+            position.pending_transfer = pending_transfer
         else:
-            position.balance = balance
+            if balance is not None:
+                position.balance = balance
+            if pending_transfer is not None:
+                position.pending_transfer = pending_transfer
         self.db.merge(position)
 
     def flush(self):
@@ -154,6 +161,9 @@ class Processor:
         self.__sync_unlock(block_from, block_to)
         self.__sync_issue(block_from, block_to)
         self.__sync_redeem(block_from, block_to)
+        self.__sync_apply_for_transfer(block_from, block_to)
+        self.__sync_cancel_transfer(block_from, block_to)
+        self.__sync_approve_transfer(block_from, block_to)
 
     def __sync_all(self, block_from: int, block_to: int):
         LOG.debug("syncing from={}, to={}".format(block_from, block_to))
@@ -162,6 +172,9 @@ class Processor:
         self.__sync_unlock(block_from, block_to)
         self.__sync_issue(block_from, block_to)
         self.__sync_redeem(block_from, block_to)
+        self.__sync_apply_for_transfer(block_from, block_to)
+        self.__sync_cancel_transfer(block_from, block_to)
+        self.__sync_approve_transfer(block_from, block_to)
         self.sink.flush()
 
     def __sync_transfer(self, block_from: int, block_to: int):
@@ -294,6 +307,98 @@ class Processor:
                         token_address=to_checksum_address(token.address),
                         account_address=account,
                         balance=balance
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_apply_for_transfer(self, block_from: int, block_to: int):
+        """Sync ApplyForTransfer Events
+
+        :param block_from: From block
+        :param block_to: To block
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                _build_filter = token.events.ApplyForTransfer.build_filter()
+                _build_filter.fromBlock = block_from
+                _build_filter.toBlock = block_to
+                event_filter = _build_filter.deploy(web3)
+                for event in event_filter.get_all_entries():
+                    args = event["args"]
+                    account = args.get("from", ZERO_ADDRESS)
+                    balance = token.functions.balanceOf(account).call()
+                    pending_transfer = token.functions.pendingTransfer(account).call()
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=account,
+                        balance=balance,
+                        pending_transfer=pending_transfer
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_cancel_transfer(self, block_from: int, block_to: int):
+        """Sync CancelTransfer Events
+
+        :param block_from: From block
+        :param block_to: To block
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                _build_filter = token.events.CancelTransfer.build_filter()
+                _build_filter.fromBlock = block_from
+                _build_filter.toBlock = block_to
+                event_filter = _build_filter.deploy(web3)
+                for event in event_filter.get_all_entries():
+                    args = event["args"]
+                    account = args.get("from", ZERO_ADDRESS)
+                    balance = token.functions.balanceOf(account).call()
+                    pending_transfer = token.functions.pendingTransfer(account).call()
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=account,
+                        balance=balance,
+                        pending_transfer=pending_transfer
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_approve_transfer(self, block_from: int, block_to: int):
+        """Sync ApproveTransfer Events
+
+        :param block_from: From block
+        :param block_to: To block
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                _build_filter = token.events.ApproveTransfer.build_filter()
+                _build_filter.fromBlock = block_from
+                _build_filter.toBlock = block_to
+                event_filter = _build_filter.deploy(web3)
+                for event in event_filter.get_all_entries():
+                    args = event["args"]
+                    # from address
+                    from_account = args.get("from", ZERO_ADDRESS)
+                    from_balance = token.functions.balanceOf(from_account).call()
+                    from_pending_transfer = token.functions.pendingTransfer(from_account).call()
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=from_account,
+                        balance=from_balance,
+                        pending_transfer=from_pending_transfer
+                    )
+                    # to address
+                    to_account = args.get("to", ZERO_ADDRESS)
+                    to_balance = token.functions.balanceOf(to_account).call()
+                    to_pending_transfer = token.functions.pendingTransfer(to_account).call()
+                    self.sink.on_position(
+                        token_address=to_checksum_address(token.address),
+                        account_address=to_account,
+                        balance=to_balance,
+                        pending_transfer=to_pending_transfer
                     )
             except Exception as e:
                 LOG.exception(e)
