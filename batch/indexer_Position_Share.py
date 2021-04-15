@@ -81,11 +81,11 @@ class DBSink:
         self.db = db
 
     def on_position(self, token_address: str, account_address: str, balance: int):
-        """残高更新
+        """Update Position data in DB
 
         :param token_address: token address
         :param account_address: account address
-        :param balance: 更新後の残高
+        :param balance: updated balance
         :return: None
         """
         position = self.db.query(IDXPosition). \
@@ -165,10 +165,10 @@ class Processor:
         self.sink.flush()
 
     def __sync_transfer(self, block_from: int, block_to: int):
-        """Transferイベントの同期
+        """Sync Transfer Events
 
-        :param block_from: From ブロック
-        :param block_to: To ブロック
+        :param block_from: From block
+        :param block_to: To block
         :return: None
         """
         for token in self.token_list:
@@ -199,10 +199,10 @@ class Processor:
                 LOG.exception(e)
 
     def __sync_lock(self, block_from: int, block_to: int):
-        """Lockイベントの同期
+        """Sync Lock Events
 
-        :param block_from: From ブロック
-        :param block_to: To ブロック
+        :param block_from: From block
+        :param block_to: To block
         :return: None
         """
         for token in self.token_list:
@@ -224,10 +224,10 @@ class Processor:
                 LOG.exception(e)
 
     def __sync_unlock(self, block_from: int, block_to: int):
-        """Unlockイベントの同期
+        """Sync Unlock Events
 
-        :param block_from: From ブロック
-        :param block_to: To ブロック
+        :param block_from: From block
+        :param block_to: To block
         :return: None
         """
         for token in self.token_list:
@@ -249,10 +249,10 @@ class Processor:
                 LOG.exception(e)
 
     def __sync_issue(self, block_from: int, block_to: int):
-        """Issueイベントの同期
+        """Sync Issue Events
 
-        :param block_from: From ブロック
-        :param block_to: To ブロック
+        :param block_from: From block
+        :param block_to: To block
         :return: None
         """
         for token in self.token_list:
@@ -274,10 +274,10 @@ class Processor:
                 LOG.exception(e)
 
     def __sync_redeem(self, block_from: int, block_to: int):
-        """Redeemイベントの同期
+        """Sync Redeem Events
 
-        :param block_from: From ブロック
-        :param block_to: To ブロック
+        :param block_from: From block
+        :param block_to: To block
         :return: None
         """
         for token in self.token_list:
