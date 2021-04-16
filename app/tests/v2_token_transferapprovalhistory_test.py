@@ -60,8 +60,8 @@ class TestV2TransferApprovalHistory:
         _transfer_approval.from_address = transfer_approval["from_address"]
         _transfer_approval.to_address = transfer_approval["to_address"]
         _transfer_approval.value = transfer_approval.get("value")  # nullable
-        _transfer_approval.application_datetime = datetime.utcnow().astimezone(JST)
-        _transfer_approval.application_blocktimestamp = datetime.utcnow().astimezone(JST)  # nullable
+        _transfer_approval.application_datetime = transfer_approval.get("application_datetime")  # nullable
+        _transfer_approval.application_blocktimestamp = transfer_approval.get("application_blocktimestamp")  # nullable
         _transfer_approval.approval_datetime = transfer_approval.get("approval_datetime")  # nullable
         _transfer_approval.approval_blocktimestamp = transfer_approval.get("approval_blocktimestamp")  # nullable
         _transfer_approval.cancelled = transfer_approval.get("cancelled")
@@ -108,8 +108,6 @@ class TestV2TransferApprovalHistory:
             replace(tzinfo=UTC).\
             astimezone(JST).\
             strftime("%Y/%m/%d %H:%M:%S.%f")
-        time.sleep(1)
-
         for i in range(2, -1, -1):
             transfer_approval = {
                 "token_address": self.token_address,
@@ -127,8 +125,6 @@ class TestV2TransferApprovalHistory:
                 session,
                 transfer_approval=transfer_approval
             )
-
-        time.sleep(1)
         after_datetime = datetime.utcnow().\
             replace(tzinfo=UTC).\
             astimezone(JST).\
