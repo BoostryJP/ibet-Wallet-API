@@ -30,6 +30,7 @@ from .token import (
     CouponToken
 )
 from .idx_transfer import IDXTransfer
+from .idx_transfer_approval import IDXTransferApproval
 from .node import Node
 from .idx_order import IDXOrder
 from .idx_agreement import (
