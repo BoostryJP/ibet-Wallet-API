@@ -16,7 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from sqlalchemy import func
+from sqlalchemy import (
+    func,
+    or_
+)
 from web3 import Web3
 from eth_utils import to_checksum_address
 
@@ -24,7 +27,7 @@ from app import log
 from app.api.common import BaseResource
 from app.contracts import Contract
 from app.model import (
-    Position,
+    IDXPosition,
     Listing
 )
 from app.errors import (
@@ -35,20 +38,16 @@ from app.errors import (
 LOG = log.get_logger()
 
 
-# ------------------------------
-# トークン別統計値取得
-# ------------------------------
+# /Statistics/Token/{contract_address}
 class Token(BaseResource):
-    """
-    Endpoint: /v2/Statistics/Token/{contract_address}
-    """
+    """トークン別統計値取得"""
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.statistics.Token')
 
         session = req.context["session"]
 
-        # 入力値チェック
+        # Validation
         try:
             contract_address = to_checksum_address(contract_address)
             if not Web3.isAddress(contract_address):
@@ -58,7 +57,7 @@ class Token(BaseResource):
             description = 'invalid contract_address'
             raise InvalidParameterError(description=description)
 
-        # 発行体アドレス取得
+        # Get issuer address
         row = session.query(Listing.owner_address).\
             filter(Listing.token_address == contract_address).\
             first()
@@ -67,16 +66,16 @@ class Token(BaseResource):
         else:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # DEXアドレス取得
+        # Get dex address
         TokenContract = Contract.get_contract('IbetStandardTokenInterface', contract_address)
         dex_address = TokenContract.functions.tradableExchange().call()
 
-        # 保有者数取得
+        # Get holders count
         holders_count = session.query(func.count()). \
-            filter(Position.token_address == contract_address). \
-            filter(Position.account_address != owner_address). \
-            filter(Position.account_address != dex_address). \
-            filter(Position.balance > 0). \
+            filter(IDXPosition.token_address == contract_address). \
+            filter(IDXPosition.account_address != owner_address). \
+            filter(IDXPosition.account_address != dex_address). \
+            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0)). \
             first()
 
         res_data = {

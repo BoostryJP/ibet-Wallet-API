@@ -16,9 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-from app.model import Listing, Transfer
-from .contract_modules import *
+from app.model import (
+    Listing,
+    IDXTransfer
+)
+from app.tests.contract_modules import *
 
 
 class TestV2CouponMyTokens:
@@ -238,7 +240,7 @@ class TestV2CouponMyTokens:
 
     @staticmethod
     def insert_transfer_record(session, token_address, from_address, to_address):
-        record = Transfer()
+        record = IDXTransfer()
         record.token_address = token_address
         record.from_address = from_address
         record.to_address = to_address
@@ -1045,7 +1047,7 @@ class TestV2CouponMyTokens:
         }
 
     # エラー系4：取扱トークン対象外
-    def test_coupon_position_error_3_2(self, client):
+    def test_coupon_position_error_4(self, client):
 
         config.COUPON_TOKEN_ENABLED = False
 

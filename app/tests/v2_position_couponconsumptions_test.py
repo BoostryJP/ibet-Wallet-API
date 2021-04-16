@@ -16,12 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 
-from .account_config import eth_account
 from app import config
-from app.model import ConsumeCoupon
+from app.model import IDXConsumeCoupon
+from app.tests.account_config import eth_account
 
 
 # クーポン消費履歴API
@@ -32,7 +31,7 @@ class TestV2CouponConsumptions:
 
     def _insert_test_data(self, session):
         self.session = session
-        consume_coupon = ConsumeCoupon()
+        consume_coupon = IDXConsumeCoupon()
         consume_coupon.transaction_hash = "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
         consume_coupon.token_address = "0xE0C95ECa44f2A1A23C4AfeA84dba62e15A35a69b"
         consume_coupon.account_address = "0x16f39D63d156f9abCe0a9aB46F751E2eFdEB040f"
@@ -42,7 +41,7 @@ class TestV2CouponConsumptions:
 
     def _insert_test_data_2(self, session):
         self.session = session
-        consume_coupon = ConsumeCoupon()
+        consume_coupon = IDXConsumeCoupon()
         consume_coupon.transaction_hash = "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
         consume_coupon.token_address = "0xE0C95ECa44f2A1A23C4AfeA84dba62e15A35a69b"
         consume_coupon.account_address = "0x28e0ad30c43b3d55851b881e25586926894de3e9"

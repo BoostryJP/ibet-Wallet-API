@@ -1964,6 +1964,8 @@ paths:
                       type: string
                     amount:
                       type: integer
+                    pending_transfer:
+                      type: integer
         400:
           description: Invalid Parameter Error
           schema:
@@ -2016,6 +2018,69 @@ paths:
                     created:
                       type: string
                       description: block_timestamp when Transfer log was emitted (JST)
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Token/{contract_address}/TransferApprovalHistory:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    get:
+      tags:
+        - "Token"
+      summary: "Token Approval History"
+      operationId: "TransferApprovalHistory"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    application_id:
+                      type: string
+                    from_address:
+                      type: string
+                    to_address:
+                      type: string
+                    value:
+                      type: integer
+                    application_datetime:
+                      type: string
+                      description: application datetime (JST)
+                    application_blocktimestamp:
+                      type: string
+                      description: application blocktimestamp (JST)
+                    approval_datetime:
+                      type: string
+                      description: approval datetime (JST)
+                    approval_blocktimestamp:
+                      type: string
+                      description: approval blocktimestamp (JST)
+                    cancelled:
+                      type: boolean
         400:
           description: Invalid Parameter Error
           schema:

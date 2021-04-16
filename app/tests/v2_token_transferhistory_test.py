@@ -16,8 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-from app.model import Listing, Transfer
+from app.model import (
+    Listing,
+    IDXTransfer
+)
 
 
 class TestV2TransferHistory:
@@ -42,7 +44,7 @@ class TestV2TransferHistory:
 
     @staticmethod
     def insert_transfer_event(session, transfer_event: dict):
-        _transfer = Transfer()
+        _transfer = IDXTransfer()
         _transfer.transaction_hash = transfer_event["transaction_hash"]
         _transfer.token_address = transfer_event["token_address"]
         _transfer.from_address = transfer_event["from_address"]

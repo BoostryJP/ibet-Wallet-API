@@ -30,8 +30,8 @@ from app.errors import (
 from app import config
 from app.contracts import Contract
 from app.model import (
-    Order,
-    Agreement,
+    IDXOrder as Order,
+    IDXAgreement as Agreement,
     AgreementStatus,
     BondToken,
     MembershipToken,

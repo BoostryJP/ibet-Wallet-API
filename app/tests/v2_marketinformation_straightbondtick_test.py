@@ -16,10 +16,13 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
+
 from app import config
-from app.model import Order, Agreement
+from app.model import (
+    IDXOrder as Order,
+    IDXAgreement as Agreement
+)
 
 
 class TestV2StraightBondTick:

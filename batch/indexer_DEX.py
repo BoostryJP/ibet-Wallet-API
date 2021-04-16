@@ -45,9 +45,9 @@ from app.config import (
     IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
 )
 from app.model import (
-    Agreement,
+    IDXAgreement as Agreement,
     AgreementStatus,
-    Order,
+    IDXOrder as Order,
     Listing
 )
 from app.contracts import Contract
