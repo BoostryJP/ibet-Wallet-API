@@ -16,6 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
+
 from sqlalchemy import (
     Column,
     String,
@@ -26,6 +32,9 @@ from sqlalchemy import (
 
 from app.model import Base
 from app.utils import alchemy
+
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
 
 class IDXTransferApproval(Base):
@@ -54,6 +63,27 @@ class IDXTransferApproval(Base):
     approval_blocktimestamp = Column(DateTime)
     # Cancellation Status
     cancelled = Column(Boolean)
+
+    @staticmethod
+    def format_datetime(_datetime: datetime) -> str:
+        if _datetime is None:
+            return ""
+        _datetime = _datetime.replace(tzinfo=UTC).astimezone(JST)
+        return _datetime.strftime("%Y/%m/%d %H:%M:%S.%f")
+
+    def json(self):
+        return {
+            "token_address": self.token_address,
+            "application_id": self.application_id,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": self.value,
+            "application_datetime": self.format_datetime(self.application_datetime),
+            "application_blocktimestamp": self.format_datetime(self.application_blocktimestamp),
+            "approval_datetime": self.format_datetime(self.approval_datetime),
+            "approval_blocktimestamp": self.format_datetime(self.approval_blocktimestamp),
+            "cancelled": self.cancelled
+        }
 
     FIELDS = {
         "id": int,

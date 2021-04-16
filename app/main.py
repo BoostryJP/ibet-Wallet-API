@@ -88,6 +88,7 @@ class App(falcon.API):
         self.add_route('/v2/Token/{contract_address}/Status', token.TokenStatus())
         self.add_route('/v2/Token/{contract_address}/Holders', token.TokenHolders())
         self.add_route('/v2/Token/{contract_address}/TransferHistory', token.TransferHistory())
+        self.add_route('/v2/Token/{contract_address}/TransferApprovalHistory', token.TransferApprovalHistory())
 
         # Market Data
         self.add_route('/v2/Market/OrderBook/StraightBond', market_information.StraightBondOrderBook())

@@ -38,7 +38,8 @@ from app.model import (
     MembershipToken,
     CouponToken,
     IDXPosition,
-    IDXTransfer
+    IDXTransfer,
+    IDXTransferApproval
 )
 
 LOG = log.get_logger()
@@ -145,13 +146,9 @@ class TokenHolders(BaseResource):
         self.on_success(res, resp_body)
 
 
-# ------------------------------
-# [トークン管理]トークン移転履歴
-# ------------------------------
+# /Token/{contract_address}/TransferHistory
 class TransferHistory(BaseResource):
-    """
-    Endpoint: /v2/Token/{contract_address}/TransferHistory
-    """
+    """トークン移転履歴"""
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.TransferHistory')
@@ -183,6 +180,42 @@ class TransferHistory(BaseResource):
 
         resp_body = []
         for transfer_event in transfer_history:
+            resp_body.append(transfer_event.json())
+
+        self.on_success(res, resp_body)
+
+
+# /Token/{contract_address}/TransferApprovalHistory
+class TransferApprovalHistory(BaseResource):
+    """トークン移転承諾履歴"""
+
+    def on_get(self, req, res, contract_address=None):
+        LOG.info("v2.token.TransferApprovalHistory")
+        db_session = req.context["session"]
+
+        # Validation
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                raise InvalidParameterError("invalid contract_address")
+        except:
+            raise InvalidParameterError("invalid contract_address")
+
+        # Check that it is a listed token
+        _listed_token = db_session.query(Listing). \
+            filter(Listing.token_address == contract_address). \
+            first()
+        if _listed_token is None:
+            raise DataNotExistsError(f"contract_address: {contract_address}")
+
+        # Get transfer approval data
+        transfer_approval_history = db_session.query(IDXTransferApproval). \
+            filter(IDXTransferApproval.token_address == contract_address). \
+            order_by(IDXTransferApproval.application_id). \
+            all()
+
+        resp_body = []
+        for transfer_event in transfer_approval_history:
             resp_body.append(transfer_event.json())
 
         self.on_success(res, resp_body)

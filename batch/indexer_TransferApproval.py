@@ -35,7 +35,6 @@ from web3.middleware import (
     geth_poa_middleware,
     local_filter_middleware
 )
-from eth_utils import to_checksum_address
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -168,7 +167,8 @@ class Processor:
         self.db = db
         self.token_list = []
 
-    def get_block_timestamp(self, event) -> datetime:
+    @staticmethod
+    def get_block_timestamp(event) -> datetime:
         block_timestamp = web3.eth.getBlock(event["blockNumber"])["timestamp"]
         return block_timestamp
 
