@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import time
 from datetime import (
     datetime,
     timezone,
@@ -107,6 +108,8 @@ class TestV2TransferApprovalHistory:
             replace(tzinfo=UTC).\
             astimezone(JST).\
             strftime("%Y/%m/%d %H:%M:%S.%f")
+        time.sleep(1)
+
         for i in range(2, -1, -1):
             transfer_approval = {
                 "token_address": self.token_address,
@@ -124,6 +127,8 @@ class TestV2TransferApprovalHistory:
                 session,
                 transfer_approval=transfer_approval
             )
+
+        time.sleep(1)
         after_datetime = datetime.utcnow().\
             replace(tzinfo=UTC).\
             astimezone(JST).\
