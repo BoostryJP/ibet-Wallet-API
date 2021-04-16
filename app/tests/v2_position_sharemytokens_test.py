@@ -230,6 +230,7 @@ class TestV2ShareMyTokens:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                "transfer_approval_required": False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -319,6 +320,7 @@ class TestV2ShareMyTokens:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                "transfer_approval_required": True,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -408,6 +410,7 @@ class TestV2ShareMyTokens:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                "transfer_approval_required": False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -498,6 +501,7 @@ class TestV2ShareMyTokens:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                "transfer_approval_required": False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -595,6 +599,7 @@ class TestV2ShareMyTokens:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                "transfer_approval_required": False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -637,6 +642,7 @@ class TestV2ShareMyTokens:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                "transfer_approval_required": False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""

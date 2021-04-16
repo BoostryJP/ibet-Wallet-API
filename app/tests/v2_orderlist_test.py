@@ -2330,6 +2330,7 @@ class TestV2OrderListShare:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                'transfer_approval_required': False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -2419,6 +2420,7 @@ class TestV2OrderListShare:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                'transfer_approval_required': False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -2512,6 +2514,7 @@ class TestV2OrderListShare:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                'transfer_approval_required': False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""

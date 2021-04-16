@@ -2890,6 +2890,8 @@ paths:
                           type: boolean
                         status:
                           type: boolean
+                        transfer_approval_required:
+                          type: boolean
                         contact_information:
                           type: string
                         privacy_policy:
@@ -2899,6 +2901,8 @@ paths:
                         max_sell_amount:
                           type: integer
                     balance:
+                      type: integer
+                    pending_transfer:
                       type: integer
                     commitment:
                       type: integer

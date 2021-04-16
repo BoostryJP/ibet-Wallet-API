@@ -38,7 +38,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 """
 発行会社トークン一覧参照API
-/v2/Companiy/{eth_address}/Tokens
+/v2/Company/{eth_address}/Tokens
 """
 
 
@@ -270,6 +270,7 @@ class TestV2CompanyCompanyTokenList:
                 'transferable': True,
                 'offering_status': False,
                 'status': True,
+                'transfer_approval_required': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'max_holding_quantity': None,
