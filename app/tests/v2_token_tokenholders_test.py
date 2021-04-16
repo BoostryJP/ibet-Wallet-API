@@ -27,10 +27,11 @@ class TestV2TokenHolders:
     Test Case for v2.token.TokenHolders
     """
 
-    # テスト対象API
-    apiurl_base = '/v2/Token/{contract_address}/Holders'
+    # Target API endpoint
+    apiurl_base = "/v2/Token/{contract_address}/Holders"
 
     token_address = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A740"
+    account_address = "0x52D0784B3460E206ED69393ae1f9Ed37941089eD"
 
     @staticmethod
     def insert_listing(session, listing: dict):
@@ -44,7 +45,8 @@ class TestV2TokenHolders:
         _position = IDXPosition()
         _position.token_address = position["token_address"]
         _position.account_address = position["account_address"]
-        _position.balance = position["balance"]
+        _position.balance = position.get("balance")  # nullable
+        _position.pending_transfer = position.get("pending_transfer")  # nullable
         session.add(_position)
 
     ####################################################################
@@ -52,7 +54,7 @@ class TestV2TokenHolders:
     ####################################################################
 
     # Normal_1
-    # Positionデータなし
+    # No data
     def test_normal_1(self, client, session):
         listing = {
             "token_address": self.token_address,
@@ -60,18 +62,19 @@ class TestV2TokenHolders:
         }
         self.insert_listing(session, listing=listing)
 
+        # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
         assumed_body = []
-
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json["data"] == assumed_body
 
     # Normal_2
-    # Positionデータあり：1件
+    # Data exists
     def test_normal_2(self, client, session):
         listing = {
             "token_address": self.token_address,
@@ -79,31 +82,48 @@ class TestV2TokenHolders:
         }
         self.insert_listing(session, listing=listing)
 
-        position = {
+        # Prepare data (balance > 0)
+        position_1 = {
             "token_address": self.token_address,
-            "account_address": "0x52D0784B3460E206ED69393ae1f9Ed37941089eD",
+            "account_address": self.account_address,
             "balance": 10
         }
-        self.insert_position(session, position=position)
+        self.insert_position(session, position=position_1)
 
+        # Prepare data (pending_transfer > 0)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address,
+            "pending_transfer": 5
+        }
+        self.insert_position(session, position=position_2)
+
+        # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
         assumed_body = [
             {
                 "token_address": self.token_address,
-                "account_address": "0x52D0784B3460E206ED69393ae1f9Ed37941089eD",
-                "amount": 10
+                "account_address": self.account_address,
+                "amount": 10,
+                "pending_transfer": None
+            }, {
+                "token_address": self.token_address,
+                "account_address": self.account_address,
+                "amount": None,
+                "pending_transfer": 5
             }
-        ]
 
+        ]
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json["data"] == assumed_body
 
     # Normal_3
-    # Positionデータあり：2件
+    # balance = 0 , pending_transfer = 0
     def test_normal_3(self, client, session):
         listing = {
             "token_address": self.token_address,
@@ -111,59 +131,23 @@ class TestV2TokenHolders:
         }
         self.insert_listing(session, listing=listing)
 
-        # １件目
-        position = {
+        # Prepare data (balance = 0)
+        position_1 = {
             "token_address": self.token_address,
-            "account_address": "0x52D0784B3460E206ED69393ae1f9Ed37941089eD",
-            "balance": 10
-        }
-        self.insert_position(session, position=position)
-
-        # ２件目
-        position = {
-            "token_address": self.token_address,
-            "account_address": "0x553c29335Aab4A0C1c10B86E46C6b0822E8753a3",
-            "balance": 20
-        }
-        self.insert_position(session, position=position)
-
-        apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
-
-        assumed_body = [
-            {
-                "token_address": self.token_address,
-                "account_address": "0x52D0784B3460E206ED69393ae1f9Ed37941089eD",
-                "amount": 10
-            },
-            {
-                "token_address": self.token_address,
-                "account_address": "0x553c29335Aab4A0C1c10B86E46C6b0822E8753a3",
-                "amount": 20
-            }
-        ]
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
-
-    # Normal_4
-    # Positionデータあり：1件（保有数量0）
-    def test_normal_4(self, client, session):
-        listing = {
-            "token_address": self.token_address,
-            "is_public": True,
-        }
-        self.insert_listing(session, listing=listing)
-
-        position = {
-            "token_address": self.token_address,
-            "account_address": "0x52D0784B3460E206ED69393ae1f9Ed37941089eD",
+            "account_address": self.account_address,
             "balance": 0
         }
-        self.insert_position(session, position=position)
+        self.insert_position(session, position=position_1)
 
+        # Prepare data (pending_transfer = 0)
+        position_2 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address,
+            "pending_transfer": 0
+        }
+        self.insert_position(session, position=position_2)
+
+        # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)
@@ -171,39 +155,39 @@ class TestV2TokenHolders:
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json["data"] == assumed_body
 
     ####################################################################
     # Error
     ####################################################################
 
     # Error_1
-    # 無効なコントラクトアドレス
-    # 400
+    # 400: Invalid Parameter Error
+    # Invalid contract address
     def test_error_1(self, client):
-        apiurl = self.apiurl_base.format(contract_address='0xabcd')
+        apiurl = self.apiurl_base.format(contract_address="0xabcd")
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': 'invalid contract_address'
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": "invalid contract_address"
         }
 
     # Error_2
-    # 取扱していないトークン
-    # 404
+    # 404: Data Not Exists Error
+    # token is not listed
     def test_error_2(self, client, session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 30,
-            'message': 'Data Not Exists',
-            'description': 'contract_address: ' + self.token_address
+        assert resp.json["meta"] == {
+            "code": 30,
+            "message": "Data Not Exists",
+            "description": "contract_address: " + self.token_address
         }

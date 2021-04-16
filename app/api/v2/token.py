@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from cerberus import Validator
+from sqlalchemy import or_
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
@@ -37,7 +38,8 @@ from app.model import (
     MembershipToken,
     CouponToken,
     IDXPosition,
-    IDXTransfer
+    IDXTransfer,
+    IDXTransferApproval
 )
 
 LOG = log.get_logger()
@@ -100,20 +102,16 @@ class TokenStatus(BaseResource):
         self.on_success(res, response_json)
 
 
-# ------------------------------
-# [トークン管理]トークン保有者一覧
-# ------------------------------
+# /Token/{contract_address}/Holders
 class TokenHolders(BaseResource):
-    """
-    Endpoint: /v2/Token/{contract_address}/Holders
-    """
+    """トークン保有者一覧"""
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.TokenHolders')
 
         session = req.context["session"]
 
-        # 入力値チェック
+        # Validation
         try:
             contract_address = to_checksum_address(contract_address)
             if not Web3.isAddress(contract_address):
@@ -123,17 +121,17 @@ class TokenHolders(BaseResource):
             description = 'invalid contract_address'
             raise InvalidParameterError(description=description)
 
-        # 取扱トークンチェック
+        # Check if the token exists in the list
         listed_token = session.query(Listing).\
             filter(Listing.token_address == contract_address).\
             first()
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # 保有者情報取得
+        # Get token holders
         holders = session.query(IDXPosition). \
             filter(IDXPosition.token_address == contract_address). \
-            filter(IDXPosition.balance > 0). \
+            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0)). \
             all()
 
         resp_body = []
@@ -141,19 +139,16 @@ class TokenHolders(BaseResource):
             resp_body.append({
                 "token_address": holder.token_address,
                 "account_address": holder.account_address,
-                "amount": holder.balance
+                "amount": holder.balance,
+                "pending_transfer": holder.pending_transfer
             })
 
         self.on_success(res, resp_body)
 
 
-# ------------------------------
-# [トークン管理]トークン移転履歴
-# ------------------------------
+# /Token/{contract_address}/TransferHistory
 class TransferHistory(BaseResource):
-    """
-    Endpoint: /v2/Token/{contract_address}/TransferHistory
-    """
+    """トークン移転履歴"""
 
     def on_get(self, req, res, contract_address=None):
         LOG.info('v2.token.TransferHistory')
@@ -185,6 +180,42 @@ class TransferHistory(BaseResource):
 
         resp_body = []
         for transfer_event in transfer_history:
+            resp_body.append(transfer_event.json())
+
+        self.on_success(res, resp_body)
+
+
+# /Token/{contract_address}/TransferApprovalHistory
+class TransferApprovalHistory(BaseResource):
+    """トークン移転承諾履歴"""
+
+    def on_get(self, req, res, contract_address=None):
+        LOG.info("v2.token.TransferApprovalHistory")
+        db_session = req.context["session"]
+
+        # Validation
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                raise InvalidParameterError("invalid contract_address")
+        except:
+            raise InvalidParameterError("invalid contract_address")
+
+        # Check that it is a listed token
+        _listed_token = db_session.query(Listing). \
+            filter(Listing.token_address == contract_address). \
+            first()
+        if _listed_token is None:
+            raise DataNotExistsError(f"contract_address: {contract_address}")
+
+        # Get transfer approval data
+        transfer_approval_history = db_session.query(IDXTransferApproval). \
+            filter(IDXTransferApproval.token_address == contract_address). \
+            order_by(IDXTransferApproval.application_id). \
+            all()
+
+        resp_body = []
+        for transfer_event in transfer_approval_history:
             resp_body.append(transfer_event.json())
 
         self.on_success(res, resp_body)

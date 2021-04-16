@@ -37,11 +37,14 @@ class IDXPosition(Base):
     account_address = Column(String(42))
     # Balance
     balance = Column(BigInteger)
+    # Pending Transfer
+    pending_transfer = Column(BigInteger)
 
     FIELDS = {
         "id": int,
         "token_address": str,
         "account_address": str,
         "balance": int,
+        "pending_transfer": int
     }
     FIELDS.update(Base.FIELDS)
