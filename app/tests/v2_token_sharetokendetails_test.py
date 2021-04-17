@@ -137,7 +137,8 @@ class TestV2TokenShareTokenDetails:
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
             'transferable': True,
-            'status': True
+            'status': True,
+            'transfer_approval_required': False,
         }
 
         assert resp.status_code == 200
