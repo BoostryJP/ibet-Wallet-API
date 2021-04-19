@@ -1245,6 +1245,8 @@ paths:
                       type: boolean
                     status:
                       type: boolean
+                    transfer_approval_required:
+                      type: boolean
                     contact_information:
                       type: string
                     privacy_policy:
@@ -1396,6 +1398,8 @@ paths:
                   offering_status:
                     type: boolean
                   status:
+                    type: boolean
+                  transfer_approval_required:
                     type: boolean
                   contact_information:
                     type: string
@@ -3790,6 +3794,8 @@ paths:
                             offering_status:
                               type: boolean
                             status:
+                              type: boolean
+                            transfer_approval_required:
                               type: boolean
                             max_holding_quantity:
                               type: integer
