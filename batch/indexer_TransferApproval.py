@@ -119,7 +119,7 @@ class DBSink:
             transfer_approval.value = value
             try:
                 transfer_approval.application_datetime = datetime.fromtimestamp(
-                    t=int(optional_data_applicant),
+                    t=float(optional_data_applicant),
                     tz=timezone.utc
                 )
             except ValueError:
@@ -145,7 +145,7 @@ class DBSink:
                 transfer_approval.to_address = to_address
             try:
                 transfer_approval.approval_datetime = datetime.fromtimestamp(
-                    t=int(optional_data_approver),
+                    t=float(optional_data_approver),
                     tz=timezone.utc
                 )
             except ValueError:
