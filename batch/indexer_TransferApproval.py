@@ -119,13 +119,13 @@ class DBSink:
             transfer_approval.value = value
             try:
                 transfer_approval.application_datetime = datetime.fromtimestamp(
-                    t=float(optional_data_applicant),
+                    float(optional_data_applicant),
                     tz=timezone.utc
                 )
             except ValueError:
                 transfer_approval.application_datetime = None
             transfer_approval.application_blocktimestamp = datetime.fromtimestamp(
-                t=block_timestamp,
+                block_timestamp,
                 tz=timezone.utc
             )
         elif event_type == "Cancel":
@@ -145,13 +145,13 @@ class DBSink:
                 transfer_approval.to_address = to_address
             try:
                 transfer_approval.approval_datetime = datetime.fromtimestamp(
-                    t=float(optional_data_approver),
+                    float(optional_data_approver),
                     tz=timezone.utc
                 )
             except ValueError:
                 transfer_approval.approval_datetime = None
             transfer_approval.approval_blocktimestamp = datetime.fromtimestamp(
-                t=block_timestamp,
+                block_timestamp,
                 tz=timezone.utc
             )
         self.db.merge(transfer_approval)
