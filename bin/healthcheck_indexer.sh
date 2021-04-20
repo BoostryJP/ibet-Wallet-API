@@ -21,6 +21,7 @@ PROC_LIST="${PROC_LIST} batch/indexer_Transfer.py"
 
 if [ "${SHARE_TOKEN_ENABLED}" = 1 ]; then
   PROC_LIST="${PROC_LIST} batch/indexer_Position_Share.py"
+  PROC_LIST="${PROC_LIST} batch/indexer_TransferApproval.py"
 fi
 
 if [ "${BOND_TOKEN_ENABLED}" = 1 ]; then
@@ -50,4 +51,3 @@ for i in ${PROC_LIST}; do
     exit 1
   fi
 done
-

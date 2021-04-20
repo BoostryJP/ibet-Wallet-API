@@ -26,6 +26,7 @@ python batch/indexer_Transfer.py &
 
 if [ $SHARE_TOKEN_ENABLED = 1 ]; then
   python batch/indexer_Position_Share.py &
+  python batch/indexer_TransferApproval.py &
 fi
 
 if [ $BOND_TOKEN_ENABLED = 1 ]; then
