@@ -90,7 +90,7 @@ class DBSink:
     def on_consume(self, transaction_hash, token_address, account_address, amount, block_timestamp):
         consume_coupon = self.__get_record(transaction_hash, token_address, account_address)
         if consume_coupon is None:
-            LOG.info(f"Consume: transaction_hash={transaction_hash}")
+            LOG.debug(f"Consume: transaction_hash={transaction_hash}")
             consume_coupon = IDXConsumeCoupon()
             consume_coupon.transaction_hash = transaction_hash
             consume_coupon.token_address = token_address
@@ -151,7 +151,7 @@ class Processor:
         self.latest_block = blockTo
 
     def __sync_all(self, block_from, block_to):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_consume(block_from, block_to)
         self.sink.flush()
 

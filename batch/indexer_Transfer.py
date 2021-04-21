@@ -103,7 +103,7 @@ class DBSink:
             filter(IDXTransfer.transaction_hash == transaction_hash). \
             first()
         if transfer is None:
-            LOG.info(f"Transfer: transaction_hash={transaction_hash}")
+            LOG.debug(f"Transfer: transaction_hash={transaction_hash}")
             transfer = IDXTransfer()
             transfer.transaction_hash = transaction_hash
             transfer.token_address = token_address
@@ -171,7 +171,7 @@ class Processor:
         self.latest_block = blockTo
 
     def __sync_all(self, block_from, block_to):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
         self.sink.flush()
 
