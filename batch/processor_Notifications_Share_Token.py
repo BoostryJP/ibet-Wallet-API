@@ -27,10 +27,7 @@ from datetime import (
 )
 
 from web3 import Web3
-from web3.middleware import (
-    geth_poa_middleware,
-    local_filter_middleware
-)
+from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
@@ -67,7 +64,6 @@ SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-web3.middleware_onion.add(local_filter_middleware)
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
@@ -164,11 +160,10 @@ class Watcher:
                         address=share_token.token_address
                     )
                     _event = getattr(share_contract.events, self.filter_name)
-                    _build_filter = _event.build_filter()
-                    _build_filter.fromBlock = self.filter_params["fromBlock"]
-                    _build_filter.toBlock = self.filter_params["toBlock"]
-                    event_filter = _build_filter.deploy(web3)
-                    entries = event_filter.get_all_entries()
+                    entries = _event.getLogs(
+                        fromBlock=self.filter_params["fromBlock"],
+                        toBlock=self.filter_params["toBlock"]
+                    )
                 except Exception as err:  # Exception が発生した場合は処理を継続
                     LOG.error(err)
                     continue
