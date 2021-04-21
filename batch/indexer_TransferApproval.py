@@ -31,10 +31,7 @@ from sqlalchemy.orm import (
     scoped_session
 )
 from web3 import Web3
-from web3.middleware import (
-    geth_poa_middleware,
-    local_filter_middleware
-)
+from web3.middleware import geth_poa_middleware
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -57,7 +54,6 @@ LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-web3.middleware_onion.add(local_filter_middleware)
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
@@ -227,11 +223,11 @@ class Processor:
         """
         for token in self.token_list:
             try:
-                _build_filter = token.events.ApplyForTransfer.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = token.events.ApplyForTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     value = args.get("value", 0)
                     if value > sys.maxsize:  # suppress overflow
@@ -260,11 +256,11 @@ class Processor:
         """
         for token in self.token_list:
             try:
-                _build_filter = token.events.CancelTransfer.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = token.events.CancelTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     self.sink.on_transfer_approval(
                         event_type="Cancel",
@@ -285,11 +281,11 @@ class Processor:
         """
         for token in self.token_list:
             try:
-                _build_filter = token.events.ApproveTransfer.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = token.events.ApproveTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     block_timestamp = self.get_block_timestamp(event=event)
                     self.sink.on_transfer_approval(

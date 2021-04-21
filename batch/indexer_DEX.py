@@ -28,10 +28,7 @@ from datetime import (
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from web3 import Web3
-from web3.middleware import (
-    geth_poa_middleware,
-    local_filter_middleware
-)
+from web3.middleware import geth_poa_middleware
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -60,7 +57,6 @@ LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-web3.middleware_onion.add(local_filter_middleware)
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
@@ -261,11 +257,11 @@ class Processor:
     def __sync_new_order(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                _build_filter = exchange_contract.events.NewOrder.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = exchange_contract.events.NewOrder.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     if args["price"] > sys.maxsize or args["amount"] > sys.maxsize:
                         pass
@@ -310,11 +306,11 @@ class Processor:
     def __sync_cancel_order(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                _build_filter = exchange_contract.events.CancelOrder.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = exchange_contract.events.CancelOrder.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     self.sink.on_cancel_order(
                         exchange_address=exchange_contract.address,
                         order_id=event["args"]["orderId"]
@@ -325,11 +321,11 @@ class Processor:
     def __sync_agree(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                _build_filter = exchange_contract.events.Agree.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = exchange_contract.events.Agree.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     if args["amount"] > sys.maxsize:
                         pass
@@ -367,11 +363,11 @@ class Processor:
     def __sync_settlement_ok(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                _build_filter = exchange_contract.events.SettlementOK.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = exchange_contract.events.SettlementOK.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     settlement_timestamp = datetime.fromtimestamp(
                         web3.eth.getBlock(event["blockNumber"])["timestamp"],
@@ -389,11 +385,11 @@ class Processor:
     def __sync_settlement_ng(self, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
-                _build_filter = exchange_contract.events.SettlementNG.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)
-                for event in event_filter.get_all_entries():
+                events = exchange_contract.events.SettlementNG.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     self.sink.on_settlement_ng(
                         exchange_address=exchange_contract.address,
