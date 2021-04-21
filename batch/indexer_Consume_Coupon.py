@@ -32,10 +32,7 @@ from sqlalchemy.orm import (
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
-from web3.middleware import (
-    geth_poa_middleware, 
-    local_filter_middleware
-)
+from web3.middleware import geth_poa_middleware
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -60,7 +57,6 @@ LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-web3.middleware_onion.add(local_filter_middleware)
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
@@ -158,11 +154,11 @@ class Processor:
     def __sync_consume(self, block_from, block_to):
         for token in self.token_list:
             try:
-                _build_filter = token.events.Consume.build_filter()
-                _build_filter.fromBlock = block_from
-                _build_filter.toBlock = block_to
-                event_filter = _build_filter.deploy(web3)                
-                for event in event_filter.get_all_entries():
+                events = token.events.Consume.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
                     block_timestamp = datetime.fromtimestamp(web3.eth.getBlock(event["blockNumber"])["timestamp"], JST)
