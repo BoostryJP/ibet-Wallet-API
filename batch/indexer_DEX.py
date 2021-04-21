@@ -108,7 +108,7 @@ class DBSink:
                      agent_address: str, order_timestamp: datetime):
         order = self.__get_order(exchange_address, order_id)
         if order is None:
-            LOG.info(f"NewOrder: exchange_address={exchange_address}, order_id={order_id}")
+            LOG.debug(f"NewOrder: exchange_address={exchange_address}, order_id={order_id}")
             order = Order()
             order.transaction_hash = transaction_hash
             order.token_address = token_address
@@ -128,7 +128,7 @@ class DBSink:
     def on_cancel_order(self, exchange_address: str, order_id: int):
         order = self.__get_order(exchange_address, order_id)
         if order is not None:
-            LOG.info(f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}")
+            LOG.debug(f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}")
             order.is_cancelled = True
 
     def on_agree(self, transaction_hash: str, exchange_address: str, order_id: int, agreement_id: int,
@@ -136,7 +136,7 @@ class DBSink:
                  amount: int, agreement_timestamp: datetime):
         agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is None:
-            LOG.info(f"Agree: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            LOG.debug(f"Agree: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement = Agreement()
             agreement.transaction_hash = transaction_hash
             agreement.exchange_address = exchange_address
@@ -154,14 +154,14 @@ class DBSink:
     def on_settlement_ok(self, exchange_address: str, order_id: int, agreement_id: int, settlement_timestamp: datetime):
         agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is not None:
-            LOG.info(f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            LOG.debug(f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement.status = AgreementStatus.DONE.value
             agreement.settlement_timestamp = settlement_timestamp
 
     def on_settlement_ng(self, exchange_address: str, order_id: int, agreement_id: int):
         agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is not None:
-            LOG.info(f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            LOG.debug(f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement.status = AgreementStatus.CANCELED.value
 
     def flush(self):
@@ -242,7 +242,7 @@ class Processor:
         self.latest_block = blockTo
 
     def __init_sync_all(self, block_from, block_to):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_new_order(block_from, block_to)
         self.__sync_cancel_order(block_from, block_to)
         self.__sync_agree(block_from, block_to)
@@ -250,7 +250,7 @@ class Processor:
         self.__sync_settlement_ng(block_from, block_to)
 
     def __sync_all(self, block_from, block_to):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_new_order(block_from, block_to)
         self.__sync_cancel_order(block_from, block_to)
         self.__sync_agree(block_from, block_to)
