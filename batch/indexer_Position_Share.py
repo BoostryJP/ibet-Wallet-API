@@ -96,7 +96,7 @@ class DBSink:
             filter(IDXPosition.account_address == account_address). \
             first()
         if position is None:
-            LOG.info(f"Position created (Share): token_address={token_address}, account_address={account_address}")
+            LOG.debug(f"Position created (Share): token_address={token_address}, account_address={account_address}")
             position = IDXPosition()
             position.token_address = token_address
             position.account_address = account_address
@@ -137,7 +137,7 @@ class Processor:
         _from_block = 0
         if self.latest_block > 999999:
             while _to_block < self.latest_block:
-                self.__sync_all(_from_block, _to_block)
+                self.__init_sync_all(_from_block, _to_block)
                 _to_block += 1000000
                 _from_block += 1000000
             self.__init_sync_all(_from_block, self.latest_block)
@@ -155,7 +155,7 @@ class Processor:
         self.latest_block = blockTo
 
     def __init_sync_all(self, block_from: int, block_to: int):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
         self.__sync_lock(block_from, block_to)
         self.__sync_unlock(block_from, block_to)
@@ -166,7 +166,7 @@ class Processor:
         self.__sync_approve_transfer(block_from, block_to)
 
     def __sync_all(self, block_from: int, block_to: int):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
         self.__sync_lock(block_from, block_to)
         self.__sync_unlock(block_from, block_to)

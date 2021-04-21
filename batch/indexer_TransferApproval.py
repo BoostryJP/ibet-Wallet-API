@@ -212,7 +212,7 @@ class Processor:
         self.latest_block = blockTo
 
     def __sync_all(self, block_from, block_to):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_apply_for_transfer(block_from, block_to)
         self.__sync_cancel_transfer(block_from, block_to)
         self.__sync_approve_transfer(block_from, block_to)
