@@ -45,7 +45,8 @@ class IbetShareUtils:
             args["dividends"],
             args["dividendRecordDate"],
             args["dividendPaymentDate"],
-            args["cancellationDate"]
+            args["cancellationDate"],
+            args["principalValue"]
         ]
         contract_address, abi = Contract.deploy_contract(
             contract_name="IbetShare",

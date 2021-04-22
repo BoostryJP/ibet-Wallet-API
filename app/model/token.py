@@ -254,6 +254,7 @@ class BondToken(TokenBase):
 
 class ShareToken(TokenBase):
     issue_price: int
+    principal_value: int
     dividend_information: object
     cancellation_date: str
     reference_urls: object
@@ -315,6 +316,7 @@ class ShareToken(TokenBase):
         symbol = TokenContract.functions.symbol().call()
         total_supply = TokenContract.functions.totalSupply().call()
         issue_price = TokenContract.functions.issuePrice().call()
+        principal_value = TokenContract.functions.principalValue().call()
         dividend_information = TokenContract.functions.dividendInformation().call()
         cancellation_date = TokenContract.functions.cancellationDate().call()
         reference_url_1 = TokenContract.functions.referenceUrls(0).call()
@@ -349,6 +351,7 @@ class ShareToken(TokenBase):
         sharetoken.symbol = symbol
         sharetoken.total_supply = total_supply
         sharetoken.issue_price = issue_price
+        sharetoken.principal_value = principal_value
         sharetoken.dividend_information = {
             'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
             'dividend_record_date': dividend_information[1],
