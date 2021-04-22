@@ -55,6 +55,7 @@ class TestV2TokenShareTokens:
             'personalInfoAddress': personal_info_address,
             'totalSupply': 1000000,
             'issuePrice': 10000,
+            'principalValue': 10000,
             'dividends': 101,
             'dividendRecordDate': '20200909',
             'dividendPaymentDate': '20201001',
@@ -122,6 +123,7 @@ class TestV2TokenShareTokens:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',
@@ -187,6 +189,7 @@ class TestV2TokenShareTokens:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',
@@ -219,6 +222,7 @@ class TestV2TokenShareTokens:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',
@@ -285,6 +289,7 @@ class TestV2TokenShareTokens:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',
@@ -317,6 +322,7 @@ class TestV2TokenShareTokens:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',
@@ -383,6 +389,7 @@ class TestV2TokenShareTokens:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',
@@ -449,6 +456,7 @@ class TestV2TokenShareTokens:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',

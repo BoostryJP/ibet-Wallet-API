@@ -1213,6 +1213,8 @@ paths:
                       type: integer
                     issue_price:
                       type: integer
+                    principal_value:
+                      type: integer
                     dividend_information:
                       type: object
                       properties:
@@ -1366,6 +1368,8 @@ paths:
                   total_supply:
                     type: integer
                   issue_price:
+                    type: integer
+                  principal_value:
                     type: integer
                   dividend_information:
                     type: object
@@ -2862,6 +2866,8 @@ paths:
                           type: integer
                         issue_price:
                           type: integer
+                        principal_value:
+                          type: integer
                         dividend_information:
                           type: object
                           properties:
@@ -3753,6 +3759,8 @@ paths:
                             total_supply:
                               type: integer
                             issue_price:
+                              type: integer
+                            principal_value:
                               type: integer
                             dividend_information:
                               type: object

@@ -117,6 +117,7 @@ class TestV2GetAgreementGet:
             'tradableExchange': exchange['address'],
             'personalInfoAddress': personal_info['address'],
             'issuePrice': 1000,
+            'principalValue': 1000,
             'totalSupply': 1000000,
             'dividends': 101,
             'dividendRecordDate': '20200401',

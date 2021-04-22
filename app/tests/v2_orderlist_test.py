@@ -2146,6 +2146,7 @@ class TestV2OrderListShare:
             "tradableExchange": exchange["address"],
             "personalInfoAddress": personal_info["address"],
             "issuePrice": 1000,
+            "principalValue": 1000,
             "totalSupply": 1000000,
             "dividends": 101,
             "dividendRecordDate": "20200401",
@@ -2320,6 +2321,7 @@ class TestV2OrderListShare:
                 "symbol": "SHARE",
                 "total_supply": 1000000,
                 "issue_price": 1000,
+                "principal_value": 1000,
                 "dividend_information": {
                     "dividends": 1.01,
                     "dividend_record_date": "20200401",
@@ -2410,6 +2412,7 @@ class TestV2OrderListShare:
                 "symbol": "SHARE",
                 "total_supply": 1000000,
                 "issue_price": 1000,
+                "principal_value": 1000,
                 "dividend_information": {
                     "dividends": 1.01,
                     "dividend_record_date": "20200401",
@@ -2504,6 +2507,7 @@ class TestV2OrderListShare:
                 "symbol": "SHARE",
                 "total_supply": 1000000,
                 "issue_price": 1000,
+                "principal_value": 1000,
                 "dividend_information": {
                     "dividends": 1.01,
                     "dividend_record_date": "20200401",
