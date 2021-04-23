@@ -56,6 +56,7 @@ class TestV2TokenShareTokenAddresses:
             'personalInfoAddress': personal_info_address,
             'totalSupply': 1000000,
             'issuePrice': 10000,
+            'principalValue': 10000,
             'dividends': 101,
             'dividendRecordDate': '20200909',
             'dividendPaymentDate': '20201001',

@@ -98,6 +98,7 @@ class TestV2TokenTokenStatus:
             'tradableExchange': exchange_address,
             'personalInfoAddress': personal_info_address,
             'issuePrice': 100001,
+            'principalValue': 100001,
             'totalSupply': 1000001,
             'dividends': 1000,
             'dividendRecordDate': '20201001',

@@ -284,14 +284,21 @@ def issue_share_token(invoker, attribute):
     web3.eth.defaultAccount = invoker['account_address']
 
     arguments = [
-        attribute['name'], attribute['symbol'],
-        attribute['issuePrice'], attribute['totalSupply'], attribute['dividends'],
-        attribute['dividendRecordDate'], attribute['dividendPaymentDate'],
-        attribute['cancellationDate']
+        attribute['name'],
+        attribute['symbol'],
+        attribute['issuePrice'],
+        attribute['totalSupply'],
+        attribute['dividends'],
+        attribute['dividendRecordDate'],
+        attribute['dividendPaymentDate'],
+        attribute['cancellationDate'],
+        attribute['principalValue']
     ]
-
     contract_address, abi = Contract.deploy_contract(
-        'IbetShare', arguments, invoker['account_address'])
+        contract_name='IbetShare',
+        args=arguments,
+        deployer=invoker['account_address']
+    )
 
     TokenContract = Contract.get_contract('IbetShare', contract_address)
     if 'tradableExchange' in attribute:
