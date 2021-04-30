@@ -16,12 +16,16 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from app.model import (
+    IDXOrder as Order,
+    IDXAgreement as Agreement,
+    AgreementStatus
+)
 
-from app.model import Order, Agreement, AgreementStatus
-from .contract_modules import *
+from app.tests.contract_modules import *
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 class TestV2OrderList:
@@ -2142,6 +2146,7 @@ class TestV2OrderListShare:
             "tradableExchange": exchange["address"],
             "personalInfoAddress": personal_info["address"],
             "issuePrice": 1000,
+            "principalValue": 1000,
             "totalSupply": 1000000,
             "dividends": 101,
             "dividendRecordDate": "20200401",
@@ -2316,6 +2321,7 @@ class TestV2OrderListShare:
                 "symbol": "SHARE",
                 "total_supply": 1000000,
                 "issue_price": 1000,
+                "principal_value": 1000,
                 "dividend_information": {
                     "dividends": 1.01,
                     "dividend_record_date": "20200401",
@@ -2326,6 +2332,7 @@ class TestV2OrderListShare:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                'transfer_approval_required': False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -2405,6 +2412,7 @@ class TestV2OrderListShare:
                 "symbol": "SHARE",
                 "total_supply": 1000000,
                 "issue_price": 1000,
+                "principal_value": 1000,
                 "dividend_information": {
                     "dividends": 1.01,
                     "dividend_record_date": "20200401",
@@ -2415,6 +2423,7 @@ class TestV2OrderListShare:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                'transfer_approval_required': False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""
@@ -2498,6 +2507,7 @@ class TestV2OrderListShare:
                 "symbol": "SHARE",
                 "total_supply": 1000000,
                 "issue_price": 1000,
+                "principal_value": 1000,
                 "dividend_information": {
                     "dividends": 1.01,
                     "dividend_record_date": "20200401",
@@ -2508,6 +2518,7 @@ class TestV2OrderListShare:
                 "transferable": True,
                 "offering_status": False,
                 "status": True,
+                'transfer_approval_required': False,
                 "reference_urls": [{
                     "id": 1,
                     "url": ""

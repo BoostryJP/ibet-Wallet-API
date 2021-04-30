@@ -23,13 +23,13 @@ cd /app/ibet-Wallet-API
 
 function start () {
     #source .venv/bin/activate
-    python async/processor_Block_Sync_Status.py &
+    python batch/processor_Block_Sync_Status.py &
     gunicorn -b 0.0.0.0:5000 --reload app.main:application --timeout 30 --workers=$WORKER_COUNT --max-requests 500 --max-requests-jitter 200 -k gevent
 }
 
 function stop () {
     ps -ef | grep gunicorn | awk '{print $2}' | xargs kill -9
-    ps -ef | grep "async/processor_Block_Sync_Status.py" | awk '{print $2}' | xargs kill -9
+    ps -ef | grep "batch/processor_Block_Sync_Status.py" | awk '{print $2}' | xargs kill -9
 }
 
 

@@ -16,55 +16,74 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session
+)
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app import config
-from app.model import Notification, NotificationType
+from app.config import (
+    WEB3_HTTP_PROVIDER,
+    DATABASE_URL,
+    WORKER_COUNT,
+    SLEEP_INTERVAL,
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    COMPANY_LIST_URL, IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+)
+from app.model import (
+    Notification,
+    NotificationType
+)
 from app.contracts import Contract
-from async.lib.token import TokenFactory
-from async.lib.company_list import CompanyListFactory
-from async.lib.token_list import TokenList
-from async.lib.misc import wait_all_futures
+from batch.lib.token import TokenFactory
+from batch.lib.company_list import CompanyListFactory
+from batch.lib.token_list import TokenList
+from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
-LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-BOND-EXCHANGE")
+LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-COUPON-EXCHANGE")
 
-# 設定の取得
-WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
-URI = config.DATABASE_URL
-WORKER_COUNT = int(config.WORKER_COUNT)
-SLEEP_INTERVAL = int(config.SLEEP_INTERVAL)
-IBET_SB_EXCHANGE_CONTRACT_ADDRESS = config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+WORKER_COUNT = int(WORKER_COUNT)
+SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
-# 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-engine = create_engine(URI, echo=False)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
+
 token_factory = TokenFactory(web3)
-company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
+company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
-sb_exchange_contract = Contract.get_contract('IbetStraightBondExchange', config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
-list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+cp_exchange_contract = Contract.get_contract(
+    contract_name="IbetCouponExchange",
+    address=IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+)
+list_contract = Contract.get_contract(
+    contract_name="TokenList",
+    address=TOKEN_LIST_CONTRACT_ADDRESS
+)
 token_list = TokenList(list_contract)
 
 
@@ -75,9 +94,6 @@ class Watcher:
         self.filter_name = filter_name
         self.filter_params = filter_params
         self.from_block = 0
-
-    def watch(self, entries):
-        pass
 
     def _gen_notification_id(self, entry, option_type=0):
         return "0x{:012x}{:06x}{:06x}{:02x}".format(
@@ -90,6 +106,9 @@ class Watcher:
     def _gen_block_timestamp(self, entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
+    def watch(self, entries):
+        pass
+
     def loop(self):
         start_time = time.time()
         try:
@@ -99,6 +118,9 @@ class Watcher:
 
             # 最新のブロックナンバーを取得
             _latest_block = web3.eth.blockNumber
+            if self.from_block > _latest_block:
+                LOG.info(f"[{self.__class__.__name__}]: skip processing")
+                return
 
             # レスポンスタイムアウト抑止
             # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
@@ -110,30 +132,32 @@ class Watcher:
                 self.filter_params["toBlock"] = _latest_block
                 _next_from = _latest_block + 1
 
-            event_filter = self.contract.eventFilter(self.filter_name, self.filter_params)
-            entries = event_filter.get_all_entries()
-            web3.eth.uninstallFilter(event_filter.filter_id)
+            _event = getattr(self.contract.events, self.filter_name)
+            entries = _event.getLogs(
+                fromBlock=self.filter_params["fromBlock"],
+                toBlock=self.filter_params["toBlock"]
+            )
             if len(entries) > 0:
                 self.watch(entries)
                 db_session.commit()
 
             self.from_block = _next_from
         except Exception as err:  # Exceptionが発生した場合は処理を継続
-            LOG.error(err)
+            LOG.exception(err)
         finally:
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
 
-'''
-普通社債取引関連（IbetStraightBondExchange）
-'''
+"""
+クーポン取引関連（IbetCouponExchange）
+"""
 
 
 # イベント：注文
-class WatchBondNewOrder(Watcher):
+class WatchCouponNewOrder(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "NewOrder", {})
+        super().__init__(cp_exchange_contract, "NewOrder", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -144,7 +168,7 @@ class WatchBondNewOrder(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -152,8 +176,8 @@ class WatchBondNewOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -168,9 +192,9 @@ class WatchBondNewOrder(Watcher):
 
 
 # イベント：注文取消
-class WatchBondCancelOrder(Watcher):
+class WatchCouponCancelOrder(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "CancelOrder", {})
+        super().__init__(cp_exchange_contract, "CancelOrder", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -181,7 +205,7 @@ class WatchBondCancelOrder(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -189,8 +213,8 @@ class WatchBondCancelOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -205,9 +229,9 @@ class WatchBondCancelOrder(Watcher):
 
 
 # イベント：約定（買）
-class WatchBondBuyAgreement(Watcher):
+class WatchCouponBuyAgreement(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "Agree", {})
+        super().__init__(cp_exchange_contract, "Agree", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -218,7 +242,7 @@ class WatchBondBuyAgreement(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -226,8 +250,8 @@ class WatchBondBuyAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -242,9 +266,9 @@ class WatchBondBuyAgreement(Watcher):
 
 
 # イベント：約定（売）
-class WatchBondSellAgreement(Watcher):
+class WatchCouponSellAgreement(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "Agree", {})
+        super().__init__(cp_exchange_contract, "Agree", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -255,7 +279,7 @@ class WatchBondSellAgreement(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -263,8 +287,8 @@ class WatchBondSellAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -279,9 +303,9 @@ class WatchBondSellAgreement(Watcher):
 
 
 # イベント：決済OK（買）
-class WatchBondBuySettlementOK(Watcher):
+class WatchCouponBuySettlementOK(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "SettlementOK", {})
+        super().__init__(cp_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -292,7 +316,7 @@ class WatchBondBuySettlementOK(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -300,8 +324,8 @@ class WatchBondBuySettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -316,9 +340,9 @@ class WatchBondBuySettlementOK(Watcher):
 
 
 # イベント：決済OK（売）
-class WatchBondSellSettlementOK(Watcher):
+class WatchCouponSellSettlementOK(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "SettlementOK", {})
+        super().__init__(cp_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -329,7 +353,7 @@ class WatchBondSellSettlementOK(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -337,8 +361,8 @@ class WatchBondSellSettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -353,9 +377,9 @@ class WatchBondSellSettlementOK(Watcher):
 
 
 # イベント：決済NG（買）
-class WatchBondBuySettlementNG(Watcher):
+class WatchCouponBuySettlementNG(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "SettlementNG", {})
+        super().__init__(cp_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -366,7 +390,7 @@ class WatchBondBuySettlementNG(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -374,8 +398,8 @@ class WatchBondBuySettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -390,9 +414,9 @@ class WatchBondBuySettlementNG(Watcher):
 
 
 # イベント：決済NG（売）
-class WatchBondSellSettlementNG(Watcher):
+class WatchCouponSellSettlementNG(Watcher):
     def __init__(self):
-        super().__init__(sb_exchange_contract, "SettlementNG", {})
+        super().__init__(cp_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -403,7 +427,7 @@ class WatchBondSellSettlementNG(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_straight_bond(token_address)
+            token = token_factory.get_coupon(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -411,8 +435,8 @@ class WatchBondSellSettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetStraightBond"
+                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetCoupon"
             }
 
             notification = Notification()
@@ -428,14 +452,14 @@ class WatchBondSellSettlementNG(Watcher):
 
 def main():
     watchers = [
-        WatchBondNewOrder(),
-        WatchBondCancelOrder(),
-        WatchBondBuyAgreement(),
-        WatchBondSellAgreement(),
-        WatchBondBuySettlementOK(),
-        WatchBondSellSettlementOK(),
-        WatchBondBuySettlementNG(),
-        WatchBondSellSettlementNG(),
+        WatchCouponNewOrder(),
+        WatchCouponCancelOrder(),
+        WatchCouponBuyAgreement(),
+        WatchCouponSellAgreement(),
+        WatchCouponBuySettlementOK(),
+        WatchCouponSellSettlementOK(),
+        WatchCouponBuySettlementNG(),
+        WatchCouponSellSettlementNG(),
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)

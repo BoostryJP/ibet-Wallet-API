@@ -32,7 +32,7 @@ sys.path.append(path)
 
 from app import config
 from app.model.node import Node
-from async.lib.misc import wait_all_futures
+from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
@@ -50,7 +50,7 @@ EXPECTED_BLOCKS_PER_SEC = 1
 
 # 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 engine = create_engine(URI, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)

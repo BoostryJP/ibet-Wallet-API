@@ -26,15 +26,27 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import (issue_bond_token, register_bond_list, bond_invalidate, bond_untransferable, \
-                               issue_share_token, register_share_list, invalidate_share_token,
-                               untransferable_share_token, membership_issue, \
-                               membership_register_list, membership_invalidate, membership_untransferable,
-                               issue_coupon_token, \
-                               coupon_register_list, invalidate_coupon_token, untransferable_coupon_token)
+from .contract_modules import (
+    issue_bond_token,
+    register_bond_list,
+    bond_invalidate,
+    bond_untransferable,
+    issue_share_token,
+    register_share_list,
+    invalidate_share_token,
+    untransferable_share_token,
+    membership_issue,
+    membership_register_list,
+    membership_invalidate,
+    membership_untransferable,
+    issue_coupon_token,
+    coupon_register_list,
+    invalidate_coupon_token,
+    untransferable_coupon_token
+)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 class TestV2TokenTokenStatus:
@@ -86,6 +98,7 @@ class TestV2TokenTokenStatus:
             'tradableExchange': exchange_address,
             'personalInfoAddress': personal_info_address,
             'issuePrice': 100001,
+            'principalValue': 100001,
             'totalSupply': 1000001,
             'dividends': 1000,
             'dividendRecordDate': '20201001',
@@ -136,8 +149,6 @@ class TestV2TokenTokenStatus:
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal.unlockAccount(deployer['account_address'], deployer['password'])
-
         contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
 
         return {'address': contract_address, 'abi': abi}

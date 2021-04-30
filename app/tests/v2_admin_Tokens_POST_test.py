@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 
 from eth_utils import to_checksum_address
@@ -25,12 +24,19 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
-from app.model import Listing, ExecutableContract
+from app.model import (
+    Listing,
+    ExecutableContract
+)
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, register_bond_list
+from .contract_modules import (
+    issue_bond_token,
+    register_bond_list
+)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
 
 class TestAdminTokensPOST:
     # テスト対象API
@@ -85,9 +91,6 @@ class TestAdminTokensPOST:
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal.unlockAccount(
-            deployer['account_address'], deployer['password'])
-
         contract_address, abi = Contract.deploy_contract(
             'TokenList', [], deployer['account_address'])
 

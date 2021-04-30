@@ -16,22 +16,25 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from cerberus import Validator
-
 from web3 import Web3
+from web3.geth import GethTxPool
 from web3.middleware import geth_poa_middleware
-from web3.utils.threads import Timeout
+from web3.exceptions import TimeExhausted
 from eth_account import Account
 from eth_typing import ChecksumAddress
-
 from eth_utils import to_checksum_address
 from rlp import decode
 from hexbytes import HexBytes
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, SuspendedTokenError, DataNotExistsError, ServiceUnavailable
+from app.errors import (
+    InvalidParameterError,
+    SuspendedTokenError,
+    DataNotExistsError,
+    ServiceUnavailable
+)
 from app import config
 from app.model import ExecutableContract, Listing
 from app.contracts import Contract
@@ -40,7 +43,7 @@ from app.model.node import Node
 LOG = log.get_logger()
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 # ------------------------------
@@ -190,7 +193,7 @@ class SendRawTransaction(BaseResource):
             # Handling a transaction execution result
             try:
                 tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
-            except Timeout as err:
+            except TimeExhausted as err:
                 status = 2  # execution success (pending transaction)
 
                 # Transactions that are not promoted to pending and remain in the queued state
@@ -202,7 +205,7 @@ class SendRawTransaction(BaseResource):
                     LOG.error(f"get sender address from signed transaction failed: {err}")
                     continue
                 nonce = int("0x0" if raw_tx[0].hex() == "" else raw_tx[0].hex(), 16)
-                txpool_inspect = web3.txpool.inspect
+                txpool_inspect = GethTxPool.inspect
                 if from_address in txpool_inspect.queued:
                     if str(nonce) in txpool_inspect.queued[from_address]:
                         status = 0  # execution failure

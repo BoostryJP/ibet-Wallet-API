@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 
 from web3 import Web3
@@ -26,7 +25,7 @@ from eth_utils import to_checksum_address
 from app import config
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 class Contract:
@@ -77,11 +76,10 @@ class Contract:
             bytecode_runtime=contract_json['deployedBytecode'],
         )
 
-        tx_hash = contract.deploy(
-            transaction={'from': deployer, 'gas': 6000000},
-            args=args
-        ).hex()
-
+        tx_hash = contract.constructor(*args).transact({
+            'from': deployer,
+            'gas': 6000000
+        })
         tx = web3.eth.waitForTransactionReceipt(tx_hash)
 
         contract_address = ''

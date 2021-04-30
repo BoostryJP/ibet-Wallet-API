@@ -16,22 +16,29 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.model import Listing
-from .contract_modules import issue_bond_token, register_bond_list, issue_share_token, register_share_list, \
-    membership_issue, membership_register_list, issue_coupon_token, coupon_register_list
+from .contract_modules import (
+    issue_bond_token,
+    register_bond_list,
+    issue_share_token,
+    register_share_list,
+    membership_issue,
+    membership_register_list,
+    issue_coupon_token,
+    coupon_register_list
+)
 from .account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 """
 発行会社トークン一覧参照API
-/v2/Companiy/{eth_address}/Tokens
+/v2/Company/{eth_address}/Tokens
 """
 
 
@@ -81,6 +88,7 @@ class TestV2CompanyCompanyTokenList:
             'personalInfoAddress': personal_info_address,
             'totalSupply': 1000000,
             'issuePrice': 10000,
+            'principalValue': 10000,
             'dividends': 101,
             'dividendRecordDate': '20200909',
             'dividendPaymentDate': '20201001',
@@ -247,6 +255,7 @@ class TestV2CompanyCompanyTokenList:
                 'symbol': 'SHARE',
                 'total_supply': 1000000,
                 'issue_price': 10000,
+                'principal_value': 10000,
                 'dividend_information': {
                     'dividends': 1.01,
                     'dividend_record_date': '20200909',
@@ -263,6 +272,7 @@ class TestV2CompanyCompanyTokenList:
                 'transferable': True,
                 'offering_status': False,
                 'status': True,
+                'transfer_approval_required': False,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'max_holding_quantity': None,

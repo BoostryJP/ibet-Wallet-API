@@ -16,55 +16,75 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session
+)
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app import config
-from app.model import Notification, NotificationType
+from app.config import (
+    WEB3_HTTP_PROVIDER,
+    DATABASE_URL,
+    WORKER_COUNT,
+    SLEEP_INTERVAL,
+    IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    COMPANY_LIST_URL
+)
+from app.model import (
+    Notification,
+    NotificationType
+)
 from app.contracts import Contract
-from async.lib.token import TokenFactory
-from async.lib.company_list import CompanyListFactory
-from async.lib.token_list import TokenList
-from async.lib.misc import wait_all_futures
+from batch.lib.token import TokenFactory
+from batch.lib.company_list import CompanyListFactory
+from batch.lib.token_list import TokenList
+from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
-LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-COUPON-EXCHANGE")
+LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-MEMBERSHIP-EXCHANGE")
 
-# 設定の取得
-WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
-URI = config.DATABASE_URL
-WORKER_COUNT = int(config.WORKER_COUNT)
-SLEEP_INTERVAL = int(config.SLEEP_INTERVAL)
-IBET_CP_EXCHANGE_CONTRACT_ADDRESS = config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+WORKER_COUNT = int(WORKER_COUNT)
+SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
-# 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-engine = create_engine(URI, echo=False)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
+
 token_factory = TokenFactory(web3)
-company_list_factory = CompanyListFactory(config.COMPANY_LIST_URL)
+company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
-cp_exchange_contract = Contract.get_contract('IbetCouponExchange', config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
-list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+membership_exchange_contract = Contract.get_contract(
+    contract_name="IbetMembershipExchange",
+    address=IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
+)
+list_contract = Contract.get_contract(
+    contract_name="TokenList",
+    address=TOKEN_LIST_CONTRACT_ADDRESS
+)
 token_list = TokenList(list_contract)
 
 
@@ -110,9 +130,11 @@ class Watcher:
                 self.filter_params["toBlock"] = _latest_block
                 _next_from = _latest_block + 1
 
-            event_filter = self.contract.eventFilter(self.filter_name, self.filter_params)
-            entries = event_filter.get_all_entries()
-            web3.eth.uninstallFilter(event_filter.filter_id)
+            _event = getattr(self.contract.events, self.filter_name)
+            entries = _event.getLogs(
+                fromBlock=self.filter_params["fromBlock"],
+                toBlock=self.filter_params["toBlock"]
+            )
             if len(entries) > 0:
                 self.watch(entries)
                 db_session.commit()
@@ -125,15 +147,15 @@ class Watcher:
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
 
-'''
-クーポン取引関連（IbetCouponExchange）
-'''
+"""
+会員権取引関連（IbetMembershipExchange）
+"""
 
 
 # イベント：注文
-class WatchCouponNewOrder(Watcher):
+class WatchMembershipNewOrder(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "NewOrder", {})
+        super().__init__(membership_exchange_contract, "NewOrder", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -144,7 +166,7 @@ class WatchCouponNewOrder(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -152,8 +174,8 @@ class WatchCouponNewOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -168,9 +190,9 @@ class WatchCouponNewOrder(Watcher):
 
 
 # イベント：注文取消
-class WatchCouponCancelOrder(Watcher):
+class WatchMembershipCancelOrder(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "CancelOrder", {})
+        super().__init__(membership_exchange_contract, "CancelOrder", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -181,7 +203,7 @@ class WatchCouponCancelOrder(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -189,8 +211,8 @@ class WatchCouponCancelOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -205,9 +227,9 @@ class WatchCouponCancelOrder(Watcher):
 
 
 # イベント：約定（買）
-class WatchCouponBuyAgreement(Watcher):
+class WatchMembershipBuyAgreement(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "Agree", {})
+        super().__init__(membership_exchange_contract, "Agree", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -218,7 +240,7 @@ class WatchCouponBuyAgreement(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -226,8 +248,8 @@ class WatchCouponBuyAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -242,9 +264,9 @@ class WatchCouponBuyAgreement(Watcher):
 
 
 # イベント：約定（売）
-class WatchCouponSellAgreement(Watcher):
+class WatchMembershipSellAgreement(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "Agree", {})
+        super().__init__(membership_exchange_contract, "Agree", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -255,7 +277,7 @@ class WatchCouponSellAgreement(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -263,8 +285,8 @@ class WatchCouponSellAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -279,9 +301,9 @@ class WatchCouponSellAgreement(Watcher):
 
 
 # イベント：決済OK（買）
-class WatchCouponBuySettlementOK(Watcher):
+class WatchMembershipBuySettlementOK(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementOK", {})
+        super().__init__(membership_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -292,7 +314,7 @@ class WatchCouponBuySettlementOK(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -300,8 +322,8 @@ class WatchCouponBuySettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -316,9 +338,9 @@ class WatchCouponBuySettlementOK(Watcher):
 
 
 # イベント：決済OK（売）
-class WatchCouponSellSettlementOK(Watcher):
+class WatchMembershipSellSettlementOK(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementOK", {})
+        super().__init__(membership_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -329,7 +351,7 @@ class WatchCouponSellSettlementOK(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -337,8 +359,8 @@ class WatchCouponSellSettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -353,9 +375,9 @@ class WatchCouponSellSettlementOK(Watcher):
 
 
 # イベント：決済NG（買）
-class WatchCouponBuySettlementNG(Watcher):
+class WatchMembershipBuySettlementNG(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementNG", {})
+        super().__init__(membership_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -366,7 +388,7 @@ class WatchCouponBuySettlementNG(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -374,8 +396,8 @@ class WatchCouponBuySettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -390,9 +412,9 @@ class WatchCouponBuySettlementNG(Watcher):
 
 
 # イベント：決済NG（売）
-class WatchCouponSellSettlementNG(Watcher):
+class WatchMembershipSellSettlementNG(Watcher):
     def __init__(self):
-        super().__init__(cp_exchange_contract, "SettlementNG", {})
+        super().__init__(membership_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
         company_list = company_list_factory.get()
@@ -403,7 +425,7 @@ class WatchCouponSellSettlementNG(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            token = token_factory.get_coupon(token_address)
+            token = token_factory.get_membership(token_address)
 
             company = company_list.find(token.owner_address)
 
@@ -411,8 +433,8 @@ class WatchCouponSellSettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                "token_type": "IbetCoupon"
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
             }
 
             notification = Notification()
@@ -428,14 +450,14 @@ class WatchCouponSellSettlementNG(Watcher):
 
 def main():
     watchers = [
-        WatchCouponNewOrder(),
-        WatchCouponCancelOrder(),
-        WatchCouponBuyAgreement(),
-        WatchCouponSellAgreement(),
-        WatchCouponBuySettlementOK(),
-        WatchCouponSellSettlementOK(),
-        WatchCouponBuySettlementNG(),
-        WatchCouponSellSettlementNG(),
+        WatchMembershipNewOrder(),
+        WatchMembershipCancelOrder(),
+        WatchMembershipBuyAgreement(),
+        WatchMembershipSellAgreement(),
+        WatchMembershipBuySettlementOK(),
+        WatchMembershipSellSettlementOK(),
+        WatchMembershipBuySettlementNG(),
+        WatchMembershipSellSettlementNG(),
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)

@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -26,10 +25,15 @@ from app import config
 from app.contracts import Contract
 
 from .account_config import eth_account
-from .contract_modules import issue_share_token, register_share_list, register_share_reference_url, invalidate_share_token
+from .contract_modules import (
+    issue_share_token,
+    register_share_list,
+    register_share_reference_url,
+    invalidate_share_token
+)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 class TestV2TokenShareTokenDetails:
@@ -49,6 +53,7 @@ class TestV2TokenShareTokenDetails:
             'personalInfoAddress': personal_info_address,
             'totalSupply': 1000000,
             'issuePrice': 10000,
+            'principalValue': 10000,
             'dividends': 101,
             'dividendRecordDate': '20200909',
             'dividendPaymentDate': '20201001',
@@ -64,8 +69,6 @@ class TestV2TokenShareTokenDetails:
     def tokenlist_contract():
         deployer = eth_account['deployer']
         web3.eth.defaultAccount = deployer['account_address']
-        web3.personal.unlockAccount(deployer['account_address'], deployer['password'])
-
         contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
 
         return {'address': contract_address, 'abi': abi}
@@ -116,6 +119,7 @@ class TestV2TokenShareTokenDetails:
             'symbol': 'SHARE',
             'total_supply': 1000000,
             'issue_price': 10000,
+            'principal_value': 10000,
             'dividend_information': {
                 'dividends': 1.01,
                 'dividend_record_date': '20200909',
@@ -135,7 +139,8 @@ class TestV2TokenShareTokenDetails:
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
             'transferable': True,
-            'status': True
+            'status': True,
+            'transfer_approval_required': False,
         }
 
         assert resp.status_code == 200

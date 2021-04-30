@@ -254,6 +254,7 @@ class BondToken(TokenBase):
 
 class ShareToken(TokenBase):
     issue_price: int
+    principal_value: int
     dividend_information: object
     cancellation_date: str
     reference_urls: object
@@ -264,6 +265,7 @@ class ShareToken(TokenBase):
     reference_urls: object
     max_holding_quantity: int
     max_sell_amount: int
+    transfer_approval_required: bool
 
     # トークン情報のキャッシュ
     cache = {}
@@ -289,12 +291,10 @@ class ShareToken(TokenBase):
                     # キャッシュ情報を取得
                     sharetoken = token_cache["token"]
                     # キャッシュ情報以外の情報を取得
-                    transferable = TokenContract.functions.transferable().call()
-                    offering_status = TokenContract.functions.offeringStatus().call()
-                    status = TokenContract.functions.status().call()
-                    sharetoken.transferable = transferable
-                    sharetoken.offering_status = offering_status
-                    sharetoken.status = status
+                    sharetoken.transferable = TokenContract.functions.transferable().call()
+                    sharetoken.offering_status = TokenContract.functions.offeringStatus().call()
+                    sharetoken.status = TokenContract.functions.status().call()
+                    sharetoken.transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
                     return sharetoken
 
         # キャッシュ未利用の場合
@@ -316,6 +316,7 @@ class ShareToken(TokenBase):
         symbol = TokenContract.functions.symbol().call()
         total_supply = TokenContract.functions.totalSupply().call()
         issue_price = TokenContract.functions.issuePrice().call()
+        principal_value = TokenContract.functions.principalValue().call()
         dividend_information = TokenContract.functions.dividendInformation().call()
         cancellation_date = TokenContract.functions.cancellationDate().call()
         reference_url_1 = TokenContract.functions.referenceUrls(0).call()
@@ -325,6 +326,7 @@ class ShareToken(TokenBase):
         transferable = TokenContract.functions.transferable().call()
         offering_status = TokenContract.functions.offeringStatus().call()
         status = TokenContract.functions.status().call()
+        transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
 
@@ -349,6 +351,7 @@ class ShareToken(TokenBase):
         sharetoken.symbol = symbol
         sharetoken.total_supply = total_supply
         sharetoken.issue_price = issue_price
+        sharetoken.principal_value = principal_value
         sharetoken.dividend_information = {
             'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
             'dividend_record_date': dividend_information[1],
@@ -365,6 +368,7 @@ class ShareToken(TokenBase):
         sharetoken.transferable = transferable
         sharetoken.offering_status = offering_status
         sharetoken.status = status
+        sharetoken.transfer_approval_required = transfer_approval_required
         sharetoken.contact_information = contact_information
         sharetoken.privacy_policy = privacy_policy
         sharetoken.max_holding_quantity = listed_token.max_holding_quantity \

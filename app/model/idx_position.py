@@ -16,33 +16,35 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-from sqlalchemy import Column
-from sqlalchemy import String, BigInteger
+from sqlalchemy import (
+    Column,
+    String,
+    BigInteger
+)
 
 from app.model import Base
 
 
-class Position(Base):
-    """
-    トークン保有残高
-    """
-    __tablename__ = 'position'
+class IDXPosition(Base):
+    """Token Positions (INDEX)"""
+    __tablename__ = "position"
 
+    # Sequence Id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Token Address
     token_address = Column(String(42), index=True)
+    # Account Address
     account_address = Column(String(42))
+    # Balance
     balance = Column(BigInteger)
-
-    def __repr__(self):
-        return "<Position(token_address='%s', account_address='%s', balance='%d')>" % \
-               (self.token_address, self.account_address, self.balance)
+    # Pending Transfer
+    pending_transfer = Column(BigInteger)
 
     FIELDS = {
-        'id': int,
-        'token_address': str,
-        'account_address': str,
-        'balance': int,
+        "id": int,
+        "token_address": str,
+        "account_address": str,
+        "balance": int,
+        "pending_transfer": int
     }
-
     FIELDS.update(Base.FIELDS)

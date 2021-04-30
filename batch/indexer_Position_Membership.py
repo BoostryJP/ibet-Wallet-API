@@ -16,37 +16,42 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import os
 import sys
 import time
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session
+)
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
-path = os.path.join(os.path.dirname(__file__), '../')
+path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app import config
-from app.model import Listing, Position
+from app.config import (
+    WEB3_HTTP_PROVIDER,
+    DATABASE_URL,
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    ZERO_ADDRESS
+)
+from app.model import (
+    Listing,
+    IDXPosition
+)
 from app.contracts import Contract
 import log
 
 process_name = "INDEXER-POSITION-MEMBERSHIP"
 LOG = log.get_logger(process_name=process_name)
 
-# 設定の取得
-WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
-URI = config.DATABASE_URL
-
-# 初期化
 web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
-engine = create_engine(URI, echo=False)
+web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
 
@@ -79,13 +84,13 @@ class DBSink:
         :param balance: 更新後の残高
         :return: None
         """
-        position = self.db.query(Position). \
-            filter(Position.token_address == token_address). \
-            filter(Position.account_address == account_address). \
+        position = self.db.query(IDXPosition). \
+            filter(IDXPosition.token_address == token_address). \
+            filter(IDXPosition.account_address == account_address). \
             first()
         if position is None:
-            LOG.info(f"Position created (Membership): token_address={token_address}, account_address={account_address}")
-            position = Position()
+            LOG.debug(f"Position created (Membership): token_address={token_address}, account_address={account_address}")
+            position = IDXPosition()
             position.token_address = token_address
             position.account_address = account_address
             position.balance = balance
@@ -106,12 +111,12 @@ class Processor:
 
     def get_token_list(self):
         self.token_list = []
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        ListContract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
         for listed_token in listed_tokens:
             token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
             if token_info[1] == "IbetMembership":
-                token_contract = Contract.get_contract('IbetMembership', listed_token.token_address)
+                token_contract = Contract.get_contract("IbetMembership", listed_token.token_address)
                 self.token_list.append(token_contract)
 
     def initial_sync(self):
@@ -121,7 +126,7 @@ class Processor:
         _from_block = 0
         if self.latest_block > 999999:
             while _to_block < self.latest_block:
-                self.__sync_all(_from_block, _to_block)
+                self.__init_sync_all(_from_block, _to_block)
                 _to_block += 1000000
                 _from_block += 1000000
             self.__init_sync_all(_from_block, self.latest_block)
@@ -139,11 +144,11 @@ class Processor:
         self.latest_block = blockTo
 
     def __init_sync_all(self, block_from: int, block_to: int):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
 
     def __sync_all(self, block_from: int, block_to: int):
-        LOG.debug("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(block_from, block_to)
         self.sink.flush()
 
@@ -156,15 +161,13 @@ class Processor:
         """
         for token in self.token_list:
             try:
-                event_filter = token.eventFilter(
-                    'Transfer', {
-                        'fromBlock': block_from,
-                        'toBlock': block_to,
-                    }
+                events = token.events.Transfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
                 )
-                for event in event_filter.get_all_entries():
-                    args = event['args']
-                    from_account = args.get("from", config.ZERO_ADDRESS)
+                for event in events:
+                    args = event["args"]
+                    from_account = args.get("from", ZERO_ADDRESS)
                     from_account_balance = token.functions.balanceOf(from_account).call()
                     # from address
                     self.sink.on_position(
@@ -173,14 +176,13 @@ class Processor:
                         balance=from_account_balance
                     )
                     # to address
-                    to_account = args.get("to", config.ZERO_ADDRESS)
+                    to_account = args.get("to", ZERO_ADDRESS)
                     to_account_balance = token.functions.balanceOf(to_account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=to_account,
                         balance=to_account_balance,
                     )
-                web3.eth.uninstallFilter(event_filter.filter_id)
             except Exception as e:
                 LOG.exception(e)
 

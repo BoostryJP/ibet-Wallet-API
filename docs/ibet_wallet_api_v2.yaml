@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.3.0"
+  version: "21.4.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -1213,6 +1213,8 @@ paths:
                       type: integer
                     issue_price:
                       type: integer
+                    principal_value:
+                      type: integer
                     dividend_information:
                       type: object
                       properties:
@@ -1244,6 +1246,8 @@ paths:
                     offering_status:
                       type: boolean
                     status:
+                      type: boolean
+                    transfer_approval_required:
                       type: boolean
                     contact_information:
                       type: string
@@ -1365,6 +1369,8 @@ paths:
                     type: integer
                   issue_price:
                     type: integer
+                  principal_value:
+                    type: integer
                   dividend_information:
                     type: object
                     properties:
@@ -1396,6 +1402,8 @@ paths:
                   offering_status:
                     type: boolean
                   status:
+                    type: boolean
+                  transfer_approval_required:
                     type: boolean
                   contact_information:
                     type: string
@@ -1964,6 +1972,8 @@ paths:
                       type: string
                     amount:
                       type: integer
+                    pending_transfer:
+                      type: integer
         400:
           description: Invalid Parameter Error
           schema:
@@ -2016,6 +2026,69 @@ paths:
                     created:
                       type: string
                       description: block_timestamp when Transfer log was emitted (JST)
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Token/{contract_address}/TransferApprovalHistory:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    get:
+      tags:
+        - "Token"
+      summary: "Token Approval History"
+      operationId: "TransferApprovalHistory"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    token_address:
+                      type: string
+                    application_id:
+                      type: string
+                    from_address:
+                      type: string
+                    to_address:
+                      type: string
+                    value:
+                      type: integer
+                    application_datetime:
+                      type: string
+                      description: application datetime (JST)
+                    application_blocktimestamp:
+                      type: string
+                      description: application blocktimestamp (JST)
+                    approval_datetime:
+                      type: string
+                      description: approval datetime (JST)
+                    approval_blocktimestamp:
+                      type: string
+                      description: approval blocktimestamp (JST)
+                    cancelled:
+                      type: boolean
         400:
           description: Invalid Parameter Error
           schema:
@@ -2793,6 +2866,8 @@ paths:
                           type: integer
                         issue_price:
                           type: integer
+                        principal_value:
+                          type: integer
                         dividend_information:
                           type: object
                           properties:
@@ -2825,6 +2900,8 @@ paths:
                           type: boolean
                         status:
                           type: boolean
+                        transfer_approval_required:
+                          type: boolean
                         contact_information:
                           type: string
                         privacy_policy:
@@ -2834,6 +2911,8 @@ paths:
                         max_sell_amount:
                           type: integer
                     balance:
+                      type: integer
+                    pending_transfer:
                       type: integer
                     commitment:
                       type: integer
@@ -3681,6 +3760,8 @@ paths:
                               type: integer
                             issue_price:
                               type: integer
+                            principal_value:
+                              type: integer
                             dividend_information:
                               type: object
                               properties:
@@ -3721,6 +3802,8 @@ paths:
                             offering_status:
                               type: boolean
                             status:
+                              type: boolean
+                            transfer_approval_required:
                               type: boolean
                             max_holding_quantity:
                               type: integer

@@ -16,92 +16,96 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-from datetime import timezone, timedelta
-
-JST = timezone(timedelta(hours=+9), 'JST')
-
 from cerberus import Validator
-
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.errors import InvalidParameterError, NotSupportedError
+from app.errors import (
+    InvalidParameterError,
+    NotSupportedError
+)
 from app import config
 from app.contracts import Contract
-from app.model import Listing, BondToken, ShareToken, MembershipToken, CouponToken, ConsumeCoupon, Transfer
+from app.model import (
+    Listing,
+    BondToken,
+    ShareToken,
+    MembershipToken,
+    CouponToken,
+    IDXConsumeCoupon,
+    IDXTransfer
+)
 
 LOG = log.get_logger()
 
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
-
-# ------------------------------
-# [株式]保有トークン一覧
-# ------------------------------
+# /Position/Share
 class ShareMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/Share
-    """
+    """保有一覧参照（Share）"""
 
     def on_post(self, req, res):
-        LOG.info('v2.position.ShareMyTokens')
+        LOG.info("v2.position.ShareMyTokens")
 
         session = req.context["session"]
 
         if config.SHARE_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
-        # 入力値チェック
+        # Validation
         request_json = ShareMyTokens.validate(req)
 
         # TokenList Contract
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        ListContract = Contract.get_contract(
+            contract_name="TokenList",
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # Exchange Contract
         ExchangeContract = None
         if config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
             ExchangeContract = Contract.get_contract(
-                'IbetOTCExchange',
-                config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+                contract_name="IbetOTCExchange",
+                address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
             )
 
         listed_tokens = session.query(Listing).all()
         position_list = []
-        for _account_address in request_json['account_address_list']:
-            # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
+        for _account_address in request_json["account_address_list"]:
+            # Get token details
             for token in listed_tokens:
                 token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
                 token_address = token_info[0]
                 token_template = token_info[1]
-                owner = to_checksum_address(_account_address)
-
-                if token_template == 'IbetShare':
-                    TokenContract = Contract.get_contract('IbetShare', token_address)
+                if token_template == "IbetShare":
+                    _account_address = to_checksum_address(_account_address)
+                    TokenContract = Contract.get_contract(
+                        contract_name="IbetShare",
+                        address=token_address
+                    )
                     try:
-                        balance = TokenContract.functions.balanceOf(owner).call()
+                        balance = TokenContract.functions.balanceOf(_account_address).call()
+                        pending_transfer = TokenContract.functions.pendingTransfer(_account_address).call()
                         if ExchangeContract is not None:
-                            commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
+                            commitment = ExchangeContract.functions.commitmentOf(_account_address, token_address).call()
                         else:
-                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
-                            # NOTE: 残高もゼロの場合は後続処理で取得対象外となる
+                            # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                             commitment = 0
-
-                        # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
-                        # Note: 現状は、株式トークンの場合、残高・残注文ゼロの場合は詳細情報を
-                        #       返さない仕様としている。
-                        if balance == 0 and commitment == 0:
+                        # If balance, pending_transfer, and commitment are non-zero,
+                        # get the token information from TokenContract.
+                        if balance == 0 and pending_transfer == 0 and commitment == 0:
                             continue
                         else:
-                            sharetoken = ShareToken.get(session=session, token_address=token_address)
+                            sharetoken = ShareToken.get(
+                                session=session,
+                                token_address=token_address
+                            )
                             position_list.append({
-                                'token': sharetoken.__dict__,
-                                'balance': balance,
-                                'commitment': commitment
+                                "token": sharetoken.__dict__,
+                                "balance": balance,
+                                "pending_transfer": pending_transfer,
+                                "commitment": commitment
                             })
                     except Exception as e:
                         LOG.exception(e)
@@ -111,95 +115,91 @@ class ShareMyTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address_list': {
-                'type': 'list',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
             }
         })
-
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             if not Web3.isAddress(account_address):
-                raise InvalidParameterError
+                raise InvalidParameterError("invalid account address")
 
         return request_json
 
 
-# ------------------------------
-# [普通社債]保有トークン一覧
-# ------------------------------
+# /Position/StraightBond
 class StraightBondMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/StraightBond
-    """
+    """保有一覧参照（StraightBond）"""
 
     def on_post(self, req, res):
-        LOG.info('v2.position.StraightBondMyTokens')
+        LOG.info("v2.position.StraightBondMyTokens")
 
         session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
-        # 入力値チェック
+        # Validation
         request_json = StraightBondMyTokens.validate(req)
 
         # TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList',
-            config.TOKEN_LIST_CONTRACT_ADDRESS
+            contract_name="TokenList",
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
         # Bond Exchange Contract
         BondExchangeContract = None
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
             BondExchangeContract = Contract.get_contract(
-                'IbetStraightBondExchange',
-                config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+                contract_name="IbetStraightBondExchange",
+                address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
             )
 
         listed_tokens = session.query(Listing).all()
-
         position_list = []
-        for _account_address in request_json['account_address_list']:
-            # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
+        for _account_address in request_json["account_address_list"]:
+            # Get token details
             for token in listed_tokens:
                 token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
                 token_address = token_info[0]
                 token_template = token_info[1]
                 owner = to_checksum_address(_account_address)
-
-                if token_template == 'IbetStraightBond':
-                    BondTokenContract = Contract.get_contract('IbetStraightBond', token_address)
+                if token_template == "IbetStraightBond":
+                    BondTokenContract = Contract.get_contract(
+                        contract_name="IbetStraightBond",
+                        address=token_address
+                    )
                     try:
                         balance = BondTokenContract.functions.balanceOf(owner).call()
                         if BondExchangeContract is not None:
                             commitment = BondExchangeContract.functions.commitmentOf(owner, token_address).call()
                         else:
-                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
-                            # NOTE: 残高もゼロの場合は後続処理で取得対象外となる
+                            # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                             commitment = 0
-
-                        # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
-                        # Note: 現状は、債券トークンの場合、残高・残注文ゼロの場合は詳細情報を
-                        #       返さない仕様としている。
+                        # If balance, pending_transfer, and commitment are non-zero,
+                        # get the token information from TokenContract.
                         if balance == 0 and commitment == 0:
                             continue
                         else:
-                            bondtoken = BondToken.get(session=session, token_address=token_address)
+                            bondtoken = BondToken.get(
+                                session=session,
+                                token_address=token_address
+                            )
                             position_list.append({
-                                'token': bondtoken.__dict__,
-                                'balance': balance,
-                                'commitment': commitment
+                                "token": bondtoken.__dict__,
+                                "balance": balance,
+                                "commitment": commitment
                             })
                     except Exception as e:
                         LOG.error(e)
@@ -209,95 +209,92 @@ class StraightBondMyTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address_list': {
-                'type': 'list',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
             }
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             if not Web3.isAddress(account_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [会員権]保有トークン一覧
-# ------------------------------
+# /Position/Membership
 class MembershipMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/Membership
-    """
+    """保有一覧参照（Membership）"""
 
     def on_post(self, req, res):
-        LOG.info('v2.position.MembershipMyTokens')
+        LOG.info("v2.position.MembershipMyTokens")
 
         session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
-        # 入力値チェック
+        # Validation
         request_json = MembershipMyTokens.validate(req)
 
         # TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList',
-            config.TOKEN_LIST_CONTRACT_ADDRESS
+            contract_name="TokenList",
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
         # Exchange Contract
         ExchangeContract = None
         if config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             ExchangeContract = Contract.get_contract(
-                'IbetMembershipExchange',
-                config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
+                contract_name="IbetMembershipExchange",
+                address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
 
         listed_tokens = session.query(Listing).all()
-
         position_list = []
-        for _account_address in request_json['account_address_list']:
-            # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
+        for _account_address in request_json["account_address_list"]:
+            # Get token details
             for token in listed_tokens:
                 token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
                 token_address = token_info[0]
                 token_template = token_info[1]
                 owner = to_checksum_address(_account_address)
-
-                if token_template == 'IbetMembership':
-                    TokenContract = Contract.get_contract('IbetMembership', token_address)
+                if token_template == "IbetMembership":
+                    TokenContract = Contract.get_contract(
+                        contract_name="IbetMembership",
+                        address=token_address
+                    )
                     try:
                         balance = TokenContract.functions.balanceOf(owner).call()
                         if ExchangeContract is not None:
                             commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
                         else:
-                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
-                            # NOTE: 残高もゼロの場合は後続処理で取得対象外となる
+                            # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                             commitment = 0
-
-                        # 残高、残注文がゼロではない場合、Token-Contractから情報を取得する
-                        # Note: 現状は、会員権トークンの場合、残高・残注文ゼロの場合は詳細情報を
-                        #       返さない仕様としている。
+                        # If balance, pending_transfer, and commitment are non-zero,
+                        # get the token information from TokenContract.
                         if balance == 0 and commitment == 0:
                             continue
                         else:
-                            membershiptoken = MembershipToken.get(session=session, token_address=token_address)
+                            membershiptoken = MembershipToken.get(
+                                session=session,
+                                token_address=token_address
+                            )
                             position_list.append({
-                                'token': membershiptoken.__dict__,
-                                'balance': balance,
-                                'commitment': commitment
+                                "token": membershiptoken.__dict__,
+                                "balance": balance,
+                                "commitment": commitment
                             })
                     except Exception as e:
                         LOG.error(e)
@@ -307,105 +304,101 @@ class MembershipMyTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address_list': {
-                'type': 'list',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
             }
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             if not Web3.isAddress(account_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [クーポン]保有トークン一覧
-# ------------------------------
+# /Position/Coupon
 class CouponMyTokens(BaseResource):
-    """
-    Endpoint: /v2/Position/Coupon
-    """
+    """保有一覧参照（Coupon）"""
 
     def on_post(self, req, res):
-        LOG.info('v2.position.CouponMyTokens')
+        LOG.info("v2.position.CouponMyTokens")
 
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
-        # 入力値チェック
+        # Validation
         request_json = CouponMyTokens.validate(req)
 
         # TokenList Contract
         ListContract = Contract.get_contract(
-            'TokenList',
-            config.TOKEN_LIST_CONTRACT_ADDRESS
+            contract_name="TokenList",
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
         # Coupon Exchange Contract
         CouponExchangeContract = None
         if config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
             CouponExchangeContract = Contract.get_contract(
-                'IbetCouponExchange',
-                config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+                contract_name="IbetCouponExchange",
+                address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
             )
 
         listed_tokens = session.query(Listing).all()
-
         position_list = []
-        for _account_address in request_json['account_address_list']:
-            # 取扱トークンリスト1件ずつトークンの詳細情報を取得していく
+        for _account_address in request_json["account_address_list"]:
+            # Get token details
             for token in listed_tokens:
                 token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
                 token_address = token_info[0]
                 token_template = token_info[1]
                 owner = to_checksum_address(_account_address)
-
-                if token_template == 'IbetCoupon':
-                    CouponTokenContract = Contract.get_contract('IbetCoupon', token_address)
+                if token_template == "IbetCoupon":
+                    CouponTokenContract = Contract.get_contract(
+                        contract_name="IbetCoupon",
+                        address=token_address
+                    )
                     try:
                         balance = CouponTokenContract.functions.balanceOf(owner).call()
                         if CouponExchangeContract is not None:
                             commitment = CouponExchangeContract.functions.commitmentOf(owner, token_address).call()
                         else:
-                            # EXCHANGE_CONTRACT_ADDRESSが設定されていない場合は残注文ゼロを設定する
-                            # NOTE: 残高、使用済数量、受領履歴もゼロの場合は後続処理で取得対象外となる
+                            # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                             commitment = 0
                         used = CouponTokenContract.functions.usedOf(owner).call()
-
-                        # 移転履歴TBLからトークンの受領履歴を検索
-                        # NOTE: TBLの情報は実際の移転状態とタイムラグがある
-                        received_history = session.query(Transfer). \
-                            filter(Transfer.token_address == token.token_address). \
-                            filter(Transfer.to_address == owner). \
+                        # Retrieving token receipt history from IDXTransfer
+                        # NOTE: Index data has a lag from the most recent transfer state.
+                        received_history = session.query(IDXTransfer). \
+                            filter(IDXTransfer.token_address == token.token_address). \
+                            filter(IDXTransfer.to_address == owner). \
                             first()
-
-                        # 残高がゼロではない or 残注文がゼロではない or
-                        # 使用済数量がゼロではない or 受領履歴がゼロ件ではない 場合、詳細情報を取得する
+                        # If balance, pending_transfer, and commitment are non-zero,
+                        # get the token information from TokenContract.
                         if balance == 0 and commitment == 0 and used == 0 and received_history is None:
                             continue
                         else:
-                            coupontoken = CouponToken.get(session=session, token_address=token_address)
+                            coupontoken = CouponToken.get(
+                                session=session,
+                                token_address=token_address
+                            )
                             position_list.append({
-                                'token': coupontoken.__dict__,
-                                'balance': balance,
-                                'commitment': commitment,
-                                'used': used
+                                "token": coupontoken.__dict__,
+                                "balance": balance,
+                                "commitment": commitment,
+                                "used": used
                             })
-
                     except Exception as e:
                         LOG.error(e)
                         continue
@@ -414,98 +407,93 @@ class CouponMyTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address_list': {
-                'type': 'list',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
             }
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             if not Web3.isAddress(account_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [クーポン]消費履歴
-# ------------------------------
+# /Position/Coupon/Consumptions
 class CouponConsumptions(BaseResource):
-    """
-    Endpoint: /v2/Position/Coupon/Consumptions
-    """
+    """Coupon消費履歴参照"""
 
     def on_post(self, req, res):
-        LOG.info('v2.position.CouponConsumptions')
-        session = req.context['session']
+        LOG.info("v2.position.CouponConsumptions")
+        session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
-        # 入力値チェック
+        # Validation
         request_json = CouponConsumptions.validate(req)
 
-        # クーポン消費履歴のリストを作成
-        _coupon_address = to_checksum_address(request_json['token_address'])
+        # Create a list of coupon consumption history
+        _coupon_address = to_checksum_address(request_json["token_address"])
         coupon_consumptions = []
-        for _account_address in request_json['account_address_list']:
-            consumptions = session.query(ConsumeCoupon). \
-                filter(ConsumeCoupon.token_address == _coupon_address). \
-                filter(ConsumeCoupon.account_address == _account_address). \
+        for _account_address in request_json["account_address_list"]:
+            consumptions = session.query(IDXConsumeCoupon). \
+                filter(IDXConsumeCoupon.token_address == _coupon_address). \
+                filter(IDXConsumeCoupon.account_address == _account_address). \
                 all()
             for consumption in consumptions:
                 coupon_consumptions.append({
-                    'account_address': _account_address,
-                    'block_timestamp': consumption.block_timestamp.strftime('%Y/%m/%d %H:%M:%S'),
-                    'value': consumption.amount
+                    "account_address": _account_address,
+                    "block_timestamp": consumption.block_timestamp.strftime("%Y/%m/%d %H:%M:%S"),
+                    "value": consumption.amount
                 })
 
-        # block_timestampの昇順にソートする
-        # Note: もともとのリストはaccountのリストでループして作成したリストなので、古い順になっていないため
+        # Sort by block_timestamp in ascending order
         coupon_consumptions = sorted(
             coupon_consumptions,
-            key=lambda x: x['block_timestamp']
+            key=lambda x: x["block_timestamp"]
         )
 
         self.on_success(res, coupon_consumptions)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'token_address': {
-                'type': 'string',
-                'empty': False,
-                'required': True
+            "token_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
             },
-            'account_address_list': {
-                'type': 'list',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
+            "account_address_list": {
+                "type": "list",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
             }
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['token_address']):
+        if not Web3.isAddress(request_json["token_address"]):
             raise InvalidParameterError
 
-        for account_address in request_json['account_address_list']:
+        for account_address in request_json["account_address_list"]:
             if not Web3.isAddress(account_address):
                 raise InvalidParameterError
 

@@ -16,64 +16,56 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 from sqlalchemy import func
 from sqlalchemy import desc
 from sqlalchemy import and_
 from cerberus import Validator
-
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
-
 from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import Order, Agreement, AgreementStatus
-from app.errors import InvalidParameterError, NotSupportedError
+from app.model import (
+    IDXOrder as Order,
+    IDXAgreement as Agreement,
+    AgreementStatus
+)
+from app.errors import (
+    InvalidParameterError,
+    NotSupportedError
+)
 from app import config
 from app.contracts import Contract
 
 LOG = log.get_logger()
 
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_stack.inject(geth_poa_middleware, layer=0)
 
-"""
-Common
-"""
-
-
-# ------------------------------
-# 約定情報参照
-# ------------------------------
+# /Market/Agreement
 class GetAgreement(BaseResource):
-    """
-    Endpoint: /v2/Market/Agreement
-    """
+    """約定情報参照"""
 
     def on_get(self, req, res):
-        LOG.info('v2.market_information.GetAgreement')
+        LOG.info("v2.market_information.GetAgreement")
 
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None and \
                 config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None and \
                 config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None and \
                 config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='GET', url=req.path)
+            raise NotSupportedError(method="GET", url=req.path)
 
         # 入力値チェック
         request_json = self.validate(req)
 
         # リクエストから情報を抽出
-        order_id = request_json['order_id']
-        agreement_id = request_json['agreement_id']
-        exchange_address = to_checksum_address(request_json['exchange_address'])
+        order_id = request_json["order_id"]
+        agreement_id = request_json["agreement_id"]
+        exchange_address = to_checksum_address(request_json["exchange_address"])
 
         # 取引コントラクトに接続
         ExchangeContract, exchange = self.exchange_contracts(exchange_address)
 
         # 注文情報の取得
-        if exchange != 'IbetOTCExchange':
+        if exchange != "IbetOTCExchange":
             maker_address, token_address, _, _, is_buy, _, _ = \
                 ExchangeContract.functions.getOrder(order_id).call()
         else:
@@ -82,14 +74,14 @@ class GetAgreement(BaseResource):
             is_buy = False
 
         if maker_address == config.ZERO_ADDRESS:
-            raise InvalidParameterError('Data not found')
+            raise InvalidParameterError("Data not found")
 
         # 約定情報の取得
         taker_address, amount, price, canceled, paid, expiry = \
             ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
 
         if taker_address == config.ZERO_ADDRESS:
-            raise InvalidParameterError('Data not found')
+            raise InvalidParameterError("Data not found")
 
         if is_buy:
             buyer_address = maker_address
@@ -99,15 +91,15 @@ class GetAgreement(BaseResource):
             seller_address = maker_address
 
         res_data = {
-            'token_address': token_address,  # トークンアドレス
-            'counterpart': taker_address,  # Takerのアドレス
-            'buyer_address': buyer_address,  # 買い手EOA
-            'seller_address': seller_address,  # 売り手EOA
-            'amount': amount,  # 約定数量
-            'price': price,  # 約定単価
-            'canceled': canceled,  # 約定取消フラグ
-            'paid': paid,  # 支払済フラグ
-            'expiry': expiry  # 有効期限（unixtime）
+            "token_address": token_address,  # トークンアドレス
+            "counterpart": taker_address,  # Takerのアドレス
+            "buyer_address": buyer_address,  # 買い手EOA
+            "seller_address": seller_address,  # 売り手EOA
+            "amount": amount,  # 約定数量
+            "price": price,  # 約定単価
+            "canceled": canceled,  # 約定取消フラグ
+            "paid": paid,  # 支払済フラグ
+            "expiry": expiry  # 有効期限（unixtime）
         }
 
         self.on_success(res, res_data)
@@ -116,22 +108,22 @@ class GetAgreement(BaseResource):
     def exchange_contracts(exchange_address):
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract('IbetStraightBondExchange', exchange_address)
-            exchange = 'IbetStraightBondExchange'
+            ExchangeContract = Contract.get_contract("IbetStraightBondExchange", exchange_address)
+            exchange = "IbetStraightBondExchange"
         elif config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract('IbetMembershipExchange', exchange_address)
-            exchange = 'IbetMembershipExchange'
+            ExchangeContract = Contract.get_contract("IbetMembershipExchange", exchange_address)
+            exchange = "IbetMembershipExchange"
         elif config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract('IbetCouponExchange', exchange_address)
-            exchange = 'IbetCouponExchange'
+            ExchangeContract = Contract.get_contract("IbetCouponExchange", exchange_address)
+            exchange = "IbetCouponExchange"
         elif config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None and \
                 exchange_address == to_checksum_address(config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract('IbetOTCExchange', exchange_address)
-            exchange = 'IbetOTCExchange'
+            ExchangeContract = Contract.get_contract("IbetOTCExchange", exchange_address)
+            exchange = "IbetOTCExchange"
         else:
-            raise InvalidParameterError(description='Invalid Address')
+            raise InvalidParameterError(description="Invalid Address")
 
         return ExchangeContract, exchange
 
@@ -147,21 +139,21 @@ class GetAgreement(BaseResource):
             raise InvalidParameterError()
 
         validator = Validator({
-            'order_id': {
-                'type': 'integer',
-                'empty': False,
-                'required': True
+            "order_id": {
+                "type": "integer",
+                "empty": False,
+                "required": True
             },
-            'agreement_id': {
-                'type': 'integer',
-                'empty': False,
-                'required': True
+            "agreement_id": {
+                "type": "integer",
+                "empty": False,
+                "required": True
             },
-            'exchange_address': {
-                'type': 'string',
-                'schema': {'type': 'string'},
-                'empty': False,
-                'required': True
+            "exchange_address": {
+                "type": "string",
+                "schema": {"type": "string"},
+                "empty": False,
+                "required": True
             }
         })
 
@@ -169,7 +161,7 @@ class GetAgreement(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         try:
-            if not Web3.isAddress(request_json['exchange_address']):
+            if not Web3.isAddress(request_json["exchange_address"]):
                 raise InvalidParameterError
         except:
             raise InvalidParameterError
@@ -177,40 +169,31 @@ class GetAgreement(BaseResource):
         return request_json
 
 
-"""
-Straight Bond
-"""
-
-
-# ------------------------------
-# [普通社債]板情報取得
-# ------------------------------
+# /Market/OrderBook/StraightBond
 class StraightBondOrderBook(BaseResource):
-    """
-    Endpoint: /v2/Market/OrderBook/StraightBond
-    """
+    """[普通社債]板情報取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.StraightBondOrderBook')
-        session = req.context['session']
+        LOG.info("v2.market_information.StraightBondOrderBook")
+        session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         # 入力値チェック
         request_json = StraightBondOrderBook.validate(req)
 
         # 入力値を抽出
-        token_address = to_checksum_address(request_json['token_address'])
+        token_address = to_checksum_address(request_json["token_address"])
 
         # 注文を抽出
-        is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
+        is_buy = request_json["order_type"] == "buy"  # 相対注文が買い注文かどうか
         exchange_address = to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
-        if 'account_address' in request_json:
-            account_address = to_checksum_address(request_json['account_address'])
+        if "account_address" in request_json:
+            account_address = to_checksum_address(request_json["account_address"])
 
             if is_buy:  # 買注文
                 # ＜抽出条件＞
@@ -304,79 +287,75 @@ class StraightBondOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
-                'order_id': order_id,
-                'price': price,
-                'amount': amount,
-                'account_address': account_address,
+                "order_id": order_id,
+                "price": price,
+                "amount": amount,
+                "account_address": account_address,
             })
 
         # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
-        if request_json['order_type'] == 'buy':
-            order_list = sorted(order_list_tmp, key=lambda x: x['price'])
+        if request_json["order_type"] == "buy":
+            order_list = sorted(order_list_tmp, key=lambda x: x["price"])
         else:
-            order_list = sorted(order_list_tmp, key=lambda x: -x['price'])
+            order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
         self.on_success(res, order_list)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address': {
-                'type': 'string'
+            "account_address": {
+                "type": "string"
             },
-            'token_address': {
-                'type': 'string',
-                'empty': False,
-                'required': True
+            "token_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
             },
-            'order_type': {
-                'type': 'string',
-                'empty': False,
-                'required': True,
-                'allowed': ['buy', 'sell']
+            "order_type": {
+                "type": "string",
+                "empty": False,
+                "required": True,
+                "allowed": ["buy", "sell"]
             },
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['token_address']):
+        if not Web3.isAddress(request_json["token_address"]):
             raise InvalidParameterError
 
-        if 'account_address' in request_json:
-            if not Web3.isAddress(request_json['account_address']):
+        if "account_address" in request_json:
+            if not Web3.isAddress(request_json["account_address"]):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [普通社債]現在値取得
-# ------------------------------
+# /Market/LastPrice/StraightBond
 class StraightBondLastPrice(BaseResource):
-    """
-    Endpoint: /v2/Market/LastPrice/StraightBond
-    """
+    """[普通社債]現在値取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.StraightBondLastPrice')
+        LOG.info("v2.market_information.StraightBondLastPrice")
 
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         request_json = StraightBondLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
-            'IbetStraightBondExchange',
+            "IbetStraightBondExchange",
             config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             try:
                 last_price = ExchangeContract.functions.lastPrice(
                     to_checksum_address(token_address)).call()
@@ -384,27 +363,27 @@ class StraightBondLastPrice(BaseResource):
                 LOG.error(e)
                 last_price = 0
             price_list.append({
-                'token_address': token_address,
-                'last_price': last_price
+                "token_address": token_address,
+                "last_price": last_price
             })
 
         self.on_success(res, price_list)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'address_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "address_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })
@@ -412,33 +391,29 @@ class StraightBondLastPrice(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             if not Web3.isAddress(token_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [普通社債]歩み値取得
-# ------------------------------
+# /v2/Market/Tick/StraightBond
 class StraightBondTick(BaseResource):
-    """
-    Endpoint: /v2/Market/Tick/StraightBond
-    """
+    """[普通社債]歩み値取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.StraightBondTick')
+        LOG.info("v2.market_information.StraightBondTick")
 
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         request_json = StraightBondTick.validate(req)
 
         session = req.context["session"]
 
         tick_list = []
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             token = to_checksum_address(token_address)
             tick = []
             try:
@@ -450,19 +425,19 @@ class StraightBondTick(BaseResource):
                     all()
 
                 for entry in entries:
-                    block_timestamp_utc = entry.Agreement.settlement_timestamp
+                    block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
                     tick.append({
-                        'block_timestamp': block_timestamp_utc.strftime('%Y/%m/%d %H:%M:%S'),
-                        'buy_address': entry.Agreement.buyer_address,
-                        'sell_address': entry.Agreement.seller_address,
-                        'order_id': entry.Agreement.order_id,
-                        'agreement_id': entry.Agreement.agreement_id,
-                        'price': entry.Order.price,
-                        'amount': entry.Agreement.amount
+                        "block_timestamp": block_timestamp_utc.strftime("%Y/%m/%d %H:%M:%S"),
+                        "buy_address": entry.IDXAgreement.buyer_address,
+                        "sell_address": entry.IDXAgreement.seller_address,
+                        "order_id": entry.IDXAgreement.order_id,
+                        "agreement_id": entry.IDXAgreement.agreement_id,
+                        "price": entry.IDXOrder.price,
+                        "amount": entry.IDXAgreement.amount
                     })
                 tick_list.append({
-                    'token_address': token_address,
-                    'tick': tick
+                    "token_address": token_address,
+                    "tick": tick
                 })
             except Exception as e:
                 LOG.error(e)
@@ -472,19 +447,19 @@ class StraightBondTick(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'address_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "address_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })
@@ -492,47 +467,38 @@ class StraightBondTick(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             if not Web3.isAddress(token_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-"""
-Membership
-"""
-
-
-# ------------------------------
-# [会員権]板情報取得
-# ------------------------------
+# /v2/Market/OrderBook/Membership
 class MembershipOrderBook(BaseResource):
-    """
-    Endpoint: /v2/Market/OrderBook/Membership
-    """
+    """[会員権]板情報取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.MembershipOrderBook')
-        session = req.context['session']
+        LOG.info("v2.market_information.MembershipOrderBook")
+        session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         # 入力値チェック
         request_json = MembershipOrderBook.validate(req)
 
         # 入力値を抽出
-        token_address = to_checksum_address(request_json['token_address'])
+        token_address = to_checksum_address(request_json["token_address"])
 
         # 注文を抽出
-        is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
+        is_buy = request_json["order_type"] == "buy"  # 相対注文が買い注文かどうか
         exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
-        if 'account_address' in request_json:
-            account_address = to_checksum_address(request_json['account_address'])
+        if "account_address" in request_json:
+            account_address = to_checksum_address(request_json["account_address"])
 
             if is_buy:  # 買注文
                 # ＜抽出条件＞
@@ -626,79 +592,75 @@ class MembershipOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
-                'order_id': order_id,
-                'price': price,
-                'amount': amount,
-                'account_address': account_address,
+                "order_id": order_id,
+                "price": price,
+                "amount": amount,
+                "account_address": account_address,
             })
 
         # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
-        if request_json['order_type'] == 'buy':
-            order_list = sorted(order_list_tmp, key=lambda x: x['price'])
+        if request_json["order_type"] == "buy":
+            order_list = sorted(order_list_tmp, key=lambda x: x["price"])
         else:
-            order_list = sorted(order_list_tmp, key=lambda x: -x['price'])
+            order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
         self.on_success(res, order_list)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address': {
-                'type': 'string'
+            "account_address": {
+                "type": "string"
             },
-            'token_address': {
-                'type': 'string',
-                'empty': False,
-                'required': True
+            "token_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
             },
-            'order_type': {
-                'type': 'string',
-                'empty': False,
-                'required': True,
-                'allowed': ['buy', 'sell']
+            "order_type": {
+                "type": "string",
+                "empty": False,
+                "required": True,
+                "allowed": ["buy", "sell"]
             },
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['token_address']):
+        if not Web3.isAddress(request_json["token_address"]):
             raise InvalidParameterError
 
-        if 'account_address' in request_json:
-            if not Web3.isAddress(request_json['account_address']):
+        if "account_address" in request_json:
+            if not Web3.isAddress(request_json["account_address"]):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [会員権]現在値取得
-# ------------------------------
+# /v2/Market/LastPrice/Membership
 class MembershipLastPrice(BaseResource):
-    """
-    Endpoint: /v2/Market/LastPrice/Membership
-    """
+    """[会員権]現在値取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.MembershipLastPrice')
+        LOG.info("v2.market_information.MembershipLastPrice")
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         request_json = MembershipLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
-            'IbetMembershipExchange',
+            "IbetMembershipExchange",
             config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             try:
                 last_price = ExchangeContract.functions. \
                     lastPrice(to_checksum_address(token_address)).call()
@@ -707,27 +669,27 @@ class MembershipLastPrice(BaseResource):
                 last_price = 0
 
             price_list.append({
-                'token_address': token_address,
-                'last_price': last_price
+                "token_address": token_address,
+                "last_price": last_price
             })
 
         self.on_success(res, price_list)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'address_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "address_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })
@@ -735,26 +697,22 @@ class MembershipLastPrice(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             if not Web3.isAddress(token_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [会員権]歩み値取得
-# ------------------------------
+# /v2/Market/Tick/Membership
 class MembershipTick(BaseResource):
-    """
-    Endpoint: /v2/Market/Tick/Membership
-    """
+    """[会員権]歩み値取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.MembershipTick')
+        LOG.info("v2.market_information.MembershipTick")
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         request_json = MembershipTick.validate(req)
 
@@ -762,7 +720,7 @@ class MembershipTick(BaseResource):
 
         tick_list = []
         # TokenごとにTickを取得
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             token = to_checksum_address(token_address)
             tick = []
             try:
@@ -774,19 +732,19 @@ class MembershipTick(BaseResource):
                     all()
 
                 for entry in entries:
-                    block_timestamp_utc = entry.Agreement.settlement_timestamp
+                    block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
                     tick.append({
-                        'block_timestamp': block_timestamp_utc.strftime('%Y/%m/%d %H:%M:%S'),
-                        'buy_address': entry.Agreement.buyer_address,
-                        'sell_address': entry.Agreement.seller_address,
-                        'order_id': entry.Agreement.order_id,
-                        'agreement_id': entry.Agreement.agreement_id,
-                        'price': entry.Order.price,
-                        'amount': entry.Agreement.amount
+                        "block_timestamp": block_timestamp_utc.strftime("%Y/%m/%d %H:%M:%S"),
+                        "buy_address": entry.IDXAgreement.buyer_address,
+                        "sell_address": entry.IDXAgreement.seller_address,
+                        "order_id": entry.IDXAgreement.order_id,
+                        "agreement_id": entry.IDXAgreement.agreement_id,
+                        "price": entry.IDXOrder.price,
+                        "amount": entry.IDXAgreement.amount
                     })
                 tick_list.append({
-                    'token_address': token_address,
-                    'tick': tick
+                    "token_address": token_address,
+                    "tick": tick
                 })
             except Exception as e:
                 LOG.error(e)
@@ -796,19 +754,19 @@ class MembershipTick(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'address_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "address_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })
@@ -816,47 +774,38 @@ class MembershipTick(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             if not Web3.isAddress(token_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-"""
-Coupon
-"""
-
-
-# ------------------------------
-# [クーポン]板情報取得
-# ------------------------------
+# /v2/Market/OrderBook/Coupon
 class CouponOrderBook(BaseResource):
-    """
-    Endpoint: /v2/Market/OrderBook/Coupon
-    """
+    """[クーポン]板情報取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.CouponOrderBook')
-        session = req.context['session']
+        LOG.info("v2.market_information.CouponOrderBook")
+        session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         # 入力値チェック
         request_json = CouponOrderBook.validate(req)
 
         # 入力値を抽出
-        token_address = to_checksum_address(request_json['token_address'])
+        token_address = to_checksum_address(request_json["token_address"])
 
         # 注文を抽出
-        is_buy = request_json['order_type'] == 'buy'  # 相対注文が買い注文かどうか
+        is_buy = request_json["order_type"] == "buy"  # 相対注文が買い注文かどうか
         exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
 
         # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
         # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
-        if 'account_address' in request_json:
-            account_address = to_checksum_address(request_json['account_address'])
+        if "account_address" in request_json:
+            account_address = to_checksum_address(request_json["account_address"])
 
             if is_buy:  # 買注文
                 # ＜抽出条件＞
@@ -950,79 +899,75 @@ class CouponOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
-                'order_id': order_id,
-                'price': price,
-                'amount': amount,
-                'account_address': account_address,
+                "order_id": order_id,
+                "price": price,
+                "amount": amount,
+                "account_address": account_address,
             })
 
         # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
-        if request_json['order_type'] == 'buy':
-            order_list = sorted(order_list_tmp, key=lambda x: x['price'])
+        if request_json["order_type"] == "buy":
+            order_list = sorted(order_list_tmp, key=lambda x: x["price"])
         else:
-            order_list = sorted(order_list_tmp, key=lambda x: -x['price'])
+            order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
         self.on_success(res, order_list)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'account_address': {
-                'type': 'string'
+            "account_address": {
+                "type": "string"
             },
-            'token_address': {
-                'type': 'string',
-                'empty': False,
-                'required': True
+            "token_address": {
+                "type": "string",
+                "empty": False,
+                "required": True
             },
-            'order_type': {
-                'type': 'string',
-                'empty': False,
-                'required': True,
-                'allowed': ['buy', 'sell']
+            "order_type": {
+                "type": "string",
+                "empty": False,
+                "required": True,
+                "allowed": ["buy", "sell"]
             },
         })
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json['token_address']):
+        if not Web3.isAddress(request_json["token_address"]):
             raise InvalidParameterError
 
-        if 'account_address' in request_json:
-            if not Web3.isAddress(request_json['account_address']):
+        if "account_address" in request_json:
+            if not Web3.isAddress(request_json["account_address"]):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [クーポン]現在値取得
-# ------------------------------
+# /v2/Market/LastPrice/Coupon
 class CouponLastPrice(BaseResource):
-    """
-    Endpoint: /v2/Market/LastPrice/Coupon
-    """
+    """[クーポン]現在値取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.CouponLastPrice')
+        LOG.info("v2.market_information.CouponLastPrice")
 
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         request_json = CouponLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
-            'IbetCouponExchange',
+            "IbetCouponExchange",
             config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             try:
                 last_price = ExchangeContract.functions. \
                     lastPrice(to_checksum_address(token_address)).call()
@@ -1031,27 +976,27 @@ class CouponLastPrice(BaseResource):
                 last_price = 0
 
             price_list.append({
-                'token_address': token_address,
-                'last_price': last_price
+                "token_address": token_address,
+                "last_price": last_price
             })
 
         self.on_success(res, price_list)
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'address_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "address_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })
@@ -1059,26 +1004,22 @@ class CouponLastPrice(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             if not Web3.isAddress(token_address):
                 raise InvalidParameterError
 
         return request_json
 
 
-# ------------------------------
-# [クーポン]歩み値取得
-# ------------------------------
+# /v2/Market/Tick/Coupon
 class CouponTick(BaseResource):
-    """
-    Endpoint: /v2/Market/Tick/Coupon
-    """
+    """[クーポン]歩み値取得"""
 
     def on_post(self, req, res):
-        LOG.info('v2.market_information.CouponTick')
+        LOG.info("v2.market_information.CouponTick")
 
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method='POST', url=req.path)
+            raise NotSupportedError(method="POST", url=req.path)
 
         request_json = CouponTick.validate(req)
 
@@ -1086,7 +1027,7 @@ class CouponTick(BaseResource):
 
         tick_list = []
         # TokenごとにTickを取得
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             token = to_checksum_address(token_address)
             tick = []
             try:
@@ -1098,19 +1039,19 @@ class CouponTick(BaseResource):
                     all()
 
                 for entry in entries:
-                    block_timestamp_utc = entry.Agreement.settlement_timestamp
+                    block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
                     tick.append({
-                        'block_timestamp': block_timestamp_utc.strftime('%Y/%m/%d %H:%M:%S'),
-                        'buy_address': entry.Agreement.buyer_address,
-                        'sell_address': entry.Agreement.seller_address,
-                        'order_id': entry.Agreement.order_id,
-                        'agreement_id': entry.Agreement.agreement_id,
-                        'price': entry.Order.price,
-                        'amount': entry.Agreement.amount
+                        "block_timestamp": block_timestamp_utc.strftime("%Y/%m/%d %H:%M:%S"),
+                        "buy_address": entry.IDXAgreement.buyer_address,
+                        "sell_address": entry.IDXAgreement.seller_address,
+                        "order_id": entry.IDXAgreement.order_id,
+                        "agreement_id": entry.IDXAgreement.agreement_id,
+                        "price": entry.IDXOrder.price,
+                        "amount": entry.IDXAgreement.amount
                     })
                 tick_list.append({
-                    'token_address': token_address,
-                    'tick': tick
+                    "token_address": token_address,
+                    "tick": tick
                 })
             except Exception as e:
                 LOG.error(e)
@@ -1120,19 +1061,19 @@ class CouponTick(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = req.context['data']
+        request_json = req.context["data"]
         if request_json is None:
             raise InvalidParameterError
 
         validator = Validator({
-            'address_list': {
-                'type': 'list',
-                'empty': False,
-                'required': True,
-                'schema': {
-                    'type': 'string',
-                    'required': True,
-                    'empty': False,
+            "address_list": {
+                "type": "list",
+                "empty": False,
+                "required": True,
+                "schema": {
+                    "type": "string",
+                    "required": True,
+                    "empty": False,
                 }
             }
         })
@@ -1140,7 +1081,7 @@ class CouponTick(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        for token_address in request_json['address_list']:
+        for token_address in request_json["address_list"]:
             if not Web3.isAddress(token_address):
                 raise InvalidParameterError
 
