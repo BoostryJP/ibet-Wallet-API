@@ -42,10 +42,10 @@ class CompanyList:
                 resp_json = json.load(open('data/company_list.json', 'r'))
             else:
                 resp_json = requests.get(url, timeout=config.REQUEST_TIMEOUT).json()
+            return CompanyList(resp_json)
         except Exception as err:
-            resp_json = {}
             LOG.error(err)
-        return CompanyList(resp_json)
+            raise err
 
     def __init__(self, list_json):
         self.json = list_json
