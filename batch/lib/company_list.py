@@ -28,6 +28,9 @@ LOG = log.get_logger()
 
 class CompanyListFactory:
     def __init__(self, url):
+        if config.APP_ENV != "local" and config.COMPANY_LIST_LOCAL_MODE is False:
+            if url is None:
+                raise Exception("COMPANY_LIST_URL is not set")
         self.url = url
 
     def get(self):
@@ -35,6 +38,7 @@ class CompanyListFactory:
 
 
 class CompanyList:
+
     @classmethod
     def get(self, url):
         try:
@@ -42,13 +46,10 @@ class CompanyList:
                 resp_json = json.load(open('data/company_list.json', 'r'))
             else:
                 resp_json = requests.get(url, timeout=config.REQUEST_TIMEOUT).json()
-            return CompanyList(resp_json)
-        except ConnectionError:
-            LOG.warn(f"Failed to connect to {url}")
-        except TimeoutError:
-            LOG.warn(f"Timed out connecting to {url}")
         except Exception as err:
-            raise err
+            resp_json = {}
+            LOG.error(err)
+        return CompanyList(resp_json)
 
     def __init__(self, list_json):
         self.json = list_json

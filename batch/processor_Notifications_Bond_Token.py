@@ -365,16 +365,6 @@ def main():
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
     LOG.info("Service started successfully")
-    try:
-        if len(company_list_factory.get().json) == 0:
-            LOG.error("Company list not found")
-            exit(1)
-    except FileNotFoundError:
-        LOG.error("Local mode need company list at 'data/company_list.json'")
-        exit(1)
-    except Exception as err:
-        LOG.error(f"Failed to get {company_list_factory.url}")
-        LOG.error(err)
 
     while True:
         start_time = time.time()
