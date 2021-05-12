@@ -43,8 +43,11 @@ class CompanyList:
             else:
                 resp_json = requests.get(url, timeout=config.REQUEST_TIMEOUT).json()
             return CompanyList(resp_json)
+        except ConnectionError:
+            LOG.warn(f"Failed to connect to {url}")
+        except TimeoutError:
+            LOG.warn(f"Timed out connecting to {url}")
         except Exception as err:
-            LOG.error(err)
             raise err
 
     def __init__(self, list_json):

@@ -30,11 +30,13 @@ function start () {
     fi
 
     # COMPANY_LIST_URL
-     resp=$(curl "${COMPANY_LIST_URL}" -o /dev/null -w '%{http_code}\n' -s)
-     if [ "${resp}" -ne 200 ]; then
-       echo "Please confirm COMPANY_LIST_URL, which response code is ${resp}"
-       exit 1
-     fi
+    if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
+      resp=$(curl "${COMPANY_LIST_URL}" -o /dev/null -w '%{http_code}\n' -s)
+      if [ "${resp}" -ne 200 ]; then
+        echo "Please confirm COMPANY_LIST_URL, which response code is ${resp}"
+        exit 1
+      fi
+    fi
 
     #source .venv/bin/activate
     python batch/processor_Block_Sync_Status.py &
