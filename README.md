@@ -22,11 +22,11 @@ It supports the tokens developed by [ibet-SmartContract](https://github.com/Boos
 
 ## Supported contract version
 
-* ibet-SmartContract: version 1.1.0
+* ibet-SmartContract: version 21.4.0
 
 ## Prerequisites
 
-Set up an execution environment of Python 3.6 or higher.
+Set up an execution environment of Python 3.8 or higher.
 
 ## Starting and Stopping the Server
 Install packages
