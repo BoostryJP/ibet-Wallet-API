@@ -97,7 +97,7 @@ class TestV2TransferApprovalHistory:
 
     # Normal_2
     # Data exists
-    # cursor=設定なし、 limit=設定なし
+    # offset=設定なし、 limit=設定なし
     def test_normal_2(self, client, session):
         # prepare data
         listing = {
@@ -157,7 +157,7 @@ class TestV2TransferApprovalHistory:
 
     # Normal_3
     # Data exists
-    # cursor=1、 limit=設定なし
+    # offset=1、 limit=設定なし
     def test_normal_3(self, client, session):
         # prepare data
         listing = {
@@ -198,7 +198,7 @@ class TestV2TransferApprovalHistory:
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = "cursor=1"
+        query_string = "offset=1"
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         # assertion
@@ -218,7 +218,7 @@ class TestV2TransferApprovalHistory:
 
     # Normal_4
     # Data exists
-    # cursor=2、 limit=2
+    # offset=2、 limit=2
     def test_normal_4(self, client, session):
         # prepare data
         listing = {
@@ -259,7 +259,7 @@ class TestV2TransferApprovalHistory:
 
         # request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = "cursor=2&limit=2"
+        query_string = "offset=2&limit=2"
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         # assertion
@@ -278,7 +278,7 @@ class TestV2TransferApprovalHistory:
 
     # Normal_5
     # Data exists
-    # cursor=設定なし、 limit=2
+    # offset=設定なし、 limit=2
     def test_normal_5(self, client, session):
         # prepare data
         listing = {
@@ -327,7 +327,7 @@ class TestV2TransferApprovalHistory:
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert len(resp.json["data"]) == 1
         assert resp.json["data"][0]["token_address"] == self.token_address
-        assert resp.json["data"][0]["application_id"] == i
+        assert resp.json["data"][0]["application_id"] == 0
         assert resp.json["data"][0]["from_address"] == self.from_address
         assert resp.json["data"][0]["to_address"] == self.to_address
         assert before_datetime < resp.json["data"][0]["application_datetime"] < after_datetime
@@ -338,7 +338,7 @@ class TestV2TransferApprovalHistory:
 
     # Normal_6
     # Data exists
-    # cursor=設定なし、 limit=0
+    # offset=設定なし、 limit=0
     def test_normal_6(self, client, session):
         # prepare data
         listing = {
@@ -410,11 +410,11 @@ class TestV2TransferApprovalHistory:
         }
 
     # Error_3_1
-    # cursor validation : String
+    # offset validation : String
     # 400
     def test_error_3_1(self, client, session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = "cursor=string"
+        query_string = "offset=string"
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assert resp.status_code == 400
@@ -422,34 +422,34 @@ class TestV2TransferApprovalHistory:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'cursor': [
-                    "field 'cursor' could not be coerced",
+                'offset': [
+                    "field 'offset' could not be coerced",
                     'must be of integer type'
                 ]
             }
         }
 
     # Error_3_2
-    # cursor validation : 負値
+    # offset validation : 負値
     # 400
     def test_error_3_2(self, client, session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = "cursor=-1"
+        query_string = "offset=-1"
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'cursor': 'min value is 0'}
+            'description': {'offset': 'min value is 0'}
         }
 
     # Error_3_3
-    # cursor validation : 小数
+    # offset validation : 小数
     # 400
     def test_error_3_3(self, client, session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        query_string = "cursor=1.5"
+        query_string = "offset=1.5"
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assert resp.status_code == 400
@@ -457,15 +457,15 @@ class TestV2TransferApprovalHistory:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'cursor': [
-                    "field 'cursor' could not be coerced",
+                'offset': [
+                    "field 'offset' could not be coerced",
                     'must be of integer type'
                 ]
             }
         }
 
     # Error_3_4
-    # cursor validation : listより大きい値
+    # offset validation : listより大きい値
     # 400
     def test_error_3_4(self, client, session):
         listing = {
@@ -476,14 +476,14 @@ class TestV2TransferApprovalHistory:
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         max_value = str(sys.maxsize)
-        query_string = 'cursor=' + max_value + '&limit=1'
+        query_string = 'offset=' + max_value + '&limit=1'
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': 'cursor parameter must be less than transfer_approval_history list num'
+            'description': 'offset parameter must be less than transfer_approval_history list num'
         }
 
     # Error_4_1

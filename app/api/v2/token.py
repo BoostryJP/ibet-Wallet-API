@@ -166,7 +166,7 @@ class TransferHistory(BaseResource):
             raise InvalidParameterError(description=description)
 
         # validation
-        request_json = TransferHistory.validate(req)
+        request_json = self.validate(req)
 
         # 取扱トークンチェック
         listed_token = session.query(Listing). \
@@ -176,41 +176,35 @@ class TransferHistory(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # 移転履歴取得
-        transfer_history = session.query(IDXTransfer). \
+        query = session.query(IDXTransfer). \
             filter(IDXTransfer.token_address == contract_address). \
-            order_by(IDXTransfer.id). \
-            all()
-        list_length = len(transfer_history)
+            order_by(IDXTransfer.id)
+        list_length = query.count()
 
-        if request_json['cursor'] is not None and request_json['cursor'] >= list_length:
-            raise InvalidParameterError("cursor parameter must be less than transfer_history list num")
+        if request_json['offset'] is not None and request_json['offset'] > list_length:
+            raise InvalidParameterError("offset parameter must be less than transfer_history list num")
 
-        # パラメータを設定
-        cursor = request_json['cursor']
-        limit = request_json['limit']
-        # cursorとlimitのどちらも設定がない場合は全件出力
-        if limit is None:
-            limit = list_length
-        if cursor is None:
-            cursor = 0
+        if request_json['offset'] is not None:
+            query = query.offset(request_json['offset'])
+        if request_json['limit'] is not None:
+            query = query.limit(request_json['limit'])
+        transfer_history = query.all()
 
         resp_body = []
-        # 古い順に表示
-        end_cursor = min(cursor+limit, list_length)
-        for i in range(cursor, end_cursor):
-            resp_body.append(transfer_history[i].json())
+        for transfer_event in transfer_history:
+            resp_body.append(transfer_event.json())
 
         self.on_success(res, resp_body)
 
     @staticmethod
     def validate(req):
         request_json = {
-            'cursor': req.get_param('cursor'),
+            'offset': req.get_param('offset'),
             'limit': req.get_param('limit')
         }
 
         validator = Validator({
-            'cursor': {
+            'offset': {
                 'type': 'integer',
                 'coerce': int,
                 'min': 0,
@@ -258,39 +252,36 @@ class TransferApprovalHistory(BaseResource):
             raise DataNotExistsError(f"contract_address: {contract_address}")
 
         # Get transfer approval data
-        transfer_approval_history = db_session.query(IDXTransferApproval). \
+        query = db_session.query(IDXTransferApproval). \
             filter(IDXTransferApproval.token_address == contract_address). \
-            order_by(IDXTransferApproval.application_id). \
-            all()
-        list_length = len(transfer_approval_history)
+            order_by(IDXTransferApproval.application_id)
+        list_length = query.count()
 
-        if request_json['cursor'] is not None and request_json['cursor'] >= list_length:
-            raise InvalidParameterError("cursor parameter must be less than transfer_approval_history list num")
+        if request_json['offset'] is not None and request_json['offset'] > list_length:
+            raise InvalidParameterError("offset parameter must be less than transfer_approval_history list num")
 
         # パラメータを設定
-        cursor = request_json['cursor']
-        limit = request_json['limit']
-        if cursor is None:
-            cursor = 0
-        if limit is None:
-            limit = list_length
-        end_cursor = min(cursor+limit, list_length)
+        if request_json['offset'] is not None:
+            query = query.offset(request_json['offset'])
+        if request_json['limit'] is not None:
+            query = query.limit(request_json['limit'])
+        transfer_approval_history = query.all()
 
         resp_body = []
-        for i in range(cursor, end_cursor):
-            resp_body.append(transfer_approval_history[i].json())
+        for transfer_approval_event in transfer_approval_history:
+            resp_body.append(transfer_approval_event.json())
 
         self.on_success(res, resp_body)
 
     @staticmethod
     def validate(req):
         request_json = {
-            'cursor': req.get_param('cursor'),
+            'offset': req.get_param('offset'),
             'limit': req.get_param('limit'),
         }
 
         validator = Validator({
-            'cursor': {
+            'offset': {
                 'type': 'integer',
                 'coerce': int,
                 'min': 0,
