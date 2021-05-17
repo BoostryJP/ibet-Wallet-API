@@ -165,6 +165,9 @@ class TransferHistory(BaseResource):
             description = 'invalid contract_address'
             raise InvalidParameterError(description=description)
 
+        # validation
+        request_json = TransferHistory.validate(req)
+
         # 取扱トークンチェック
         listed_token = session.query(Listing). \
             filter(Listing.token_address == contract_address). \
@@ -177,12 +180,56 @@ class TransferHistory(BaseResource):
             filter(IDXTransfer.token_address == contract_address). \
             order_by(IDXTransfer.id). \
             all()
+        list_length = len(transfer_history)
+
+        if request_json['cursor'] is not None and request_json['cursor'] >= list_length:
+            raise InvalidParameterError("cursor parameter must be less than transfer_history list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        limit = request_json['limit']
+        # cursorとlimitのどちらも設定がない場合は全件出力
+        if limit is None:
+            limit = list_length
+        if cursor is None:
+            cursor = 0
 
         resp_body = []
-        for transfer_event in transfer_history:
-            resp_body.append(transfer_event.json())
+        # 古い順に表示
+        end_cursor = min(cursor+limit, list_length)
+        for i in range(cursor, end_cursor):
+            resp_body.append(transfer_history[i].json())
 
         self.on_success(res, resp_body)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit')
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
 
 
 # /Token/{contract_address}/TransferApprovalHistory
@@ -201,6 +248,8 @@ class TransferApprovalHistory(BaseResource):
         except:
             raise InvalidParameterError("invalid contract_address")
 
+        request_json = TransferApprovalHistory.validate(req)
+
         # Check that it is a listed token
         _listed_token = db_session.query(Listing). \
             filter(Listing.token_address == contract_address). \
@@ -213,12 +262,54 @@ class TransferApprovalHistory(BaseResource):
             filter(IDXTransferApproval.token_address == contract_address). \
             order_by(IDXTransferApproval.application_id). \
             all()
+        list_length = len(transfer_approval_history)
+
+        if request_json['cursor'] is not None and request_json['cursor'] >= list_length:
+            raise InvalidParameterError("cursor parameter must be less than transfer_approval_history list num")
+
+        # パラメータを設定
+        cursor = request_json['cursor']
+        limit = request_json['limit']
+        if cursor is None:
+            cursor = 0
+        if limit is None:
+            limit = list_length
+        end_cursor = min(cursor+limit, list_length)
 
         resp_body = []
-        for transfer_event in transfer_approval_history:
-            resp_body.append(transfer_event.json())
+        for i in range(cursor, end_cursor):
+            resp_body.append(transfer_approval_history[i].json())
 
         self.on_success(res, resp_body)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'cursor': req.get_param('cursor'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'cursor': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
 
 
 # ------------------------------

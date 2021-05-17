@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import time
+import sys
 from datetime import (
     datetime,
     timezone,
@@ -96,6 +97,7 @@ class TestV2TransferApprovalHistory:
 
     # Normal_2
     # Data exists
+    # cursor=設定なし、 limit=設定なし
     def test_normal_2(self, client, session):
         # prepare data
         listing = {
@@ -153,6 +155,226 @@ class TestV2TransferApprovalHistory:
             assert before_datetime < item["approval_blocktimestamp"] < after_datetime
             assert item["cancelled"] is False
 
+    # Normal_3
+    # Data exists
+    # cursor=1、 limit=設定なし
+    def test_normal_3(self, client, session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        before_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST). \
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+        time.sleep(1)
+
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False
+            }
+            self.insert_transfer_approval(
+                session,
+                transfer_approval=transfer_approval
+            )
+
+        time.sleep(1)
+        after_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST). \
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "cursor=1"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json["data"]) == 2
+        for i, item in enumerate(resp.json["data"]):
+            assert item["token_address"] == self.token_address
+            assert item["application_id"] == i + 1
+            assert item["from_address"] == self.from_address
+            assert item["to_address"] == self.to_address
+            assert before_datetime < item["application_datetime"] < after_datetime
+            assert before_datetime < item["application_blocktimestamp"] < after_datetime
+            assert before_datetime < item["approval_datetime"] < after_datetime
+            assert before_datetime < item["approval_blocktimestamp"] < after_datetime
+            assert item["cancelled"] is False
+
+    # Normal_4
+    # Data exists
+    # cursor=2、 limit=2
+    def test_normal_4(self, client, session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        before_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST). \
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+        time.sleep(1)
+
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False
+            }
+            self.insert_transfer_approval(
+                session,
+                transfer_approval=transfer_approval
+            )
+
+        time.sleep(1)
+        after_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST). \
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "cursor=2&limit=2"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json["data"]) == 1
+        assert resp.json["data"][0]["token_address"] == self.token_address
+        assert resp.json["data"][0]["application_id"] == 2
+        assert resp.json["data"][0]["from_address"] == self.from_address
+        assert resp.json["data"][0]["to_address"] == self.to_address
+        assert before_datetime < resp.json["data"][0]["application_datetime"] < after_datetime
+        assert before_datetime < resp.json["data"][0]["application_blocktimestamp"] < after_datetime
+        assert before_datetime < resp.json["data"][0]["approval_datetime"] < after_datetime
+        assert before_datetime < resp.json["data"][0]["approval_blocktimestamp"] < after_datetime
+        assert resp.json["data"][0]["cancelled"] is False
+
+    # Normal_5
+    # Data exists
+    # cursor=設定なし、 limit=2
+    def test_normal_5(self, client, session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        before_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST). \
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+        time.sleep(1)
+
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False
+            }
+            self.insert_transfer_approval(
+                session,
+                transfer_approval=transfer_approval
+            )
+
+        time.sleep(1)
+        after_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST). \
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=1"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json["data"]) == 1
+        assert resp.json["data"][0]["token_address"] == self.token_address
+        assert resp.json["data"][0]["application_id"] == i
+        assert resp.json["data"][0]["from_address"] == self.from_address
+        assert resp.json["data"][0]["to_address"] == self.to_address
+        assert before_datetime < resp.json["data"][0]["application_datetime"] < after_datetime
+        assert before_datetime < resp.json["data"][0]["application_blocktimestamp"] < after_datetime
+        assert before_datetime < resp.json["data"][0]["approval_datetime"] < after_datetime
+        assert before_datetime < resp.json["data"][0]["approval_blocktimestamp"] < after_datetime
+        assert resp.json["data"][0]["cancelled"] is False
+
+    # Normal_6
+    # Data exists
+    # cursor=設定なし、 limit=0
+    def test_normal_6(self, client, session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False
+            }
+            self.insert_transfer_approval(
+                session,
+                transfer_approval=transfer_approval
+            )
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=0"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json["data"]) == 0
+
     ####################################################################
     # Error
     ####################################################################
@@ -185,4 +407,136 @@ class TestV2TransferApprovalHistory:
             "code": 30,
             "message": "Data Not Exists",
             "description": "contract_address: " + self.token_address
+        }
+
+    # Error_3_1
+    # cursor validation : String
+    # 400
+    def test_error_3_1(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "cursor=string"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'cursor': [
+                    "field 'cursor' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # Error_3_2
+    # cursor validation : 負値
+    # 400
+    def test_error_3_2(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "cursor=-1"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'cursor': 'min value is 0'}
+        }
+
+    # Error_3_3
+    # cursor validation : 小数
+    # 400
+    def test_error_3_3(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "cursor=1.5"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'cursor': [
+                    "field 'cursor' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # Error_3_4
+    # cursor validation : listより大きい値
+    # 400
+    def test_error_3_4(self, client, session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        max_value = str(sys.maxsize)
+        query_string = 'cursor=' + max_value + '&limit=1'
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': 'cursor parameter must be less than transfer_approval_history list num'
+        }
+
+    # Error_4_1
+    # limit validation : String
+    # 400
+    def test_error_4_1(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=string"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # Error_4_2
+    # limit validation : 負値
+    # 400
+    def test_error_4_2(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=-1"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'limit': 'min value is 0'}
+        }
+
+    # Error_4_3
+    # limit validation : 小数
+    # 400
+    def test_error_4_3(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=1.5"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
         }
