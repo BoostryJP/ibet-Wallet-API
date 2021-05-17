@@ -242,7 +242,7 @@ class TransferApprovalHistory(BaseResource):
         except:
             raise InvalidParameterError("invalid contract_address")
 
-        request_json = TransferApprovalHistory.validate(req)
+        request_json = self.validate(req)
 
         # Check that it is a listed token
         _listed_token = db_session.query(Listing). \
