@@ -181,42 +181,48 @@ class TransferHistory(BaseResource):
             order_by(IDXTransfer.id)
         list_length = query.count()
 
-        if request_json['offset'] is not None and request_json['offset'] > list_length:
-            raise InvalidParameterError("offset parameter must be less than transfer_history list num")
-
-        if request_json['offset'] is not None:
+        if request_json["offset"] is not None:
             query = query.offset(request_json['offset'])
-        if request_json['limit'] is not None:
+        if request_json["limit"] is not None:
             query = query.limit(request_json['limit'])
         transfer_history = query.all()
 
-        resp_body = []
+        resp_data = []
         for transfer_event in transfer_history:
-            resp_body.append(transfer_event.json())
+            resp_data.append(transfer_event.json())
 
-        self.on_success(res, resp_body)
+        data = {
+            "result_set": {
+                "count": list_length,
+                "offset": request_json['offset'],
+                "limit": request_json['limit'],
+                "total": list_length
+            },
+            "transfer_history": resp_data
+        }
+        self.on_success(res, data=data)
 
     @staticmethod
     def validate(req):
         request_json = {
-            'offset': req.get_param('offset'),
-            'limit': req.get_param('limit')
+            "offset": req.get_param("offset"),
+            "limit": req.get_param("limit")
         }
 
         validator = Validator({
-            'offset': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
+            "offset": {
+                "type": "integer",
+                "coerce": int,
+                "min": 0,
+                "required": False,
+                "nullable": True,
             },
-            'limit': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
+            "limit": {
+                "type": "integer",
+                "coerce": int,
+                "min": 0,
+                "required": False,
+                "nullable": True,
             },
         })
 
@@ -257,21 +263,26 @@ class TransferApprovalHistory(BaseResource):
             order_by(IDXTransferApproval.application_id)
         list_length = query.count()
 
-        if request_json['offset'] is not None and request_json['offset'] > list_length:
-            raise InvalidParameterError("offset parameter must be less than transfer_approval_history list num")
-
         # パラメータを設定
-        if request_json['offset'] is not None:
-            query = query.offset(request_json['offset'])
-        if request_json['limit'] is not None:
-            query = query.limit(request_json['limit'])
+        if request_json["offset"] is not None:
+            query = query.offset(request_json["offset"])
+        if request_json["limit"] is not None:
+            query = query.limit(request_json["limit"])
         transfer_approval_history = query.all()
 
-        resp_body = []
+        resp_data = []
         for transfer_approval_event in transfer_approval_history:
-            resp_body.append(transfer_approval_event.json())
-
-        self.on_success(res, resp_body)
+            resp_data.append(transfer_approval_event.json())
+        data = {
+            "result_set": {
+                "count": list_length,
+                "offset": request_json['offset'],
+                "limit": request_json['limit'],
+                "total": list_length
+            },
+            "transfer_approval_history": resp_data
+        }
+        self.on_success(res, data=data)
 
     @staticmethod
     def validate(req):

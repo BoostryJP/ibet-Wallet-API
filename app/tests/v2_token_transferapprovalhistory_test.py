@@ -90,7 +90,15 @@ class TestV2TransferApprovalHistory:
         )
 
         # assertion
-        assumed_body = []
+        assumed_body = {
+            "result_set": {
+                "count": 0,
+                "offset": None,
+                "limit": None,
+                "total": 0
+            },
+            "transfer_approval_history": []
+        }
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert resp.json["data"] == assumed_body
@@ -144,7 +152,15 @@ class TestV2TransferApprovalHistory:
         # assertion
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        for i, item in enumerate(resp.json["data"]):
+
+        assert resp.json["data"]["result_set"] == {
+                "count": 3,
+                "offset": None,
+                "limit": None,
+                "total": 3
+        }
+        data = resp.json["data"]["transfer_approval_history"]
+        for i, item in enumerate(data):
             assert item["token_address"] == self.token_address
             assert item["application_id"] == i
             assert item["from_address"] == self.from_address
@@ -204,8 +220,15 @@ class TestV2TransferApprovalHistory:
         # assertion
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]) == 2
-        for i, item in enumerate(resp.json["data"]):
+        assert resp.json["data"]["result_set"] == {
+            "count": 3,
+            "offset": 1,
+            "limit": None,
+            "total": 3
+        }
+        data = resp.json["data"]["transfer_approval_history"]
+        assert len(data) == 2
+        for i, item in enumerate(data):
             assert item["token_address"] == self.token_address
             assert item["application_id"] == i + 1
             assert item["from_address"] == self.from_address
@@ -265,16 +288,23 @@ class TestV2TransferApprovalHistory:
         # assertion
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]) == 1
-        assert resp.json["data"][0]["token_address"] == self.token_address
-        assert resp.json["data"][0]["application_id"] == 2
-        assert resp.json["data"][0]["from_address"] == self.from_address
-        assert resp.json["data"][0]["to_address"] == self.to_address
-        assert before_datetime < resp.json["data"][0]["application_datetime"] < after_datetime
-        assert before_datetime < resp.json["data"][0]["application_blocktimestamp"] < after_datetime
-        assert before_datetime < resp.json["data"][0]["approval_datetime"] < after_datetime
-        assert before_datetime < resp.json["data"][0]["approval_blocktimestamp"] < after_datetime
-        assert resp.json["data"][0]["cancelled"] is False
+        assert resp.json["data"]["result_set"] == {
+            "count": 3,
+            "offset": 2,
+            "limit": 2,
+            "total": 3
+        }
+        data = resp.json["data"]["transfer_approval_history"]
+        assert len(data) == 1
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["application_id"] == 2
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert before_datetime < data[0]["application_datetime"] < after_datetime
+        assert before_datetime < data[0]["application_blocktimestamp"] < after_datetime
+        assert before_datetime < data[0]["approval_datetime"] < after_datetime
+        assert before_datetime < data[0]["approval_blocktimestamp"] < after_datetime
+        assert data[0]["cancelled"] is False
 
     # Normal_5
     # Data exists
@@ -325,16 +355,23 @@ class TestV2TransferApprovalHistory:
         # assertion
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]) == 1
-        assert resp.json["data"][0]["token_address"] == self.token_address
-        assert resp.json["data"][0]["application_id"] == 0
-        assert resp.json["data"][0]["from_address"] == self.from_address
-        assert resp.json["data"][0]["to_address"] == self.to_address
-        assert before_datetime < resp.json["data"][0]["application_datetime"] < after_datetime
-        assert before_datetime < resp.json["data"][0]["application_blocktimestamp"] < after_datetime
-        assert before_datetime < resp.json["data"][0]["approval_datetime"] < after_datetime
-        assert before_datetime < resp.json["data"][0]["approval_blocktimestamp"] < after_datetime
-        assert resp.json["data"][0]["cancelled"] is False
+        assert resp.json["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": 1,
+            "total": 3
+        }
+        data = resp.json["data"]["transfer_approval_history"]
+        assert len(data) == 1
+        assert data[0]["token_address"] == self.token_address
+        assert data[0]["application_id"] == 0
+        assert data[0]["from_address"] == self.from_address
+        assert data[0]["to_address"] == self.to_address
+        assert before_datetime < data[0]["application_datetime"] < after_datetime
+        assert before_datetime < data[0]["application_blocktimestamp"] < after_datetime
+        assert before_datetime < data[0]["approval_datetime"] < after_datetime
+        assert before_datetime < data[0]["approval_blocktimestamp"] < after_datetime
+        assert data[0]["cancelled"] is False
 
     # Normal_6
     # Data exists
@@ -373,7 +410,14 @@ class TestV2TransferApprovalHistory:
         # assertion
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]) == 0
+        assert resp.json["data"]["result_set"] == {
+            "count": 3,
+            "offset": None,
+            "limit": 0,
+            "total": 3
+        }
+        data = resp.json["data"]["transfer_approval_history"]
+        assert len(data) == 0
 
     ####################################################################
     # Error
@@ -462,28 +506,6 @@ class TestV2TransferApprovalHistory:
                     'must be of integer type'
                 ]
             }
-        }
-
-    # Error_3_4
-    # offset validation : listより大きい値
-    # 400
-    def test_error_3_4(self, client, session):
-        listing = {
-            "token_address": self.token_address,
-            "is_public": True,
-        }
-        self.insert_listing(session, listing=listing)
-
-        apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        max_value = str(sys.maxsize)
-        query_string = 'offset=' + max_value + '&limit=1'
-        resp = client.simulate_get(apiurl, query_string=query_string)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': 'offset parameter must be less than transfer_approval_history list num'
         }
 
     # Error_4_1

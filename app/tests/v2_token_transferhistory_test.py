@@ -75,7 +75,13 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json['data']['result_set'] == {
+            'count': 0,
+            'offset': None,
+            'limit': None,
+            'total': 0
+        }
+        assert resp.json['data']['transfer_history'] == assumed_body
 
     # Normal_2
     # Transferイベントあり：1件
@@ -102,12 +108,19 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        for item in resp.json["data"]:
-            assert item["transaction_hash"] == transfer_event["transaction_hash"]
-            assert item["token_address"] == transfer_event["token_address"]
-            assert item["from_address"] == transfer_event["from_address"]
-            assert item["to_address"] == transfer_event["to_address"]
-            assert item["value"] == transfer_event["value"]
+        assert resp.json['data']['result_set'] == {
+            'count': 1,
+            'offset': None,
+            'limit': None,
+            'total': 1
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 1
+        assert data[0]['transaction_hash'] == transfer_event['transaction_hash']
+        assert data[0]['token_address'] == transfer_event['token_address']
+        assert data[0]['from_address'] == transfer_event['from_address']
+        assert data[0]['to_address'] == transfer_event['to_address']
+        assert data[0]['value'] == transfer_event['value']
 
     # Normal_3
     # Transferイベントあり：2件
@@ -145,18 +158,25 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': None,
+            'limit': None,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 2
+        assert data[0]['transaction_hash'] == transfer_event_1['transaction_hash']
+        assert data[0]['token_address'] == transfer_event_1['token_address']
+        assert data[0]['from_address'] == transfer_event_1['from_address']
+        assert data[0]['to_address'] == transfer_event_1['to_address']
+        assert data[0]['value'] == transfer_event_1['value']
 
-        assert resp.json["data"][0]["transaction_hash"] == transfer_event_1["transaction_hash"]
-        assert resp.json["data"][0]["token_address"] == transfer_event_1["token_address"]
-        assert resp.json["data"][0]["from_address"] == transfer_event_1["from_address"]
-        assert resp.json["data"][0]["to_address"] == transfer_event_1["to_address"]
-        assert resp.json["data"][0]["value"] == transfer_event_1["value"]
-
-        assert resp.json["data"][1]["transaction_hash"] == transfer_event_2["transaction_hash"]
-        assert resp.json["data"][1]["token_address"] == transfer_event_2["token_address"]
-        assert resp.json["data"][1]["from_address"] == transfer_event_2["from_address"]
-        assert resp.json["data"][1]["to_address"] == transfer_event_2["to_address"]
-        assert resp.json["data"][1]["value"] == transfer_event_2["value"]
+        assert data[1]['transaction_hash'] == transfer_event_2['transaction_hash']
+        assert data[1]['token_address'] == transfer_event_2['token_address']
+        assert data[1]['from_address'] == transfer_event_2['from_address']
+        assert data[1]['to_address'] == transfer_event_2['to_address']
+        assert data[1]['value'] == transfer_event_2['value']
 
     # Normal_4
     # offset=2, limit=設定なし
@@ -194,13 +214,20 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': 1,
+            'limit': None,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 1
 
-        assert len(resp.json["data"]) == 1
-        assert resp.json["data"][0]["transaction_hash"] == transfer_event_2["transaction_hash"]
-        assert resp.json["data"][0]["token_address"] == transfer_event_2["token_address"]
-        assert resp.json["data"][0]["from_address"] == transfer_event_2["from_address"]
-        assert resp.json["data"][0]["to_address"] == transfer_event_2["to_address"]
-        assert resp.json["data"][0]["value"] == transfer_event_2["value"]
+        assert data[0]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_2["token_address"]
+        assert data[0]["from_address"] == transfer_event_2["from_address"]
+        assert data[0]["to_address"] == transfer_event_2["to_address"]
+        assert data[0]["value"] == transfer_event_2["value"]
 
     # Normal_5
     # offset=0, limit=設定なし
@@ -238,18 +265,25 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': 0,
+            'limit': None,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 2
 
-        assert resp.json["data"][0]["transaction_hash"] == transfer_event_1["transaction_hash"]
-        assert resp.json["data"][0]["token_address"] == transfer_event_1["token_address"]
-        assert resp.json["data"][0]["from_address"] == transfer_event_1["from_address"]
-        assert resp.json["data"][0]["to_address"] == transfer_event_1["to_address"]
-        assert resp.json["data"][0]["value"] == transfer_event_1["value"]
-        assert resp.json["data"][1]["transaction_hash"] == transfer_event_2["transaction_hash"]
-        assert resp.json["data"][1]["token_address"] == transfer_event_2["token_address"]
-        assert resp.json["data"][1]["from_address"] == transfer_event_2["from_address"]
-        assert resp.json["data"][1]["to_address"] == transfer_event_2["to_address"]
-        assert resp.json["data"][1]["value"] == transfer_event_2["value"]
-        assert len(resp.json["data"]) == 2
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_2["token_address"]
+        assert data[1]["from_address"] == transfer_event_2["from_address"]
+        assert data[1]["to_address"] == transfer_event_2["to_address"]
+        assert data[1]["value"] == transfer_event_2["value"]
 
     # Normal_6
     # offset =設定なし, limit=2
@@ -287,13 +321,20 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': None,
+            'limit': 1,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 1
 
-        assert resp.json["data"][0]["transaction_hash"] == transfer_event_1["transaction_hash"]
-        assert resp.json["data"][0]["token_address"] == transfer_event_1["token_address"]
-        assert resp.json["data"][0]["from_address"] == transfer_event_1["from_address"]
-        assert resp.json["data"][0]["to_address"] == transfer_event_1["to_address"]
-        assert resp.json["data"][0]["value"] == transfer_event_1["value"]
-        assert len(resp.json["data"]) == 1
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
 
     ####################################################################
     # Error
@@ -382,28 +423,6 @@ class TestV2TransferHistory:
                     'must be of integer type'
                 ]
             }
-        }
-
-    # Error_3_4
-    # offset validation : listより大きい値
-    # 400
-    def test_error_3_4(self, client, session):
-        listing = {
-            "token_address": self.token_address,
-            "is_public": True,
-        }
-        self.insert_listing(session, listing=listing)
-
-        apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        max_value = str(sys.maxsize)
-        query_string = 'offset=' + max_value + '&limit=1'
-        resp = client.simulate_get(apiurl, query_string=query_string)
-
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': 'offset parameter must be less than transfer_history list num'
         }
 
     # Error_4_1
