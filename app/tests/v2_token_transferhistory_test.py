@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import sys
+
 from app.model import (
     Listing,
     IDXTransfer
@@ -73,10 +75,17 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json['data']['result_set'] == {
+            'count': 0,
+            'offset': None,
+            'limit': None,
+            'total': 0
+        }
+        assert resp.json['data']['transfer_history'] == assumed_body
 
     # Normal_2
     # Transferイベントあり：1件
+    # offset=設定なし、 limit=設定なし
     def test_normal_2(self, client, session):
         listing = {
             "token_address": self.token_address,
@@ -99,15 +108,23 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        for item in resp.json["data"]:
-            assert item["transaction_hash"] == transfer_event["transaction_hash"]
-            assert item["token_address"] == transfer_event["token_address"]
-            assert item["from_address"] == transfer_event["from_address"]
-            assert item["to_address"] == transfer_event["to_address"]
-            assert item["value"] == transfer_event["value"]
+        assert resp.json['data']['result_set'] == {
+            'count': 1,
+            'offset': None,
+            'limit': None,
+            'total': 1
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 1
+        assert data[0]['transaction_hash'] == transfer_event['transaction_hash']
+        assert data[0]['token_address'] == transfer_event['token_address']
+        assert data[0]['from_address'] == transfer_event['from_address']
+        assert data[0]['to_address'] == transfer_event['to_address']
+        assert data[0]['value'] == transfer_event['value']
 
     # Normal_3
     # Transferイベントあり：2件
+    # offset=設定なし、 limit=設定なし
     def test_normal_3(self, client, session):
         listing = {
             "token_address": self.token_address,
@@ -141,18 +158,183 @@ class TestV2TransferHistory:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': None,
+            'limit': None,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 2
+        assert data[0]['transaction_hash'] == transfer_event_1['transaction_hash']
+        assert data[0]['token_address'] == transfer_event_1['token_address']
+        assert data[0]['from_address'] == transfer_event_1['from_address']
+        assert data[0]['to_address'] == transfer_event_1['to_address']
+        assert data[0]['value'] == transfer_event_1['value']
 
-        assert resp.json["data"][0]["transaction_hash"] == transfer_event_1["transaction_hash"]
-        assert resp.json["data"][0]["token_address"] == transfer_event_1["token_address"]
-        assert resp.json["data"][0]["from_address"] == transfer_event_1["from_address"]
-        assert resp.json["data"][0]["to_address"] == transfer_event_1["to_address"]
-        assert resp.json["data"][0]["value"] == transfer_event_1["value"]
+        assert data[1]['transaction_hash'] == transfer_event_2['transaction_hash']
+        assert data[1]['token_address'] == transfer_event_2['token_address']
+        assert data[1]['from_address'] == transfer_event_2['from_address']
+        assert data[1]['to_address'] == transfer_event_2['to_address']
+        assert data[1]['value'] == transfer_event_2['value']
 
-        assert resp.json["data"][1]["transaction_hash"] == transfer_event_2["transaction_hash"]
-        assert resp.json["data"][1]["token_address"] == transfer_event_2["token_address"]
-        assert resp.json["data"][1]["from_address"] == transfer_event_2["from_address"]
-        assert resp.json["data"][1]["to_address"] == transfer_event_2["to_address"]
-        assert resp.json["data"][1]["value"] == transfer_event_2["value"]
+    # Normal_4
+    # offset=2, limit=設定なし
+    # Transferイベントあり：2件
+    def test_normal_4(self, client, session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10
+        }
+        self.insert_transfer_event(session, transfer_event=transfer_event_1)
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.to_address,
+            "to_address": self.from_address,
+            "value": 20
+        }
+        self.insert_transfer_event(session, transfer_event=transfer_event_2)
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = 'offset=1'
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': 1,
+            'limit': None,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_2["token_address"]
+        assert data[0]["from_address"] == transfer_event_2["from_address"]
+        assert data[0]["to_address"] == transfer_event_2["to_address"]
+        assert data[0]["value"] == transfer_event_2["value"]
+
+    # Normal_5
+    # offset=0, limit=設定なし
+    # Transferイベントあり：2件
+    def test_normal_5(self, client, session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10
+        }
+        self.insert_transfer_event(session, transfer_event=transfer_event_1)
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.to_address,
+            "to_address": self.from_address,
+            "value": 20
+        }
+        self.insert_transfer_event(session, transfer_event=transfer_event_2)
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = 'offset=0'
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': 0,
+            'limit': None,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 2
+
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
+        assert data[1]["transaction_hash"] == transfer_event_2["transaction_hash"]
+        assert data[1]["token_address"] == transfer_event_2["token_address"]
+        assert data[1]["from_address"] == transfer_event_2["from_address"]
+        assert data[1]["to_address"] == transfer_event_2["to_address"]
+        assert data[1]["value"] == transfer_event_2["value"]
+
+    # Normal_6
+    # offset =設定なし, limit=2
+    # Transferイベントあり：2件
+    def test_normal_6(self, client, session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # １件目
+        transfer_event_1 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.from_address,
+            "to_address": self.to_address,
+            "value": 10
+        }
+        self.insert_transfer_event(session, transfer_event=transfer_event_1)
+
+        # ２件目
+        transfer_event_2 = {
+            "transaction_hash": self.transaction_hash,
+            "token_address": self.token_address,
+            "from_address": self.to_address,
+            "to_address": self.from_address,
+            "value": 20
+        }
+        self.insert_transfer_event(session, transfer_event=transfer_event_2)
+
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = 'limit=1'
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data']['result_set'] == {
+            'count': 2,
+            'offset': None,
+            'limit': 1,
+            'total': 2
+        }
+        data = resp.json['data']['transfer_history']
+        assert len(data) == 1
+
+        assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
+        assert data[0]["token_address"] == transfer_event_1["token_address"]
+        assert data[0]["from_address"] == transfer_event_1["from_address"]
+        assert data[0]["to_address"] == transfer_event_1["to_address"]
+        assert data[0]["value"] == transfer_event_1["value"]
 
     ####################################################################
     # Error
@@ -186,4 +368,114 @@ class TestV2TransferHistory:
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + self.token_address
+        }
+
+    # Error_3_1
+    # offset validation : String
+    # 400
+    def test_error_3_1(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "offset=string"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'offset': [
+                    "field 'offset' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # Error_3_2
+    # offset validation : 負値
+    # 400
+    def test_error_3_2(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "offset=-1"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'offset': 'min value is 0'}
+        }
+
+    # Error_3_3
+    # offset validation : 小数
+    # 400
+    def test_error_3_3(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "offset=1.5"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'offset': [
+                    "field 'offset' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # Error_4_1
+    # limit validation : String
+    # 400
+    def test_error_4_1(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=string"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
+        }
+
+    # Error_4_2
+    # limit validation : 負値
+    # 400
+    def test_error_4_2(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=-1"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'limit': 'min value is 0'}
+        }
+
+    # Error_4_3
+    # limit validation : 小数
+    # 400
+    def test_error_4_3(self, client, session):
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = "limit=1.5"
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'limit': [
+                    "field 'limit' could not be coerced",
+                    'must be of integer type'
+                ]
+            }
         }
