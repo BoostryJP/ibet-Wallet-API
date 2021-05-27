@@ -274,6 +274,36 @@ def bond_untransferable(invoker, token):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 債券の新規募集ステータスの変更（True：開始、False：未開始or終了）
+def bond_set_initial_offering_status(invoker: dict, status: bool, token: dict):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.setInitialOfferingStatus(status). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 債券の募集割当
+def bond_allot(invoker: dict, to_token: dict, amount: int, token: dict):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.allot(to_token['account_address'], amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 債券の募集申込
+def bond_apply_for_offering(invoker: dict, amount: int, data: str, token: dict):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.applyForOffering(amount, data). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Share Token （株式）
 '''
