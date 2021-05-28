@@ -72,3 +72,6 @@ RUN chown -R apl:apl /app/ibet-Wallet-API \
 
 USER apl
 CMD /app/ibet-Wallet-API/app/tests/qa.sh
+
+USER apl
+CMD /app/ibet-Wallet-API/batch/tests/qa.sh

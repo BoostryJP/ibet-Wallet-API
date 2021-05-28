@@ -22,17 +22,11 @@ import re
 import sys
 import pytest
 
-from sqlalchemy import (
-    create_engine,
-    desc
-)
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
+from sqlalchemy import desc
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-path = os.path.join(os.path.dirname(__file__), "../../app")
+
+path = os.path.join(os.path.dirname(__file__), "../../")
 sys.path.append(path)
 from app import config
 from app.model.notification import Notification, NotificationType
@@ -43,23 +37,18 @@ from app.tests.contract_modules import (
     register_bond_list,
     bond_set_initial_offering_status,
 )
-from app.tests.conftest import (
-    tokenlist_contract,
-    shared_contract,
-    eth_account
-)
-token_list = tokenlist_contract()
-config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
-from batch.processor_Notifications_Bond_Token import WatchStartInitialOffering
+from batch.tests.conftest import eth_account
 
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-
 @pytest.fixture(scope="function")
-def watcher_start_initial_offering():
+def watcher_start_initial_offering(shared_contract):
+    token_list = shared_contract['TokenList']
+    config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+    from batch.processor_Notifications_Bond_Token import WatchStartInitialOffering
     return WatchStartInitialOffering()
 
 
@@ -68,17 +57,17 @@ class TestProcessorNotificationsBondTokenWatchStartInitialOffering:
     Test Case for WatchStartInitialOffering()
     """
     @staticmethod
-    def list_token(token_address, db_session):
+    def list_token(token_address, session):
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        db_session.add(listed_token)
-        db_session.commit()
+        session.add(listed_token)
+        session.commit()
 
     @staticmethod
-    def bond_start_initial_offering(bond_exchange, personal_info):
+    def bond_start_initial_offering(bond_exchange, personal_info, token_list):
         issuer = eth_account['issuer']
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
@@ -119,32 +108,22 @@ class TestProcessorNotificationsBondTokenWatchStartInitialOffering:
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
         register_personalinfo(issuer, personal_info)
-        bond_set_initial_offering_status(
-            invoker=issuer,
-            status=True,
-            token=bond_token
-        )
+        bond_set_initial_offering_status(issuer, True, bond_token)
         return bond_token
 
     ####################################################################
     # Normal
     ####################################################################
     # Normal_1
-    def test_normal_1(self, watcher_start_initial_offering, shared_contract):
-        engine = create_engine(config.DATABASE_URL, echo=False)
-        db_session = scoped_session(sessionmaker())
-        db_session.configure(bind=engine)
-
+    def test_normal_1(self, watcher_start_initial_offering, shared_contract, session):
         started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
 
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
+        token_list = shared_contract['TokenList']
 
-        bond_token = self.bond_start_initial_offering(
-            bond_exchange=bond_exchange,
-            personal_info=personal_info,
-        )
-        self.list_token(bond_token['address'], db_session)
+        bond_token = self.bond_start_initial_offering(bond_exchange, personal_info, token_list)
+        self.list_token(bond_token['address'], session)
 
         # テスト実行
         watcher_start_initial_offering.loop()
@@ -158,12 +137,12 @@ class TestProcessorNotificationsBondTokenWatchStartInitialOffering:
         }
 
         # Assertion
-        notification = db_session.query(Notification). \
+        notification = session.query(Notification). \
             filter(Notification.notification_type == NotificationType.START_INITIAL_OFFERING.value). \
             filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
 
-        db_session.close()
+        session.close()
         # blockNumber: 12桁、transactionIndex: 6桁、logIndex: 6桁、option_type=0:2桁
         assert re.search('0x[0-9a-fA-F]{12}0{6}0{6}0{2}', notification.notification_id) is not None
         assert notification.notification_type == NotificationType.START_INITIAL_OFFERING.value
@@ -179,19 +158,15 @@ class TestProcessorNotificationsBondTokenWatchStartInitialOffering:
         assert notification.metainfo == expected_metadata
 
     # Normal_2 : データ無
-    def test_normal_2(self, watcher_start_initial_offering):
-        engine = create_engine(config.DATABASE_URL, echo=False)
-        db_session = scoped_session(sessionmaker())
-        db_session.configure(bind=engine)
+    def test_normal_2(self, watcher_start_initial_offering, session):
 
         started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
         # テスト実行
         watcher_start_initial_offering.loop()
-        notification = db_session.query(Notification). \
+        notification = session.query(Notification). \
             filter(Notification.notification_type == NotificationType.START_INITIAL_OFFERING.value). \
             order_by(desc(Notification.notification_id)). \
             first()
-        db_session.close()
         if notification is None:
             assert True
         else:

@@ -103,6 +103,7 @@ class Watcher:
     def _get_bond_token_public_list(self):
         res = []
         registered_token_list = db_session.query(Listing).filter(Listing.is_public == True).all()
+        db_session.close()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue
@@ -113,6 +114,7 @@ class Watcher:
     def _get_bond_token_all_list(self):
         res = []
         registered_token_list = db_session.query(Listing).all()
+        db_session.close()
         for registered_token in registered_token_list:
             if not token_list.is_registered(registered_token.token_address):
                 continue

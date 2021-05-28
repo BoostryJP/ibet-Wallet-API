@@ -18,22 +18,15 @@ SPDX-License-Identifier: Apache-2.0
 """
 import datetime
 import os
-import sys
-
 import pytest
 import re
+import sys
 
-from sqlalchemy import (
-    create_engine,
-    desc
-)
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
+from sqlalchemy import desc
+
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-path = os.path.join(os.path.dirname(__file__), "../../app")
+path = os.path.join(os.path.dirname(__file__), "../../")
 sys.path.append(path)
 from app import config
 from app.model.notification import Notification, NotificationType
@@ -46,14 +39,7 @@ from app.tests.contract_modules import (
     bond_apply_for_offering,
     bond_allot,
 )
-from app.tests.conftest import (
-    tokenlist_contract,
-    shared_contract,
-    eth_account
-)
-token_list = tokenlist_contract()
-config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
-from batch.processor_Notifications_Bond_Token import WatchAllot
+from batch.tests.conftest import eth_account
 
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -61,7 +47,10 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def watcher_allot():
+def watcher_allot(shared_contract):
+    token_list = shared_contract['TokenList']
+    config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+    from batch.processor_Notifications_Bond_Token import WatchAllot
     return WatchAllot()
 
 
@@ -70,17 +59,17 @@ class TestProcessorNotificationsBondTokenWatchAllot:
     Test Case for WatchAllot()
     """
     @staticmethod
-    def list_token(token_address: str, db_session):
+    def list_token(token_address: str, session):
         listed_token = Listing()
         listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
-        db_session.add(listed_token)
-        db_session.commit()
+        session.add(listed_token)
+        session.commit()
 
     @staticmethod
-    def bond_allot(bond_exchange: dict, personal_info: dict):
+    def bond_allot(bond_exchange: dict, personal_info: dict, token_list: dict):
         issuer = eth_account['issuer']
         trader = eth_account['trader']
         # ＜発行体オペレーション＞
@@ -142,18 +131,16 @@ class TestProcessorNotificationsBondTokenWatchAllot:
     # Normal
     ####################################################################
     # Normal_1
-    def test_normal_1(self, watcher_allot, shared_contract):
-        engine = create_engine(config.DATABASE_URL, echo=False)
-        db_session = scoped_session(sessionmaker())
-        db_session.configure(bind=engine)
+    def test_normal_1(self, watcher_allot, shared_contract, session):
 
         started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
 
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
+        token_list = shared_contract['TokenList']
 
-        bond_token = self.bond_allot(bond_exchange, personal_info)
-        self.list_token(bond_token['address'], db_session)
+        bond_token = self.bond_allot(bond_exchange, personal_info, token_list)
+        self.list_token(bond_token['address'], session)
 
         # テスト実行
         watcher_allot.loop()
@@ -172,11 +159,10 @@ class TestProcessorNotificationsBondTokenWatchAllot:
             "amount": 100
         }
 
-        notification = db_session.query(Notification). \
+        notification = session.query(Notification). \
             filter(Notification.notification_type == NotificationType.ALLOT.value). \
             filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
-        db_session.close()
 
         # blockNumber: 12桁、transactionIndex: 6桁、logIndex: 6桁、option_type=0:2桁
         assert re.search('0x[0-9a-fA-F]{12}0{6}0{6}0{2}', notification.notification_id) is not None
@@ -187,26 +173,22 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         assert notification.is_deleted is False
         assert notification.deleted_at is None
         assert notification.block_timestamp >= started_timestamp
-        assert notification.block_timestamp <= (datetime.datetime.utcnow() + datetime.timedelta(seconds=10))
+        assert notification.block_timestamp <= datetime.datetime.utcnow()
         assert notification.args == expected_args
         assert notification.metainfo == expected_metadata
 
     # Normal_2 : No startInitialOffering event data
-    def test_normal_2(self, watcher_allot):
-        engine = create_engine(config.DATABASE_URL, echo=False)
-        db_session = scoped_session(sessionmaker())
-        db_session.configure(bind=engine)
+    def test_normal_2(self, watcher_allot, session):
         started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
 
         # テスト実行
         watcher_allot.loop()
 
         # Assertion
-        notification = db_session.query(Notification). \
+        notification = session.query(Notification). \
             filter(Notification.notification_type == NotificationType.ALLOT.value). \
             order_by(desc(Notification.notification_id)). \
             first()
-        db_session.close()
         if notification is None:
             assert True
         else:
