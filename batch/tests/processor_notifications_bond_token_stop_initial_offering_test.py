@@ -154,16 +154,9 @@ class TestProcessorNotificationsBondTokenWatchStopInitialOffering:
         assert notification.args == {'status': False}
         assert notification.metainfo == expected_metadata
 
-    # Normal_2 : No startInitialOffering event data
+    # Normal_2 : No Listing data
     def test_normal_2(self, watcher_stop_initial_offering, session):
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
         # テスト実行
         watcher_stop_initial_offering.loop()
-        notification = session.query(Notification). \
-            filter(Notification.notification_type == NotificationType.STOP_INITIAL_OFFERING.value). \
-            order_by(desc(Notification.notification_id)). \
-            first()
-        if notification is None:
-            assert True
-        else:
-            assert notification.block_timestamp < started_timestamp
+        notification = session.query(Notification).first()
+        assert notification is None

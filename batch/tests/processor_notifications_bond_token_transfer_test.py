@@ -114,10 +114,52 @@ class TestProcessorNotificationsBondTokenWatchTransfer:
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
         return bond_token
 
+    @staticmethod
+    def bond_transfer_without_register(bond_exchange, personal_info):
+        issuer = eth_account['issuer']
+        # ＜発行体オペレーション＞
+        #   1) 債券トークン発行
+        #   2) 募集
+        attribute = {
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'tradableExchange': bond_exchange['address'],
+            'faceValue': 10000,
+            'interestRate': 602,
+            'interestPaymentDate1': '0101',
+            'interestPaymentDate2': '0201',
+            'interestPaymentDate3': '0301',
+            'interestPaymentDate4': '0401',
+            'interestPaymentDate5': '0501',
+            'interestPaymentDate6': '0601',
+            'interestPaymentDate7': '0701',
+            'interestPaymentDate8': '0801',
+            'interestPaymentDate9': '0901',
+            'interestPaymentDate10': '1001',
+            'interestPaymentDate11': '1101',
+            'interestPaymentDate12': '1201',
+            'redemptionDate': '20191231',
+            'redemptionValue': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
+            'memo': 'メモ',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info['address'],
+            'transferable': True,
+            'isRedeemed': False
+        }
+        bond_token = issue_bond_token(issuer, attribute)
+        offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
+        return bond_token
+
     ####################################################################
     # Normal
     ####################################################################
     # Normal_1
+    # is_registered : True
     def test_normal_1(self, watcher_transfer, shared_contract, session):
 
         started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
@@ -164,16 +206,28 @@ class TestProcessorNotificationsBondTokenWatchTransfer:
         assert notification.args == expected_args
         assert notification.metainfo == expected_metadata
 
-    # Normal_2 : No startInitialOffering event data
-    def test_normal_2(self, watcher_transfer, session):
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
+    # Normal_2
+    # is_registered : False
+    def test_normal_2(self, watcher_transfer, shared_contract, session):
+
+        bond_exchange = shared_contract['IbetStraightBondExchange']
+        personal_info = shared_contract['PersonalInfo']
+
+        bond_token = self.bond_transfer_without_register(bond_exchange, personal_info)
+        self.list_token(bond_token['address'], session)
         # テスト実行
         watcher_transfer.loop()
+
         notification = session.query(Notification). \
             filter(Notification.notification_type == NotificationType.TRANSFER.value). \
-            order_by(desc(Notification.notification_id)). \
+            filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
-        if notification is None:
-            assert True
-        else:
-            assert notification.block_timestamp < started_timestamp
+        # blockNumber: 12桁、transactionIndex: 6桁、logIndex: 6桁、option_type=0:2桁
+        assert notification is None
+
+    # Normal_3 : No Listing Data
+    def test_normal_3(self, watcher_transfer, session):
+        # テスト実行
+        watcher_transfer.loop()
+        notification = session.query(Notification).first()
+        assert notification is None

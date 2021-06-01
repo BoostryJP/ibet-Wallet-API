@@ -161,12 +161,6 @@ class TestProcessorNotificationsBondTokenWatchRedeem:
         watcher_redeem.loop()
 
         # Assertion
-        notification = session.query(Notification). \
-            filter(Notification.notification_type == NotificationType.REDEEM.value). \
-            first()
-        if notification is None:
-            assert True
-        else:
-            assert notification.block_timestamp <= started_timestamp
-
+        notification = session.query(Notification).first()
+        assert notification is None
 

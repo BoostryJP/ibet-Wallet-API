@@ -160,14 +160,7 @@ class TestProcessorNotificationsBondTokenWatchStartInitialOffering:
     # Normal_2 : データ無
     def test_normal_2(self, watcher_start_initial_offering, session):
 
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
         # テスト実行
         watcher_start_initial_offering.loop()
-        notification = session.query(Notification). \
-            filter(Notification.notification_type == NotificationType.START_INITIAL_OFFERING.value). \
-            order_by(desc(Notification.notification_id)). \
-            first()
-        if notification is None:
-            assert True
-        else:
-            assert notification.block_timestamp < started_timestamp
+        notification = session.query(Notification).first()
+        assert notification is None

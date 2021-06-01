@@ -22,7 +22,7 @@ import pytest
 import re
 import sys
 
-from sqlalchemy import desc
+from sqlalchemy.sql.functions import max
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -127,10 +127,70 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         bond_allot(issuer, trader, 100, bond_token)
         return bond_token
 
+    @staticmethod
+    def bond_allot_without_register(bond_exchange: dict, personal_info: dict):
+        issuer = eth_account['issuer']
+        trader = eth_account['trader']
+        # ＜発行体オペレーション＞
+        #   1) 債券トークン発行
+        #   2) 債券トークンをトークンリストに登録
+        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
+        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
+        #   5) 債券トークンの新規募集開始フラグ設定
+        attribute = {
+            'name': 'テスト債券',
+            'symbol': 'BOND',
+            'totalSupply': 1000000,
+            'tradableExchange': bond_exchange['address'],
+            'faceValue': 10000,
+            'interestRate': 602,
+            'interestPaymentDate1': '0101',
+            'interestPaymentDate2': '0201',
+            'interestPaymentDate3': '0301',
+            'interestPaymentDate4': '0401',
+            'interestPaymentDate5': '0501',
+            'interestPaymentDate6': '0601',
+            'interestPaymentDate7': '0701',
+            'interestPaymentDate8': '0801',
+            'interestPaymentDate9': '0901',
+            'interestPaymentDate10': '1001',
+            'interestPaymentDate11': '1101',
+            'interestPaymentDate12': '1201',
+            'redemptionDate': '20191231',
+            'redemptionValue': 10000,
+            'returnDate': '20191231',
+            'returnAmount': '商品券をプレゼント',
+            'purpose': '新商品の開発資金として利用。',
+            'memo': 'メモ',
+            'contactInformation': '問い合わせ先',
+            'privacyPolicy': 'プライバシーポリシー',
+            'personalInfoAddress': personal_info['address'],
+            'transferable': True,
+            'isRedeemed': False
+        }
+        bond_token = issue_bond_token(issuer, attribute)
+        register_personalinfo(issuer, personal_info)
+        bond_set_initial_offering_status(invoker=issuer, status=True, token=bond_token)
+
+        # ＜投資家オペレーション＞
+        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
+        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
+        #   3) 買い注文
+        register_personalinfo(trader, personal_info)
+        _data = datetime.datetime.utcnow().isoformat()
+        bond_apply_for_offering(trader, 10, _data, bond_token)
+
+        # ＜発行体オペレーション＞
+        #   1) 債券トークン募集割当確定
+        bond_allot(issuer, trader, 100, bond_token)
+        return bond_token
+
     ####################################################################
     # Normal
     ####################################################################
     # Normal_1
+    # registered_token : True
+    # skip processing
     def test_normal_1(self, watcher_allot, shared_contract, session):
 
         started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
@@ -177,19 +237,68 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         assert notification.args == expected_args
         assert notification.metainfo == expected_metadata
 
-    # Normal_2 : No startInitialOffering event data
-    def test_normal_2(self, watcher_allot, session):
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
+        started_timestamp = datetime.datetime.utcnow()
+
+        # テスト実行 (Watcher.loop() skip processing)
+        watcher_allot.loop()
+        notification = session.query(max(Notification.modified).label("modified_max")).first()
+        assert notification.modified_max <= started_timestamp
+
+    # Normal_2:
+    # registered_token : False
+    def test_normal_2(self, watcher_allot, shared_contract, session):
+
+        bond_exchange = shared_contract['IbetStraightBondExchange']
+        personal_info = shared_contract['PersonalInfo']
+
+        bond_token = self.bond_allot_without_register(bond_exchange, personal_info)
+        self.list_token(bond_token['address'], session)
 
         # テスト実行
         watcher_allot.loop()
 
         # Assertion
         notification = session.query(Notification). \
-            filter(Notification.notification_type == NotificationType.ALLOT.value). \
-            order_by(desc(Notification.notification_id)). \
+            filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
-        if notification is None:
-            assert True
-        else:
-            assert notification.block_timestamp < started_timestamp
+
+        assert notification is None
+
+    # Normal_3 : No Listing data
+    def test_normal_3(self, watcher_allot, session):
+
+        # テスト実行
+        watcher_allot.loop()
+
+        # Assertion
+        notification = session.query(Notification).first()
+        assert notification is None
+
+    ####################################################################
+    # Error
+    ####################################################################
+    # Error_1
+    # Contract.get_contract / getLogs Exception
+    def test_error_1(self, watcher_allot, shared_contract, session):
+
+        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
+
+        bond_exchange = shared_contract['IbetStraightBondExchange']
+        personal_info = shared_contract['PersonalInfo']
+        token_list = shared_contract['TokenList']
+
+        bond_token = self.bond_allot(bond_exchange, personal_info, token_list)
+        self.list_token(bond_token['address'], session)
+
+        # テスト実行
+        from web3.exceptions import TimeExhausted
+        from unittest.mock import patch
+        web3_eth_Eth_getLogs = patch(
+                target="web3.eth.Eth.getLogs",
+                side_effect=TimeExhausted("TIME EXHAUSED")
+        )
+        with web3_eth_Eth_getLogs as mock_web3_get_logs:
+            watcher_allot.loop()
+
+        mock_web3_get_logs.assert_called_once()
+

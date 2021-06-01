@@ -175,19 +175,12 @@ class TestProcessorNotificationsBondTokenWatchApplyForOffering:
         assert notification.block_timestamp >= started_timestamp
         assert notification.block_timestamp <= datetime.datetime.utcnow()
 
-        # Normal_2 : データ無
+        # Normal_2 : No Listing Data
     def test_normal_2(self, watcher_apply_for_offering, session):
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
         # テスト実行
         watcher_apply_for_offering.loop()
 
         # Assertion
-        notification = session.query(Notification). \
-            filter(Notification.notification_type == NotificationType.APPLY_FOR_OFFERING.value). \
-            order_by(desc(Notification.notification_id)). \
-            first()
-        if notification is None:
-            assert True
-        else:
-            assert notification.block_timestamp <= started_timestamp
+        notification = session.query(Notification).first()
+        assert notification is None
 
