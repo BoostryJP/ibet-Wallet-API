@@ -53,9 +53,11 @@ JST = timezone(timedelta(hours=+9), "JST")
 
 
 @pytest.fixture(scope="function")
-def watcher_transfer(shared_contract):
+def watcher_transfer(shared_contract, session):
     token_list = shared_contract['TokenList']
     config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+    from batch import processor_Notifications_Bond_Token
+    processor_Notifications_Bond_Token.db_session = session
     from batch.processor_Notifications_Bond_Token import WatchTransfer
     return WatchTransfer()
 

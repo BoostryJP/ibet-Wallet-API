@@ -53,9 +53,11 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def watcher_apply_for_offering(shared_contract):
+def watcher_apply_for_offering(shared_contract, session):
     token_list = shared_contract['TokenList']
     config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+    from batch import processor_Notifications_Bond_Token
+    processor_Notifications_Bond_Token.db_session = session
     from batch.processor_Notifications_Bond_Token import WatchApplyForOffering
     return WatchApplyForOffering()
 
