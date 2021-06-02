@@ -16,12 +16,17 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import datetime
 import os
 import sys
 import pytest
 import re
+import time
 
+from datetime import (
+    datetime,
+    timedelta,
+    timezone
+)
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 path = os.path.join(os.path.dirname(__file__), "../../")
@@ -39,6 +44,9 @@ from batch.tests.conftest import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
 
 @pytest.fixture(scope="function")
@@ -114,7 +122,11 @@ class TestProcessorNotificationsBondTokenWatchRedeem:
     ####################################################################
     # Normal_1
     def test_normal_1(self, watcher_redeem, shared_contract, session):
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
+        # Prepare data
+        started_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        time.sleep(1)
 
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
@@ -139,6 +151,13 @@ class TestProcessorNotificationsBondTokenWatchRedeem:
             filter(Notification.notification_type == NotificationType.REDEEM.value). \
             filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
+        block_timestamp_jst = notification.block_timestamp. \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        time.sleep(1)
+        finished_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
 
         # blockNumber: 12桁、transactionIndex: 6桁、logIndex: 6桁、option_type=0:2桁
         assert re.search('0x[0-9a-fA-F]{12}0{6}0{6}0{2}', notification.notification_id) is not None
@@ -148,19 +167,15 @@ class TestProcessorNotificationsBondTokenWatchRedeem:
         assert notification.is_flagged is False
         assert notification.is_deleted is False
         assert notification.deleted_at is None
-        assert notification.block_timestamp >= started_timestamp
-        assert notification.block_timestamp <= datetime.datetime.utcnow()
         assert notification.args == {}
         assert notification.metainfo == expected_metadata
+        assert started_datetime < block_timestamp_jst < finished_datetime
 
     # Normal_2 : No startInitialOffering event data
     def test_normal_2(self, watcher_redeem, session):
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
-
         # テスト実行
         watcher_redeem.loop()
 
         # Assertion
         notification = session.query(Notification).first()
         assert notification is None
-

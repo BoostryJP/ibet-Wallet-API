@@ -24,7 +24,7 @@ cd /app/ibet-Wallet-API
 sleep 10
 
 # test
-pytest -v --cov=batch/ --cov-report=xml --cov-branch
+pytest batch -v --cov=batch/ --cov-report=xml --cov-branch
 
 status_code=$?
 

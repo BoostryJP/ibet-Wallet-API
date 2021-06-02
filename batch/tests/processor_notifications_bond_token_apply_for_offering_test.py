@@ -16,13 +16,17 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import datetime
+import time
 import os
 import pytest
 import re
 import sys
 
-from sqlalchemy import desc
+from datetime import (
+    datetime,
+    timedelta,
+    timezone
+)
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -54,6 +58,10 @@ def watcher_apply_for_offering(shared_contract):
     config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
     from batch.processor_Notifications_Bond_Token import WatchApplyForOffering
     return WatchApplyForOffering()
+
+
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
 
 class TestProcessorNotificationsBondTokenWatchApplyForOffering:
@@ -121,7 +129,7 @@ class TestProcessorNotificationsBondTokenWatchApplyForOffering:
         #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
         #   2) 債券トークンの募集申込
         register_personalinfo(trader, personal_info)
-        _data = datetime.datetime.utcnow().isoformat()
+        _data = datetime.utcnow().isoformat()
         bond_apply_for_offering(trader, 10, _data, bond_token)
         return bond_token
 
@@ -130,8 +138,11 @@ class TestProcessorNotificationsBondTokenWatchApplyForOffering:
     ####################################################################
     # Normal_1
     def test_normal_1(self, watcher_apply_for_offering, shared_contract, session):
-
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
+        # Prepare data
+        started_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        time.sleep(1)
 
         token_list = shared_contract['TokenList']
         bond_exchange = shared_contract['IbetStraightBondExchange']
@@ -140,7 +151,6 @@ class TestProcessorNotificationsBondTokenWatchApplyForOffering:
 
         bond_token = self.bond_apply_for_offering(bond_exchange, personal_info, payment_gateway, token_list)
         self.list_token(bond_token['address'], session)
-        listing = session.query(Listing).first()
 
         # テスト実行
         watcher_apply_for_offering.loop()
@@ -162,6 +172,13 @@ class TestProcessorNotificationsBondTokenWatchApplyForOffering:
             filter(Notification.notification_type == NotificationType.APPLY_FOR_OFFERING.value). \
             filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
+        block_timestamp_jst = notification.block_timestamp. \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        time.sleep(1)
+        finished_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
         # blockNumber: 12桁、transactionIndex: 6桁、logIndex: 6桁、option_type=0:2桁
         assert re.search('0x[0-9a-fA-F]{12}0{6}0{6}0{2}', notification.notification_id) is not None
         assert notification.priority == 0
@@ -172,8 +189,7 @@ class TestProcessorNotificationsBondTokenWatchApplyForOffering:
         assert notification.is_flagged is False
         assert notification.is_deleted is False
         assert notification.deleted_at is None
-        assert notification.block_timestamp >= started_timestamp
-        assert notification.block_timestamp <= datetime.datetime.utcnow()
+        assert started_datetime < block_timestamp_jst < finished_datetime
 
         # Normal_2 : No Listing Data
     def test_normal_2(self, watcher_apply_for_offering, session):
@@ -183,4 +199,3 @@ class TestProcessorNotificationsBondTokenWatchApplyForOffering:
         # Assertion
         notification = session.query(Notification).first()
         assert notification is None
-

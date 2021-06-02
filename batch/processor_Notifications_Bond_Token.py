@@ -57,6 +57,7 @@ from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
+UTC = timezone(timedelta(hours=0), "UTC")
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-BOND-TOKEN")
 
 WORKER_COUNT = int(WORKER_COUNT)
@@ -201,7 +202,7 @@ class WatchStartInitialOffering(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = NotificationType.START_INITIAL_OFFERING.value
             notification.priority = 0
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = self._gen_block_timestamp(entry).astimezone(tz=UTC)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
@@ -229,7 +230,7 @@ class WatchStopInitialOffering(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = NotificationType.STOP_INITIAL_OFFERING.value
             notification.priority = 0
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = self._gen_block_timestamp(entry).astimezone(tz=UTC)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
@@ -257,7 +258,7 @@ class WatchRedeem(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = NotificationType.REDEEM.value
             notification.priority = 0
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = self._gen_block_timestamp(entry).astimezone(tz=UTC)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
@@ -286,7 +287,7 @@ class WatchApplyForOffering(Watcher):
             notification.notification_type = NotificationType.APPLY_FOR_OFFERING.value
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = self._gen_block_timestamp(entry).astimezone(tz=UTC)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
@@ -315,7 +316,7 @@ class WatchAllot(Watcher):
             notification.notification_type = NotificationType.ALLOT.value
             notification.priority = 1
             notification.address = entry["args"]["accountAddress"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = self._gen_block_timestamp(entry).astimezone(tz=UTC)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)
@@ -348,7 +349,7 @@ class WatchTransfer(Watcher):
             notification.notification_type = NotificationType.TRANSFER.value
             notification.priority = 0
             notification.address = entry["args"]["to"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.block_timestamp = self._gen_block_timestamp(entry).astimezone(tz=UTC)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
             db_session.merge(notification)

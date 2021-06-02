@@ -24,12 +24,12 @@ cd /app/ibet-Wallet-API
 sleep 10
 
 # test
-pytest -v --cov=app/api/ --cov-report=xml --cov-branch
+pytest app -v --cov=app/api/ --cov-report=xml --cov-branch
 
 status_code=$?
 
 # カバレッジファイルの移動
-mv coverage.xml cov/
+mv coverage.xml cov/coverage-api.xml
 
 if [ $status_code -ne 0 ]; then
   exit 1

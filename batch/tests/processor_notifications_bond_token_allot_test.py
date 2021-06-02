@@ -16,14 +16,18 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import datetime
 import os
 import pytest
 import re
 import sys
+import time
 
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 from sqlalchemy.sql.functions import max
-
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 path = os.path.join(os.path.dirname(__file__), "../../")
@@ -44,6 +48,9 @@ from batch.tests.conftest import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
 
 @pytest.fixture(scope="function")
@@ -119,7 +126,7 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
         #   3) 買い注文
         register_personalinfo(trader, personal_info)
-        _data = datetime.datetime.utcnow().isoformat()
+        _data = datetime.utcnow().isoformat()
         bond_apply_for_offering(trader, 10, _data, bond_token)
 
         # ＜発行体オペレーション＞
@@ -177,7 +184,7 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
         #   3) 買い注文
         register_personalinfo(trader, personal_info)
-        _data = datetime.datetime.utcnow().isoformat()
+        _data = datetime.utcnow().isoformat()
         bond_apply_for_offering(trader, 10, _data, bond_token)
 
         # ＜発行体オペレーション＞
@@ -192,8 +199,11 @@ class TestProcessorNotificationsBondTokenWatchAllot:
     # registered_token : True
     # skip processing
     def test_normal_1(self, watcher_allot, shared_contract, session):
-
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
+        # Prepare data
+        started_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        time.sleep(1)
 
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
@@ -223,6 +233,14 @@ class TestProcessorNotificationsBondTokenWatchAllot:
             filter(Notification.notification_type == NotificationType.ALLOT.value). \
             filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
+        block_timestamp_jst = notification.block_timestamp. \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        time.sleep(1)
+
+        finished_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
 
         # blockNumber: 12桁、transactionIndex: 6桁、logIndex: 6桁、option_type=0:2桁
         assert re.search('0x[0-9a-fA-F]{12}0{6}0{6}0{2}', notification.notification_id) is not None
@@ -232,22 +250,28 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         assert notification.is_flagged is False
         assert notification.is_deleted is False
         assert notification.deleted_at is None
-        assert notification.block_timestamp >= started_timestamp
-        assert notification.block_timestamp <= datetime.datetime.utcnow()
         assert notification.args == expected_args
         assert notification.metainfo == expected_metadata
+        assert started_datetime < block_timestamp_jst
+        assert block_timestamp_jst < finished_datetime
 
-        started_timestamp = datetime.datetime.utcnow()
+        skip_processing_started_datetime = datetime.utcnow(). \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        time.sleep(1)
 
         # テスト実行 (Watcher.loop() skip processing)
         watcher_allot.loop()
         notification = session.query(max(Notification.modified).label("modified_max")).first()
-        assert notification.modified_max <= started_timestamp
+        notification_last_modified_datetime = notification.modified_max. \
+            replace(tzinfo=UTC). \
+            astimezone(JST)
+        assert notification_last_modified_datetime < skip_processing_started_datetime
 
     # Normal_2:
     # registered_token : False
     def test_normal_2(self, watcher_allot, shared_contract, session):
-
+        # Prepare data
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
 
@@ -261,12 +285,10 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         notification = session.query(Notification). \
             filter(Notification.metainfo['token_address'].as_string() == bond_token['address']). \
             first()
-
         assert notification is None
 
     # Normal_3 : No Listing data
     def test_normal_3(self, watcher_allot, session):
-
         # テスト実行
         watcher_allot.loop()
 
@@ -280,9 +302,7 @@ class TestProcessorNotificationsBondTokenWatchAllot:
     # Error_1
     # Contract.get_contract / getLogs Exception
     def test_error_1(self, watcher_allot, shared_contract, session):
-
-        started_timestamp = datetime.datetime.utcnow().replace(microsecond=0)
-
+        # Prepare data
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         token_list = shared_contract['TokenList']
@@ -295,10 +315,12 @@ class TestProcessorNotificationsBondTokenWatchAllot:
         from unittest.mock import patch
         web3_eth_Eth_getLogs = patch(
                 target="web3.eth.Eth.getLogs",
-                side_effect=TimeExhausted("TIME EXHAUSED")
+                side_effect=TimeExhausted("TIME EXHAUSTED")
         )
         with web3_eth_Eth_getLogs as mock_web3_get_logs:
             watcher_allot.loop()
 
+        # Assertion
         mock_web3_get_logs.assert_called_once()
-
+        notification = session.query(Notification).first()
+        assert notification is None
