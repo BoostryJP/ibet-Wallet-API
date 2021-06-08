@@ -25,7 +25,10 @@ from datetime import (
     timedelta
 )
 
-from sqlalchemy import create_engine
+from sqlalchemy import (
+    create_engine,
+    desc
+)
 from sqlalchemy.orm import (
     sessionmaker,
     scoped_session
@@ -85,30 +88,26 @@ class DBSink:
 
     def on_transfer(self, transaction_hash, token_address,
                     from_account_address, to_account_address, value, event_created):
-        """Transferイベントの同期
-
-        :param transaction_hash: トランザクションハッシュ
+        """Registry Transfer data in DB
+        
+        :param transaction_hash: transaction hash (same value for bulk transfer of token contract)
         :param token_address: token address
         :param from_account_address: from address
         :param to_account_address: to address
-        :param value: 移転数量
-        :param event_created: 移転日時（block timestamp）
+        :param value: transfer amount
+        :param event_created: block timestamp (same value for bulk transfer of token contract)
         :return: None
         """
-        transfer = self.db.query(IDXTransfer). \
-            filter(IDXTransfer.transaction_hash == transaction_hash). \
-            first()
-        if transfer is None:
-            LOG.debug(f"Transfer: transaction_hash={transaction_hash}")
-            transfer = IDXTransfer()
-            transfer.transaction_hash = transaction_hash
-            transfer.token_address = token_address
-            transfer.from_address = from_account_address
-            transfer.to_address = to_account_address
-            transfer.value = value
-            transfer.created = event_created
-            transfer.modified = event_created
-            self.db.merge(transfer)
+        LOG.debug(f"Transfer: transaction_hash={transaction_hash}")
+        transfer = IDXTransfer()
+        transfer.transaction_hash = transaction_hash
+        transfer.token_address = token_address
+        transfer.from_address = from_account_address
+        transfer.to_address = to_account_address
+        transfer.value = value
+        transfer.created = event_created
+        transfer.modified = event_created
+        self.db.add(transfer)
 
     def flush(self):
         self.db.commit()
@@ -143,19 +142,29 @@ class Processor:
                 token_contract = Contract.get_contract("IbetShare", listed_token.token_address)
                 self.token_list.append(token_contract)
 
+    def get_latest_registered_block_timestamp(self):
+        latest_registered = self.db.query(IDXTransfer). \
+            order_by(desc(IDXTransfer.created)). \
+            first()
+        if latest_registered is not None:
+            return latest_registered.created
+        else:
+            return None
+
     def initial_sync(self):
         self.get_token_list()
-        # 1,000,000ブロックずつ同期処理を行う
+        skip_timestamp = self.get_latest_registered_block_timestamp()
+        # Synchronize 1,000,000 blocks at a time
         _to_block = 999999
         _from_block = 0
         if self.latest_block > 999999:
             while _to_block < self.latest_block:
-                self.__sync_all(_from_block, _to_block)
+                self.__sync_all(_from_block, _to_block, skip_timestamp)
                 _to_block += 1000000
                 _from_block += 1000000
-            self.__sync_all(_from_block, self.latest_block)
+            self.__sync_all(_from_block, self.latest_block, skip_timestamp)
         else:
-            self.__sync_all(_from_block, self.latest_block)
+            self.__sync_all(_from_block, self.latest_block, skip_timestamp)
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
@@ -166,12 +175,12 @@ class Processor:
         self.__sync_all(self.latest_block + 1, blockTo)
         self.latest_block = blockTo
 
-    def __sync_all(self, block_from, block_to):
+    def __sync_all(self, block_from, block_to, skip_timestamp=None):
         LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_transfer(block_from, block_to)
+        self.__sync_transfer(block_from, block_to, skip_timestamp)
         self.sink.flush()
 
-    def __sync_transfer(self, block_from, block_to):
+    def __sync_transfer(self, block_from, block_to, skip_timestamp):
         for token in self.token_list:
             try:
                 events = token.events.Transfer.getLogs(
@@ -185,6 +194,9 @@ class Processor:
                         pass
                     else:
                         event_created = self.gen_block_timestamp(event=event)
+                        if skip_timestamp is not None and event_created <= skip_timestamp:
+                            LOG.debug(f"Skip Registry Transfer data in DB: blockNumber={event['blockNumber']}")
+                            continue
                         self.sink.on_transfer(
                             transaction_hash=event["transactionHash"].hex(),
                             token_address=to_checksum_address(token.address),
