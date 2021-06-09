@@ -165,6 +165,9 @@ class TransferHistory(BaseResource):
             description = 'invalid contract_address'
             raise InvalidParameterError(description=description)
 
+        # validation
+        request_json = self.validate(req)
+
         # 取扱トークンチェック
         listed_token = session.query(Listing). \
             filter(Listing.token_address == contract_address). \
@@ -173,16 +176,60 @@ class TransferHistory(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # 移転履歴取得
-        transfer_history = session.query(IDXTransfer). \
+        query = session.query(IDXTransfer). \
             filter(IDXTransfer.token_address == contract_address). \
-            order_by(IDXTransfer.id). \
-            all()
+            order_by(IDXTransfer.id)
+        list_length = query.count()
 
-        resp_body = []
+        if request_json["offset"] is not None:
+            query = query.offset(request_json['offset'])
+        if request_json["limit"] is not None:
+            query = query.limit(request_json['limit'])
+        transfer_history = query.all()
+
+        resp_data = []
         for transfer_event in transfer_history:
-            resp_body.append(transfer_event.json())
+            resp_data.append(transfer_event.json())
 
-        self.on_success(res, resp_body)
+        data = {
+            "result_set": {
+                "count": list_length,
+                "offset": request_json['offset'],
+                "limit": request_json['limit'],
+                "total": list_length
+            },
+            "transfer_history": resp_data
+        }
+        self.on_success(res, data=data)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            "offset": req.get_param("offset"),
+            "limit": req.get_param("limit")
+        }
+
+        validator = Validator({
+            "offset": {
+                "type": "integer",
+                "coerce": int,
+                "min": 0,
+                "required": False,
+                "nullable": True,
+            },
+            "limit": {
+                "type": "integer",
+                "coerce": int,
+                "min": 0,
+                "required": False,
+                "nullable": True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
 
 
 # /Token/{contract_address}/TransferApprovalHistory
@@ -201,6 +248,8 @@ class TransferApprovalHistory(BaseResource):
         except:
             raise InvalidParameterError("invalid contract_address")
 
+        request_json = self.validate(req)
+
         # Check that it is a listed token
         _listed_token = db_session.query(Listing). \
             filter(Listing.token_address == contract_address). \
@@ -209,16 +258,60 @@ class TransferApprovalHistory(BaseResource):
             raise DataNotExistsError(f"contract_address: {contract_address}")
 
         # Get transfer approval data
-        transfer_approval_history = db_session.query(IDXTransferApproval). \
+        query = db_session.query(IDXTransferApproval). \
             filter(IDXTransferApproval.token_address == contract_address). \
-            order_by(IDXTransferApproval.application_id). \
-            all()
+            order_by(IDXTransferApproval.application_id)
+        list_length = query.count()
 
-        resp_body = []
-        for transfer_event in transfer_approval_history:
-            resp_body.append(transfer_event.json())
+        # パラメータを設定
+        if request_json["offset"] is not None:
+            query = query.offset(request_json["offset"])
+        if request_json["limit"] is not None:
+            query = query.limit(request_json["limit"])
+        transfer_approval_history = query.all()
 
-        self.on_success(res, resp_body)
+        resp_data = []
+        for transfer_approval_event in transfer_approval_history:
+            resp_data.append(transfer_approval_event.json())
+        data = {
+            "result_set": {
+                "count": list_length,
+                "offset": request_json['offset'],
+                "limit": request_json['limit'],
+                "total": list_length
+            },
+            "transfer_approval_history": resp_data
+        }
+        self.on_success(res, data=data)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            'offset': req.get_param('offset'),
+            'limit': req.get_param('limit'),
+        }
+
+        validator = Validator({
+            'offset': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+            'limit': {
+                'type': 'integer',
+                'coerce': int,
+                'min': 0,
+                'required': False,
+                'nullable': True,
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
 
 
 # ------------------------------

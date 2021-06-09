@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.4.0"
+  version: "21.5.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -85,28 +85,31 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: contract_address
-          in: query
-          description: "contract address"
+        - name: "body"
+          in: "body"
           required: true
-          type: string
-        - name: is_public
-          in: query
-          required: true
-          type: boolean
-        - name: max_holding_quantity
-          in: query
-          required: false
-          type: integer
-        - name: max_sell_amount
-          in: query
-          required: false
-          type: integer
-        - name: owner_address
-          in: query
-          description: "token owner address"
-          required: true
-          type: string
+          schema:
+            type: "object"
+            properties:
+              contract_address:
+                description: Contract(Token) address
+                type: string
+              is_public:
+                description: Public and private listings
+                type: boolean
+              max_holding_quantity:
+                description: Maximum holding quantity limit
+                type: integer
+              max_sell_amount:
+                description: Maximum sell amount limit
+                type: integer
+              owner_address:
+                description: Token issuer address
+                type: string
+            required:
+              - contract_address
+              - is_public
+              - owner_address
       responses:
         200:
           description: Successful Operation
@@ -202,28 +205,29 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: "contract_address"
-          in: "path"
-          description: "Contract Address"
+        - name: contract_address
+          in: path
+          description: Contract(Token) address"
           required: true
-          type: "string"
-        - name: is_public
-          in: query
-          required: false
-          type: boolean
-        - name: max_holding_quantity
-          in: query
-          required: false
-          type: integer
-        - name: max_sell_amount
-          in: query
-          required: false
-          type: integer
-        - name: owner_address
-          in: query
-          description: "token owner address"
-          required: false
           type: string
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              is_public:
+                description: Public and private listings
+                type: boolean
+              max_holding_quantity:
+                description: Maximum holding quantity limit
+                type: integer
+              max_sell_amount:
+                description: Maximum sell amount limit
+                type: integer
+              owner_address:
+                description: Token issuer address
+                type: string
       responses:
         200:
           description: Successful Operation
@@ -385,13 +389,19 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: raw_tx_hex_list
-          in: query
-          description: "signed transaction list"
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              raw_tx_hex_list:
+                description: Signed transaction list
+                type: array
+                items:
+                  type: string
+            required:
+              - raw_tx_hex_list
       responses:
         200:
           description: Successful Operation
@@ -440,13 +450,19 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: raw_tx_hex_list
-          in: query
-          description: "signed transaction list"
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              raw_tx_hex_list:
+                description: Signed transaction list
+                type: array
+                items:
+                  type: string
+            required:
+              - raw_tx_hex_list
       responses:
         200:
           description: Successful Operation
@@ -498,18 +514,22 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: transaction_hash
-          in: query
-          description: "transaction hash"
+        - name: "body"
+          in: "body"
           required: true
-          type: string
-        - name: timeout
-          in: query
-          description: "timeout value"
-          required: false
-          type: integer
-          minimum: 1
-          maximum: 30
+          schema:
+            type: "object"
+            properties:
+              transaction_hash:
+                description: Transaction hash
+                type: string
+              timeout:
+                description: Timeout value
+                type: integer
+                minimum: 1
+                maximum: 30
+            required:
+              - transaction_hash
       responses:
         200:
           description: Successful Operation
@@ -2009,23 +2029,48 @@ paths:
               meta:
                 $ref: "#/definitions/200Success"
               data:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    transaction_hash:
-                      type: string
-                    token_address:
-                      type: string
-                    from_address:
-                      type: string
-                    to_address:
-                      type: string
-                    value:
-                      type: integer
-                    created:
-                      type: string
-                      description: block_timestamp when Transfer log was emitted (JST)
+                type: object
+                properties:
+                  result_set:
+                    description: Result set
+                    type: object
+                    properties:
+                      count:
+                        description: Number of search results
+                        type: integer
+                      offset:
+                        description: Search query offset
+                        type: integer
+                      limit:
+                        description: Search query limit
+                        type: integer
+                      total:
+                        description: Total number
+                        type: integer
+                  transfer_history:
+                    description: Transfer history
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        transaction_hash:
+                          description: Transaction hash
+                          type: string
+                        token_address:
+                          description: Token address
+                          type: string
+                        from_address:
+                          description: Account address of transfer source
+                          type: string
+                        to_address:
+                          description: Account address of transfer destination
+                          type: string
+                        value:
+                          description: Transfer quantity
+                          type: integer
+                        created:
+                          description: block_timestamp when Transfer log was emitted (JST)
+                          type: string
         400:
           description: Invalid Parameter Error
           schema:
@@ -2061,34 +2106,59 @@ paths:
               meta:
                 $ref: "#/definitions/200Success"
               data:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    token_address:
-                      type: string
-                    application_id:
-                      type: string
-                    from_address:
-                      type: string
-                    to_address:
-                      type: string
-                    value:
-                      type: integer
-                    application_datetime:
-                      type: string
-                      description: application datetime (JST)
-                    application_blocktimestamp:
-                      type: string
-                      description: application blocktimestamp (JST)
-                    approval_datetime:
-                      type: string
-                      description: approval datetime (JST)
-                    approval_blocktimestamp:
-                      type: string
-                      description: approval blocktimestamp (JST)
-                    cancelled:
-                      type: boolean
+                type: object
+                properties:
+                  result_set:
+                    description: Result set
+                    type: object
+                    properties:
+                      count:
+                        description: Number of search results
+                        type: integer
+                      offset:
+                        description: Search query offset
+                        type: integer
+                      limit:
+                        description: Search query limit
+                        type: integer
+                      total:
+                        description: Total number
+                        type: integer
+                  transfer_approval_history:
+                    description: Transfer approval history
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token_address:
+                          description: Token address
+                          type: string
+                        application_id:
+                          description: Application id
+                          type: string
+                        from_address:
+                          description: Account address of transfer source
+                          type: string
+                        to_address:
+                          description: Account address of transfer destination
+                          type: string
+                        value:
+                          description: Transfer quantity
+                          type: integer
+                        application_datetime:
+                          description: application datetime (JST)
+                          type: string
+                        application_blocktimestamp:
+                          description: application blocktimestamp (JST)
+                          type: string
+                        approval_datetime:
+                          description: approval datetime (JST)
+                          type: string
+                        approval_blocktimestamp:
+                          description: approval blocktimestamp (JST)
+                          type: string
+                        cancelled:
+                          type: boolean
         400:
           description: Invalid Parameter Error
           schema:
@@ -2110,22 +2180,25 @@ paths:
       summary: "StraightBond Token Orderbook"
       operationId: "StraightBondOrderBook"
       parameters:
-        - name: account_address
-          in: query
-          description: Orderer's account address
-          required: false
-          type: string
-        - name: token_address
-          in: query
-          description: token address
+        - name: "body"
+          in: "body"
           required: true
-          type: string
-        - name: order_type
-          in: query
-          description: order type
-          required: true
-          type: string
-          enum: [buy,sell]
+          schema:
+            type: "object"
+            properties:
+              account_address:
+                description: Account address
+                type: string
+              token_address:
+                description: Token address
+                type: string
+              order_type:
+                description: Order type
+                type: string
+                enum: [buy, sell]
+            required:
+              - token_address
+              - order_type
       responses:
         200:
           description: Successful Operation
@@ -2168,22 +2241,25 @@ paths:
       summary: "Membership Token Orderbook"
       operationId: "MembershipOrderBook"
       parameters:
-        - name: account_address
-          in: query
-          description: Orderer's account address
-          required: false
-          type: string
-        - name: token_address
-          in: query
-          description: token address
+        - name: "body"
+          in: "body"
           required: true
-          type: string
-        - name: order_type
-          in: query
-          description: order type
-          required: true
-          type: string
-          enum: [buy,sell]
+          schema:
+            type: "object"
+            properties:
+              account_address:
+                description: Account address
+                type: string
+              token_address:
+                description: Token address
+                type: string
+              order_type:
+                description: Order type
+                type: string
+                enum: [buy, sell]
+            required:
+              - token_address
+              - order_type
       responses:
         200:
           description: Successful Operation
@@ -2226,22 +2302,25 @@ paths:
       summary: "Coupon Token Orderbook"
       operationId: "CouponOrderBook"
       parameters:
-        - name: account_address
-          in: query
-          description: Orderer's account address
-          required: false
-          type: string
-        - name: token_address
-          in: query
-          description: token address
+        - name: "body"
+          in: "body"
           required: true
-          type: string
-        - name: order_type
-          in: query
-          description: order type
-          required: true
-          type: string
-          enum: [buy,sell]
+          schema:
+            type: "object"
+            properties:
+              account_address:
+                description: Account address
+                type: string
+              token_address:
+                description: Token address
+                type: string
+              order_type:
+                description: Order type
+                type: string
+                enum: [buy, sell]
+            required:
+              - token_address
+              - order_type
       responses:
         200:
           description: Successful Operation
@@ -2284,13 +2363,19 @@ paths:
       summary: "StraightBond Token Last Price (Bulk Get)"
       operationId: "StraightBondLastPrice"
       parameters:
-        - name: address_list
-          in: query
-          description: token address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              address_list:
+                description: Token address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2329,13 +2414,19 @@ paths:
       summary: "Membership Token Last Price (Bulk Get)"
       operationId: "MembershipLastPrice"
       parameters:
-        - name: address_list
-          in: query
-          description: token address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              address_list:
+                description: Token address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2374,13 +2465,19 @@ paths:
       summary: "Coupon Token Last Price (Bulk Get)"
       operationId: "CouponLastPrice"
       parameters:
-        - name: address_list
-          in: query
-          description: token address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              address_list:
+                description: Token address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2419,13 +2516,19 @@ paths:
       summary: "StraightBond Token Tick (Bulk Get)"
       operationId: "StraightBondTick"
       parameters:
-        - name: address_list
-          in: query
-          description: token address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              address_list:
+                description: Token address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2482,13 +2585,19 @@ paths:
       summary: "Membership Token Tick (Bulk Get)"
       operationId: "MembershipTick"
       parameters:
-        - name: address_list
-          in: query
-          description: token address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              address_list:
+                description: Token address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2545,13 +2654,19 @@ paths:
       summary: "Coupon Token Tick (Bulk Get)"
       operationId: "CouponTick"
       parameters:
-        - name: address_list
-          in: query
-          description: token address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              address_list:
+                description: Token address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2685,13 +2800,19 @@ paths:
       summary: "StraightBond Token Position (Bulk Get)"
       operationId: "StraightBondMyTokens"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2820,13 +2941,19 @@ paths:
       summary: "Share Token Position (Bulk Get)"
       operationId: "ShareMyTokens"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -2937,13 +3064,19 @@ paths:
       summary: "Membership Token Position (Bulk Get)"
       operationId: "MembershipMyTokens"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -3037,13 +3170,19 @@ paths:
       summary: "Coupon Token Position (Bulk Get)"
       operationId: "CouponMyTokens"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -3139,18 +3278,23 @@ paths:
       summary: "Coupon Consumption History (Bulk Get)"
       operationId: "CouponConsumptions"
       parameters:
-        - name: token_address
-          in: query
-          description: token address
+        - name: "body"
+          in: "body"
           required: true
-          type: string
-        - name: account_address_list
-          in: query
-          description: account address list
-          required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              token_address:
+                description: Token address
+                type: string
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - token_address
+              - address_list
       responses:
         200:
           description: Successful Operation
@@ -3194,24 +3338,28 @@ paths:
       summary: "Order History filtered by token (Bulk Get)"
       operationId: "OrderList"
       parameters:
-        - name: token_address
-          in: path
+        - name: "body"
+          in: "body"
           required: true
-          type: string
-          description: token address
-        - name: "exchange_contract_name"
-          in: "query"
-          description: DEX contract name
-          required: true
-          type: "string"
-          enum: ["IbetStraightBondExchange", "IbetMembershipExchange", "IbetCouponExchange"]
-        - name: account_address_list
-          in: query
-          description: account address list
-          required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              token_address:
+                description: Token address
+                type: string
+              exchange_contract_name:
+                description: Exchange contract name
+                type: string
+                enum: ["IbetStraightBondExchange", "IbetMembershipExchange", "IbetCouponExchange"]
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - token_address
+              - exchange_contract_name
+              - account_address_list
       responses:
         200:
           description: Successful Operation
@@ -3332,13 +3480,19 @@ paths:
       summary: "Straight Bond Order History (Bulk Get)"
       operationId: "StraightBondOrderList"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - account_address_list
       responses:
         200:
           description: Successful Operation
@@ -3714,13 +3868,19 @@ paths:
       summary: "Share Order History (Bulk Get)"
       operationId: "ShareOrderList"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - account_address_list
       responses:
         200:
           description: Successful Operation
@@ -3908,13 +4068,19 @@ paths:
       summary: "Membership Order History (Bulk Get)"
       operationId: "MembershipOrderList"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - account_address_list
       responses:
         200:
           description: Successful Operation
@@ -4185,13 +4351,19 @@ paths:
       summary: "Share Order History (Bulk Get)"
       operationId: "CouponOrderList"
       parameters:
-        - name: account_address_list
-          in: query
-          description: account address list
+        - name: "body"
+          in: "body"
           required: true
-          type: array
-          items:
-            type: string
+          schema:
+            type: "object"
+            properties:
+              account_address_list:
+                description: Account address list
+                type: array
+                items:
+                  type: string
+            required:
+              - account_address_list
       responses:
         200:
           description: Successful Operation
@@ -4565,20 +4737,28 @@ paths:
       summary: "Update Notification"
       operationId: "PostNotifications"
       parameters:
-        - in: body
-          name: body
+        - name: "body"
+          in: "body"
+          required: true
           schema:
-            type: object
+            type: "object"
             properties:
               address:
+                description: Account address
                 type: string
+                allowEmptyValue: false
               id:
+                description: Notification id
                 type: string
+                allowEmptyValue: false
               is_read:
+                description: Read update
                 type: boolean
               is_flagged:
+                description: Set flag
                 type: boolean
               is_deleted:
+                description: Logical deletion
                 type: boolean
             required:
               - address
