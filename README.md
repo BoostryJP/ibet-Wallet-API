@@ -5,7 +5,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-21.4-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-21.5-blue.svg?cacheSeconds=2592000" />
   <a href="https:/doc.com" target="_blank">
     <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
   </a>
@@ -22,11 +22,11 @@ It supports the tokens developed by [ibet-SmartContract](https://github.com/Boos
 
 ## Supported contract version
 
-* ibet-SmartContract: version 1.1.0
+* ibet-SmartContract: version 21.4.0
 
 ## Prerequisites
 
-Set up an execution environment of Python 3.6 or higher.
+Set up an execution environment of Python 3.8 or higher.
 
 ## Starting and Stopping the Server
 Install packages

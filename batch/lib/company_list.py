@@ -28,6 +28,9 @@ LOG = log.get_logger()
 
 class CompanyListFactory:
     def __init__(self, url):
+        if config.APP_ENV != "local" and config.COMPANY_LIST_LOCAL_MODE is False:
+            if url is None:
+                raise Exception("COMPANY_LIST_URL is not set")
         self.url = url
 
     def get(self):
@@ -35,6 +38,7 @@ class CompanyListFactory:
 
 
 class CompanyList:
+
     @classmethod
     def get(self, url):
         try:

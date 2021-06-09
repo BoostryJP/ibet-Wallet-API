@@ -28,16 +28,7 @@ APP_ENV = os.environ.get('APP_ENV') or 'local'
 
 # コンソーシアム企業リスト設定
 NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
-if NETWORK == "IBET":
-    if APP_ENV == 'live':
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list/company_list.json'
-    else:
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-company-list-dev/company_list.json'
-elif NETWORK == "IBETFIN":
-    if APP_ENV == 'live':
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list/company_list.json'
-    else:
-        COMPANY_LIST_URL = 'https://s3-ap-northeast-1.amazonaws.com/ibet-fin-company-list-dev/company_list.json'
+COMPANY_LIST_URL = os.environ.get("COMPANY_LIST_URL")
 COMPANY_LIST_LOCAL_MODE = True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
 
 # 環境設定読み込み
