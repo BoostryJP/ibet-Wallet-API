@@ -1269,6 +1269,8 @@ paths:
                       type: boolean
                     transfer_approval_required:
                       type: boolean
+                    is_canceled:
+                      type: boolean
                     contact_information:
                       type: string
                     privacy_policy:
@@ -1424,6 +1426,8 @@ paths:
                   status:
                     type: boolean
                   transfer_approval_required:
+                    type: boolean
+                  is_canceled:
                     type: boolean
                   contact_information:
                     type: string
@@ -3029,6 +3033,8 @@ paths:
                           type: boolean
                         transfer_approval_required:
                           type: boolean
+                        is_canceled:
+                          type: boolean
                         contact_information:
                           type: string
                         privacy_policy:
@@ -3964,6 +3970,8 @@ paths:
                             status:
                               type: boolean
                             transfer_approval_required:
+                              type: boolean
+                            is_canceled:
                               type: boolean
                             max_holding_quantity:
                               type: integer
