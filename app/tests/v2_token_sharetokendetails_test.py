@@ -141,6 +141,7 @@ class TestV2TokenShareTokenDetails:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }
 
         assert resp.status_code == 200
