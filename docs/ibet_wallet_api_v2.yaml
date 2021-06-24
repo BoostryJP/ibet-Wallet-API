@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.5.0"
+  version: "21.6.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -1269,6 +1269,8 @@ paths:
                       type: boolean
                     transfer_approval_required:
                       type: boolean
+                    is_canceled:
+                      type: boolean
                     contact_information:
                       type: string
                     privacy_policy:
@@ -1424,6 +1426,8 @@ paths:
                   status:
                     type: boolean
                   transfer_approval_required:
+                    type: boolean
+                  is_canceled:
                     type: boolean
                   contact_information:
                     type: string
@@ -3029,6 +3033,8 @@ paths:
                           type: boolean
                         transfer_approval_required:
                           type: boolean
+                        is_canceled:
+                          type: boolean
                         contact_information:
                           type: string
                         privacy_policy:
@@ -3964,6 +3970,8 @@ paths:
                             status:
                               type: boolean
                             transfer_approval_required:
+                              type: boolean
+                            is_canceled:
                               type: boolean
                             max_holding_quantity:
                               type: integer

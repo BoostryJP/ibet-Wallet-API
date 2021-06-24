@@ -266,6 +266,7 @@ class ShareToken(TokenBase):
     max_holding_quantity: int
     max_sell_amount: int
     transfer_approval_required: bool
+    is_canceled: bool
 
     # トークン情報のキャッシュ
     cache = {}
@@ -291,10 +292,19 @@ class ShareToken(TokenBase):
                     # キャッシュ情報を取得
                     sharetoken = token_cache["token"]
                     # キャッシュ情報以外の情報を取得
+                    sharetoken.total_supply = TokenContract.functions.totalSupply().call()
+                    sharetoken.principal_value = TokenContract.functions.principalValue().call()
+                    dividend_information = TokenContract.functions.dividendInformation().call()
+                    sharetoken.dividend_information = {
+                        'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
+                        'dividend_record_date': dividend_information[1],
+                        'dividend_payment_date': dividend_information[2],
+                    }
                     sharetoken.transferable = TokenContract.functions.transferable().call()
                     sharetoken.offering_status = TokenContract.functions.offeringStatus().call()
                     sharetoken.status = TokenContract.functions.status().call()
                     sharetoken.transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
+                    sharetoken.is_canceled = TokenContract.functions.isCanceled().call()
                     return sharetoken
 
         # キャッシュ未利用の場合
@@ -327,6 +337,7 @@ class ShareToken(TokenBase):
         offering_status = TokenContract.functions.offeringStatus().call()
         status = TokenContract.functions.status().call()
         transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
+        is_canceled = TokenContract.functions.isCanceled().call()
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
 
@@ -369,6 +380,7 @@ class ShareToken(TokenBase):
         sharetoken.offering_status = offering_status
         sharetoken.status = status
         sharetoken.transfer_approval_required = transfer_approval_required
+        sharetoken.is_canceled = is_canceled
         sharetoken.contact_information = contact_information
         sharetoken.privacy_policy = privacy_policy
         sharetoken.max_holding_quantity = listed_token.max_holding_quantity \
