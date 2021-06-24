@@ -22,7 +22,7 @@ It supports the tokens developed by [ibet-SmartContract](https://github.com/Boos
 
 ## Supported contract version
 
-* ibet-SmartContract: version 21.4.0
+* ibet-SmartContract: version 21.6.0
 
 ## Prerequisites
 

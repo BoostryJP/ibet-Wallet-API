@@ -145,6 +145,7 @@ class TestV2TokenShareTokens:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }]
 
         assert resp.status_code == 200
@@ -211,6 +212,7 @@ class TestV2TokenShareTokens:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }, {
             'id': 0,
             'token_address': share_list[0]['address'],
@@ -244,6 +246,7 @@ class TestV2TokenShareTokens:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }]
 
         assert resp.status_code == 200
@@ -311,6 +314,7 @@ class TestV2TokenShareTokens:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }, {
             'id': 0,
             'token_address': share_list[0]['address'],
@@ -344,6 +348,7 @@ class TestV2TokenShareTokens:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }]
 
         assert resp.status_code == 200
@@ -411,6 +416,7 @@ class TestV2TokenShareTokens:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }]
 
         assert resp.status_code == 200
@@ -478,6 +484,7 @@ class TestV2TokenShareTokens:
             'transferable': True,
             'status': True,
             'transfer_approval_required': False,
+            'is_canceled': False,
         }]
 
         assert resp.status_code == 200
