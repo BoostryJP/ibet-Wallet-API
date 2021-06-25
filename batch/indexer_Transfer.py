@@ -53,7 +53,7 @@ from app.model import (
 from app.contracts import Contract
 import log
 
-JST = timezone(timedelta(hours=+9), "JST")
+UTC = timezone(timedelta(hours=0), "UTC")
 
 process_name = "INDEXER-TRANSFER"
 LOG = log.get_logger(process_name=process_name)
@@ -121,7 +121,7 @@ class Processor:
         self.token_list = []
 
     def gen_block_timestamp(self, event):
-        return datetime.fromtimestamp(web3.eth.getBlock(event["blockNumber"])["timestamp"], JST)
+        return datetime.fromtimestamp(web3.eth.getBlock(event["blockNumber"])["timestamp"], UTC)
 
     def get_token_list(self):
         self.token_list = []
@@ -194,7 +194,7 @@ class Processor:
                         pass
                     else:
                         event_created = self.gen_block_timestamp(event=event)
-                        if skip_timestamp is not None and event_created <= skip_timestamp:
+                        if skip_timestamp is not None and event_created <= skip_timestamp.replace(tzinfo=UTC):
                             LOG.debug(f"Skip Registry Transfer data in DB: blockNumber={event['blockNumber']}")
                             continue
                         self.sink.on_transfer(
