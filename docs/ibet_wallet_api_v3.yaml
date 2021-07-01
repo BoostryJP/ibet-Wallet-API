@@ -79,18 +79,7 @@ paths:
                 type: object
                 properties:
                   result_set:
-                    type: object
-                    properties:
-                      count:
-                        type: integer
-                        description: "number of search results"
-                      offset:
-                        type: integer
-                      limit:
-                        type: integer
-                      total:
-                        type: integer
-                        description: "total number of results"
+                    $ref: "#/definitions/ResultSet"
                   notifications:
                     type: array
                     items:
@@ -190,6 +179,19 @@ paths:
               meta:
                 $ref: "#/definitions/404NotFoundError"
 definitions:
+  ResultSet:
+    type: object
+    properties:
+      count:
+        type: integer
+        description: "number of search results"
+      offset:
+        type: integer
+      limit:
+        type: integer
+      total:
+        type: integer
+        description: "total number of results"
   200Success:
     type: object
     properties:
