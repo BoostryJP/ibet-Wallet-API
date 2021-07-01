@@ -20,14 +20,32 @@ SPDX-License-Identifier: Apache-2.0
 import falcon
 
 from app import log
-from app.middleware import JSONTranslator, DatabaseSessionManager, CORSMiddleware
-from app.database import db_session, init_session
+from app.middleware import (
+    JSONTranslator,
+    DatabaseSessionManager,
+    CORSMiddleware
+)
+from app.database import (
+    db_session,
+    init_session
+)
 
 from app.api.common import base
-from app.api.v2 import admin
-from app.api.v2 import token_abi, notification, eth, company, user, nodeInfo, \
-    token, market_information, position, order_list, statistics
-
+from app.api.v2 import (
+    admin as v2_admin,
+    token_abi as v2_token_abi,
+    notification as v2_notification,
+    eth as v2_eth,
+    company as v2_company,
+    user as v2_user,
+    nodeInfo as v2_nodeInfo,
+    token as v2_token,
+    market_information as v2_market_information,
+    position as v2_position,
+    order_list as v2_order_list,
+    statistics as v2_statistics
+)
+from app.api.v3 import notification as v3_notification
 
 from app.errors import AppError
 
@@ -46,87 +64,96 @@ class App(falcon.API):
         """
 
         # System Environment Settings
-        self.add_route('/v2/Admin/Tokens', admin.Tokens())
-        self.add_route('/v2/Admin/Tokens/Type', admin.TokenType())
-        self.add_route('/v2/Admin/Token/{contract_address}', admin.Token())
+        self.add_route('/v2/Admin/Tokens', v2_admin.Tokens())
+        self.add_route('/v2/Admin/Tokens/Type', v2_admin.TokenType())
+        self.add_route('/v2/Admin/Token/{contract_address}', v2_admin.Token())
 
         # Blockchain Transactions
-        self.add_route('/v2/Eth/TransactionCount/{eth_address}', eth.GetTransactionCount())
-        self.add_route('/v2/Eth/SendRawTransaction', eth.SendRawTransaction())
-        self.add_route('/v2/Eth/SendRawTransactionNoWait', eth.SendRawTransactionNoWait())
-        self.add_route('/v2/Eth/WaitForTransactionReceipt', eth.WaitForTransactionReceipt())
+        self.add_route('/v2/Eth/TransactionCount/{eth_address}', v2_eth.GetTransactionCount())
+        self.add_route('/v2/Eth/SendRawTransaction', v2_eth.SendRawTransaction())
+        self.add_route('/v2/Eth/SendRawTransactionNoWait', v2_eth.SendRawTransactionNoWait())
+        self.add_route('/v2/Eth/WaitForTransactionReceipt', v2_eth.WaitForTransactionReceipt())
 
         # Blockchain Node Information
-        self.add_route('/v2/NodeInfo', nodeInfo.NodeInfo())
-        self.add_route('/v2/NodeInfo/BlockSyncStatus', nodeInfo.BlockSyncStatus())
+        self.add_route('/v2/NodeInfo', v2_nodeInfo.NodeInfo())
+        self.add_route('/v2/NodeInfo/BlockSyncStatus', v2_nodeInfo.BlockSyncStatus())
 
         # Contract ABIs
-        self.add_route('/v2/ABI/StraightBond', token_abi.StraightBondABI())
-        self.add_route('/v2/ABI/Share', token_abi.ShareABI())
-        self.add_route('/v2/ABI/Membership', token_abi.MembershipABI())
-        self.add_route('/v2/ABI/Coupon', token_abi.CouponABI())
+        self.add_route('/v2/ABI/StraightBond', v2_token_abi.StraightBondABI())
+        self.add_route('/v2/ABI/Share', v2_token_abi.ShareABI())
+        self.add_route('/v2/ABI/Membership', v2_token_abi.MembershipABI())
+        self.add_route('/v2/ABI/Coupon', v2_token_abi.CouponABI())
 
         # Companies
-        self.add_route('/v2/Company/{eth_address}', company.CompanyInfo())
-        self.add_route('/v2/Companies', company.CompanyInfoList())
-        self.add_route('/v2/Company/{eth_address}/Tokens', company.CompanyTokenList())
-        self.add_route('/v2/PaymentAgent/{eth_address}', company.PaymentAgentInfo())
+        self.add_route('/v2/Company/{eth_address}', v2_company.CompanyInfo())
+        self.add_route('/v2/Companies', v2_company.CompanyInfoList())
+        self.add_route('/v2/Company/{eth_address}/Tokens', v2_company.CompanyTokenList())
+        self.add_route('/v2/PaymentAgent/{eth_address}', v2_company.PaymentAgentInfo())
 
         # Tokens
-        self.add_route('/v2/Token/StraightBond', token.StraightBondTokens())
-        self.add_route('/v2/Token/StraightBond/Address', token.StraightBondTokenAddresses())
-        self.add_route('/v2/Token/StraightBond/{contract_address}', token.StraightBondTokenDetails())
-        self.add_route('/v2/Token/Share', token.ShareTokens())
-        self.add_route('/v2/Token/Share/Address', token.ShareTokenAddresses())
-        self.add_route('/v2/Token/Share/{contract_address}', token.ShareTokenDetails())
-        self.add_route('/v2/Token/Membership', token.MembershipTokens())
-        self.add_route('/v2/Token/Membership/Address', token.MembershipTokenAddresses())
-        self.add_route('/v2/Token/Membership/{contract_address}', token.MembershipTokenDetails())
-        self.add_route('/v2/Token/Coupon', token.CouponTokens())
-        self.add_route('/v2/Token/Coupon/Address', token.CouponTokenAddresses())
-        self.add_route('/v2/Token/Coupon/{contract_address}', token.CouponTokenDetails())
-        self.add_route('/v2/Token/{contract_address}/Status', token.TokenStatus())
-        self.add_route('/v2/Token/{contract_address}/Holders', token.TokenHolders())
-        self.add_route('/v2/Token/{contract_address}/TransferHistory', token.TransferHistory())
-        self.add_route('/v2/Token/{contract_address}/TransferApprovalHistory', token.TransferApprovalHistory())
+        self.add_route('/v2/Token/StraightBond', v2_token.StraightBondTokens())
+        self.add_route('/v2/Token/StraightBond/Address', v2_token.StraightBondTokenAddresses())
+        self.add_route('/v2/Token/StraightBond/{contract_address}', v2_token.StraightBondTokenDetails())
+        self.add_route('/v2/Token/Share', v2_token.ShareTokens())
+        self.add_route('/v2/Token/Share/Address', v2_token.ShareTokenAddresses())
+        self.add_route('/v2/Token/Share/{contract_address}', v2_token.ShareTokenDetails())
+        self.add_route('/v2/Token/Membership', v2_token.MembershipTokens())
+        self.add_route('/v2/Token/Membership/Address', v2_token.MembershipTokenAddresses())
+        self.add_route('/v2/Token/Membership/{contract_address}', v2_token.MembershipTokenDetails())
+        self.add_route('/v2/Token/Coupon', v2_token.CouponTokens())
+        self.add_route('/v2/Token/Coupon/Address', v2_token.CouponTokenAddresses())
+        self.add_route('/v2/Token/Coupon/{contract_address}', v2_token.CouponTokenDetails())
+        self.add_route('/v2/Token/{contract_address}/Status', v2_token.TokenStatus())
+        self.add_route('/v2/Token/{contract_address}/Holders', v2_token.TokenHolders())
+        self.add_route('/v2/Token/{contract_address}/TransferHistory', v2_token.TransferHistory())
+        self.add_route('/v2/Token/{contract_address}/TransferApprovalHistory', v2_token.TransferApprovalHistory())
 
         # Market Data
-        self.add_route('/v2/Market/OrderBook/StraightBond', market_information.StraightBondOrderBook())
-        self.add_route('/v2/Market/OrderBook/Membership', market_information.MembershipOrderBook())
-        self.add_route('/v2/Market/OrderBook/Coupon', market_information.CouponOrderBook())
-        self.add_route('/v2/Market/LastPrice/StraightBond', market_information.StraightBondLastPrice())
-        self.add_route('/v2/Market/LastPrice/Membership', market_information.MembershipLastPrice())
-        self.add_route('/v2/Market/LastPrice/Coupon', market_information.CouponLastPrice())
-        self.add_route('/v2/Market/Tick/StraightBond', market_information.StraightBondTick())
-        self.add_route('/v2/Market/Tick/Membership', market_information.MembershipTick())
-        self.add_route('/v2/Market/Tick/Coupon', market_information.CouponTick())
-        self.add_route('/v2/Market/Agreement', market_information.GetAgreement())
+        self.add_route('/v2/Market/OrderBook/StraightBond', v2_market_information.StraightBondOrderBook())
+        self.add_route('/v2/Market/OrderBook/Membership', v2_market_information.MembershipOrderBook())
+        self.add_route('/v2/Market/OrderBook/Coupon', v2_market_information.CouponOrderBook())
+        self.add_route('/v2/Market/LastPrice/StraightBond', v2_market_information.StraightBondLastPrice())
+        self.add_route('/v2/Market/LastPrice/Membership', v2_market_information.MembershipLastPrice())
+        self.add_route('/v2/Market/LastPrice/Coupon', v2_market_information.CouponLastPrice())
+        self.add_route('/v2/Market/Tick/StraightBond', v2_market_information.StraightBondTick())
+        self.add_route('/v2/Market/Tick/Membership', v2_market_information.MembershipTick())
+        self.add_route('/v2/Market/Tick/Coupon', v2_market_information.CouponTick())
+        self.add_route('/v2/Market/Agreement', v2_market_information.GetAgreement())
 
         # Position
-        self.add_route('/v2/Position/StraightBond', position.StraightBondMyTokens())
-        self.add_route('/v2/Position/Share', position.ShareMyTokens())
-        self.add_route('/v2/Position/Membership', position.MembershipMyTokens())
-        self.add_route('/v2/Position/Coupon', position.CouponMyTokens())
-        self.add_route('/v2/Position/Coupon/Consumptions', position.CouponConsumptions())
+        self.add_route('/v2/Position/StraightBond', v2_position.StraightBondMyTokens())
+        self.add_route('/v2/Position/Share', v2_position.ShareMyTokens())
+        self.add_route('/v2/Position/Membership', v2_position.MembershipMyTokens())
+        self.add_route('/v2/Position/Coupon', v2_position.CouponMyTokens())
+        self.add_route('/v2/Position/Coupon/Consumptions', v2_position.CouponConsumptions())
 
         # Orders
-        self.add_route('/v2/OrderList/{token_address}', order_list.OrderList())
-        self.add_route('/v2/OrderList/StraightBond', order_list.StraightBondOrderList())
-        self.add_route('/v2/OrderList/Share', order_list.ShareOrderList())
-        self.add_route('/v2/OrderList/Membership', order_list.MembershipOrderList())
-        self.add_route('/v2/OrderList/Coupon', order_list.CouponOrderList())
+        self.add_route('/v2/OrderList/{token_address}', v2_order_list.OrderList())
+        self.add_route('/v2/OrderList/StraightBond', v2_order_list.StraightBondOrderList())
+        self.add_route('/v2/OrderList/Share', v2_order_list.ShareOrderList())
+        self.add_route('/v2/OrderList/Membership', v2_order_list.MembershipOrderList())
+        self.add_route('/v2/OrderList/Coupon', v2_order_list.CouponOrderList())
 
         # Notifications
-        self.add_route('/v2/Notifications', notification.Notifications())
-        self.add_route('/v2/Notifications/Read', notification.NotificationsRead())
-        self.add_route('/v2/NotificationCount', notification.NotificationCount())
+        self.add_route('/v2/Notifications', v2_notification.Notifications())
+        self.add_route('/v2/Notifications/Read', v2_notification.NotificationsRead())
+        self.add_route('/v2/NotificationCount', v2_notification.NotificationCount())
+        self.add_route('/v3/Notifications', v2_notification.Notifications())
 
         # User Information
-        self.add_route('/v2/User/PaymentAccount', user.PaymentAccount())
-        self.add_route('/v2/User/PersonalInfo', user.PersonalInfo())
+        self.add_route('/v2/User/PaymentAccount', v2_user.PaymentAccount())
+        self.add_route('/v2/User/PersonalInfo', v2_user.PersonalInfo())
 
         # Statistics
-        self.add_route('/v2/Statistics/Token/{contract_address}', statistics.Token())
+        self.add_route('/v2/Statistics/Token/{contract_address}', v2_statistics.Token())
+
+        """
+        Version 3
+        """
+
+        # Notifications
+        self.add_route('/v3/Notifications', v3_notification.Notifications())
+        self.add_route('/v3/Notifications/{id}', v3_notification.NotificationsId())
 
         """
         Error Handler
