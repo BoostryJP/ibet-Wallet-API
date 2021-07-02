@@ -1,0 +1,265 @@
+swagger: "2.0"
+info:
+  description: "ibet Wallet API"
+  version: "21.6.0"
+  title: "ibet Wallet API"
+  termsOfService: ""
+  contact:
+    email: "dev@boostry.co.jp"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+basePath: "/v3"
+tags:
+- name: "Notification"
+  description: "Account Notification"
+schemes:
+- "https"
+- "http"
+paths:
+  /Notifications:
+    get:
+      tags:
+        - "Notification"
+      summary: "Notification List"
+      operationId: "GetNotifications"
+      parameters:
+        - name: address
+          in: query
+          required: true
+          type: string
+        - name: notification_type
+          in: query
+          required: false
+          type: string
+          enum: [ "NewOrder", "NewOrderCounterpart", "CancelOrder", "CancelOrderCounterpart", "BuyAgreement",
+                  "BuySettlementOK", "BuySettlementNG", "SellAgreement", "SellSettlementOK",
+                  "SellSettlementNG", "StartInitialOffering", "StopInitialOffering", "StartOffering",
+                  "StopOffering", "Redeem", "Suspend", "ApplyForOffering", "Allot", "Transfer",
+                  "PaymentAccountRegister", "PaymentAccountApprove", "PaymentAccountUnapprove",
+                  "PaymentAccountWarn", "PaymentAccountBan" ]
+        - name: priority
+          in: query
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 2
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: [ "notification_type", "priority", "block_timestamp", "created" ]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+        - name: offset
+          in: query
+          description: "start position"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "number of get"
+          required: false
+          type: integer
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  notifications:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        notifications:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              notification_type:
+                                type: string
+                                example:
+                                  NewOrder
+                                enum: [
+                                  NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
+                                  BuyAgreement,BuySettlementOK,BuySettlementNG,
+                                  SellAgreement,SellSettlementOK,SellSettlementNG,
+                                  StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
+                                  Redeem,Suspend,ApplyForOffering,Allot,Transfer,
+                                  PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
+                                  PaymentAccountWarn,PaymentAccountBan
+                                ]
+                              id:
+                                type: string
+                                example:
+                                  "0x00000373ca8600000000000000"
+                              priority:
+                                type: integer
+                              block_timestamp:
+                                type: string
+                                description: "block timestamp"
+                              is_read:
+                                type: boolean
+                              is_flagged:
+                                type: boolean
+                              is_deleted:
+                                type: boolean
+                              deleted_at:
+                                type: string
+                                description: "datetime of deletion"
+                              args:
+                                type: object
+                              metainfo:
+                                type: object
+                                properties:
+                                  company_name:
+                                    type: string
+                                  token_address:
+                                    type: string
+                                  token_name:
+                                    type: string
+                                  exchange_address:
+                                    type: string
+                                  token_type:
+                                    type: string
+                                    enum: [IbetStraightBond,IbetMembership,IbetCoupon]
+                              account_address:
+                                type: string
+                              sort_id:
+                                type: integer
+                              created:
+                                type: string
+                                description: "datetime of create"
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+  /Notifications/{id}:
+    delete:
+      tags:
+        - "Notification"
+      summary: "Delete Notification"
+      operationId: "DeleteNotification"
+      parameters:
+        - name: "id"
+          in: path
+          description: "Notification id"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+definitions:
+  ResultSet:
+    type: object
+    properties:
+      count:
+        type: integer
+        description: "number of search results"
+      offset:
+        type: integer
+      limit:
+        type: integer
+      total:
+        type: integer
+        description: "total number of results"
+  200Success:
+    type: object
+    properties:
+      code:
+        type: string
+        description: "Processing Result Code"
+        example: 200
+      message:
+        type: string
+        description: "Processing Result Message"
+        example: OK
+  400InvalidParameterError:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: "Error Code"
+        example: 88
+      message:
+        type: string
+        description: "Error Message"
+        example: Invalid Parameter
+      description:
+        type: string
+        description: "Error Reason"
+        example: ""
+  404NotFoundError:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: "Error Code"
+        example: 30
+      message:
+        type: string
+        description: "Error Reason"
+        example: "Data Not Exists"
+      description:
+        type: string
+        description: "Error Reason"
+        example: ""
+  404NotSupportedError:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: "Error Code"
+        example: 10
+      message:
+        type: string
+        description: "Error Reason"
+        example: "Not Supported"
+      description:
+        type: string
+        description: "Error Reason"
+        example: ""
+  503ServiceUnavailable:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: "Error Code"
+        example: 503
+      message:
+        type: string
+        description: "Error Reason"
+        example: "Service Unavailable"
+      description:
+        type: string
+        description: "Error Reason"
+        example: "Block synchronization is down"
