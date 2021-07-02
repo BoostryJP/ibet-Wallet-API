@@ -141,7 +141,7 @@ paths:
                                 type: string
                               sort_id:
                                 type: integer
-                              created_at:
+                              created:
                                 type: string
                                 description: "datetime of create"
         400:

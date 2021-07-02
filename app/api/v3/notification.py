@@ -92,7 +92,7 @@ class Notifications(BaseResource):
             sort_id += 1
             notification = _notification.json()
             notification["sort_id"] = sort_id
-            notification["created_at"] = _notification.created.strftime("%Y/%m/%d %H:%M:%S")
+            notification["created"] = _notification.created.strftime("%Y/%m/%d %H:%M:%S.%f")
             notifications.append(notification)
 
         data = {

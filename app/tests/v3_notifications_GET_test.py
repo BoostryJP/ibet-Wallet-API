@@ -47,7 +47,7 @@ class TestNotificationsGet:
         n.metainfo = {
             "aaa": "bbb",
         }
-        n.created = datetime.strptime("2022/01/01 15:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 15:20:30.123456", '%Y/%m/%d %H:%M:%S.%f')
         session.add(n)
 
         n = Notification()
@@ -64,7 +64,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 16:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 16:20:30.123456", '%Y/%m/%d %H:%M:%S.%f')
         session.add(n)
 
         n = Notification()
@@ -81,7 +81,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 17:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 17:20:30.123456", '%Y/%m/%d %H:%M:%S.%f')
         session.add(n)
 
         n = Notification()
@@ -98,7 +98,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 18:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 18:20:30.123456", '%Y/%m/%d %H:%M:%S.%f')
         session.add(n)
 
         n = Notification()
@@ -115,7 +115,7 @@ class TestNotificationsGet:
             "hoge": "fuga",
         }
         n.metainfo = {}
-        n.created = datetime.strptime("2022/01/01 19:20:30", '%Y/%m/%d %H:%M:%S')
+        n.created = datetime.strptime("2022/01/01 19:20:30.123456", '%Y/%m/%d %H:%M:%S.%f')
         session.add(n)
 
     ###########################################################################
@@ -161,7 +161,7 @@ class TestNotificationsGet:
                         "aaa": "bbb"
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 15:20:30"
+                    "created": "2022/01/01 15:20:30.123456"
                 },
                 {
                     "notification_type": "NewOrderCounterpart",
@@ -178,7 +178,7 @@ class TestNotificationsGet:
                     },
                     "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 16:20:30"
+                    "created": "2022/01/01 16:20:30.123456"
                 },
                 {
                     "notification_type": "NewOrder",
@@ -196,7 +196,7 @@ class TestNotificationsGet:
                     "metainfo": {
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30.123456"
                 },
                 {
                     "notification_type": "NewOrder",
@@ -214,7 +214,7 @@ class TestNotificationsGet:
                     "metainfo": {
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 19:20:30"
+                    "created": "2022/01/01 19:20:30.123456"
                 },
             ]
         }
@@ -262,7 +262,7 @@ class TestNotificationsGet:
                     },
                     "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 16:20:30"
+                    "created": "2022/01/01 16:20:30.123456"
                 },
                 {
                     "notification_type": "NewOrder",
@@ -280,7 +280,7 @@ class TestNotificationsGet:
                     "metainfo": {
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30.123456"
                 },
             ]
         }
@@ -329,7 +329,7 @@ class TestNotificationsGet:
                     "metainfo": {
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30.123456"
                 },
             ]
         }
@@ -378,7 +378,7 @@ class TestNotificationsGet:
                     "metainfo": {
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 17:20:30"
+                    "created": "2022/01/01 17:20:30.123456"
                 },
                 {
                     "notification_type": "NewOrder",
@@ -397,7 +397,7 @@ class TestNotificationsGet:
                         "aaa": "bbb"
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 15:20:30"
+                    "created": "2022/01/01 15:20:30.123456"
                 },
                 {
                     "notification_type": "NewOrderCounterpart",
@@ -414,7 +414,7 @@ class TestNotificationsGet:
                     },
                     "metainfo": {},
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 16:20:30"
+                    "created": "2022/01/01 16:20:30.123456"
                 },
                 {
                     "notification_type": "NewOrder",
@@ -432,7 +432,7 @@ class TestNotificationsGet:
                     "metainfo": {
                     },
                     "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf",
-                    "created_at": "2022/01/01 19:20:30"
+                    "created": "2022/01/01 19:20:30.123456"
                 },
             ]
         }
