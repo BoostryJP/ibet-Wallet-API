@@ -277,6 +277,7 @@ class TestV2CompanyCompanyTokenList:
                 'privacy_policy': 'プライバシーポリシー',
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
+                'is_canceled': False
             }
         ]
 
