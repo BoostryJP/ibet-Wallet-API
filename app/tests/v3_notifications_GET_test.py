@@ -130,18 +130,15 @@ class TestNotificationsGet:
 
         # Request target API
         resp = client.simulate_get(
-            self.apiurl,
-            params={
-                "address": self.address
-            }
+            self.apiurl
         )
 
         assumed_body = {
             "result_set": {
-                "count": 4,
+                "count": 5,
                 "offset": None,
                 "limit": None,
-                "total": 4
+                "total": 5
             },
             "notifications": [
                 {
@@ -199,9 +196,27 @@ class TestNotificationsGet:
                     "created": "2022/01/01 17:20:30"
                 },
                 {
+                    "notification_type": "NewOrderCounterpart",
+                    "id": "0x00000011032000000000000000",
+                    "sort_id": 4,
+                    "priority": 1,
+                    "block_timestamp": "2017/03/10 10:00:00",
+                    "is_read": True,
+                    "is_flagged": False,
+                    "is_deleted": False,
+                    "deleted_at": None,
+                    "args": {
+                        "hoge": "fuga",
+                    },
+                    "metainfo": {
+                    },
+                    "account_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
+                    "created": "2022/01/01 18:20:30"
+                },
+                {
                     "notification_type": "NewOrder",
                     "id": "0x00000001034000000000000000",
-                    "sort_id": 4,
+                    "sort_id": 5,
                     "priority": 0,
                     "block_timestamp": "2017/02/10 10:00:00",
                     "is_read": False,
@@ -233,7 +248,6 @@ class TestNotificationsGet:
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": self.address,
                 "offset": 1,
                 "limit": 2,
             }
@@ -241,10 +255,10 @@ class TestNotificationsGet:
 
         assumed_body = {
             "result_set": {
-                "count": 4,
+                "count": 5,
                 "offset": 1,
                 "limit": 2,
-                "total": 4
+                "total": 5
             },
             "notifications": [
                 {
@@ -299,7 +313,6 @@ class TestNotificationsGet:
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": self.address,
                 "notification_type": "NewOrder",
                 "priority": 2,
             }
@@ -310,7 +323,7 @@ class TestNotificationsGet:
                 "count": 1,
                 "offset": None,
                 "limit": None,
-                "total": 4
+                "total": 5
             },
             "notifications": [
                 {
@@ -348,7 +361,6 @@ class TestNotificationsGet:
         resp = client.simulate_get(
             self.apiurl,
             params={
-                "address": self.address,
                 "sort_item": "priority",
                 "sort_order": 1,
             }
@@ -356,10 +368,10 @@ class TestNotificationsGet:
 
         assumed_body = {
             "result_set": {
-                "count": 4,
+                "count": 5,
                 "offset": None,
                 "limit": None,
-                "total": 4
+                "total": 5
             },
             "notifications": [
                 {
@@ -417,9 +429,27 @@ class TestNotificationsGet:
                     "created": "2022/01/01 16:20:30"
                 },
                 {
+                    "notification_type": "NewOrderCounterpart",
+                    "id": "0x00000011032000000000000000",
+                    "sort_id": 4,
+                    "priority": 1,
+                    "block_timestamp": "2017/03/10 10:00:00",
+                    "is_read": True,
+                    "is_flagged": False,
+                    "is_deleted": False,
+                    "deleted_at": None,
+                    "args": {
+                        "hoge": "fuga",
+                    },
+                    "metainfo": {
+                    },
+                    "account_address": "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF",
+                    "created": "2022/01/01 18:20:30"
+                },
+                {
                     "notification_type": "NewOrder",
                     "id": "0x00000001034000000000000000",
-                    "sort_id": 4,
+                    "sort_id": 5,
                     "priority": 0,
                     "block_timestamp": "2017/02/10 10:00:00",
                     "is_read": False,
@@ -467,7 +497,6 @@ class TestNotificationsGet:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "address": ["null value not allowed", "must be of string type"],
                 "notification_type": "unallowed value hoge",
                 "priority": "min value is 0",
                 "sort_item": "unallowed value fuga",

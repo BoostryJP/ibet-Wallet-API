@@ -138,7 +138,6 @@ class App(falcon.API):
         self.add_route('/v2/Notifications', v2_notification.Notifications())
         self.add_route('/v2/Notifications/Read', v2_notification.NotificationsRead())
         self.add_route('/v2/NotificationCount', v2_notification.NotificationCount())
-        self.add_route('/v3/Notifications', v2_notification.Notifications())
 
         # User Information
         self.add_route('/v2/User/PaymentAccount', v2_user.PaymentAccount())
