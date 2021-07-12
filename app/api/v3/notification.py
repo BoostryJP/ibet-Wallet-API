@@ -61,7 +61,7 @@ class Notifications(BaseResource):
 
         # Search Filter
         if address is not None:
-            query = query.filter(Notification.notification_type == to_checksum_address(address))
+            query = query.filter(Notification.address == to_checksum_address(address))
         if notification_type is not None:
             query = query.filter(Notification.notification_type == notification_type)
         if priority is not None:

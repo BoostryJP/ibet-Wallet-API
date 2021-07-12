@@ -304,7 +304,7 @@ class TestNotificationsGet:
         assert resp.json["data"] == assumed_body
 
     # <Normal_3>
-    # Search Filter
+    # Pagination(over offset)
     def test_normal_3(self, client, session):
         # Prepare data
         self._insert_test_data(session)
@@ -313,6 +313,35 @@ class TestNotificationsGet:
         resp = client.simulate_get(
             self.apiurl,
             params={
+                "offset": 5,
+            }
+        )
+
+        assumed_body = {
+            "result_set": {
+                "count": 5,
+                "offset": 5,
+                "limit": None,
+                "total": 5
+            },
+            "notifications": []
+        }
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json["data"] == assumed_body
+
+    # <Normal_4>
+    # Search Filter
+    def test_normal_4(self, client, session):
+        # Prepare data
+        self._insert_test_data(session)
+
+        # Request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "address": self.address,
                 "notification_type": "NewOrder",
                 "priority": 2,
             }
@@ -351,9 +380,39 @@ class TestNotificationsGet:
         assert resp.status_code == 200
         assert resp.json["data"] == assumed_body
 
-    # <Normal_4>
+    # <Normal_5>
+    # Search Filter(not hit)
+    def test_normal_5(self, client, session):
+        # Prepare data
+        self._insert_test_data(session)
+
+        # Request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "address": self.address_2,
+                "notification_type": "NewOrder",
+                "priority": 1,
+            }
+        )
+
+        assumed_body = {
+            "result_set": {
+                "count": 0,
+                "offset": None,
+                "limit": None,
+                "total": 5
+            },
+            "notifications": []
+        }
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json["data"] == assumed_body
+
+    # <Normal_6>
     # Sort
-    def test_normal_4(self, client, session):
+    def test_normal_6(self, client, session):
         # Prepare data
         self._insert_test_data(session)
 
