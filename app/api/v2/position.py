@@ -187,7 +187,7 @@ class StraightBondMyTokens(BaseResource):
                         else:
                             # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                             commitment = 0
-                        # If balance, pending_transfer, and commitment are non-zero,
+                        # If balance and commitment are non-zero,
                         # get the token information from TokenContract.
                         if balance == 0 and commitment == 0:
                             continue
@@ -282,7 +282,7 @@ class MembershipMyTokens(BaseResource):
                         else:
                             # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                             commitment = 0
-                        # If balance, pending_transfer, and commitment are non-zero,
+                        # If balance and commitment are non-zero,
                         # get the token information from TokenContract.
                         if balance == 0 and commitment == 0:
                             continue
@@ -384,7 +384,7 @@ class CouponMyTokens(BaseResource):
                             filter(IDXTransfer.token_address == token.token_address). \
                             filter(IDXTransfer.to_address == owner). \
                             first()
-                        # If balance, pending_transfer, and commitment are non-zero,
+                        # If balance, commitment, and used are non-zero, and exist received history,
                         # get the token information from TokenContract.
                         if balance == 0 and commitment == 0 and used == 0 and received_history is None:
                             continue
