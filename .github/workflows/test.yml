@@ -5,12 +5,12 @@ jobs:
   unit-test-postgres:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: run unit test using postgres
         run: docker-compose run ibet-wallet-api-postgres
   unit-test-mysql:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: run unit test using mysql
         run: docker-compose run ibet-wallet-api-mysql
