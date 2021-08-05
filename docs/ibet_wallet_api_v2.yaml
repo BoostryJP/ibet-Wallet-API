@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.7.0"
+  version: "21.9.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -3344,15 +3344,17 @@ paths:
       summary: "Order History filtered by token (Bulk Get)"
       operationId: "OrderList"
       parameters:
+        - in: "path"
+          name: token_address
+          description: Token Address
+          required: true
+          type: string
         - name: "body"
           in: "body"
           required: true
           schema:
             type: "object"
             properties:
-              token_address:
-                description: Token address
-                type: string
               exchange_contract_name:
                 description: Exchange contract name
                 type: string
@@ -3363,7 +3365,6 @@ paths:
                 items:
                   type: string
             required:
-              - token_address
               - exchange_contract_name
               - account_address_list
       responses:
@@ -4754,11 +4755,9 @@ paths:
               address:
                 description: Account address
                 type: string
-                allowEmptyValue: false
               id:
                 description: Notification id
                 type: string
-                allowEmptyValue: false
               is_read:
                 description: Read update
                 type: boolean

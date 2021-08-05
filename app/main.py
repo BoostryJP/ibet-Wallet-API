@@ -45,7 +45,10 @@ from app.api.v2 import (
     order_list as v2_order_list,
     statistics as v2_statistics
 )
-from app.api.v3 import notification as v3_notification
+from app.api.v3 import (
+    notification as v3_notification,
+    position as v3_position
+)
 
 from app.errors import AppError
 
@@ -149,6 +152,20 @@ class App(falcon.API):
         """
         Version 3
         """
+
+        # Position
+        self.add_route('/v3/Position/{account_address}/Share', v3_position.PositionShare())
+        self.add_route('/v3/Position/{account_address}/StraightBond', v3_position.PositionStraightBond())
+        self.add_route('/v3/Position/{account_address}/Membership', v3_position.PositionMembership())
+        self.add_route('/v3/Position/{account_address}/Coupon', v3_position.PositionCoupon())
+        self.add_route('/v3/Position/{account_address}/Share/{contract_address}',
+                       v3_position.PositionShareContractAddress())
+        self.add_route('/v3/Position/{account_address}/StraightBond/{contract_address}',
+                       v3_position.PositionStraightBondContractAddress())
+        self.add_route('/v3/Position/{account_address}/Membership/{contract_address}',
+                       v3_position.PositionMembershipContractAddress())
+        self.add_route('/v3/Position/{account_address}/Coupon/{contract_address}',
+                       v3_position.PositionCouponContractAddress())
 
         # Notifications
         self.add_route('/v3/Notifications', v3_notification.Notifications())
