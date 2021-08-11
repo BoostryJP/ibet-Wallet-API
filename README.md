@@ -10,11 +10,10 @@
   </a>
 </p>
 
-## About this repository
+## Features
 
-ibe-Wallet-API is an API service that provides various utilities to help you build Wallet services on [ibet network](https://github.com/BoostryJP/ibet-Network).
-
-It supports the tokens developed by [ibet-SmartContract](https://github.com/BoostryJP/ibet-SmartContract).
+- ibe-Wallet-API is RPC services that provides utility functions for building a wallet system on [ibet-Network](https://github.com/BoostryJP/ibet-Network).
+- ibet-Wallet-API runs on token contracts and DEX contracts developed in the [ibet-SmartContract project](https://github.com/BoostryJP/ibet-SmartContract).
 
 ## Dependencies
 
