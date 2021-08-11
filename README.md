@@ -18,8 +18,13 @@ It supports the tokens developed by [ibet-SmartContract](https://github.com/Boos
 
 ## Dependencies
 
-- [python3](https://www.python.org/downloads/release/python-3811/) version 3.8 or greater
-
+- [python3](https://www.python.org/) - version 3.8 or greater
+- RDB
+  - [PostgreSQL](https://www.postgresql.org/) - version 10
+  - [MySQL](https://www.mysql.com/) - version 5.7
+- GoQuorum
+  - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
+  - We use [ganache-cli](https://github.com/trufflesuite/ganache-cli) for local development and unit testing, and we use the latest version.
 
 ## Supported contract version
 
