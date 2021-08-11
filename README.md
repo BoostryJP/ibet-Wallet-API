@@ -20,13 +20,15 @@ ibe-Wallet-API is an API service that provides various utilities to help you bui
 
 It supports the tokens developed by [ibet-SmartContract](https://github.com/BoostryJP/ibet-SmartContract).
 
+## Dependencies
+
+- [python3](https://www.python.org/downloads/release/python-3811/) version 3.8 or greater
+
+
 ## Supported contract version
 
 * ibet-SmartContract: version 21.6.0
 
-## Prerequisites
-
-Set up an execution environment of Python 3.8 or higher.
 
 ## Starting and Stopping the Server
 Install packages
@@ -49,6 +51,13 @@ You can run the tests with:
 ```
 $ pytest app/tests/
 ```
+
+## Branching model
+
+<p align='center'>
+  <img alt="ibet" src="https://user-images.githubusercontent.com/963333/128963415-df122a46-b813-4832-a64e-7830a175f825.png"/>
+</p>
+
 
 ## License
 
