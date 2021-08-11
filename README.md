@@ -11,17 +11,16 @@
 </p>
 
 ## Features
-
 - ibe-Wallet-API is RPC services that provides utility functions for building a wallet system on [ibet-Network](https://github.com/BoostryJP/ibet-Network).
 - ibet-Wallet-API runs on token contracts and DEX contracts developed in the [ibet-SmartContract project](https://github.com/BoostryJP/ibet-SmartContract).
 
 ## Dependencies
-
-- [python3](https://www.python.org/) - version 3.8 or greater
+- [python3](https://www.python.org/)
+  - Version 3.8 or greater
 - RDB
-  - [PostgreSQL](https://www.postgresql.org/) - version 10
-  - [MySQL](https://www.mysql.com/) - version 5.7
-- GoQuorum
+  - [PostgreSQL](https://www.postgresql.org/) - Version 10
+  - [MySQL](https://www.mysql.com/) - Version 5.7
+- [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
   - We use [ganache-cli](https://github.com/trufflesuite/ganache-cli) for local development and unit testing, and we use the latest version.
 
