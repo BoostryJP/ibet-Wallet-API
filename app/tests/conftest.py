@@ -93,14 +93,14 @@ def tokenlist_contract():
 
 
 @pytest.fixture(scope='session')
-def shared_contract():
-    payment_gateway = payment_gateway_contract()
-    personal_info = personalinfo_contract()
+def shared_contract(payment_gateway_contract, personalinfo_contract, tokenlist_contract):
+    payment_gateway = payment_gateway_contract
+    personal_info = personalinfo_contract
     bond_exchange = ibet_exchange_contract(payment_gateway['address'])
     membership_exchange = ibet_exchange_contract(payment_gateway['address'])
     coupon_exchange = ibet_exchange_contract(payment_gateway['address'])
     share_exchange = ibet_exchange_contract(payment_gateway['address'])
-    token_list = tokenlist_contract()
+    token_list = tokenlist_contract
     contracts = {
         'PaymentGateway': payment_gateway,
         'PersonalInfo': personal_info,
