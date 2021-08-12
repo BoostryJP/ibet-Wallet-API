@@ -66,7 +66,7 @@ class ShareMyTokens(BaseResource):
         ExchangeContract = None
         if config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
             ExchangeContract = Contract.get_contract(
-                contract_name="IbetOTCExchange",
+                contract_name="IbetExchange",
                 address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
             )
 
@@ -162,7 +162,7 @@ class StraightBondMyTokens(BaseResource):
         BondExchangeContract = None
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
             BondExchangeContract = Contract.get_contract(
-                contract_name="IbetStraightBondExchange",
+                contract_name="IbetExchange",
                 address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
             )
 
@@ -257,7 +257,7 @@ class MembershipMyTokens(BaseResource):
         ExchangeContract = None
         if config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             ExchangeContract = Contract.get_contract(
-                contract_name="IbetMembershipExchange",
+                contract_name="IbetExchange",
                 address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
 
@@ -352,7 +352,7 @@ class CouponMyTokens(BaseResource):
         CouponExchangeContract = None
         if config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
             CouponExchangeContract = Contract.get_contract(
-                contract_name="IbetCouponExchange",
+                contract_name="IbetExchange",
                 address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
             )
 

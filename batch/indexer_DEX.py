@@ -100,7 +100,8 @@ class DBSink:
         self.db = db
 
     def on_new_order(self, transaction_hash: str, token_address: str, exchange_address: str,
-                     order_id: int, account_address: str, counterpart_address: str, is_buy: bool, price: int, amount: int,
+                     order_id: int, account_address: str, counterpart_address: str, is_buy: bool, price: int,
+                     amount: int,
                      agent_address: str, order_timestamp: datetime):
         order = self.__get_order(exchange_address, order_id)
         if order is None:
@@ -183,28 +184,28 @@ class Processor:
         # 債券取引コントラクト登録
         if IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
             bond_exchange_contract = Contract.get_contract(
-                "IbetStraightBondExchange",
+                "IbetExchange",
                 IBET_SB_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(bond_exchange_contract)
         # 会員権取引コントラクト登録
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             membership_exchange_contract = Contract.get_contract(
-                "IbetMembershipExchange",
+                "IbetExchange",
                 IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(membership_exchange_contract)
         # クーポン取引コントラクト登録
         if IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
             coupon_exchange_contract = Contract.get_contract(
-                "IbetCouponExchange",
+                "IbetExchange",
                 IBET_CP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(coupon_exchange_contract)
-        # OTC取引コントラクト登録
+        # 株式取引コントラクト登録
         if IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
             self.share_exchange_contract = Contract.get_contract(
-                "IbetOTCExchange",
+                "IbetExchange",
                 IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(self.share_exchange_contract)
@@ -274,18 +275,9 @@ class Processor:
                             JST
                         )
                         if available_token is not None:
-                            # NOTE: OTC取引の場合
-                            #   args[counterpartAddress]が存在する
-                            #   args[isBuy]が存在しない
-                            #   accountAddress -> ownerAddress
-                            if exchange_contract == self.share_exchange_contract:
-                                account_address = args["ownerAddress"]
-                                counterpart_address = args["counterpartAddress"]
-                                is_buy = False
-                            else:
-                                account_address = args["accountAddress"]
-                                counterpart_address = ""
-                                is_buy = args["isBuy"]
+                            account_address = args["accountAddress"]
+                            counterpart_address = ""
+                            is_buy = args["isBuy"]
 
                             self.sink.on_new_order(
                                 transaction_hash=transaction_hash,
@@ -330,13 +322,9 @@ class Processor:
                     if args["amount"] > sys.maxsize:
                         pass
                     else:
-                        # IbetOTCExchangeの場合、is_buyが存在せずMake注文は全て売り注文
-                        # NOTE: 他商品がOTCExchangeを利用する場合修正が必要
-                        is_buy = False
-                        if exchange_contract != self.share_exchange_contract:
-                            order_id = args["orderId"]
-                            orderbook = exchange_contract.functions.getOrder(order_id).call()
-                            is_buy = orderbook[4]
+                        order_id = args["orderId"]
+                        orderbook = exchange_contract.functions.getOrder(order_id).call()
+                        is_buy = orderbook[4]
                         if is_buy:
                             counterpart_address = args["sellAddress"]
                         else:

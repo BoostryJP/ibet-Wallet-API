@@ -278,7 +278,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         attribute = TestV2TokenTokenStatus.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
@@ -311,7 +311,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         attribute = TestV2TokenTokenStatus.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
@@ -347,7 +347,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         attribute = TestV2TokenTokenStatus.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
@@ -383,7 +383,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         attribute = TestV2TokenTokenStatus.membership_token_attribute(exchange_address)
         membership_token = membership_issue(issuer, attribute)
         membership_register_list(issuer, membership_token, token_list)
@@ -415,7 +415,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         attribute = TestV2TokenTokenStatus.membership_token_attribute(exchange_address)
         membership_token = membership_issue(issuer, attribute)
         membership_register_list(issuer, membership_token, token_list)
@@ -450,7 +450,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         attribute = TestV2TokenTokenStatus.membership_token_attribute(exchange_address)
         membership_token = membership_issue(issuer, attribute)
         membership_register_list(issuer, membership_token, token_list)
@@ -485,7 +485,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：クーポン新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         attribute = TestV2TokenTokenStatus.coupon_token_attribute(exchange_address)
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
@@ -517,7 +517,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：クーポン新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         attribute = TestV2TokenTokenStatus.coupon_token_attribute(exchange_address)
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
@@ -552,7 +552,7 @@ class TestV2TokenTokenStatus:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：クーポン新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         attribute = TestV2TokenTokenStatus.coupon_token_attribute(exchange_address)
         coupon_token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, coupon_token, token_list)
@@ -626,12 +626,12 @@ class TestV2TokenTokenStatus:
     #   無効なコントラクトアドレス（TokenInterfaceを継承しているが譲渡可否を持たないコントラクト）
     #   -> 404エラー
     def test_tokenstatus_error_3(self, client, session, shared_contract):
-        otc_exchange = shared_contract['IbetOTCExchange']
+        share_exchange = shared_contract['IbetShareExchange']
 
         # 取扱トークンデータ挿入
-        TestV2TokenTokenStatus.list_token(session, otc_exchange)
+        TestV2TokenTokenStatus.list_token(session, share_exchange)
 
-        apiurl = self.apiurl_base.format(contract_address=otc_exchange['address'])
+        apiurl = self.apiurl_base.format(contract_address=share_exchange['address'])
 
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)
@@ -640,5 +640,5 @@ class TestV2TokenTokenStatus:
         assert resp.json['meta'] == {
             'code': 30,
             'message': 'Data Not Exists',
-            'description': 'contract_address: ' + otc_exchange['address']
+            'description': 'contract_address: ' + share_exchange['address']
         }

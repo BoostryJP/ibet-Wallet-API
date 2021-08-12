@@ -21,9 +21,16 @@ import json
 
 from .account_config import eth_account
 from app import config
-from .contract_modules import issue_bond_token, offer_bond_token, \
-    register_personalinfo, register_payment_gateway, \
-    take_buy_bond_token, get_latest_orderid, get_latest_agreementid, bond_confirm_agreement
+from .contract_modules import (
+    issue_bond_token,
+    offer_bond_token,
+    register_personalinfo,
+    register_payment_gateway,
+    take_buy,
+    get_latest_orderid,
+    get_latest_agreementid,
+    confirm_agreement
+)
 
 
 class TestV2StraightBondLastPrice:
@@ -81,11 +88,11 @@ class TestV2StraightBondLastPrice:
         register_personalinfo(trader, personal_info)
         register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
+        take_buy(trader, bond_exchange, latest_orderid, 100)
 
         # 決済業者オペレーション
         latest_agreementid = get_latest_agreementid(bond_exchange, latest_orderid)
-        bond_confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
+        confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
 
         return bond_token
 
@@ -234,7 +241,6 @@ class TestV2StraightBondLastPrice:
 
     # エラー系4：HTTPメソッドが不正
     def test_lastprice_error_4(self, client):
-
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -249,7 +255,6 @@ class TestV2StraightBondLastPrice:
 
     # エラー系5：取扱トークン対象外
     def test_lastprice_error_5(self, client):
-
         config.BOND_TOKEN_ENABLED = False
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -264,7 +269,6 @@ class TestV2StraightBondLastPrice:
 
     # エラー系6：exchangeアドレス未設定
     def test_lastprice_error_6(self, client):
-
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
 

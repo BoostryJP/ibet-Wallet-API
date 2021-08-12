@@ -94,7 +94,7 @@ class IbetShareUtils:
     @staticmethod
     def sell(tx_from: str,
              exchange_address: str, token_address: str,
-             counterpart: str, amount: int, price: int):
+             amount: int, price: int):
         IbetShareUtils.transfer_to_exchange(
             tx_from=tx_from,
             exchange_address=exchange_address,
@@ -105,7 +105,6 @@ class IbetShareUtils:
             tx_from=tx_from,
             exchange_address=exchange_address,
             token_address=token_address,
-            counterpart=counterpart,
             amount=amount,
             price=price
         )
@@ -125,15 +124,15 @@ class IbetShareUtils:
     @staticmethod
     def make_sell_order(tx_from: str,
                         exchange_address: str, token_address: str,
-                        counterpart: str, amount: int, price: int):
+                        amount: int, price: int):
         web3.eth.defaultAccount = tx_from
         agent_address = eth_account["agent"]["account_address"]
         ExchangeContract = Contract.get_contract(
-            contract_name="IbetOTCExchange",
+            contract_name="IbetExchange",
             address=exchange_address
         )
         ExchangeContract.functions. \
-            createOrder(counterpart, token_address, amount, price, agent_address). \
+            createOrder(token_address, amount, price, False, agent_address). \
             transact({"from": tx_from, "gas": gas_limit})
 
     @staticmethod

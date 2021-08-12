@@ -118,14 +118,14 @@ class TestV2CouponMyTokens:
 
         # ＜投資家オペレーション＞
         #   1) Take買
-        latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid)
-        coupon_confirm_agreement(
+            get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(
             agent, exchange, latest_orderid, latest_agreementid)
 
         return token
@@ -161,14 +161,14 @@ class TestV2CouponMyTokens:
 
         # ＜投資家オペレーション＞
         #   1) Take買
-        latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            coupon_get_latest_agreementid(exchange, latest_orderid)
-        coupon_confirm_agreement(
+            get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(
             agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション＞
@@ -214,13 +214,13 @@ class TestV2CouponMyTokens:
 
         # ＜投資家オペレーション①＞
         #   1) Take買
-        latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション①＞
         #   1）　決済
-        latest_agreementid = coupon_get_latest_agreementid(exchange, latest_orderid)
-        coupon_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
+        latest_agreementid = get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション②＞
         #   1) Make売
@@ -228,13 +228,13 @@ class TestV2CouponMyTokens:
 
         # ＜発行体オペレーション②＞
         #   1) Take買
-        latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(issuer, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(issuer, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション②＞
         #   1）　決済
-        latest_agreementid = coupon_get_latest_agreementid(exchange, latest_orderid)
-        coupon_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
+        latest_agreementid = get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 

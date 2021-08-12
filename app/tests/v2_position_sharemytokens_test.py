@@ -118,8 +118,7 @@ class TestV2ShareMyTokens:
     # Prepare commitment data
     # balance = 999900, commitment = 100
     @staticmethod
-    def create_commitment_data(account, otc_counterpart_account,
-                               exchange_contract, personal_info_contract, token_list_contract):
+    def create_commitment_data(account, exchange_contract, personal_info_contract, token_list_contract):
         PersonalInfoUtils.register(
             tx_from=account["account_address"],
             personal_info_address=personal_info_contract["address"],
@@ -157,7 +156,6 @@ class TestV2ShareMyTokens:
             tx_from=account["account_address"],
             exchange_address=exchange_contract["address"],
             token_address=token["address"],
-            counterpart=otc_counterpart_account["account_address"],
             amount=100,
             price=1000
         )
@@ -179,7 +177,7 @@ class TestV2ShareMyTokens:
     # Normal_1
     # balance > 0, pending_transfer = 0, commitment = 0
     def test_normal_1(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         issuer = eth_account["issuer"]
@@ -269,7 +267,7 @@ class TestV2ShareMyTokens:
     # Normal_2
     # balance > 0, pending_transfer > 0, commitment = 0
     def test_normal_2(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         issuer = eth_account["issuer"]
@@ -359,16 +357,14 @@ class TestV2ShareMyTokens:
     # Normal_3
     # balance > 0, pending_transfer = 0, commitment > 0
     def test_normal_3(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         issuer = eth_account["issuer"]
-        otc_counterpart_account = eth_account["trader"]
 
         # Prepare data
         token = self.create_commitment_data(
             account=issuer,
-            otc_counterpart_account=otc_counterpart_account,
             exchange_contract=exchange_contract,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
@@ -452,16 +448,14 @@ class TestV2ShareMyTokens:
     # balance > 0, commitment > 0
     # Exchange address not set
     def test_normal_4(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         issuer = eth_account["issuer"]
-        otc_counterpart_account = eth_account["trader"]
 
         # Prepare data
         token = self.create_commitment_data(
             account=issuer,
-            otc_counterpart_account=otc_counterpart_account,
             exchange_contract=exchange_contract,
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
@@ -543,7 +537,7 @@ class TestV2ShareMyTokens:
     # Normal_5
     # Multiple record
     def test_normal_5(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         issuer = eth_account["issuer"]

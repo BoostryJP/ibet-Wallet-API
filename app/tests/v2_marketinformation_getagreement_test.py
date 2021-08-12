@@ -24,23 +24,14 @@ from app.tests.contract_modules import (
     issue_bond_token,
     offer_bond_token,
     get_latest_orderid,
-    take_buy_bond_token,
+    take_buy,
     get_latest_agreementid,
     membership_issue,
     membership_offer,
-    membership_get_latest_orderid,
-    membership_get_latest_agreementid,
-    membership_take_buy,
     issue_coupon_token,
     coupon_offer,
-    coupon_get_latest_orderid,
-    coupon_take_buy,
-    coupon_get_latest_agreementid,
     issue_share_token,
     share_offer,
-    share_get_latest_orderid,
-    share_take_buy,
-    share_get_latest_agreementid
 )
 
 
@@ -99,7 +90,7 @@ class TestV2GetAgreementGet:
         register_personalinfo(trader, personal_info)
         register_payment_gateway(trader, payment_gateway)
         latest_orderid = get_latest_orderid(exchange)
-        take_buy_bond_token(trader, exchange, latest_orderid, 100)
+        take_buy(trader, exchange, latest_orderid, 100)
         latest_agreementid = get_latest_agreementid(exchange, latest_orderid)
 
         return token, latest_orderid, latest_agreementid
@@ -136,15 +127,15 @@ class TestV2GetAgreementGet:
         #   4) 募集（Make売）
         token = issue_share_token(issuer, attribute)
         register_personalinfo(issuer, personal_info)
-        share_offer(issuer, exchange, token, trader, 100, 1000)
+        share_offer(issuer, exchange, token, 100, 1000)
 
         # ＜投資家オペレーション＞
         #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
         #   2) Take買
         register_personalinfo(trader, personal_info)
-        latest_orderid = share_get_latest_orderid(exchange)
-        share_take_buy(trader, exchange, latest_orderid)
-        latest_agreementid = share_get_latest_agreementid(exchange, latest_orderid)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
+        latest_agreementid = get_latest_agreementid(exchange, latest_orderid)
 
         return token, latest_orderid, latest_agreementid
 
@@ -174,9 +165,9 @@ class TestV2GetAgreementGet:
         membership_offer(issuer, exchange, token, 1000000, 1000)
 
         # 投資家オペレーション
-        latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid, 100)
-        latest_agreementid = membership_get_latest_agreementid(exchange, latest_orderid)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
+        latest_agreementid = get_latest_agreementid(exchange, latest_orderid)
 
         return token, latest_orderid, latest_agreementid
 
@@ -206,9 +197,9 @@ class TestV2GetAgreementGet:
         coupon_offer(issuer, exchange, token, 1000000, 1000)
 
         # 投資家オペレーション
-        latest_orderid = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, latest_orderid, 100)
-        latest_agreementid = coupon_get_latest_agreementid(exchange, latest_orderid)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
+        latest_agreementid = get_latest_agreementid(exchange, latest_orderid)
 
         return token, latest_orderid, latest_agreementid
 
@@ -329,7 +320,7 @@ class TestV2GetAgreementGet:
     # <Normal_4>
     # Share
     def test_normal_4(self, client, shared_contract):
-        exchange = shared_contract['IbetOTCExchange']
+        exchange = shared_contract['IbetShareExchange']
         personal_info = shared_contract['PersonalInfo']
 
         _, order_id, agreement_id = self._generate_agree_event_share(exchange, personal_info)

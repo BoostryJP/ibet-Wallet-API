@@ -23,9 +23,15 @@ from app import config
 from app.model import Listing
 
 from .account_config import eth_account
-from .contract_modules import issue_bond_token, offer_bond_token, \
-    register_personalinfo, register_payment_gateway, take_buy_bond_token, get_latest_orderid, \
-    register_bond_list, get_latest_agreementid, bond_confirm_agreement
+from .contract_modules import (
+    issue_bond_token,
+    offer_bond_token,
+    take_buy,
+    get_latest_orderid,
+    register_bond_list,
+    get_latest_agreementid,
+    confirm_agreement
+)
 
 
 class TestV2StraightBondMyTokens:
@@ -78,27 +84,19 @@ class TestV2StraightBondMyTokens:
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) 募集
+        #   3) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
-        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
-        #   3) 買い注文
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
+        #   1) 買い注文
         latest_orderid = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
+        take_buy(trader, bond_exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         latest_agreementid = get_latest_agreementid(bond_exchange, latest_orderid)
-        bond_confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
+        confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
 
         return bond_token
 
@@ -144,27 +142,19 @@ class TestV2StraightBondMyTokens:
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) 募集
+        #   3) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
-        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
-        #   3) 買い注文
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
+        #   1) 買い注文
         latest_orderid = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, latest_orderid, 100)
+        take_buy(trader, bond_exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         latest_agreementid = get_latest_agreementid(bond_exchange, latest_orderid)
-        bond_confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
+        confirm_agreement(agent, bond_exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション＞
         #   1) Make売

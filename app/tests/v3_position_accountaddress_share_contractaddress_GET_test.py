@@ -117,8 +117,7 @@ class TestPositionAccountAddressShareContractAddress:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(account, otc_counterpart_account,
-                               exchange_contract, personal_info_contract, token_list_contract, commitment):
+    def create_commitment_data(account, exchange_contract, personal_info_contract, token_list_contract, commitment):
         # Issue token
         token = TestPositionAccountAddressShareContractAddress.create_balance_data(
             account, exchange_contract, personal_info_contract, token_list_contract)
@@ -128,7 +127,6 @@ class TestPositionAccountAddressShareContractAddress:
             tx_from=account["account_address"],
             exchange_address=exchange_contract["address"],
             token_address=token["address"],
-            counterpart=otc_counterpart_account["account_address"],
             amount=commitment,
             price=1000
         )
@@ -177,7 +175,7 @@ class TestPositionAccountAddressShareContractAddress:
     # <Normal_1>
     # balance: 1000000
     def test_normal_1(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -213,10 +211,10 @@ class TestPositionAccountAddressShareContractAddress:
             token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_5 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_5["address"], session)
         token_6 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_6["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
@@ -275,7 +273,7 @@ class TestPositionAccountAddressShareContractAddress:
     # <Normal_2>
     # balance: 999900, pending_transfer: 100
     def test_normal_2(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -311,10 +309,10 @@ class TestPositionAccountAddressShareContractAddress:
             token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_5 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_5["address"], session)
         token_6 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_6["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
@@ -373,7 +371,7 @@ class TestPositionAccountAddressShareContractAddress:
     # <Normal_3>
     # balance: 0, pending_transfer: 1000000
     def test_normal_3(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -409,10 +407,10 @@ class TestPositionAccountAddressShareContractAddress:
             token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_5 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_5["address"], session)
         token_6 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_6["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
@@ -471,7 +469,7 @@ class TestPositionAccountAddressShareContractAddress:
     # <Normal_4>
     # balance: 999900, commitment: 100
     def test_normal_4(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -507,10 +505,10 @@ class TestPositionAccountAddressShareContractAddress:
             token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_5 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_5["address"], session)
         token_6 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_6["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
@@ -569,7 +567,7 @@ class TestPositionAccountAddressShareContractAddress:
     # <Normal_5>
     # balance: 0, commitment: 1000000
     def test_normal_5(self, client, session, shared_contract):
-        exchange_contract = shared_contract["IbetOTCExchange"]
+        exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -605,10 +603,10 @@ class TestPositionAccountAddressShareContractAddress:
             token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_5 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_5["address"], session)
         token_6 = self.create_commitment_data(
-            self.account_1, self.account_2, exchange_contract, personal_info_contract, token_list_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_6["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,

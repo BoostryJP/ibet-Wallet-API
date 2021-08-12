@@ -70,18 +70,6 @@ def register_payment_gateway(invoker, payment_gateway):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
-# 取引参加者登録
-def register_exchange_regulator(invoker, exchange_regulator_service, account_address):
-    web3.eth.defaultAccount = invoker['account_address']
-
-    ExchangeRegulatorService = \
-        Contract.get_contract('ExchangeRegulatorService', exchange_regulator_service['address'])
-
-    tx_hash = ExchangeRegulatorService.functions.register(account_address, False). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
 '''
 Straight Bond Token （普通社債）
 '''
@@ -158,7 +146,7 @@ def register_bond_list(invoker, bond_token, token_list):
 # 債券トークンの募集
 def offer_bond_token(invoker, bond_exchange, bond_token, amount, price):
     bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount)
-    make_sell_bond_token(invoker, bond_exchange, bond_token, amount, price)
+    make_sell(invoker, bond_exchange, bond_token, amount, price)
 
 
 # 取引コントラクトに債券トークンをチャージ
@@ -169,65 +157,6 @@ def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
         'IbetStraightBond', bond_token['address'])
 
     tx_hash = TokenContract.functions.transfer(bond_exchange['address'], amount). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 債券トークンの売りMake注文
-def make_sell_bond_token(invoker, bond_exchange, bond_token, amount, price):
-    web3.eth.defaultAccount = invoker['account_address']
-
-    ExchangeContract = Contract.get_contract(
-        'IbetStraightBondExchange', bond_exchange['address'])
-
-    agent = eth_account['agent']
-
-    tx_hash = ExchangeContract.functions. \
-        createOrder(bond_token['address'], amount, price, False, agent['account_address']). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 債券トークンの買いTake注文
-def take_buy_bond_token(invoker, bond_exchange, order_id, amount):
-    web3.eth.defaultAccount = invoker['account_address']
-
-    ExchangeContract = Contract.get_contract(
-        'IbetStraightBondExchange', bond_exchange['address'])
-
-    tx_hash = ExchangeContract.functions. \
-        executeOrder(order_id, amount, True). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 直近注文IDを取得
-def get_latest_orderid(bond_exchange):
-    ExchangeContract = Contract.get_contract(
-        'IbetStraightBondExchange', bond_exchange['address'])
-
-    latest_orderid = ExchangeContract.functions.latestOrderId().call()
-    return latest_orderid
-
-
-# 直近約定IDを取得
-def get_latest_agreementid(bond_exchange, order_id):
-    ExchangeContract = Contract.get_contract(
-        'IbetStraightBondExchange', bond_exchange['address'])
-
-    latest_agreementid = ExchangeContract.functions.latestAgreementId(order_id).call()
-    return latest_agreementid
-
-
-# 債券約定の資金決済
-def bond_confirm_agreement(invoker, bond_exchange, order_id, agreement_id):
-    web3.eth.defaultAccount = invoker['account_address']
-
-    ExchangeContract = Contract.get_contract(
-        'IbetStraightBondExchange', bond_exchange['address'])
-
-    tx_hash = ExchangeContract.functions. \
-        confirmAgreement(order_id, agreement_id). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -352,9 +281,9 @@ def register_share_reference_url(invoker, token, url_list):
 
 
 # 株式Tokenの募集（売出）
-def share_offer(invoker, exchange, token, counterpart, amount, price):
+def share_offer(invoker, exchange, token, amount, price):
     share_transfer_to_exchange(invoker, exchange, token, amount)
-    share_make_sell(invoker, exchange, token, counterpart, amount, price)
+    make_sell(invoker, exchange, token, amount, price)
 
 
 # 取引コントラクトに株式トークンをチャージ
@@ -364,57 +293,6 @@ def share_transfer_to_exchange(invoker, exchange, token, amount):
         get_contract('IbetShare', token['address'])
     tx_hash = TokenContract.functions. \
         transfer(exchange['address'], amount). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 株式Tokenの売りMake注文
-def share_make_sell(invoker, exchange, token, counterpart, amount, price):
-    web3.eth.defaultAccount = invoker['account_address']
-    ExchangeContract = Contract. \
-        get_contract('IbetOTCExchange', exchange['address'])
-    agent = eth_account['agent']
-    tx_hash = ExchangeContract.functions. \
-        createOrder(counterpart['account_address'], token['address'], amount, price, agent['account_address']). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 株式権Tokenの買いTake注文
-def share_take_buy(invoker, exchange, order_id):
-    web3.eth.defaultAccount = invoker['account_address']
-    ExchangeContract = Contract. \
-        get_contract('IbetOTCExchange', exchange['address'])
-    tx_hash = ExchangeContract.functions. \
-        executeOrder(order_id). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 直近注文IDを取得
-def share_get_latest_orderid(exchange):
-    ExchangeContract = Contract. \
-        get_contract('IbetOTCExchange', exchange['address'])
-    latest_orderid = ExchangeContract.functions.latestOrderId().call()
-    return latest_orderid
-
-
-# 直近約定IDを取得
-def share_get_latest_agreementid(exchange, order_id):
-    ExchangeContract = Contract. \
-        get_contract('IbetOTCExchange', exchange['address'])
-    latest_agreementid = \
-        ExchangeContract.functions.latestAgreementId(order_id).call()
-    return latest_agreementid
-
-
-# 株式約定の資金決済
-def share_confirm_agreement(invoker, exchange, order_id, agreement_id):
-    web3.eth.defaultAccount = invoker['account_address']
-    ExchangeContract = Contract. \
-        get_contract('IbetOTCExchange', exchange['address'])
-    tx_hash = ExchangeContract.functions. \
-        confirmAgreement(order_id, agreement_id). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -518,7 +396,7 @@ def consume_coupon_token(invoker, coupon_token, value):
 # クーポントークンの売出
 def coupon_offer(invoker, exchange, token, amount, price):
     coupon_transfer_to_exchange(invoker, exchange, token, amount)
-    coupon_make_sell(invoker, exchange, token, amount, price)
+    make_sell(invoker, exchange, token, amount, price)
 
 
 # クーポンDEXコントラクトにクーポントークンをデポジット
@@ -528,57 +406,6 @@ def coupon_transfer_to_exchange(invoker, exchange, token, amount):
         get_contract('IbetCoupon', token['address'])
     tx_hash = TokenContract.functions. \
         transfer(exchange['address'], amount). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# クーポントークンの売りMake注文
-def coupon_make_sell(invoker, exchange, token, amount, price):
-    web3.eth.defaultAccount = invoker['account_address']
-    ExchangeContract = Contract. \
-        get_contract('IbetCouponExchange', exchange['address'])
-    agent = eth_account['agent']
-    tx_hash = ExchangeContract.functions. \
-        createOrder(token['address'], amount, price, False, agent['account_address']). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# クーポントークンの買いTake注文
-def coupon_take_buy(invoker, exchange, order_id, amount):
-    web3.eth.defaultAccount = invoker['account_address']
-    ExchangeContract = Contract. \
-        get_contract('IbetCouponExchange', exchange['address'])
-    tx_hash = ExchangeContract.functions. \
-        executeOrder(order_id, amount, True). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 直近注文IDを取得
-def coupon_get_latest_orderid(exchange):
-    ExchangeContract = Contract. \
-        get_contract('IbetCouponExchange', exchange['address'])
-    latest_orderid = ExchangeContract.functions.latestOrderId().call()
-    return latest_orderid
-
-
-# 直近約定IDを取得
-def coupon_get_latest_agreementid(exchange, order_id):
-    ExchangeContract = Contract. \
-        get_contract('IbetCouponExchange', exchange['address'])
-    latest_agreementid = \
-        ExchangeContract.functions.latestAgreementId(order_id).call()
-    return latest_agreementid
-
-
-# 決済承認
-def coupon_confirm_agreement(invoker, exchange, order_id, agreement_id):
-    web3.eth.defaultAccount = invoker['account_address']
-    ExchangeContract = Contract. \
-        get_contract('IbetCouponExchange', exchange['address'])
-    tx_hash = ExchangeContract.functions. \
-        confirmAgreement(order_id, agreement_id). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -642,7 +469,7 @@ def membership_untransferable(invoker, token):
 # 会員権Tokenの募集（売出）
 def membership_offer(invoker, exchange, token, amount, price):
     membership_transfer_to_exchange(invoker, exchange, token, amount)
-    membership_make_sell(invoker, exchange, token, amount, price)
+    make_sell(invoker, exchange, token, amount, price)
 
 
 # 会員権DEXコントラクトに会員権Tokenをデポジット
@@ -656,11 +483,16 @@ def membership_transfer_to_exchange(invoker, exchange, token, amount):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
-# 会員権Tokenの売りMake注文
-def membership_make_sell(invoker, exchange, token, amount, price):
+'''
+DEX
+'''
+
+
+# Tokenの売りMake注文
+def make_sell(invoker, exchange, token, amount, price):
     web3.eth.defaultAccount = invoker['account_address']
     ExchangeContract = Contract. \
-        get_contract('IbetMembershipExchange', exchange['address'])
+        get_contract('IbetExchange', exchange['address'])
     agent = eth_account['agent']
     tx_hash = ExchangeContract.functions. \
         createOrder(token['address'], amount, price, False, agent['account_address']). \
@@ -668,11 +500,11 @@ def membership_make_sell(invoker, exchange, token, amount, price):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
-# 会員権Tokenの買いTake注文
-def membership_take_buy(invoker, exchange, order_id, amount):
+# Tokenの買いTake注文
+def take_buy(invoker, exchange, order_id, amount):
     web3.eth.defaultAccount = invoker['account_address']
     ExchangeContract = Contract. \
-        get_contract('IbetMembershipExchange', exchange['address'])
+        get_contract('IbetExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
         executeOrder(order_id, amount, True). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
@@ -680,27 +512,27 @@ def membership_take_buy(invoker, exchange, order_id, amount):
 
 
 # 直近注文IDを取得
-def membership_get_latest_orderid(exchange):
+def get_latest_orderid(exchange):
     ExchangeContract = Contract. \
-        get_contract('IbetMembershipExchange', exchange['address'])
+        get_contract('IbetExchange', exchange['address'])
     latest_orderid = ExchangeContract.functions.latestOrderId().call()
     return latest_orderid
 
 
 # 直近約定IDを取得
-def membership_get_latest_agreementid(exchange, order_id):
+def get_latest_agreementid(exchange, order_id):
     ExchangeContract = Contract. \
-        get_contract('IbetMembershipExchange', exchange['address'])
+        get_contract('IbetExchange', exchange['address'])
     latest_agreementid = \
         ExchangeContract.functions.latestAgreementId(order_id).call()
     return latest_agreementid
 
 
-# 会員権約定の資金決済
-def membership_confirm_agreement(invoker, exchange, order_id, agreement_id):
+# 約定の資金決済
+def confirm_agreement(invoker, exchange, order_id, agreement_id):
     web3.eth.defaultAccount = invoker['account_address']
     ExchangeContract = Contract. \
-        get_contract('IbetMembershipExchange', exchange['address'])
+        get_contract('IbetExchange', exchange['address'])
     tx_hash = ExchangeContract.functions. \
         confirmAgreement(order_id, agreement_id). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
