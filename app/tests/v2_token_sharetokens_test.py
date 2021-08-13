@@ -98,7 +98,7 @@ class TestV2TokenShareTokens:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
@@ -167,7 +167,7 @@ class TestV2TokenShareTokens:
 
         # データ準備：株式新規発行
         share_list = []
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
             attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
@@ -268,7 +268,7 @@ class TestV2TokenShareTokens:
 
         # データ準備：株式新規発行
         share_list = []
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
             attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
@@ -370,7 +370,7 @@ class TestV2TokenShareTokens:
 
         # データ準備：株式新規発行
         share_list = []
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
             attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
@@ -438,7 +438,7 @@ class TestV2TokenShareTokens:
 
         # データ準備：株式新規発行
         share_list = []
-        exchange_address = to_checksum_address(shared_contract['IbetOTCExchange']['address'])
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
             attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)

@@ -214,7 +214,7 @@ class BasePosition(BaseResource):
         _exchange_contract = None
         if exchange_address != config.ZERO_ADDRESS:
             _exchange_contract = Contract.get_contract(
-                contract_name=self.exchange_contract_name,
+                contract_name="IbetExchange",
                 address=exchange_address)
 
         return _token_contract, _exchange_contract
@@ -255,7 +255,6 @@ class BasePositionShare(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetShare"
         self.token_model = ShareToken
-        self.exchange_contract_name = "IbetOTCExchange"
 
     def _get_position(self, account_address, token_address, session, is_detail=False):
 
@@ -300,7 +299,6 @@ class BasePositionStraightBond(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetStraightBond"
         self.token_model = BondToken
-        self.exchange_contract_name = "IbetStraightBondExchange"
 
 
 class BasePositionMembership(BasePosition):
@@ -308,7 +306,6 @@ class BasePositionMembership(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetMembership"
         self.token_model = MembershipToken
-        self.exchange_contract_name = "IbetMembershipExchange"
 
 
 class BasePositionCoupon(BasePosition):
@@ -317,7 +314,6 @@ class BasePositionCoupon(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetCoupon"
         self.token_model = CouponToken
-        self.exchange_contract_name = "IbetCouponExchange"
 
     def _get_position(self, account_address, token_address, session, is_detail=False):
 

@@ -42,7 +42,6 @@ from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS,
     PAYMENT_GATEWAY_CONTRACT_ADDRESS,
     COMPANY_LIST_URL
 )
@@ -53,7 +52,6 @@ from app.model import (
 from app.contracts import Contract
 from batch.lib.token import TokenFactory
 from batch.lib.company_list import CompanyListFactory
-from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
 
@@ -81,11 +79,6 @@ payment_gateway_contract = Contract.get_contract(
     contract_name="PaymentGateway",
     address=PAYMENT_GATEWAY_CONTRACT_ADDRESS
 )
-list_contract = Contract.get_contract(
-    contract_name="TokenList",
-    address=TOKEN_LIST_CONTRACT_ADDRESS
-)
-token_list = TokenList(list_contract)
 
 
 # Watcher
@@ -210,9 +203,9 @@ class WatchPaymentAccountWarn(Watcher):
 
 
 # イベント：受領用銀行口座非承認
-class WatchPaymentAccountUnapprove(Watcher):
+class WatchPaymentAccountDisapprove(Watcher):
     def __init__(self):
-        super().__init__(payment_gateway_contract, "Unapprove", {})
+        super().__init__(payment_gateway_contract, "Disapprove", {})
 
     def watch(self, entries):
         for entry in entries:
@@ -250,7 +243,7 @@ def main():
         WatchPaymentAccountRegister(),
         WatchPaymentAccountApprove(),
         WatchPaymentAccountWarn(),
-        WatchPaymentAccountUnapprove(),
+        WatchPaymentAccountDisapprove(),
         WatchPaymentAccountBan(),
     ]
 

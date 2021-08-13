@@ -147,7 +147,7 @@ class TestV2CompanyCompanyTokenList:
         bond_exchange = shared_contract['IbetStraightBondExchange']
         membership_exchange = shared_contract['IbetMembershipExchange']
         coupon_exchange = shared_contract['IbetCouponExchange']
-        otc_exchange = shared_contract["IbetOTCExchange"]
+        share_exchange = shared_contract["IbetShareExchange"]
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
         token_list = shared_contract['TokenList']
@@ -155,7 +155,7 @@ class TestV2CompanyCompanyTokenList:
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
-        return bond_exchange, membership_exchange, coupon_exchange, otc_exchange, personal_info, payment_gateway, token_list
+        return bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list
 
     ###########################################################################
     # Normal
@@ -232,11 +232,11 @@ class TestV2CompanyCompanyTokenList:
     def test_normal_2(self, client, session, shared_contract):
         # 環境変数設定変更
         config.SHARE_TOKEN_ENABLED = True
-        _, _, _, otc_exchange, personal_info, _, token_list = self._set_env(shared_contract)
+        _, _, _, share_exchange, personal_info, _, token_list = self._set_env(shared_contract)
 
         # 新規トークン発行
         issuer = eth_account['issuer']
-        attribute = self._share_attribute(otc_exchange["address"], personal_info["address"])
+        attribute = self._share_attribute(share_exchange["address"], personal_info["address"])
         token = issue_share_token(issuer, attribute)
         register_share_list(issuer, token, token_list)
         self._insert_listing(session, token["address"], issuer["account_address"])

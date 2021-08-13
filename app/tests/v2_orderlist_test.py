@@ -77,8 +77,6 @@ class TestV2OrderList:
         attribute = TestV2OrderList.bond_token_attribute(bond_exchange, personal_info)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
         order_id = get_latest_orderid(bond_exchange)
         agreement_id = get_latest_agreementid(bond_exchange, order_id)
@@ -95,14 +93,10 @@ class TestV2OrderList:
         attribute = TestV2OrderList.bond_token_attribute(bond_exchange, personal_info)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
         order_id = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, order_id, 100)
+        take_buy(trader, bond_exchange, order_id, 100)
         agreement_id = get_latest_agreementid(bond_exchange, order_id)
 
         return bond_token, order_id, agreement_id
@@ -119,17 +113,13 @@ class TestV2OrderList:
 
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
         order_id = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, order_id, 100)
+        take_buy(trader, bond_exchange, order_id, 100)
 
         agreement_id = get_latest_agreementid(bond_exchange, order_id)
-        bond_confirm_agreement(agent, bond_exchange, order_id, agreement_id)
+        confirm_agreement(agent, bond_exchange, order_id, agreement_id)
 
         return bond_token, order_id, agreement_id
 
@@ -191,7 +181,6 @@ class TestV2OrderList:
 
         # request target API
         request_params = {
-            "exchange_contract_name": "IbetStraightBondExchange",
             "account_address_list": [account["account_address"]]
         }
         headers = {"Content-Type": "application/json"}
@@ -270,7 +259,6 @@ class TestV2OrderList:
 
         # request target API
         request_params = {
-            "exchange_contract_name": "IbetStraightBondExchange",
             "account_address_list": [account["account_address"]]
         }
         headers = {"Content-Type": "application/json"}
@@ -353,7 +341,6 @@ class TestV2OrderList:
 
         # request target API
         request_params = {
-            "exchange_contract_name": "IbetStraightBondExchange",
             "account_address_list": [account["account_address"]]
         }
         headers = {"Content-Type": "application/json"}
@@ -473,13 +460,12 @@ class TestV2OrderList:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "exchange_contract_name": "required field",
                 "account_address_list": "required field"
             }
         }
 
     # Error_3_2
-    # Validation error: invalid type (exchange_contract_name)
+    # Validation error: invalid type (account_address)
     # -> 400
     def test_error_3_2(self, client, shared_contract):
         account = eth_account["trader"]
@@ -499,48 +485,6 @@ class TestV2OrderList:
         # request target API
         headers = {"Content-Type": "application/json"}
         request_params = {
-            "exchange_contract_name": "invalid_contract_name",
-            "account_address_list": [account["account_address"]]
-        }
-        request_body = json.dumps(request_params)
-        resp = client.simulate_post(
-            self.base_url + bond_token["address"],
-            headers=headers,
-            body=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "exchange_contract_name": "unallowed value invalid_contract_name"
-            }
-        }
-
-    # Error_3_3
-    # Validation error: invalid type (account_address)
-    # -> 400
-    def test_error_3_3(self, client, shared_contract):
-        account = eth_account["trader"]
-
-        # set environment variables
-        bond_exchange, _, _, personal_info, payment_gateway, token_list = \
-            self.set_env(shared_contract)
-
-        # emit order event
-        bond_token, order_id, _ = self.bond_order_event(
-            bond_exchange=bond_exchange,
-            personal_info=personal_info,
-            payment_gateway=payment_gateway,
-            token_list=token_list
-        )
-
-        # request target API
-        headers = {"Content-Type": "application/json"}
-        request_params = {
-            "exchange_contract_name": "IbetStraightBondExchange",
             "account_address_list": [account["account_address"][:-1]]
         }
         request_body = json.dumps(request_params)
@@ -610,13 +554,9 @@ class TestV2OrderListBond:
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) 募集
+        #   3) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         order_id = get_latest_orderid(bond_exchange)
@@ -635,23 +575,15 @@ class TestV2OrderListBond:
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) 募集
+        #   3) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
-        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
-        #   3) 買い注文
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
+        #   1) 買い注文
         order_id = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, order_id, 100)
+        take_buy(trader, bond_exchange, order_id, 100)
         agreement_id = get_latest_agreementid(bond_exchange, order_id)
 
         return bond_token, order_id, agreement_id
@@ -668,27 +600,19 @@ class TestV2OrderListBond:
         # ＜発行体オペレーション＞
         #   1) 債券トークン発行
         #   2) 債券トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) 募集
+        #   3) 募集
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
         offer_bond_token(issuer, bond_exchange, bond_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
-        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
-        #   3) 買い注文
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
+        #   1) 買い注文
         order_id = get_latest_orderid(bond_exchange)
-        take_buy_bond_token(trader, bond_exchange, order_id, 100)
+        take_buy(trader, bond_exchange, order_id, 100)
 
         # ＜決済業者オペレーション＞
         agreement_id = get_latest_agreementid(bond_exchange, order_id)
-        bond_confirm_agreement(agent, bond_exchange, order_id, agreement_id)
+        confirm_agreement(agent, bond_exchange, order_id, agreement_id)
 
         return bond_token, order_id, agreement_id
 
@@ -1186,8 +1110,8 @@ class TestV2OrderListMembership:
         membership_register_list(issuer, token, token_list)
         membership_offer(issuer, exchange, token, 1000000, 1000)
 
-        order_id = membership_get_latest_orderid(exchange)
-        agreement_id = membership_get_latest_agreementid(exchange, order_id)
+        order_id = get_latest_orderid(exchange)
+        agreement_id = get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
 
@@ -1210,9 +1134,9 @@ class TestV2OrderListMembership:
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, order_id, 100)
-        agreement_id = membership_get_latest_agreementid(exchange, order_id)
+        order_id = get_latest_orderid(exchange)
+        take_buy(trader, exchange, order_id, 100)
+        agreement_id = get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
 
@@ -1236,12 +1160,12 @@ class TestV2OrderListMembership:
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, order_id, 100)
+        order_id = get_latest_orderid(exchange)
+        take_buy(trader, exchange, order_id, 100)
 
         # ＜決済業者オペレーション＞
-        agreement_id = membership_get_latest_agreementid(exchange, order_id)
-        membership_confirm_agreement(agent, exchange, order_id, agreement_id)
+        agreement_id = get_latest_agreementid(exchange, order_id)
+        confirm_agreement(agent, exchange, order_id, agreement_id)
 
         return token, order_id, agreement_id
 
@@ -1682,8 +1606,8 @@ class TestV2OrderListCoupon:
         coupon_register_list(issuer, token, token_list)
         coupon_offer(issuer, exchange, token, 1000000, 1000)
 
-        order_id = coupon_get_latest_orderid(exchange)
-        agreement_id = coupon_get_latest_agreementid(exchange, order_id)
+        order_id = get_latest_orderid(exchange)
+        agreement_id = get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
 
@@ -1705,9 +1629,9 @@ class TestV2OrderListCoupon:
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, order_id, 100)
-        agreement_id = coupon_get_latest_agreementid(exchange, order_id)
+        order_id = get_latest_orderid(exchange)
+        take_buy(trader, exchange, order_id, 100)
+        agreement_id = get_latest_agreementid(exchange, order_id)
 
         return token, order_id, agreement_id
 
@@ -1730,12 +1654,12 @@ class TestV2OrderListCoupon:
 
         # ＜投資家オペレーション＞
         #   1) 買い注文
-        order_id = coupon_get_latest_orderid(exchange)
-        coupon_take_buy(trader, exchange, order_id, 100)
+        order_id = get_latest_orderid(exchange)
+        take_buy(trader, exchange, order_id, 100)
 
         # ＜決済業者オペレーション＞
-        agreement_id = coupon_get_latest_agreementid(exchange, order_id)
-        coupon_confirm_agreement(agent, exchange, order_id, agreement_id)
+        agreement_id = get_latest_agreementid(exchange, order_id)
+        confirm_agreement(agent, exchange, order_id, agreement_id)
 
         return token, order_id, agreement_id
 
@@ -2163,21 +2087,16 @@ class TestV2OrderListShare:
     @staticmethod
     def order_event(share_exchange, personal_info, payment_gateway, token_list):
         issuer = eth_account["issuer"]
-        trader = eth_account["trader"]
 
         attribute = TestV2OrderListShare.share_token_attribute(share_exchange, personal_info)
 
         # ＜発行体オペレーション＞
         #   1) 株式トークン発行
         #   2) 株式トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) 募集
+        #   3) 募集
         share_token = issue_share_token(issuer, attribute)
         register_share_list(issuer, share_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
-        share_offer(issuer, share_exchange, share_token, trader, 1000000, 1000)
+        share_offer(issuer, share_exchange, share_token, 1000000, 1000)
 
         order_id = get_latest_orderid(share_exchange)
         agreement_id = get_latest_agreementid(share_exchange, order_id)
@@ -2195,23 +2114,15 @@ class TestV2OrderListShare:
         # ＜発行体オペレーション＞
         #   1) 株式トークン発行
         #   2) 株式トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) Make売り
+        #   3) Make売り
         share_token = issue_share_token(issuer, attribute)
         register_share_list(issuer, share_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
-        share_offer(issuer, share_exchange, share_token, trader, 1000000, 1000)
+        share_offer(issuer, share_exchange, share_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
-        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
-        #   3) 買い注文
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
+        #   1) 買い注文
         order_id = get_latest_orderid(share_exchange)
-        share_take_buy(trader, share_exchange, order_id)
+        take_buy(trader, share_exchange, order_id, 1000000)
         agreement_id = get_latest_agreementid(share_exchange, order_id)
 
         return share_token, order_id, agreement_id
@@ -2228,27 +2139,19 @@ class TestV2OrderListShare:
         # ＜発行体オペレーション＞
         #   1) 株式トークン発行
         #   2) 株式トークンをトークンリストに登録
-        #   3) 投資家名簿用個人情報コントラクト（PersonalInfo）に発行体の情報を登録
-        #   4) 収納代行コントラクト（PaymentGateway）に発行体の情報を登録
-        #   5) Make売り
+        #   3) Make売り
         share_token = issue_share_token(issuer, attribute)
         register_share_list(issuer, share_token, token_list)
-        register_personalinfo(issuer, personal_info)
-        register_payment_gateway(issuer, payment_gateway)
-        share_offer(issuer, share_exchange, share_token, trader, 1000000, 1000)
+        share_offer(issuer, share_exchange, share_token, 1000000, 1000)
 
         # ＜投資家オペレーション＞
-        #   1) 投資家名簿用個人情報コントラクト（PersonalInfo）に投資家の情報を登録
-        #   2) 収納代行コントラクト（PaymentGateway）に投資家の情報を登録
-        #   3) 買い注文
-        register_personalinfo(trader, personal_info)
-        register_payment_gateway(trader, payment_gateway)
+        #   1) 買い注文
         order_id = get_latest_orderid(share_exchange)
-        share_take_buy(trader, share_exchange, order_id)
+        take_buy(trader, share_exchange, order_id, 1000000)
 
         # ＜決済業者オペレーション＞
         agreement_id = get_latest_agreementid(share_exchange, order_id)
-        share_confirm_agreement(
+        confirm_agreement(
             agent, share_exchange, order_id, agreement_id)
 
         return share_token, order_id, agreement_id
@@ -2258,7 +2161,7 @@ class TestV2OrderListShare:
         bond_exchange = shared_contract["IbetStraightBondExchange"]
         membership_exchange = shared_contract["IbetMembershipExchange"]
         coupon_exchange = shared_contract["IbetCouponExchange"]
-        share_exchange = shared_contract["IbetOTCExchange"]
+        share_exchange = shared_contract["IbetShareExchange"]
         personal_info = shared_contract["PersonalInfo"]
         payment_gateway = shared_contract["PaymentGateway"]
         token_list = shared_contract["TokenList"]
@@ -2298,7 +2201,7 @@ class TestV2OrderListShare:
         order.order_id = order_id
         order.unique_order_id = share_exchange["address"] + "_" + str(1)
         order.account_address = account["account_address"]
-        order.counterpart_address = counterpart["account_address"]
+        order.counterpart_address = ""
         order.is_buy = False
         order.price = 1000
         order.amount = 100
@@ -2352,7 +2255,7 @@ class TestV2OrderListShare:
             },
             "order": {
                 "order_id": order_id,
-                "counterpart_address": counterpart["account_address"],
+                "counterpart_address": "",
                 "amount": 1000000,
                 "price": 1000,
                 "is_buy": False,

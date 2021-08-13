@@ -89,7 +89,7 @@ class TestPositionAccountAddressMembershipContractAddress:
             commitment
         )
         ExchangeContract = Contract.get_contract(
-            'IbetMembershipExchange', exchange_contract['address'])
+            'IbetExchange', exchange_contract['address'])
         tx_hash = ExchangeContract.functions. \
             createOrder(token['address'], commitment, 10000, False, agent['account_address']). \
             transact({'from': account['account_address'], 'gas': 4000000})

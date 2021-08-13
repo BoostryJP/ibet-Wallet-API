@@ -21,8 +21,14 @@ import json
 
 from .account_config import eth_account
 from app import config
-from .contract_modules import membership_issue, membership_offer, \
-    membership_get_latest_orderid, membership_take_buy, membership_get_latest_agreementid, membership_confirm_agreement
+from .contract_modules import (
+    membership_issue,
+    membership_offer,
+    get_latest_orderid,
+    take_buy,
+    get_latest_agreementid,
+    confirm_agreement
+)
 
 
 class TestV2MembershipLastPrice:
@@ -59,12 +65,12 @@ class TestV2MembershipLastPrice:
         membership_offer(issuer, exchange, token, 1000000, 1000)
 
         # 投資家オペレーション
-        latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
 
         # 決済業者オペレーション
-        latest_agreementid = membership_get_latest_agreementid(exchange, latest_orderid)
-        membership_confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
+        latest_agreementid = get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(agent, exchange, latest_orderid, latest_agreementid)
 
         return token
 
@@ -147,7 +153,6 @@ class TestV2MembershipLastPrice:
 
     # エラー系1：入力値エラー（request-bodyなし）
     def test_membership_lastprice_error_1(self, client):
-
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
@@ -211,7 +216,6 @@ class TestV2MembershipLastPrice:
 
     # エラー系4：HTTPメソッドが不正
     def test_membership_lastprice_error_4(self, client):
-
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
@@ -227,7 +231,6 @@ class TestV2MembershipLastPrice:
 
     # エラー系5：取扱トークン対象外
     def test_membership_lastprice_error_5(self, client):
-
         config.MEMBERSHIP_TOKEN_ENABLED = False
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
             "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
@@ -243,7 +246,6 @@ class TestV2MembershipLastPrice:
 
     # エラー系5：exchangeアドレス未設定
     def test_membership_lastprice_error_5(self, client):
-
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
 

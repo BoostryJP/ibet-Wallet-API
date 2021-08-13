@@ -78,14 +78,14 @@ NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
 sb_exchange_contract = Contract.get_contract(
-    contract_name="IbetStraightBondExchange",
+    contract_name="IbetExchange",
     address=IBET_SB_EXCHANGE_CONTRACT_ADDRESS
 )
 list_contract = Contract.get_contract(
     contract_name="TokenList",
     address=TOKEN_LIST_CONTRACT_ADDRESS
 )
-token_list = TokenList(list_contract)
+token_list = TokenList(list_contract, "IbetStraightBond")
 
 
 # Watcher
@@ -151,7 +151,7 @@ class Watcher:
 
 
 """
-普通社債取引関連（IbetStraightBondExchange）
+普通社債取引関連（IbetExchange）
 """
 
 

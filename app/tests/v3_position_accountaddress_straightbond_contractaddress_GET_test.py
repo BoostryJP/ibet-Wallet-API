@@ -29,9 +29,7 @@ from app.tests.utils import PersonalInfoUtils
 from .contract_modules import (
     issue_bond_token,
     register_bond_list,
-    bond_transfer_to_exchange,
-    register_payment_gateway,
-    register_exchange_regulator
+    bond_transfer_to_exchange
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -104,8 +102,7 @@ class TestPositionAccountAddressStraightBondContractAddress:
     # Prepare commitment data
     # balance = 1000000 - commitment, commitment = [args commitment]
     @staticmethod
-    def create_commitment_data(account, exchange_contract, personal_info_contract, token_list_contract,
-                               payment_gateway_contract, commitment):
+    def create_commitment_data(account, exchange_contract, personal_info_contract, token_list_contract, commitment):
         # Issue token
         token = TestPositionAccountAddressStraightBondContractAddress.create_balance_data(
             account, exchange_contract, personal_info_contract, token_list_contract)
@@ -118,12 +115,8 @@ class TestPositionAccountAddressStraightBondContractAddress:
             token,
             commitment
         )
-        register_payment_gateway(account, payment_gateway_contract)
         ExchangeContract = Contract.get_contract(
-            'IbetStraightBondExchange', exchange_contract['address'])
-        regulator_service_address = ExchangeContract.functions.regulatorServiceAddress().call()
-        register_exchange_regulator(eth_account["deployer"], {"address": regulator_service_address},
-                                    account["account_address"])
+            'IbetExchange', exchange_contract['address'])
         tx_hash = ExchangeContract.functions. \
             createOrder(token['address'], commitment, 10000, False, agent['account_address']). \
             transact({'from': account['account_address'], 'gas': 4000000})
@@ -176,7 +169,6 @@ class TestPositionAccountAddressStraightBondContractAddress:
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-        payment_gateway_contract = shared_contract["PaymentGateway"]
 
         # Prepare data
         token_non = self.create_non_balance_data(
@@ -202,12 +194,10 @@ class TestPositionAccountAddressStraightBondContractAddress:
             token_list_contract)
         self.list_token(token_non["address"], session)  # not target
         token_3 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract,
-            payment_gateway_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_3["address"], session)
         token_4 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract,
-            payment_gateway_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
@@ -276,7 +266,6 @@ class TestPositionAccountAddressStraightBondContractAddress:
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-        payment_gateway_contract = shared_contract["PaymentGateway"]
 
         # Prepare data
         token_non = self.create_non_balance_data(
@@ -302,12 +291,10 @@ class TestPositionAccountAddressStraightBondContractAddress:
             token_list_contract)
         self.list_token(token_non["address"], session)  # not target
         token_3 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract,
-            payment_gateway_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_3["address"], session)
         token_4 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract,
-            payment_gateway_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
@@ -376,7 +363,6 @@ class TestPositionAccountAddressStraightBondContractAddress:
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-        payment_gateway_contract = shared_contract["PaymentGateway"]
 
         # Prepare data
         token_non = self.create_non_balance_data(
@@ -402,12 +388,10 @@ class TestPositionAccountAddressStraightBondContractAddress:
             token_list_contract)
         self.list_token(token_non["address"], session)  # not target
         token_3 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract,
-            payment_gateway_contract, 100)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
         self.list_token(token_3["address"], session)
         token_4 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract,
-            payment_gateway_contract, 1000000)
+            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
         self.list_token(token_4["address"], session)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,

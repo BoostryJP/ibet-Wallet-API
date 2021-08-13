@@ -23,10 +23,15 @@ from app import config
 from app.model import Listing
 
 from .account_config import eth_account
-from .contract_modules import membership_issue, membership_register_list, \
-    membership_offer, membership_get_latest_orderid, \
-    membership_take_buy, membership_get_latest_agreementid, \
-    membership_confirm_agreement
+from .contract_modules import (
+    membership_issue,
+    membership_register_list,
+    membership_offer,
+    get_latest_orderid,
+    take_buy,
+    get_latest_agreementid,
+    confirm_agreement
+)
 
 
 class TestV2MembershipMyTokens:
@@ -68,14 +73,14 @@ class TestV2MembershipMyTokens:
 
         # ＜投資家オペレーション＞
         #   1) Take買
-        latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid)
-        membership_confirm_agreement(
+            get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(
             agent, exchange, latest_orderid, latest_agreementid)
 
         return token
@@ -111,14 +116,14 @@ class TestV2MembershipMyTokens:
 
         # ＜投資家オペレーション＞
         #   1) Take買
-        latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid)
-        membership_confirm_agreement(
+            get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(
             agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション＞
@@ -158,14 +163,14 @@ class TestV2MembershipMyTokens:
 
         # ＜投資家オペレーション①＞
         #   1) Take買
-        latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(trader, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(trader, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション①＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid)
-        membership_confirm_agreement(
+            get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(
             agent, exchange, latest_orderid, latest_agreementid)
 
         # ＜投資家オペレーション②＞
@@ -174,14 +179,14 @@ class TestV2MembershipMyTokens:
 
         # ＜発行体オペレーション②＞
         #   1) Take買
-        latest_orderid = membership_get_latest_orderid(exchange)
-        membership_take_buy(issuer, exchange, latest_orderid, 100)
+        latest_orderid = get_latest_orderid(exchange)
+        take_buy(issuer, exchange, latest_orderid, 100)
 
         # ＜決済業者オペレーション②＞
         #   1）　決済
         latest_agreementid = \
-            membership_get_latest_agreementid(exchange, latest_orderid)
-        membership_confirm_agreement(
+            get_latest_agreementid(exchange, latest_orderid)
+        confirm_agreement(
             agent, exchange, latest_orderid, latest_agreementid)
 
         return token

@@ -307,9 +307,9 @@ paths:
                     type: string
                   ibet_coupon_exchange_abi:
                     type: object
-                  ibet_otc_exchange_address:
+                  ibet_share_exchange_address:
                     type: string
-                  ibet_otc_exchange_abi:
+                  ibet_share_exchange_abi:
                     type: object
                   agent_address:
                     type: string
@@ -3355,10 +3355,6 @@ paths:
           schema:
             type: "object"
             properties:
-              exchange_contract_name:
-                description: Exchange contract name
-                type: string
-                enum: ["IbetStraightBondExchange", "IbetMembershipExchange", "IbetCouponExchange"]
               account_address_list:
                 description: Account address list
                 type: array
