@@ -26,7 +26,7 @@ services:
   ibet-wallet-api-postgres:
     build:
       context: ./
-      dockerfile: ./app/tests/Dockerfile
+      dockerfile: ./tests/Dockerfile
     environment:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
@@ -40,7 +40,7 @@ services:
   ibet-wallet-api-mysql:
     build:
       context: ./
-      dockerfile: ./app/tests/Dockerfile
+      dockerfile: ./tests/Dockerfile
     environment:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
