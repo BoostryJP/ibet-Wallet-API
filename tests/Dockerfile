@@ -58,7 +58,7 @@ RUN . ~/.bash_profile \
  && rm -f /app/requirements.txt
 
 # install python packages 2
-COPY app/tests/requirements.txt /app/requirements2.txt
+COPY tests/requirements.txt /app/requirements2.txt
 RUN . ~/.bash_profile \
  && pip install -r /app/requirements2.txt \
  && rm -f /app/requirements2.txt
