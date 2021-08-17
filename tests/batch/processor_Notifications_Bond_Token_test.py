@@ -19,10 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 import pytest
 from unittest import mock
 from unittest.mock import MagicMock
-from datetime import (
-    timezone,
-    timedelta
-)
 from importlib import reload
 
 from web3 import Web3
@@ -45,9 +41,6 @@ from tests.utils import PersonalInfoUtils
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 @pytest.fixture(scope="function")
@@ -152,14 +145,12 @@ class TestWatchStartInitialOffering:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.START_INITIAL_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "status": True,
         }
@@ -201,7 +192,6 @@ class TestWatchStartInitialOffering:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -209,8 +199,7 @@ class TestWatchStartInitialOffering:
         assert _notification.notification_type == NotificationType.START_INITIAL_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "status": True,
         }
@@ -221,14 +210,12 @@ class TestWatchStartInitialOffering:
             "exchange_address": "",
             "token_type": "IbetStraightBond"
         }
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.START_INITIAL_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "status": True,
         }
@@ -309,14 +296,12 @@ class TestWatchStopInitialOffering:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.STOP_INITIAL_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "status": False,
         }
@@ -358,7 +343,6 @@ class TestWatchStopInitialOffering:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -366,8 +350,7 @@ class TestWatchStopInitialOffering:
         assert _notification.notification_type == NotificationType.STOP_INITIAL_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "status": False,
         }
@@ -378,14 +361,12 @@ class TestWatchStopInitialOffering:
             "exchange_address": "",
             "token_type": "IbetStraightBond"
         }
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.STOP_INITIAL_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "status": False,
         }
@@ -466,14 +447,12 @@ class TestWatchRedeem:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.REDEEM.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {}
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -513,7 +492,6 @@ class TestWatchRedeem:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -521,8 +499,7 @@ class TestWatchRedeem:
         assert _notification.notification_type == NotificationType.REDEEM.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {}
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -531,14 +508,12 @@ class TestWatchRedeem:
             "exchange_address": "",
             "token_type": "IbetStraightBond"
         }
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.REDEEM.value
         assert _notification.priority == 0
         assert _notification.address is None
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {}
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
@@ -626,14 +601,12 @@ class TestWatchApplyForOffering:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "accountAddress": self.trader["account_address"],
             "amount": 100,
@@ -690,7 +663,6 @@ class TestWatchApplyForOffering:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -698,8 +670,7 @@ class TestWatchApplyForOffering:
         assert _notification.notification_type == NotificationType.APPLY_FOR_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "accountAddress": self.trader["account_address"],
             "amount": 100,
@@ -711,14 +682,12 @@ class TestWatchApplyForOffering:
             "exchange_address": "",
             "token_type": "IbetStraightBond"
         }
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_OFFERING.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "accountAddress": self.trader2["account_address"],
             "amount": 200,
@@ -800,14 +769,12 @@ class TestWatchAllot:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.ALLOT.value
         assert _notification.priority == 1
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "accountAddress": self.trader["account_address"],
             "amount": 100,
@@ -847,7 +814,6 @@ class TestWatchAllot:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -855,8 +821,7 @@ class TestWatchAllot:
         assert _notification.notification_type == NotificationType.ALLOT.value
         assert _notification.priority == 1
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "accountAddress": self.trader["account_address"],
             "amount": 100,
@@ -868,14 +833,12 @@ class TestWatchAllot:
             "exchange_address": "",
             "token_type": "IbetStraightBond"
         }
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.ALLOT.value
         assert _notification.priority == 1
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "accountAddress": self.trader2["account_address"],
             "amount": 200,
@@ -955,14 +918,12 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": self.trader["account_address"],
@@ -1000,7 +961,6 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -1008,8 +968,7 @@ class TestWatchTransfer:
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": self.trader["account_address"],
@@ -1022,14 +981,12 @@ class TestWatchTransfer:
             "exchange_address": "",
             "token_type": "IbetStraightBond"
         }
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": self.trader2["account_address"],
@@ -1087,7 +1044,6 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 1  # Not Transfer from DEX
         _notification = _notification_list[0]
@@ -1095,8 +1051,7 @@ class TestWatchTransfer:
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == exchange_contract["address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": exchange_contract["address"],

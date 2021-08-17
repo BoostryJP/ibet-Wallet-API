@@ -19,10 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 import pytest
 from unittest import mock
 from unittest.mock import MagicMock
-from datetime import (
-    timezone,
-    timedelta
-)
 from importlib import reload
 
 from web3 import Web3
@@ -44,9 +40,6 @@ from tests.contract_modules import (
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 @pytest.fixture(scope="function")
@@ -133,8 +126,7 @@ class TestWatchTransfer:
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": self.trader["account_address"],
@@ -166,7 +158,6 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -174,8 +165,7 @@ class TestWatchTransfer:
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": self.trader["account_address"],
@@ -188,14 +178,12 @@ class TestWatchTransfer:
             "exchange_address": "",
             "token_type": "IbetCoupon"
         }
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": self.trader2["account_address"],
@@ -247,7 +235,6 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 1  # Not Transfer from DEX
         _notification = _notification_list[0]
@@ -255,8 +242,7 @@ class TestWatchTransfer:
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == exchange_contract["address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "from": self.issuer["account_address"],
             "to": exchange_contract["address"],

@@ -19,10 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 import pytest
 from unittest import mock
 from unittest.mock import MagicMock
-from datetime import (
-    timezone,
-    timedelta
-)
 from importlib import reload
 
 from web3 import Web3
@@ -38,9 +34,6 @@ from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 @pytest.fixture(scope="function")
@@ -94,14 +87,12 @@ class TestWatchPaymentAccountRegister:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_REGISTER.value
         assert _notification.priority == 2
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
@@ -131,7 +122,6 @@ class TestWatchPaymentAccountRegister:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -139,21 +129,18 @@ class TestWatchPaymentAccountRegister:
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_REGISTER.value
         assert _notification.priority == 2
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
         }
         assert _notification.metainfo == {}
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_REGISTER.value
         assert _notification.priority == 2
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader2["account_address"],
             "agent_address": self.agent["account_address"],
@@ -225,14 +212,12 @@ class TestWatchPaymentAccountApprove:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_APPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
@@ -272,7 +257,6 @@ class TestWatchPaymentAccountApprove:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -280,21 +264,18 @@ class TestWatchPaymentAccountApprove:
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_APPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
         }
         assert _notification.metainfo == {}
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_APPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader2["account_address"],
             "agent_address": self.agent["account_address"],
@@ -375,14 +356,12 @@ class TestWatchPaymentAccountWarn:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_WARN.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
@@ -422,7 +401,6 @@ class TestWatchPaymentAccountWarn:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -430,21 +408,18 @@ class TestWatchPaymentAccountWarn:
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_WARN.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
         }
         assert _notification.metainfo == {}
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_WARN.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader2["account_address"],
             "agent_address": self.agent["account_address"],
@@ -525,14 +500,12 @@ class TestWatchPaymentAccountDisapprove:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
@@ -572,7 +545,6 @@ class TestWatchPaymentAccountDisapprove:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -580,21 +552,18 @@ class TestWatchPaymentAccountDisapprove:
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
         }
         assert _notification.metainfo == {}
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader2["account_address"],
             "agent_address": self.agent["account_address"],
@@ -675,14 +644,12 @@ class TestWatchPaymentAccountBan:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_BAN.value
         assert _notification.priority == 2
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
@@ -722,7 +689,6 @@ class TestWatchPaymentAccountBan:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number - 1)
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -730,21 +696,18 @@ class TestWatchPaymentAccountBan:
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_BAN.value
         assert _notification.priority == 2
         assert _notification.address == self.trader["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader["account_address"],
             "agent_address": self.agent["account_address"],
         }
         assert _notification.metainfo == {}
-        block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_BAN.value
         assert _notification.priority == 2
         assert _notification.address == self.trader2["account_address"]
-        assert _notification.block_timestamp.replace(tzinfo=UTC).astimezone(test_module.JST).timestamp() == \
-               block["timestamp"]
+        assert _notification.block_timestamp is not None
         assert _notification.args == {
             "account_address": self.trader2["account_address"],
             "agent_address": self.agent["account_address"],

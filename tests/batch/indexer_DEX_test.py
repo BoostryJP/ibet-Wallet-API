@@ -19,10 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 import pytest
 from unittest import mock
 from unittest.mock import MagicMock
-from datetime import (
-    timezone,
-    timedelta
-)
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -62,9 +58,6 @@ from batch import indexer_DEX
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-UTC = timezone(timedelta(hours=0), "UTC")
-JST = timezone(timedelta(hours=+9), "JST")
 
 
 @pytest.fixture(scope="function")
@@ -270,7 +263,7 @@ class TestProcessor:
         assert _order.amount == 1000000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
 
@@ -316,7 +309,7 @@ class TestProcessor:
         assert _order.amount == 1000000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is True
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
 
@@ -364,7 +357,7 @@ class TestProcessor:
         assert _order.amount == 1000000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 1
         block2 = web3.eth.getBlock(block_number2)
@@ -379,7 +372,7 @@ class TestProcessor:
         assert _agreement.counterpart_address == self.trader["account_address"]
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.PENDING.value
-        assert _agreement.agreement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block2["timestamp"]
+        assert _agreement.agreement_timestamp is not None
         assert _agreement.settlement_timestamp is None
 
     # <Normal_4>
@@ -430,7 +423,7 @@ class TestProcessor:
         assert _order.amount == 4000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 1
         block2 = web3.eth.getBlock(block_number2)
@@ -445,7 +438,7 @@ class TestProcessor:
         assert _agreement.counterpart_address == self.trader["account_address"]
         assert _agreement.amount == 3000
         assert _agreement.status == AgreementStatus.PENDING.value
-        assert _agreement.agreement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block2["timestamp"]
+        assert _agreement.agreement_timestamp is not None
         assert _agreement.settlement_timestamp is None
 
     # <Normal_5>
@@ -497,7 +490,7 @@ class TestProcessor:
         assert _order.amount == 1000000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 1
         block2 = web3.eth.getBlock(block_number2)
@@ -513,8 +506,8 @@ class TestProcessor:
         assert _agreement.counterpart_address == self.trader["account_address"]
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.DONE.value
-        assert _agreement.agreement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block2["timestamp"]
-        assert _agreement.settlement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block3["timestamp"]
+        assert _agreement.agreement_timestamp is not None
+        assert _agreement.settlement_timestamp is not None
 
     # <Normal_6>
     # StraightBondExchange
@@ -564,7 +557,7 @@ class TestProcessor:
         assert _order.amount == 1000000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 1
         block2 = web3.eth.getBlock(block_number2)
@@ -579,7 +572,7 @@ class TestProcessor:
         assert _agreement.counterpart_address == self.trader["account_address"]
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.CANCELED.value
-        assert _agreement.agreement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block2["timestamp"]
+        assert _agreement.agreement_timestamp is not None
         assert _agreement.settlement_timestamp is None
 
     # <Normal_7>
@@ -656,7 +649,7 @@ class TestProcessor:
         assert _order.amount == 900000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         block = web3.eth.getBlock(coupon_block_number)
         _order = _order_list[1]
         assert _order.id == 2
@@ -671,7 +664,7 @@ class TestProcessor:
         assert _order.amount == 800000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         block = web3.eth.getBlock(share_block_number)
         _order = _order_list[2]
         assert _order.id == 3
@@ -686,7 +679,7 @@ class TestProcessor:
         assert _order.amount == 700000
         assert _order.agent_address == self.agent["account_address"]
         assert _order.is_cancelled is False
-        assert _order.order_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block["timestamp"]
+        assert _order.order_timestamp is not None
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 3
         block2 = web3.eth.getBlock(membership_block_number2)
@@ -702,8 +695,8 @@ class TestProcessor:
         assert _agreement.counterpart_address == self.trader["account_address"]
         assert _agreement.amount == 1000
         assert _agreement.status == AgreementStatus.DONE.value
-        assert _agreement.agreement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block2["timestamp"]
-        assert _agreement.settlement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block3["timestamp"]
+        assert _agreement.agreement_timestamp is not None
+        assert _agreement.settlement_timestamp is not None
         block2 = web3.eth.getBlock(coupon_block_number2)
         block3 = web3.eth.getBlock(coupon_block_number3)
         _agreement = _agreement_list[1]
@@ -717,8 +710,8 @@ class TestProcessor:
         assert _agreement.counterpart_address == self.trader["account_address"]
         assert _agreement.amount == 2000
         assert _agreement.status == AgreementStatus.DONE.value
-        assert _agreement.agreement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block2["timestamp"]
-        assert _agreement.settlement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block3["timestamp"]
+        assert _agreement.agreement_timestamp is not None
+        assert _agreement.settlement_timestamp is not None
         block2 = web3.eth.getBlock(share_block_number2)
         block3 = web3.eth.getBlock(share_block_number3)
         _agreement = _agreement_list[2]
@@ -732,8 +725,8 @@ class TestProcessor:
         assert _agreement.counterpart_address == self.trader["account_address"]
         assert _agreement.amount == 3000
         assert _agreement.status == AgreementStatus.DONE.value
-        assert _agreement.agreement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block2["timestamp"]
-        assert _agreement.settlement_timestamp.replace(tzinfo=UTC).astimezone(JST).timestamp() == block3["timestamp"]
+        assert _agreement.agreement_timestamp is not None
+        assert _agreement.settlement_timestamp is not None
 
     # <Normal_8>
     # Not Listing Token
