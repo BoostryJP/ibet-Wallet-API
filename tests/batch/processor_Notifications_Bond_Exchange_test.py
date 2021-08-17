@@ -36,9 +36,9 @@ from app.model import (
 from tests.conftest import ibet_exchange_contract
 from tests.account_config import eth_account
 from tests.contract_modules import (
-    issue_coupon_token,
-    coupon_register_list,
-    transfer_coupon_token,
+    issue_bond_token,
+    register_bond_list,
+    bond_transfer_to_exchange,
     make_sell,
     take_buy,
     cancel_order,
@@ -56,13 +56,13 @@ JST = timezone(timedelta(hours=+9), "JST")
 @pytest.fixture(scope="function")
 def test_module(session, shared_contract):
     # Create exchange contract for each test method.
-    coupon_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
+    bond_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
 
     config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-    config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
+    config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange["address"]
 
-    from batch import processor_Notifications_Coupon_Exchange
-    test_module = reload(processor_Notifications_Coupon_Exchange)
+    from batch import processor_Notifications_Bond_Exchange
+    test_module = reload(processor_Notifications_Bond_Exchange)
     test_module.db_session = session
 
     return test_module
@@ -75,28 +75,46 @@ def get_test_target(module, cls_name):
     return obj
 
 
-def issue_token(issuer, exchange_contract_address, token_list):
+def issue_token(issuer, exchange_contract_address, personal_info_contract_address, token_list):
     # Issue token
     args = {
-        'name': 'テストクーポン',
-        'symbol': 'COUPON',
+        'name': 'テスト債券',
+        'symbol': 'BOND',
         'totalSupply': 1000000,
         'tradableExchange': exchange_contract_address,
-        'details': 'クーポン詳細',
-        'returnDetails': 'リターン詳細',
-        'memo': 'クーポンメモ欄',
-        'expirationDate': '20191231',
-        'transferable': True,
+        'faceValue': 10000,
+        'interestRate': 602,
+        'interestPaymentDate1': '0101',
+        'interestPaymentDate2': '0201',
+        'interestPaymentDate3': '0301',
+        'interestPaymentDate4': '0401',
+        'interestPaymentDate5': '0501',
+        'interestPaymentDate6': '0601',
+        'interestPaymentDate7': '0701',
+        'interestPaymentDate8': '0801',
+        'interestPaymentDate9': '0901',
+        'interestPaymentDate10': '1001',
+        'interestPaymentDate11': '1101',
+        'interestPaymentDate12': '1201',
+        'redemptionDate': '20191231',
+        'redemptionValue': 10000,
+        'returnDate': '20191231',
+        'returnAmount': '商品券をプレゼント',
+        'purpose': '新商品の開発資金として利用。',
+        'memo': 'メモ',
         'contactInformation': '問い合わせ先',
-        'privacyPolicy': 'プライバシーポリシー'
+        'privacyPolicy': 'プライバシーポリシー',
+        'personalInfoAddress': personal_info_contract_address,
+        'transferable': True,
+        'isRedeemed': False
     }
-    token = issue_coupon_token(issuer, args)
-    coupon_register_list(issuer, token, token_list)
+    token = issue_bond_token(issuer, args)
+    register_bond_list(issuer, token, token_list)
 
     return token
 
 
-class TestWatchCouponNewOrder:
+class TestWatchBondNewOrder:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
 
@@ -107,14 +125,15 @@ class TestWatchCouponNewOrder:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponNewOrder")
+        target = get_test_target(test_module, "WatchBondNewOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Run target process
@@ -142,22 +161,23 @@ class TestWatchCouponNewOrder:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponNewOrder")
+        target = get_test_target(test_module, "WatchBondNewOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 5000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 5000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000, 100)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
@@ -188,9 +208,9 @@ class TestWatchCouponNewOrder:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -212,15 +232,15 @@ class TestWatchCouponNewOrder:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponNewOrder")
+        target = get_test_target(test_module, "WatchBondNewOrder")
 
         # Run target process
         target.loop()
@@ -237,7 +257,7 @@ class TestWatchCouponNewOrder:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponNewOrder")
+        target = get_test_target(test_module, "WatchBondNewOrder")
 
         # Run target process
         target.loop()
@@ -247,7 +267,7 @@ class TestWatchCouponNewOrder:
         assert _notification is None
 
 
-class TestWatchCouponCancelOrder:
+class TestWatchBondCancelOrder:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
 
@@ -258,14 +278,15 @@ class TestWatchCouponCancelOrder:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponCancelOrder")
+        target = get_test_target(test_module, "WatchBondCancelOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Cancel Order
@@ -296,22 +317,23 @@ class TestWatchCouponCancelOrder:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponCancelOrder")
+        target = get_test_target(test_module, "WatchBondCancelOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 5000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 5000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000, 100)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
@@ -346,9 +368,9 @@ class TestWatchCouponCancelOrder:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -370,22 +392,23 @@ class TestWatchCouponCancelOrder:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponCancelOrder")
+        target = get_test_target(test_module, "WatchBondCancelOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Not Cancel Order
@@ -404,7 +427,7 @@ class TestWatchCouponCancelOrder:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponCancelOrder")
+        target = get_test_target(test_module, "WatchBondCancelOrder")
 
         # Run target process
         target.loop()
@@ -414,7 +437,7 @@ class TestWatchCouponCancelOrder:
         assert _notification is None
 
 
-class TestWatchCouponBuyAgreement:
+class TestWatchBondBuyAgreement:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
     trader = eth_account["trader"]
@@ -426,14 +449,15 @@ class TestWatchCouponBuyAgreement:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuyAgreement")
+        target = get_test_target(test_module, "WatchBondBuyAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -465,22 +489,23 @@ class TestWatchCouponBuyAgreement:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuyAgreement")
+        target = get_test_target(test_module, "WatchBondBuyAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -515,9 +540,9 @@ class TestWatchCouponBuyAgreement:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -540,22 +565,23 @@ class TestWatchCouponBuyAgreement:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuyAgreement")
+        target = get_test_target(test_module, "WatchBondBuyAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Not Buy Order
@@ -574,7 +600,7 @@ class TestWatchCouponBuyAgreement:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuyAgreement")
+        target = get_test_target(test_module, "WatchBondBuyAgreement")
 
         # Run target process
         target.loop()
@@ -584,7 +610,7 @@ class TestWatchCouponBuyAgreement:
         assert _notification is None
 
 
-class TestWatchCouponSellAgreement:
+class TestWatchBondSellAgreement:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
     trader = eth_account["trader"]
@@ -596,14 +622,15 @@ class TestWatchCouponSellAgreement:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellAgreement")
+        target = get_test_target(test_module, "WatchBondSellAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -635,22 +662,23 @@ class TestWatchCouponSellAgreement:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellAgreement")
+        target = get_test_target(test_module, "WatchBondSellAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -685,9 +713,9 @@ class TestWatchCouponSellAgreement:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -710,22 +738,23 @@ class TestWatchCouponSellAgreement:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellAgreement")
+        target = get_test_target(test_module, "WatchBondSellAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Not Buy Order
@@ -744,7 +773,7 @@ class TestWatchCouponSellAgreement:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellAgreement")
+        target = get_test_target(test_module, "WatchBondSellAgreement")
 
         # Run target process
         target.loop()
@@ -754,7 +783,7 @@ class TestWatchCouponSellAgreement:
         assert _notification is None
 
 
-class TestWatchCouponBuySettlementOK:
+class TestWatchBondBuySettlementOK:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
     trader = eth_account["trader"]
@@ -766,14 +795,15 @@ class TestWatchCouponBuySettlementOK:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementOK")
+        target = get_test_target(test_module, "WatchBondBuySettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -808,22 +838,23 @@ class TestWatchCouponBuySettlementOK:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementOK")
+        target = get_test_target(test_module, "WatchBondBuySettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -862,9 +893,9 @@ class TestWatchCouponBuySettlementOK:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -887,22 +918,23 @@ class TestWatchCouponBuySettlementOK:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementOK")
+        target = get_test_target(test_module, "WatchBondBuySettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -924,7 +956,7 @@ class TestWatchCouponBuySettlementOK:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementOK")
+        target = get_test_target(test_module, "WatchBondBuySettlementOK")
 
         # Run target process
         target.loop()
@@ -934,7 +966,7 @@ class TestWatchCouponBuySettlementOK:
         assert _notification is None
 
 
-class TestWatchCouponSellSettlementOK:
+class TestWatchBondSellSettlementOK:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
     trader = eth_account["trader"]
@@ -946,14 +978,15 @@ class TestWatchCouponSellSettlementOK:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementOK")
+        target = get_test_target(test_module, "WatchBondSellSettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -988,22 +1021,23 @@ class TestWatchCouponSellSettlementOK:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementOK")
+        target = get_test_target(test_module, "WatchBondSellSettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1042,9 +1076,9 @@ class TestWatchCouponSellSettlementOK:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -1067,22 +1101,23 @@ class TestWatchCouponSellSettlementOK:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementOK")
+        target = get_test_target(test_module, "WatchBondSellSettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1104,7 +1139,7 @@ class TestWatchCouponSellSettlementOK:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementOK")
+        target = get_test_target(test_module, "WatchBondSellSettlementOK")
 
         # Run target process
         target.loop()
@@ -1114,7 +1149,7 @@ class TestWatchCouponSellSettlementOK:
         assert _notification is None
 
 
-class TestWatchCouponBuySettlementNG:
+class TestWatchBondBuySettlementNG:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
     trader = eth_account["trader"]
@@ -1126,14 +1161,15 @@ class TestWatchCouponBuySettlementNG:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementNG")
+        target = get_test_target(test_module, "WatchBondBuySettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1168,22 +1204,23 @@ class TestWatchCouponBuySettlementNG:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementNG")
+        target = get_test_target(test_module, "WatchBondBuySettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1222,9 +1259,9 @@ class TestWatchCouponBuySettlementNG:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -1247,22 +1284,23 @@ class TestWatchCouponBuySettlementNG:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementNG")
+        target = get_test_target(test_module, "WatchBondBuySettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1284,7 +1322,7 @@ class TestWatchCouponBuySettlementNG:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponBuySettlementNG")
+        target = get_test_target(test_module, "WatchBondBuySettlementNG")
 
         # Run target process
         target.loop()
@@ -1294,7 +1332,7 @@ class TestWatchCouponBuySettlementNG:
         assert _notification is None
 
 
-class TestWatchCouponSellSettlementNG:
+class TestWatchBondSellSettlementNG:
     issuer = eth_account["issuer"]
     agent = eth_account["agent"]
     trader = eth_account["trader"]
@@ -1306,14 +1344,15 @@ class TestWatchCouponSellSettlementNG:
     # <Normal_1>
     # Single event logs
     def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementNG")
+        target = get_test_target(test_module, "WatchBondSellSettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1348,22 +1387,23 @@ class TestWatchCouponSellSettlementNG:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementNG")
+        target = get_test_target(test_module, "WatchBondSellSettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1402,9 +1442,9 @@ class TestWatchCouponSellSettlementNG:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
         block = web3.eth.getBlock(block_number)
         _notification = _notification_list[1]
@@ -1427,22 +1467,23 @@ class TestWatchCouponSellSettlementNG:
         assert _notification.metainfo == {
             "company_name": "株式会社DEMO",
             "token_address": token["address"],
-            "token_name": "テストクーポン",
+            "token_name": "テスト債券",
             "exchange_address": exchange_contract_address,
-            "token_type": "IbetCoupon"
+            "token_type": "IbetStraightBond"
         }
 
     # <Normal_3>
     # No event logs
     def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementNG")
+        target = get_test_target(test_module, "WatchBondSellSettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
-        token = issue_token(self.issuer, exchange_contract_address, token_list_contract)
+        exchange_contract_address = test_module.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
         # Create Order
-        transfer_coupon_token(self.issuer, token, exchange_contract_address, 1000000)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Buy Order
@@ -1464,7 +1505,7 @@ class TestWatchCouponSellSettlementNG:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchCouponSellSettlementNG")
+        target = get_test_target(test_module, "WatchBondSellSettlementNG")
 
         # Run target process
         target.loop()

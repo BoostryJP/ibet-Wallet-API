@@ -511,6 +511,29 @@ def take_buy(invoker, exchange, order_id, amount):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# Tokenの買いMake注文
+def make_buy(invoker, exchange, token, amount, price):
+    web3.eth.defaultAccount = invoker['account_address']
+    ExchangeContract = Contract. \
+        get_contract('IbetExchange', exchange['address'])
+    agent = eth_account['agent']
+    tx_hash = ExchangeContract.functions. \
+        createOrder(token['address'], amount, price, True, agent['account_address']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# Tokenの売りTake注文
+def take_sell(invoker, exchange, order_id, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    ExchangeContract = Contract. \
+        get_contract('IbetExchange', exchange['address'])
+    tx_hash = ExchangeContract.functions. \
+        executeOrder(order_id, amount, False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 # 直近注文IDを取得
 def get_latest_orderid(exchange):
     ExchangeContract = Contract. \

@@ -42,16 +42,13 @@ from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
-    PAYMENT_GATEWAY_CONTRACT_ADDRESS,
-    COMPANY_LIST_URL
+    PAYMENT_GATEWAY_CONTRACT_ADDRESS
 )
 from app.model import (
     Notification,
     NotificationType
 )
 from app.contracts import Contract
-from batch.lib.token import TokenFactory
-from batch.lib.company_list import CompanyListFactory
 from batch.lib.misc import wait_all_futures
 import log
 
@@ -67,9 +64,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
-
-token_factory = TokenFactory(web3)
-company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
