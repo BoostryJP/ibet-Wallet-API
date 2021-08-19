@@ -47,25 +47,24 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def test_module(session, shared_contract):
-    # Create exchange contract for each test method.
-    share_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
+def watcher_factory(session, shared_contract):
+    def _watcher(cls_name):
+        # Create exchange contract for each test method.
+        share_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
 
-    config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-    config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = share_exchange["address"]
+        config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
+        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = share_exchange["address"]
 
-    from batch import processor_Notifications_Share_Exchange
-    test_module = reload(processor_Notifications_Share_Exchange)
-    test_module.db_session = session
+        from batch import processor_Notifications_Share_Exchange
+        test_module = reload(processor_Notifications_Share_Exchange)
+        test_module.db_session = session
 
-    return test_module
+        cls = getattr(test_module, cls_name)
+        watcher = cls()
+        watcher.from_block = web3.eth.blockNumber
+        return watcher, share_exchange["address"]
 
-
-def get_test_target(module, cls_name):
-    cls = getattr(module, cls_name)
-    obj = cls()
-    obj.from_block = web3.eth.blockNumber
-    return obj
+    return _watcher
 
 
 def issue_token(issuer, exchange_contract_address, personal_info_contract_address, token_list):
@@ -103,11 +102,10 @@ class TestWatchShareNewOrder:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareNewOrder")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareNewOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -116,7 +114,7 @@ class TestWatchShareNewOrder:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -145,11 +143,10 @@ class TestWatchShareNewOrder:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareNewOrder")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareNewOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -159,7 +156,7 @@ class TestWatchShareNewOrder:
         make_sell(self.issuer, {"address": exchange_contract_address}, token, 4000, 10)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -212,11 +209,16 @@ class TestWatchShareNewOrder:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareNewOrder")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareNewOrder")
 
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
+
+        # Not Create Order
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -229,11 +231,11 @@ class TestWatchShareNewOrder:
     # <Error_4>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareNewOrder")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareNewOrder")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -250,11 +252,10 @@ class TestWatchShareCancelOrder:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareCancelOrder")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareCancelOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -266,7 +267,7 @@ class TestWatchShareCancelOrder:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 1)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -295,11 +296,10 @@ class TestWatchShareCancelOrder:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareCancelOrder")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareCancelOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -313,7 +313,7 @@ class TestWatchShareCancelOrder:
         cancel_order(self.issuer, {"address": exchange_contract_address}, 2)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -366,11 +366,10 @@ class TestWatchShareCancelOrder:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareCancelOrder")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareCancelOrder")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -380,7 +379,7 @@ class TestWatchShareCancelOrder:
 
         # Not Cancel Order
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -393,11 +392,11 @@ class TestWatchShareCancelOrder:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareCancelOrder")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareCancelOrder")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -415,11 +414,10 @@ class TestWatchShareBuyAgreement:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuyAgreement")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuyAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -431,7 +429,7 @@ class TestWatchShareBuyAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -461,11 +459,10 @@ class TestWatchShareBuyAgreement:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuyAgreement")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuyAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -478,7 +475,7 @@ class TestWatchShareBuyAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -533,11 +530,10 @@ class TestWatchShareBuyAgreement:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuyAgreement")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuyAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -547,7 +543,7 @@ class TestWatchShareBuyAgreement:
 
         # Not Buy Order
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -560,11 +556,11 @@ class TestWatchShareBuyAgreement:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuyAgreement")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareBuyAgreement")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -582,11 +578,10 @@ class TestWatchShareSellAgreement:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellAgreement")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -598,7 +593,7 @@ class TestWatchShareSellAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 1000000)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -628,11 +623,10 @@ class TestWatchShareSellAgreement:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellAgreement")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -645,7 +639,7 @@ class TestWatchShareSellAgreement:
         take_buy(self.trader, {"address": exchange_contract_address}, 1, 400000)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -700,11 +694,10 @@ class TestWatchShareSellAgreement:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellAgreement")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellAgreement")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -714,7 +707,7 @@ class TestWatchShareSellAgreement:
 
         # Not Buy Order
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -727,11 +720,11 @@ class TestWatchShareSellAgreement:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellAgreement")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareSellAgreement")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -749,11 +742,10 @@ class TestWatchShareBuySettlementOK:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementOK")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuySettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -768,7 +760,7 @@ class TestWatchShareBuySettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -798,11 +790,10 @@ class TestWatchShareBuySettlementOK:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementOK")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuySettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -819,7 +810,7 @@ class TestWatchShareBuySettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -874,11 +865,10 @@ class TestWatchShareBuySettlementOK:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementOK")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuySettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -891,7 +881,7 @@ class TestWatchShareBuySettlementOK:
 
         # Not Confirm Agreement
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -904,11 +894,11 @@ class TestWatchShareBuySettlementOK:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementOK")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareBuySettlementOK")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -926,11 +916,10 @@ class TestWatchShareSellSettlementOK:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementOK")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellSettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -945,7 +934,7 @@ class TestWatchShareSellSettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -975,11 +964,10 @@ class TestWatchShareSellSettlementOK:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementOK")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellSettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -996,7 +984,7 @@ class TestWatchShareSellSettlementOK:
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -1051,11 +1039,10 @@ class TestWatchShareSellSettlementOK:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementOK")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellSettlementOK")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -1068,7 +1055,7 @@ class TestWatchShareSellSettlementOK:
 
         # Not Confirm Agreement
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -1081,11 +1068,11 @@ class TestWatchShareSellSettlementOK:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementOK")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareSellSettlementOK")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -1103,11 +1090,10 @@ class TestWatchShareBuySettlementNG:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementNG")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuySettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -1122,7 +1108,7 @@ class TestWatchShareBuySettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -1152,11 +1138,10 @@ class TestWatchShareBuySettlementNG:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementNG")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuySettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -1173,7 +1158,7 @@ class TestWatchShareBuySettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -1228,11 +1213,10 @@ class TestWatchShareBuySettlementNG:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementNG")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareBuySettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -1245,7 +1229,7 @@ class TestWatchShareBuySettlementNG:
 
         # Not Cancel Agreement
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -1258,11 +1242,11 @@ class TestWatchShareBuySettlementNG:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareBuySettlementNG")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareBuySettlementNG")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -1280,11 +1264,10 @@ class TestWatchShareSellSettlementNG:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementNG")
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellSettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -1299,7 +1282,7 @@ class TestWatchShareSellSettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -1329,11 +1312,10 @@ class TestWatchShareSellSettlementNG:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementNG")
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellSettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -1350,7 +1332,7 @@ class TestWatchShareSellSettlementNG:
         cancel_agreement(self.agent, {"address": exchange_contract_address}, 1, 2)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -1405,11 +1387,10 @@ class TestWatchShareSellSettlementNG:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementNG")
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchShareSellSettlementNG")
 
         token_list_contract = shared_contract["TokenList"]
-        exchange_contract_address = test_module.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = issue_token(self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
 
@@ -1422,7 +1403,7 @@ class TestWatchShareSellSettlementNG:
 
         # Not Cancel Agreement
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -1435,11 +1416,11 @@ class TestWatchShareSellSettlementNG:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchShareSellSettlementNG")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchShareSellSettlementNG")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()

@@ -37,26 +37,25 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope="function")
-def test_module(session):
-    # Create PaymentGateway contract for each test method.
-    deployer = eth_account["deployer"]
-    payment_gateway_contract_address, _ = Contract.deploy_contract(
-        "PaymentGateway", [], deployer["account_address"])
+def watcher_factory(session, shared_contract):
+    def _watcher(cls_name):
+        # Create PaymentGateway contract for each test method.
+        deployer = eth_account["deployer"]
+        payment_gateway_contract_address, _ = Contract.deploy_contract(
+            "PaymentGateway", [], deployer["account_address"])
 
-    config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway_contract_address
+        config.PAYMENT_GATEWAY_CONTRACT_ADDRESS = payment_gateway_contract_address
 
-    from batch import processor_Notifications_PaymentGateway
-    test_module = reload(processor_Notifications_PaymentGateway)
-    test_module.db_session = session
+        from batch import processor_Notifications_PaymentGateway
+        test_module = reload(processor_Notifications_PaymentGateway)
+        test_module.db_session = session
 
-    return test_module
+        cls = getattr(test_module, cls_name)
+        watcher = cls()
+        watcher.from_block = web3.eth.blockNumber
+        return watcher, payment_gateway_contract_address
 
-
-def get_test_target(module, cls_name):
-    cls = getattr(module, cls_name)
-    obj = cls()
-    obj.from_block = web3.eth.blockNumber
-    return obj
+    return _watcher
 
 
 class TestWatchPaymentAccountRegister:
@@ -70,10 +69,8 @@ class TestWatchPaymentAccountRegister:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountRegister")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_1(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountRegister")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -83,7 +80,7 @@ class TestWatchPaymentAccountRegister:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -101,10 +98,8 @@ class TestWatchPaymentAccountRegister:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountRegister")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_2(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountRegister")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -118,7 +113,7 @@ class TestWatchPaymentAccountRegister:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -149,12 +144,12 @@ class TestWatchPaymentAccountRegister:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountRegister")
+    def test_normal_3(self, watcher_factory, session, shared_contract):
+        watcher, _ = watcher_factory("WatchPaymentAccountRegister")
 
         # Not Register Agent Info
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -167,11 +162,11 @@ class TestWatchPaymentAccountRegister:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchPaymentAccountRegister")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchPaymentAccountRegister")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -189,10 +184,8 @@ class TestWatchPaymentAccountApprove:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountApprove")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_1(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountApprove")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -208,7 +201,7 @@ class TestWatchPaymentAccountApprove:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -226,10 +219,8 @@ class TestWatchPaymentAccountApprove:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountApprove")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_2(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountApprove")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -253,7 +244,7 @@ class TestWatchPaymentAccountApprove:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -284,10 +275,8 @@ class TestWatchPaymentAccountApprove:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountApprove")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_3(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountApprove")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -298,7 +287,7 @@ class TestWatchPaymentAccountApprove:
 
         # Not Approve
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -311,11 +300,11 @@ class TestWatchPaymentAccountApprove:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchPaymentAccountApprove")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchPaymentAccountApprove")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -333,10 +322,8 @@ class TestWatchPaymentAccountWarn:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountWarn")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_1(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountWarn")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -352,7 +339,7 @@ class TestWatchPaymentAccountWarn:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -370,10 +357,8 @@ class TestWatchPaymentAccountWarn:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountWarn")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_2(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountWarn")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -397,7 +382,7 @@ class TestWatchPaymentAccountWarn:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -428,10 +413,8 @@ class TestWatchPaymentAccountWarn:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountWarn")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_3(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountWarn")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -442,7 +425,7 @@ class TestWatchPaymentAccountWarn:
 
         # Not Warn
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -455,11 +438,11 @@ class TestWatchPaymentAccountWarn:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchPaymentAccountWarn")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchPaymentAccountWarn")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -477,10 +460,8 @@ class TestWatchPaymentAccountDisapprove:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountDisapprove")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_1(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountDisapprove")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -496,7 +477,7 @@ class TestWatchPaymentAccountDisapprove:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -514,10 +495,8 @@ class TestWatchPaymentAccountDisapprove:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountDisapprove")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_2(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountDisapprove")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -541,7 +520,7 @@ class TestWatchPaymentAccountDisapprove:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -572,10 +551,8 @@ class TestWatchPaymentAccountDisapprove:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountDisapprove")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_3(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountDisapprove")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -586,7 +563,7 @@ class TestWatchPaymentAccountDisapprove:
 
         # Not Disapprove
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -599,11 +576,11 @@ class TestWatchPaymentAccountDisapprove:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchPaymentAccountDisapprove")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchPaymentAccountDisapprove")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -621,10 +598,8 @@ class TestWatchPaymentAccountBan:
 
     # <Normal_1>
     # Single event logs
-    def test_normal_1(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountBan")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_1(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountBan")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -640,7 +615,7 @@ class TestWatchPaymentAccountBan:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -658,10 +633,8 @@ class TestWatchPaymentAccountBan:
 
     # <Normal_2>
     # Multi event logs
-    def test_normal_2(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountBan")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_2(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountBan")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -685,7 +658,7 @@ class TestWatchPaymentAccountBan:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
@@ -716,10 +689,8 @@ class TestWatchPaymentAccountBan:
 
     # <Normal_3>
     # No event logs
-    def test_normal_3(self, test_module, session, shared_contract):
-        target = get_test_target(test_module, "WatchPaymentAccountBan")
-
-        payment_gateway_contract_address = test_module.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+    def test_normal_3(self, watcher_factory, session, shared_contract):
+        watcher, payment_gateway_contract_address = watcher_factory("WatchPaymentAccountBan")
 
         # Register Agent Info
         payment_gateway_contract = Contract.get_contract("PaymentGateway", payment_gateway_contract_address)
@@ -730,7 +701,7 @@ class TestWatchPaymentAccountBan:
 
         # Not Ban
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
@@ -743,11 +714,11 @@ class TestWatchPaymentAccountBan:
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, test_module, session, shared_contract, mocked_company_list):
-        target = get_test_target(test_module, "WatchPaymentAccountBan")
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchPaymentAccountBan")
 
         # Run target process
-        target.loop()
+        watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
