@@ -131,7 +131,6 @@ class TestWatchStartOffering:
 
         # Assertion
         block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.START_OFFERING.value

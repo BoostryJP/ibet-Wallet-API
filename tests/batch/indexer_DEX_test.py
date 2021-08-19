@@ -468,7 +468,6 @@ class TestProcessor:
 
         # Confirm Agreement
         confirm_agreement(self.agent, {"address": exchange_contract_address}, 1, 1)
-        block_number3 = web3.eth.blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -494,7 +493,6 @@ class TestProcessor:
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 1
         block2 = web3.eth.getBlock(block_number2)
-        block3 = web3.eth.getBlock(block_number3)
         _agreement = _agreement_list[0]
         assert _agreement.transaction_hash == block2["transactions"][0].hex()
         assert _agreement.exchange_address == exchange_contract_address
@@ -623,11 +621,8 @@ class TestProcessor:
 
         # Confirm Agreement
         confirm_agreement(self.agent, {"address": membership_exchange_contract_address}, 1, 1)
-        membership_block_number3 = web3.eth.blockNumber
         confirm_agreement(self.agent, {"address": coupon_exchange_contract_address}, 1, 1)
-        coupon_block_number3 = web3.eth.blockNumber
         confirm_agreement(self.agent, {"address": share_exchange_contract_address}, 1, 1)
-        share_block_number3 = web3.eth.blockNumber
 
         # Run target process
         processor.sync_new_logs()
@@ -683,7 +678,6 @@ class TestProcessor:
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 3
         block2 = web3.eth.getBlock(membership_block_number2)
-        block3 = web3.eth.getBlock(membership_block_number3)
         _agreement = _agreement_list[0]
         assert _agreement.transaction_hash == block2["transactions"][0].hex()
         assert _agreement.exchange_address == membership_exchange_contract_address
@@ -698,7 +692,6 @@ class TestProcessor:
         assert _agreement.agreement_timestamp is not None
         assert _agreement.settlement_timestamp is not None
         block2 = web3.eth.getBlock(coupon_block_number2)
-        block3 = web3.eth.getBlock(coupon_block_number3)
         _agreement = _agreement_list[1]
         assert _agreement.transaction_hash == block2["transactions"][0].hex()
         assert _agreement.exchange_address == coupon_exchange_contract_address
@@ -713,7 +706,6 @@ class TestProcessor:
         assert _agreement.agreement_timestamp is not None
         assert _agreement.settlement_timestamp is not None
         block2 = web3.eth.getBlock(share_block_number2)
-        block3 = web3.eth.getBlock(share_block_number3)
         _agreement = _agreement_list[2]
         assert _agreement.transaction_hash == block2["transactions"][0].hex()
         assert _agreement.exchange_address == share_exchange_contract_address
@@ -777,7 +769,7 @@ class TestProcessor:
         assert len(_agreement_list) == 0
 
     # <Normal_10>
-    # Blockchain Not Proceed
+    # No event logs
     def test_normal_10(self, processor_factory, shared_contract, session):
         processor, exchange_address = processor_factory()
 

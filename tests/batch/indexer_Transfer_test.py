@@ -405,6 +405,34 @@ class TestProcessor:
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 1  # prepare same
 
+    # <Normal_6>
+    # Not Listing Token
+    def test_normal_6(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+        block_number = web3.eth.blockNumber
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+    ###########################################################################
+    # Error Case
+    ###########################################################################
+
     # <Error_1>
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))

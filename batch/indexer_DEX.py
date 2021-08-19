@@ -151,16 +151,14 @@ class DBSink:
     def on_settlement_ok(self, exchange_address: str, order_id: int, agreement_id: int, settlement_timestamp: datetime):
         agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is not None:
-            LOG.debug(
-                f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            LOG.debug(f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement.status = AgreementStatus.DONE.value
             agreement.settlement_timestamp = settlement_timestamp
 
     def on_settlement_ng(self, exchange_address: str, order_id: int, agreement_id: int):
         agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
         if agreement is not None:
-            LOG.debug(
-                f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            LOG.debug(f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
             agreement.status = AgreementStatus.CANCELED.value
 
     def flush(self):
