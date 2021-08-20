@@ -268,7 +268,8 @@ class Processor:
                         pass
                     else:
                         available_token = self.db.query(Listing). \
-                            filter(Listing.token_address == args["tokenAddress"])
+                            filter(Listing.token_address == args["tokenAddress"]). \
+                            first()
                         transaction_hash = event["transactionHash"].hex()
                         order_timestamp = datetime.fromtimestamp(
                             web3.eth.getBlock(event["blockNumber"])["timestamp"],
@@ -391,9 +392,16 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
-LOG.info("Service started successfully")
 
-processor.initial_sync()
-while True:
-    processor.sync_new_logs()
-    time.sleep(1)
+
+def main():
+    LOG.info("Service started successfully")
+
+    processor.initial_sync()
+    while True:
+        processor.sync_new_logs()
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()

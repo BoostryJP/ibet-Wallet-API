@@ -212,9 +212,16 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
-LOG.info("Service started successfully")
 
-processor.initial_sync()
-while True:
-    processor.sync_new_logs()
-    time.sleep(5)
+
+def main():
+    LOG.info("Service started successfully")
+
+    processor.initial_sync()
+    while True:
+        processor.sync_new_logs()
+        time.sleep(5)
+
+
+if __name__ == "__main__":
+    main()

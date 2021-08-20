@@ -51,25 +51,24 @@ RUN . ~/.bash_profile \
  && pyenv global 3.8.7 \
  && pip install --upgrade pip
 
-# install python packages
+# install python packages 1
 COPY requirements.txt /app/requirements.txt
 RUN . ~/.bash_profile \
  && pip install -r /app/requirements.txt \
  && rm -f /app/requirements.txt
 
+# install python packages 2
+COPY tests/requirements.txt /app/requirements2.txt
+RUN . ~/.bash_profile \
+ && pip install -r /app/requirements2.txt \
+ && rm -f /app/requirements2.txt
+
 # deploy app
 USER root
-COPY . /app/ibet-Wallet-API
+COPY . /app/ibet-Wallet-API/
 RUN chown -R apl:apl /app/ibet-Wallet-API \
- && rm -rf /app/ibet-Wallet-API/tests/ \
  && find /app/ibet-Wallet-API/ -type d -name __pycache__ | xargs rm -fr \
  && chmod 755 /app/ibet-Wallet-API
 
-# command deploy
 USER apl
-COPY run.sh healthcheck.sh /app/
-
-EXPOSE 5000
-
-CMD /app/run.sh
-HEALTHCHECK --interval=10s CMD /app/healthcheck.sh
+CMD /app/ibet-Wallet-API/tests/qa.sh
