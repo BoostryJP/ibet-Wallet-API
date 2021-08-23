@@ -41,6 +41,8 @@ class NodeInfo(BaseResource):
         payment_gateway_json = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
         personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
         ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
+        ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
+        e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
         nodeInfo = {
             'payment_gateway_address': config.PAYMENT_GATEWAY_CONTRACT_ADDRESS,
@@ -55,6 +57,10 @@ class NodeInfo(BaseResource):
             'ibet_coupon_exchange_abi': ibet_exchange_json['abi'],
             'ibet_share_exchange_address': config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
             'ibet_share_exchange_abi': ibet_exchange_json['abi'],
+            'ibet_escrow_address': config.IBET_ESCROW_CONTRACT_ADDRESS,
+            'ibet_escrow_abi': ibet_escrow_json['abi'],
+            'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
+            'ec2_messaging_abi': e2e_messaging_json['abi'],
             'agent_address': config.AGENT_ADDRESS,
         }
 
