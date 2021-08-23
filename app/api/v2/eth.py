@@ -174,7 +174,9 @@ class SendRawTransaction(BaseResource):
                         to_contract_address != config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
-                        to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS:
+                        to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS and \
+                        to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS:
                     result.append({"id": i + 1, "status": 0})
                     LOG.error("Not executable")
                     continue
@@ -334,7 +336,9 @@ class SendRawTransactionNoWait(BaseResource):
                         to_contract_address != config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
-                        to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS:
+                        to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS and \
+                        to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS:
                     result.append({"id": i + 1, "status": 0})
                     LOG.error("Not executable")
                     continue

@@ -34,6 +34,8 @@ class TestNodeInfo:
         payment_gateway = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
         personal_info = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
         ibet_exchange = json.load(open("app/contracts/json/IbetExchange.json", "r"))
+        ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
+        e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
         payment_gateway_address = config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
         payment_gateway_abi = payment_gateway['abi']
@@ -53,6 +55,12 @@ class TestNodeInfo:
         share_exchange_address = config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
         share_exchange_abi = ibet_exchange['abi']
 
+        ibet_escrow_address = config.IBET_ESCROW_CONTRACT_ADDRESS
+        ibet_escrow_abi = ibet_escrow_json['abi']
+
+        e2e_messaging_address = config.E2E_MESSAGING_CONTRACT_ADDRESS
+        ec2_messaging_abi = e2e_messaging_json['abi']
+
         agent_address = config.AGENT_ADDRESS
 
         assumed_body = {
@@ -68,6 +76,10 @@ class TestNodeInfo:
             'ibet_coupon_exchange_abi': coupon_exchange_abi,
             'ibet_share_exchange_address': share_exchange_address,
             'ibet_share_exchange_abi': share_exchange_abi,
+            'ibet_escrow_address': ibet_escrow_address,
+            'ibet_escrow_abi': ibet_escrow_abi,
+            'e2e_messaging_address': e2e_messaging_address,
+            'ec2_messaging_abi': ec2_messaging_abi,
             'agent_address': agent_address
         }
 
