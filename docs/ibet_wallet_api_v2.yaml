@@ -2922,7 +2922,9 @@ paths:
                           type: string
                     balance:
                       type: integer
-                    commitment:
+                    exchange_balance:
+                      type: integer
+                    exchange_commitment:
                       type: integer
         400:
           description: Invalid Parameter Error
@@ -3047,7 +3049,9 @@ paths:
                       type: integer
                     pending_transfer:
                       type: integer
-                    commitment:
+                    exchange_balance:
+                      type: integer
+                    exchange_commitment:
                       type: integer
         400:
           description: Invalid Parameter Error
@@ -3153,7 +3157,9 @@ paths:
                           type: string
                     balance:
                       type: integer
-                    commitment:
+                    exchange_balance:
+                      type: integer
+                    exchange_commitment:
                       type: integer
         400:
           description: Invalid Parameter Error
@@ -3259,7 +3265,9 @@ paths:
                           type: string
                     balance:
                       type: integer
-                    commitment:
+                    exchange_balance:
+                      type: integer
+                    exchange_commitment:
                       type: integer
                     used:
                       type: integer
