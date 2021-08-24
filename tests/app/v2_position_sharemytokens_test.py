@@ -175,7 +175,7 @@ class TestV2ShareMyTokens:
     ###########################################################################
 
     # Normal_1
-    # balance > 0, pending_transfer = 0, commitment = 0
+    # balance > 0, pending_transfer = 0, exchange_balance = 0
     def test_normal_1(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -252,7 +252,8 @@ class TestV2ShareMyTokens:
             },
             "balance": 1000000,
             "pending_transfer": 0,
-            "commitment": 0
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
@@ -265,7 +266,7 @@ class TestV2ShareMyTokens:
         assert count == 1
 
     # Normal_2
-    # balance > 0, pending_transfer > 0, commitment = 0
+    # balance > 0, pending_transfer > 0, exchange_balance = 0
     def test_normal_2(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -345,7 +346,8 @@ class TestV2ShareMyTokens:
 
             "balance": 999900,
             "pending_transfer": 100,
-            "commitment": 0
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
         count = 0
         for token in resp.json["data"]:
@@ -355,7 +357,7 @@ class TestV2ShareMyTokens:
         assert count == 1
 
     # Normal_3
-    # balance > 0, pending_transfer = 0, commitment > 0
+    # balance > 0, pending_transfer = 0, exchange_balance > 0
     def test_normal_3(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -435,7 +437,8 @@ class TestV2ShareMyTokens:
 
             "balance": 999900,
             "pending_transfer": 0,
-            "commitment": 100
+            "exchange_balance": 0,
+            "exchange_commitment": 100,
         }
         count = 0
         for token in resp.json["data"]:
@@ -445,7 +448,7 @@ class TestV2ShareMyTokens:
         assert count == 1
 
     # Normal_4
-    # balance > 0, commitment > 0
+    # balance > 0, exchange_balance > 0
     # Exchange address not set
     def test_normal_4(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -525,7 +528,8 @@ class TestV2ShareMyTokens:
             },
             "balance": 999900,
             "pending_transfer": 0,
-            "commitment": 0
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
         count = 0
         for token in resp.json["data"]:
@@ -626,7 +630,8 @@ class TestV2ShareMyTokens:
 
             "balance": 1000000,
             "pending_transfer": 0,
-            "commitment": 0
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
         assumed_body_2 = {
             "token": {
@@ -670,7 +675,8 @@ class TestV2ShareMyTokens:
             },
             "balance": 1000000,
             "pending_transfer": 0,
-            "commitment": 0
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
         count = 0
         for token in resp.json["data"]:

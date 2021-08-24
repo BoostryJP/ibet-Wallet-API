@@ -184,22 +184,26 @@ class TestPositionAccountAddressMembership:
                 {
                     "token_address": token_1["address"],
                     "balance": 1000000,
-                    "commitment": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
                 },
                 {
                     "token_address": token_2["address"],
                     "balance": 1000000,
-                    "commitment": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
                 },
                 {
                     "token_address": token_3["address"],
                     "balance": 999900,
-                    "commitment": 100,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 100,
                 },
                 {
                     "token_address": token_4["address"],
                     "balance": 0,
-                    "commitment": 1000000,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 1000000,
                 },
             ]
         }
@@ -263,12 +267,14 @@ class TestPositionAccountAddressMembership:
                 {
                     "token_address": token_2["address"],
                     "balance": 1000000,
-                    "commitment": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
                 },
                 {
                     "token_address": token_3["address"],
                     "balance": 999900,
-                    "commitment": 100,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 100,
                 },
             ]
         }

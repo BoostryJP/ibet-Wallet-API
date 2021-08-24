@@ -240,12 +240,13 @@ class TestPositionAccountAddressCouponContractAddress:
                 'privacy_policy': 'プライバシーポリシー'
             },
             "balance": 1000000,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
             "used": 0,
         }
 
     # <Normal_2>
-    # balance: 999900, commitment: 100
+    # balance: 999900, exchange_balance: 100
     def test_normal_2(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -337,12 +338,13 @@ class TestPositionAccountAddressCouponContractAddress:
                 'privacy_policy': 'プライバシーポリシー'
             },
             "balance": 999900,
-            "commitment": 100,
+            "exchange_balance": 0,
+            "exchange_commitment": 100,
             "used": 0,
         }
 
     # <Normal_3>
-    # balance: 0, commitment: 1000000
+    # balance: 0, exchange_balance: 1000000
     def test_normal_3(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -434,12 +436,13 @@ class TestPositionAccountAddressCouponContractAddress:
                 'privacy_policy': 'プライバシーポリシー'
             },
             "balance": 0,
-            "commitment": 1000000,
+            "exchange_balance": 0,
+            "exchange_commitment": 1000000,
             "used": 0,
         }
 
     # <Normal_4>
-    # balance: 999900, commitment: 100
+    # balance: 999900, exchange_balance: 100
     def test_normal_4(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -531,7 +534,8 @@ class TestPositionAccountAddressCouponContractAddress:
                 'privacy_policy': 'プライバシーポリシー'
             },
             "balance": 999900,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
             "used": 100,
         }
 
@@ -628,12 +632,13 @@ class TestPositionAccountAddressCouponContractAddress:
                 'privacy_policy': 'プライバシーポリシー'
             },
             "balance": 0,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
             "used": 1000000,
         }
 
     # <Normal_6>
-    # balance: 0, commitment: 0, used: 0, exist history
+    # balance: 0, exchange_balance: 0, used: 0, exist history
     def test_normal_6(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -725,7 +730,8 @@ class TestPositionAccountAddressCouponContractAddress:
                 'privacy_policy': 'プライバシーポリシー'
             },
             "balance": 0,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
             "used": 0,
         }
 
