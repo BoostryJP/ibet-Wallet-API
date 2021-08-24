@@ -267,7 +267,8 @@ class TestPositionAccountAddressShareContractAddress:
                 'max_sell_amount': 1000},
             "balance": 1000000,
             "pending_transfer": 0,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
 
     # <Normal_2>
@@ -365,7 +366,8 @@ class TestPositionAccountAddressShareContractAddress:
                 'max_sell_amount': 1000},
             "balance": 999900,
             "pending_transfer": 100,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
 
     # <Normal_3>
@@ -463,11 +465,12 @@ class TestPositionAccountAddressShareContractAddress:
                 'max_sell_amount': 1000},
             "balance": 0,
             "pending_transfer": 1000000,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
 
     # <Normal_4>
-    # balance: 999900, commitment: 100
+    # balance: 999900, exchange_balance: 100
     def test_normal_4(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -561,11 +564,12 @@ class TestPositionAccountAddressShareContractAddress:
                 'max_sell_amount': 1000},
             "balance": 999900,
             "pending_transfer": 0,
-            "commitment": 100,
+            "exchange_balance": 0,
+            "exchange_commitment": 100,
         }
 
     # <Normal_5>
-    # balance: 0, commitment: 1000000
+    # balance: 0, exchange_balance: 1000000
     def test_normal_5(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -659,7 +663,8 @@ class TestPositionAccountAddressShareContractAddress:
                 'max_sell_amount': 1000},
             "balance": 0,
             "pending_transfer": 0,
-            "commitment": 1000000,
+            "exchange_balance": 0,
+            "exchange_commitment": 1000000,
         }
 
     ###########################################################################

@@ -267,7 +267,8 @@ class TestV2MembershipMyTokens:
                 'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
-            'commitment': 0
+            'exchange_balance': 0,
+            'exchange_commitment': 0,
         }
 
         assert resp.status_code == 200
@@ -339,7 +340,8 @@ class TestV2MembershipMyTokens:
                 'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 50,
-            'commitment': 50
+            'exchange_balance': 0,
+            'exchange_commitment': 50,
         }
 
         assert resp.status_code == 200
@@ -411,7 +413,8 @@ class TestV2MembershipMyTokens:
                 'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 50,
-            'commitment': 0
+            'exchange_balance': 0,
+            'exchange_commitment': 0,
         }
 
         assert resp.status_code == 200
@@ -520,7 +523,8 @@ class TestV2MembershipMyTokens:
                 'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
-            'commitment': 0
+            'exchange_balance': 0,
+            'exchange_commitment': 0,
         }
 
         assert resp.status_code == 200
@@ -592,7 +596,8 @@ class TestV2MembershipMyTokens:
                 'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
-            'commitment': 0
+            'exchange_balance': 0,
+            'exchange_commitment': 0,
         }
 
         assert resp.status_code == 200
@@ -669,7 +674,8 @@ class TestV2MembershipMyTokens:
                 'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
-            'commitment': 0
+            'exchange_balance': 0,
+            'exchange_commitment': 0,
         }
 
         assumed_body_2 = {
@@ -705,7 +711,8 @@ class TestV2MembershipMyTokens:
                 'privacy_policy': 'プライバシーポリシー'
             },
             'balance': 100,
-            'commitment': 0
+            'exchange_balance': 0,
+            'exchange_commitment': 0,
         }
 
         assert resp.status_code == 200

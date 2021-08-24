@@ -257,11 +257,12 @@ class TestPositionAccountAddressStraightBondContractAddress:
                 'certification': []
             },
             "balance": 1000000,
-            "commitment": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0,
         }
 
     # <Normal_2>
-    # balance: 999900, commitment: 100
+    # balance: 999900, exchange_balance: 100
     def test_normal_2(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -354,11 +355,12 @@ class TestPositionAccountAddressStraightBondContractAddress:
                 'certification': []
             },
             "balance": 999900,
-            "commitment": 100,
+            "exchange_balance": 0,
+            "exchange_commitment": 100,
         }
 
     # <Normal_3>
-    # balance: 0, commitment: 1000000
+    # balance: 0, exchange_balance: 1000000
     def test_normal_3(self, client, session, shared_contract):
         exchange_contract = shared_contract["IbetStraightBondExchange"]
         token_list_contract = shared_contract["TokenList"]
@@ -451,7 +453,8 @@ class TestPositionAccountAddressStraightBondContractAddress:
                 'certification': []
             },
             "balance": 0,
-            "commitment": 1000000,
+            "exchange_balance": 0,
+            "exchange_commitment": 1000000,
         }
 
     ###########################################################################

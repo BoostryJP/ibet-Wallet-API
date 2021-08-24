@@ -176,13 +176,15 @@ class BasePosition(BaseResource):
         try:
             balance = _token_contract.functions.balanceOf(account_address).call()
             if _exchange_contract is not None:
-                commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
+                _exchange_balance = _exchange_contract.functions.balanceOf(account_address, token_address).call()
+                _exchange_commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
-                commitment = 0
+                _exchange_balance = 0
+                _exchange_commitment = 0
             # If balance and commitment are non-zero,
             # get the token information from TokenContract.
-            if balance == 0 and commitment == 0:
+            if balance == 0 and _exchange_balance == 0 and _exchange_commitment == 0:
                 return None
             else:
                 token = self.token_model.get(
@@ -191,7 +193,8 @@ class BasePosition(BaseResource):
                 )
                 position = {
                     "balance": balance,
-                    "commitment": commitment
+                    "exchange_balance": _exchange_balance,
+                    "exchange_commitment": _exchange_commitment
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -207,15 +210,17 @@ class BasePosition(BaseResource):
         # Get Token Contract
         _token_contract = Contract.get_contract(
             contract_name=self.token_type,
-            address=token_address)
+            address=token_address
+        )
 
         # Get Exchange Contract
         exchange_address = _token_contract.functions.tradableExchange().call()
         _exchange_contract = None
         if exchange_address != config.ZERO_ADDRESS:
             _exchange_contract = Contract.get_contract(
-                contract_name="IbetExchange",
-                address=exchange_address)
+                contract_name="IbetExchangeInterface",
+                address=exchange_address
+            )
 
         return _token_contract, _exchange_contract
 
@@ -264,14 +269,18 @@ class BasePositionShare(BasePosition):
         try:
             balance = _token_contract.functions.balanceOf(account_address).call()
             if _exchange_contract is not None:
-                commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
+                _exchange_balance = _exchange_contract.functions.balanceOf(account_address, token_address).call()
+                _exchange_commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
-                commitment = 0
+                _exchange_balance = 0
+                _exchange_commitment = 0
+
             pending_transfer = _token_contract.functions.pendingTransfer(account_address).call()
             # If balance, pending_transfer, and commitment are non-zero,
             # get the token information from TokenContract.
-            if balance == 0 and pending_transfer == 0 and commitment == 0:
+            if balance == 0 and pending_transfer == 0 \
+                    and _exchange_balance == 0 and _exchange_commitment == 0:
                 return None
             else:
                 token = ShareToken.get(
@@ -280,8 +289,9 @@ class BasePositionShare(BasePosition):
                 )
                 position = {
                     "balance": balance,
-                    "pending_transfer": pending_transfer,
-                    "commitment": commitment
+                    "exchange_balance": _exchange_balance,
+                    "exchange_commitment": _exchange_commitment,
+                    "pending_transfer": pending_transfer
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -323,10 +333,12 @@ class BasePositionCoupon(BasePosition):
         try:
             balance = _token_contract.functions.balanceOf(account_address).call()
             if _exchange_contract is not None:
-                commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
+                _exchange_balance = _exchange_contract.functions.balanceOf(account_address, token_address).call()
+                _exchange_commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
-                commitment = 0
+                _exchange_balance = 0
+                _exchange_commitment = 0
             used = _token_contract.functions.usedOf(account_address).call()
             # Retrieving token receipt history from IDXTransfer
             # NOTE: Index data has a lag from the most recent transfer state.
@@ -336,7 +348,9 @@ class BasePositionCoupon(BasePosition):
                 first()
             # If balance, commitment, and used are non-zero, and exist received history,
             # get the token information from TokenContract.
-            if balance == 0 and commitment == 0 and used == 0 and received_history is None:
+            if balance == 0 and \
+                    _exchange_balance == 0 and _exchange_commitment == 0 and \
+                    used == 0 and received_history is None:
                 return None
             else:
                 token = CouponToken.get(
@@ -345,7 +359,8 @@ class BasePositionCoupon(BasePosition):
                 )
                 position = {
                     "balance": balance,
-                    "commitment": commitment,
+                    "exchange_balance": _exchange_balance,
+                    "exchange_commitment": _exchange_commitment,
                     "used": used
                 }
                 if is_detail is True:
