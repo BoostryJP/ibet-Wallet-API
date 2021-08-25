@@ -11,30 +11,26 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 basePath: "/v2"
 tags:
-- name: "Admin"
-  description: "System Environment Settings"
-- name: "NodeInfo"
-  description: "Blockchain Node Settings"
-- name: "Eth"
-  description: "Transaction Generator"
-- name: "ABI"
-  description: "Contract ABI"
-- name: "Company"
-  description: "Issuer Information"
-- name: "User"
-  description: "User Information"
-- name: "Token"
-  description: "Token information"
-- name: "Market"
-  description: "Market Data"
-- name: "Position"
-  description: "Token Position"
-- name: "OrderList"
-  description: "Token Order History"
-- name: "Notification"
-  description: "Account Notification"
-- name: "Statistics"
-  description: "Statistics Data"
+- name: Admin
+  description: System administration
+- name: Node
+  description: Information about blockchain and contracts
+- name: Company
+  description: Company information
+- name: User
+  description: User information
+- name: Notification
+  description: Notifications for users
+- name: Transaction
+  description: Send blockchain transaction
+- name: Token
+  description: Attribute information of the listed tokens
+- name: IbetExchange
+  description: Trade related features on IbetExchage
+- name: Position
+  description: Token balance held by the user
+- name: Statistics
+  description: Statistical information
 schemes:
 - "https"
 - "http"
@@ -270,9 +266,9 @@ paths:
   /NodeInfo:
     get:
       tags:
-        - "NodeInfo"
+        - Node
       summary: "Blockchain node information"
-      operationId: "NodeInfo"
+      operationId: "Node Information"
       responses:
         200:
           description: Successful Operation
@@ -314,9 +310,9 @@ paths:
   /NodeInfo/BlockSyncStatus:
     get:
       tags:
-        - "NodeInfo"
+        - Node
       summary: "Block synchronization status of the connected blockchain node"
-      operationId: "NodeInfoBlockSyncStatus"
+      operationId: "Node InformationBlockSyncStatus"
       responses:
         200:
           description: Successful Operation
@@ -333,7 +329,7 @@ paths:
   /Eth/TransactionCount/{eth_address}:
     get:
       tags:
-        - "Eth"
+        - Transaction
       summary: "Transaction count for the specified eth_address"
       operationId: "TransactionCount"
       parameters:
@@ -379,7 +375,7 @@ paths:
   /Eth/SendRawTransaction:
     post:
       tags:
-        - "Eth"
+        - Transaction
       summary: "Send signed transaction"
       operationId: "SendRawTransaction"
       consumes:
@@ -440,7 +436,7 @@ paths:
   /Eth/SendRawTransactionNoWait:
     post:
       tags:
-        - "Eth"
+        - Transaction
       summary: "Send signed transaction"
       operationId: "SendRawTransactionNoWait"
       consumes:
@@ -504,7 +500,7 @@ paths:
   /Eth/WaitForTransactionReceipt:
     post:
       tags:
-        - "Eth"
+        - Transaction
       summary: "Wait for Transaction Receipt"
       operationId: "WaitForTransactionReceipt"
       consumes:
@@ -553,7 +549,7 @@ paths:
   /ABI/StraightBond:
     get:
       tags:
-        - "ABI"
+        - Node
       summary: "StraightBond ABI"
       operationId: "StraightBondABI"
       responses:
@@ -571,7 +567,7 @@ paths:
   /ABI/Share:
     get:
       tags:
-        - "ABI"
+        - Node
       summary: "Share ABI"
       operationId: "ShareABI"
       responses:
@@ -589,7 +585,7 @@ paths:
   /ABI/Membership:
     get:
       tags:
-        - "ABI"
+        - Node
       summary: "Membership ABI"
       operationId: "MembershipABI"
       responses:
@@ -605,7 +601,7 @@ paths:
   /ABI/Coupon:
     get:
       tags:
-        - "ABI"
+        - Node
       summary: "Coupon ABI"
       operationId: "CouponABI"
       responses:
@@ -2131,7 +2127,7 @@ paths:
   /Market/OrderBook/StraightBond:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "StraightBond Token Orderbook"
       operationId: "StraightBondOrderBook"
       parameters:
@@ -2192,7 +2188,7 @@ paths:
   /Market/OrderBook/Membership:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "Membership Token Orderbook"
       operationId: "MembershipOrderBook"
       parameters:
@@ -2253,7 +2249,7 @@ paths:
   /Market/OrderBook/Coupon:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "Coupon Token Orderbook"
       operationId: "CouponOrderBook"
       parameters:
@@ -2314,7 +2310,7 @@ paths:
   /Market/LastPrice/StraightBond:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "StraightBond Token Last Price (Bulk Get)"
       operationId: "StraightBondLastPrice"
       parameters:
@@ -2365,7 +2361,7 @@ paths:
   /Market/LastPrice/Membership:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "Membership Token Last Price (Bulk Get)"
       operationId: "MembershipLastPrice"
       parameters:
@@ -2416,7 +2412,7 @@ paths:
   /Market/LastPrice/Coupon:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "Coupon Token Last Price (Bulk Get)"
       operationId: "CouponLastPrice"
       parameters:
@@ -2467,7 +2463,7 @@ paths:
   /Market/Tick/StraightBond:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "StraightBond Token Tick (Bulk Get)"
       operationId: "StraightBondTick"
       parameters:
@@ -2536,7 +2532,7 @@ paths:
   /Market/Tick/Membership:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "Membership Token Tick (Bulk Get)"
       operationId: "MembershipTick"
       parameters:
@@ -2605,7 +2601,7 @@ paths:
   /Market/Tick/Coupon:
     post:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "Coupon Token Tick (Bulk Get)"
       operationId: "CouponTick"
       parameters:
@@ -2674,7 +2670,7 @@ paths:
   /Market/Agreement:
     get:
       tags:
-        - "Market"
+        - IbetExchange
       summary: "Agreement Details"
       operationId: "GetAgreement"
       parameters:
@@ -3299,9 +3295,9 @@ paths:
   /OrderList/{token_address}:
     post:
       tags:
-        - "OrderList"
+        - IbetExchange
       summary: "Order History filtered by token (Bulk Get)"
-      operationId: "OrderList"
+      operationId: IbetExchange
       parameters:
         - in: "path"
           name: token_address
@@ -3438,7 +3434,7 @@ paths:
   /OrderList/StraightBond:
     post:
       tags:
-        - "OrderList"
+        - IbetExchange
       summary: "Straight Bond Order History (Bulk Get)"
       operationId: "StraightBondOrderList"
       parameters:
@@ -3826,7 +3822,7 @@ paths:
   /OrderList/Share:
     post:
       tags:
-        - "OrderList"
+        - IbetExchange
       summary: "Share Order History (Bulk Get)"
       operationId: "ShareOrderList"
       parameters:
@@ -4028,7 +4024,7 @@ paths:
   /OrderList/Membership:
     post:
       tags:
-        - "OrderList"
+        - IbetExchange
       summary: "Membership Order History (Bulk Get)"
       operationId: "MembershipOrderList"
       parameters:
@@ -4311,7 +4307,7 @@ paths:
   /OrderList/Coupon:
     post:
       tags:
-        - "OrderList"
+        - IbetExchange
       summary: "Share Order History (Bulk Get)"
       operationId: "CouponOrderList"
       parameters:

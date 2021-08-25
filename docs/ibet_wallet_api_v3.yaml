@@ -11,10 +11,12 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 basePath: "/v3"
 tags:
-- name: "Position"
-  description: "Token Position"
-- name: "Notification"
-  description: "Account Notification"
+- name: Notification
+  description: Notifications for users
+- name: Position
+  description: Token balance held by the user
+- name: E2EMessage
+  description: Features related to the E2EMessaging contract
 schemes:
 - "https"
 - "http"
@@ -22,7 +24,7 @@ paths:
   /Position/{account_address}/Share:
     get:
       tags:
-        - ""
+        - Position
       summary: "Share Token Position"
       operationId: "GetShareTokenPosition"
       parameters:
@@ -76,7 +78,7 @@ paths:
   /Position/{account_address}/Share/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "Share Token Position By Token Address"
       operationId: "GetShareTokenPositionByAddress"
       parameters:
@@ -198,7 +200,7 @@ paths:
   /Position/{account_address}/StraightBond:
     get:
       tags:
-        - ""
+        - Position
       summary: "StraightBond Token Position"
       operationId: "GetStraightBondTokenPosition"
       parameters:
@@ -250,7 +252,7 @@ paths:
   /Position/{account_address}/StraightBond/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "StraightBond Token Position By Token Address"
       operationId: "GetStraightBondTokenPositionByAddress"
       parameters:
@@ -388,7 +390,7 @@ paths:
   /Position/{account_address}/Membership:
     get:
       tags:
-        - ""
+        - Position
       summary: "Membership Token Position"
       operationId: "GetMembershipTokenPosition"
       parameters:
@@ -440,7 +442,7 @@ paths:
   /Position/{account_address}/Membership/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "Membership Token Position By Token Address"
       operationId: "GetMembershipTokenPositionByAddress"
       parameters:
@@ -540,11 +542,10 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/404NotFoundError"
-
   /Position/{account_address}/Coupon:
     get:
       tags:
-        - ""
+        - Position
       summary: "Coupon Token Position"
       operationId: "GetCouponTokenPosition"
       parameters:
@@ -598,7 +599,7 @@ paths:
   /Position/{account_address}/Coupon/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "Coupon Token Position By Token Address"
       operationId: "GetCouponTokenPositionByAddress"
       parameters:
@@ -703,7 +704,7 @@ paths:
   /Notifications:
     get:
       tags:
-        - "Notification"
+        - Notification
       summary: "Notification List"
       operationId: "GetNotifications"
       parameters:
@@ -832,7 +833,7 @@ paths:
   /Notifications/{id}:
     delete:
       tags:
-        - "Notification"
+        - Notification
       summary: "Delete Notification"
       operationId: "DeleteNotification"
       parameters:
@@ -849,6 +850,50 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/200Success"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /E2EMessage/EncryptionKey/{account_address}:
+    get:
+      tags:
+        - E2EMessage
+      summary: Retrieve message encryption key
+      operationId: EncryptionKey
+      parameters:
+        - name: "account_address"
+          in: path
+          description: Account address (message receiver)
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  key:
+                    description: Message encryption key
+                    type: string
+                  key_type:
+                    description: Key type
+                    type: string
+                    example: RSA4096
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
         404:
           description: Not Found Error
           schema:

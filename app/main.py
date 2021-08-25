@@ -47,7 +47,8 @@ from app.api.v2 import (
 )
 from app.api.v3 import (
     notification as v3_notification,
-    position as v3_position
+    position as v3_position,
+    e2e_message
 )
 
 from app.errors import AppError
@@ -169,6 +170,9 @@ class App(falcon.API):
         # Notifications
         self.add_route('/v3/Notifications', v3_notification.Notifications())
         self.add_route('/v3/Notifications/{id}', v3_notification.NotificationsId())
+
+        # E2E Message
+        self.add_route('/v3/E2EMessage/EncryptionKey/{account_address}', e2e_message.EncryptionKey())
 
         """
         Error Handler
