@@ -15,6 +15,8 @@ tags:
   description: Notifications for users
 - name: Position
   description: Token balance held by the user
+- name: E2EMessage
+  description: Features related to the E2EMessaging contract
 schemes:
 - "https"
 - "http"
@@ -540,7 +542,6 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/404NotFoundError"
-
   /Position/{account_address}/Coupon:
     get:
       tags:
@@ -849,6 +850,50 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/200Success"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /E2EMessage/EncryptionKey/{account_address}:
+    get:
+      tags:
+        - E2EMessage
+      summary: Retrieve message encryption key
+      operationId: EncryptionKey
+      parameters:
+        - name: "account_address"
+          in: path
+          description: Account address (message receiver)
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  key:
+                    description: Message encryption key
+                    type: string
+                  key_type:
+                    description: Key type
+                    type: string
+                    example: RSA4096
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
         404:
           description: Not Found Error
           schema:
