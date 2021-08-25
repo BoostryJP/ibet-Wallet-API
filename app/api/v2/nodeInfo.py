@@ -60,7 +60,7 @@ class NodeInfo(BaseResource):
             'ibet_escrow_address': config.IBET_ESCROW_CONTRACT_ADDRESS,
             'ibet_escrow_abi': ibet_escrow_json['abi'],
             'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
-            'ec2_messaging_abi': e2e_messaging_json['abi'],
+            'e2e_messaging_abi': e2e_messaging_json['abi'],
             'agent_address': config.AGENT_ADDRESS,
         }
 

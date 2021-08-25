@@ -59,7 +59,7 @@ class TestNodeInfo:
         ibet_escrow_abi = ibet_escrow_json['abi']
 
         e2e_messaging_address = config.E2E_MESSAGING_CONTRACT_ADDRESS
-        ec2_messaging_abi = e2e_messaging_json['abi']
+        e2e_messaging_abi = e2e_messaging_json['abi']
 
         agent_address = config.AGENT_ADDRESS
 
@@ -79,13 +79,13 @@ class TestNodeInfo:
             'ibet_escrow_address': ibet_escrow_address,
             'ibet_escrow_abi': ibet_escrow_abi,
             'e2e_messaging_address': e2e_messaging_address,
-            'ec2_messaging_abi': ec2_messaging_abi,
+            'e2e_messaging_abi': e2e_messaging_abi,
             'agent_address': agent_address
         }
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json['data'] == e2e_messaging_abi
 
     # ＜エラー系1＞
     # HTTPメソッド不正
