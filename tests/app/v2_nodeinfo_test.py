@@ -85,7 +85,7 @@ class TestNodeInfo:
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == e2e_messaging_abi
+        assert resp.json['data'] == assumed_body
 
     # ＜エラー系1＞
     # HTTPメソッド不正
