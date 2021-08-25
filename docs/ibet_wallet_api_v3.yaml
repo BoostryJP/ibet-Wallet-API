@@ -11,10 +11,10 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 basePath: "/v3"
 tags:
-- name: "Position"
-  description: "Token Position"
-- name: "Notification"
-  description: "Account Notification"
+- name: Notification
+  description: Notifications for users
+- name: Position
+  description: Token balance held by the user
 schemes:
 - "https"
 - "http"
@@ -22,7 +22,7 @@ paths:
   /Position/{account_address}/Share:
     get:
       tags:
-        - ""
+        - Position
       summary: "Share Token Position"
       operationId: "GetShareTokenPosition"
       parameters:
@@ -76,7 +76,7 @@ paths:
   /Position/{account_address}/Share/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "Share Token Position By Token Address"
       operationId: "GetShareTokenPositionByAddress"
       parameters:
@@ -198,7 +198,7 @@ paths:
   /Position/{account_address}/StraightBond:
     get:
       tags:
-        - ""
+        - Position
       summary: "StraightBond Token Position"
       operationId: "GetStraightBondTokenPosition"
       parameters:
@@ -250,7 +250,7 @@ paths:
   /Position/{account_address}/StraightBond/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "StraightBond Token Position By Token Address"
       operationId: "GetStraightBondTokenPositionByAddress"
       parameters:
@@ -388,7 +388,7 @@ paths:
   /Position/{account_address}/Membership:
     get:
       tags:
-        - ""
+        - Position
       summary: "Membership Token Position"
       operationId: "GetMembershipTokenPosition"
       parameters:
@@ -440,7 +440,7 @@ paths:
   /Position/{account_address}/Membership/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "Membership Token Position By Token Address"
       operationId: "GetMembershipTokenPositionByAddress"
       parameters:
@@ -544,7 +544,7 @@ paths:
   /Position/{account_address}/Coupon:
     get:
       tags:
-        - ""
+        - Position
       summary: "Coupon Token Position"
       operationId: "GetCouponTokenPosition"
       parameters:
@@ -598,7 +598,7 @@ paths:
   /Position/{account_address}/Coupon/{contract_address}:
     get:
       tags:
-        - ""
+        - Position
       summary: "Coupon Token Position By Token Address"
       operationId: "GetCouponTokenPositionByAddress"
       parameters:
@@ -703,7 +703,7 @@ paths:
   /Notifications:
     get:
       tags:
-        - "Notification"
+        - Notification
       summary: "Notification List"
       operationId: "GetNotifications"
       parameters:
@@ -832,7 +832,7 @@ paths:
   /Notifications/{id}:
     delete:
       tags:
-        - "Notification"
+        - Notification
       summary: "Delete Notification"
       operationId: "DeleteNotification"
       parameters:
