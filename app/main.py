@@ -91,7 +91,6 @@ class App(falcon.API):
         self.add_route('/v2/Company/{eth_address}', v2_company.CompanyInfo())
         self.add_route('/v2/Companies', v2_company.CompanyInfoList())
         self.add_route('/v2/Company/{eth_address}/Tokens', v2_company.CompanyTokenList())
-        self.add_route('/v2/PaymentAgent/{eth_address}', v2_company.PaymentAgentInfo())
 
         # Tokens
         self.add_route('/v2/Token/StraightBond', v2_token.StraightBondTokens())

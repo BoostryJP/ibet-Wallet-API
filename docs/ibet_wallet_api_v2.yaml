@@ -21,8 +21,6 @@ tags:
   description: "Contract ABI"
 - name: "Company"
   description: "Issuer Information"
-- name: "PaymentAgent"
-  description: "Payment Agent Information"
 - name: "User"
   description: "User Information"
 - name: "Token"
@@ -745,53 +743,6 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
-  /PaymentAgent/{eth_address}:
-    get:
-      deprecated: true
-      tags:
-        - "PaymentAgent"
-      summary: "Payment Agent Information"
-      description: "Deprecated. This operation may be removed in a future version. Use GET /Company/{eth_address} instead."
-      operationId: "PaymentAgent"
-      parameters:
-        - name: "eth_address"
-          in: "path"
-          description: "address"
-          required: true
-          type: "string"
-      responses:
-        200:
-          description: Successful Operation
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: "#/definitions/200Success"
-              data:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  corporate_name:
-                    type: string
-                  rsa_publickey:
-                    type: string
-                  homepage:
-                    type: string
-        400:
-          description: Invalid Parameter Error
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: "#/definitions/400InvalidParameterError"
-        404:
-          description: Not Found Error
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: "#/definitions/404NotFoundError"
   /User/PaymentAccount:
     get:
       tags:
