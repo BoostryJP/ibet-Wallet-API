@@ -39,5 +39,13 @@ eth_account = {
     'trader': {
         'account_address': web3.eth.accounts[3],
         'password': 'password'
+    },
+    'user1': {
+        'account_address': web3.eth.accounts[4],
+        'password': 'password'
+    },
+    'user2': {
+        'account_address': web3.eth.accounts[5],
+        'password': 'password'
     }
 }

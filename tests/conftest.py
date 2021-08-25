@@ -100,22 +100,30 @@ def tokenlist_contract():
 
 
 @pytest.fixture(scope='session')
-def shared_contract(payment_gateway_contract, personalinfo_contract, tokenlist_contract):
-    payment_gateway = payment_gateway_contract
-    personal_info = personalinfo_contract
-    bond_exchange = ibet_exchange_contract(payment_gateway['address'])
-    membership_exchange = ibet_exchange_contract(payment_gateway['address'])
-    coupon_exchange = ibet_exchange_contract(payment_gateway['address'])
-    share_exchange = ibet_exchange_contract(payment_gateway['address'])
-    token_list = tokenlist_contract
+def e2e_messaging_contract():
+    deployer = eth_account['deployer']
+    web3.eth.defaultAccount = deployer['account_address']
+    contract_address, abi = Contract.deploy_contract(
+        contract_name='E2EMessaging',
+        args=[],
+        deployer=deployer['account_address']
+    )
+
+    return {'address': contract_address, 'abi': abi}
+
+
+@pytest.fixture(scope='session')
+def shared_contract(payment_gateway_contract, personalinfo_contract,
+                    tokenlist_contract, e2e_messaging_contract):
     contracts = {
-        'PaymentGateway': payment_gateway,
-        'PersonalInfo': personal_info,
-        'IbetStraightBondExchange': bond_exchange,
-        'IbetMembershipExchange': membership_exchange,
-        'IbetCouponExchange': coupon_exchange,
-        'TokenList': token_list,
-        'IbetShareExchange': share_exchange
+        'PaymentGateway': payment_gateway_contract,
+        'PersonalInfo': personalinfo_contract,
+        'IbetShareExchange': ibet_exchange_contract(payment_gateway_contract['address']),
+        'IbetStraightBondExchange': ibet_exchange_contract(payment_gateway_contract['address']),
+        'IbetMembershipExchange': ibet_exchange_contract(payment_gateway_contract['address']),
+        'IbetCouponExchange': ibet_exchange_contract(payment_gateway_contract['address']),
+        'TokenList': tokenlist_contract,
+        'E2EMessaging': e2e_messaging_contract
     }
     return contracts
 
