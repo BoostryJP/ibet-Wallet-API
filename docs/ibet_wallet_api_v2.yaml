@@ -268,7 +268,7 @@ paths:
       tags:
         - Node
       summary: "Blockchain node information"
-      operationId: "Node Information"
+      operationId: "NodeInfo"
       responses:
         200:
           description: Successful Operation
@@ -312,7 +312,7 @@ paths:
       tags:
         - Node
       summary: "Block synchronization status of the connected blockchain node"
-      operationId: "Node InformationBlockSyncStatus"
+      operationId: "NodeInfoBlockSyncStatus"
       responses:
         200:
           description: Successful Operation
@@ -325,7 +325,11 @@ paths:
                 type: object
                 properties:
                   is_synced:
+                    description: block sync status
                     type: boolean
+                  latest_block_number:
+                    description: latest block number (returns null if is_synced is false)
+                    type: integer
   /Eth/TransactionCount/{eth_address}:
     get:
       tags:
