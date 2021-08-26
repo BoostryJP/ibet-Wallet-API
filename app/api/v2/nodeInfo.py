@@ -16,15 +16,20 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 
-from app import config
-from app import log
+from web3 import Web3
+
+from app import (
+    config,
+    log
+)
 from app.api.common import BaseResource
 from app.model.node import Node
 
 LOG = log.get_logger()
+
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
 
 # ------------------------------
@@ -80,8 +85,15 @@ class BlockSyncStatus(BaseResource):
 
         session = req.context["session"]
 
+        # Get block sync status
         node = session.query(Node).first()
 
+        # Get latest block number
+        latest_block_number = None
+        if node.is_synced:
+            latest_block_number = web3.eth.blockNumber
+
         self.on_success(res, {
-            "is_synced": node.is_synced
+            "is_synced": node.is_synced,
+            "latest_block_number": latest_block_number
         })

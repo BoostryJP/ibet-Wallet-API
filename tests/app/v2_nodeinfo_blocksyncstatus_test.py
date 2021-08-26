@@ -16,13 +16,18 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from web3 import Web3
 
+from app import config
 from app.model.node import Node
+
+web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
 
 class TestNodeInfoBlockSyncStatus:
-    # テスト対象API
-    apiurl = '/v2/NodeInfo/BlockSyncStatus'
+
+    # target api
+    apiurl = "/v2/NodeInfo/BlockSyncStatus"
 
     @staticmethod
     def insert_node_data(session, is_synced):
@@ -30,28 +35,47 @@ class TestNodeInfoBlockSyncStatus:
         node.is_synced = is_synced
         session.add(node)
 
-    # ＜正常系1＞
-    # ブロック同期正常
-    def test_normal_1(self, client, session):
-        TestNodeInfoBlockSyncStatus.insert_node_data(session, is_synced=True)
+    ##################################################
+    # Normal
+    ##################################################
 
+    # Normal_1
+    # Node is synced
+    def test_normal_1(self, client, session):
+        # prepare test data
+        self.insert_node_data(session, is_synced=True)
+
+        # request target api
         resp = client.simulate_get(self.apiurl)
 
+        # assertion
+        latest_block_number = web3.eth.blockNumber
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == {
-            "is_synced": True
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == {
+            "is_synced": True,
+            "latest_block_number": latest_block_number
         }
 
-    # ＜正常系2＞
-    # ブロック同期停止
+    # Normal_2
+    # Node is not synced
     def test_normal_2(self, client, session):
-        TestNodeInfoBlockSyncStatus.insert_node_data(session, is_synced=False)
+        # prepare test data
+        self.insert_node_data(session, is_synced=False)
 
+        # request target api
         resp = client.simulate_get(self.apiurl)
 
+        # assertion
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == {
-            "is_synced": False
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == {
+            "is_synced": False,
+            "latest_block_number": None
         }
