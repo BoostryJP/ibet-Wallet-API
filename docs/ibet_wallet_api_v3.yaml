@@ -17,6 +17,8 @@ tags:
   description: Token balance held by the user
 - name: E2EMessage
   description: Features related to the E2EMessaging contract
+- name: Events
+  description: Contract event logs
 schemes:
 - "https"
 - "http"
@@ -887,6 +889,67 @@ paths:
                     description: Key type
                     type: string
                     example: RSA4096
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Events/E2EMessaging:
+    get:
+      tags:
+        - Events
+      summary: List all E2EMessaging event logs
+      operationId: E2EMessagingEvents
+      parameters:
+        - name: from_block
+          in: query
+          description: from block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: to_block
+          in: query
+          description: to block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: event
+          in: query
+          description: events to get
+          required: true
+          type: string
+          enum: [PublicKeyUpdated, Message]
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    args:
+                      description: event args
+                      type: object
+                    transaction_hash:
+                      description: transaction hash
+                      type: string
+                    block_number:
+                      description: block number
+                      type: integer
         400:
           description: "Invalid Parameter Error"
           schema:
