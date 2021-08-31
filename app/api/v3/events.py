@@ -45,25 +45,34 @@ class E2EMessagingEvents(BaseResource):
             contract_name="E2EMessaging",
             address=config.E2E_MESSAGING_CONTRACT_ADDRESS
         )
-        events = []
         if request_json["event"] == "Message":
-            events = contract.events.Message.getLogs(
-                fromBlock=request_json["from_block"],
-                toBlock=request_json["to_block"]
-            )
+            attr_list = ["Message"]
         elif request_json["event"] == "PublicKeyUpdated":
-            events = contract.events.PublicKeyUpdated.getLogs(
+            attr_list = ["PublicKeyUpdated"]
+        else:  # All events
+            attr_list = ["PublicKeyUpdated", "Message"]
+
+        tmp_list = []
+        for attr in attr_list:
+            contract_event = getattr(contract.events, attr)
+            events = contract_event.getLogs(
                 fromBlock=request_json["from_block"],
                 toBlock=request_json["to_block"]
             )
+            for event in events:
+                tmp_list.append({
+                    "event": event["event"],
+                    "args": dict(event["args"]),
+                    "transaction_hash": event["transactionHash"].hex(),
+                    "block_number": event["blockNumber"],
+                    "log_index": event["logIndex"]
+                })
 
-        resp_json = []
-        for event in events:
-            resp_json.append({
-                "args": dict(event["args"]),
-                "transaction_hash": event["transactionHash"].hex(),
-                "block_number": event["blockNumber"]
-            })
+        # Sort: block_number > log_index
+        resp_json = sorted(
+            tmp_list,
+            key=lambda x: (x["block_number"], x["log_index"])
+        )
 
         self.on_success(res, resp_json)
 
@@ -90,9 +99,111 @@ class E2EMessagingEvents(BaseResource):
             },
             "event": {
                 "type": "string",
-                "required": True,
-                "empty": False,
+                "required": False,
+                "nullable": True,
                 "allowed": ["Message", "PublicKeyUpdated"]
+            }
+        })
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if request_json["from_block"] > request_json["to_block"]:
+            raise InvalidParameterError("to_block must be greater than or equal to the from_block")
+
+        return validator.document
+
+
+# /Events/IbetEscrow
+class IbetEscrowEvents(BaseResource):
+    """IbetEscrow Event Logs"""
+
+    def on_get(self, req, res, account_address=None):
+        """List all event logs"""
+        LOG.info("v3.events.IbetEscrowEvents")
+
+        # Validate Request Data
+        request_json = self.validate(req)
+
+        # Get event logs
+        contract = Contract.get_contract(
+            contract_name="IbetEscrow",
+            address=config.IBET_ESCROW_CONTRACT_ADDRESS
+        )
+        if request_json["event"] == "Deposited":
+            attr_list = ["Deposited"]
+        elif request_json["event"] == "Withdrawn":
+            attr_list = ["Withdrawn"]
+        elif request_json["event"] == "EscrowCreated":
+            attr_list = ["EscrowCreated"]
+        elif request_json["event"] == "EscrowCanceled":
+            attr_list = ["EscrowCanceled"]
+        elif request_json["event"] == "EscrowFinished":
+            attr_list = ["EscrowFinished"]
+        else:  # All events
+            attr_list = [
+                "Deposited",
+                "Withdrawn",
+                "EscrowCreated",
+                "EscrowCanceled",
+                "EscrowFinished"
+            ]
+
+        tmp_list = []
+        for attr in attr_list:
+            contract_event = getattr(contract.events, attr)
+            events = contract_event.getLogs(
+                fromBlock=request_json["from_block"],
+                toBlock=request_json["to_block"]
+            )
+            for event in events:
+                tmp_list.append({
+                    "event": event["event"],
+                    "args": dict(event["args"]),
+                    "transaction_hash": event["transactionHash"].hex(),
+                    "block_number": event["blockNumber"],
+                    "log_index": event["logIndex"]
+                })
+
+        # Sort: block_number > log_index
+        resp_json = sorted(
+            tmp_list,
+            key=lambda x: (x["block_number"], x["log_index"])
+        )
+
+        self.on_success(res, resp_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            "from_block": req.get_param("from_block"),
+            "to_block": req.get_param("to_block"),
+            "event": req.get_param("event")
+        }
+
+        validator = Validator({
+            "from_block": {
+                "type": "integer",
+                "coerce": int,
+                "min": 1,
+                "required": True
+            },
+            "to_block": {
+                "type": "integer",
+                "coerce": int,
+                "min": 1,
+                "required": True
+            },
+            "event": {
+                "type": "string",
+                "required": False,
+                "nullable": True,
+                "allowed": [
+                    "Deposited",
+                    "Withdrawn",
+                    "EscrowCreated",
+                    "EscrowCanceled",
+                    "EscrowFinished"
+                ]
             }
         })
         if not validator.validate(request_json):

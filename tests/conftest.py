@@ -99,22 +99,61 @@ def tokenlist_contract():
     return {'address': contract_address, 'abi': abi}
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def e2e_messaging_contract():
-    deployer = eth_account['deployer']
-    web3.eth.defaultAccount = deployer['account_address']
+    deployer = eth_account["deployer"]
+    web3.eth.defaultAccount = deployer["account_address"]
     contract_address, abi = Contract.deploy_contract(
-        contract_name='E2EMessaging',
+        contract_name="E2EMessaging",
         args=[],
-        deployer=deployer['account_address']
+        deployer=deployer["account_address"]
+    )
+    _e2e_messaging_contract = Contract.get_contract(
+        contract_name="E2EMessaging",
+        address=contract_address
+    )
+    return _e2e_messaging_contract
+
+
+@pytest.fixture(scope="session")
+def ibet_escrow_contract():
+    deployer = eth_account["deployer"]["account_address"]
+
+    web3.eth.defaultAccount = deployer
+
+    storage_address, _ = Contract.deploy_contract(
+        contract_name="EscrowStorage",
+        args=[],
+        deployer=deployer
     )
 
-    return {'address': contract_address, 'abi': abi}
+    contract_address, abi = Contract.deploy_contract(
+        contract_name="IbetEscrow",
+        args=[storage_address],
+        deployer=deployer
+    )
+
+    storage = Contract.get_contract(
+        contract_name="EscrowStorage",
+        address=storage_address
+    )
+    storage.functions.upgradeVersion(
+        contract_address
+    ).transact({
+        "from": deployer
+    })
+
+    _ibet_escrow_contract = Contract.get_contract(
+        contract_name="IbetEscrow",
+        address=contract_address
+    )
+    return _ibet_escrow_contract
 
 
 @pytest.fixture(scope='session')
 def shared_contract(payment_gateway_contract, personalinfo_contract,
-                    tokenlist_contract, e2e_messaging_contract):
+                    tokenlist_contract, e2e_messaging_contract,
+                    ibet_escrow_contract):
     contracts = {
         'PaymentGateway': payment_gateway_contract,
         'PersonalInfo': personalinfo_contract,
@@ -123,7 +162,8 @@ def shared_contract(payment_gateway_contract, personalinfo_contract,
         'IbetMembershipExchange': ibet_exchange_contract(payment_gateway_contract['address']),
         'IbetCouponExchange': ibet_exchange_contract(payment_gateway_contract['address']),
         'TokenList': tokenlist_contract,
-        'E2EMessaging': e2e_messaging_contract
+        'E2EMessaging': e2e_messaging_contract,
+        'IbetEscrow': ibet_escrow_contract
     }
     return contracts
 

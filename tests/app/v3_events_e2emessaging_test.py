@@ -37,15 +37,42 @@ class TestEventsE2EMessaging:
     ###########################################################################
 
     # Normal_1
-    # PublicKeyUpdated
+    # No event
     def test_normal_1(self, client, shared_contract):
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number + 1,
+                "to_block": latest_block_number + 1,
+                "event": "PublicKeyUpdated"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == []
+
+    # Normal_2_1
+    # event = PublicKeyUpdated
+    def test_normal_2_1(self, client, shared_contract):
         user1 = eth_account["user1"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
             contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
+            address=e2e_messaging_contract.address
         )
         tx = e2e_messaging_contract.functions.setPublicKey(
             "test_key",
@@ -73,27 +100,30 @@ class TestEventsE2EMessaging:
         }
         assert resp.json["data"] == [
             {
+                "event": "PublicKeyUpdated",
                 "args": {
                     "key": "test_key",
                     "key_type": "test_key_type",
                     "who": user1
                 },
+                "transaction_hash": tx.hex(),
                 "block_number": latest_block_number,
-                "transaction_hash": tx.hex()
+                "log_index": 0
             }
         ]
 
-    # Normal_2
-    # Message
-    def test_normal_2(self, client, shared_contract):
+    # Normal_2_2
+    # event = Message
+    def test_normal_2_2(self, client, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
             contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
+            address=e2e_messaging_contract.address
         )
         tx = e2e_messaging_contract.functions.sendMessage(
             user2,
@@ -119,23 +149,75 @@ class TestEventsE2EMessaging:
             "code": 200,
             "message": "OK"
         }
+        assert resp.json["data"][0]["event"] == "Message"
         assert resp.json["data"][0]["args"]["sender"] == user1
         assert resp.json["data"][0]["args"]["receiver"] == user2
         assert resp.json["data"][0]["args"]["text"] == "test_message"
-        assert resp.json["data"][0]["block_number"] == latest_block_number
         assert resp.json["data"][0]["transaction_hash"] == tx.hex()
+        assert resp.json["data"][0]["block_number"] == latest_block_number
+        assert resp.json["data"][0]["log_index"] == 0
+
+    # Normal_2_3
+    # event = None
+    def test_normal_2_3(self, client, shared_contract):
+        user1 = eth_account["user1"]["account_address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+
+        # prepare data
+        e2e_messaging_contract = Contract.get_contract(
+            contract_name="E2EMessaging",
+            address=e2e_messaging_contract.address
+        )
+        tx = e2e_messaging_contract.functions.setPublicKey(
+            "test_key",
+            "test_key_type"
+        ).transact({
+            "from": user1
+        })
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == [
+            {
+                "event": "PublicKeyUpdated",
+                "args": {
+                    "key": "test_key",
+                    "key_type": "test_key_type",
+                    "who": user1
+                },
+                "transaction_hash": tx.hex(),
+                "block_number": latest_block_number,
+                "log_index": 0
+            }
+        ]
 
     # Normal_3
     # Multiple events
     def test_normal_3(self, client, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
             contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
+            address=e2e_messaging_contract.address
         )
         tx_1 = e2e_messaging_contract.functions.sendMessage(
             user2,
@@ -169,42 +251,21 @@ class TestEventsE2EMessaging:
             "message": "OK"
         }
 
+        assert resp.json["data"][0]["event"] == "Message"
         assert resp.json["data"][0]["args"]["sender"] == user1
         assert resp.json["data"][0]["args"]["receiver"] == user2
         assert resp.json["data"][0]["args"]["text"] == "test_message"
-        assert resp.json["data"][0]["block_number"] == latest_block_number - 1
         assert resp.json["data"][0]["transaction_hash"] == tx_1.hex()
+        assert resp.json["data"][0]["block_number"] == latest_block_number - 1
+        assert resp.json["data"][0]["log_index"] == 0
 
+        assert resp.json["data"][1]["event"] == "Message"
         assert resp.json["data"][1]["args"]["sender"] == user1
         assert resp.json["data"][1]["args"]["receiver"] == user2
         assert resp.json["data"][1]["args"]["text"] == "test_message"
         assert resp.json["data"][1]["block_number"] == latest_block_number
         assert resp.json["data"][1]["transaction_hash"] == tx_2.hex()
-
-    # Normal_4
-    # No event
-    def test_normal_4(self, client, shared_contract):
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
-
-        latest_block_number = web3.eth.blockNumber
-
-        # request target API
-        resp = client.simulate_get(
-            self.apiurl,
-            params={
-                "from_block": latest_block_number + 1,
-                "to_block": latest_block_number + 1,
-                "event": "PublicKeyUpdated"
-            }
-        )
-
-        # assertion
-        assert resp.status_code == 200
-        assert resp.json["meta"] == {
-            "code": 200,
-            "message": "OK"
-        }
-        assert resp.json["data"] == []
+        assert resp.json["data"][1]["log_index"] == 0
 
     ###########################################################################
     # Error
@@ -214,7 +275,8 @@ class TestEventsE2EMessaging:
     # InvalidParameterError
     # null value not allowed
     def test_error_1(self, client, shared_contract):
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # request target API
         resp = client.simulate_get(
@@ -237,10 +299,6 @@ class TestEventsE2EMessaging:
                     "null value not allowed",
                     "field 'to_block' could not be coerced",
                     "must be of integer type"
-                ],
-                "event": [
-                    "null value not allowed",
-                    "must be of string type"
                 ]
             }
         }
@@ -249,28 +307,15 @@ class TestEventsE2EMessaging:
     # InvalidParameterError
     # from_block, to_block: min value
     def test_error_2(self, client, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
-
-        # prepare data
-        e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
-        )
-        e2e_messaging_contract.functions.setPublicKey(
-            "test_key",
-            "test_key_type"
-        ).transact({
-            "from": user1
-        })
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # request target API
         resp = client.simulate_get(
             self.apiurl,
             params={
                 "from_block": 0,
-                "to_block": 0,
-                "event": "PublicKeyUpdated"
+                "to_block": 0
             }
         )
 
@@ -289,20 +334,8 @@ class TestEventsE2EMessaging:
     # InvalidParameterError
     # event: unallowed value
     def test_error_3(self, client, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
-
-        # prepare data
-        e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
-        )
-        e2e_messaging_contract.functions.setPublicKey(
-            "test_key",
-            "test_key_type"
-        ).transact({
-            "from": user1
-        })
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.blockNumber
 
         # request target API
@@ -327,20 +360,8 @@ class TestEventsE2EMessaging:
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
     def test_error_4(self, client, shared_contract):
-        user1 = eth_account["user1"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
-
-        # prepare data
-        e2e_messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
-        )
-        e2e_messaging_contract.functions.setPublicKey(
-            "test_key",
-            "test_key_type"
-        ).transact({
-            "from": user1
-        })
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.blockNumber
 
         # request target API
@@ -348,8 +369,7 @@ class TestEventsE2EMessaging:
             self.apiurl,
             params={
                 "from_block": latest_block_number,
-                "to_block": latest_block_number - 1,
-                "event": "PublicKeyUpdated"
+                "to_block": latest_block_number - 1
             }
         )
 
