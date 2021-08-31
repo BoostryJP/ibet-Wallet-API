@@ -110,7 +110,7 @@ class WatchBlockSyncState(Watcher):
         if syncing:
             remaining_blocks = syncing["highestBlock"] - syncing["currentBlock"]
             # 1ブロックだけ遅れている場合はすぐに最新化されると想定して正常扱い
-            if remaining_blocks > 1:
+            if remaining_blocks > config.BLOCK_SYNC_REMAINING_THRESHOLD:
                 is_synced = False
                 messages.append(f"highestBlock={syncing['highestBlock']}, currentBlock={syncing['currentBlock']}")
 
