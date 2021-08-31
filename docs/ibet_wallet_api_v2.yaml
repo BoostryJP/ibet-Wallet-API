@@ -282,7 +282,6 @@ paths:
                 properties:
                   payment_gateway_address:
                     type: string
-                    example:
                   payment_gateway_abi:
                     type: object
                   personal_info_address:
@@ -304,6 +303,14 @@ paths:
                   ibet_share_exchange_address:
                     type: string
                   ibet_share_exchange_abi:
+                    type: object
+                  ibet_escrow_address:
+                    type: string
+                  ibet_escrow_abi:
+                    type: object
+                  e2e_messaging_address:
+                    type: string
+                  e2e_messaging_abi:
                     type: object
                   agent_address:
                     type: string
