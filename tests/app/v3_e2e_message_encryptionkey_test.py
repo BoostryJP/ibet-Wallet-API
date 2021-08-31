@@ -39,12 +39,13 @@ class TestE2EMessageEncryptionKey:
     # Normal_1
     def test_normal_1(self, client, shared_contract):
         user1 = eth_account["user1"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
             contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
+            address=e2e_messaging_contract.address
         )
         e2e_messaging_contract.functions.setPublicKey(
             "test_key",
@@ -79,12 +80,13 @@ class TestE2EMessageEncryptionKey:
     # invalid account_address
     def test_error_1(self, client, shared_contract):
         user1 = eth_account["user1"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # prepare data
         e2e_messaging_contract = Contract.get_contract(
             contract_name="E2EMessaging",
-            address=shared_contract["E2EMessaging"]["address"]
+            address=e2e_messaging_contract.address
         )
         e2e_messaging_contract.functions.setPublicKey(
             "test_key",
@@ -111,7 +113,8 @@ class TestE2EMessageEncryptionKey:
     # encryption key is not registered
     def test_error_2(self, client, shared_contract):
         user = eth_account["deployer"]["account_address"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = shared_contract["E2EMessaging"]["address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # request target API
         resp = client.simulate_get(
