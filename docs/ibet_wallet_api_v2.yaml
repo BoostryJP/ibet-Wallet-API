@@ -950,6 +950,14 @@ paths:
                       type: string
                     transferable:
                       type: boolean
+                    tradable_exchange:
+                      type: string
+                    status:
+                      type: boolean
+                    memo:
+                      type: string
+                    personal_info_address:
+                      type: string
                     id:
                       type: integer
                       description: cursor id
@@ -1124,6 +1132,14 @@ paths:
                     type: string
                   transferable:
                     type: boolean
+                  tradable_exchange:
+                    type: string
+                  status:
+                    type: boolean
+                  memo:
+                    type: string
+                  personal_info_address:
+                    type: string
         400:
           description: Invalid Parameter Error
           schema:
@@ -1237,6 +1253,10 @@ paths:
                       type: integer
                     max_sell_amount:
                       type: integer
+                    tradable_exchange:
+                      type: string
+                    personal_info_address:
+                      type: string
                     id:
                       type: integer
                       description: cursor id
@@ -1395,6 +1415,10 @@ paths:
                     type: integer
                   max_sell_amount:
                     type: integer
+                  tradable_exchange:
+                    type: string
+                  personal_info_address:
+                    type: string
         400:
           description: Invalid Parameter Error
           schema:
@@ -1490,6 +1514,8 @@ paths:
                     contact_information:
                       type: string
                     privacy_policy:
+                      type: string
+                    tradable_exchange:
                       type: string
                     id:
                       type: integer
@@ -1632,6 +1658,8 @@ paths:
                     type: string
                   privacy_policy:
                     type: string
+                  tradable_exchange:
+                    type: string
         400:
           description: Invalid Parameter Error
           schema:
@@ -1727,6 +1755,8 @@ paths:
                     contact_information:
                       type: string
                     privacy_policy:
+                      type: string
+                    tradable_exchange:
                       type: string
                     id:
                       type: integer
@@ -1868,6 +1898,8 @@ paths:
                   contact_information:
                     type: string
                   privacy_policy:
+                    type: string
+                  tradable_exchange:
                     type: string
         400:
           description: Invalid Parameter Error
@@ -2878,6 +2910,14 @@ paths:
                           type: string
                         privacy_policy:
                           type: string
+                        tradable_exchange:
+                          type: string
+                        status:
+                          type: boolean
+                        memo:
+                          type: string
+                        personal_info_address:
+                          type: string
                     balance:
                       type: integer
                     exchange_balance:
@@ -3003,6 +3043,10 @@ paths:
                           type: integer
                         max_sell_amount:
                           type: integer
+                        tradable_exchange:
+                          type: string
+                        personal_info_address:
+                          type: string
                     balance:
                       type: integer
                     pending_transfer:
@@ -3113,6 +3157,8 @@ paths:
                           type: string
                         privacy_policy:
                           type: string
+                        tradable_exchange:
+                          type: string
                     balance:
                       type: integer
                     exchange_balance:
@@ -3220,6 +3266,8 @@ paths:
                         contact_information:
                           type: string
                         privacy_policy:
+                          type: string
+                        tradable_exchange:
                           type: string
                     balance:
                       type: integer
@@ -3568,6 +3616,14 @@ paths:
                               type: string
                             privacy_policy:
                               type: string
+                            tradable_exchange:
+                              type: string
+                            status:
+                              type: boolean
+                            memo:
+                              type: string
+                            personal_info_address:
+                              type: string
                         order:
                           type: object
                           properties:
@@ -3679,6 +3735,14 @@ paths:
                             contact_information:
                               type: string
                             privacy_policy:
+                              type: string
+                            tradable_exchange:
+                              type: string
+                            status:
+                              type: boolean
+                            memo:
+                              type: string
+                            personal_info_address:
                               type: string
                         agreement:
                           type: object
@@ -3793,6 +3857,14 @@ paths:
                             contact_information:
                               type: string
                             privacy_policy:
+                              type: string
+                            tradable_exchange:
+                              type: string
+                            status:
+                              type: boolean
+                            memo:
+                              type: string
+                            personal_info_address:
                               type: string
                         agreement:
                           type: object
@@ -3943,6 +4015,10 @@ paths:
                             contact_information:
                               type: string
                             privacy_policy:
+                              type: string
+                            tradable_exchange:
+                              type: string
+                            personal_info_address:
                               type: string
                         order:
                           type: object
@@ -4123,6 +4199,8 @@ paths:
                               type: string
                             privacy_policy:
                               type: string
+                            tradable_exchange:
+                              type: string
                         order:
                           type: object
                           properties:
@@ -4199,6 +4277,8 @@ paths:
                             contact_information:
                               type: string
                             privacy_policy:
+                              type: string
+                            tradable_exchange:
                               type: string
                         agreement:
                           type: object
@@ -4278,6 +4358,8 @@ paths:
                             contact_information:
                               type: string
                             privacy_policy:
+                              type: string
+                            tradable_exchange:
                               type: string
                         agreement:
                           type: object
@@ -4406,6 +4488,8 @@ paths:
                               type: string
                             privacy_policy:
                               type: string
+                            tradable_exchange:
+                              type: string
                         order:
                           type: object
                           properties:
@@ -4482,6 +4566,8 @@ paths:
                             contact_information:
                               type: string
                             privacy_policy:
+                              type: string
+                            tradable_exchange:
                               type: string
                         agreement:
                           type: object
@@ -4561,6 +4647,8 @@ paths:
                             contact_information:
                               type: string
                             privacy_policy:
+                              type: string
+                            tradable_exchange:
                               type: string
                         agreement:
                           type: object

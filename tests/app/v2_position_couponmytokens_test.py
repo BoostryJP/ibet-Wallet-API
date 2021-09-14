@@ -320,7 +320,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             },
             'balance': 10,
             'exchange_balance': 0,
@@ -394,7 +395,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             },
             'balance': 10,
             'exchange_balance': 0,
@@ -466,7 +468,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             },
             'balance': 10,
             'exchange_balance': 0,
@@ -539,7 +542,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             },
             'balance': 10,
             'exchange_balance': 0,
@@ -616,7 +620,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             },
             'balance': 10,
             'exchange_balance': 0,
@@ -654,7 +659,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             },
             'balance': 10,
             'exchange_balance': 0,
@@ -730,7 +736,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange["address"],
             },
             'balance': 100,
             'exchange_balance': 0,
@@ -802,7 +809,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange["address"],
             },
             'balance': 50,
             'exchange_balance': 0,
@@ -891,7 +899,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange["address"],
             },
             'balance': 0,
             'exchange_balance': 0,
@@ -960,7 +969,8 @@ class TestV2CouponMyTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange["address"],
             },
             'balance': 50,
             'exchange_balance': 0,

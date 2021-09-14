@@ -195,7 +195,8 @@ class TestPositionAccountAddressMembershipContractAddress:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': config.ZERO_ADDRESS,
             },
             "balance": 1000000,
             "exchange_balance": 0,
@@ -269,7 +270,8 @@ class TestPositionAccountAddressMembershipContractAddress:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_contract["address"],
             },
             "balance": 999900,
             "exchange_balance": 0,
@@ -343,7 +345,8 @@ class TestPositionAccountAddressMembershipContractAddress:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_contract["address"],
             },
             "balance": 0,
             "exchange_balance": 0,
