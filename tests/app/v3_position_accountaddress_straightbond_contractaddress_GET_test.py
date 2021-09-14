@@ -255,7 +255,7 @@ class TestPositionAccountAddressStraightBondContractAddress:
                 'transferable': True,
                 'initial_offering_status': False,
                 'certification': [],
-                'tradable_exchange': exchange_contract["address"],
+                'tradable_exchange': config.ZERO_ADDRESS,
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info_contract["address"],

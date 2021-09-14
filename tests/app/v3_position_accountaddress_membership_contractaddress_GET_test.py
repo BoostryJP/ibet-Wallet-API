@@ -196,7 +196,7 @@ class TestPositionAccountAddressMembershipContractAddress:
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
-                'tradable_exchange': exchange_contract["address"],
+                'tradable_exchange': config.ZERO_ADDRESS,
             },
             "balance": 1000000,
             "exchange_balance": 0,
