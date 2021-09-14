@@ -177,6 +177,10 @@ paths:
                         type: integer
                       max_sell_amount:
                         type: integer
+                      tradable_exchange:
+                        type: string
+                      personal_info_address:
+                        type: string
                   balance:
                     type: integer
                   pending_transfer:
@@ -369,6 +373,14 @@ paths:
                         type: string
                       privacy_policy:
                         type: string
+                      tradable_exchange:
+                        type: string
+                      status:
+                        type: boolean
+                      memo:
+                        type: string
+                      personal_info_address:
+                        type: string
                   balance:
                     type: integer
                   exchange_balance:
@@ -523,6 +535,8 @@ paths:
                       contact_information:
                         type: string
                       privacy_policy:
+                        type: string
+                      tradable_exchange:
                         type: string
                   balance:
                     type: integer
@@ -680,6 +694,8 @@ paths:
                       contact_information:
                         type: string
                       privacy_policy:
+                        type: string
+                      tradable_exchange:
                         type: string
                   balance:
                     type: integer
