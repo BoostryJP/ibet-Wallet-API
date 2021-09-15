@@ -1900,7 +1900,13 @@ paths:
               data:
                 type: object
                 properties:
+                  token_template:
+                    type: string
+                    example:
+                      IbetStraightBond
                   status:
+                    type: boolean
+                  transferable:
                     type: boolean
         400:
           description: Invalid Parameter Error
