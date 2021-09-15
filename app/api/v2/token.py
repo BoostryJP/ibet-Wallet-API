@@ -96,6 +96,7 @@ class TokenStatus(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         response_json = {
+            'token_template': token_template,
             'status': status,
             'transferable': transferable
         }
