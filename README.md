@@ -40,12 +40,12 @@ $ ./bin/run_server.sh start(stop)
 ## Running the tests
 Install packages
 ```
-$ pip install -r ./app/tests/requirements.txt
+$ pip install -r tests/requirements.txt
 ```
 
 You can run the tests with:
 ```
-$ pytest app/tests/
+$ pytest tests/
 ```
 
 ## Branching model
