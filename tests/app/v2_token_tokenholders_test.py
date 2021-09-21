@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from app.model import (
+from app.model.db import (
     IDXPosition,
     Listing
 )
@@ -165,7 +165,7 @@ class TestV2TokenHolders:
     # Error_1
     # 400: Invalid Parameter Error
     # Invalid contract address
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         apiurl = self.apiurl_base.format(contract_address="0xabcd")
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)

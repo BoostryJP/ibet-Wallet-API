@@ -26,7 +26,7 @@ from sqlalchemy import String, Integer, Boolean, DateTime, JSON
 from datetime import datetime
 
 from app import config
-from app.model import Base
+from app.model.db import Base
 
 URI = config.DATABASE_URL
 engine = create_engine(URI, echo=False)

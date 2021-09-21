@@ -20,7 +20,7 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model import Listing
+from app.model.db import Listing
 from app import config
 from app.contracts import Contract
 from tests.account_config import eth_account

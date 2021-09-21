@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 from unittest import mock
 
 from app import config
-from app.model import Listing
+from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.utils import (
     PersonalInfoUtils,

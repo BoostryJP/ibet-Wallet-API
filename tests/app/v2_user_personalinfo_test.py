@@ -35,7 +35,7 @@ class TestPersonalInfo:
     # Normal_1_1
     # Registered
     # environment variable (default)
-    def test_normal_1_1(self, client, shared_contract):
+    def test_normal_1_1(self, client, session, shared_contract):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"]
 
@@ -63,7 +63,7 @@ class TestPersonalInfo:
     # Normal_1_2
     # Registered
     # query parameter
-    def test_normal_1_2(self, client, shared_contract):
+    def test_normal_1_2(self, client, session, shared_contract):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"]
 
@@ -92,7 +92,7 @@ class TestPersonalInfo:
 
     # Normal_2
     # Not registered
-    def test_normal_2(self, client, shared_contract):
+    def test_normal_2(self, client, session, shared_contract):
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         issuer = eth_account["issuer"]["account_address"]
 
@@ -121,7 +121,7 @@ class TestPersonalInfo:
     # Error_1
     # Unsupported HTTP method
     # 404: Not Supported
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
@@ -143,7 +143,7 @@ class TestPersonalInfo:
     # Error_2_1
     # Invalid parameter: null value
     # 400
-    def test_error_2_1(self, client):
+    def test_error_2_1(self, client, session):
         # Request target API
         query_string = ""
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -167,7 +167,7 @@ class TestPersonalInfo:
 
     # Error_2_2
     # Invalid parameter: invalid account address
-    def test_error_2_2(self, client):
+    def test_error_2_2(self, client, session):
         trader = eth_account["issuer"]["account_address"][:-1]  # short address
         issuer = eth_account["issuer"]["account_address"]
 
@@ -184,7 +184,7 @@ class TestPersonalInfo:
 
     # Error_2_3
     # Invalid parameter: invalid owner address
-    def test_error_2_3(self, client):
+    def test_error_2_3(self, client, session):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"][:-1]  # short address
 

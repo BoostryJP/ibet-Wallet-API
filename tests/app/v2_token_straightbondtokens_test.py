@@ -23,7 +23,7 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model import Listing
+from app.model.db import Listing
 from app import config
 from app.contracts import Contract
 
@@ -674,7 +674,7 @@ class TestV2TokenStraightBondTokens:
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
-    def test_bondlist_error_1(self, client):
+    def test_bondlist_error_1(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
@@ -692,7 +692,7 @@ class TestV2TokenStraightBondTokens:
     # ＜エラー系2-1＞
     # cursorに文字が含まれる
     # -> 入力エラー
-    def test_bondlist_error_2_1(self, client):
+    def test_bondlist_error_2_1(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=a&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -712,7 +712,7 @@ class TestV2TokenStraightBondTokens:
     # ＜エラー系2-2＞
     # cursorが負値
     # -> 入力エラー
-    def test_bondlist_error_2_2(self, client):
+    def test_bondlist_error_2_2(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=-1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -727,7 +727,7 @@ class TestV2TokenStraightBondTokens:
     # ＜エラー系2-3＞
     # cursorが小数
     # -> 入力エラー
-    def test_bondlist_error_2_3(self, client):
+    def test_bondlist_error_2_3(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=0.1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -763,7 +763,7 @@ class TestV2TokenStraightBondTokens:
     # ＜エラー系3-1＞
     # limitに文字が含まれる
     # -> 入力エラー
-    def test_bondlist_error_3_1(self, client):
+    def test_bondlist_error_3_1(self, client, session):
         query_string = 'cursor=1&limit=a'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -782,7 +782,7 @@ class TestV2TokenStraightBondTokens:
     # ＜エラー系3-2＞
     # limitが負値
     # -> 入力エラー
-    def test_bondlist_error_3_2(self, client):
+    def test_bondlist_error_3_2(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=1&limit=-1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -797,7 +797,7 @@ class TestV2TokenStraightBondTokens:
     # ＜エラー系3-3＞
     # limitが小数
     # -> 入力エラー
-    def test_bondlist_error_3_3(self, client):
+    def test_bondlist_error_3_3(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         query_string = 'cursor=1&limit=0.1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -816,7 +816,7 @@ class TestV2TokenStraightBondTokens:
 
     # ＜エラー系4＞
     #  取扱トークン対象外
-    def test_bondlist_error_4(self, client):
+    def test_bondlist_error_4(self, client, session):
         config.BOND_TOKEN_ENABLED = False
         resp = client.simulate_get(self.apiurl)
 

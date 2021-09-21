@@ -26,7 +26,7 @@ from eth_utils import to_checksum_address
 from app import log
 from app.api.common import BaseResource
 from app.contracts import Contract
-from app.model import (
+from app.model.db import (
     IDXPosition,
     Listing
 )

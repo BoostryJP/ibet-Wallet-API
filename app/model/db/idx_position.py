@@ -22,7 +22,7 @@ from sqlalchemy import (
     BigInteger
 )
 
-from app.model import Base
+from app.model.db import Base
 
 
 class IDXPosition(Base):

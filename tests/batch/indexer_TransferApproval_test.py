@@ -26,7 +26,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
-from app.model import (
+from app.model.db import (
     Listing,
     IDXTransferApproval
 )

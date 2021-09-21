@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from app import config
-from app.model import IDXConsumeCoupon
+from app.model.db import IDXConsumeCoupon
 from tests.account_config import eth_account
 
 
@@ -131,7 +131,7 @@ class TestV2CouponConsumptions:
     # ＜エラー系1＞
     #  入力値エラー
     #    request-bodyなし
-    def test_couponconsumptions_error_1(self, client):
+    def test_couponconsumptions_error_1(self, client, session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -153,7 +153,7 @@ class TestV2CouponConsumptions:
     # ＜エラー系2＞
     #  入力値エラー
     #    headersなし
-    def test_couponconsumptions_error_2(self, client):
+    def test_couponconsumptions_error_2(self, client, session):
         request_params = {}
         headers = {}
         request_body = json.dumps(request_params)
@@ -172,7 +172,7 @@ class TestV2CouponConsumptions:
     # ＜エラー系3-1＞
     #  入力値エラー
     #    token_addressがアドレスフォーマットではない
-    def test_couponconsumptions_error_3_1(self, client):
+    def test_couponconsumptions_error_3_1(self, client, session):
         token_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         account = eth_account['trader']
 
@@ -197,7 +197,7 @@ class TestV2CouponConsumptions:
     # ＜エラー系3-2＞
     #  入力値エラー
     #    token_addressがstring以外
-    def test_couponconsumptions_error_3_2(self, client):
+    def test_couponconsumptions_error_3_2(self, client, session):
         token_address = 123456789123456789123456789123456789
         account = eth_account['trader']
 
@@ -223,7 +223,7 @@ class TestV2CouponConsumptions:
     # ＜エラー系4-1＞
     #  入力値エラー
     #    account_addressがアドレスフォーマットではない
-    def test_couponconsumptions_error_4_1(self, client):
+    def test_couponconsumptions_error_4_1(self, client, session):
         token_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
 
@@ -248,7 +248,7 @@ class TestV2CouponConsumptions:
     # ＜エラー系4-2＞
     #  入力値エラー
     #    account_addressがstring以外
-    def test_couponconsumptions_error_4_2(self, client):
+    def test_couponconsumptions_error_4_2(self, client, session):
         token_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
         account_address = 123456789123456789123456789123456789
 
@@ -275,7 +275,7 @@ class TestV2CouponConsumptions:
 
     # ＜エラー系4-2＞
     #  取扱トークン対象外
-    def test_couponconsumptions_error_5(self, client):
+    def test_couponconsumptions_error_5(self, client, session):
 
         config.COUPON_TOKEN_ENABLED = False
 

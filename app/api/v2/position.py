@@ -28,14 +28,16 @@ from app.errors import (
 )
 from app import config
 from app.contracts import Contract
-from app.model import (
+from app.model.db import (
     Listing,
+    IDXConsumeCoupon,
+    IDXTransfer
+)
+from app.model.blockchain import (
     BondToken,
     ShareToken,
     MembershipToken,
-    CouponToken,
-    IDXConsumeCoupon,
-    IDXTransfer
+    CouponToken
 )
 
 LOG = log.get_logger()

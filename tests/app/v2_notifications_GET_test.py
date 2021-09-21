@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime, timedelta, timezone
 
-from app.model import Notification
+from app.model.db import Notification
 
 JST = timezone(timedelta(hours=+9), "JST")
 

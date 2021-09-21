@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from app.model import (
+from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement,
     AgreementStatus
@@ -379,7 +379,7 @@ class TestV2OrderList:
     # Error_1
     # invalid token address
     # -> 400
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         # request target API
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
@@ -400,7 +400,7 @@ class TestV2OrderList:
     # Error_2
     # No headers
     # -> 400
-    def test_error_2(self, client, shared_contract):
+    def test_error_2(self, client, session, shared_contract):
         # set environment variables
         bond_exchange, _, _, personal_info, payment_gateway, token_list = \
             self.set_env(shared_contract)
@@ -432,7 +432,7 @@ class TestV2OrderList:
     # Error_3_1
     # Validation error: no request-body
     # -> 400
-    def test_error_3_1(self, client, shared_contract):
+    def test_error_3_1(self, client, session, shared_contract):
         # set environment variables
         bond_exchange, _, _, personal_info, payment_gateway, token_list = \
             self.set_env(shared_contract)
@@ -467,7 +467,7 @@ class TestV2OrderList:
     # Error_3_2
     # Validation error: invalid type (account_address)
     # -> 400
-    def test_error_3_2(self, client, shared_contract):
+    def test_error_3_2(self, client, session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -946,7 +946,7 @@ class TestV2OrderListBond:
     # ＜エラー系1＞
     # request-bodyなし
     # -> 入力値エラー
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
@@ -966,7 +966,7 @@ class TestV2OrderListBond:
     # ＜エラー系2＞
     # headersなし
     # -> 入力値エラー
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -986,7 +986,7 @@ class TestV2OrderListBond:
     # ＜エラー系3-1＞
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
-    def test_error_3_1(self, client):
+    def test_error_3_1(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
@@ -1006,7 +1006,7 @@ class TestV2OrderListBond:
     # ＜エラー系3-2＞
     # account_addressがstring以外
     # -> 入力エラー
-    def test_error_3_2(self, client):
+    def test_error_3_2(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -1030,7 +1030,7 @@ class TestV2OrderListBond:
 
     # ＜エラー系4＞
     # HTTPメソッドが不正
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
@@ -1043,7 +1043,7 @@ class TestV2OrderListBond:
 
     # ＜エラー系5＞
     # 取扱トークン対象外(ENABLED=false)
-    def test_error_5(self, client):
+    def test_error_5(self, client, session):
         config.BOND_TOKEN_ENABLED = False
         resp = client.simulate_post(self.apiurl)
 
@@ -1056,7 +1056,7 @@ class TestV2OrderListBond:
 
     # ＜エラー系6＞
     # exchangeアドレス未設定
-    def test_error_6(self, client):
+    def test_error_6(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
         resp = client.simulate_post(self.apiurl)
@@ -1443,7 +1443,7 @@ class TestV2OrderListMembership:
     # ＜エラー系1＞
     # request-bodyなし
     # -> 入力値エラー
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
@@ -1463,7 +1463,7 @@ class TestV2OrderListMembership:
     # ＜エラー系2＞
     # headersなし
     # -> 入力値エラー
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -1483,7 +1483,7 @@ class TestV2OrderListMembership:
     # ＜エラー系3-1＞
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
-    def test_error_3_1(self, client):
+    def test_error_3_1(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
@@ -1503,7 +1503,7 @@ class TestV2OrderListMembership:
     # ＜エラー系3-2＞
     # account_addressがstring以外
     # -> 入力エラー
-    def test_error_3_2(self, client):
+    def test_error_3_2(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -1527,7 +1527,7 @@ class TestV2OrderListMembership:
 
     # ＜エラー系4＞
     # HTTPメソッドが不正
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
@@ -1540,7 +1540,7 @@ class TestV2OrderListMembership:
 
     # ＜エラー系5＞
     # 取扱トークン対象外(ENABLED=false)
-    def test_error_5(self, client):
+    def test_error_5(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = False
         resp = client.simulate_post(self.apiurl)
 
@@ -1553,7 +1553,7 @@ class TestV2OrderListMembership:
 
     # ＜エラー系6＞
     # exchangeアドレス未設定
-    def test_error_6(self, client):
+    def test_error_6(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
         resp = client.simulate_post(self.apiurl)
@@ -1931,7 +1931,7 @@ class TestV2OrderListCoupon:
     # ＜エラー系1＞
     # request-bodyなし
     # -> 入力値エラー
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
@@ -1951,7 +1951,7 @@ class TestV2OrderListCoupon:
     # ＜エラー系2＞
     # headersなし
     # -> 入力値エラー
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -1971,7 +1971,7 @@ class TestV2OrderListCoupon:
     # ＜エラー系3-1＞
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
-    def test_error_3_1(self, client):
+    def test_error_3_1(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
@@ -1991,7 +1991,7 @@ class TestV2OrderListCoupon:
     # ＜エラー系3-2＞
     # account_addressがstring以外
     # -> 入力エラー
-    def test_error_3_2(self, client):
+    def test_error_3_2(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -2015,7 +2015,7 @@ class TestV2OrderListCoupon:
 
     # ＜エラー系4＞
     # HTTPメソッドが不正
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
@@ -2028,7 +2028,7 @@ class TestV2OrderListCoupon:
 
     # ＜エラー系5＞
     # 取扱トークン対象外(ENABLED=false)
-    def test_error_5(self, client):
+    def test_error_5(self, client, session):
         config.COUPON_TOKEN_ENABLED = False
         resp = client.simulate_post(self.apiurl)
 
@@ -2041,7 +2041,7 @@ class TestV2OrderListCoupon:
 
     # ＜エラー系6＞
     # exchangeアドレス未設定
-    def test_error_6(self, client):
+    def test_error_6(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
         resp = client.simulate_post(self.apiurl)
@@ -2467,7 +2467,7 @@ class TestV2OrderListShare:
     # ＜エラー系1＞
     # request-bodyなし
     # -> 入力値エラー
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         config.SHARE_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
@@ -2487,7 +2487,7 @@ class TestV2OrderListShare:
     # ＜エラー系2＞
     # headersなし
     # -> 入力値エラー
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         config.SHARE_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -2507,7 +2507,7 @@ class TestV2OrderListShare:
     # ＜エラー系3-1＞
     # account_addressがアドレスフォーマットではない
     # -> 入力値エラー
-    def test_error_3_1(self, client):
+    def test_error_3_1(self, client, session):
         config.SHARE_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
@@ -2527,7 +2527,7 @@ class TestV2OrderListShare:
     # ＜エラー系3-2＞
     # account_addressがstring以外
     # -> 入力エラー
-    def test_error_3_2(self, client):
+    def test_error_3_2(self, client, session):
         config.SHARE_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -2551,7 +2551,7 @@ class TestV2OrderListShare:
 
     # ＜エラー系4＞
     # HTTPメソッドが不正
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         config.SHARE_TOKEN_ENABLED = True
         resp = client.simulate_get(self.apiurl)
 
@@ -2564,7 +2564,7 @@ class TestV2OrderListShare:
 
     # ＜エラー系5＞
     # 取扱トークン対象外(ENABLED=false)
-    def test_error_5(self, client):
+    def test_error_5(self, client, session):
         config.SHARE_TOKEN_ENABLED = False
         resp = client.simulate_post(self.apiurl)
 
@@ -2577,7 +2577,7 @@ class TestV2OrderListShare:
 
     # ＜エラー系6＞
     # exchangeアドレス未設定
-    def test_error_6(self, client):
+    def test_error_6(self, client, session):
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
         resp = client.simulate_post(self.apiurl)

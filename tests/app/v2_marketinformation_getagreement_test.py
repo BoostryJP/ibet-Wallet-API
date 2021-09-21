@@ -209,7 +209,7 @@ class TestV2GetAgreementGet:
 
     # <Normal_1>
     # StraightBond
-    def test_normal_1(self, client, shared_contract):
+    def test_normal_1(self, client, session, shared_contract):
         exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
@@ -247,7 +247,7 @@ class TestV2GetAgreementGet:
 
     # <Normal_2>
     # Membership
-    def test_normal_2(self, client, shared_contract):
+    def test_normal_2(self, client, session, shared_contract):
         exchange = shared_contract['IbetMembershipExchange']
 
         _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
@@ -283,7 +283,7 @@ class TestV2GetAgreementGet:
 
     # <Normal_3>
     # Coupon
-    def test_normal_3(self, client, shared_contract):
+    def test_normal_3(self, client, session, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
 
         _, order_id, agreement_id = self._generate_agree_event_coupon(exchange)
@@ -319,7 +319,7 @@ class TestV2GetAgreementGet:
 
     # <Normal_4>
     # Share
-    def test_normal_4(self, client, shared_contract):
+    def test_normal_4(self, client, session, shared_contract):
         exchange = shared_contract['IbetShareExchange']
         personal_info = shared_contract['PersonalInfo']
 
@@ -361,7 +361,7 @@ class TestV2GetAgreementGet:
     # Error_1
     # 入力値エラー（query_stringなし）
     # 400
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         query_string = ""
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
@@ -374,7 +374,7 @@ class TestV2GetAgreementGet:
     # Error_2
     # 入力値エラー（exchange_addressの型誤り）
     # 400
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B'  # アドレス長が短い
         query_string = f'order_id=2&agreement_id=102&exchange_address={exchange_address}'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -388,7 +388,7 @@ class TestV2GetAgreementGet:
     # Error_3
     # 入力値エラー（数値項目の型誤り）
     # 400
-    def test_error_3(self, client):
+    def test_error_3(self, client, session):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         query_string = f'order_id=aa&agreement_id=bb&exchange_address={exchange_address}'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -402,7 +402,7 @@ class TestV2GetAgreementGet:
     # Error_4
     # 指定した約定情報が存在しない
     # 400
-    def test_error_4(self, client, shared_contract):
+    def test_error_4(self, client, session, shared_contract):
         exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
@@ -431,7 +431,7 @@ class TestV2GetAgreementGet:
     # Error_5
     # exchangeアドレスが環境変数の値と異なる
     # 400
-    def test_error_5(self, client, shared_contract):
+    def test_error_5(self, client, session, shared_contract):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         order_id = 2
         agreement_id = 102
@@ -455,7 +455,7 @@ class TestV2GetAgreementGet:
     # Error_6
     # exchangeアドレスが未設定
     # 404
-    def test_error_6(self, client):
+    def test_error_6(self, client, session):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         order_id = 2
         agreement_id = 102

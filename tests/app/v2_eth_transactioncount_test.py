@@ -37,7 +37,7 @@ class TestEthTransactionCount:
     # ＜正常系1＞
     # トランザクション未実行のアドレス
     # -> nonce = 0
-    def test_transactioncount_normal_1(self, client):
+    def test_transactioncount_normal_1(self, client, session):
         # 任意のアドレス
         some_account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
 
@@ -53,7 +53,7 @@ class TestEthTransactionCount:
     # ＜正常系2＞
     # トランザクション実行済みのアドレス
     # -> nonce = （ブロックを直接参照した情報と一致）
-    def test_transactioncount_normal_2(self, client):
+    def test_transactioncount_normal_2(self, client, session):
         # deployerのアドレス
         eth_address = eth_account['deployer']['account_address']
 
@@ -71,7 +71,7 @@ class TestEthTransactionCount:
 
     # ＜正常系3＞
     # block_identifier = "pending"
-    def test_transactioncount_normal_3(self, client):
+    def test_transactioncount_normal_3(self, client, session):
         # deployerのアドレス
         eth_address = eth_account['deployer']['account_address']
 
@@ -95,7 +95,7 @@ class TestEthTransactionCount:
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
-    def test_transactioncount_error_1(self, client):
+    def test_transactioncount_error_1(self, client, session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -107,7 +107,7 @@ class TestEthTransactionCount:
     # ＜エラー系2＞
     # addressのフォーマットが正しくない
     # -> 400エラー（InvalidParameterError）
-    def test_transactioncount_error_2(self, client):
+    def test_transactioncount_error_2(self, client, session):
         some_account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレス長が短い
 
         apiurl = self.apiurl_base + some_account_address
@@ -122,7 +122,7 @@ class TestEthTransactionCount:
     # ＜エラー系3＞
     # addressが未設定
     # -> 400エラー
-    def test_transactioncount_error_3(self, client):
+    def test_transactioncount_error_3(self, client, session):
         apiurl = self.apiurl_base
         resp = client.simulate_get(apiurl)
 
@@ -132,7 +132,7 @@ class TestEthTransactionCount:
     # トランザクション実行済みのアドレス
     # block_identifier に取り得る値以外
     # -> 400
-    def test_transactioncount_error_4(self, client):
+    def test_transactioncount_error_4(self, client, session):
         # 任意のアドレス
         some_account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
 

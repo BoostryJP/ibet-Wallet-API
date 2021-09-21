@@ -26,7 +26,7 @@ from sqlalchemy import (
     DateTime
 )
 
-from app.model import Base
+from app.model.db import Base
 from app.utils import alchemy
 
 

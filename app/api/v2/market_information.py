@@ -25,7 +25,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import (
+from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement,
     AgreementStatus

@@ -33,13 +33,15 @@ from app.errors import (
     DataNotExistsError,
     NotSupportedError
 )
-from app.model import (
+from app.model.db import (
     Listing,
+    IDXTransfer
+)
+from app.model.blockchain import (
     ShareToken,
     BondToken,
     MembershipToken,
-    CouponToken,
-    IDXTransfer
+    CouponToken
 )
 
 LOG = log.get_logger()

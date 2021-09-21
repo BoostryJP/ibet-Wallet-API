@@ -37,7 +37,7 @@ class TestE2EMessageEncryptionKey:
     ###########################################################################
 
     # Normal_1
-    def test_normal_1(self, client, shared_contract):
+    def test_normal_1(self, client, session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -78,7 +78,7 @@ class TestE2EMessageEncryptionKey:
     # Error_1
     # InvalidParameterError
     # invalid account_address
-    def test_error_1(self, client, shared_contract):
+    def test_error_1(self, client, session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -111,7 +111,7 @@ class TestE2EMessageEncryptionKey:
     # Error_2
     # DataNotExistsError
     # encryption key is not registered
-    def test_error_2(self, client, shared_contract):
+    def test_error_2(self, client, session, shared_contract):
         user = eth_account["deployer"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address

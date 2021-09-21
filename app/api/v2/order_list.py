@@ -29,10 +29,12 @@ from app.errors import (
 )
 from app import config
 from app.contracts import Contract
-from app.model import (
+from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement,
-    AgreementStatus,
+    AgreementStatus
+)
+from app.model.blockchain import (
     BondToken,
     MembershipToken,
     CouponToken,

@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import pytest
+import time
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -24,184 +25,179 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from app import config
-from app.model import Node
-from batch import processor_Block_Sync_Status
+from app.model.db import Node
+from batch.processor_Block_Sync_Status import (
+    Sinks,
+    DBSink,
+    Processor
+)
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-@pytest.fixture(scope="function")
-def watcher_factory(session):
-    def _watcher(cls_name):
-        cls = getattr(processor_Block_Sync_Status, cls_name)
-        watcher = cls()
-        return watcher
-
-    return _watcher
+@pytest.fixture(scope='function')
+def processor(db):
+    _sink = Sinks()
+    _sink.register(DBSink(db))
+    return Processor(sink=_sink, db=db)
 
 
-class TestWatchBlockSyncState:
+class TestProcessor:
 
     ###########################################################################
     # Normal Case
     ###########################################################################
 
     # <Normal_1>
-    # Working
-    def test_normal_1(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
+    # Execute Batch Run 1st: synced
+    # Execute Batch Run 2nd: block generation speed down(same the previous)
+    # Execute Batch Run 3rd: synced
+    # Execute Batch Run 4th: node syncing(DIFF:over 1)
+    # Execute Batch Run 5th: node syncing(DIFF:1) == synced
+    def test_normal_1(self, processor, db):
+        # Run 1st: synced
+        processor.process()
 
-        # Run target process
-        next_block_number = watcher.history.peekOldest()["block_number"] + 10000
-        with mock.patch("web3.eth.Eth.blockNumber", next_block_number):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
+        # assertion
+        _node = db.query(Node).first()
         assert _node.id == 1
-        assert _node.is_synced is True
+        assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
+        assert _node.priority == 0
+        assert _node.is_synced == True
+
+        time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
+
+        # Run 2st: block generation speed down(same the previous)
+        with mock.patch("batch.processor_Block_Sync_Status.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
+            processor.process()
+
+        # assertion
+        _node = db.query(Node).first()
+        assert _node.is_synced == False
+
+        time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
+
+        # Run 3rd: synced
+        processor.process()
+
+        # assertion
+        _node = db.query(Node).first()
+        assert _node.is_synced == True
+
+        time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
+
+        # Run 4th: node syncing(DIFF:over 1)
+        block_number = web3.eth.blockNumber
+        with mock.patch("web3.eth.Eth.is_syncing") as mock_is_syncing:
+            mock_is_syncing.side_effect = [
+                {
+                    "highestBlock": block_number,
+                    "currentBlock": block_number - 2
+                }
+            ]
+            processor.process()
+
+        # assertion
+        _node = db.query(Node).first()
+        assert _node.is_synced == False
+
+        time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
+
+        # Run 5th: node syncing(DIFF:1) == synced
+        block_number = web3.eth.blockNumber
+        with mock.patch("web3.eth.Eth.is_syncing") as mock_is_syncing:
+            mock_is_syncing.side_effect = [
+                {
+                    "highestBlock": block_number,
+                    "currentBlock": block_number - 1
+                }
+            ]
+            processor.process()
+
+        # assertion
+        _node = db.query(Node).first()
+        assert _node.is_synced == True
 
     # <Normal_2>
-    # Working(1 block late)
-    def test_normal_2(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
+    # standby node is down to sync
+    @mock.patch("batch.processor_Block_Sync_Status.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000"])
+    def test_normal_2(self, db):
+        _sink = Sinks()
+        _sink.register(DBSink(db))
+        processor = Processor(sink=_sink, db=db)
 
-        # Run target process
-        block_number = watcher.history.peekOldest()["block_number"]
-        next_block_number = block_number + 10000
-        with mock.patch("web3.eth.Eth.syncing", {"highestBlock": block_number, "currentBlock": block_number - 1}), \
-             mock.patch("web3.eth.Eth.blockNumber", next_block_number):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
+        # pre assertion
+        _node = db.query(Node).first()
         assert _node.id == 1
-        assert _node.is_synced is True
+        assert _node.endpoint_uri == "http://test1:1000"
+        assert _node.priority == 1
+        assert _node.is_synced == False
 
-    # <Normal_3>
-    # Not Sync(now syncing)
-    def test_normal_3(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
+        # node sync(processing)
+        org_value = processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri
+        processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri = config.WEB3_HTTP_PROVIDER
+        processor.process()
+        processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri = org_value
 
-        # Run target process
-        block_number = watcher.history.peekOldest()["block_number"]
-        with mock.patch("web3.eth.Eth.syncing", {"highestBlock": block_number, "currentBlock": block_number - 2}):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
-        assert _node.id == 1
-        assert _node.is_synced is False
-
-    # <Normal_4>
-    # Not Sync(block late)
-    def test_normal_4(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
-
-        # Run target process
-        next_block_number = watcher.history.peekOldest()["block_number"] - 10000
-        with mock.patch("web3.eth.Eth.blockNumber", next_block_number):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
-        assert _node.id == 1
-        assert _node.is_synced is False
-
-    # <Normal_5>
-    # Working -> Working
-    def test_normal_5(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
-
-        # Prepare Data
-        _node = Node()
-        _node.is_synced = True
-        session.add(_node)
-
-        # Run target process
-        next_block_number = watcher.history.peekOldest()["block_number"] + 10000
-        with mock.patch("web3.eth.Eth.blockNumber", next_block_number):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
-        assert _node.id == 1
-        assert _node.is_synced is True
-
-    # <Normal_6>
-    # Working -> Not Sync
-    def test_normal_6(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
-
-        # Prepare Data
-        _node = Node()
-        _node.is_synced = True
-        session.add(_node)
-
-        # Run target process
-        next_block_number = watcher.history.peekOldest()["block_number"] - 10000
-        with mock.patch("web3.eth.Eth.blockNumber", next_block_number):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
-        assert _node.id == 1
-        assert _node.is_synced is False
-
-    # <Normal_7>
-    # Not Sync -> Working
-    def test_normal_7(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
-
-        # Prepare Data
-        _node = Node()
-        _node.is_synced = False
-        session.add(_node)
-
-        # Run target process
-        next_block_number = watcher.history.peekOldest()["block_number"] + 10000
-        with mock.patch("web3.eth.Eth.blockNumber", next_block_number):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
-        assert _node.id == 1
-        assert _node.is_synced is True
-
-    # <Normal_8>
-    # Not Sync -> Not Sync
-    def test_normal_8(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
-
-        # Prepare Data
-        _node = Node()
-        _node.is_synced = False
-        session.add(_node)
-
-        # Run target process
-        next_block_number = watcher.history.peekOldest()["block_number"] - 10000
-        with mock.patch("web3.eth.Eth.blockNumber", next_block_number):
-            watcher.loop()
-
-        # Assertion
-        _node = session.query(Node).first()
-        assert _node.id == 1
-        assert _node.is_synced is False
+        # assertion
+        _node = db.query(Node).filter(Node.endpoint_uri == "http://test1:1000").first()
+        assert _node.is_synced == True
 
     ###########################################################################
     # Error Case
     ###########################################################################
 
     # <Error_1>
-    # Error occur
-    def test_error_1(self, watcher_factory, session):
-        watcher = watcher_factory("WatchBlockSyncState")
+    # node down(initialize)
+    @mock.patch("batch.processor_Block_Sync_Status.WEB3_HTTP_PROVIDER_STANDBY",
+                ["http://test1:1000", "http://test2:2000"])
+    @mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=Exception()))
+    def test_error_1(self, db):
+        _sink = Sinks()
+        _sink.register(DBSink(db))
+        Processor(sink=_sink, db=db)
 
-        # Run target process
-        with mock.patch("web3.eth.Eth.blockNumber", MagicMock(side_effect=Exception())):
-            watcher.loop()
+        # assertion
+        _node_list = db.query(Node).order_by(Node.id).all()
+        assert len(_node_list) == 3
+        _node = _node_list[0]
+        assert _node.id == 1
+        assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
+        assert _node.priority == 0
+        assert _node.is_synced == False
+        _node = _node_list[1]
+        assert _node.id == 2
+        assert _node.endpoint_uri == "http://test1:1000"
+        assert _node.priority == 1
+        assert _node.is_synced == False
+        _node = _node_list[2]
+        assert _node.id == 3
+        assert _node.endpoint_uri == "http://test2:2000"
+        assert _node.priority == 1
+        assert _node.is_synced == False
 
-        # Assertion
-        _node = session.query(Node).first()
-        assert _node is None
+    # <Error_2>
+    # node down(processing)
+    def test_error_2(self, processor, db):
+        processor.process()
+
+        # assertion
+        _node = db.query(Node).first()
+        assert _node.id == 1
+        assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
+        assert _node.priority == 0
+        assert _node.is_synced == True
+
+        # node down(processing)
+        org_value = processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri
+        processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri = "http://hogehoge"
+        processor.process()
+        processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri = org_value
+
+        # assertion
+        _node = db.query(Node).first()
+        assert _node.id == 1
+        assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
+        assert _node.priority == 0
+        assert _node.is_synced == False

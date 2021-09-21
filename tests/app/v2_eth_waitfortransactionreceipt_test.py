@@ -32,7 +32,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_1
     # timeout設定なし（デフォルト採用）
     # -> 404エラー（Data not exists）
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
         }
@@ -55,7 +55,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_2
     # timeout設定あり
     # -> 404エラー（Data not exists）
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": 1
@@ -79,7 +79,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_3
     # HTTPメソッド不正
     # -> 404エラー（Not Supported）
-    def test_error_3(self, client):
+    def test_error_3(self, client, session):
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -92,7 +92,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_4
     # headersなし
     # -> 400エラー（InvalidParameterError）
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
         }
@@ -111,7 +111,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_5_1
     # 入力エラー（timeout最小値）
     # -> 400エラー
-    def test_error_5_1(self, client):
+    def test_error_5_1(self, client, session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": 0
@@ -136,7 +136,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_5_2
     # 入力エラー（timeout最大値）
     # -> 400エラー
-    def test_error_5_2(self, client):
+    def test_error_5_2(self, client, session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": 31
@@ -161,7 +161,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_6_1
     # 入力型エラー（transaction_hash）
     # -> 400エラー
-    def test_error_6_1(self, client):
+    def test_error_6_1(self, client, session):
         request_params = {
             "transaction_hash": 1234,
             "timeout": 1
@@ -186,7 +186,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_6_2
     # 入力型エラー（timeout）
     # -> 400エラー
-    def test_error_6_2(self, client):
+    def test_error_6_2(self, client, session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": "aaaa"

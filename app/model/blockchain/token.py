@@ -27,7 +27,7 @@ from eth_utils import to_checksum_address
 from app import config
 from app import log
 from app.contracts import Contract
-from app.model import Listing
+from app.model.db import Listing
 
 LOG = log.get_logger()
 

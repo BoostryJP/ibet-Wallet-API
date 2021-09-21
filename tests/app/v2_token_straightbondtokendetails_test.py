@@ -20,7 +20,7 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model import Listing
+from app.model.db import Listing
 from app import config
 from app.contracts import Contract
 
@@ -168,7 +168,7 @@ class TestV2TokenStraightBondTokenDetails:
     # ＜エラー系1＞
     #   無効なコントラクトアドレス
     #   -> 400エラー
-    def test_straightbonddetails_error_1(self, client):
+    def test_straightbonddetails_error_1(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '0xabcd'
 
@@ -251,7 +251,7 @@ class TestV2TokenStraightBondTokenDetails:
 
     # ＜エラー系4＞
     #  取扱トークン対象外
-    def test_straightbonddetails_error_4(self, client):
+    def test_straightbonddetails_error_4(self, client, session):
         config.BOND_TOKEN_ENABLED = False
         resp = client.simulate_get(self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765")
 

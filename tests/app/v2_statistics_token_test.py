@@ -20,7 +20,10 @@ from typing import Optional
 
 from eth_utils import to_checksum_address
 
-from app.model import IDXPosition, Listing
+from app.model.db import (
+    IDXPosition,
+    Listing
+)
 from tests.account_config import eth_account
 from tests.contract_modules import issue_coupon_token
 
@@ -211,7 +214,7 @@ class TestV2StatisticsToken:
     # Error_1
     # 400: Invalid Parameter Error
     # Invalid contract address
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         apiurl = self.apiurl_base + "0xabcd"
 
         query_string = ""

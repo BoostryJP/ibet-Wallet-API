@@ -28,7 +28,7 @@ class TestNodeInfo:
 
     # ＜正常系1＞
     # 通常参照
-    def test_nodeinfo_normal_1(self, client):
+    def test_nodeinfo_normal_1(self, client, session):
         resp = client.simulate_get(self.apiurl)
 
         payment_gateway = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
@@ -90,7 +90,7 @@ class TestNodeInfo:
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
-    def test_nodeinfo_error_1(self, client):
+    def test_nodeinfo_error_1(self, client, session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 

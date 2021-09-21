@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from app import config
-from app.model import (
+from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement
 )
@@ -168,7 +168,7 @@ class TestV2MembershipTick:
         ]
 
     # エラー系1：入力値エラー（request-bodyなし）
-    def test_membership_tick_error_1(self, client):
+    def test_membership_tick_error_1(self, client, session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -187,7 +187,7 @@ class TestV2MembershipTick:
         }
 
     # エラー系2：入力値エラー（headersなし）
-    def test_membership_tick_error_2(self, client):
+    def test_membership_tick_error_2(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
@@ -208,7 +208,7 @@ class TestV2MembershipTick:
         }
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
-    def test_membership_tick_error_3(self, client):
+    def test_membership_tick_error_3(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
@@ -229,7 +229,7 @@ class TestV2MembershipTick:
         }
 
     # エラー系4：HTTPメソッドが不正
-    def test_membership_tick_error_4(self, client):
+    def test_membership_tick_error_4(self, client, session):
 
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
@@ -245,7 +245,7 @@ class TestV2MembershipTick:
         }
 
     # エラー系5：取扱トークン対象外
-    def test_membership_tick_error_5(self, client):
+    def test_membership_tick_error_5(self, client, session):
 
         config.MEMBERSHIP_TOKEN_ENABLED = False
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = \
@@ -261,7 +261,7 @@ class TestV2MembershipTick:
         }
 
     # エラー系6：exchangeアドレス未設定
-    def test_membership_tick_error_6(self, client):
+    def test_membership_tick_error_6(self, client, session):
 
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None

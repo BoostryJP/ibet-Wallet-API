@@ -25,12 +25,11 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from app import config
-from app.model import (
+from app.model.db import (
     Notification,
     NotificationType,
     Listing
 )
-from app.contracts import Contract
 from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_coupon_token,

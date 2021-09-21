@@ -23,7 +23,7 @@ from sqlalchemy import (
     DateTime
 )
 
-from app.model import Base
+from app.model.db import Base
 
 
 class IDXConsumeCoupon(Base):

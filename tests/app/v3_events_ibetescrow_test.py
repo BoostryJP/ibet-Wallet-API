@@ -38,7 +38,7 @@ class TestEventsIbetEscrow:
 
     # Normal_1
     # No event
-    def test_normal_1(self, client, shared_contract):
+    def test_normal_1(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
         latest_block_number = web3.eth.blockNumber
@@ -62,7 +62,7 @@ class TestEventsIbetEscrow:
 
     # Normal_2_1
     # event = Deposited
-    def test_normal_2_1(self, client, shared_contract):
+    def test_normal_2_1(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
@@ -117,7 +117,7 @@ class TestEventsIbetEscrow:
 
     # Normal_2_2
     # event = Withdrawn
-    def test_normal_2_2(self, client, shared_contract):
+    def test_normal_2_2(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
@@ -180,7 +180,7 @@ class TestEventsIbetEscrow:
 
     # Normal_2_3
     # event = EscrowCreated
-    def test_normal_2_3(self, client, shared_contract):
+    def test_normal_2_3(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -255,7 +255,7 @@ class TestEventsIbetEscrow:
 
     # Normal_2_4
     # event = EscrowCanceled
-    def test_normal_2_4(self, client, shared_contract):
+    def test_normal_2_4(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -335,7 +335,7 @@ class TestEventsIbetEscrow:
 
     # Normal_2_5
     # event = EscrowFinished
-    def test_normal_2_5(self, client, shared_contract):
+    def test_normal_2_5(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -420,7 +420,7 @@ class TestEventsIbetEscrow:
     # Error_1
     # InvalidParameterError
     # null value not allowed
-    def test_error_1(self, client, shared_contract):
+    def test_error_1(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
 
@@ -452,7 +452,7 @@ class TestEventsIbetEscrow:
     # Error_2
     # InvalidParameterError
     # from_block, to_block: min value
-    def test_error_2(self, client, shared_contract):
+    def test_error_2(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
 
@@ -479,7 +479,7 @@ class TestEventsIbetEscrow:
     # Error_3
     # InvalidParameterError
     # event: unallowed value
-    def test_error_3(self, client, shared_contract):
+    def test_error_3(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
         latest_block_number = web3.eth.blockNumber
@@ -505,7 +505,7 @@ class TestEventsIbetEscrow:
     # Error_4
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
-    def test_error_4(self, client, shared_contract):
+    def test_error_4(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
         latest_block_number = web3.eth.blockNumber

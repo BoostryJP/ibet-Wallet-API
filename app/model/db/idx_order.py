@@ -24,7 +24,7 @@ from sqlalchemy import (
     Boolean
 )
 
-from app.model import Base
+from app.model.db import Base
 from app.utils import alchemy
 
 

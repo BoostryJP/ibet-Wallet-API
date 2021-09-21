@@ -42,6 +42,7 @@ from app.database import (
 )
 from app import config
 from app.contracts import Contract
+from app.utils.web3_utils import FailOverHTTPProvider
 from tests.account_config import eth_account
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -51,6 +52,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 @pytest.fixture(scope='session')
 def client():
     config.DB_AUTOCOMMIT = False
+    FailOverHTTPProvider.is_default = None
 
     init_session()
     middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
@@ -171,7 +173,7 @@ def shared_contract(payment_gateway_contract, personalinfo_contract,
 # テーブルの自動作成・自動削除
 @pytest.fixture(scope='function')
 def db(request):
-    from app.model import Base
+    from app.model.db import Base
     Base.metadata.create_all(engine)
 
     def teardown():
