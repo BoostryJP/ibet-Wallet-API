@@ -18,22 +18,39 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from sqlalchemy import Column
-from sqlalchemy import String, Integer, BigInteger, Boolean
+from sqlalchemy import (
+    BigInteger,
+    String,
+    Integer,
+    Boolean
+)
 
 from app.model import Base
 
-class ExecutableContract(Base):
-    __tablename__ = 'executable_contract'
+
+class Node(Base):
+    """
+    Ethereum Node Information
+    """
+    __tablename__ = 'node'
+
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    contract_address = Column(String(256), index=True)
+    # endpoint uri(http[s]://domain:port)
+    endpoint_uri = Column(String(267))
+    # connect priority(top priority is lower number)
+    priority = Column(Integer)
+    # node synchronized status
+    is_synced = Column(Boolean, nullable=False)
 
     def __repr__(self):
-        return "<Listing id='%d' contract_address='%s'>" % \
-            (self.id, self.contract_address)
+        return "<Node id='%d' is_synced='%s'>" % \
+               (self.id, self.is_synced)
 
     FIELDS = {
         'id': int,
-        'contract_address': str,
+        'endpoint_uri': str,
+        'priority': int,
+        'is_synced': bool,
     }
 
     FIELDS.update(Base.FIELDS)

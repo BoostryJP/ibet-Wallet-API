@@ -18,18 +18,16 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 
-from web3 import Web3
-
 from app import (
     config,
     log
 )
 from app.api.common import BaseResource
-from app.model.node import Node
+from app.model.db import Node
+from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
+web3 = Web3Wrapper()
 
 
 # ------------------------------
@@ -86,14 +84,19 @@ class BlockSyncStatus(BaseResource):
         session = req.context["session"]
 
         # Get block sync status
-        node = session.query(Node).first()
+        node = session.query(Node). \
+            filter(Node.is_synced == True). \
+            order_by(Node.priority). \
+            first()
 
         # Get latest block number
+        is_synced = False
         latest_block_number = None
-        if node.is_synced:
+        if node is not None:
+            is_synced = True
             latest_block_number = web3.eth.blockNumber
 
         self.on_success(res, {
-            "is_synced": node.is_synced,
+            "is_synced": is_synced,
             "latest_block_number": latest_block_number
         })

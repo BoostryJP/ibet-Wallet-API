@@ -18,27 +18,22 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from sqlalchemy import Column
-from sqlalchemy import BigInteger, Boolean
+from sqlalchemy import String, BigInteger
 
 from app.model import Base
 
-
-class Node(Base):
-    """
-    ノード情報
-    """
-    __tablename__ = 'node'
+class ExecutableContract(Base):
+    __tablename__ = 'executable_contract'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    # ブロックが取込可能になっているか
-    is_synced = Column(Boolean, nullable=False)
+    contract_address = Column(String(256), index=True)
 
     def __repr__(self):
-        return "<Node id='%d' is_synced='%s'>" % \
-            (self.id, self.is_synced)
+        return "<Listing id='%d' contract_address='%s'>" % \
+            (self.id, self.contract_address)
 
     FIELDS = {
         'id': int,
-        'is_synced': bool,
+        'contract_address': str,
     }
 
     FIELDS.update(Base.FIELDS)

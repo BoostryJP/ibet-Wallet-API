@@ -24,11 +24,10 @@ from eth_utils import to_checksum_address
 
 from app import config
 from app.contracts import Contract
-from app.model import (
+from app.model.db import (
     Listing,
     ExecutableContract
 )
-from app.model.node import Node
 
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -38,12 +37,6 @@ from tests.contract_modules import (
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-
-def insert_node_data(session, is_synced):
-    node = Node()
-    node.is_synced = is_synced
-    session.add(node)
 
 
 def tokenlist_contract():
@@ -85,7 +78,6 @@ class TestEthSendRawTransactionNoWait:
     # Input list is empty
     def test_normal_1(self, client, session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
-        insert_node_data(session, is_synced=True)
 
         request_params = {"raw_tx_hex_list": []}
 
@@ -101,7 +93,6 @@ class TestEthSendRawTransactionNoWait:
     # <Normal_2>
     # Input list exists (1 entry)
     def test_normal_2(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -167,7 +158,6 @@ class TestEthSendRawTransactionNoWait:
     # <Normal_3>
     # Input list exists (multiple entries)
     def test_normal_3(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -280,7 +270,7 @@ class TestEthSendRawTransactionNoWait:
     # <Error_1>
     # Unsupported HTTP method
     # -> 404 Not Supported
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -293,7 +283,7 @@ class TestEthSendRawTransactionNoWait:
     # <Error_2>
     # No headers
     # -> 400 InvalidParameterError
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
@@ -312,7 +302,7 @@ class TestEthSendRawTransactionNoWait:
     # <Error_3>
     # No inputs
     # -> 400 InvalidParameterError
-    def test_error_3(self, client):
+    def test_error_3(self, client, session):
         request_params = {}
 
         headers = {'Content-Type': 'application/json'}
@@ -333,7 +323,7 @@ class TestEthSendRawTransactionNoWait:
     # <Error_4>
     # Input values are incorrect (not a list)
     # -> 400 InvalidParameterError
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
@@ -355,7 +345,7 @@ class TestEthSendRawTransactionNoWait:
     # <Error_5>
     # Input values are incorrect (not a string type)
     # -> 400 InvalidParameterError
-    def test_error_5(self, client):
+    def test_error_5(self, client, session):
         raw_tx_1 = 1234
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
@@ -381,7 +371,6 @@ class TestEthSendRawTransactionNoWait:
     # -> 200, status = 0
     def test_error_6(self, client, session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
-        insert_node_data(session, is_synced=True)
 
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
@@ -397,30 +386,8 @@ class TestEthSendRawTransactionNoWait:
         assert resp.json['data'] == [{'id': 1, 'status': 0}]
 
     # <Error_7>
-    # block synchronization stop
-    def test_error_7(self, client, session):
-        config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
-        insert_node_data(session, is_synced=False)
-
-        raw_tx_1 = 'raw_tx_1'
-        request_params = {'raw_tx_hex_list': [raw_tx_1]}
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-        assert resp.status_code == 503
-        assert resp.json['meta'] == {
-            'code': 503,
-            'message': 'Service Unavailable',
-            'description': 'Block synchronization is down',
-        }
-
-    # <Error_8>
     # Invalid token status
-    def test_error_8(self, client, session):
-        insert_node_data(session, is_synced=True)
+    def test_error_7(self, client, session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -481,10 +448,9 @@ class TestEthSendRawTransactionNoWait:
             'description': 'Token is currently suspended',
         }
 
-    # <Error_9>
+    # <Error_8>
     # Non executable contract
-    def test_error_9(self, client, session):
-        insert_node_data(session, is_synced=True)
+    def test_error_8(self, client, session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -536,10 +502,9 @@ class TestEthSendRawTransactionNoWait:
             "status": 0
         }]
 
-    # <Error_10>
+    # <Error_9>
     # Transaction failed
-    def test_error_10(self, client, session):
-        insert_node_data(session, is_synced=True)
+    def test_error_9(self, client, session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
