@@ -26,7 +26,10 @@ from app import config
 from app.api.common import BaseResource
 from app.contracts import Contract
 from app.errors import InvalidParameterError, DataNotExistsError, AppError
-from app.model import Listing, ExecutableContract
+from app.model.db import (
+    Listing,
+    ExecutableContract
+)
 
 LOG = log.get_logger()
 

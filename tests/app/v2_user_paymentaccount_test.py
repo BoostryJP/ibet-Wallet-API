@@ -31,7 +31,7 @@ class TestPaymentAccount:
 
     # ＜正常系1＞
     # 通常参照（登録 -> 認可済）
-    def test_paymentaccount_normal_1(self, client, shared_contract):
+    def test_paymentaccount_normal_1(self, client, session, shared_contract):
         # テスト用アカウント
         trader = eth_account['trader']
         agent = eth_account['agent']
@@ -60,7 +60,7 @@ class TestPaymentAccount:
 
     # ＜正常系2＞
     # 通常参照（登録なし）
-    def test_paymentaccount_normal_2(self, client, shared_contract):
+    def test_paymentaccount_normal_2(self, client, session, shared_contract):
         # テスト用アカウント（traderは任意のアドレス）
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         agent = eth_account['agent']
@@ -87,7 +87,7 @@ class TestPaymentAccount:
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
-    def test_paymentaccount_error_1(self, client):
+    def test_paymentaccount_error_1(self, client, session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -104,7 +104,7 @@ class TestPaymentAccount:
     # ＜エラー系2-1＞
     # 入力エラー
     # account_addressが未設定
-    def test_paymentaccount_error_2_1(self, client):
+    def test_paymentaccount_error_2_1(self, client, session):
         # テスト用アカウント
         agent = eth_account['agent']
 
@@ -125,7 +125,7 @@ class TestPaymentAccount:
     # ＜エラー系2-2＞
     # 入力エラー
     # account_addressのアドレスフォーマットが正しくない
-    def test_paymentaccount_error_2_2(self, client):
+    def test_paymentaccount_error_2_2(self, client, session):
         # テスト用アカウント
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い
         agent = eth_account['agent']
@@ -144,7 +144,7 @@ class TestPaymentAccount:
     # ＜エラー系3-1＞
     # 入力エラー
     # agent_addressが未設定
-    def test_paymentaccount_error_3_1(self, client):
+    def test_paymentaccount_error_3_1(self, client, session):
         # テスト用アカウント
         trader = eth_account['trader']['account_address']
 
@@ -164,7 +164,7 @@ class TestPaymentAccount:
 
     # ＜エラー系3-2＞
     # agent_addressのアドレスフォーマットが正しくない
-    def test_paymentaccount_error_3_2(self, client):
+    def test_paymentaccount_error_3_2(self, client, session):
         # テスト用アカウント
         trader = eth_account['trader']['account_address']
         agent = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9"  # アドレスが短い

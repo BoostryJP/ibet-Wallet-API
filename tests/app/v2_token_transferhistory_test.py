@@ -16,9 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import sys
 
-from app.model import (
+from app.model.db import (
     Listing,
     IDXTransfer
 )
@@ -343,7 +342,7 @@ class TestV2TransferHistory:
     # Error_1
     # 無効なコントラクトアドレス
     # 400
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         apiurl = self.apiurl_base.format(contract_address='0xabcd')
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)

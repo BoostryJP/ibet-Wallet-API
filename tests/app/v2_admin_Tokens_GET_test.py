@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from app.model import Listing
+from app.model.db import Listing
 
 class TestAdminTokensGET:
     # テスト対象API

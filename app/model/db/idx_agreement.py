@@ -16,65 +16,69 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from enum import Enum
+
 from sqlalchemy import (
     Column,
-    DateTime,
     String,
+    Integer,
     BigInteger,
-    Boolean
+    DateTime
 )
 
-from app.model import Base
+from app.model.db import Base
 from app.utils import alchemy
 
 
-class IDXOrder(Base):
-    """DEX Order Events (INDEX)"""
-    __tablename__ = "order"
+class IDXAgreement(Base):
+    """DEX Agreement Events (INDEX)"""
+    __tablename__ = "agreement"
 
     # Sequence Id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # Transaction Hash
     transaction_hash = Column(String(66))
-    # Token Address
-    token_address = Column(String(42), index=True)
     # Exchange(DEX) Address
-    exchange_address = Column(String(42), index=True)
+    exchange_address = Column(String(42), primary_key=True)
     # Order Id
-    order_id = Column(BigInteger, index=True)
+    order_id = Column(BigInteger, primary_key=True)
+    # Agreement Id
+    agreement_id = Column(BigInteger, primary_key=True)
     # Unique Order Id: exchange_address + "_" + str(order_id)
     unique_order_id = Column(String(256), index=True)
-    # Account Address
-    account_address = Column(String(42))
+    # Buyer Address
+    buyer_address = Column(String(42), index=True)
+    # Seller Address
+    seller_address = Column(String(42), index=True)
     # Counterpart Address
     counterpart_address = Column(String(42))
-    # Buy/Sell
-    is_buy = Column(Boolean)
-    # Order Price
-    price = Column(BigInteger)
-    # Order Amount (quantity)
+    # Agreement Amount
     amount = Column(BigInteger)
-    # Paying Agent Address
-    agent_address = Column(String(42))
-    # Cancellation Status
-    is_cancelled = Column(Boolean)
-    # Order Timestamp (datetime)
-    order_timestamp = Column(DateTime, default=None)
+    # Agreement Status
+    status = Column(Integer)
+    # Agreement Timestamp (datetime)
+    agreement_timestamp = Column(DateTime, default=None)
+    # Settlement Timestamp (datetime)
+    settlement_timestamp = Column(DateTime, default=None)
 
     FIELDS = {
         "id": int,
-        "transaction_hash": str,
-        "token_address": str,
         "exchange_address": str,
         "order_id": int,
-        "account_address": str,
+        "agreement_id": int,
+        "unique_order_id": str,
+        "buyer_address": str,
+        "seller_address": str,
         "counterpart_address": str,
-        "is_buy": bool,
-        "price": int,
         "amount": int,
-        "agent_address": str,
-        "is_cancelled": bool,
-        "order_timestamp": alchemy.datetime_to_timestamp,
+        "status": int,
+        "settlement_timestamp": alchemy.datetime_to_timestamp,
     }
 
     FIELDS.update(Base.FIELDS)
+
+
+class AgreementStatus(Enum):
+    PENDING = 0
+    DONE = 1
+    CANCELED = 2

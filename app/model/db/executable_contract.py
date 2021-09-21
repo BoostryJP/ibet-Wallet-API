@@ -18,9 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from sqlalchemy import Column
-from sqlalchemy import String, Integer, BigInteger, Boolean
+from sqlalchemy import String, BigInteger
 
-from app.model import Base
+from app.model.db import Base
 
 class ExecutableContract(Base):
     __tablename__ = 'executable_contract'

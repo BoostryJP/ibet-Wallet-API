@@ -20,7 +20,7 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from app import config
-from app.model import Listing
+from app.model.db import Listing
 from tests.contract_modules import (
     issue_bond_token,
     register_bond_list,
@@ -498,7 +498,7 @@ class TestV2CompanyCompanyTokenList:
     ###########################################################################
 
     # エラー系：入力値エラー（eth_addressがアドレスフォーマットではない）
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         eth_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
 
         url = self.apiurl.replace("{eth_address}", eth_address)

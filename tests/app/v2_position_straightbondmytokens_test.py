@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from app import config
-from app.model import Listing
+from app.model.db import Listing
 
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -820,7 +820,7 @@ class TestV2StraightBondMyTokens:
                 assert token == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）
-    def test_position_error_1(self, client):
+    def test_position_error_1(self, client, session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -839,7 +839,7 @@ class TestV2StraightBondMyTokens:
         }
 
     # エラー系2：入力値エラー（headersなし）
-    def test_position_error_2(self, client):
+    def test_position_error_2(self, client, session):
         account = eth_account['trader']
         request_params = {"account_address_list": [account['account_address']]}
 
@@ -858,7 +858,7 @@ class TestV2StraightBondMyTokens:
         }
 
     # エラー系3-1：入力値エラー（account_addressがアドレスフォーマットではない）
-    def test_position_error_3_1(self, client):
+    def test_position_error_3_1(self, client, session):
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
         request_params = {"account_address_list": [account_address]}
 
@@ -877,7 +877,7 @@ class TestV2StraightBondMyTokens:
         }
 
     # エラー系3-2：入力値エラー（account_addressがstring以外）
-    def test_position_error_3_2(self, client):
+    def test_position_error_3_2(self, client, session):
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
 
@@ -901,7 +901,7 @@ class TestV2StraightBondMyTokens:
         }
 
     # エラー系4：取扱トークン対象外
-    def test_position_error_4(self, client):
+    def test_position_error_4(self, client, session):
 
         config.BOND_TOKEN_ENABLED = False
 

@@ -24,7 +24,7 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from app import config
-from app.model import (
+from app.model.db import (
     Listing,
     IDXPosition
 )

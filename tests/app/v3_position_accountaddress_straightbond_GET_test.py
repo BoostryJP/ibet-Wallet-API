@@ -23,7 +23,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.contracts import Contract
-from app.model import Listing
+from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.utils import PersonalInfoUtils
 from tests.contract_modules import (

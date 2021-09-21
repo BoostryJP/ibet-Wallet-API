@@ -38,7 +38,7 @@ class TestEventsE2EMessaging:
 
     # Normal_1
     # No event
-    def test_normal_1(self, client, shared_contract):
+    def test_normal_1(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -64,7 +64,7 @@ class TestEventsE2EMessaging:
 
     # Normal_2_1
     # event = PublicKeyUpdated
-    def test_normal_2_1(self, client, shared_contract):
+    def test_normal_2_1(self, client, session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -114,7 +114,7 @@ class TestEventsE2EMessaging:
 
     # Normal_2_2
     # event = Message
-    def test_normal_2_2(self, client, shared_contract):
+    def test_normal_2_2(self, client, session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -159,7 +159,7 @@ class TestEventsE2EMessaging:
 
     # Normal_2_3
     # event = None
-    def test_normal_2_3(self, client, shared_contract):
+    def test_normal_2_3(self, client, session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -208,7 +208,7 @@ class TestEventsE2EMessaging:
 
     # Normal_3
     # Multiple events
-    def test_normal_3(self, client, shared_contract):
+    def test_normal_3(self, client, session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -274,7 +274,7 @@ class TestEventsE2EMessaging:
     # Error_1
     # InvalidParameterError
     # null value not allowed
-    def test_error_1(self, client, shared_contract):
+    def test_error_1(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -306,7 +306,7 @@ class TestEventsE2EMessaging:
     # Error_2
     # InvalidParameterError
     # from_block, to_block: min value
-    def test_error_2(self, client, shared_contract):
+    def test_error_2(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
@@ -333,7 +333,7 @@ class TestEventsE2EMessaging:
     # Error_3
     # InvalidParameterError
     # event: unallowed value
-    def test_error_3(self, client, shared_contract):
+    def test_error_3(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.blockNumber
@@ -359,7 +359,7 @@ class TestEventsE2EMessaging:
     # Error_4
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
-    def test_error_4(self, client, shared_contract):
+    def test_error_4(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.blockNumber

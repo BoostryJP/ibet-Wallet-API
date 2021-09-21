@@ -44,6 +44,8 @@ CONFIG.read(INI_FILE)
 
 # Web3設定
 WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8545'
+WEB3_HTTP_PROVIDER_STANDBY = [node.strip() for node in os.environ.get("WEB3_HTTP_PROVIDER_STANDBY").split(",")] \
+    if os.environ.get("WEB3_HTTP_PROVIDER_STANDBY") else []
 WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
 TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT")) \
     if os.environ.get("TRANSACTION_WAIT_TIMEOUT") else 120
@@ -63,7 +65,16 @@ BLOCK_SYNC_STATUS_CALC_PERIOD = int(os.environ.get("BLOCK_SYNC_STATUS_CALC_PERIO
 BLOCK_SYNC_REMAINING_THRESHOLD = int(os.environ.get("BLOCK_SYNC_REMAINING_THRESHOLD", 1))
 # ブロック同期停止と判断するブロック生成速度のしきい値 (%)
 # NOTE: Quorum Validator 4台中1台がクラッシュ障害状態のとき、ブロック生成速度は 20% 〜 35% ぐらいになる
-BLOCK_GENERATION_SPEED_THRESHOLD = int(os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD", 10))
+if APP_ENV == "local":
+    BLOCK_GENERATION_SPEED_THRESHOLD = int(os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD")) \
+        if os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD") else 0
+else:
+    BLOCK_GENERATION_SPEED_THRESHOLD = int(os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD")) \
+        if os.environ.get("BLOCK_GENERATION_SPEED_THRESHOLD") else 10
+WEB3_REQUEST_RETRY_COUNT = int(os.environ.get("WEB3_REQUEST_RETRY_COUNT")) if os.environ.get(
+    "WEB3_REQUEST_RETRY_COUNT") else 3
+WEB3_REQUEST_WAIT_TIME = int(os.environ.get("WEB3_REQUEST_WAIT_TIME")) \
+    if os.environ.get("WEB3_REQUEST_WAIT_TIME") else BLOCK_SYNC_STATUS_SLEEP_INTERVAL  # Same batch interval
 
 # データベース設定
 if 'pytest' in sys.modules:  # 単体テスト実行時

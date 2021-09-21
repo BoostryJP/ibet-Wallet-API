@@ -27,7 +27,7 @@ from app.errors import (
     InvalidParameterError,
     DataNotExistsError
 )
-from app.model import Notification
+from app.model.db import Notification
 
 LOG = log.get_logger()
 

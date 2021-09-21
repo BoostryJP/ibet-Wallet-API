@@ -18,42 +18,100 @@ SPDX-License-Identifier: Apache-2.0
 """
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
 import time
-from datetime import timezone, timedelta
+from typing import Any, Callable
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session
+)
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from web3.types import (
+    RPCEndpoint,
+    RPCResponse
+)
 
-path = os.path.join(os.path.dirname(__file__), "../")
+path = os.path.join(os.path.dirname(__file__), '../')
 sys.path.append(path)
 
 from app import config
-from app.model.node import Node
-from batch.lib.misc import wait_all_futures
+from app.model.db import Node
 import log
 
-JST = timezone(timedelta(hours=+9), "JST")
 LOG = log.get_logger(process_name="PROCESSOR-BLOCK_SYNC_STATUS")
 
-# 設定の取得
-WEB3_HTTP_PROVIDER = config.WEB3_HTTP_PROVIDER
-URI = config.DATABASE_URL
-WORKER_COUNT = int(config.WORKER_COUNT)
-BLOCK_SYNC_STATUS_SLEEP_INTERVAL = config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL
-BLOCK_SYNC_STATUS_CALC_PERIOD = config.BLOCK_SYNC_STATUS_CALC_PERIOD
-BLOCK_GENERATION_SPEED_THRESHOLD = config.BLOCK_GENERATION_SPEED_THRESHOLD
-# 平均ブロック生成間隔 (秒)
-EXPECTED_BLOCKS_PER_SEC = 1
-
-# 初期化
-web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-engine = create_engine(URI, echo=False)
+engine = create_engine(config.DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
+
+
+class Web3WrapperException(Exception):
+    pass
+
+
+def web3_exception_handler_middleware(
+        make_request: Callable[[RPCEndpoint, Any], Any], w3: "Web3"
+) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+    METHODS = [
+        "eth_blockNumber",
+        "eth_getBlockByNumber",
+        "eth_syncing",
+    ]
+
+    def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+        if method in METHODS:
+            try:
+                return make_request(method, params)
+            except Exception as ex:
+                # Throw Web3WrapperException if an error occurred in Web3(connection error, timeout, etc),
+                # Web3WrapperException is handled in this module.
+                raise Web3WrapperException(ex)
+        else:
+            return make_request(method, params)
+
+    return middleware
+
+
+# Average block generation interval
+EXPECTED_BLOCKS_PER_SEC = 1
+
+
+class Sinks:
+    def __init__(self):
+        self.sinks = []
+
+    def register(self, sink):
+        self.sinks.append(sink)
+
+    def on_node(self, *args, **kwargs):
+        for sink in self.sinks:
+            sink.on_node(*args, **kwargs)
+
+    def flush(self, *args, **kwargs):
+        for sink in self.sinks:
+            sink.flush(*args, **kwargs)
+
+
+class DBSink:
+    def __init__(self, db):
+        self.db = db
+
+    def on_node(self, endpoint_uri: str, priority: int, is_synced: bool):
+        _node = self.db.query(Node).filter(Node.endpoint_uri == endpoint_uri).first()
+        if _node is not None:
+            _node.is_synced = is_synced
+            self.db.merge(_node)
+        else:
+            _node = Node()
+            _node.endpoint_uri = endpoint_uri
+            _node.priority = priority
+            _node.is_synced = is_synced
+            self.db.add(_node)
+
+    def flush(self):
+        self.db.commit()
 
 
 class RingBuffer:
@@ -65,117 +123,137 @@ class RingBuffer:
         self._buffer[self._next] = data
         self._next = (self._next + 1) % len(self._buffer)
 
-    def peekOldest(self):
+    def peek_oldest(self):
         return self._buffer[self._next]
 
 
-# Watcher
-class Watcher:
-    def __init__(self):
-        pass
+class Processor:
+    def __init__(self, sink, db):
+        self.sink = sink
+        self.db = db
+        self.node_info = {}
 
-    def watch(self):
-        pass
+        self.__set_node_info(endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0)
+        for endpoint_uri in config.WEB3_HTTP_PROVIDER_STANDBY:
+            self.__set_node_info(endpoint_uri=endpoint_uri, priority=1)
+        self.sink.flush()
 
-    def loop(self):
+    def process(self):
+        for endpoint_uri in self.node_info.keys():
+            try:
+                self.__process(endpoint_uri=endpoint_uri)
+            except Web3WrapperException:
+                self.__web3_errors(endpoint_uri=endpoint_uri)
+                LOG.error(f"Node connection failed: {endpoint_uri}")
+
+    def __set_node_info(self, endpoint_uri: str, priority: int):
+        self.node_info[endpoint_uri] = {
+            "priority": priority
+        }
+
+        web3 = Web3(Web3.HTTPProvider(endpoint_uri))
+        web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        web3.middleware_onion.add(web3_exception_handler_middleware)
+        self.node_info[endpoint_uri]["web3"] = web3
+
+        # Get block number
         try:
-            self.watch()
-        except Exception as err:  # Exceptionが発生した場合は処理を継続
-            LOG.error(err)
+            # NOTE: Immediately after the processing, the monitoring data is not retained,
+            #       so the past block number is acquired.
+            block = web3.eth.get_block(max(web3.eth.blockNumber - config.BLOCK_SYNC_STATUS_CALC_PERIOD, 0))
+        except Web3WrapperException:
+            self.__web3_errors(endpoint_uri=endpoint_uri)
+            LOG.error(f"Node connection failed: {endpoint_uri}")
+            block = {
+                "timestamp": time.time(),
+                "number": 0
+            }
 
-
-class WatchBlockSyncState(Watcher):
-    """
-    ブロック同期監視。
-    ブロックが同期されておらずトランザクションがすぐに取り込まれない状態だと、
-    nonce の値が正しく計算されないため同期状態を監視する。
-    """
-
-    def __init__(self):
-        super().__init__()
-        # 起動直後は、監視データが溜まっていないので過去ブロックの情報を観測値として代用する
-        block = web3.eth.getBlock(max(web3.eth.blockNumber - BLOCK_SYNC_STATUS_CALC_PERIOD, 0))
         data = {
             "time": block["timestamp"],
             "block_number": block["number"]
         }
-        self.history = RingBuffer(BLOCK_SYNC_STATUS_CALC_PERIOD, data)
+        history = RingBuffer(config.BLOCK_SYNC_STATUS_CALC_PERIOD, data)
+        self.node_info[endpoint_uri]["history"] = history
 
-    def watch(self):
+    def __process(self, endpoint_uri: str):
         is_synced = True
-        messages = []
+        errors = []
+        priority = self.node_info[endpoint_uri]["priority"]
+        web3 = self.node_info[endpoint_uri]["web3"]
+        history = self.node_info[endpoint_uri]["history"]
 
-        # 接続先ノードのチェーンが遅れており、最新のブロックを取り込んでいる途中か判定
+        # Check sync to other node
         syncing = web3.eth.syncing
         if syncing:
             remaining_blocks = syncing["highestBlock"] - syncing["currentBlock"]
-            # 1ブロックだけ遅れている場合はすぐに最新化されると想定して正常扱い
-            if remaining_blocks > config.BLOCK_SYNC_REMAINING_THRESHOLD:
+            # NOTE: If it is delayed by one block,
+            #       it will be treated normally assuming that it will be updated immediately afterwards.
+            if remaining_blocks > 1:
                 is_synced = False
-                messages.append(f"highestBlock={syncing['highestBlock']}, currentBlock={syncing['currentBlock']}")
+                errors.append(f"highestBlock={syncing['highestBlock']}, currentBlock={syncing['currentBlock']}")
 
-        # ブロックナンバー増加チェック
-        # 直近 BLOCK_SYNC_STATUS_CALC_PERIOD 回の監視中に増加したブロックナンバーが、
-        # 理論値の BLOCK_GENERATION_SPEED_THRESHOLD % を下回ればエラー
+        # Check increased block number
         data = {
             "time": time.time(),
             "block_number": web3.eth.blockNumber
         }
-        old_data = self.history.peekOldest()
+        old_data = history.peek_oldest()
         elapsed_time = data["time"] - old_data["time"]
         generated_block_count = data["block_number"] - old_data["block_number"]
         generated_block_count_threshold = \
-            elapsed_time / EXPECTED_BLOCKS_PER_SEC * BLOCK_GENERATION_SPEED_THRESHOLD / 100
+            (elapsed_time / EXPECTED_BLOCKS_PER_SEC) * \
+            (config.BLOCK_GENERATION_SPEED_THRESHOLD / 100)  # count of block generation theoretical value
         if generated_block_count < generated_block_count_threshold:
             is_synced = False
-            messages.append(f"{generated_block_count} blocks in {int(elapsed_time)} sec")
+            errors.append(f"{generated_block_count} blocks in {int(elapsed_time)} sec")
+        history.append(data)
 
-        self.history.append(data)
+        # Update database
+        _node = self.db.query(Node).filter(Node.endpoint_uri == endpoint_uri).first()
+        status_changed = False if _node is not None and _node.is_synced == is_synced else True
+        self.sink.on_node(endpoint_uri=endpoint_uri, priority=priority, is_synced=is_synced)
 
-        # DB更新
-        status_changed = False
-        node = db_session.query(Node).first()
-        if node is None:
-            node = Node()
-            node.is_synced = is_synced
-            db_session.merge(node)
-            db_session.commit()
-        elif node.is_synced != is_synced:
-            node.is_synced = is_synced
-            db_session.commit()
-            status_changed = True
-
-        # ブロック同期状態の変化に応じてログ出力
+        # Output logs
         if status_changed:
             if is_synced:
-                LOG.info("Block synchronization is working.")
+                LOG.info(f"{endpoint_uri} Block synchronization is working")
             else:
-                LOG.error("Block synchronization is down: %s", messages)
-        elif not is_synced:
-            # 一度エラーログを出力した後は、ワーニングレベルでログを出す
-            LOG.warning("Block synchronization is down: %s", messages)
+                LOG.error(f"{endpoint_uri} Block synchronization is down: %s", errors)
+        else:
+            if not is_synced:
+                # If the same previous processing status, log output with WARING level.
+                LOG.warning(f"{endpoint_uri} Block synchronization is down: %s", errors)
+
+        self.sink.flush()
+
+    def __web3_errors(self, endpoint_uri: str):
+        try:
+            priority = self.node_info[endpoint_uri]["priority"]
+            self.sink.on_node(endpoint_uri=endpoint_uri, priority=priority, is_synced=False)
+            self.sink.flush()
+        except Exception as ex:
+            # Unexpected errors(DB error, etc)
+            LOG.exception(ex)
+
+
+_sink = Sinks()
+_sink.register(DBSink(db_session))
+processor = Processor(sink=_sink, db=db_session)
 
 
 def main():
-    watchers = [
-        WatchBlockSyncState(),
-    ]
-
-    e = ThreadPoolExecutor(max_workers=WORKER_COUNT)
     LOG.info("Service started successfully")
 
     while True:
-        start_time = time.time()
+        try:
+            processor.process()
+            LOG.debug("Processed")
+        except Exception as ex:
+            # Unexpected errors(DB error, etc)
+            LOG.exception(ex)
 
-        fs = []
-        for watcher in watchers:
-            fs.append(e.submit(watcher.loop))
-        wait_all_futures(fs)
-
-        elapsed_time = time.time() - start_time
-        LOG.info("[LOOP] finished in {} secs".format(elapsed_time))
-
-        time.sleep(max(BLOCK_SYNC_STATUS_SLEEP_INTERVAL - elapsed_time, 0))
+        time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
 
 
 if __name__ == "__main__":

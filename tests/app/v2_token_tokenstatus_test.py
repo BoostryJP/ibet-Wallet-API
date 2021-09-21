@@ -21,7 +21,7 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model import Listing
+from app.model.db import Listing
 from app import config
 from app.contracts import Contract
 
@@ -591,7 +591,7 @@ class TestV2TokenTokenStatus:
     # ＜エラー系1＞
     #   無効なコントラクトアドレス（不正な形式）
     #   -> 400エラー
-    def test_tokenstatus_error_1(self, client):
+    def test_tokenstatus_error_1(self, client, session):
         apiurl = self.apiurl_base.format(contract_address='0xabcd')
 
         query_string = ''

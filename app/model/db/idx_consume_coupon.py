@@ -19,32 +19,37 @@ SPDX-License-Identifier: Apache-2.0
 from sqlalchemy import (
     Column,
     String,
-    BigInteger
+    BigInteger,
+    DateTime
 )
 
-from app.model import Base
+from app.model.db import Base
 
 
-class IDXPosition(Base):
-    """Token Positions (INDEX)"""
-    __tablename__ = "position"
+class IDXConsumeCoupon(Base):
+    """Coupon Consume Events (INDEX)"""
+    __tablename__ = "consume_coupon"
 
     # Sequence Id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Transaction Hash
+    transaction_hash = Column(String(66), index=True)
     # Token Address
     token_address = Column(String(42), index=True)
     # Account Address
-    account_address = Column(String(42))
-    # Balance
-    balance = Column(BigInteger)
-    # Pending Transfer
-    pending_transfer = Column(BigInteger)
+    account_address = Column(String(42), index=True)
+    # Consume Amount
+    amount = Column(BigInteger)
+    # Block Timestamp (datetime)
+    block_timestamp = Column(DateTime, default=None)
 
     FIELDS = {
         "id": int,
+        "transaction_hash": str,
         "token_address": str,
         "account_address": str,
-        "balance": int,
-        "pending_transfer": int
+        "amount": int,
+        "block_timestamp": str
     }
+
     FIELDS.update(Base.FIELDS)

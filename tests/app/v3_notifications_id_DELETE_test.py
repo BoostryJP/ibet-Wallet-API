@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
 
-from app.model import Notification
+from app.model.db import Notification
 
 
 class TestNotificationsIdGet:

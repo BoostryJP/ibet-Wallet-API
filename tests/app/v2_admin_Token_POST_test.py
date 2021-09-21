@@ -19,7 +19,10 @@ SPDX-License-Identifier: Apache-2.0
 
 import json
 
-from app.model import Listing, ExecutableContract
+from app.model.db import (
+    Listing,
+    ExecutableContract
+)
 
 
 class TestAdminTokenPOST:

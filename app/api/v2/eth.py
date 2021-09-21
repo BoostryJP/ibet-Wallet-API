@@ -17,9 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from cerberus import Validator
-from web3 import Web3
-from web3.geth import GethTxPool
-from web3.middleware import geth_poa_middleware
 from web3.exceptions import TimeExhausted
 from eth_account import Account
 from eth_typing import ChecksumAddress
@@ -32,18 +29,18 @@ from app.api.common import BaseResource
 from app.errors import (
     InvalidParameterError,
     SuspendedTokenError,
-    DataNotExistsError,
-    ServiceUnavailable
+    DataNotExistsError
 )
 from app import config
-from app.model import ExecutableContract, Listing
+from app.model.db import (
+    ExecutableContract,
+    Listing
+)
 from app.contracts import Contract
-from app.model.node import Node
+from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
-
-web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3 = Web3Wrapper()
 
 
 # ------------------------------
@@ -144,12 +141,6 @@ class SendRawTransaction(BaseResource):
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
 
-        # Check block synchronization state
-        # NOTE: If the block is out of sync, the nonce is not the correct value.
-        block = session.query(Node).first()
-        if block is None or not block.is_synced:
-            raise ServiceUnavailable("Block synchronization is down")
-
         # Send transaction
         result = []
         for i, raw_tx_hex in enumerate(raw_tx_hex_list):
@@ -207,7 +198,7 @@ class SendRawTransaction(BaseResource):
                     LOG.error(f"get sender address from signed transaction failed: {err}")
                     continue
                 nonce = int("0x0" if raw_tx[0].hex() == "" else raw_tx[0].hex(), 16)
-                txpool_inspect = GethTxPool.inspect
+                txpool_inspect = web3.geth.txpool.inspect()
                 if from_address in txpool_inspect.queued:
                     if str(nonce) in txpool_inspect.queued[from_address]:
                         status = 0  # execution failure
@@ -305,12 +296,6 @@ class SendRawTransactionNoWait(BaseResource):
                         continue
                     if TokenContract.functions.status().call() is False:
                         raise SuspendedTokenError("Token is currently suspended")
-
-        # Check block synchronization state
-        # NOTE: If the block is out of sync, the nonce is not the correct value.
-        node = session.query(Node).first()
-        if node is None or not node.is_synced:
-            raise ServiceUnavailable("Block synchronization is down")
 
         # Send transaction
         result = []

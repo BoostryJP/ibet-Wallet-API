@@ -16,10 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from unittest import mock
+
 from web3 import Web3
 
 from app import config
-from app.model.node import Node
+from app.model.db import Node
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 
@@ -30,10 +32,13 @@ class TestNodeInfoBlockSyncStatus:
     apiurl = "/v2/NodeInfo/BlockSyncStatus"
 
     @staticmethod
-    def insert_node_data(session, is_synced):
+    def insert_node_data(session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0):
         node = Node()
         node.is_synced = is_synced
+        node.endpoint_uri = endpoint_uri
+        node.priority = priority
         session.add(node)
+        session.commit()
 
     ##################################################
     # Normal
@@ -42,11 +47,13 @@ class TestNodeInfoBlockSyncStatus:
     # Normal_1
     # Node is synced
     def test_normal_1(self, client, session):
-        # prepare test data
-        self.insert_node_data(session, is_synced=True)
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+            # prepare test data
+            self.insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546")
+            self.insert_node_data(session, is_synced=True, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=1)
 
-        # request target api
-        resp = client.simulate_get(self.apiurl)
+            # request target api
+            resp = client.simulate_get(self.apiurl)
 
         # assertion
         latest_block_number = web3.eth.blockNumber
@@ -63,11 +70,13 @@ class TestNodeInfoBlockSyncStatus:
     # Normal_2
     # Node is not synced
     def test_normal_2(self, client, session):
-        # prepare test data
-        self.insert_node_data(session, is_synced=False)
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+            # prepare test data
+            self.insert_node_data(session, is_synced=False)
+            self.insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546", priority=1)
 
-        # request target api
-        resp = client.simulate_get(self.apiurl)
+            # request target api
+            resp = client.simulate_get(self.apiurl)
 
         # assertion
         assert resp.status_code == 200

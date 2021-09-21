@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from app.model import Notification
+from app.model.db import Notification
 from datetime import datetime, timedelta, timezone
 
 JST = timezone(timedelta(hours=+9), "JST")

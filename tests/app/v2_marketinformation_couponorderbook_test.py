@@ -22,7 +22,7 @@ import sys
 from eth_utils import to_checksum_address
 
 from app import config
-from app.model import (
+from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement,
     AgreementStatus
@@ -1382,7 +1382,7 @@ class TestV2CouponOrderBook:
         assert resp.json['data'] == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）
-    def test_coupon_orderbook_error_1(self, client):
+    def test_coupon_orderbook_error_1(self, client, session):
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = True
@@ -1404,7 +1404,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系2：入力値エラー（headersなし）
-    def test_coupon_orderbook_error_2(self, client):
+    def test_coupon_orderbook_error_2(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
@@ -1431,7 +1431,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系3-1：入力値エラー（token_addressがアドレスフォーマットではない）
-    def test_coupon_orderbook_error_3_1(self, client):
+    def test_coupon_orderbook_error_3_1(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレスが短い
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
@@ -1458,7 +1458,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系3-2：入力値エラー（token_addressがstring以外）
-    def test_coupon_orderbook_error_3_2(self, client):
+    def test_coupon_orderbook_error_3_2(self, client, session):
         token_address = 123456789123456789123456789123456789
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
@@ -1488,7 +1488,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系4-1：入力値エラー（account_addressがアドレスフォーマットではない）
-    def test_coupon_orderbook_error_4_1(self, client):
+    def test_coupon_orderbook_error_4_1(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
@@ -1515,7 +1515,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系4-2：入力値エラー（account_addressがstring以外）
-    def test_coupon_orderbook_error_4_2(self, client):
+    def test_coupon_orderbook_error_4_2(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
@@ -1545,7 +1545,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系5：入力値エラー（order_typeがbuy/sell以外）
-    def test_coupon_orderbook_error_5(self, client):
+    def test_coupon_orderbook_error_5(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
@@ -1575,7 +1575,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系6：HTTPメソッドが不正
-    def test_coupon_orderbook_error_6(self, client):
+    def test_coupon_orderbook_error_6(self, client, session):
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = True
@@ -1590,7 +1590,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系7：取扱トークン対象外
-    def test_coupon_orderbook_error_7(self, client):
+    def test_coupon_orderbook_error_7(self, client, session):
         exchange_address = \
             to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = False
@@ -1605,7 +1605,7 @@ class TestV2CouponOrderBook:
         }
 
     # エラー系8：exchangeアドレス未設定
-    def test_coupon_orderbook_error_8(self, client):
+    def test_coupon_orderbook_error_8(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
         resp = client.simulate_post(self.apiurl)

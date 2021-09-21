@@ -98,7 +98,7 @@ class TestV2StraightBondLastPrice:
 
     # 正常系1：存在しない取引コントラクトアドレスを指定
     #  -> 現在値：0円
-    def test_lastprice_normal_1(self, client):
+    def test_lastprice_normal_1(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
@@ -124,7 +124,7 @@ class TestV2StraightBondLastPrice:
 
     # 正常系2：約定が発生していないトークンアドレスを指定した場合
     #  -> 現在値：0円
-    def test_lastprice_normal_2(self, client):
+    def test_lastprice_normal_2(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
@@ -150,7 +150,7 @@ class TestV2StraightBondLastPrice:
 
     # 正常系3：1000円で約定
     #  -> 現在値1000円が返却される
-    def test_lastprice_normal_3(self, client, shared_contract):
+    def test_lastprice_normal_3(self, client, session, shared_contract):
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
@@ -180,7 +180,7 @@ class TestV2StraightBondLastPrice:
         assert resp.json['data'] == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）
-    def test_lastprice_error_1(self, client):
+    def test_lastprice_error_1(self, client, session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
@@ -200,7 +200,7 @@ class TestV2StraightBondLastPrice:
         }
 
     # エラー系2：入力値エラー（headersなし）
-    def test_lastprice_error_2(self, client):
+    def test_lastprice_error_2(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
@@ -220,7 +220,7 @@ class TestV2StraightBondLastPrice:
         }
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
-    def test_lastprice_error_3(self, client):
+    def test_lastprice_error_3(self, client, session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
@@ -240,7 +240,7 @@ class TestV2StraightBondLastPrice:
         }
 
     # エラー系4：HTTPメソッドが不正
-    def test_lastprice_error_4(self, client):
+    def test_lastprice_error_4(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -254,7 +254,7 @@ class TestV2StraightBondLastPrice:
         }
 
     # エラー系5：取扱トークン対象外
-    def test_lastprice_error_5(self, client):
+    def test_lastprice_error_5(self, client, session):
         config.BOND_TOKEN_ENABLED = False
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
@@ -268,7 +268,7 @@ class TestV2StraightBondLastPrice:
         }
 
     # エラー系6：exchangeアドレス未設定
-    def test_lastprice_error_6(self, client):
+    def test_lastprice_error_6(self, client, session):
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
 

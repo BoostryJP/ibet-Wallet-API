@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from app import config
-from app.model import Listing
+from app.model.db import Listing
 from tests.account_config import eth_account
 from tests.utils import (
     PersonalInfoUtils,
@@ -707,7 +707,7 @@ class TestV2ShareMyTokens:
     # Error_1
     # Invalid Parameter Error
     # No request-body
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         config.SHARE_TOKEN_ENABLED = True
 
         headers = {"Content-Type": "application/json"}
@@ -731,7 +731,7 @@ class TestV2ShareMyTokens:
     # Error_2
     # Invalid Parameter Error
     # No headers
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
 
@@ -755,7 +755,7 @@ class TestV2ShareMyTokens:
     # Error_3_1
     # Invalid Parameter Error
     # account_address: invalid address
-    def test_error_3_1(self, client):
+    def test_error_3_1(self, client, session):
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # short address
         request_params = {"account_address_list": [account_address]}
 
@@ -780,7 +780,7 @@ class TestV2ShareMyTokens:
     # Error_3_2
     # Invalid Parameter Error
     # account_address: invalid type
-    def test_error_3_2(self, client):
+    def test_error_3_2(self, client, session):
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
 
@@ -809,7 +809,7 @@ class TestV2ShareMyTokens:
     # Error_4
     # Not Supported Error
     # Token is not listed
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         config.SHARE_TOKEN_ENABLED = False
         resp = client.simulate_post(self.apiurl)
         # Assertion

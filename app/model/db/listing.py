@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import Column
 from sqlalchemy import String, BigInteger, Boolean
 
-from app.model import Base
+from app.model.db import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
 JST = timezone(timedelta(hours=+9), "JST")

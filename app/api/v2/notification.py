@@ -26,7 +26,7 @@ from web3 import Web3
 from app import log
 from app.api.common import BaseResource
 from app.errors import InvalidParameterError, DataNotExistsError
-from app.model import Notification
+from app.model.db import Notification
 
 LOG = log.get_logger()
 

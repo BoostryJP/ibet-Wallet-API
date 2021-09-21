@@ -48,11 +48,11 @@ engine = get_engine(config.DATABASE_URL)
 def init_session():
     db_session.configure(bind=engine)
 
-    from app.model import Notification
+    from app.model.db import Notification
 
     if engine.name != "mysql":
         # NOTE:MySQLの場合はSEQ機能が利用できない
         Notification.notification_id_seq.create(bind=engine)
 
-    from app.model import Base
+    from app.model.db import Base
     Base.metadata.create_all(engine)

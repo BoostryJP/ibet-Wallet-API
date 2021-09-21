@@ -28,8 +28,11 @@ from eth_utils import to_checksum_address
 
 from app import config
 from app.contracts import Contract
-from app.model import Listing, ExecutableContract
-from app.model.node import Node
+from app.model.db import (
+    Listing,
+    ExecutableContract,
+    Node
+)
 
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -41,10 +44,13 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-def insert_node_data(session, is_synced):
+def insert_node_data(session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0):
     node = Node()
     node.is_synced = is_synced
+    node.endpoint_uri = endpoint_uri
+    node.priority = priority
     session.add(node)
+    session.commit()
 
 
 def tokenlist_contract():
@@ -72,7 +78,6 @@ def executable_contract_token(session, contract):
 
 
 class TestEthSendRawTransaction:
-
     # Test API
     apiurl = '/v2/Eth/SendRawTransaction/'
 
@@ -83,7 +88,6 @@ class TestEthSendRawTransaction:
     # <Normal_1>
     # Input list is empty
     def test_normal_1(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         request_params = {"raw_tx_hex_list": []}
@@ -99,73 +103,75 @@ class TestEthSendRawTransaction:
 
     # <Normal_2>
     # Input list exists (1 entry)
+    # Web3 FailOver
     def test_normal_2(self, client, session):
-        insert_node_data(session, is_synced=True)
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+            insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546")
+            insert_node_data(session, is_synced=True, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=1)
 
-        # トークンリスト登録
-        tokenlist = tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
-        issuer = eth_account['issuer']
-        coupontoken_1 = issue_coupon_token(issuer, {
-            "name": "name_test1",
-            "symbol": "symbol_test1",
-            "totalSupply": 1000000,
-            "tradableExchange": config.ZERO_ADDRESS,
-            "details": "details_test1",
-            "returnDetails": "returnDetails_test1",
-            "memo": "memo_test1",
-            "expirationDate": "20211201",
-            "transferable": True,
-            "contactInformation": "contactInformation_test1",
-            "privacyPolicy": "privacyPolicy_test1"
-        })
-        coupon_register_list(issuer, coupontoken_1, tokenlist)
+            # トークンリスト登録
+            tokenlist = tokenlist_contract()
+            config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+            issuer = eth_account['issuer']
+            coupontoken_1 = issue_coupon_token(issuer, {
+                "name": "name_test1",
+                "symbol": "symbol_test1",
+                "totalSupply": 1000000,
+                "tradableExchange": config.ZERO_ADDRESS,
+                "details": "details_test1",
+                "returnDetails": "returnDetails_test1",
+                "memo": "memo_test1",
+                "expirationDate": "20211201",
+                "transferable": True,
+                "contactInformation": "contactInformation_test1",
+                "privacyPolicy": "privacyPolicy_test1"
+            })
+            coupon_register_list(issuer, coupontoken_1, tokenlist)
 
-        # Listing,実行可能コントラクト登録
-        listing_token(session, coupontoken_1)
-        executable_contract_token(session, coupontoken_1)
+            # Listing,実行可能コントラクト登録
+            listing_token(session, coupontoken_1)
+            executable_contract_token(session, coupontoken_1)
 
-        token_contract_1 = web3.eth.contract(
-            address=to_checksum_address(coupontoken_1["address"]),
-            abi=coupontoken_1["abi"],
-        )
+            token_contract_1 = web3.eth.contract(
+                address=to_checksum_address(coupontoken_1["address"]),
+                abi=coupontoken_1["abi"],
+            )
 
-        local_account_1 = web3.eth.account.create()
+            local_account_1 = web3.eth.account.create()
 
-        # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
+            # テスト用のトランザクション実行前の事前準備
+            pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
+                {
+                    "from": to_checksum_address(issuer["account_address"]),
+                    "gas": 6000000
+                })
+            tx_hash = web3.eth.sendTransaction(pre_tx)
+            web3.eth.waitForTransactionReceipt(tx_hash)
+
+            tx = token_contract_1.functions.consume(10).buildTransaction({
+                "from": to_checksum_address(local_account_1.address),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+            tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
+            signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
-            "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
-        })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+            request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+            headers = {'Content-Type': 'application/json'}
+            request_body = json.dumps(request_params)
 
-        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 1
-        }]
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 1
+            }]
 
     # <Normal_3>
     # Input list exists (multiple entries)
     def test_normal_3(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -272,7 +278,6 @@ class TestEthSendRawTransaction:
     # <Normal_4>
     # pending transaction
     def test_normal_4(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -327,14 +332,14 @@ class TestEthSendRawTransaction:
         # タイムアウト
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
         with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
-                "web3.geth.GethTxPool.inspect", AttributeDict({
+                "web3.geth.GethTxPool.inspect", MagicMock(side_effect=[AttributeDict({
                     "pending": AttributeDict({
                         to_checksum_address(local_account_1.address): AttributeDict({
                             str(tx["nonce"]): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
                         })
                     }),
                     "queued": AttributeDict({})
-                })):
+                })])):
             resp = client.simulate_post(
                 self.apiurl, headers=headers, body=request_body)
 
@@ -352,7 +357,7 @@ class TestEthSendRawTransaction:
     # <Error_1>
     # Unsupported HTTP method
     # -> 404 Not Supported
-    def test_error_1(self, client):
+    def test_error_1(self, client, session):
         resp = client.simulate_get(self.apiurl)
 
         assert resp.status_code == 404
@@ -365,7 +370,7 @@ class TestEthSendRawTransaction:
     # <Error_2>
     # No headers
     # -> 400 InvalidParameterError
-    def test_error_2(self, client):
+    def test_error_2(self, client, session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
@@ -384,7 +389,7 @@ class TestEthSendRawTransaction:
     # <Error_3>
     # No inputs
     # -> 400 InvalidParameterError
-    def test_error_3(self, client):
+    def test_error_3(self, client, session):
         request_params = {}
 
         headers = {'Content-Type': 'application/json'}
@@ -405,7 +410,7 @@ class TestEthSendRawTransaction:
     # <Error_4>
     # Input values are incorrect (not a list type)
     # -> 400 InvalidParameterError
-    def test_error_4(self, client):
+    def test_error_4(self, client, session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
@@ -427,7 +432,7 @@ class TestEthSendRawTransaction:
     # <Error_5>
     # Input values are incorrect (not a string type)
     # -> 400 InvalidParameterError
-    def test_error_5(self, client):
+    def test_error_5(self, client, session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         raw_tx_1 = 1234
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
@@ -454,7 +459,6 @@ class TestEthSendRawTransaction:
     # -> 200, status = 0
     def test_error_6(self, client, session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
-        insert_node_data(session, is_synced=True)
 
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
@@ -470,19 +474,64 @@ class TestEthSendRawTransaction:
         assert resp.json['data'] == [{'id': 1, 'status': 0}]
 
     # <Error_7>
-    # block synchronization stop
+    # block synchronization stop(Web3 FailOver Error)
     def test_error_7(self, client, session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
-        insert_node_data(session, is_synced=False)
 
-        raw_tx_1 = 'raw_tx_1'
-        request_params = {'raw_tx_hex_list': [raw_tx_1]}
+        # トークンリスト登録
+        tokenlist = tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+        issuer = eth_account['issuer']
+        coupontoken_1 = issue_coupon_token(issuer, {
+            "name": "name_test1",
+            "symbol": "symbol_test1",
+            "totalSupply": 1000000,
+            "tradableExchange": config.ZERO_ADDRESS,
+            "details": "details_test1",
+            "returnDetails": "returnDetails_test1",
+            "memo": "memo_test1",
+            "expirationDate": "20211201",
+            "transferable": True,
+            "contactInformation": "contactInformation_test1",
+            "privacyPolicy": "privacyPolicy_test1"
+        })
+        coupon_register_list(issuer, coupontoken_1, tokenlist)
 
+        # Listing,実行可能コントラクト登録
+        listing_token(session, coupontoken_1)
+        executable_contract_token(session, coupontoken_1)
+
+        token_contract_1 = web3.eth.contract(
+            address=to_checksum_address(coupontoken_1["address"]),
+            abi=coupontoken_1["abi"],
+        )
+
+        local_account_1 = web3.eth.account.create()
+
+        # テスト用のトランザクション実行前の事前準備
+        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
+            {
+                "from": to_checksum_address(issuer["account_address"]),
+                "gas": 6000000
+            })
+        tx_hash = web3.eth.sendTransaction(pre_tx)
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        tx = token_contract_1.functions.consume(10).buildTransaction({
+            "from": to_checksum_address(local_account_1.address),
+            "gas": 6000000
+        })
+        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+
+        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+            insert_node_data(session, is_synced=False)
+            insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546", priority=1)
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
         assert resp.status_code == 503
         assert resp.json['meta'] == {
             'code': 503,
@@ -493,7 +542,6 @@ class TestEthSendRawTransaction:
     # <Error_8>
     # Invalid token status
     def test_error_8(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -557,7 +605,6 @@ class TestEthSendRawTransaction:
     # <Error_9>
     # Non executable contract
     def test_error_9(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -612,7 +659,6 @@ class TestEthSendRawTransaction:
     # <Error_10>
     # Transaction failed
     def test_error_10(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -669,7 +715,6 @@ class TestEthSendRawTransaction:
     # <Error_11>
     # waitForTransactionReceipt error
     def test_error_11(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -736,7 +781,6 @@ class TestEthSendRawTransaction:
     # <Error_12>
     # recoverTransaction error
     def test_error_12(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -809,7 +853,6 @@ class TestEthSendRawTransaction:
     # <Error_13>
     # Transaction timeout, no transition to pending
     def test_error_13(self, client, session):
-        insert_node_data(session, is_synced=True)
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -865,14 +908,14 @@ class TestEthSendRawTransaction:
         # queuedに滞留
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
         with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
-                "web3.geth.GethTxPool.inspect", AttributeDict({
+                "web3.geth.GethTxPool.inspect", MagicMock(side_effect=[AttributeDict({
                     "pending": AttributeDict({}),
                     "queued": AttributeDict({
                         to_checksum_address(local_account_1.address): AttributeDict({
                             str(tx["nonce"]): "0xffffffffffffffffffffffffffffffffffffffff: 0 wei + 999999 × 11111 gas"
                         })
                     })
-                })):
+                })])):
             resp = client.simulate_post(
                 self.apiurl, headers=headers, body=request_body)
 
