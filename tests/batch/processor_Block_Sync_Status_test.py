@@ -37,10 +37,10 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
 @pytest.fixture(scope='function')
-def processor(db):
+def processor(session):
     _sink = Sinks()
-    _sink.register(DBSink(db))
-    return Processor(sink=_sink, db=db)
+    _sink.register(DBSink(session))
+    return Processor(sink=_sink, db=session)
 
 
 class TestProcessor:
@@ -55,12 +55,12 @@ class TestProcessor:
     # Execute Batch Run 3rd: synced
     # Execute Batch Run 4th: node syncing(DIFF:over 1)
     # Execute Batch Run 5th: node syncing(DIFF:1) == synced
-    def test_normal_1(self, processor, db):
+    def test_normal_1(self, processor, session):
         # Run 1st: synced
         processor.process()
 
         # assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.id == 1
         assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert _node.priority == 0
@@ -69,11 +69,11 @@ class TestProcessor:
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
 
         # Run 2st: block generation speed down(same the previous)
-        with mock.patch("batch.processor_Block_Sync_Status.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
+        with mock.patch("app.config.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
             processor.process()
 
         # assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.is_synced == False
 
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
@@ -82,7 +82,7 @@ class TestProcessor:
         processor.process()
 
         # assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.is_synced == True
 
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
@@ -99,7 +99,7 @@ class TestProcessor:
             processor.process()
 
         # assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.is_synced == False
 
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
@@ -116,19 +116,19 @@ class TestProcessor:
             processor.process()
 
         # assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.is_synced == True
 
     # <Normal_2>
     # standby node is down to sync
-    @mock.patch("batch.processor_Block_Sync_Status.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000"])
-    def test_normal_2(self, db):
+    @mock.patch("app.config.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000"])
+    def test_normal_2(self, session):
         _sink = Sinks()
-        _sink.register(DBSink(db))
-        processor = Processor(sink=_sink, db=db)
+        _sink.register(DBSink(session))
+        processor = Processor(sink=_sink, db=session)
 
         # pre assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.id == 1
         assert _node.endpoint_uri == "http://test1:1000"
         assert _node.priority == 1
@@ -141,7 +141,7 @@ class TestProcessor:
         processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri = org_value
 
         # assertion
-        _node = db.query(Node).filter(Node.endpoint_uri == "http://test1:1000").first()
+        _node = session.query(Node).filter(Node.endpoint_uri == "http://test1:1000").first()
         assert _node.is_synced == True
 
     ###########################################################################
@@ -150,16 +150,15 @@ class TestProcessor:
 
     # <Error_1>
     # node down(initialize)
-    @mock.patch("batch.processor_Block_Sync_Status.WEB3_HTTP_PROVIDER_STANDBY",
-                ["http://test1:1000", "http://test2:2000"])
+    @mock.patch("app.config.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000", "http://test2:2000"])
     @mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=Exception()))
-    def test_error_1(self, db):
+    def test_error_1(self, session):
         _sink = Sinks()
-        _sink.register(DBSink(db))
-        Processor(sink=_sink, db=db)
+        _sink.register(DBSink(session))
+        Processor(sink=_sink, db=session)
 
         # assertion
-        _node_list = db.query(Node).order_by(Node.id).all()
+        _node_list = session.query(Node).order_by(Node.id).all()
         assert len(_node_list) == 3
         _node = _node_list[0]
         assert _node.id == 1
@@ -179,11 +178,11 @@ class TestProcessor:
 
     # <Error_2>
     # node down(processing)
-    def test_error_2(self, processor, db):
+    def test_error_2(self, processor, session):
         processor.process()
 
         # assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.id == 1
         assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert _node.priority == 0
@@ -196,7 +195,7 @@ class TestProcessor:
         processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri = org_value
 
         # assertion
-        _node = db.query(Node).first()
+        _node = session.query(Node).first()
         assert _node.id == 1
         assert _node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert _node.priority == 0
