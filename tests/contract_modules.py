@@ -126,6 +126,8 @@ def issue_bond_token(invoker, attribute):
         transact({'from': invoker['account_address'], 'gas': 4000000})
     TokenContract.functions.setPersonalInfoAddress(attribute['personalInfoAddress']). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setMemo(attribute['memo']). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
 
     return {'address': contract_address, 'abi': abi}
 

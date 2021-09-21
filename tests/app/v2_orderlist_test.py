@@ -714,7 +714,11 @@ class TestV2OrderListBond:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': bond_exchange["address"],
+                'status': True,
+                'memo': 'メモ',
+                'personal_info_address': personal_info["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -815,7 +819,11 @@ class TestV2OrderListBond:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': bond_exchange["address"],
+                'status': True,
+                'memo': 'メモ',
+                'personal_info_address': personal_info["address"],
             },
             "agreement": {
                 "exchange_address": bond_exchange["address"],
@@ -918,7 +926,11 @@ class TestV2OrderListBond:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': bond_exchange["address"],
+                'status': True,
+                'memo': 'メモ',
+                'personal_info_address': personal_info["address"],
             },
             "agreement": {
                 "exchange_address": bond_exchange["address"],
@@ -1245,7 +1257,8 @@ class TestV2OrderListMembership:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': membership_exchange["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -1332,7 +1345,8 @@ class TestV2OrderListMembership:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': membership_exchange["address"],
             },
             "agreement": {
                 "exchange_address": membership_exchange["address"],
@@ -1415,7 +1429,8 @@ class TestV2OrderListMembership:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': membership_exchange["address"],
             },
             "agreement": {
                 "exchange_address": membership_exchange["address"],
@@ -1739,7 +1754,8 @@ class TestV2OrderListCoupon:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': coupon_exchange["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -1820,7 +1836,8 @@ class TestV2OrderListCoupon:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': coupon_exchange["address"],
             },
             "agreement": {
                 "exchange_address": coupon_exchange["address"],
@@ -1903,7 +1920,8 @@ class TestV2OrderListCoupon:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': coupon_exchange["address"],
             },
             "agreement": {
                 "exchange_address": coupon_exchange["address"],
@@ -2251,7 +2269,9 @@ class TestV2OrderListShare:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': share_exchange["address"],
+                'personal_info_address': personal_info["address"],
             },
             "order": {
                 "order_id": order_id,
@@ -2343,7 +2363,9 @@ class TestV2OrderListShare:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': share_exchange["address"],
+                'personal_info_address': personal_info["address"],
             },
             "agreement": {
                 "exchange_address": share_exchange["address"],
@@ -2439,7 +2461,9 @@ class TestV2OrderListShare:
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
-                "privacy_policy": "プライバシーポリシー"
+                "privacy_policy": "プライバシーポリシー",
+                'tradable_exchange': share_exchange["address"],
+                'personal_info_address': personal_info["address"],
             },
             "agreement": {
                 "exchange_address": share_exchange["address"],

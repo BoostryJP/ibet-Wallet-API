@@ -146,6 +146,8 @@ class TestV2TokenShareTokens:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -213,6 +215,8 @@ class TestV2TokenShareTokens:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }, {
             'id': 0,
             'token_address': share_list[0]['address'],
@@ -247,6 +251,8 @@ class TestV2TokenShareTokens:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -315,6 +321,8 @@ class TestV2TokenShareTokens:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }, {
             'id': 0,
             'token_address': share_list[0]['address'],
@@ -349,6 +357,8 @@ class TestV2TokenShareTokens:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -417,6 +427,8 @@ class TestV2TokenShareTokens:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -485,6 +497,8 @@ class TestV2TokenShareTokens:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200

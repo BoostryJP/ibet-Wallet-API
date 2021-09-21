@@ -132,7 +132,8 @@ class TestV2TokenMembershipTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
             }
         ]
 
@@ -196,7 +197,8 @@ class TestV2TokenMembershipTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -222,7 +224,8 @@ class TestV2TokenMembershipTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
             }
         ]
 
@@ -286,7 +289,8 @@ class TestV2TokenMembershipTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
             }, {
                 'id': 0,
                 'token_address': issued_list[0]['address'],
@@ -312,7 +316,8 @@ class TestV2TokenMembershipTokens:
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
             }
         ]
 
@@ -375,7 +380,8 @@ class TestV2TokenMembershipTokens:
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'tradable_exchange': exchange_address,
         }]
 
         assert resp.status_code == 200
@@ -437,7 +443,8 @@ class TestV2TokenMembershipTokens:
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'tradable_exchange': exchange_address,
         }]
 
         assert resp.status_code == 200

@@ -187,6 +187,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetStraightBond',
             'status': True,
             'transferable': True
         }
@@ -223,6 +224,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetStraightBond',
             'status': False,
             'transferable': True
         }
@@ -259,6 +261,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetStraightBond',
             'status': True,
             'transferable': False
         }
@@ -292,6 +295,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetShare',
             'status': True,
             'transferable': True
         }
@@ -328,6 +332,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetShare',
             'status': False,
             'transferable': True
         }
@@ -364,6 +369,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetShare',
             'status': True,
             'transferable': False
         }
@@ -396,6 +402,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetMembership',
             'status': True,
             'transferable': True
         }
@@ -431,6 +438,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetMembership',
             'status': False,
             'transferable': True
         }
@@ -466,6 +474,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetMembership',
             'status': True,
             'transferable': False
         }
@@ -498,6 +507,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetCoupon',
             'status': True,
             'transferable': True
         }
@@ -533,6 +543,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetCoupon',
             'status': False,
             'transferable': True
         }
@@ -568,6 +579,7 @@ class TestV2TokenTokenStatus:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         assumed_body = {
+            'token_template': 'IbetCoupon',
             'status': True,
             'transferable': False
         }

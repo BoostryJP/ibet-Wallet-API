@@ -158,7 +158,11 @@ class TestV2TokenStraightBondTokenDetails:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }
 
         assert resp.status_code == 200

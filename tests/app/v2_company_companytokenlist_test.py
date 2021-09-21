@@ -219,7 +219,11 @@ class TestV2CompanyCompanyTokenList:
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': bond_exchange["address"],
+                'status': True,
+                'memo': 'メモ',
+                'personal_info_address': personal_info["address"],
             }
         ]
 
@@ -277,7 +281,9 @@ class TestV2CompanyCompanyTokenList:
                 'privacy_policy': 'プライバシーポリシー',
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
-                'is_canceled': False
+                'is_canceled': False,
+                'tradable_exchange': share_exchange["address"],
+                'personal_info_address': personal_info["address"],
             }
         ]
 
@@ -327,7 +333,8 @@ class TestV2CompanyCompanyTokenList:
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': membership_exchange["address"],
             }
         ]
 
@@ -377,7 +384,8 @@ class TestV2CompanyCompanyTokenList:
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             }
         ]
 
@@ -435,7 +443,8 @@ class TestV2CompanyCompanyTokenList:
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
             },
             {
                 'token_address': membership_token["address"],
@@ -461,7 +470,8 @@ class TestV2CompanyCompanyTokenList:
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
                 'contact_information': '問い合わせ先',
-                'privacy_policy': 'プライバシーポリシー'
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': membership_exchange["address"],
             }
         ]
 

@@ -41,9 +41,10 @@ class TokenBase:
     name: str
     symbol: str
     total_supply: int
-    image_url: object
+    tradable_exchange: str
     contact_information: str
     privacy_policy: str
+    status: bool
 
 
 class BondToken(TokenBase):
@@ -66,10 +67,13 @@ class BondToken(TokenBase):
     return_date: str
     return_amount: str
     purpose: str
+    memo: str
+    initial_offering_status: bool
     isRedeemed: bool
     transferable: bool
+    personal_info_address: str
+    image_url: object
     certification: str
-    initial_offering_status: bool
     max_holding_quantity: int
     max_sell_amount: int
 
@@ -102,9 +106,11 @@ class BondToken(TokenBase):
                     isRedeemed = TokenContract.functions.isRedeemed().call()
                     transferable = TokenContract.functions.transferable().call()
                     initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
+                    status = TokenContract.functions.status().call()
                     bondtoken.isRedeemed = isRedeemed
                     bondtoken.transferable = transferable
                     bondtoken.initial_offering_status = initial_offering_status
+                    bondtoken.status = status
                     bondtoken.certification = certification
                     return bondtoken
 
@@ -187,6 +193,10 @@ class BondToken(TokenBase):
         owner_address = TokenContract.functions.owner().call()
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
+        tradable_exchange = TokenContract.functions.tradableExchange().call()
+        status = TokenContract.functions.status().call()
+        memo = TokenContract.functions.memo().call()
+        personal_info_address = TokenContract.functions.personalInfoAddress().call()
 
         # 企業リストから、企業名を取得する
         company_name = ""
@@ -242,6 +252,10 @@ class BondToken(TokenBase):
         bondtoken.transferable = transferable
         bondtoken.initial_offering_status = initial_offering_status
         bondtoken.certification = certification
+        bondtoken.tradable_exchange = tradable_exchange
+        bondtoken.status = status
+        bondtoken.memo = memo
+        bondtoken.personal_info_address = personal_info_address
 
         if config.TOKEN_CACHE:
             BondToken.cache[token_address] = {
@@ -253,20 +267,19 @@ class BondToken(TokenBase):
 
 
 class ShareToken(TokenBase):
+    personal_info_address: str
     issue_price: int
-    principal_value: int
-    dividend_information: object
     cancellation_date: str
-    reference_urls: object
     memo: str
     transferable: bool
     offering_status: bool
-    status: bool
+    principal_value: int
+    transfer_approval_required: bool
+    is_canceled: bool
+    dividend_information: object
     reference_urls: object
     max_holding_quantity: int
     max_sell_amount: int
-    transfer_approval_required: bool
-    is_canceled: bool
 
     # トークン情報のキャッシュ
     cache = {}
@@ -340,6 +353,8 @@ class ShareToken(TokenBase):
         is_canceled = TokenContract.functions.isCanceled().call()
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
+        tradable_exchange = TokenContract.functions.tradableExchange().call()
+        personal_info_address = TokenContract.functions.personalInfoAddress().call()
 
         # 企業リストから、企業名とRSA鍵を取得する
         company_name = ''
@@ -387,6 +402,8 @@ class ShareToken(TokenBase):
             if hasattr(listed_token, "max_holding_quantity") else 0
         sharetoken.max_sell_amount = listed_token.max_sell_amount \
             if hasattr(listed_token, "max_sell_amount") else 0
+        sharetoken.tradable_exchange = tradable_exchange
+        sharetoken.personal_info_address = personal_info_address
 
         if config.TOKEN_CACHE:
             ShareToken.cache[token_address] = {
@@ -403,8 +420,8 @@ class MembershipToken(TokenBase):
     expiration_date: str
     memo: str
     transferable: str
-    status: str
-    initial_offering_status: str
+    initial_offering_status: bool
+    image_url: object
     max_holding_quantity: int
     max_sell_amount: int
 
@@ -471,6 +488,7 @@ class MembershipToken(TokenBase):
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
         owner_address = TokenContract.functions.owner().call()
+        tradable_exchange = TokenContract.functions.tradableExchange().call()
 
         # 企業リストから、企業名を取得する
         company_name = ""
@@ -510,6 +528,7 @@ class MembershipToken(TokenBase):
             if hasattr(listed_token, "max_sell_amount") else 0
         membershiptoken.contact_information = contact_information
         membershiptoken.privacy_policy = privacy_policy
+        membershiptoken.tradable_exchange = tradable_exchange
 
         if config.TOKEN_CACHE:
             MembershipToken.cache[token_address] = {
@@ -526,8 +545,8 @@ class CouponToken(TokenBase):
     expiration_date: str
     memo: str
     transferable: str
-    status: str
-    initial_offering_status: str
+    initial_offering_status: bool
+    image_url: object
     max_holding_quantity: int
     max_sell_amount: int
 
@@ -594,6 +613,7 @@ class CouponToken(TokenBase):
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
         owner_address = TokenContract.functions.owner().call()
+        tradable_exchange = TokenContract.functions.tradableExchange().call()
 
         # 企業リストから、企業名を取得する
         company_name = ""
@@ -633,6 +653,7 @@ class CouponToken(TokenBase):
             if hasattr(listed_token, "max_sell_amount") else 0
         coupontoken.contact_information = contact_information
         coupontoken.privacy_policy = privacy_policy
+        coupontoken.tradable_exchange = tradable_exchange
 
         if config.TOKEN_CACHE:
             CouponToken.cache[token_address] = {

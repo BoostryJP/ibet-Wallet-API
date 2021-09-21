@@ -163,7 +163,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -243,7 +247,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -290,7 +298,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -371,7 +383,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -418,7 +434,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -499,7 +519,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -580,7 +604,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200
@@ -664,7 +692,11 @@ class TestV2TokenStraightBondTokens:
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
             'privacy_policy': 'プライバシーポリシー',
-            'transferable': True
+            'transferable': True,
+            'tradable_exchange': exchange_address,
+            'status': True,
+            'memo': 'メモ',
+            'personal_info_address': personal_info,
         }]
 
         assert resp.status_code == 200

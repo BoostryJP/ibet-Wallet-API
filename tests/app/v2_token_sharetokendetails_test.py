@@ -142,6 +142,8 @@ class TestV2TokenShareTokenDetails:
             'status': True,
             'transfer_approval_required': False,
             'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
         }
 
         assert resp.status_code == 200

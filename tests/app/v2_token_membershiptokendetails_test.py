@@ -127,7 +127,8 @@ class TestV2TokenMembershipTokenDetails:
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
-            'privacy_policy': 'プライバシーポリシー'
+            'privacy_policy': 'プライバシーポリシー',
+            'tradable_exchange': exchange_address,
         }
 
         assert resp.status_code == 200
