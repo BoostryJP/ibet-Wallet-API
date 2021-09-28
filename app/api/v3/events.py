@@ -107,7 +107,7 @@ class E2EMessagingEvents(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if request_json["from_block"] > request_json["to_block"]:
+        if int(request_json["from_block"]) > int(request_json["to_block"]):
             raise InvalidParameterError("to_block must be greater than or equal to the from_block")
 
         return validator.document
@@ -209,7 +209,7 @@ class IbetEscrowEvents(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if request_json["from_block"] > request_json["to_block"]:
+        if int(request_json["from_block"]) > int(request_json["to_block"]):
             raise InvalidParameterError("to_block must be greater than or equal to the from_block")
 
         return validator.document
