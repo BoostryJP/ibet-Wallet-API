@@ -3381,7 +3381,6 @@ paths:
                 items:
                   type: string
             required:
-              - exchange_contract_name
               - account_address_list
       responses:
         200:
