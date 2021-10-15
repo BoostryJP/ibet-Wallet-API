@@ -27,7 +27,7 @@ from app.errors import (
     InvalidParameterError,
     DataNotExistsError
 )
-from app.model import Notification
+from app.model.db import Notification
 
 LOG = log.get_logger()
 
@@ -48,7 +48,7 @@ class Notifications(BaseResource):
         # Validate Request Data
         request_json = Notifications.validate_get(req)
 
-        address = to_checksum_address(request_json["address"])
+        address = request_json["address"]
         notification_type = request_json["notification_type"]
         priority = request_json["priority"]
         sort_item = "created" if request_json["sort_item"] is None else request_json["sort_item"]
@@ -56,11 +56,12 @@ class Notifications(BaseResource):
         offset = request_json["offset"]
         limit = request_json["limit"]
 
-        query = session.query(Notification). \
-            filter(Notification.address == address)
+        query = session.query(Notification)
         total = query.count()
 
         # Search Filter
+        if address is not None:
+            query = query.filter(Notification.address == to_checksum_address(address))
         if notification_type is not None:
             query = query.filter(Notification.notification_type == notification_type)
         if priority is not None:
@@ -121,7 +122,8 @@ class Notifications(BaseResource):
         validator = Validator({
             "address": {
                 "type": "string",
-                "required": True,
+                "required": False,
+                "nullable": True,
                 "empty": False,
             },
             "notification_type": {
@@ -177,8 +179,9 @@ class Notifications(BaseResource):
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
 
-        if not Web3.isAddress(request_json["address"]):
-            raise InvalidParameterError
+        if request_json["address"] is not None:
+            if not Web3.isAddress(request_json["address"]):
+                raise InvalidParameterError
 
         return validator.document
 

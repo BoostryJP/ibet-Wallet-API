@@ -61,7 +61,7 @@ RUN . ~/.bash_profile \
 USER root
 COPY . /app/ibet-Wallet-API
 RUN chown -R apl:apl /app/ibet-Wallet-API \
- && rm -rf /app/ibet-Wallet-API/app/tests/ \
+ && rm -rf /app/ibet-Wallet-API/tests/ \
  && find /app/ibet-Wallet-API/ -type d -name __pycache__ | xargs rm -fr \
  && chmod 755 /app/ibet-Wallet-API
 

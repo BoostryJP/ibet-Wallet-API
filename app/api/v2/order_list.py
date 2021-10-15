@@ -29,10 +29,12 @@ from app.errors import (
 )
 from app import config
 from app.contracts import Contract
-from app.model import (
+from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement,
-    AgreementStatus,
+    AgreementStatus
+)
+from app.model.blockchain import (
     BondToken,
     MembershipToken,
     CouponToken,
@@ -47,13 +49,13 @@ class BaseOrderList(object):
     @staticmethod
     def get_order_list(
             session, token_model,
-            exchange_contract_name, exchange_contract_address,
+            exchange_contract_address,
             account_address
     ):
         """List all orders from the account (DEX)"""
         # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
+        exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter order events that are generated from account_address
         _order_events = session.query(Order.id, Order.order_id, Order.order_timestamp). \
@@ -93,13 +95,13 @@ class BaseOrderList(object):
     @staticmethod
     def get_settlement_list(
             session, token_model,
-            exchange_contract_name, exchange_contract_address,
+            exchange_contract_address,
             account_address
     ):
         """List all orders in process of settlement (DEX)"""
         # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
+        exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter agreement events (settlement not completed) generated from account_address
         _agreement_events = session.query(
@@ -141,13 +143,13 @@ class BaseOrderList(object):
     @staticmethod
     def get_complete_list(
             session, token_model,
-            exchange_contract_name, exchange_contract_address,
+            exchange_contract_address,
             account_address
     ):
         """List all orders that have been settled (DEX)"""
         # Get exchange contract
         exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
+        exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter agreement events (settlement completed) generated from account_address
         _agreement_events = session.query(
@@ -191,155 +193,8 @@ class BaseOrderList(object):
         return complete_list
 
     @staticmethod
-    def get_otc_order_list(
-            session, token_model,
-            exchange_contract_name, exchange_contract_address,
-            account_address
-    ):
-        """List all orders from the account (OTC)"""
-        # Get exchange contract
-        exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
-
-        # Filter order events that are generated from account_address
-        # NOTE: Filter the order events for maker or taker(counterpart)
-        _order_events = session.query(Order.id, Order.order_id, Order.order_timestamp). \
-            filter(Order.exchange_address == exchange_address). \
-            filter(Order.is_cancelled == False). \
-            filter(or_(Order.account_address == account_address, Order.counterpart_address == account_address)). \
-            all()
-
-        order_list = []
-        for (id, order_id, order_timestamp) in _order_events:
-            order_book = exchange_contract.functions.getOrder(order_id).call()
-            # If there are no remaining orders, skip this process
-            if order_book[3] != 0:
-                _order = {
-                    "order": {
-                        "order_id": order_id,
-                        "counterpart_address": order_book[1],
-                        "amount": order_book[3],
-                        "price": order_book[4],
-                        "is_buy": False,
-                        "canceled": order_book[6],
-                        "order_timestamp": order_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                    },
-                    "sort_id": id
-                }
-                if token_model is not None:
-                    token_detail = token_model.get(
-                        session=session,
-                        token_address=to_checksum_address(order_book[2])
-                    )
-                    _order["token"] = token_detail.__dict__
-
-                order_list.append(_order)
-
-        return order_list
-
-    @staticmethod
-    def get_otc_settlement_list(
-            session, token_model,
-            exchange_contract_name, exchange_contract_address,
-            account_address
-    ):
-        """List all orders in process of settlement (OTC)"""
-        # Get exchange contract
-        exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
-
-        # Filter agreement events (settlement not completed) generated from account_address
-        _agreement_events = session.query(
-                Agreement.id, Agreement.order_id, Agreement.agreement_id,
-                Agreement.agreement_timestamp, Agreement.buyer_address). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
-            filter(Agreement.status == AgreementStatus.PENDING.value). \
-            all()
-
-        settlement_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in _agreement_events:
-            order_book = exchange_contract.functions.getOrder(order_id).call()
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
-            _settlement = {
-                "agreement": {
-                    "exchange_address": exchange_contract_address,
-                    "order_id": order_id,
-                    "agreement_id": agreement_id,
-                    "amount": agreement[1],
-                    "price": agreement[2],
-                    "is_buy": buyer_address == account_address,
-                    "canceled": agreement[3],
-                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                "sort_id": id
-            }
-            if token_model is not None:
-                token_detail = token_model.get(
-                    session=session,
-                    token_address=to_checksum_address(order_book[2])
-                )
-                _settlement["token"] = token_detail.__dict__
-
-            settlement_list.append(_settlement)
-
-        return settlement_list
-
-    @staticmethod
-    def get_otc_complete_list(
-            session, token_model,
-            exchange_contract_name, exchange_contract_address,
-            account_address
-    ):
-        """List all orders that have been settled (DEX)"""
-        # Get exchange contract
-        exchange_address = to_checksum_address(exchange_contract_address)
-        exchange_contract = Contract.get_contract(exchange_contract_name, exchange_address)
-
-        # Filter agreement events (settlement completed) generated from account_address
-        _agreement_events = session.query(
-                Agreement.id, Agreement.order_id, Agreement.agreement_id,
-                Agreement.agreement_timestamp, Agreement.settlement_timestamp, Agreement.buyer_address). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
-
-        complete_list = []
-        for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in _agreement_events:
-            if settlement_timestamp is not None:
-                settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-            else:
-                settlement_timestamp_jp = ""
-            order_book = exchange_contract.functions.getOrder(order_id).call()
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
-            _complete = {
-                "agreement": {
-                    "exchange_address": exchange_contract_address,
-                    "order_id": order_id,
-                    "agreement_id": agreement_id,
-                    "amount": agreement[1],
-                    "price": agreement[2],
-                    "is_buy": buyer_address == account_address,
-                    "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-                },
-                "settlement_timestamp": settlement_timestamp_jp,
-                "sort_id": id
-            }
-            if token_model is not None:
-                token_detail = token_model.get(
-                    session=session,
-                    token_address=to_checksum_address(order_book[2])
-                )
-                _complete["token"] = token_detail.__dict__
-
-            complete_list.append(_complete)
-
-        return complete_list
-
-    @staticmethod
     def get_order_list_filtered_by_token(
-            session, token_address, exchange_contract_name, account_address
+            session, token_address, account_address
     ):
         """List orders from accounts filtered by token address (DEX)"""
 
@@ -353,7 +208,7 @@ class BaseOrderList(object):
         order_list = []
         for (id, exchange_contract_address, order_id, order_timestamp) in _order_events:
             exchange_contract = Contract.get_contract(
-                contract_name=exchange_contract_name,
+                contract_name="IbetExchange",
                 address=exchange_contract_address
             )
             order_book = exchange_contract.functions.getOrder(order_id).call()
@@ -380,7 +235,7 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_settlement_list_filtered_by_token(
-            session, token_address, exchange_contract_name, account_address
+            session, token_address, account_address
     ):
         """List all orders in process of settlement (DEX)"""
 
@@ -397,7 +252,7 @@ class BaseOrderList(object):
         settlement_list = []
         for (id, exchange_contract_address, order_id, agreement_id, agreement_timestamp, buyer_address) in _agreement_events:
             exchange_contract = Contract.get_contract(
-                contract_name=exchange_contract_name,
+                contract_name="IbetExchange",
                 address=exchange_contract_address
             )
             agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
@@ -423,7 +278,7 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_complete_list_filtered_by_token(
-            session, token_address, exchange_contract_name, account_address
+            session, token_address, account_address
     ):
         """List all orders that have been settled (DEX)"""
 
@@ -444,7 +299,7 @@ class BaseOrderList(object):
             else:
                 settlement_timestamp_jp = ""
             exchange_contract = Contract.get_contract(
-                contract_name=exchange_contract_name,
+                contract_name="IbetExchange",
                 address=exchange_contract_address
             )
             agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
@@ -504,7 +359,6 @@ class OrderList(BaseOrderList, BaseResource):
                     self.get_order_list_filtered_by_token(
                         session=session,
                         token_address=token_address,
-                        exchange_contract_name=request_json["exchange_contract_name"],
                         account_address=account_address
                     )
                 )
@@ -515,7 +369,6 @@ class OrderList(BaseOrderList, BaseResource):
                     self.get_settlement_list_filtered_by_token(
                         session=session,
                         token_address=token_address,
-                        exchange_contract_name=request_json["exchange_contract_name"],
                         account_address=account_address
                     )
                 )
@@ -526,7 +379,6 @@ class OrderList(BaseOrderList, BaseResource):
                     self.get_complete_list_filtered_by_token(
                         session=session,
                         token_address=token_address,
-                        exchange_contract_name=request_json["exchange_contract_name"],
                         account_address=account_address
                     )
                 )
@@ -549,16 +401,6 @@ class OrderList(BaseOrderList, BaseResource):
             raise InvalidParameterError
 
         validator = Validator({
-            "exchange_contract_name": {
-                "type": "string",
-                "required": True,
-                "nullable": False,
-                "allowed": [
-                    "IbetStraightBondExchange",
-                    "IbetMembershipExchange",
-                    "IbetCouponExchange"
-                ]
-            },
             "account_address_list": {
                 "type": "list",
                 "schema": {"type": "string"},
@@ -605,7 +447,6 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
                     self.get_order_list(
                         session=session,
                         token_model=BondToken,
-                        exchange_contract_name="IbetStraightBondExchange",
                         exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -617,7 +458,6 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
                     self.get_settlement_list(
                         session=session,
                         token_model=BondToken,
-                        exchange_contract_name="IbetStraightBondExchange",
                         exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -629,7 +469,6 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
                     self.get_complete_list(
                         session=session,
                         token_model=BondToken,
-                        exchange_contract_name="IbetStraightBondExchange",
                         exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -700,7 +539,6 @@ class MembershipOrderList(BaseOrderList, BaseResource):
                     self.get_order_list(
                         session=session,
                         token_model=MembershipToken,
-                        exchange_contract_name="IbetMembershipExchange",
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -712,7 +550,6 @@ class MembershipOrderList(BaseOrderList, BaseResource):
                     self.get_settlement_list(
                         session=session,
                         token_model=MembershipToken,
-                        exchange_contract_name="IbetMembershipExchange",
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -724,7 +561,6 @@ class MembershipOrderList(BaseOrderList, BaseResource):
                     self.get_complete_list(
                         session=session,
                         token_model=MembershipToken,
-                        exchange_contract_name="IbetMembershipExchange",
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -795,7 +631,6 @@ class CouponOrderList(BaseOrderList, BaseResource):
                     self.get_order_list(
                         session=session,
                         token_model=CouponToken,
-                        exchange_contract_name="IbetCouponExchange",
                         exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -807,7 +642,6 @@ class CouponOrderList(BaseOrderList, BaseResource):
                     self.get_settlement_list(
                         session=session,
                         token_model=CouponToken,
-                        exchange_contract_name="IbetCouponExchange",
                         exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -819,7 +653,6 @@ class CouponOrderList(BaseOrderList, BaseResource):
                     self.get_complete_list(
                         session=session,
                         token_model=CouponToken,
-                        exchange_contract_name="IbetCouponExchange",
                         exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -887,10 +720,9 @@ class ShareOrderList(BaseOrderList, BaseResource):
             try:
                 # order_list
                 order_list.extend(
-                    self.get_otc_order_list(
+                    self.get_order_list(
                         session=session,
                         token_model=ShareToken,
-                        exchange_contract_name="IbetOTCExchange",
                         exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -899,10 +731,9 @@ class ShareOrderList(BaseOrderList, BaseResource):
 
                 # settlement_list
                 settlement_list.extend(
-                    self.get_otc_settlement_list(
+                    self.get_settlement_list(
                         session=session,
                         token_model=ShareToken,
-                        exchange_contract_name="IbetOTCExchange",
                         exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
@@ -911,10 +742,9 @@ class ShareOrderList(BaseOrderList, BaseResource):
 
                 # complete_list
                 complete_list.extend(
-                    self.get_otc_complete_list(
+                    self.get_complete_list(
                         session=session,
                         token_model=ShareToken,
-                        exchange_contract_name="IbetOTCExchange",
                         exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )

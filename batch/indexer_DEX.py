@@ -27,27 +27,25 @@ from datetime import (
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 from app.config import (
-    WEB3_HTTP_PROVIDER,
     DATABASE_URL,
     IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
     IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
     IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
 )
-from app.model import (
+from app.model.db import (
     IDXAgreement as Agreement,
     AgreementStatus,
     IDXOrder as Order,
     Listing
 )
 from app.contracts import Contract
+from app.utils.web3_utils import Web3Wrapper
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
@@ -55,8 +53,7 @@ JST = timezone(timedelta(hours=+9), "JST")
 process_name = "INDEXER-DEX"
 LOG = log.get_logger(process_name=process_name)
 
-web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3 = Web3Wrapper()
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
@@ -100,7 +97,8 @@ class DBSink:
         self.db = db
 
     def on_new_order(self, transaction_hash: str, token_address: str, exchange_address: str,
-                     order_id: int, account_address: str, counterpart_address: str, is_buy: bool, price: int, amount: int,
+                     order_id: int, account_address: str, counterpart_address: str, is_buy: bool, price: int,
+                     amount: int,
                      agent_address: str, order_timestamp: datetime):
         order = self.__get_order(exchange_address, order_id)
         if order is None:
@@ -183,28 +181,28 @@ class Processor:
         # 債券取引コントラクト登録
         if IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
             bond_exchange_contract = Contract.get_contract(
-                "IbetStraightBondExchange",
+                "IbetExchange",
                 IBET_SB_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(bond_exchange_contract)
         # 会員権取引コントラクト登録
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             membership_exchange_contract = Contract.get_contract(
-                "IbetMembershipExchange",
+                "IbetExchange",
                 IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(membership_exchange_contract)
         # クーポン取引コントラクト登録
         if IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
             coupon_exchange_contract = Contract.get_contract(
-                "IbetCouponExchange",
+                "IbetExchange",
                 IBET_CP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(coupon_exchange_contract)
-        # OTC取引コントラクト登録
+        # 株式取引コントラクト登録
         if IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
             self.share_exchange_contract = Contract.get_contract(
-                "IbetOTCExchange",
+                "IbetExchange",
                 IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(self.share_exchange_contract)
@@ -267,25 +265,17 @@ class Processor:
                         pass
                     else:
                         available_token = self.db.query(Listing). \
-                            filter(Listing.token_address == args["tokenAddress"])
+                            filter(Listing.token_address == args["tokenAddress"]). \
+                            first()
                         transaction_hash = event["transactionHash"].hex()
                         order_timestamp = datetime.fromtimestamp(
                             web3.eth.getBlock(event["blockNumber"])["timestamp"],
                             JST
                         )
                         if available_token is not None:
-                            # NOTE: OTC取引の場合
-                            #   args[counterpartAddress]が存在する
-                            #   args[isBuy]が存在しない
-                            #   accountAddress -> ownerAddress
-                            if exchange_contract == self.share_exchange_contract:
-                                account_address = args["ownerAddress"]
-                                counterpart_address = args["counterpartAddress"]
-                                is_buy = False
-                            else:
-                                account_address = args["accountAddress"]
-                                counterpart_address = ""
-                                is_buy = args["isBuy"]
+                            account_address = args["accountAddress"]
+                            counterpart_address = ""
+                            is_buy = args["isBuy"]
 
                             self.sink.on_new_order(
                                 transaction_hash=transaction_hash,
@@ -330,13 +320,9 @@ class Processor:
                     if args["amount"] > sys.maxsize:
                         pass
                     else:
-                        # IbetOTCExchangeの場合、is_buyが存在せずMake注文は全て売り注文
-                        # NOTE: 他商品がOTCExchangeを利用する場合修正が必要
-                        is_buy = False
-                        if exchange_contract != self.share_exchange_contract:
-                            order_id = args["orderId"]
-                            orderbook = exchange_contract.functions.getOrder(order_id).call()
-                            is_buy = orderbook[4]
+                        order_id = args["orderId"]
+                        orderbook = exchange_contract.functions.getOrder(order_id).call()
+                        is_buy = orderbook[4]
                         if is_buy:
                             counterpart_address = args["sellAddress"]
                         else:
@@ -403,9 +389,16 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
-LOG.info("Service started successfully")
 
-processor.initial_sync()
-while True:
-    processor.sync_new_logs()
-    time.sleep(1)
+
+def main():
+    LOG.info("Service started successfully")
+
+    processor.initial_sync()
+    while True:
+        processor.sync_new_logs()
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()

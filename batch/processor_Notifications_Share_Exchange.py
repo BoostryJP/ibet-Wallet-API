@@ -26,8 +26,6 @@ from datetime import (
     timedelta
 )
 
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
@@ -38,7 +36,6 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 from app.config import (
-    WEB3_HTTP_PROVIDER,
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
@@ -46,11 +43,12 @@ from app.config import (
     TOKEN_LIST_CONTRACT_ADDRESS,
     COMPANY_LIST_URL
 )
-from app.model import (
+from app.model.db import (
     Notification,
     NotificationType
 )
 from app.contracts import Contract
+from app.utils.web3_utils import Web3Wrapper
 from batch.lib.token import TokenFactory
 from batch.lib.company_list import CompanyListFactory
 from batch.lib.token_list import TokenList
@@ -63,8 +61,7 @@ LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-SHARE-EXCHANGE")
 WORKER_COUNT = int(WORKER_COUNT)
 SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
-web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3 = Web3Wrapper()
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
@@ -78,14 +75,14 @@ NOW_BLOCKNUMBER = web3.eth.blockNumber
 
 # コントラクトの生成
 share_exchange_contract = Contract.get_contract(
-    contract_name="IbetOTCExchange",
+    contract_name="IbetExchange",
     address=IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
 )
 list_contract = Contract.get_contract(
     contract_name="TokenList",
     address=TOKEN_LIST_CONTRACT_ADDRESS
 )
-token_list = TokenList(list_contract)
+token_list = TokenList(list_contract, "IbetShare")
 
 
 # Watcher
@@ -151,7 +148,7 @@ class Watcher:
 
 
 """
-株式取引（相対）関連（IbetOTCExchange）
+株式取引関連（IbetExchange）
 """
 
 
@@ -167,11 +164,6 @@ class WatchShareNewOrder(Watcher):
             token_address = entry["args"]["tokenAddress"]
 
             if not token_list.is_registered(token_address):
-                continue
-
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
                 continue
 
             token = token_factory.get_share(token_address)
@@ -190,17 +182,7 @@ class WatchShareNewOrder(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = NotificationType.NEW_ORDER.value
             notification.priority = 0
-            notification.address = entry["args"]["ownerAddress"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
-            notification.args = dict(entry["args"])
-            notification.metainfo = metadata
-            db_session.merge(notification)
-
-            notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.NEW_ORDER_COUNTERPART.value
-            notification.priority = 0
-            notification.address = entry["args"]["counterpartAddress"]
+            notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
@@ -221,11 +203,6 @@ class WatchShareCancelOrder(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
-                continue
-
             token = token_factory.get_share(token_address)
             
             company = company_list.find(token.owner_address)
@@ -242,17 +219,7 @@ class WatchShareCancelOrder(Watcher):
             notification.notification_id = self._gen_notification_id(entry)
             notification.notification_type = NotificationType.CANCEL_ORDER.value
             notification.priority = 0
-            notification.address = entry["args"]["ownerAddress"]
-            notification.block_timestamp = self._gen_block_timestamp(entry)
-            notification.args = dict(entry["args"])
-            notification.metainfo = metadata
-            db_session.merge(notification)
-
-            notification = Notification()
-            notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.CANCEL_ORDER_COUNTERPART.value
-            notification.priority = 0
-            notification.address = entry["args"]["counterpartAddress"]
+            notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
             notification.args = dict(entry["args"])
             notification.metainfo = metadata
@@ -271,11 +238,6 @@ class WatchShareBuyAgreement(Watcher):
             token_address = entry["args"]["tokenAddress"]
 
             if not token_list.is_registered(token_address):
-                continue
-
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
                 continue
 
             token = token_factory.get_share(token_address)
@@ -315,11 +277,6 @@ class WatchShareSellAgreement(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
-                continue
-
             token = token_factory.get_share(token_address)
 
             company = company_list.find(token.owner_address)
@@ -355,11 +312,6 @@ class WatchShareBuySettlementOK(Watcher):
             token_address = entry["args"]["tokenAddress"]
 
             if not token_list.is_registered(token_address):
-                continue
-
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
                 continue
 
             token = token_factory.get_share(token_address)
@@ -399,11 +351,6 @@ class WatchShareSellSettlementOK(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
-                continue
-
             token = token_factory.get_share(token_address)
 
             company = company_list.find(token.owner_address)
@@ -441,11 +388,6 @@ class WatchShareBuySettlementNG(Watcher):
             if not token_list.is_registered(token_address):
                 continue
 
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
-                continue
-
             token = token_factory.get_share(token_address)
 
             company = company_list.find(token.owner_address)
@@ -481,11 +423,6 @@ class WatchShareSellSettlementNG(Watcher):
             token_address = entry["args"]["tokenAddress"]
 
             if not token_list.is_registered(token_address):
-                continue
-
-            # NOTE: OTCExchangeはShare以外のトークンでも利用される可能性があるため、
-            #       token_templateがShareではない場合処理をスキップする
-            if token_list.get_token(token_address)[1] != "IbetShare":
                 continue
             
             token = token_factory.get_share(token_address)

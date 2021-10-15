@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.6.0"
+  version: "21.9.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -11,22 +11,724 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 basePath: "/v3"
 tags:
-- name: "Notification"
-  description: "Account Notification"
+- name: Notification
+  description: Notifications for users
+- name: Position
+  description: Token balance held by the user
+- name: E2EMessage
+  description: Features related to the E2EMessaging contract
+- name: Events
+  description: Contract event logs
 schemes:
 - "https"
 - "http"
 paths:
+  /Position/{account_address}/Share:
+    get:
+      tags:
+        - Position
+      summary: "Share Token Position"
+      operationId: "GetShareTokenPosition"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  positions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        balance:
+                          type: integer
+                        pending_transfer:
+                          type: integer
+                        exchange_balance:
+                          type: integer
+                        exchange_commitment:
+                          type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Position/{account_address}/Share/{contract_address}:
+    get:
+      tags:
+        - Position
+      summary: "Share Token Position By Token Address"
+      operationId: "GetShareTokenPositionByAddress"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+        - name: "contract_address"
+          in: path
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  token:
+                    type: object
+                    properties:
+                      token_address:
+                        type: string
+                      token_template:
+                        type: string
+                        example:
+                          IbetShare
+                      owner_address:
+                        type: string
+                        description: issuer address
+                      company_name:
+                        type: string
+                      rsa_publickey:
+                        type: string
+                      name:
+                        type: string
+                        description: token name
+                      symbol:
+                        type: string
+                        description: token symbol
+                      total_supply:
+                        type: integer
+                      issue_price:
+                        type: integer
+                      principal_value:
+                        type: integer
+                      dividend_information:
+                        type: object
+                        properties:
+                          dividends:
+                            type: number
+                          dividend_record_date:
+                            type: string
+                          divicend_payment_date:
+                            type: string
+                      cancellation_date:
+                        type: string
+                      reference_urls:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            url:
+                              type: string
+                      image_url:
+                        type: array
+                        items:
+                          type: object
+                      memo:
+                        type: string
+                      transferable:
+                        type: boolean
+                      offering_status:
+                        type: boolean
+                      status:
+                        type: boolean
+                      transfer_approval_required:
+                        type: boolean
+                      is_canceled:
+                        type: boolean
+                      contact_information:
+                        type: string
+                      privacy_policy:
+                        type: string
+                      max_holding_quantity:
+                        type: integer
+                      max_sell_amount:
+                        type: integer
+                      tradable_exchange:
+                        type: string
+                      personal_info_address:
+                        type: string
+                  balance:
+                    type: integer
+                  pending_transfer:
+                    type: integer
+                  exchange_balance:
+                    type: integer
+                  exchange_commitment:
+                    type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Found Error / Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Position/{account_address}/StraightBond:
+    get:
+      tags:
+        - Position
+      summary: "StraightBond Token Position"
+      operationId: "GetStraightBondTokenPosition"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  positions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        balance:
+                          type: integer
+                        exchange_balance:
+                          type: integer
+                        exchange_commitment:
+                          type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Position/{account_address}/StraightBond/{contract_address}:
+    get:
+      tags:
+        - Position
+      summary: "StraightBond Token Position By Token Address"
+      operationId: "GetStraightBondTokenPositionByAddress"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+        - name: "contract_address"
+          in: path
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  token:
+                    type: object
+                    properties:
+                      token_address:
+                        type: string
+                      token_template:
+                        type: string
+                        example:
+                          IbetStraightBond
+                      owner_address:
+                        type: string
+                        description: issuer address
+                      company_name:
+                        type: string
+                      rsa_publickey:
+                        type: string
+                      name:
+                        type: string
+                        description: token name
+                      symbol:
+                        type: string
+                        description: token symbol
+                      total_supply:
+                        type: integer
+                      face_value:
+                        type: integer
+                      interest_rate:
+                        type: number
+                      interest_payment_date1:
+                        type: string
+                      interest_payment_date2:
+                        type: string
+                      interest_payment_date3:
+                        type: string
+                      interest_payment_date4:
+                        type: string
+                      interest_payment_date5:
+                        type: string
+                      interest_payment_date6:
+                        type: string
+                      interest_payment_date7:
+                        type: string
+                      interest_payment_date8:
+                        type: string
+                      interest_payment_date9:
+                        type: string
+                      interest_payment_date10:
+                        type: string
+                      interest_payment_date11:
+                        type: string
+                      interest_payment_date12:
+                        type: string
+                      redemption_date:
+                        type: string
+                      redemption_value:
+                        type: integer
+                      return_date:
+                        type: string
+                      return_amount:
+                        type: string
+                      purpose:
+                        type: string
+                        description: purpose of issue
+                      transferable:
+                        type: boolean
+                      isRedeemed:
+                        type: boolean
+                      image_url:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            url:
+                              type: string
+                      certification:
+                        type: array
+                        items:
+                          type: string
+                      initial_offering_status:
+                        type: boolean
+                      max_holding_quantity:
+                        type: integer
+                      max_sell_amount:
+                        type: integer
+                      contact_information:
+                        type: string
+                      privacy_policy:
+                        type: string
+                      tradable_exchange:
+                        type: string
+                      status:
+                        type: boolean
+                      memo:
+                        type: string
+                      personal_info_address:
+                        type: string
+                  balance:
+                    type: integer
+                  exchange_balance:
+                    type: integer
+                  exchange_commitment:
+                    type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Found Error / Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Position/{account_address}/Membership:
+    get:
+      tags:
+        - Position
+      summary: "Membership Token Position"
+      operationId: "GetMembershipTokenPosition"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  positions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        balance:
+                          type: integer
+                        exchange_balance:
+                          type: integer
+                        exchange_commitment:
+                          type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Position/{account_address}/Membership/{contract_address}:
+    get:
+      tags:
+        - Position
+      summary: "Membership Token Position By Token Address"
+      operationId: "GetMembershipTokenPositionByAddress"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+        - name: "contract_address"
+          in: path
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  token:
+                    type: object
+                    properties:
+                      token_address:
+                        type: string
+                      token_template:
+                        type: string
+                        example:
+                          IbetMembership
+                      owner_address:
+                        type: string
+                        description: issuer address
+                      company_name:
+                        type: string
+                      rsa_publickey:
+                        type: string
+                      name:
+                        type: string
+                        description: token name
+                      symbol:
+                        type: string
+                        description: token symbol
+                      total_supply:
+                        type: integer
+                      details:
+                        type: string
+                      return_details:
+                        type: string
+                      expiration_date:
+                        type: string
+                      memo:
+                        type: string
+                      transferable:
+                        type: boolean
+                      status:
+                        type: boolean
+                      initial_offering_status:
+                        type: boolean
+                      image_url:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            url:
+                              type: string
+                      max_holding_quantity:
+                        type: integer
+                      max_sell_amount:
+                        type: integer
+                      contact_information:
+                        type: string
+                      privacy_policy:
+                        type: string
+                      tradable_exchange:
+                        type: string
+                  balance:
+                    type: integer
+                  exchange_balance:
+                    type: integer
+                  exchange_commitment:
+                    type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Found Error / Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Position/{account_address}/Coupon:
+    get:
+      tags:
+        - Position
+      summary: "Coupon Token Position"
+      operationId: "GetCouponTokenPosition"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  positions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        token_address:
+                          type: string
+                        balance:
+                          type: integer
+                        exchange_balance:
+                          type: integer
+                        exchange_commitment:
+                          type: integer
+                        used:
+                          type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Position/{account_address}/Coupon/{contract_address}:
+    get:
+      tags:
+        - Position
+      summary: "Coupon Token Position By Token Address"
+      operationId: "GetCouponTokenPositionByAddress"
+      parameters:
+        - name: "account_address"
+          in: path
+          description: "account address"
+          required: true
+          type: "string"
+        - name: "contract_address"
+          in: path
+          description: "token address"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  token:
+                    type: object
+                    properties:
+                      token_address:
+                        type: string
+                      token_template:
+                        type: string
+                        example:
+                          IbetCoupon
+                      owner_address:
+                        type: string
+                        description: issuer address
+                      company_name:
+                        type: string
+                      rsa_publickey:
+                        type: string
+                      name:
+                        type: string
+                        description: token name
+                      symbol:
+                        type: string
+                        description: token symbol
+                      total_supply:
+                        type: integer
+                      details:
+                        type: string
+                      return_details:
+                        type: string
+                      expiration_date:
+                        type: string
+                      memo:
+                        type: string
+                      transferable:
+                        type: boolean
+                      status:
+                        type: boolean
+                      initial_offering_status:
+                        type: boolean
+                      image_url:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            url:
+                              type: string
+                      max_holding_quantity:
+                        type: integer
+                      max_sell_amount:
+                        type: integer
+                      contact_information:
+                        type: string
+                      privacy_policy:
+                        type: string
+                      tradable_exchange:
+                        type: string
+                  balance:
+                    type: integer
+                  exchange_balance:
+                    type: integer
+                  exchange_commitment:
+                    type: integer
+                  used:
+                    type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: "Not Found Error / Not Supported Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Notifications:
     get:
       tags:
-        - "Notification"
+        - Notification
       summary: "Notification List"
       operationId: "GetNotifications"
       parameters:
         - name: address
           in: query
-          required: true
+          required: false
           type: string
         - name: notification_type
           in: query
@@ -85,65 +787,60 @@ paths:
                     items:
                       type: object
                       properties:
-                        notifications:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              notification_type:
-                                type: string
-                                example:
-                                  NewOrder
-                                enum: [
-                                  NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
-                                  BuyAgreement,BuySettlementOK,BuySettlementNG,
-                                  SellAgreement,SellSettlementOK,SellSettlementNG,
-                                  StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
-                                  Redeem,Suspend,ApplyForOffering,Allot,Transfer,
-                                  PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
-                                  PaymentAccountWarn,PaymentAccountBan
-                                ]
-                              id:
-                                type: string
-                                example:
-                                  "0x00000373ca8600000000000000"
-                              priority:
-                                type: integer
-                              block_timestamp:
-                                type: string
-                                description: "block timestamp"
-                              is_read:
-                                type: boolean
-                              is_flagged:
-                                type: boolean
-                              is_deleted:
-                                type: boolean
-                              deleted_at:
-                                type: string
-                                description: "datetime of deletion"
-                              args:
-                                type: object
-                              metainfo:
-                                type: object
-                                properties:
-                                  company_name:
-                                    type: string
-                                  token_address:
-                                    type: string
-                                  token_name:
-                                    type: string
-                                  exchange_address:
-                                    type: string
-                                  token_type:
-                                    type: string
-                                    enum: [IbetStraightBond,IbetMembership,IbetCoupon]
-                              account_address:
-                                type: string
-                              sort_id:
-                                type: integer
-                              created:
-                                type: string
-                                description: "datetime of create"
+                        notification_type:
+                          type: string
+                          example:
+                            NewOrder
+                          enum: [
+                            NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
+                            BuyAgreement,BuySettlementOK,BuySettlementNG,
+                            SellAgreement,SellSettlementOK,SellSettlementNG,
+                            StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
+                            Redeem,Suspend,ApplyForOffering,Allot,Transfer,
+                            PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
+                            PaymentAccountWarn,PaymentAccountBan
+                          ]
+                        id:
+                          type: string
+                          example:
+                            "0x00000373ca8600000000000000"
+                        priority:
+                          type: integer
+                        block_timestamp:
+                          type: string
+                          description: "block timestamp"
+                        is_read:
+                          type: boolean
+                        is_flagged:
+                          type: boolean
+                        is_deleted:
+                          type: boolean
+                        deleted_at:
+                          type: string
+                          description: "datetime of deletion"
+                        args:
+                          type: object
+                        metainfo:
+                          type: object
+                          properties:
+                            company_name:
+                              type: string
+                            token_address:
+                              type: string
+                            token_name:
+                              type: string
+                            exchange_address:
+                              type: string
+                            token_type:
+                              type: string
+                              enum: [IbetStraightBond,IbetMembership,IbetCoupon]
+                        account_address:
+                          type: string
+                        sort_id:
+                          type: integer
+                        created:
+                          type: string
+                          description: "datetime of create"
         400:
           description: "Invalid Parameter Error"
           schema:
@@ -154,7 +851,7 @@ paths:
   /Notifications/{id}:
     delete:
       tags:
-        - "Notification"
+        - Notification
       summary: "Delete Notification"
       operationId: "DeleteNotification"
       parameters:
@@ -178,6 +875,165 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/404NotFoundError"
+  /E2EMessage/EncryptionKey/{account_address}:
+    get:
+      tags:
+        - E2EMessage
+      summary: Retrieve message encryption key
+      operationId: EncryptionKey
+      parameters:
+        - name: "account_address"
+          in: path
+          description: Account address (message receiver)
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  key:
+                    description: Message encryption key
+                    type: string
+                  key_type:
+                    description: Key type
+                    type: string
+                    example: RSA4096
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Events/E2EMessaging:
+    get:
+      tags:
+        - Events
+      summary: List all E2EMessaging event logs
+      operationId: E2EMessagingEvents
+      parameters:
+        - name: from_block
+          in: query
+          description: from block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: to_block
+          in: query
+          description: to block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: event
+          in: query
+          description: events to get
+          required: false
+          type: string
+          enum: [PublicKeyUpdated, Message]
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    event:
+                      description: the event name
+                      type: string
+                    args:
+                      description: event args
+                      type: object
+                    transaction_hash:
+                      description: transaction hash
+                      type: string
+                    block_number:
+                      description: the block number where this log was in
+                      type: integer
+                    log_index:
+                      description: integer of the log index position in the block
+                      type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+  /Events/IbetEscrow:
+    get:
+        - name: from_block
+          in: query
+          description: from block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: to_block
+          in: query
+          description: to block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: event
+          in: query
+          description: events to get
+          required: false
+          type: string
+          enum: [Deposited, Withdrawn, EscrowCreated, EscrowCanceled, EscrowFinished]
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    event:
+                      description: the event name
+                      type: string
+                    args:
+                      description: event args
+                      type: object
+                    transaction_hash:
+                      description: transaction hash
+                      type: string
+                    block_number:
+                      description: the block number where this log was in
+                      type: integer
+                    log_index:
+                      description: integer of the log index position in the block
+                      type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
 definitions:
   ResultSet:
     type: object

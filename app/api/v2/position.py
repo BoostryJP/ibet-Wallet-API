@@ -28,14 +28,16 @@ from app.errors import (
 )
 from app import config
 from app.contracts import Contract
-from app.model import (
+from app.model.db import (
     Listing,
+    IDXConsumeCoupon,
+    IDXTransfer
+)
+from app.model.blockchain import (
     BondToken,
     ShareToken,
     MembershipToken,
-    CouponToken,
-    IDXConsumeCoupon,
-    IDXTransfer
+    CouponToken
 )
 
 LOG = log.get_logger()
@@ -63,10 +65,10 @@ class ShareMyTokens(BaseResource):
         )
 
         # Exchange Contract
-        ExchangeContract = None
+        _exchange_contract = None
         if config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
-            ExchangeContract = Contract.get_contract(
-                contract_name="IbetOTCExchange",
+            _exchange_contract = Contract.get_contract(
+                contract_name="IbetExchangeInterface",
                 address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
             )
 
@@ -80,21 +82,26 @@ class ShareMyTokens(BaseResource):
                 token_template = token_info[1]
                 if token_template == "IbetShare":
                     _account_address = to_checksum_address(_account_address)
-                    TokenContract = Contract.get_contract(
+                    _token_contract = Contract.get_contract(
                         contract_name="IbetShare",
                         address=token_address
                     )
                     try:
-                        balance = TokenContract.functions.balanceOf(_account_address).call()
-                        pending_transfer = TokenContract.functions.pendingTransfer(_account_address).call()
-                        if ExchangeContract is not None:
-                            commitment = ExchangeContract.functions.commitmentOf(_account_address, token_address).call()
+                        balance = _token_contract.functions.balanceOf(_account_address).call()
+                        pending_transfer = _token_contract.functions.pendingTransfer(_account_address).call()
+                        if _exchange_contract is not None:
+                            _exchange_balance = _exchange_contract.functions.\
+                                balanceOf(_account_address, token_address).call()
+                            _exchange_commitment = _exchange_contract.functions.\
+                                commitmentOf(_account_address, token_address).call()
                         else:
                             # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
-                            commitment = 0
+                            _exchange_balance = 0
+                            _exchange_commitment = 0
                         # If balance, pending_transfer, and commitment are non-zero,
                         # get the token information from TokenContract.
-                        if balance == 0 and pending_transfer == 0 and commitment == 0:
+                        if balance == 0 and pending_transfer == 0 and \
+                                _exchange_balance == 0 and _exchange_commitment == 0:
                             continue
                         else:
                             sharetoken = ShareToken.get(
@@ -104,8 +111,9 @@ class ShareMyTokens(BaseResource):
                             position_list.append({
                                 "token": sharetoken.__dict__,
                                 "balance": balance,
-                                "pending_transfer": pending_transfer,
-                                "commitment": commitment
+                                "exchange_balance": _exchange_balance,
+                                "exchange_commitment": _exchange_commitment,
+                                "pending_transfer": pending_transfer
                             })
                     except Exception as e:
                         LOG.exception(e)
@@ -159,10 +167,10 @@ class StraightBondMyTokens(BaseResource):
         )
 
         # Bond Exchange Contract
-        BondExchangeContract = None
+        _exchange_contract = None
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
-            BondExchangeContract = Contract.get_contract(
-                contract_name="IbetStraightBondExchange",
+            _exchange_contract = Contract.get_contract(
+                contract_name="IbetExchangeInterface",
                 address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
             )
 
@@ -182,14 +190,18 @@ class StraightBondMyTokens(BaseResource):
                     )
                     try:
                         balance = BondTokenContract.functions.balanceOf(owner).call()
-                        if BondExchangeContract is not None:
-                            commitment = BondExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        if _exchange_contract is not None:
+                            _exchange_balance = _exchange_contract.functions. \
+                                balanceOf(_account_address, token_address).call()
+                            _exchange_commitment = _exchange_contract.functions. \
+                                commitmentOf(_account_address, token_address).call()
                         else:
                             # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
-                            commitment = 0
-                        # If balance, pending_transfer, and commitment are non-zero,
+                            _exchange_balance = 0
+                            _exchange_commitment = 0
+                        # If balance and commitment are non-zero,
                         # get the token information from TokenContract.
-                        if balance == 0 and commitment == 0:
+                        if balance == 0 and _exchange_balance == 0 and _exchange_commitment == 0:
                             continue
                         else:
                             bondtoken = BondToken.get(
@@ -199,7 +211,8 @@ class StraightBondMyTokens(BaseResource):
                             position_list.append({
                                 "token": bondtoken.__dict__,
                                 "balance": balance,
-                                "commitment": commitment
+                                "exchange_balance": _exchange_balance,
+                                "exchange_commitment": _exchange_commitment
                             })
                     except Exception as e:
                         LOG.error(e)
@@ -254,10 +267,10 @@ class MembershipMyTokens(BaseResource):
         )
 
         # Exchange Contract
-        ExchangeContract = None
+        _exchange_contract = None
         if config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
-            ExchangeContract = Contract.get_contract(
-                contract_name="IbetMembershipExchange",
+            _exchange_contract = Contract.get_contract(
+                contract_name="IbetExchangeInterface",
                 address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
 
@@ -277,14 +290,18 @@ class MembershipMyTokens(BaseResource):
                     )
                     try:
                         balance = TokenContract.functions.balanceOf(owner).call()
-                        if ExchangeContract is not None:
-                            commitment = ExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        if _exchange_contract is not None:
+                            _exchange_balance = _exchange_contract.functions. \
+                                balanceOf(_account_address, token_address).call()
+                            _exchange_commitment = _exchange_contract.functions. \
+                                commitmentOf(_account_address, token_address).call()
                         else:
                             # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
-                            commitment = 0
-                        # If balance, pending_transfer, and commitment are non-zero,
+                            _exchange_balance = 0
+                            _exchange_commitment = 0
+                        # If balance and commitment are non-zero,
                         # get the token information from TokenContract.
-                        if balance == 0 and commitment == 0:
+                        if balance == 0 and _exchange_balance == 0 and _exchange_commitment == 0:
                             continue
                         else:
                             membershiptoken = MembershipToken.get(
@@ -294,7 +311,8 @@ class MembershipMyTokens(BaseResource):
                             position_list.append({
                                 "token": membershiptoken.__dict__,
                                 "balance": balance,
-                                "commitment": commitment
+                                "exchange_balance": _exchange_balance,
+                                "exchange_commitment": _exchange_commitment,
                             })
                     except Exception as e:
                         LOG.error(e)
@@ -349,10 +367,10 @@ class CouponMyTokens(BaseResource):
         )
 
         # Coupon Exchange Contract
-        CouponExchangeContract = None
+        _exchange_contract = None
         if config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
-            CouponExchangeContract = Contract.get_contract(
-                contract_name="IbetCouponExchange",
+            _exchange_contract = Contract.get_contract(
+                contract_name="IbetExchangeInterface",
                 address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
             )
 
@@ -364,29 +382,36 @@ class CouponMyTokens(BaseResource):
                 token_info = ListContract.functions.getTokenByAddress(token.token_address).call()
                 token_address = token_info[0]
                 token_template = token_info[1]
-                owner = to_checksum_address(_account_address)
+                _account_address = to_checksum_address(_account_address)
                 if token_template == "IbetCoupon":
-                    CouponTokenContract = Contract.get_contract(
+                    _token_contract = Contract.get_contract(
                         contract_name="IbetCoupon",
                         address=token_address
                     )
                     try:
-                        balance = CouponTokenContract.functions.balanceOf(owner).call()
-                        if CouponExchangeContract is not None:
-                            commitment = CouponExchangeContract.functions.commitmentOf(owner, token_address).call()
+                        balance = _token_contract.functions.balanceOf(_account_address).call()
+                        if _exchange_contract is not None:
+                            _exchange_balance = _exchange_contract.functions. \
+                                balanceOf(_account_address, token_address).call()
+                            _exchange_commitment = _exchange_contract.functions. \
+                                commitmentOf(_account_address, token_address).call()
                         else:
                             # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
-                            commitment = 0
-                        used = CouponTokenContract.functions.usedOf(owner).call()
+                            _exchange_balance = 0
+                            _exchange_commitment = 0
+
+                        used = _token_contract.functions.usedOf(_account_address).call()
                         # Retrieving token receipt history from IDXTransfer
                         # NOTE: Index data has a lag from the most recent transfer state.
                         received_history = session.query(IDXTransfer). \
                             filter(IDXTransfer.token_address == token.token_address). \
-                            filter(IDXTransfer.to_address == owner). \
+                            filter(IDXTransfer.to_address == _account_address). \
                             first()
-                        # If balance, pending_transfer, and commitment are non-zero,
+                        # If balance, commitment, and used are non-zero, and exist received history,
                         # get the token information from TokenContract.
-                        if balance == 0 and commitment == 0 and used == 0 and received_history is None:
+                        if balance == 0 and \
+                                _exchange_balance == 0 and _exchange_commitment == 0 and \
+                                used == 0 and received_history is None:
                             continue
                         else:
                             coupontoken = CouponToken.get(
@@ -396,7 +421,8 @@ class CouponMyTokens(BaseResource):
                             position_list.append({
                                 "token": coupontoken.__dict__,
                                 "balance": balance,
-                                "commitment": commitment,
+                                "exchange_balance": _exchange_balance,
+                                "exchange_commitment": _exchange_commitment,
                                 "used": used
                             })
                     except Exception as e:

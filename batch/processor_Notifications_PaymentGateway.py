@@ -26,8 +26,6 @@ from datetime import (
     timedelta
 )
 
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
@@ -38,22 +36,17 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 from app.config import (
-    WEB3_HTTP_PROVIDER,
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    PAYMENT_GATEWAY_CONTRACT_ADDRESS,
-    COMPANY_LIST_URL
+    PAYMENT_GATEWAY_CONTRACT_ADDRESS
 )
-from app.model import (
+from app.model.db import (
     Notification,
     NotificationType
 )
 from app.contracts import Contract
-from batch.lib.token import TokenFactory
-from batch.lib.company_list import CompanyListFactory
-from batch.lib.token_list import TokenList
+from app.utils.web3_utils import Web3Wrapper
 from batch.lib.misc import wait_all_futures
 import log
 
@@ -63,15 +56,11 @@ LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-PAYMENTGATEWAY")
 WORKER_COUNT = int(WORKER_COUNT)
 SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
-web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3 = Web3Wrapper()
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
-
-token_factory = TokenFactory(web3)
-company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
@@ -81,11 +70,6 @@ payment_gateway_contract = Contract.get_contract(
     contract_name="PaymentGateway",
     address=PAYMENT_GATEWAY_CONTRACT_ADDRESS
 )
-list_contract = Contract.get_contract(
-    contract_name="TokenList",
-    address=TOKEN_LIST_CONTRACT_ADDRESS
-)
-token_list = TokenList(list_contract)
 
 
 # Watcher
@@ -210,9 +194,9 @@ class WatchPaymentAccountWarn(Watcher):
 
 
 # イベント：受領用銀行口座非承認
-class WatchPaymentAccountUnapprove(Watcher):
+class WatchPaymentAccountDisapprove(Watcher):
     def __init__(self):
-        super().__init__(payment_gateway_contract, "Unapprove", {})
+        super().__init__(payment_gateway_contract, "Disapprove", {})
 
     def watch(self, entries):
         for entry in entries:
@@ -250,7 +234,7 @@ def main():
         WatchPaymentAccountRegister(),
         WatchPaymentAccountApprove(),
         WatchPaymentAccountWarn(),
-        WatchPaymentAccountUnapprove(),
+        WatchPaymentAccountDisapprove(),
         WatchPaymentAccountBan(),
     ]
 

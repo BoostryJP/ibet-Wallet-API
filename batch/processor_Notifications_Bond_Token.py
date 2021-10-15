@@ -26,8 +26,6 @@ from datetime import (
     timedelta
 )
 
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     sessionmaker,
@@ -38,19 +36,19 @@ path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 from app.config import (
-    WEB3_HTTP_PROVIDER,
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
     TOKEN_LIST_CONTRACT_ADDRESS,
     COMPANY_LIST_URL
 )
-from app.model import (
+from app.model.db import (
     Notification,
     NotificationType,
     Listing
 )
 from app.contracts import Contract
+from app.utils.web3_utils import Web3Wrapper
 from batch.lib.company_list import CompanyListFactory
 from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
@@ -62,8 +60,7 @@ LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-BOND-TOKEN")
 WORKER_COUNT = int(WORKER_COUNT)
 SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
-web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3 = Web3Wrapper()
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())

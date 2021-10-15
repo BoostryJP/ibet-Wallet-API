@@ -33,24 +33,22 @@ from sqlalchemy.orm import (
     sessionmaker,
     scoped_session
 )
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
 from app.config import (
-    WEB3_HTTP_PROVIDER,
     DATABASE_URL,
     TOKEN_LIST_CONTRACT_ADDRESS,
     ZERO_ADDRESS
 )
-from app.model import (
+from app.model.db import (
     Listing,
     IDXTransfer
 )
 from app.contracts import Contract
+from app.utils.web3_utils import Web3Wrapper
 import log
 
 UTC = timezone(timedelta(hours=0), "UTC")
@@ -58,8 +56,7 @@ UTC = timezone(timedelta(hours=0), "UTC")
 process_name = "INDEXER-TRANSFER"
 LOG = log.get_logger(process_name=process_name)
 
-web3 = Web3(Web3.HTTPProvider(WEB3_HTTP_PROVIDER))
-web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+web3 = Web3Wrapper()
 
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
@@ -212,9 +209,16 @@ class Processor:
 _sink = Sinks()
 _sink.register(DBSink(db_session))
 processor = Processor(_sink, db_session)
-LOG.info("Service started successfully")
 
-processor.initial_sync()
-while True:
-    processor.sync_new_logs()
-    time.sleep(5)
+
+def main():
+    LOG.info("Service started successfully")
+
+    processor.initial_sync()
+    while True:
+        processor.sync_new_logs()
+        time.sleep(5)
+
+
+if __name__ == "__main__":
+    main()

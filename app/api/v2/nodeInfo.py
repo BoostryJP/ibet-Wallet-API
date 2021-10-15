@@ -16,15 +16,18 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
 
-from app import config
-from app import log
+from app import (
+    config,
+    log
+)
 from app.api.common import BaseResource
-from app.model.node import Node
+from app.model.db import Node
+from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
+web3 = Web3Wrapper()
 
 
 # ------------------------------
@@ -40,10 +43,9 @@ class NodeInfo(BaseResource):
 
         payment_gateway_json = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
         personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
-        ibet_straightbond_exchange_json = json.load(open("app/contracts/json/IbetStraightBondExchange.json", "r"))
-        ibet_membership_exchange_json = json.load(open("app/contracts/json/IbetMembershipExchange.json", "r"))
-        ibet_coupon_exchange_json = json.load(open("app/contracts/json/IbetCouponExchange.json", "r"))
-        ibet_otc_exchange_json = json.load(open("app/contracts/json/IbetOTCExchange.json", "r"))
+        ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
+        ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
+        e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
         nodeInfo = {
             'payment_gateway_address': config.PAYMENT_GATEWAY_CONTRACT_ADDRESS,
@@ -51,13 +53,17 @@ class NodeInfo(BaseResource):
             'personal_info_address': config.PERSONAL_INFO_CONTRACT_ADDRESS,
             'personal_info_abi': personal_info_json['abi'],
             'ibet_straightbond_exchange_address': config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_straightbond_exchange_abi': ibet_straightbond_exchange_json['abi'],
+            'ibet_straightbond_exchange_abi': ibet_exchange_json['abi'],
             'ibet_membership_exchange_address': config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_membership_exchange_abi': ibet_membership_exchange_json['abi'],
+            'ibet_membership_exchange_abi': ibet_exchange_json['abi'],
             'ibet_coupon_exchange_address': config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_coupon_exchange_abi': ibet_coupon_exchange_json['abi'],
-            'ibet_otc_exchange_address': config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_otc_exchange_abi': ibet_otc_exchange_json['abi'],
+            'ibet_coupon_exchange_abi': ibet_exchange_json['abi'],
+            'ibet_share_exchange_address': config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+            'ibet_share_exchange_abi': ibet_exchange_json['abi'],
+            'ibet_escrow_address': config.IBET_ESCROW_CONTRACT_ADDRESS,
+            'ibet_escrow_abi': ibet_escrow_json['abi'],
+            'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
+            'e2e_messaging_abi': e2e_messaging_json['abi'],
             'agent_address': config.AGENT_ADDRESS,
         }
 
@@ -77,8 +83,20 @@ class BlockSyncStatus(BaseResource):
 
         session = req.context["session"]
 
-        node = session.query(Node).first()
+        # Get block sync status
+        node = session.query(Node). \
+            filter(Node.is_synced == True). \
+            order_by(Node.priority). \
+            first()
+
+        # Get latest block number
+        is_synced = False
+        latest_block_number = None
+        if node is not None:
+            is_synced = True
+            latest_block_number = web3.eth.blockNumber
 
         self.on_success(res, {
-            "is_synced": node.is_synced
+            "is_synced": is_synced,
+            "latest_block_number": latest_block_number
         })

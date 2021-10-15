@@ -25,7 +25,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app.model import (
+from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement,
     AgreementStatus
@@ -62,16 +62,20 @@ class GetAgreement(BaseResource):
         exchange_address = to_checksum_address(request_json["exchange_address"])
 
         # 取引コントラクトに接続
-        ExchangeContract, exchange = self.exchange_contracts(exchange_address)
+        address_list = [
+            config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+            config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+            config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+            config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+        ]
+        address_list = [to_checksum_address(address) for address in address_list if address is not None]
+        if exchange_address not in address_list:
+            raise InvalidParameterError(description="Invalid Address")
+        ExchangeContract = Contract.get_contract("IbetExchange", exchange_address)
 
         # 注文情報の取得
-        if exchange != "IbetOTCExchange":
-            maker_address, token_address, _, _, is_buy, _, _ = \
-                ExchangeContract.functions.getOrder(order_id).call()
-        else:
-            maker_address, _, token_address, _, _, _, _ = \
-                ExchangeContract.functions.getOrder(order_id).call()
-            is_buy = False
+        maker_address, token_address, _, _, is_buy, _, _ = \
+            ExchangeContract.functions.getOrder(order_id).call()
 
         if maker_address == config.ZERO_ADDRESS:
             raise InvalidParameterError("Data not found")
@@ -103,29 +107,6 @@ class GetAgreement(BaseResource):
         }
 
         self.on_success(res, res_data)
-
-    @staticmethod
-    def exchange_contracts(exchange_address):
-        if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None and \
-                exchange_address == to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract("IbetStraightBondExchange", exchange_address)
-            exchange = "IbetStraightBondExchange"
-        elif config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None and \
-                exchange_address == to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract("IbetMembershipExchange", exchange_address)
-            exchange = "IbetMembershipExchange"
-        elif config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None and \
-                exchange_address == to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract("IbetCouponExchange", exchange_address)
-            exchange = "IbetCouponExchange"
-        elif config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None and \
-                exchange_address == to_checksum_address(config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS):
-            ExchangeContract = Contract.get_contract("IbetOTCExchange", exchange_address)
-            exchange = "IbetOTCExchange"
-        else:
-            raise InvalidParameterError(description="Invalid Address")
-
-        return ExchangeContract, exchange
 
     @staticmethod
     def validate(req):
@@ -350,7 +331,7 @@ class StraightBondLastPrice(BaseResource):
         request_json = StraightBondLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
-            "IbetStraightBondExchange",
+            "IbetExchange",
             config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         )
 
@@ -655,7 +636,7 @@ class MembershipLastPrice(BaseResource):
         request_json = MembershipLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
-            "IbetMembershipExchange",
+            "IbetExchange",
             config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
@@ -962,7 +943,7 @@ class CouponLastPrice(BaseResource):
         request_json = CouponLastPrice.validate(req)
 
         ExchangeContract = Contract.get_contract(
-            "IbetCouponExchange",
+            "IbetExchange",
             config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         )
 

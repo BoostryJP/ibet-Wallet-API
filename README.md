@@ -1,32 +1,30 @@
-<p align='center'>
- <img alt="ibet" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png" width="300"/>
-</p>
-  
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-21.6-blue.svg?cacheSeconds=2592000" />
-  <a href="https:/doc.com" target="_blank">
-    <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
-  </a>
-  <a href="#" target="_blank">
-    <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
-  </a>
+  <img alt="Version" src="https://img.shields.io/badge/version-21.9-blue.svg?cacheSeconds=2592000" />
+  <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
-## About this repository
+<img width="33%" align="right" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png"/>
 
-ibe-Wallet-API is an API service that provides various utilities to help you build Wallet services on [ibet network](https://github.com/BoostryJP/ibet-Network).
+## Features
+- ibe-Wallet-API is RPC services that provides utility functions for building a wallet system on [ibet-Network](https://github.com/BoostryJP/ibet-Network).
+- ibet-Wallet-API runs on token contracts and DEX contracts developed in the [ibet-SmartContract project](https://github.com/BoostryJP/ibet-SmartContract).
 
-It supports the tokens developed by [ibet-SmartContract](https://github.com/BoostryJP/ibet-SmartContract).
+## Dependencies
+- [python3](https://www.python.org/)
+  - Version 3.8 or greater
+- RDB
+  - [PostgreSQL](https://www.postgresql.org/) - Version 10
+  - [MySQL](https://www.mysql.com/) - Version 5.7
+- [GoQuorum](https://github.com/ConsenSys/quorum)
+  - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
+  - We use [ganache-cli](https://github.com/trufflesuite/ganache-cli) for local development and unit testing, and we use the latest version.
 
 ## Supported contract version
 
-* ibet-SmartContract: version 21.6.0
+* ibet-SmartContract: version 21.9.0
 
-## Prerequisites
-
-Set up an execution environment of Python 3.8 or higher.
 
 ## Starting and Stopping the Server
 Install packages
@@ -42,13 +40,20 @@ $ ./bin/run_server.sh start(stop)
 ## Running the tests
 Install packages
 ```
-$ pip install -r ./app/tests/requirements.txt
+$ pip install -r tests/requirements.txt
 ```
 
 You can run the tests with:
 ```
-$ pytest app/tests/
+$ pytest tests/
 ```
+
+## Branching model
+
+<p align='center'>
+  <img alt="ibet" src="https://user-images.githubusercontent.com/963333/128963415-df122a46-b813-4832-a64e-7830a175f825.png"/>
+</p>
+
 
 ## License
 
