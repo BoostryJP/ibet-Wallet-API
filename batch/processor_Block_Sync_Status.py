@@ -187,9 +187,7 @@ class Processor:
         syncing = web3.eth.syncing
         if syncing:
             remaining_blocks = syncing["highestBlock"] - syncing["currentBlock"]
-            # NOTE: If it is delayed by one block,
-            #       it will be treated normally assuming that it will be updated immediately afterwards.
-            if remaining_blocks > 1:
+            if remaining_blocks > config.BLOCK_SYNC_REMAINING_THRESHOLD:
                 is_synced = False
                 errors.append(f"highestBlock={syncing['highestBlock']}, currentBlock={syncing['currentBlock']}")
 
@@ -246,6 +244,8 @@ def main():
     LOG.info("Service started successfully")
 
     while True:
+        start_time = time.time()
+
         try:
             processor.process()
             LOG.debug("Processed")
@@ -253,7 +253,8 @@ def main():
             # Unexpected errors(DB error, etc)
             LOG.exception(ex)
 
-        time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
+        elapsed_time = time.time() - start_time
+        time.sleep(max(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL - elapsed_time, 0))
 
 
 if __name__ == "__main__":
