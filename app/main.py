@@ -57,7 +57,7 @@ from app.errors import AppError
 LOG = log.get_logger()
 
 
-class App(falcon.API):
+class App(falcon.App):
     def __init__(self, *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
         LOG.info('API Server is starting')
@@ -189,5 +189,6 @@ class App(falcon.API):
 init_session()
 middleware = [JSONTranslator(), DatabaseSessionManager(db_session), CORSMiddleware()]
 application = App(middleware=middleware)
+application.req_options.strip_url_path_trailing_slash = True
 
 LOG.info("Service started successfully")

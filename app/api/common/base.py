@@ -28,7 +28,6 @@ except ImportError:
 from app import log
 from app.utils.alchemy import new_alchemy_encoder
 from app.config import BRAND_NAME
-from app.database import engine
 from app.errors import NotSupportedError
 
 LOG = log.get_logger()
@@ -53,7 +52,7 @@ class BaseResource(object):
 
         obj = OrderedDict()
         obj['meta'] = meta
-        res.body = self.to_json(obj)
+        res.text = self.to_json(obj)
 
     def on_success(self, res, data=None):
         res.status = falcon.HTTP_200
@@ -64,21 +63,21 @@ class BaseResource(object):
         obj = OrderedDict()
         obj['meta'] = meta
         obj['data'] = data
-        res.body = self.to_json(obj)
+        res.text = self.to_json(obj)
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, *args, **kwargs):
         if req.path == '/':
             res.status = falcon.HTTP_200
-            res.body = self.to_json(self.HELLO_WORLD)
+            res.text = self.to_json(self.HELLO_WORLD)
         else:
             raise NotSupportedError(method='GET', url=req.path)
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, *args, **kwargs):
         raise NotSupportedError(method='POST', url=req.path)
 
-    def on_put(self, req, res):
+    def on_put(self, req, res, *args, **kwargs):
         raise NotSupportedError(method='PUT', url=req.path)
 
-    def on_delete(self, req, res):
+    def on_delete(self, req, res, *args, **kwargs):
         raise NotSupportedError(method='DELETE', url=req.path)
 

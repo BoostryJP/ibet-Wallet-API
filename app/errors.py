@@ -97,14 +97,14 @@ class AppError(Exception):
         return self.error['description']
 
     @staticmethod
-    def handle(exception, req, res, error=None):
+    def handle(req, res, exception, error=None):
         res.status = exception.status
         meta = OrderedDict()
         meta['code'] = exception.code
         meta['message'] = exception.title
         if exception.description:
             meta['description'] = exception.description
-        res.body = json.dumps({'meta': meta})
+        res.text = json.dumps({'meta': meta})
 
 
 class InvalidParameterError(AppError):

@@ -33,7 +33,8 @@ from web3.middleware import geth_poa_middleware
 from app.main import App
 from app.middleware import (
     JSONTranslator,
-    DatabaseSessionManager
+    DatabaseSessionManager,
+    CORSMiddleware
 )
 from app.database import (
     db_session,
@@ -55,8 +56,10 @@ def client():
     FailOverHTTPProvider.is_default = None
 
     init_session()
-    middleware = [JSONTranslator(), DatabaseSessionManager(db_session)]
-    return testing.TestClient(App(middleware=middleware))
+    middleware = [JSONTranslator(), DatabaseSessionManager(db_session), CORSMiddleware()]
+    application = App(middleware=middleware)
+    application.req_options.strip_url_path_trailing_slash = True
+    return testing.TestClient(application)
 
 
 @pytest.fixture(scope='session')

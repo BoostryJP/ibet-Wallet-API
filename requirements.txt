@@ -1,7 +1,7 @@
 Cerberus==0.9
 coincurve==14.0.0
 eth-keyfile==0.5.1
-falcon==1.4.1
+falcon==3.0.1
 future==0.16.0
 gunicorn==20.0.4
 gevent==1.4.0
