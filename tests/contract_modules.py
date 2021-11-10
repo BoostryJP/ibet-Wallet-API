@@ -555,6 +555,17 @@ def cancel_order(invoker, exchange, order_id):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 注文の強制取消
+def force_cancel_order(invoker, exchange, order_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    ExchangeContract = Contract. \
+        get_contract('IbetExchange', exchange['address'])
+    tx_hash = ExchangeContract.functions. \
+        forceCancelOrder(order_id). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 # 直近約定IDを取得
 def get_latest_agreementid(exchange, order_id):
     ExchangeContract = Contract. \

@@ -75,6 +75,10 @@ class Sinks:
         for sink in self.sinks:
             sink.on_cancel_order(*args, **kwargs)
 
+    def on_force_cancel_order(self, *args, **kwargs):
+        for sink in self.sinks:
+            sink.on_force_cancel_order(*args, **kwargs)
+
     def on_agree(self, *args, **kwargs):
         for sink in self.sinks:
             sink.on_agree(*args, **kwargs)
@@ -123,6 +127,12 @@ class DBSink:
         order = self.__get_order(exchange_address, order_id)
         if order is not None:
             LOG.debug(f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}")
+            order.is_cancelled = True
+
+    def on_force_cancel_order(self, exchange_address: str, order_id: int):
+        order = self.__get_order(exchange_address, order_id)
+        if order is not None:
+            LOG.debug(f"ForceCancelOrder: exchange_address={exchange_address}, order_id={order_id}")
             order.is_cancelled = True
 
     def on_agree(self, transaction_hash: str, exchange_address: str, order_id: int, agreement_id: int,
@@ -239,6 +249,7 @@ class Processor:
         LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_new_order(block_from, block_to)
         self.__sync_cancel_order(block_from, block_to)
+        self.__sync_force_cancel_order(block_from, block_to)
         self.__sync_agree(block_from, block_to)
         self.__sync_settlement_ok(block_from, block_to)
         self.__sync_settlement_ng(block_from, block_to)
@@ -247,6 +258,7 @@ class Processor:
         LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_new_order(block_from, block_to)
         self.__sync_cancel_order(block_from, block_to)
+        self.__sync_force_cancel_order(block_from, block_to)
         self.__sync_agree(block_from, block_to)
         self.__sync_settlement_ok(block_from, block_to)
         self.__sync_settlement_ng(block_from, block_to)
@@ -302,6 +314,21 @@ class Processor:
                 )
                 for event in events:
                     self.sink.on_cancel_order(
+                        exchange_address=exchange_contract.address,
+                        order_id=event["args"]["orderId"]
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_force_cancel_order(self, block_from, block_to):
+        for exchange_contract in self.exchange_list:
+            try:
+                events = exchange_contract.events.ForceCancelOrder.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    self.sink.on_force_cancel_order(
                         exchange_address=exchange_contract.address,
                         order_id=event["args"]["orderId"]
                     )
