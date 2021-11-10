@@ -223,6 +223,43 @@ class WatchMembershipCancelOrder(Watcher):
             db_session.merge(notification)
 
 
+# イベント：強制注文取消
+class WatchMembershipForceCancelOrder(Watcher):
+    def __init__(self):
+        super().__init__(membership_exchange_contract, "ForceCancelOrder", {})
+
+    def watch(self, entries):
+        company_list = company_list_factory.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_membership(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": token_address,
+                "token_name": token.name,
+                "exchange_address": IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetMembership"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = NotificationType.FORCE_CANCEL_ORDER.value
+            notification.priority = 2
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+
 # イベント：約定（買）
 class WatchMembershipBuyAgreement(Watcher):
     def __init__(self):
@@ -449,6 +486,7 @@ def main():
     watchers = [
         WatchMembershipNewOrder(),
         WatchMembershipCancelOrder(),
+        WatchMembershipForceCancelOrder(),
         WatchMembershipBuyAgreement(),
         WatchMembershipSellAgreement(),
         WatchMembershipBuySettlementOK(),
