@@ -22,6 +22,22 @@ source ~/.bash_profile
 
 cd /app/ibet-Wallet-API
 
+if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
+  # check COMPANY_LIST_LOCAL_MODE and COMPANY_LIST_URL
+  if [ -z "${COMPANY_LIST_URL:-}" ]; then
+    echo -n '[ERROR] Please set APP_ENV "local" or COMPANY_LIST_LOCAL_MODE "1", if you use company list local mode, ' >&2
+    echo 'please set COMPANY_LIST_URL company list url, if you do not use local mode.' >&2
+    exit 1
+  fi
+  # check COMPANY_LIST_URL available
+  resp=$(curl "${COMPANY_LIST_URL}" -o /dev/null -w '%{http_code}\n' -s)
+  if [ "${resp}" -ne 200 ]; then
+    echo -n "[WARNING] Could not access to COMPANY_LIST_URL, " >&2
+    echo "please confirm COMPANY_LIST_URL, which response code is ${resp}" >&2
+  fi
+  python batch/indexer_CompanyList.py &
+fi
+
 python batch/indexer_Transfer.py &
 
 if [ $SHARE_TOKEN_ENABLED = 1 ]; then

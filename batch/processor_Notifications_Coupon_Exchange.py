@@ -40,7 +40,7 @@ from app.config import (
     WORKER_COUNT,
     SLEEP_INTERVAL,
     TOKEN_LIST_CONTRACT_ADDRESS,
-    COMPANY_LIST_URL, IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+    IBET_CP_EXCHANGE_CONTRACT_ADDRESS
 )
 from app.model.db import (
     Notification,
@@ -49,7 +49,7 @@ from app.model.db import (
 from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.token import TokenFactory
-from batch.lib.company_list import CompanyListFactory
+from app.utils.company_list import CompanyList
 from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
@@ -67,7 +67,6 @@ db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
 
 token_factory = TokenFactory(web3)
-company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
@@ -157,7 +156,7 @@ class WatchCouponNewOrder(Watcher):
         super().__init__(cp_exchange_contract, "NewOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -194,7 +193,7 @@ class WatchCouponCancelOrder(Watcher):
         super().__init__(cp_exchange_contract, "CancelOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -231,7 +230,7 @@ class WatchCouponBuyAgreement(Watcher):
         super().__init__(cp_exchange_contract, "Agree", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -268,7 +267,7 @@ class WatchCouponSellAgreement(Watcher):
         super().__init__(cp_exchange_contract, "Agree", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -305,7 +304,7 @@ class WatchCouponBuySettlementOK(Watcher):
         super().__init__(cp_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -342,7 +341,7 @@ class WatchCouponSellSettlementOK(Watcher):
         super().__init__(cp_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -379,7 +378,7 @@ class WatchCouponBuySettlementNG(Watcher):
         super().__init__(cp_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -416,7 +415,7 @@ class WatchCouponSellSettlementNG(Watcher):
         super().__init__(cp_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]

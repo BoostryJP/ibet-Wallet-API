@@ -30,6 +30,8 @@ APP_ENV = os.environ.get('APP_ENV') or 'local'
 NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
 COMPANY_LIST_URL = os.environ.get("COMPANY_LIST_URL")
 COMPANY_LIST_LOCAL_MODE = True if os.environ.get("COMPANY_LIST_LOCAL_MODE") == "1" else False
+COMPANY_LIST_SLEEP_INTERVAL = int(os.environ.get("COMPANY_LIST_SLEEP_INTERVAL")) \
+    if os.environ.get("COMPANY_LIST_SLEEP_INTERVAL") else 3600
 
 # 環境設定読み込み
 if APP_ENV != "live":

@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from .base import Base
+from .company import Company
 from .notification import (
     Notification,
     NotificationType
