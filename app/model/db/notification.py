@@ -137,6 +137,7 @@ class NotificationType(Enum):
     NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
     CANCEL_ORDER = "CancelOrder"
     CANCEL_ORDER_COUNTERPART = "CancelOrderCounterpart"
+    FORCE_CANCEL_ORDER = "ForceCancelOrder"
     BUY_AGREEMENT = "BuyAgreement"
     BUY_SETTLEMENT_OK = "BuySettlementOK"
     BUY_SETTLEMENT_NG = "BuySettlementNG"

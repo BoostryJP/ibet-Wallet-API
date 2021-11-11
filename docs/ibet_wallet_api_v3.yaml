@@ -734,12 +734,33 @@ paths:
           in: query
           required: false
           type: string
-          enum: [ "NewOrder", "NewOrderCounterpart", "CancelOrder", "CancelOrderCounterpart", "BuyAgreement",
-                  "BuySettlementOK", "BuySettlementNG", "SellAgreement", "SellSettlementOK",
-                  "SellSettlementNG", "StartInitialOffering", "StopInitialOffering", "StartOffering",
-                  "StopOffering", "Redeem", "Suspend", "ApplyForOffering", "Allot", "Transfer",
-                  "PaymentAccountRegister", "PaymentAccountApprove", "PaymentAccountUnapprove",
-                  "PaymentAccountWarn", "PaymentAccountBan" ]
+          enum: [
+            "NewOrder",
+            "NewOrderCounterpart",
+            "CancelOrder",
+            "ForceCancelOrder",
+            "CancelOrderCounterpart",
+            "BuyAgreement",
+            "BuySettlementOK",
+            "BuySettlementNG",
+            "SellAgreement",
+            "SellSettlementOK",
+            "SellSettlementNG",
+            "StartInitialOffering",
+            "StopInitialOffering",
+            "StartOffering",
+            "StopOffering",
+            "Redeem",
+            "Suspend",
+            "ApplyForOffering",
+            "Allot",
+            "Transfer",
+            "PaymentAccountRegister",
+            "PaymentAccountApprove",
+            "PaymentAccountUnapprove",
+            "PaymentAccountWarn",
+            "PaymentAccountBan"
+          ]
         - name: priority
           in: query
           required: false
