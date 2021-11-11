@@ -230,7 +230,7 @@ class WatchBondForceCancelOrder(Watcher):
         super().__init__(sb_exchange_contract, "ForceCancelOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
