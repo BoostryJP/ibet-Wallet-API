@@ -3380,6 +3380,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -3513,6 +3516,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -3925,6 +3931,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -4131,6 +4140,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -4420,6 +4432,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
