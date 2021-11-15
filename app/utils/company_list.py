@@ -103,26 +103,26 @@ class Company:
 
     @property
     def address(self):
-        return self.obj["address"]
+        return self.obj.get("address")
 
     @property
     def corporate_name(self):
-        return self.obj["corporate_name"]
+        return self.obj.get("corporate_name")
 
     @property
     def rsa_publickey(self):
-        return self.obj["rsa_publickey"]
+        return self.obj.get("rsa_publickey")
 
     @property
     def homepage(self):
-        return self.obj["homepage"]
+        return self.obj.get("homepage")
 
     def json(self):
         return {
-            "address": self.obj["address"],
-            "corporate_name": self.obj["corporate_name"],
-            "rsa_publickey": self.obj["rsa_publickey"],
-            "homepage": self.obj["homepage"],
+            "address": self.obj.get("address"),
+            "corporate_name": self.obj.get("corporate_name"),
+            "rsa_publickey": self.obj.get("rsa_publickey"),
+            "homepage": self.obj.get("homepage"),
         }
 
     def __getitem__(self, key: str):
