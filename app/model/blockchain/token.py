@@ -21,13 +21,13 @@ import json
 from decimal import Decimal
 from datetime import datetime, timedelta
 
-import requests
 from eth_utils import to_checksum_address
 
 from app import config
 from app import log
 from app.contracts import Contract
 from app.model.db import Listing
+from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
 
@@ -118,16 +118,6 @@ class BondToken(TokenBase):
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
         # Contractから情報を取得する
         name = TokenContract.functions.name().call()
         symbol = TokenContract.functions.symbol().call()
@@ -199,12 +189,9 @@ class BondToken(TokenBase):
         personal_info_address = TokenContract.functions.personalInfoAddress().call()
 
         # 企業リストから、企業名を取得する
-        company_name = ""
-        rsa_publickey = ""
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
@@ -324,16 +311,6 @@ class ShareToken(TokenBase):
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
         owner_address = TokenContract.functions.owner().call()
         name = TokenContract.functions.name().call()
         symbol = TokenContract.functions.symbol().call()
@@ -357,12 +334,9 @@ class ShareToken(TokenBase):
         personal_info_address = TokenContract.functions.personalInfoAddress().call()
 
         # 企業リストから、企業名とRSA鍵を取得する
-        company_name = ''
-        rsa_publickey = ''
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
@@ -461,16 +435,6 @@ class MembershipToken(TokenBase):
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
         # Token-Contractから情報を取得する
         name = TokenContract.functions.name().call()
         symbol = TokenContract.functions.symbol().call()
@@ -491,12 +455,9 @@ class MembershipToken(TokenBase):
         tradable_exchange = TokenContract.functions.tradableExchange().call()
 
         # 企業リストから、企業名を取得する
-        company_name = ""
-        rsa_publickey = ""
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
@@ -586,16 +547,6 @@ class CouponToken(TokenBase):
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
         # Token-Contractから情報を取得する
         name = TokenContract.functions.name().call()
         symbol = TokenContract.functions.symbol().call()
@@ -616,12 +567,9 @@ class CouponToken(TokenBase):
         tradable_exchange = TokenContract.functions.tradableExchange().call()
 
         # 企業リストから、企業名を取得する
-        company_name = ""
-        rsa_publickey = ""
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()

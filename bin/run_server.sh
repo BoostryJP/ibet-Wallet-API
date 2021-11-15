@@ -22,21 +22,6 @@ source ~/.bash_profile
 cd /app/ibet-Wallet-API
 
 function start () {
-    # check COMPANY_LIST_LOCK_MODE and COMPANY_LIST_URL
-    if [[ "${APP_ENV:-}" != "local"  && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1  &&  -z "${COMPANY_LIST_URL:-}" ]]; then
-      echo 'Please set APP_ENV "local" or COMPANY_LIST_LOCAL_MODE "1", if you use company list local mode,' >&2
-      echo 'Please set COMPANY_LIST_URL company list url, if you do not use local mode.' >&2
-      exit 1
-    fi
-
-    # COMPANY_LIST_URL
-    if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
-      resp=$(curl "${COMPANY_LIST_URL}" -o /dev/null -w '%{http_code}\n' -s)
-      if [ "${resp}" -ne 200 ]; then
-        echo "Please confirm COMPANY_LIST_URL, which response code is ${resp}"
-        exit 1
-      fi
-    fi
 
     #source .venv/bin/activate
     python batch/processor_Block_Sync_Status.py &

@@ -39,8 +39,7 @@ from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    COMPANY_LIST_URL
+    TOKEN_LIST_CONTRACT_ADDRESS
 )
 from app.model.db import (
     Notification,
@@ -49,7 +48,7 @@ from app.model.db import (
 )
 from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
-from batch.lib.company_list import CompanyListFactory
+from app.utils.company_list import CompanyList
 from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
@@ -65,8 +64,6 @@ web3 = Web3Wrapper()
 engine = create_engine(DATABASE_URL, echo=False)
 db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
-
-company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
@@ -180,7 +177,7 @@ class WatchStartInitialOffering(Watcher):
         super().__init__("ChangeInitialOfferingStatus", {"filter": {"status": True}})
 
     def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
@@ -208,7 +205,7 @@ class WatchStopInitialOffering(Watcher):
         super().__init__("ChangeInitialOfferingStatus", {"filter": {"status": False}})
 
     def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
@@ -236,7 +233,7 @@ class WatchRedeem(Watcher):
         super().__init__("Redeem", {})
 
     def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
@@ -264,7 +261,7 @@ class WatchApplyForOffering(Watcher):
         super().__init__("ApplyFor", {})
 
     def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
@@ -293,7 +290,7 @@ class WatchAllot(Watcher):
         super().__init__("Allot", {})
 
     def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
@@ -322,7 +319,7 @@ class WatchTransfer(Watcher):
         super().__init__("Transfer", {})
 
     def db_merge(self, token_contract, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
         for entry in entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
             tradable_exchange = token_contract.functions.tradableExchange().call()

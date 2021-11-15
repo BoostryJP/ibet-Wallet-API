@@ -16,9 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import json
-import requests
-
 from eth_utils import to_checksum_address
 from sqlalchemy import desc
 from web3 import Web3
@@ -26,7 +23,6 @@ from web3 import Web3
 from app import log
 from app.api.common import BaseResource
 from app.errors import (
-    AppError,
     InvalidParameterError,
     DataNotExistsError
 )
@@ -39,6 +35,7 @@ from app.model.blockchain import (
     CouponToken,
     ShareToken
 )
+from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
 
@@ -58,25 +55,11 @@ class CompanyInfo(BaseResource):
             description = 'invalid eth_address'
             raise InvalidParameterError(description=description)
 
-        isExist = False
-
-        try:
-            if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-                company_list = json.load(open('data/company_list.json', 'r'))
-            else:
-                company_list = \
-                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-        except Exception as err:
-            LOG.error('Failed To Get Data: %s', err)
-            raise AppError
-
-        for company_info in company_list:
-            if to_checksum_address(company_info['address']) == \
-                    to_checksum_address(eth_address):
-                isExist = True
-                self.on_success(res, company_info)
-        if not isExist:
+        company = CompanyList.get_find(to_checksum_address(eth_address))
+        if company.address == "":
             raise DataNotExistsError('eth_address: %s' % eth_address)
+
+        self.on_success(res, company.json())
 
 
 # ------------------------------
@@ -93,15 +76,8 @@ class CompanyInfoList(BaseResource):
         session = req.context["session"]
 
         # 会社リストを取得
-        try:
-            if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-                company_list = json.load(open('data/company_list.json', 'r'))
-            else:
-                company_list = \
-                    requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-        except Exception as err:
-            LOG.error('Failed To Get Data: %s', err)
-            raise AppError
+        _company_list = CompanyList.get()
+        company_list = [company.json() for company in _company_list.all()]
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).filter(Listing.is_public == True).all()

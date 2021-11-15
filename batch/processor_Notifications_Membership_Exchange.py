@@ -40,8 +40,7 @@ from app.config import (
     WORKER_COUNT,
     SLEEP_INTERVAL,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    COMPANY_LIST_URL
+    TOKEN_LIST_CONTRACT_ADDRESS
 )
 from app.model.db import (
     Notification,
@@ -50,7 +49,7 @@ from app.model.db import (
 from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.token import TokenFactory
-from batch.lib.company_list import CompanyListFactory
+from app.utils.company_list import CompanyList
 from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
@@ -68,7 +67,6 @@ db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
 
 token_factory = TokenFactory(web3)
-company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
@@ -155,7 +153,7 @@ class WatchMembershipNewOrder(Watcher):
         super().__init__(membership_exchange_contract, "NewOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -192,7 +190,7 @@ class WatchMembershipCancelOrder(Watcher):
         super().__init__(membership_exchange_contract, "CancelOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -229,7 +227,7 @@ class WatchMembershipForceCancelOrder(Watcher):
         super().__init__(membership_exchange_contract, "ForceCancelOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -266,7 +264,7 @@ class WatchMembershipBuyAgreement(Watcher):
         super().__init__(membership_exchange_contract, "Agree", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -303,7 +301,7 @@ class WatchMembershipSellAgreement(Watcher):
         super().__init__(membership_exchange_contract, "Agree", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -340,7 +338,7 @@ class WatchMembershipBuySettlementOK(Watcher):
         super().__init__(membership_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -377,7 +375,7 @@ class WatchMembershipSellSettlementOK(Watcher):
         super().__init__(membership_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -414,7 +412,7 @@ class WatchMembershipBuySettlementNG(Watcher):
         super().__init__(membership_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -451,7 +449,7 @@ class WatchMembershipSellSettlementNG(Watcher):
         super().__init__(membership_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
