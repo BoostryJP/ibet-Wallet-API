@@ -112,7 +112,7 @@ class Processor:
                 address = company.get("address", "")
                 corporate_name = company.get("corporate_name", "")
                 rsa_publickey = company.get("rsa_publickey", "")
-                homepage = company.get("homepage", "")
+                homepage = company.get("homepage") if company.get("homepage") is not None else ""
                 if not isinstance(address, str) or \
                         not isinstance(corporate_name, str) or \
                         not isinstance(rsa_publickey, str) or \

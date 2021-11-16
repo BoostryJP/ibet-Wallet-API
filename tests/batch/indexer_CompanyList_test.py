@@ -171,7 +171,7 @@ class TestProcessor:
                     "address": "0x0123456789abcdef0123456789abcdef00000001",
                     "corporate_name": "株式会社テスト1",
                     "rsa_publickey": "RSA-KEY 1",
-                    "homepage": "http://test1.com",
+                    "homepage": None,
                 },
                 {
                     "address": "0x0123456789abcdef0123456789abcdef00000002",
@@ -191,7 +191,7 @@ class TestProcessor:
         assert _company.address == "0x0123456789ABCdef0123456789aBcDeF00000001"  # checksum address
         assert _company.corporate_name == "株式会社テスト1"
         assert _company.rsa_publickey == "RSA-KEY 1"
-        assert _company.homepage == "http://test1.com"
+        assert _company.homepage == ""
         _company = _company_list[1]
         assert _company.address == "0x0123456789AbCdEf0123456789aBcDEF00000002"  # checksum address
         assert _company.corporate_name == "株式会社テスト2"
