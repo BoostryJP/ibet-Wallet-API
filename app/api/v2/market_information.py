@@ -268,6 +268,7 @@ class StraightBondOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
+                "exchange_address": exchange_address,
                 "order_id": order_id,
                 "price": price,
                 "amount": amount,
@@ -573,6 +574,7 @@ class MembershipOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
+                "exchange_address": exchange_address,
                 "order_id": order_id,
                 "price": price,
                 "amount": amount,
@@ -880,6 +882,7 @@ class CouponOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
+                "exchange_address": exchange_address,
                 "order_id": order_id,
                 "price": price,
                 "amount": amount,
