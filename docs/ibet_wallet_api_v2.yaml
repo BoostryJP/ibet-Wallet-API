@@ -2177,7 +2177,7 @@ paths:
     post:
       tags:
         - IbetExchange
-      summary: "StraightBond Token Orderbook"
+      summary: "StraightBond Token Order Book"
       operationId: "StraightBondOrderBook"
       parameters:
         - name: "body"
@@ -2187,13 +2187,13 @@ paths:
             type: "object"
             properties:
               account_address:
-                description: Account address
+                description: Orderer's account address. Orders from the given address will not be included in the response.
                 type: string
               token_address:
                 description: Token address
                 type: string
               order_type:
-                description: Order type
+                description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
                 type: string
                 enum: [buy, sell]
             required:
@@ -2212,13 +2212,20 @@ paths:
                 items:
                   type: object
                   properties:
+                    exchange_address:
+                      description: Exchnage contract address
+                      type: string
                     order_id:
+                      description: Order id
                       type: integer
                     price:
+                      description: Order price
                       type: integer
                     amount:
+                      description: Order volume
                       type: integer
                     account_address:
+                      description: An orderer of each order book
                       type: string
         400:
           description: Invalid Parameter Error
@@ -2238,7 +2245,7 @@ paths:
     post:
       tags:
         - IbetExchange
-      summary: "Membership Token Orderbook"
+      summary: "Membership Token Order Book"
       operationId: "MembershipOrderBook"
       parameters:
         - name: "body"
@@ -2248,13 +2255,13 @@ paths:
             type: "object"
             properties:
               account_address:
-                description: Account address
+                description: Orderer's account address. Orders from the given address will not be included in the response.
                 type: string
               token_address:
                 description: Token address
                 type: string
               order_type:
-                description: Order type
+                description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
                 type: string
                 enum: [buy, sell]
             required:
@@ -2273,13 +2280,20 @@ paths:
                 items:
                   type: object
                   properties:
+                    exchange_address:
+                      description: Exchnage contract address
+                      type: string
                     order_id:
+                      description: Order id
                       type: integer
                     price:
+                      description: Order price
                       type: integer
                     amount:
+                      description: Order volume
                       type: integer
                     account_address:
+                      description: An orderer of each order book
                       type: string
         400:
           description: Invalid Parameter Error
@@ -2299,7 +2313,7 @@ paths:
     post:
       tags:
         - IbetExchange
-      summary: "Coupon Token Orderbook"
+      summary: "Coupon Token Order Book"
       operationId: "CouponOrderBook"
       parameters:
         - name: "body"
@@ -2309,13 +2323,13 @@ paths:
             type: "object"
             properties:
               account_address:
-                description: Account address
+                description: Orderer's account address. Orders from the given address will not be included in the response.
                 type: string
               token_address:
                 description: Token address
                 type: string
               order_type:
-                description: Order type
+                description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
                 type: string
                 enum: [buy, sell]
             required:
@@ -2334,13 +2348,20 @@ paths:
                 items:
                   type: object
                   properties:
+                    exchange_address:
+                      description: Exchnage contract address
+                      type: string
                     order_id:
+                      description: Order id
                       type: integer
                     price:
+                      description: Order price
                       type: integer
                     amount:
+                      description: Order volume
                       type: integer
                     account_address:
+                      description: An orderer of each order book
                       type: string
         400:
           description: Invalid Parameter Error
