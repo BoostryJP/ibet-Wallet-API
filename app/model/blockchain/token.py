@@ -45,9 +45,15 @@ class TokenBase:
     contact_information: str
     privacy_policy: str
     status: bool
+    max_holding_quantity: int
+    max_sell_amount: int
 
 
 class BondToken(TokenBase):
+    personal_info_address: str
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
     face_value: int
     interest_rate: float
     interest_payment_date1: str
@@ -68,14 +74,7 @@ class BondToken(TokenBase):
     return_amount: str
     purpose: str
     memo: str
-    initial_offering_status: bool
-    isRedeemed: bool
-    transferable: bool
-    personal_info_address: str
-    image_url: object
-    certification: str
-    max_holding_quantity: int
-    max_sell_amount: int
+    is_redeemed: bool
 
     # トークン情報のキャッシュ
     cache = {}
@@ -90,8 +89,6 @@ class BondToken(TokenBase):
         :return: BondToken
         """
 
-        certification = []  # NOTE:現状項目未使用であるため空のリストを返す
-
         # IbetStraightBond コントラクトへの接続
         TokenContract = Contract.get_contract('IbetStraightBond', token_address)
 
@@ -103,15 +100,11 @@ class BondToken(TokenBase):
                     # キャッシュ情報を取得
                     bondtoken = token_cache["token"]
                     # キャッシュ情報以外の情報を取得
-                    isRedeemed = TokenContract.functions.isRedeemed().call()
-                    transferable = TokenContract.functions.transferable().call()
-                    initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
-                    status = TokenContract.functions.status().call()
-                    bondtoken.isRedeemed = isRedeemed
-                    bondtoken.transferable = transferable
-                    bondtoken.initial_offering_status = initial_offering_status
-                    bondtoken.status = status
-                    bondtoken.certification = certification
+                    bondtoken.total_supply = TokenContract.functions.totalSupply().call()
+                    bondtoken.transferable = TokenContract.functions.transferable().call()
+                    bondtoken.is_offering = TokenContract.functions.isOffering().call()
+                    bondtoken.status = TokenContract.functions.status().call()
+                    bondtoken.is_redeemed = TokenContract.functions.isRedeemed().call()
                     return bondtoken
 
         # キャッシュ未利用の場合
@@ -119,6 +112,7 @@ class BondToken(TokenBase):
         # または、キャッシュの有効期限が切れている場合
 
         # Contractから情報を取得する
+        owner_address = TokenContract.functions.owner().call()
         name = TokenContract.functions.name().call()
         symbol = TokenContract.functions.symbol().call()
         total_supply = TokenContract.functions.totalSupply().call()
@@ -174,19 +168,16 @@ class BondToken(TokenBase):
         return_date = TokenContract.functions.returnDate().call()
         return_amount = TokenContract.functions.returnAmount().call()
         purpose = TokenContract.functions.purpose().call()
-        isRedeemed = TokenContract.functions.isRedeemed().call()
+        is_redeemed = TokenContract.functions.isRedeemed().call()
         transferable = TokenContract.functions.transferable().call()
-        initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
-        image_url_1 = TokenContract.functions.getImageURL(0).call()
-        image_url_2 = TokenContract.functions.getImageURL(1).call()
-        image_url_3 = TokenContract.functions.getImageURL(2).call()
-        owner_address = TokenContract.functions.owner().call()
+        is_offering = TokenContract.functions.isOffering().call()
         contact_information = TokenContract.functions.contactInformation().call()
         privacy_policy = TokenContract.functions.privacyPolicy().call()
         tradable_exchange = TokenContract.functions.tradableExchange().call()
         status = TokenContract.functions.status().call()
         memo = TokenContract.functions.memo().call()
         personal_info_address = TokenContract.functions.personalInfoAddress().call()
+        transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
 
         # 企業リストから、企業名を取得する
         company = CompanyList.get_find(to_checksum_address(owner_address))
@@ -205,6 +196,18 @@ class BondToken(TokenBase):
         bondtoken.name = name
         bondtoken.symbol = symbol
         bondtoken.total_supply = total_supply
+        bondtoken.tradable_exchange = tradable_exchange
+        bondtoken.contact_information = contact_information
+        bondtoken.privacy_policy = privacy_policy
+        bondtoken.status = status
+        bondtoken.max_holding_quantity = listed_token.max_holding_quantity \
+            if hasattr(listed_token, "max_holding_quantity") else 0
+        bondtoken.max_sell_amount = listed_token.max_sell_amount \
+            if hasattr(listed_token, "max_sell_amount") else 0
+        bondtoken.personal_info_address = personal_info_address
+        bondtoken.transferable = transferable
+        bondtoken.is_offering = is_offering
+        bondtoken.transfer_approval_required = transfer_approval_required
         bondtoken.face_value = face_value
         bondtoken.interest_rate = float(Decimal(str(interest_rate)) * Decimal('0.0001'))
         bondtoken.interest_payment_date1 = interest_payment_date1
@@ -224,25 +227,8 @@ class BondToken(TokenBase):
         bondtoken.return_date = return_date
         bondtoken.return_amount = return_amount
         bondtoken.purpose = purpose
-        bondtoken.image_url = [
-            {'id': 1, 'url': image_url_1},
-            {'id': 2, 'url': image_url_2},
-            {'id': 3, 'url': image_url_3}
-        ]
-        bondtoken.max_holding_quantity = listed_token.max_holding_quantity \
-            if hasattr(listed_token, "max_holding_quantity") else 0
-        bondtoken.max_sell_amount = listed_token.max_sell_amount \
-            if hasattr(listed_token, "max_sell_amount") else 0
-        bondtoken.contact_information = contact_information
-        bondtoken.privacy_policy = privacy_policy
-        bondtoken.isRedeemed = isRedeemed
-        bondtoken.transferable = transferable
-        bondtoken.initial_offering_status = initial_offering_status
-        bondtoken.certification = certification
-        bondtoken.tradable_exchange = tradable_exchange
-        bondtoken.status = status
         bondtoken.memo = memo
-        bondtoken.personal_info_address = personal_info_address
+        bondtoken.is_redeemed = is_redeemed
 
         if config.TOKEN_CACHE:
             BondToken.cache[token_address] = {
@@ -255,18 +241,15 @@ class BondToken(TokenBase):
 
 class ShareToken(TokenBase):
     personal_info_address: str
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
     issue_price: int
     cancellation_date: str
     memo: str
-    transferable: bool
-    offering_status: bool
     principal_value: int
-    transfer_approval_required: bool
     is_canceled: bool
     dividend_information: object
-    reference_urls: object
-    max_holding_quantity: int
-    max_sell_amount: int
 
     # トークン情報のキャッシュ
     cache = {}
@@ -301,7 +284,7 @@ class ShareToken(TokenBase):
                         'dividend_payment_date': dividend_information[2],
                     }
                     sharetoken.transferable = TokenContract.functions.transferable().call()
-                    sharetoken.offering_status = TokenContract.functions.offeringStatus().call()
+                    sharetoken.is_offering = TokenContract.functions.isOffering().call()
                     sharetoken.status = TokenContract.functions.status().call()
                     sharetoken.transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
                     sharetoken.is_canceled = TokenContract.functions.isCanceled().call()
@@ -319,12 +302,9 @@ class ShareToken(TokenBase):
         principal_value = TokenContract.functions.principalValue().call()
         dividend_information = TokenContract.functions.dividendInformation().call()
         cancellation_date = TokenContract.functions.cancellationDate().call()
-        reference_url_1 = TokenContract.functions.referenceUrls(0).call()
-        reference_url_2 = TokenContract.functions.referenceUrls(1).call()
-        reference_url_3 = TokenContract.functions.referenceUrls(2).call()
         memo = TokenContract.functions.memo().call()
         transferable = TokenContract.functions.transferable().call()
-        offering_status = TokenContract.functions.offeringStatus().call()
+        is_offering = TokenContract.functions.isOffering().call()
         status = TokenContract.functions.status().call()
         transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
         is_canceled = TokenContract.functions.isCanceled().call()
@@ -358,15 +338,9 @@ class ShareToken(TokenBase):
             'dividend_payment_date': dividend_information[2],
         }
         sharetoken.cancellation_date = cancellation_date
-        sharetoken.reference_urls = [
-            {'id': 1, 'url': reference_url_1},
-            {'id': 2, 'url': reference_url_2},
-            {'id': 3, 'url': reference_url_3},
-        ]
-        sharetoken.image_url = []
         sharetoken.memo = memo
         sharetoken.transferable = transferable
-        sharetoken.offering_status = offering_status
+        sharetoken.is_offering = is_offering
         sharetoken.status = status
         sharetoken.transfer_approval_required = transfer_approval_required
         sharetoken.is_canceled = is_canceled
@@ -396,8 +370,6 @@ class MembershipToken(TokenBase):
     transferable: str
     initial_offering_status: bool
     image_url: object
-    max_holding_quantity: int
-    max_sell_amount: int
 
     # トークン情報のキャッシュ
     cache = {}
@@ -508,8 +480,6 @@ class CouponToken(TokenBase):
     transferable: str
     initial_offering_status: bool
     image_url: object
-    max_holding_quantity: int
-    max_sell_amount: int
 
     # トークン情報のキャッシュ
     cache = {}

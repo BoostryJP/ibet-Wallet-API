@@ -202,7 +202,7 @@ class WatchPaymentAccountDisapprove(Watcher):
         for entry in entries:
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
+            notification.notification_type = NotificationType.PAYMENT_ACCOUNT_DISAPPROVE.value
             notification.priority = 0
             notification.address = entry["args"]["account_address"]
             notification.block_timestamp = self._gen_block_timestamp(entry)

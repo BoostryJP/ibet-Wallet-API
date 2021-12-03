@@ -942,20 +942,9 @@ class TestV2OrderListBond:
                 "return_date": "20191231",
                 "return_amount": "商品券をプレゼント",
                 "purpose": "新商品の開発資金として利用。",
-                "isRedeemed": False,
+                "is_redeemed": False,
                 "transferable": True,
-                "image_url": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "certification": [],
-                "initial_offering_status": False,
+                "is_offering": False,
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -964,6 +953,7 @@ class TestV2OrderListBond:
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False
             },
             "order": {
                 "order_id": order_id,
@@ -1060,20 +1050,9 @@ class TestV2OrderListBond:
                 "return_date": "20191231",
                 "return_amount": "商品券をプレゼント",
                 "purpose": "新商品の開発資金として利用。",
-                "isRedeemed": False,
+                "is_redeemed": False,
                 "transferable": True,
-                "image_url": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "certification": [],
-                "initial_offering_status": False,
+                "is_offering": False,
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -1082,6 +1061,7 @@ class TestV2OrderListBond:
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False
             },
             "order": {
                 "order_id": order_id,
@@ -1177,20 +1157,9 @@ class TestV2OrderListBond:
                 "return_date": "20191231",
                 "return_amount": "商品券をプレゼント",
                 "purpose": "新商品の開発資金として利用。",
-                "isRedeemed": False,
+                "is_redeemed": False,
                 "transferable": True,
-                "image_url": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "certification": [],
-                "initial_offering_status": False,
+                "is_offering": False,
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -1199,6 +1168,7 @@ class TestV2OrderListBond:
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False
             },
             "agreement": {
                 "exchange_address": bond_exchange["address"],
@@ -1293,20 +1263,9 @@ class TestV2OrderListBond:
                 "return_date": "20191231",
                 "return_amount": "商品券をプレゼント",
                 "purpose": "新商品の開発資金として利用。",
-                "isRedeemed": False,
+                "is_redeemed": False,
                 "transferable": True,
-                "image_url": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "certification": [],
-                "initial_offering_status": False,
+                "is_offering": False,
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -1315,6 +1274,7 @@ class TestV2OrderListBond:
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False
             },
             "agreement": {
                 "exchange_address": bond_exchange["address"],
@@ -1413,20 +1373,9 @@ class TestV2OrderListBond:
                 "return_date": "20191231",
                 "return_amount": "商品券をプレゼント",
                 "purpose": "新商品の開発資金として利用。",
-                "isRedeemed": False,
+                "is_redeemed": False,
                 "transferable": True,
-                "image_url": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "certification": [],
-                "initial_offering_status": False,
+                "is_offering": False,
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -1435,6 +1384,7 @@ class TestV2OrderListBond:
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False
             },
             "agreement": {
                 "exchange_address": bond_exchange["address"],
@@ -3432,21 +3382,10 @@ class TestV2OrderListShare:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -3540,21 +3479,10 @@ class TestV2OrderListShare:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -3643,21 +3571,10 @@ class TestV2OrderListShare:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -3748,21 +3665,10 @@ class TestV2OrderListShare:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -3858,21 +3764,10 @@ class TestV2OrderListShare:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 0,
                 "max_sell_amount": 0,
                 "contact_information": "問い合わせ先",
@@ -3901,7 +3796,6 @@ class TestV2OrderListShare:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
                 assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
-
 
     ###########################################################################
     # Error Case

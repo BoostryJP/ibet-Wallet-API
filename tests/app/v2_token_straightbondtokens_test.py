@@ -146,19 +146,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [
-                {'id': 1, 'url': ''},
-                {'id': 2, 'url': ''},
-                {'id': 3, 'url': ''}
-            ],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -168,6 +162,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }]
 
         assert resp.status_code == 200
@@ -225,24 +220,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -252,6 +236,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -276,24 +261,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -303,6 +277,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }]
 
         assert resp.status_code == 200
@@ -361,24 +336,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -388,6 +352,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }, {
             'id': 0,
             'token_address': bond_list[0]['address'],
@@ -412,24 +377,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -439,6 +393,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }]
 
         assert resp.status_code == 200
@@ -497,24 +452,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -524,6 +468,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }]
 
         assert resp.status_code == 200
@@ -582,24 +527,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -609,6 +543,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }]
 
         assert resp.status_code == 200
@@ -670,24 +605,13 @@ class TestV2TokenStraightBondTokens:
             'interest_payment_date10': '1001',
             'interest_payment_date11': '1101',
             'interest_payment_date12': '1201',
-            'isRedeemed': False,
+            'is_redeemed': False,
             'redemption_date': '20191231',
             'redemption_value': 10000,
             'return_date': '20191231',
             'return_amount': '商品券をプレゼント',
             'purpose': '新商品の開発資金として利用。',
-            'image_url': [{
-                'id': 1,
-                'url': ''
-            }, {
-                'id': 2,
-                'url': ''
-            }, {
-                'id': 3,
-                'url': ''
-            }],
-            'certification': [],
-            'initial_offering_status': False,
+            'is_offering': False,
             'max_holding_quantity': 1,
             'max_sell_amount': 1000,
             'contact_information': '問い合わせ先',
@@ -697,6 +621,7 @@ class TestV2TokenStraightBondTokens:
             'status': True,
             'memo': 'メモ',
             'personal_info_address': personal_info,
+            'transfer_approval_required': False,
         }]
 
         assert resp.status_code == 200

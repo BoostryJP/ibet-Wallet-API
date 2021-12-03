@@ -483,7 +483,7 @@ class TestWatchPaymentAccountDisapprove:
         block_number = web3.eth.blockNumber
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
-        assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
+        assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_DISAPPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
         assert _notification.block_timestamp is not None
@@ -528,7 +528,7 @@ class TestWatchPaymentAccountDisapprove:
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
-        assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
+        assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_DISAPPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader["account_address"]
         assert _notification.block_timestamp is not None
@@ -539,7 +539,7 @@ class TestWatchPaymentAccountDisapprove:
         assert _notification.metainfo == {}
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
-        assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_UNAPPROVE.value
+        assert _notification.notification_type == NotificationType.PAYMENT_ACCOUNT_DISAPPROVE.value
         assert _notification.priority == 0
         assert _notification.address == self.trader2["account_address"]
         assert _notification.block_timestamp is not None

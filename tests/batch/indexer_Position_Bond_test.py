@@ -281,9 +281,13 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
-        tx_hash = token_contract.functions.authorize(self.trader["account_address"], True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
-        )
+        tx_hash = token_contract.functions.authorizeLockAddress(
+            self.trader["account_address"],
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Lock
@@ -319,9 +323,13 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
-        tx_hash = token_contract.functions.authorize(self.trader["account_address"], True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
-        )
+        tx_hash = token_contract.functions.authorizeLockAddress(
+            self.trader["account_address"],
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Lock
@@ -390,8 +398,301 @@ class TestProcessor:
         assert _position.pending_transfer is None
 
     # <Normal_7>
-    # No event logs
+    # Single Token
+    # Single event logs
+    # - Redeem
     def test_normal_7(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_bond(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract
+        )
+        self.listing_token(token["address"], session)
+
+        # Redeem
+        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+        tx_hash = token_contract.functions.redeemFrom(
+            self.issuer["account_address"], config.ZERO_ADDRESS, 50000).transact(
+            {'from': self.issuer['account_address'], 'gas': 4000000}
+        )
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 1
+        _position = _position_list[0]
+        assert _position.id == 1
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 50000
+        assert _position.pending_transfer is None
+
+    # <Normal_8>
+    # Single Token
+    # Single event logs
+    # - Transfer
+    # - Apply For Transfer
+    def test_normal_8(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_bond(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract
+        )
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"]
+        )
+        PersonalInfoUtils.register(
+            self.trader2["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"]
+        )
+
+        # Transfer
+        bond_transfer_to_exchange(
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            token,
+            10000
+        )
+
+        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+        tx_hash = token_contract.functions.setTransferApprovalRequired(
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Apply For Transfer
+        tx_hash = token_contract.functions.applyForTransfer(
+            self.trader2["account_address"],
+            2000,
+            "test"
+        ).transact({
+            'from': self.trader['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 2
+        _position = _position_list[0]
+        assert _position.id == 1
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000
+        assert _position.pending_transfer is None
+        _position = _position_list[1]
+        assert _position.id == 2
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader["account_address"]
+        assert _position.balance == 10000 - 2000
+        assert _position.pending_transfer == 2000
+
+    # <Normal_9>
+    # Single Token
+    # Single event logs
+    # - Transfer
+    # - Apply For Transfer
+    # - Approve
+    def test_normal_9(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_bond(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract
+        )
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"]
+        )
+        PersonalInfoUtils.register(
+            self.trader2["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"]
+        )
+
+        # Transfer
+        bond_transfer_to_exchange(
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            token,
+            10000
+        )
+
+        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+        tx_hash = token_contract.functions.setTransferApprovalRequired(
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Apply For Transfer
+        tx_hash = token_contract.functions.applyForTransfer(
+            self.trader2["account_address"],
+            2000,
+            "test"
+        ).transact({
+            'from': self.trader['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Approve
+        tx_hash = token_contract.functions.approveTransfer(
+            0,
+            "test"
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 3
+        _position = _position_list[0]
+        assert _position.id == 1
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000
+        assert _position.pending_transfer is None
+        _position = _position_list[1]
+        assert _position.id == 2
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader["account_address"]
+        assert _position.balance == 10000 - 2000
+        assert _position.pending_transfer == 0
+        _position = _position_list[2]
+        assert _position.id == 3
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader2["account_address"]
+        assert _position.balance == 2000
+        assert _position.pending_transfer == 0
+
+    # <Normal_10>
+    # Single Token
+    # Single event logs
+    # - Transfer
+    # - Apply For Transfer
+    # - Cancel
+    def test_normal_10(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_bond(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract
+        )
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"]
+        )
+        PersonalInfoUtils.register(
+            self.trader2["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"]
+        )
+
+        # Transfer
+        bond_transfer_to_exchange(
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            token,
+            10000
+        )
+
+        token_contract = Contract.get_contract(
+            "IbetStraightBond",
+            token["address"]
+        )
+        tx_hash = token_contract.functions.setTransferApprovalRequired(
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Apply For Transfer
+        tx_hash = token_contract.functions.applyForTransfer(
+            self.trader2["account_address"],
+            2000,
+            "test"
+        ).transact({
+            'from': self.trader['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Cancel
+        tx_hash = token_contract.functions.cancelTransfer(
+            0,
+            "test"
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 2
+        _position = _position_list[0]
+        assert _position.id == 1
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000
+        assert _position.pending_transfer is None
+        _position = _position_list[1]
+        assert _position.id == 2
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader["account_address"]
+        assert _position.balance == 10000
+        assert _position.pending_transfer == 0
+
+    # <Normal_11>
+    # No event logs
+    def test_normal_11(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -407,9 +708,9 @@ class TestProcessor:
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
 
-    # <Normal_8>
+    # <Normal_12>
     # Not Listing Token
-    def test_normal_8(self, processor, shared_contract, session):
+    def test_normal_12(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]

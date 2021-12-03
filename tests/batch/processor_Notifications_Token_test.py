@@ -46,8 +46,8 @@ def watcher_factory(session, shared_contract):
     def _watcher(cls_name):
         config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
 
-        from batch import processor_Notifications_Coupon_Token
-        test_module = reload(processor_Notifications_Coupon_Token)
+        from batch import processor_Notifications_Token
+        test_module = reload(processor_Notifications_Token)
         test_module.db_session = session
 
         cls = getattr(test_module, cls_name)

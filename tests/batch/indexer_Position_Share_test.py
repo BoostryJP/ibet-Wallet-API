@@ -267,9 +267,13 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.authorize(self.trader["account_address"], True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
-        )
+        tx_hash = token_contract.functions.authorizeLockAddress(
+            self.trader["account_address"],
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Lock
@@ -305,9 +309,13 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.authorize(self.trader["account_address"], True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
-        )
+        tx_hash = token_contract.functions.authorizeLockAddress(
+            self.trader["account_address"],
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Lock
