@@ -109,7 +109,7 @@ class Watcher:
                 })
         return _tokens
 
-    def db_merge(self, token_contract, token_type, entries):
+    def db_merge(self, token_contract, token_type, log_entries):
         pass
 
     def loop(self):
@@ -142,7 +142,7 @@ class Watcher:
             for _token in _token_list:
                 try:
                     token_contract = Contract.get_contract(
-                        contract_name="IbetStandardTokenInterface",
+                        contract_name=_token["token_type"],
                         address=_token["token"].token_address
                     )
                     _event = getattr(token_contract.events, self.filter_name)
@@ -150,11 +150,17 @@ class Watcher:
                         fromBlock=self.filter_params["fromBlock"],
                         toBlock=self.filter_params["toBlock"]
                     )
+                except FileNotFoundError:
+                    continue
                 except Exception as err:  # Exception が発生した場合は処理を継続
                     LOG.error(err)
                     continue
                 if len(entries) > 0:
-                    self.db_merge(token_contract, _token["token_type"], entries)
+                    self.db_merge(
+                        token_contract=token_contract,
+                        token_type=_token["token_type"],
+                        log_entries=entries
+                    )
                     db_session.commit()
 
             self.from_block = _next_from
@@ -168,9 +174,9 @@ class WatchTransfer(Watcher):
     def __init__(self):
         super().__init__("Transfer", {})
 
-    def db_merge(self, token_contract, token_type, entries):
+    def db_merge(self, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
-        for entry in entries:
+        for entry in log_entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
             tradable_exchange = token_contract.functions.tradableExchange().call()
             if entry["args"]["from"] == tradable_exchange:
