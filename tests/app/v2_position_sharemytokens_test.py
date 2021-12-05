@@ -230,21 +230,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -325,21 +314,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": True,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -418,21 +396,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -440,7 +407,6 @@ class TestV2ShareMyTokens:
                 'tradable_exchange': exchange_contract["address"],
                 'personal_info_address': personal_info_contract["address"],
             },
-
             "balance": 999900,
             "pending_transfer": 0,
             "exchange_balance": 0,
@@ -512,21 +478,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -615,21 +570,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -663,21 +607,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",

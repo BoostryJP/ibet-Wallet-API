@@ -128,6 +128,8 @@ def issue_bond_token(invoker, attribute):
         transact({'from': invoker['account_address'], 'gas': 4000000})
     TokenContract.functions.setMemo(attribute['memo']). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setTransferable(True). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
 
     return {'address': contract_address, 'abi': abi}
 
@@ -169,7 +171,7 @@ def bond_redeem(invoker, token):
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
 
-    tx_hash = TokenContract.functions.redeem(). \
+    tx_hash = TokenContract.functions.changeToRedeemed(). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -267,19 +269,6 @@ def register_share_list(invoker, share_token, token_list):
         share_token['address'], 'IbetShare'). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
-
-
-# 株式トークンの関連URL追加
-def register_share_reference_url(invoker, token, url_list):
-    web3.eth.defaultAccount = invoker['account_address']
-
-    TokenContract = Contract.get_contract('IbetShare', token['address'])
-    i = 0
-    for url in url_list:
-        tx_hash = TokenContract.functions.setReferenceUrls(i, url). \
-            transact({'from': invoker['account_address'], 'gas': 4000000})
-        web3.eth.waitForTransactionReceipt(tx_hash)
-        i = i + 1
 
 
 # 株式Tokenの募集（売出）

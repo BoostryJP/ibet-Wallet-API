@@ -251,13 +251,9 @@ class TestPositionAccountAddressShareContractAddress:
                     'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
-                'reference_urls': [
-                    {'id': 1, 'url': ''}, {'id': 2, 'url': ''}, {'id': 3, 'url': ''}
-                ],
-                'image_url': [],
                 'memo': 'メモ',
                 'transferable': True,
-                'offering_status': False,
+                'is_offering': False,
                 'status': True,
                 'transfer_approval_required': False,
                 'is_canceled': False,
@@ -352,13 +348,9 @@ class TestPositionAccountAddressShareContractAddress:
                     'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
-                'reference_urls': [
-                    {'id': 1, 'url': ''}, {'id': 2, 'url': ''}, {'id': 3, 'url': ''}
-                ],
-                'image_url': [],
                 'memo': 'メモ',
                 'transferable': True,
-                'offering_status': False,
+                'is_offering': False,
                 'status': True,
                 'transfer_approval_required': True,
                 'is_canceled': False,
@@ -453,13 +445,9 @@ class TestPositionAccountAddressShareContractAddress:
                     'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
-                'reference_urls': [
-                    {'id': 1, 'url': ''}, {'id': 2, 'url': ''}, {'id': 3, 'url': ''}
-                ],
-                'image_url': [],
                 'memo': 'メモ',
                 'transferable': True,
-                'offering_status': False,
+                'is_offering': False,
                 'status': True,
                 'transfer_approval_required': True,
                 'is_canceled': False,
@@ -554,13 +542,9 @@ class TestPositionAccountAddressShareContractAddress:
                     'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
-                'reference_urls': [
-                    {'id': 1, 'url': ''}, {'id': 2, 'url': ''}, {'id': 3, 'url': ''}
-                ],
-                'image_url': [],
                 'memo': 'メモ',
                 'transferable': True,
-                'offering_status': False,
+                'is_offering': False,
                 'status': True,
                 'transfer_approval_required': False,
                 'is_canceled': False,
@@ -655,13 +639,9 @@ class TestPositionAccountAddressShareContractAddress:
                     'dividend_payment_date': '20200502'
                 },
                 'cancellation_date': '20200603',
-                'reference_urls': [
-                    {'id': 1, 'url': ''}, {'id': 2, 'url': ''}, {'id': 3, 'url': ''}
-                ],
-                'image_url': [],
                 'memo': 'メモ',
                 'transferable': True,
-                'offering_status': False,
+                'is_offering': False,
                 'status': True,
                 'transfer_approval_required': False,
                 'is_canceled': False,

@@ -737,12 +737,16 @@ paths:
                       type: string
                     total_supply:
                       type: string
-                    image_url:
-                      type: string
                     contact_information:
                       type: string
                     privacy_policy:
                       type: string
+                    status:
+                      type: boolean
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
         400:
           description: Invalid Parameter Error
           schema:
@@ -925,20 +929,7 @@ paths:
                     purpose:
                       type: string
                       description: purpose of issue
-                    image_url:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          url:
-                            type: string
-                    certification:
-                      type: array
-                      items:
-                        type: string
-                    initial_offering_status:
+                    is_offering:
                       type: boolean
                     max_holding_quantity:
                       type: integer
@@ -958,6 +949,8 @@ paths:
                       type: string
                     personal_info_address:
                       type: string
+                    transfer_approval_required:
+                      type: boolean
                     id:
                       type: integer
                       description: cursor id
@@ -1096,7 +1089,7 @@ paths:
                     type: string
                   interest_payment_date12:
                     type: string
-                  isRedeemed:
+                  is_redeemed:
                     type: boolean
                   redemption_date:
                     type: string
@@ -1109,18 +1102,7 @@ paths:
                   purpose:
                     type: string
                     description: purpose of issue
-                  image_url:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        url:
-                          type: string
-                  certification:
-                    type: string
-                  initial_offering_status:
+                  is_offering:
                     type: boolean
                   max_holding_quantity:
                     type: integer
@@ -1140,6 +1122,8 @@ paths:
                     type: string
                   personal_info_address:
                     type: string
+                  transfer_approval_required:
+                    type: boolean
         400:
           description: Invalid Parameter Error
           schema:
@@ -1220,24 +1204,11 @@ paths:
                           type: string
                     cancellation_date:
                       type: string
-                    reference_urls:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          url:
-                            type: string
-                    image_url:
-                      type: array
-                      items:
-                        type: object
                     memo:
                       type: string
                     transferable:
                       type: boolean
-                    offering_status:
+                    is_offering:
                       type: boolean
                     status:
                       type: boolean
@@ -1382,24 +1353,11 @@ paths:
                         type: string
                   cancellation_date:
                     type: string
-                  reference_urls:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        url:
-                          type: string
-                  image_url:
-                    type: array
-                    items:
-                      type: object
                   memo:
                     type: string
                   transferable:
                     type: boolean
-                  offering_status:
+                  is_offering:
                     type: boolean
                   status:
                     type: boolean
@@ -2912,22 +2870,9 @@ paths:
                           description: purpose of issue
                         transferable:
                           type: boolean
-                        isRedeemed:
+                        is_redeemed:
                           type: boolean
-                        image_url:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              id:
-                                type: integer
-                              url:
-                                type: string
-                        certification:
-                          type: array
-                          items:
-                            type: string
-                        initial_offering_status:
+                        is_offering:
                           type: boolean
                         max_holding_quantity:
                           type: integer
@@ -2945,6 +2890,8 @@ paths:
                           type: string
                         personal_info_address:
                           type: string
+                        transfer_approval_required:
+                          type: boolean
                     balance:
                       type: integer
                     exchange_balance:
@@ -3037,24 +2984,11 @@ paths:
                               type: string
                         cancellation_date:
                           type: string
-                        reference_urls:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              id:
-                                type: integer
-                              url:
-                                type: string
-                        image_url:
-                          type: array
-                          items:
-                            type: object
                         memo:
                           type: string
                         transferable:
                           type: boolean
-                        offering_status:
+                        is_offering:
                           type: boolean
                         status:
                           type: boolean
@@ -3623,22 +3557,9 @@ paths:
                               description: purpose of issue
                             transferable:
                               type: boolean
-                            isRedeemed:
+                            is_redeemed:
                               type: boolean
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            certification:
-                              type: array
-                              items:
-                                type: string
-                            initial_offering_status:
+                            is_offering:
                               type: boolean
                             max_holding_quantity:
                               type: integer
@@ -3656,6 +3577,8 @@ paths:
                               type: string
                             personal_info_address:
                               type: string
+                            transfer_approval_required:
+                              type: boolean
                         order:
                           type: object
                           properties:
@@ -3743,22 +3666,9 @@ paths:
                               description: purpose of issue
                             transferable:
                               type: boolean
-                            isRedeemed:
+                            is_redeemed:
                               type: boolean
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            certification:
-                              type: array
-                              items:
-                                type: string
-                            initial_offering_status:
+                            is_offering:
                               type: boolean
                             max_holding_quantity:
                               type: integer
@@ -3776,6 +3686,8 @@ paths:
                               type: string
                             personal_info_address:
                               type: string
+                            transfer_approval_required:
+                              type: boolean
                         agreement:
                           type: object
                           properties:
@@ -3865,22 +3777,9 @@ paths:
                               description: purpose of issue
                             transferable:
                               type: boolean
-                            isRedeemed:
+                            is_redeemed:
                               type: boolean
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            certification:
-                              type: array
-                              items:
-                                type: string
-                            initial_offering_status:
+                            is_offering:
                               type: boolean
                             max_holding_quantity:
                               type: integer
@@ -3898,6 +3797,8 @@ paths:
                               type: string
                             personal_info_address:
                               type: string
+                            transfer_approval_required:
+                              type: boolean
                         agreement:
                           type: object
                           properties:
@@ -4013,29 +3914,11 @@ paths:
                                     20201231
                             cancellation_date:
                               type: string
-                            reference_urls:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
                             memo:
                               type: string
                             transferable:
                               type: boolean
-                            offering_status:
+                            is_offering:
                               type: boolean
                             status:
                               type: boolean
@@ -4778,13 +4661,17 @@ paths:
                           example:
                             NewOrder
                           enum: [
-                            NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
-                            BuyAgreement,BuySettlementOK,BuySettlementNG,
-                            SellAgreement,SellSettlementOK,SellSettlementNG,
-                            StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
-                            Redeem,Suspend,ApplyForOffering,Allot,Transfer,
-                            PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
-                            PaymentAccountWarn,PaymentAccountBan
+                            NewOrder,
+                            NewOrderCounterpart,
+                            CancelOrder,
+                            CancelOrderCounterpart,
+                            BuyAgreement,
+                            BuySettlementOK,
+                            BuySettlementNG,
+                            SellAgreement,
+                            SellSettlementOK,
+                            SellSettlementNG,
+                            Transfer
                           ]
                         id:
                           type: string
@@ -4877,13 +4764,15 @@ paths:
                     example:
                       NewOrder
                     enum: [
-                      NewOrder,CancelOrder,
-                      BuyAgreement,BuySettlementOK,BuySettlementNG,
-                      SellAgreement,SellSettlementOK,SellSettlementNG,
-                      StartInitialOffering,StopInitialOffering,
-                      Redeem,ApplyForOffering,Allot,Transfer,
-                      PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
-                      PaymentAccountWarn,PaymentAccountBan
+                      NewOrder,
+                      CancelOrder,
+                      BuyAgreement,
+                      BuySettlementOK,
+                      BuySettlementNG,
+                      SellAgreement,
+                      SellSettlementOK,
+                      SellSettlementNG,
+                      Transfer
                     ]
                   id:
                     type: string

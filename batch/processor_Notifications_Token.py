@@ -54,7 +54,7 @@ from batch.lib.misc import wait_all_futures
 import log
 
 JST = timezone(timedelta(hours=+9), "JST")
-LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-COUPON-TOKEN")
+LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-TOKEN")
 
 WORKER_COUNT = int(WORKER_COUNT)
 SLEEP_INTERVAL = int(SLEEP_INTERVAL)
@@ -78,6 +78,7 @@ token_list = TokenList(list_contract)
 
 # Watcher
 class Watcher:
+
     def __init__(self, filter_name, filter_params):
         self.filter_name = filter_name
         self.filter_params = filter_params
@@ -94,27 +95,21 @@ class Watcher:
     def _gen_block_timestamp(self, entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def _get_coupon_token_public_list(self):
-        res = []
-        registered_token_list = db_session.query(Listing).filter(Listing.is_public == True).all()
-        for registered_token in registered_token_list:
-            if not token_list.is_registered(registered_token.token_address):
+    def _get_token_all_list(self):
+        _tokens = []
+        listed_tokens = db_session.query(Listing).all()
+        for listed_token in listed_tokens:
+            if not token_list.is_registered(listed_token.token_address):
                 continue
-            elif token_list.get_token(registered_token.token_address)[1] == "IbetCoupon":
-                res.append(registered_token)
-        return res
+            else:
+                token_type = token_list.get_token(listed_token.token_address)[1]
+                _tokens.append({
+                    "token": listed_token,
+                    "token_type": token_type
+                })
+        return _tokens
 
-    def _get_coupon_token_all_list(self):
-        res = []
-        registered_token_list = db_session.query(Listing).all()
-        for registered_token in registered_token_list:
-            if not token_list.is_registered(registered_token.token_address):
-                continue
-            elif token_list.get_token(registered_token.token_address)[1] == "IbetCoupon":
-                res.append(registered_token)
-        return res
-
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, token_contract, token_type, log_entries):
         pass
 
     def loop(self):
@@ -130,11 +125,8 @@ class Watcher:
                 LOG.info(f"[{self.__class__.__name__}]: skip processing")
                 return
 
-            # 登録済みの債券リストを取得
-            if self.__class__.__name__ == "WatchTransfer":
-                coupon_token_list = self._get_coupon_token_all_list()
-            else:
-                coupon_token_list = self._get_coupon_token_public_list()
+            # リスティング済みトークンを取得
+            _token_list = self._get_token_all_list()
 
             # レスポンスタイムアウト抑止
             # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
@@ -147,22 +139,28 @@ class Watcher:
                 _next_from = _latest_block + 1
 
             # イベント処理
-            for coupon_token in coupon_token_list:
+            for _token in _token_list:
                 try:
-                    coupon_contract = Contract.get_contract(
-                        contract_name="IbetCoupon",
-                        address=coupon_token.token_address
+                    token_contract = Contract.get_contract(
+                        contract_name=_token["token_type"],
+                        address=_token["token"].token_address
                     )
-                    _event = getattr(coupon_contract.events, self.filter_name)
+                    _event = getattr(token_contract.events, self.filter_name)
                     entries = _event.getLogs(
                         fromBlock=self.filter_params["fromBlock"],
                         toBlock=self.filter_params["toBlock"]
                     )
+                except FileNotFoundError:
+                    continue
                 except Exception as err:  # Exception が発生した場合は処理を継続
                     LOG.error(err)
                     continue
                 if len(entries) > 0:
-                    self.db_merge(coupon_contract, entries)
+                    self.db_merge(
+                        token_contract=token_contract,
+                        token_type=_token["token_type"],
+                        log_entries=entries
+                    )
                     db_session.commit()
 
             self.from_block = _next_from
@@ -176,9 +174,9 @@ class WatchTransfer(Watcher):
     def __init__(self):
         super().__init__("Transfer", {})
 
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
-        for entry in entries:
+        for entry in log_entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
             tradable_exchange = token_contract.functions.tradableExchange().call()
             if entry["args"]["from"] == tradable_exchange:
@@ -191,7 +189,7 @@ class WatchTransfer(Watcher):
                 "token_address": entry["address"],
                 "token_name": token_name,
                 "exchange_address": "",
-                "token_type": "IbetCoupon"
+                "token_type": token_type
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)

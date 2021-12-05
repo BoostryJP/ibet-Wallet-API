@@ -142,20 +142,7 @@ class Notifications(BaseResource):
                     "SellAgreement",
                     "SellSettlementOK",
                     "SellSettlementNG",
-                    "StartInitialOffering",
-                    "StopInitialOffering",
-                    "StartOffering",
-                    "StopOffering",
-                    "Redeem",
-                    "Suspend",
-                    "ApplyForOffering",
-                    "Allot",
-                    "Transfer",
-                    "PaymentAccountRegister",
-                    "PaymentAccountApprove",
-                    "PaymentAccountUnapprove",
-                    "PaymentAccountWarn",
-                    "PaymentAccountBan"
+                    "Transfer"
                 ],
             },
             "priority": {

@@ -219,7 +219,7 @@ class Processor:
                 )
                 for event in events:
                     args = event["args"]
-                    account = args.get("from", ZERO_ADDRESS)
+                    account = args.get("accountAddress", ZERO_ADDRESS)
                     balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
@@ -244,7 +244,7 @@ class Processor:
                 )
                 for event in events:
                     args = event["args"]
-                    account = args.get("to", ZERO_ADDRESS)
+                    account = args.get("recipientAddress", ZERO_ADDRESS)
                     balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
@@ -269,7 +269,7 @@ class Processor:
                 )
                 for event in events:
                     args = event["args"]
-                    account = args.get("target_address", ZERO_ADDRESS)
+                    account = args.get("targetAddress", ZERO_ADDRESS)
                     balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
@@ -294,7 +294,7 @@ class Processor:
                 )
                 for event in events:
                     args = event["args"]
-                    account = args.get("target_address", ZERO_ADDRESS)
+                    account = args.get("targetAddress", ZERO_ADDRESS)
                     balance = token.functions.balanceOf(account).call()
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),

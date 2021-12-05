@@ -144,24 +144,11 @@ paths:
                             type: string
                       cancellation_date:
                         type: string
-                      reference_urls:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: integer
-                            url:
-                              type: string
-                      image_url:
-                        type: array
-                        items:
-                          type: object
                       memo:
                         type: string
                       transferable:
                         type: boolean
-                      offering_status:
+                      is_offering:
                         type: boolean
                       status:
                         type: boolean
@@ -348,22 +335,9 @@ paths:
                         description: purpose of issue
                       transferable:
                         type: boolean
-                      isRedeemed:
+                      is_redeemed:
                         type: boolean
-                      image_url:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: integer
-                            url:
-                              type: string
-                      certification:
-                        type: array
-                        items:
-                          type: string
-                      initial_offering_status:
+                      is_offering:
                         type: boolean
                       max_holding_quantity:
                         type: integer
@@ -381,6 +355,8 @@ paths:
                         type: string
                       personal_info_address:
                         type: string
+                      transfer_approval_required:
+                        type: boolean
                   balance:
                     type: integer
                   exchange_balance:
@@ -746,20 +722,7 @@ paths:
             "SellAgreement",
             "SellSettlementOK",
             "SellSettlementNG",
-            "StartInitialOffering",
-            "StopInitialOffering",
-            "StartOffering",
-            "StopOffering",
-            "Redeem",
-            "Suspend",
-            "ApplyForOffering",
-            "Allot",
-            "Transfer",
-            "PaymentAccountRegister",
-            "PaymentAccountApprove",
-            "PaymentAccountUnapprove",
-            "PaymentAccountWarn",
-            "PaymentAccountBan"
+            "Transfer"
           ]
         - name: priority
           in: query
@@ -813,13 +776,17 @@ paths:
                           example:
                             NewOrder
                           enum: [
-                            NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
-                            BuyAgreement,BuySettlementOK,BuySettlementNG,
-                            SellAgreement,SellSettlementOK,SellSettlementNG,
-                            StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
-                            Redeem,Suspend,ApplyForOffering,Allot,Transfer,
-                            PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
-                            PaymentAccountWarn,PaymentAccountBan
+                            NewOrder,
+                            NewOrderCounterpart,
+                            CancelOrder,
+                            CancelOrderCounterpart,
+                            BuyAgreement,
+                            BuySettlementOK,
+                            BuySettlementNG,
+                            SellAgreement,
+                            SellSettlementOK,
+                            SellSettlementNG,
+                            Transfer
                           ]
                         id:
                           type: string
