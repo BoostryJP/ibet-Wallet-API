@@ -722,12 +722,7 @@ paths:
             "SellAgreement",
             "SellSettlementOK",
             "SellSettlementNG",
-            "Transfer",
-            "PaymentAccountRegister",
-            "PaymentAccountApprove",
-            "PaymentAccountDisapprove",
-            "PaymentAccountWarn",
-            "PaymentAccountBan"
+            "Transfer"
           ]
         - name: priority
           in: query
@@ -791,12 +786,7 @@ paths:
                             SellAgreement,
                             SellSettlementOK,
                             SellSettlementNG,
-                            Transfer,
-                            PaymentAccountRegister,
-                            PaymentAccountApprove,
-                            PaymentAccountDisapprove,
-                            PaymentAccountWarn,
-                            PaymentAccountBan
+                            Transfer
                           ]
                         id:
                           type: string

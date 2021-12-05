@@ -145,8 +145,3 @@ class NotificationType(Enum):
     SELL_SETTLEMENT_OK = "SellSettlementOK"
     SELL_SETTLEMENT_NG = "SellSettlementNG"
     TRANSFER = "Transfer"
-    PAYMENT_ACCOUNT_REGISTER = "PaymentAccountRegister"
-    PAYMENT_ACCOUNT_APPROVE = "PaymentAccountApprove"
-    PAYMENT_ACCOUNT_DISAPPROVE = "PaymentAccountDisapprove"
-    PAYMENT_ACCOUNT_WARN = "PaymentAccountWarn"
-    PAYMENT_ACCOUNT_BAN = "PaymentAccountBan"

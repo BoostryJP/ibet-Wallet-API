@@ -142,12 +142,7 @@ class Notifications(BaseResource):
                     "SellAgreement",
                     "SellSettlementOK",
                     "SellSettlementNG",
-                    "Transfer",
-                    "PaymentAccountRegister",
-                    "PaymentAccountApprove",
-                    "PaymentAccountDisapprove",
-                    "PaymentAccountWarn",
-                    "PaymentAccountBan"
+                    "Transfer"
                 ],
             },
             "priority": {
