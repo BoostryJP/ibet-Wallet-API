@@ -70,6 +70,16 @@ def register_payment_gateway(invoker, payment_gateway):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# トークン移転
+def transfer_token(token_contract, from_address, to_address, amount):
+    token_contract.functions.transfer(
+        to_address,
+        amount
+    ).transact({
+        'from': from_address
+    })
+
+
 '''
 Straight Bond Token （普通社債）
 '''
