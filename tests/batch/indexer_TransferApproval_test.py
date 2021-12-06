@@ -33,9 +33,9 @@ from app.model.db import (
 from batch import indexer_TransferApproval
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    transfer_token,
     issue_share_token,
-    register_share_list,
-    share_transfer_to_exchange
+    register_share_list
 )
 from tests.utils import PersonalInfoUtils
 
@@ -60,17 +60,25 @@ def processor(test_module, session):
 
 class TestProcessor:
     issuer = eth_account["issuer"]
-    trader = eth_account["trader"]
-    trader2 = eth_account["agent"]
+    account1 = eth_account["user1"]
+    account2 = eth_account["user2"]
+    escrow_agent = eth_account["agent"]
 
     @staticmethod
-    def issue_token_share(issuer, exchange_contract_address, personal_info_contract_address, token_list):
+    def issue_token_share(issuer,
+                          exchange_contract,
+                          personal_info_contract,
+                          token_list_contract):
+        if exchange_contract is None:
+            exchange_contract_address = config.ZERO_ADDRESS
+        else:
+            exchange_contract_address = exchange_contract.address
         # Issue token
         args = {
             "name": "テスト株式",
             "symbol": "SHARE",
             "tradableExchange": exchange_contract_address,
-            "personalInfoAddress": personal_info_contract_address,
+            "personalInfoAddress": personal_info_contract.get("address", config.ZERO_ADDRESS),
             "issuePrice": 1000,
             "principalValue": 1000,
             "totalSupply": 1000000,
@@ -83,67 +91,116 @@ class TestProcessor:
             "memo": "メモ",
             "transferable": True
         }
-        token = issue_share_token(issuer, args)
-        register_share_list(issuer, token, token_list)
+        _token = issue_share_token(issuer, args)
+        register_share_list(issuer, _token, token_list_contract)
 
-        return token
+        token_contract = Contract.get_contract(
+            contract_name="IbetShare",
+            address=_token["address"]
+        )
+
+        return token_contract
 
     @staticmethod
-    def listing_token(token_address, session):
+    def list_token(db_session, token_address):
         _listing = Listing()
         _listing.token_address = token_address
         _listing.is_public = True
-        _listing.max_holding_quantity = 1000000
-        _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
-        session.add(_listing)
+        db_session.add(_listing)
+
+    @staticmethod
+    def register_personal_info(account_address,
+                               link_address,
+                               personal_info_contract):
+        PersonalInfoUtils.register(
+            tx_from=account_address,
+            personal_info_address=personal_info_contract["address"],
+            link_address=link_address
+        )
+
+    @staticmethod
+    def set_transfer_approval_required(token_contract, required):
+        token_contract.functions.setTransferApprovalRequired(
+            required
+        ).transact({
+            'from': TestProcessor.issuer['account_address']
+        })
 
     ###########################################################################
     # Normal Case
     ###########################################################################
 
-    # <Normal_1>
+    # <Normal_1_1>
     # Single Token
-    # - Apply For Transfer
-    def test_normal_1(self, processor, shared_contract, session):
-        # Issue Token
+    #  - ApplyForTransfer
+    def test_normal_1_1(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
         token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "978266096").transact(
-            {"from": self.trader["account_address"], "gas": 4000000}
+        self.list_token(
+            token_address=token.address,
+            db_session=session
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
 
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = session.query(IDXTransferApproval).order_by(IDXTransferApproval.created).all()
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
         assert len(_transfer_approval_list) == 1
+
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
-        assert _transfer_approval.token_address == token["address"]
+        assert _transfer_approval.token_address == token.address
+        assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.trader["account_address"]
-        assert _transfer_approval.to_address == self.trader2["account_address"]
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -152,55 +209,85 @@ class TestProcessor:
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is None
 
-    # <Normal_2>
+    # <Normal_1_2>
     # Single Token
-    # - Apply For Transfer
-    # - Approve
-    def test_normal_2(self, processor, shared_contract, session):
-        # Issue Token
+    #  - ApplyForTransfer
+    #  - ApproveTransfer
+    def test_normal_1_2(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue Token
         token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "978266096").transact(
-            {"from": self.trader["account_address"], "gas": 4000000}
+        self.list_token(
+            token_address=token.address,
+            db_session=session
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
 
-        # Approve
-        tx_hash = token_contract.functions.approveTransfer(0, "1609418096").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        # Approve transfer
+        token.functions.approveTransfer(
+            0,
+            "1609418096"  # 2020/12/31 12:34:56
+        ).transact({
+            "from": self.issuer["account_address"]
+        })
 
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = session.query(IDXTransferApproval).order_by(IDXTransferApproval.created).all()
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
         assert len(_transfer_approval_list) == 1
+
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
-        assert _transfer_approval.token_address == token["address"]
+        assert _transfer_approval.token_address == token.address
+        assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.trader["account_address"]
-        assert _transfer_approval.to_address == self.trader2["account_address"]
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -210,55 +297,85 @@ class TestProcessor:
         assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
 
-    # <Normal_3>
+    # <Normal_1_3>
     # Single Token
-    # - Apply For Transfer
-    # - Cancel
-    def test_normal_3(self, processor, shared_contract, session):
-        # Issue Token
+    #  - ApplyForTransfer
+    #  - CancelTransfer
+    def test_normal_1_3(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
         token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "978266096").transact(
-            {"from": self.trader["account_address"], "gas": 4000000}
+        self.list_token(
+            token_address=token.address,
+            db_session=session
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
 
-        # Cancel
-        tx_hash = token_contract.functions.cancelTransfer(0, "test_data").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        # Cancel transfer
+        token.functions.cancelTransfer(
+            0,
+            "test_data"
+        ).transact({
+            "from": self.issuer["account_address"]
+        })
 
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = session.query(IDXTransferApproval).order_by(IDXTransferApproval.created).all()
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
         assert len(_transfer_approval_list) == 1
+
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
-        assert _transfer_approval.token_address == token["address"]
+        assert _transfer_approval.token_address == token.address
+        assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.trader["account_address"]
-        assert _transfer_approval.to_address == self.trader2["account_address"]
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -267,73 +384,119 @@ class TestProcessor:
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is True
 
-    # <Normal_4>
+    # <Normal_1_4>
     # Multi Token
-    # - Apply For Transfer
-    # - Approve
-    def test_normal_4(self, processor, shared_contract, session):
-        # Issue Token
+    #  - ApplyForTransfer
+    #  - ApproveTransfer
+    def test_normal_1_4(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
-        token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-        self.listing_token(token["address"], session)
-        token2 = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-        self.listing_token(token2["address"], session)
 
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token2, 10000)
+        # Issue Token
+        token_1 = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token_1.address,
+            db_session=session
+        )
 
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+        token_2 = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
-        token_contract2 = Contract.get_contract("IbetShare", token2["address"])
-        tx_hash = token_contract2.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+        self.list_token(
+            token_address=token_2.address,
+            db_session=session
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
 
-        # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "978266096").transact(
-            {"from": self.trader["account_address"], "gas": 4000000}
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
-        tx_hash = token_contract2.functions.applyForTransfer(
-            self.trader2["account_address"], 3000, "test_data").transact(
-            {"from": self.trader["account_address"], "gas": 4000000}
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
 
-        # Approve
-        tx_hash = token_contract.functions.approveTransfer(0, "1609418096").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token_1,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
-        tx_hash = token_contract2.functions.approveTransfer(0, "test_data").transact(
-            {"from": self.issuer["account_address"], "gas": 4000000}
+        transfer_token(
+            token_contract=token_2,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token_1,
+            required=True
+        )
+        self.set_transfer_approval_required(
+            token_contract=token_2,
+            required=True
+        )
+
+        # Apply for transfer
+        token_1.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+        token_2.functions.applyForTransfer(
+            self.account2["account_address"],
+            3000,
+            "978266097"  # 2000/12/31 12:34:57
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        # Approve transfer
+        token_1.functions.approveTransfer(
+            0,
+            "1609418096"  # 2020/12/31 12:34:56
+        ).transact({
+            "from": self.issuer["account_address"]
+        })
+        token_2.functions.approveTransfer(
+            0,
+            "1609418097"  # 2020/12/31 12:34:57
+        ).transact({
+            "from": self.issuer["account_address"]
+        })
 
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = session.query(IDXTransferApproval).order_by(IDXTransferApproval.created).all()
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
         assert len(_transfer_approval_list) == 2
+
         _transfer_approval = _transfer_approval_list[0]
         assert _transfer_approval.id == 1
-        assert _transfer_approval.token_address == token["address"]
+        assert _transfer_approval.token_address == token_1.address
+        assert _transfer_approval.exchange_address is None
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.trader["account_address"]
-        assert _transfer_approval.to_address == self.trader2["account_address"]
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
         assert _transfer_approval.value == 2000
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
@@ -342,120 +505,495 @@ class TestProcessor:
                datetime.strptime("2020/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
+
         _transfer_approval = _transfer_approval_list[1]
         assert _transfer_approval.id == 2
-        assert _transfer_approval.token_address == token2["address"]
+        assert _transfer_approval.token_address == token_2.address
         assert _transfer_approval.application_id == 0
-        assert _transfer_approval.from_address == self.trader["account_address"]
-        assert _transfer_approval.to_address == self.trader2["account_address"]
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
         assert _transfer_approval.value == 3000
-        assert _transfer_approval.application_datetime is None
+        assert _transfer_approval.application_datetime == \
+               datetime.strptime("2000/12/31 12:34:57", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.application_blocktimestamp is not None
         assert _transfer_approval.approval_datetime is None
-        assert _transfer_approval.approval_blocktimestamp is not None
+        assert _transfer_approval.approval_datetime == \
+               datetime.strptime("2020/12/31 12:34:57", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.cancelled is None
 
-    # <Normal_5>
+    # <Normal_1_5>
     # No event logs
-    def test_normal_5(self, processor, shared_contract, session):
-        # Issue Token
+    def test_normal_1_5(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
         token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        self.list_token(
+            token_address=token.address,
+            db_session=session
+        )
 
-        # Not Apply For Transfer
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # ApplyForTransfer events not emitted
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = session.query(IDXTransferApproval).order_by(IDXTransferApproval.created).all()
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
         assert len(_transfer_approval_list) == 0
 
-    # <Normal_6>
-    # Not Listing Token
-    def test_normal_6(self, processor, shared_contract, session):
-        # Issue Token
+    # <Normal_1_6>
+    # Not listed token
+    def test_normal_1_6(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
         token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
 
-        # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "978266096").transact(
-            {"from": self.trader["account_address"], "gas": 4000000}
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
 
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = session.query(IDXTransferApproval).order_by(IDXTransferApproval.created).all()
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
         assert len(_transfer_approval_list) == 0
+
+    # <Normal_2_1>
+    # IbetSecurityTokenEscrow
+    #  - ApplyForTransfer
+    def test_normal_2_1(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=st_escrow_contract,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token.address,
+            db_session=session
+        )
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Deposit token to escrow
+        transfer_token(
+            token_contract=token,
+            from_address=self.account1["account_address"],
+            to_address=st_escrow_contract.address,
+            amount=10000
+        )
+
+        # Create escrow
+        st_escrow_contract.functions.createEscrow(
+            token.address,
+            self.account2["account_address"],
+            10000,
+            self.escrow_agent["account_address"],
+            "978266096",  # 2000/12/31 12:34:56
+            "test_escrow_data"
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 1
+
+        _transfer_approval = _transfer_approval_list[0]
+        assert _transfer_approval.id == 1
+        assert _transfer_approval.token_address == token.address
+        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.application_id == st_escrow_contract.functions.latestEscrowId().call()
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.value == 10000
+        assert _transfer_approval.application_datetime == \
+               datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
+        assert _transfer_approval.application_blocktimestamp is not None
+        assert _transfer_approval.approval_datetime is None
+        assert _transfer_approval.approval_blocktimestamp is None
+        assert _transfer_approval.cancelled is None
+
+    # <Normal_2_2>
+    # IbetSecurityTokenEscrow
+    #  - ApplyForTransfer
+    #  - CancelTransfer
+    def test_normal_2_2(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=st_escrow_contract,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token.address,
+            db_session=session
+        )
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Deposit token to escrow
+        transfer_token(
+            token_contract=token,
+            from_address=self.account1["account_address"],
+            to_address=st_escrow_contract.address,
+            amount=10000
+        )
+
+        # Create escrow
+        st_escrow_contract.functions.createEscrow(
+            token.address,
+            self.account2["account_address"],
+            10000,
+            self.escrow_agent["account_address"],
+            "978266096",  # 2000/12/31 12:34:56
+            "test_escrow_data"
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        # Cancel escrow
+        escrow_id = st_escrow_contract.functions.latestEscrowId().call()
+        st_escrow_contract.functions.cancelEscrow(
+            escrow_id
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 1
+
+        _transfer_approval = _transfer_approval_list[0]
+        assert _transfer_approval.id == 1
+        assert _transfer_approval.token_address == token.address
+        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.application_id == escrow_id
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.value == 10000
+        assert _transfer_approval.application_datetime == \
+               datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
+        assert _transfer_approval.application_blocktimestamp is not None
+        assert _transfer_approval.approval_datetime is None
+        assert _transfer_approval.approval_blocktimestamp is None
+        assert _transfer_approval.cancelled is True
+
+    # <Normal_2_3>
+    # IbetSecurityTokenEscrow
+    #  - ApplyForTransfer
+    #  - ApproveTransfer
+    def test_normal_2_3(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=st_escrow_contract,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token.address,
+            db_session=session
+        )
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Deposit token to escrow
+        transfer_token(
+            token_contract=token,
+            from_address=self.account1["account_address"],
+            to_address=st_escrow_contract.address,
+            amount=10000
+        )
+
+        # Create escrow
+        st_escrow_contract.functions.createEscrow(
+            token.address,
+            self.account2["account_address"],
+            10000,
+            self.escrow_agent["account_address"],
+            "978266096",  # 2000/12/31 12:34:56
+            "test_escrow_data"
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        escrow_id = st_escrow_contract.functions.latestEscrowId().call()
+
+        # Approve transfer
+        st_escrow_contract.functions.approveTransfer(
+            escrow_id,
+            "1609418096"  # 2020/12/31 12:34:56
+        ).transact({
+            "from": self.issuer["account_address"]
+        })
+
+        # Finish escrow
+        st_escrow_contract.functions.finishEscrow(
+            escrow_id
+        ).transact({
+            "from": self.escrow_agent["account_address"]
+        })
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 1
+
+        _transfer_approval = _transfer_approval_list[0]
+        assert _transfer_approval.id == 1
+        assert _transfer_approval.token_address == token.address
+        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.application_id == escrow_id
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.value == 10000
+        assert _transfer_approval.application_datetime == \
+               datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
+        assert _transfer_approval.application_blocktimestamp is not None
+        assert _transfer_approval.approval_datetime == \
+               datetime.strptime("2020/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
+        assert _transfer_approval.approval_blocktimestamp is not None
+        assert _transfer_approval.cancelled is None
 
     ###########################################################################
     # Error Case
     ###########################################################################
 
     # <Error_1>
-    # Error occur
+    # Exception on getting logs
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, processor, shared_contract, session):
-        # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
         token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
-        self.listing_token(token["address"], session)
-
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract["address"], self.issuer["account_address"])
-        share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-
-        token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.setTransferApprovalRequired(True).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
-
-        # Apply For Transfer
-        tx_hash = token_contract.functions.applyForTransfer(
-            self.trader2["account_address"], 2000, "test_data").transact(
-            {"from": self.trader["account_address"], "gas": 4000000}
+        self.list_token(
+            token_address=token.address,
+            db_session=session
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
 
         # Run target process
         processor.sync_new_logs()
 
         # Assertion
-        _transfer_approval_list = session.query(IDXTransferApproval).order_by(IDXTransferApproval.created).all()
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
         assert len(_transfer_approval_list) == 0

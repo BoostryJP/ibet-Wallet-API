@@ -262,7 +262,10 @@ class TransferApprovalHistory(BaseResource):
         # Get transfer approval data
         query = db_session.query(IDXTransferApproval). \
             filter(IDXTransferApproval.token_address == contract_address). \
-            order_by(IDXTransferApproval.application_id)
+            order_by(
+                IDXTransferApproval.exchange_address,
+                IDXTransferApproval.application_id
+            )
         list_length = query.count()
 
         # パラメータを設定
