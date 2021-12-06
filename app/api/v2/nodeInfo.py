@@ -45,6 +45,7 @@ class NodeInfo(BaseResource):
         personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
         ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
         ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
+        ibet_security_token_escrow_json = json.load(open("app/contracts/json/IbetSecurityTokenEscrow.json", "r"))
         e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
         nodeInfo = {
@@ -62,6 +63,8 @@ class NodeInfo(BaseResource):
             'ibet_share_exchange_abi': ibet_exchange_json['abi'],
             'ibet_escrow_address': config.IBET_ESCROW_CONTRACT_ADDRESS,
             'ibet_escrow_abi': ibet_escrow_json['abi'],
+            'ibet_security_token_escrow_address': config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,
+            'ibet_security_token_escrow_abi': ibet_security_token_escrow_json['abi'],
             'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
             'e2e_messaging_abi': e2e_messaging_json['abi'],
             'agent_address': config.AGENT_ADDRESS,
