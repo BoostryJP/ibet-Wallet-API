@@ -207,8 +207,9 @@ class Processor:
                     address=listed_token.token_address
                 )
                 self.token_list.append(token_contract)
-                tradable_exchange = token_contract.functions.tradableExchange().call()
-                _exchange_list_tmp.append(tradable_exchange)
+                tradable_exchange_address = token_contract.functions.tradableExchange().call()
+                if tradable_exchange_address != ZERO_ADDRESS:
+                    _exchange_list_tmp.append(tradable_exchange_address)
 
         # Remove duplicate exchanges from a list
         for _exchange_address in list(set(_exchange_list_tmp)):

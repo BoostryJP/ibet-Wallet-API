@@ -516,9 +516,9 @@ class TestProcessor:
         assert _transfer_approval.application_datetime == \
                datetime.strptime("2000/12/31 12:34:57", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.application_blocktimestamp is not None
-        assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_datetime == \
                datetime.strptime("2020/12/31 12:34:57", '%Y/%m/%d %H:%M:%S')
+        assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
 
     # <Normal_1_5>
