@@ -213,3 +213,117 @@ class IbetEscrowEvents(BaseResource):
             raise InvalidParameterError("to_block must be greater than or equal to the from_block")
 
         return validator.document
+
+
+# /Events/IbetSecurityTokenEscrow
+class IbetSecurityTokenEscrowEvents(BaseResource):
+    """IbetSecurityTokenEscrow Event Logs"""
+
+    def on_get(self, req, res, account_address=None, **kwargs):
+        """List all event logs"""
+        LOG.info("v3.events.IbetSecurityTokenEscrowEvents")
+
+        # Validate Request Data
+        request_json = self.validate(req)
+
+        # Get event logs
+        contract = Contract.get_contract(
+            contract_name="IbetSecurityTokenEscrow",
+            address=config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS
+        )
+        if request_json["event"] == "Deposited":
+            attr_list = ["Deposited"]
+        elif request_json["event"] == "Withdrawn":
+            attr_list = ["Withdrawn"]
+        elif request_json["event"] == "EscrowCreated":
+            attr_list = ["EscrowCreated"]
+        elif request_json["event"] == "EscrowCanceled":
+            attr_list = ["EscrowCanceled"]
+        elif request_json["event"] == "EscrowFinished":
+            attr_list = ["EscrowFinished"]
+        elif request_json["event"] == "ApplyForTransfer":
+            attr_list = ["ApplyForTransfer"]
+        elif request_json["event"] == "CancelTransfer":
+            attr_list = ["CancelTransfer"]
+        elif request_json["event"] == "ApproveTransfer":
+            attr_list = ["ApproveTransfer"]
+        else:  # All events
+            attr_list = [
+                "Deposited",
+                "Withdrawn",
+                "EscrowCreated",
+                "EscrowCanceled",
+                "EscrowFinished",
+                "ApplyForTransfer",
+                "CancelTransfer",
+                "ApproveTransfer"
+            ]
+
+        tmp_list = []
+        for attr in attr_list:
+            contract_event = getattr(contract.events, attr)
+            events = contract_event.getLogs(
+                fromBlock=request_json["from_block"],
+                toBlock=request_json["to_block"]
+            )
+            for event in events:
+                tmp_list.append({
+                    "event": event["event"],
+                    "args": dict(event["args"]),
+                    "transaction_hash": event["transactionHash"].hex(),
+                    "block_number": event["blockNumber"],
+                    "log_index": event["logIndex"]
+                })
+
+        # Sort: block_number > log_index
+        resp_json = sorted(
+            tmp_list,
+            key=lambda x: (x["block_number"], x["log_index"])
+        )
+
+        self.on_success(res, resp_json)
+
+    @staticmethod
+    def validate(req):
+        request_json = {
+            "from_block": req.get_param("from_block"),
+            "to_block": req.get_param("to_block"),
+            "event": req.get_param("event")
+        }
+
+        validator = Validator({
+            "from_block": {
+                "type": "integer",
+                "coerce": int,
+                "min": 1,
+                "required": True
+            },
+            "to_block": {
+                "type": "integer",
+                "coerce": int,
+                "min": 1,
+                "required": True
+            },
+            "event": {
+                "type": "string",
+                "required": False,
+                "nullable": True,
+                "allowed": [
+                    "Deposited",
+                    "Withdrawn",
+                    "EscrowCreated",
+                    "EscrowCanceled",
+                    "EscrowFinished",
+                    "ApplyForTransfer",
+                    "CancelTransfer",
+                    "ApproveTransfer"
+                ]
+            }
+        })
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        if int(request_json["from_block"]) > int(request_json["to_block"]):
+            raise InvalidParameterError("to_block must be greater than or equal to the from_block")
+
+        return validator.document
