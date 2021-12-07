@@ -178,6 +178,7 @@ class App(falcon.App):
         # Events
         self.add_route('/v3/Events/E2EMessaging', events.E2EMessagingEvents())
         self.add_route('/v3/Events/IbetEscrow', events.IbetEscrowEvents())
+        self.add_route('/v3/Events/IbetSecurityTokenEscrow', events.IbetSecurityTokenEscrowEvents())
 
         """
         Error Handler

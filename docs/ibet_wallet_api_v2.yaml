@@ -308,6 +308,10 @@ paths:
                     type: string
                   ibet_escrow_abi:
                     type: object
+                  ibet_security_token_escrow_address:
+                    type: string
+                  ibet_security_token_escrow_abi:
+                    type: object
                   e2e_messaging_address:
                     type: string
                   e2e_messaging_abi:
