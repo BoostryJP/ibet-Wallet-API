@@ -66,16 +66,11 @@ class Token(BaseResource):
         else:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # Get dex address
-        TokenContract = Contract.get_contract('IbetStandardTokenInterface', contract_address)
-        dex_address = TokenContract.functions.tradableExchange().call()
-
         # Get holders count
         holders_count = session.query(func.count()). \
             filter(IDXPosition.token_address == contract_address). \
             filter(IDXPosition.account_address != owner_address). \
-            filter(IDXPosition.account_address != dex_address). \
-            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0)). \
+            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0, IDXPosition.exchange_balance > 0, IDXPosition.exchange_commitment > 0)). \
             first()
 
         res_data = {

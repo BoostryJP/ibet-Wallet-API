@@ -46,7 +46,12 @@ class TestV2TokenHolders:
         _position.token_address = position["token_address"]
         _position.account_address = position["account_address"]
         _position.balance = position.get("balance")  # nullable
-        _position.pending_transfer = position.get("pending_transfer")  # nullable
+        _position.pending_transfer = position.get(
+            "pending_transfer")  # nullable
+        _position.exchange_balance = position.get(
+            "exchange_balance")  # nullable
+        _position.exchange_commitment = position.get(
+            "exchange_commitment")  # nullable
         session.add(_position)
 
     ####################################################################
@@ -86,7 +91,8 @@ class TestV2TokenHolders:
         position_1 = {
             "token_address": self.token_address,
             "account_address": self.account_address,
-            "balance": 10
+            "balance": 10,
+            "exchange_balance": 10,
         }
         self.insert_position(session, position=position_1)
 
@@ -104,26 +110,29 @@ class TestV2TokenHolders:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         # Assertion
-        assumed_body = [
+        assumed_body = [{
+            "token_address": self.token_address,
+            "account_address": self.account_address,
+            "amount": None,
+            "pending_transfer": 5,
+            "exchange_balance": None,
+            "exchange_commitment": None
+        },
             {
                 "token_address": self.token_address,
                 "account_address": self.account_address,
                 "amount": 10,
-                "pending_transfer": None
-            }, {
-                "token_address": self.token_address,
-                "account_address": self.account_address,
-                "amount": None,
-                "pending_transfer": 5
-            }
-
+                "pending_transfer": None,
+                "exchange_balance": 10,
+                "exchange_commitment": None
+        }
         ]
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert resp.json["data"] == assumed_body
 
     # Normal_3
-    # balance = 0 , pending_transfer = 0
+    # balance = 0 , pending_transfer = 0, exchange_balance = 0, exchange_commitment = 0
     def test_normal_3(self, client, session):
         listing = {
             "token_address": self.token_address,
@@ -146,6 +155,22 @@ class TestV2TokenHolders:
             "pending_transfer": 0
         }
         self.insert_position(session, position=position_2)
+
+        # Prepare data (exchange_balance = 0)
+        position_3 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address,
+            "exchange_balance": 0
+        }
+        self.insert_position(session, position=position_3)
+
+        # Prepare data (exchange_commitment = 0)
+        position_4 = {
+            "token_address": self.token_address,
+            "account_address": self.account_address,
+            "exchange_commitment": 0
+        }
+        self.insert_position(session, position=position_4)
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)

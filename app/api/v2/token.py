@@ -133,7 +133,7 @@ class TokenHolders(BaseResource):
         # Get token holders
         holders = session.query(IDXPosition). \
             filter(IDXPosition.token_address == contract_address). \
-            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0)). \
+            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0, IDXPosition.exchange_balance > 0, IDXPosition.exchange_commitment > 0)). \
             all()
 
         resp_body = []
@@ -142,7 +142,9 @@ class TokenHolders(BaseResource):
                 "token_address": holder.token_address,
                 "account_address": holder.account_address,
                 "amount": holder.balance,
-                "pending_transfer": holder.pending_transfer
+                "pending_transfer": holder.pending_transfer,
+                "exchange_balance": holder.exchange_balance,
+                "exchange_commitment": holder.exchange_commitment
             })
 
         self.on_success(res, resp_body)
