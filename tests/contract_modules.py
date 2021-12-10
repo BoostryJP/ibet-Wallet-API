@@ -607,14 +607,19 @@ def create_security_token_escrow(invoker, exchange, token, recipient_address, ag
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
+def get_latest_escrow_id(exchange):
+    IbetSecurityTokenEscrowContract = Contract. \
+        get_contract('IbetSecurityTokenEscrow', exchange['address'])
+    latest_escrow_id = \
+        IbetSecurityTokenEscrowContract.functions.latestEscrowId().call()
+    return latest_escrow_id
+
 # エスクローの完了
-def finish_security_token_escrow(invoker, exchange):
+def finish_security_token_escrow(invoker, exchange, escrow_id):
     web3.eth.defaultAccount = invoker['account_address']
     IbetSecurityTokenEscrowContract = Contract. \
         get_contract('IbetSecurityTokenEscrow', exchange['address'])
-    latest_escrowid = \
-        IbetSecurityTokenEscrowContract.functions.latestEscrowId().call()
     tx_hash = IbetSecurityTokenEscrowContract.functions. \
-        finishEscrow(latest_escrowid).transact(
+        finishEscrow(escrow_id).transact(
             {'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)

@@ -42,7 +42,10 @@ from tests.contract_modules import (
     cancel_order,
     force_cancel_order,
     make_sell,
-    take_sell
+    take_sell,
+    get_latest_agreementid,
+    get_latest_orderid,
+    get_latest_escrow_id
 )
 from tests.utils import PersonalInfoUtils
 
@@ -783,7 +786,7 @@ class TestProcessor:
         create_security_token_escrow(self.issuer, {"address": escrow_contract.address},
                                      token, self.trader["account_address"], self.issuer["account_address"], 200)
         finish_security_token_escrow(
-            self.issuer, {"address": escrow_contract.address})
+            self.issuer, {"address": escrow_contract.address}, get_latest_escrow_id({"address": escrow_contract.address}))
         create_security_token_escrow(self.issuer, {"address": escrow_contract.address},
                                      token, self.trader["account_address"], self.issuer["account_address"], 300)
 
@@ -814,6 +817,7 @@ class TestProcessor:
     # <Normal_12>
     # Single Token
     # Multi event with IbetExchange logs
+    # - Transfer
     # - MakeOrder
     # - CancelOrder
     # - MakeOrder
@@ -832,9 +836,9 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, exchange_contract, token, 10000)
         make_sell(self.issuer, exchange_contract, token, 111, 1000)
-        cancel_order(self.issuer, exchange_contract, 1)
+        cancel_order(self.issuer, exchange_contract, get_latest_orderid(exchange_contract))
         make_sell(self.issuer, exchange_contract, token, 222, 1000)
-        force_cancel_order(agent, exchange_contract, 2)
+        force_cancel_order(agent, exchange_contract, get_latest_orderid(exchange_contract))
         make_sell(self.issuer, exchange_contract, token, 333, 1000)
 
         # Run target process
@@ -856,7 +860,12 @@ class TestProcessor:
     # <Normal_13>
     # Single Token
     # Multi event with IbetExchange logs
-    # - Settlement Event
+    # - Transfer
+    # - MakeOrder
+    # - TakeOrder
+    # - CancelAgreement
+    # - MakeOrder
+    # - TakeOrder
     def test_normal_13(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -873,10 +882,10 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, exchange_contract, token, 10000)
         make_buy(self.trader, exchange_contract, token, 111, 1000)
-        take_sell(self.issuer, exchange_contract, 1, 55)
-        cancel_agreement(agent, exchange_contract, 1, 1)
+        take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 55)
+        cancel_agreement(agent, exchange_contract, get_latest_orderid(exchange_contract), get_latest_agreementid(exchange_contract, get_latest_orderid(exchange_contract)))
         make_buy(self.trader, exchange_contract, token, 111, 1000)
-        take_sell(self.issuer, exchange_contract, 2, 66)
+        take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
 
         # Run target process
         processor.sync_new_logs()
@@ -894,9 +903,9 @@ class TestProcessor:
         assert _position.exchange_balance == 10000 - 55 - 66
         assert _position.exchange_commitment == 66
 
-    # <Normal_15>
+    # <Normal_14>
     # No event logs
-    def test_normal_15(self, processor, shared_contract, session):
+    def test_normal_14(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -913,9 +922,9 @@ class TestProcessor:
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
 
-    # <Normal_16>
+    # <Normal_15>
     # Not Listing Token
-    def test_normal_16(self, processor, shared_contract, session):
+    def test_normal_15(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]

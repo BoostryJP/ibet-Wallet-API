@@ -101,10 +101,10 @@ class DBSink:
             position = IDXPosition()
             position.token_address = token_address
             position.account_address = account_address
-            position.balance = balance
-            position.pending_transfer = pending_transfer
-            position.exchange_balance = exchange_balance
-            position.exchange_commitment = exchange_commitment
+            position.balance = balance or 0
+            position.pending_transfer = pending_transfer or 0
+            position.exchange_balance = exchange_balance or 0
+            position.exchange_commitment = exchange_commitment or 0
         else:
             if balance is not None:
                 position.balance = balance
@@ -130,6 +130,7 @@ class Processor:
 
     def get_contract_list(self):
         self.token_list = []
+        self.token_address_list = []
         self.exchange_list = []
         ListContract = Contract.get_contract(
             "TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
@@ -143,6 +144,7 @@ class Processor:
                 token_contract = Contract.get_contract(
                     "IbetStraightBond", listed_token.token_address)
                 self.token_list.append(token_contract)
+                self.token_address_list.append(token_contract.address)
                 tradable_exchange_address = token_contract.functions.tradableExchange().call()
                 if tradable_exchange_address != ZERO_ADDRESS:
                     _exchange_list_tmp.append(tradable_exchange_address)
@@ -483,7 +485,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+                target_events = []
                 for event in events:
+                    if event["args"].get("token") in self.token_address_list:
+                        target_events.append(event)
+                for event in target_events:
                     args = event["args"]
                     from_exchange_balance = 0
                     from_exchange_commitment = 0
@@ -542,7 +548,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
+                target_events = []
                 for event in order_events:
+                    if event["args"].get("tokenAddress") in self.token_address_list:
+                        target_events.append(event)
+                for event in target_events:
                     args = event["args"]
                     exchange_balance = 0
                     exchange_commitment = 0
@@ -568,7 +578,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
+                target_events = []
                 for event in settlement_events:
+                    if event["args"].get("tokenAddress") in self.token_address_list:
+                        target_events.append(event)
+                for event in target_events:
                     args = event["args"]
                     exchange_balance = 0
                     exchange_commitment = 0
@@ -595,7 +609,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                for event in settlement_events:
+                target_events = []
+                for event in escrow_events:
+                    if event["args"].get("token") in self.token_address_list:
+                        target_events.append(event)
+                for event in target_events:
                     args = event["args"]
                     exchange_balance = 0
                     exchange_commitment = 0
