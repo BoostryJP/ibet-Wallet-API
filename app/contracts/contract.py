@@ -22,9 +22,7 @@ from eth_utils import to_checksum_address
 from web3 import contract
 
 from app.utils.web3_utils import Web3Wrapper
-from app import log
 
-LOG = log.get_logger()
 web3 = Web3Wrapper()
 
 
@@ -113,7 +111,6 @@ class Contract:
             if default_returns is not None:
                 return default_returns
             else:
-                LOG.exception(err)
                 raise err
 
         return result
