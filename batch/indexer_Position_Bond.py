@@ -115,10 +115,15 @@ class Processor:
 
     def get_token_list(self):
         self.token_list = []
-        ListContract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
         for listed_token in listed_tokens:
-            token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
+            token_info = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(listed_token.token_address,),
+                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+            )
             if token_info[1] == "IbetStraightBond":
                 token_contract = Contract.get_contract("IbetStraightBond", listed_token.token_address)
                 self.token_list.append(token_contract)
@@ -187,7 +192,12 @@ class Processor:
                     args = event["args"]
                     # from address
                     from_account = args.get("from", ZERO_ADDRESS)
-                    from_account_balance = token.functions.balanceOf(from_account).call()
+                    from_account_balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(from_account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=from_account,
@@ -195,7 +205,12 @@ class Processor:
                     )
                     # to address
                     to_account = args.get("to", ZERO_ADDRESS)
-                    to_account_balance = token.functions.balanceOf(to_account).call()
+                    to_account_balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(to_account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=to_account,
@@ -220,7 +235,12 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     account = args.get("accountAddress", ZERO_ADDRESS)
-                    balance = token.functions.balanceOf(account).call()
+                    balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -245,7 +265,12 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     account = args.get("recipientAddress", ZERO_ADDRESS)
-                    balance = token.functions.balanceOf(account).call()
+                    balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -270,7 +295,12 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
-                    balance = token.functions.balanceOf(account).call()
+                    balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -295,7 +325,12 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
-                    balance = token.functions.balanceOf(account).call()
+                    balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -320,8 +355,18 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
-                    balance = token.functions.balanceOf(account).call()
-                    pending_transfer = token.functions.pendingTransfer(account).call()
+                    balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(account,),
+                        default_returns=0
+                    )
+                    pending_transfer = Contract.call_function(
+                        contract=token,
+                        function_name="pendingTransfer",
+                        args=(account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -347,8 +392,18 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
-                    balance = token.functions.balanceOf(account).call()
-                    pending_transfer = token.functions.pendingTransfer(account).call()
+                    balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(account,),
+                        default_returns=0
+                    )
+                    pending_transfer = Contract.call_function(
+                        contract=token,
+                        function_name="pendingTransfer",
+                        args=(account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -375,8 +430,18 @@ class Processor:
                     args = event["args"]
                     # from address
                     from_account = args.get("from", ZERO_ADDRESS)
-                    from_balance = token.functions.balanceOf(from_account).call()
-                    from_pending_transfer = token.functions.pendingTransfer(from_account).call()
+                    from_balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(from_account,),
+                        default_returns=0
+                    )
+                    from_pending_transfer = Contract.call_function(
+                        contract=token,
+                        function_name="pendingTransfer",
+                        args=(from_account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=from_account,
@@ -385,8 +450,18 @@ class Processor:
                     )
                     # to address
                     to_account = args.get("to", ZERO_ADDRESS)
-                    to_balance = token.functions.balanceOf(to_account).call()
-                    to_pending_transfer = token.functions.pendingTransfer(to_account).call()
+                    to_balance = Contract.call_function(
+                        contract=token,
+                        function_name="balanceOf",
+                        args=(to_account,),
+                        default_returns=0
+                    )
+                    to_pending_transfer = Contract.call_function(
+                        contract=token,
+                        function_name="pendingTransfer",
+                        args=(to_account,),
+                        default_returns=0
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=to_account,

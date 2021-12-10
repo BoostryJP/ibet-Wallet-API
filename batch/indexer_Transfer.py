@@ -122,10 +122,15 @@ class Processor:
 
     def get_token_list(self):
         self.token_list = []
-        ListContract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
         for listed_token in listed_tokens:
-            token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
+            token_info = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(listed_token.token_address,),
+                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+            )
             if token_info[1] == "IbetCoupon":
                 token_contract = Contract.get_contract("IbetCoupon", listed_token.token_address)
                 self.token_list.append(token_contract)

@@ -47,7 +47,7 @@ class Tokens(BaseResource):
     ########################################
     # GET
     ########################################
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info("v2.token.Tokens(GET)")
 
         session = req.context["session"]
@@ -67,7 +67,7 @@ class Tokens(BaseResource):
     ########################################
     # POST
     ########################################
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.token.Tokens(POST)")
 
         session = req.context["session"]
@@ -90,11 +90,17 @@ class Tokens(BaseResource):
             raise InvalidParameterError("contract_address already exist")
 
         # token情報をTokenListコントラクトから取得
-        ListContract = Contract.get_contract(
-            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-            
-        token = ListContract.functions.getTokenByAddress(
-            contract_address).call()
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
+        token = Contract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(contract_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        )
+
         # contract_addressの有効性チェック
         if token[1] is None or token[1] not in self.available_token_template():
             raise InvalidParameterError("contract_address is invalid token address")
@@ -195,7 +201,7 @@ class TokenType(BaseResource):
     ########################################
     # GET
     ########################################
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info("v2.token.TokenType")
 
         res_body = {
@@ -222,7 +228,7 @@ class Token(BaseResource):
     ########################################
     # GET
     ########################################
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info("v2.token.Token(GET)")
 
         session = req.context["session"]
@@ -241,7 +247,7 @@ class Token(BaseResource):
     ########################################
     # POST
     ########################################
-    def on_post(self, req, res, contract_address=None):
+    def on_post(self, req, res, contract_address=None, **kwargs):
         LOG.info("v2.token.Token(POST)")
 
         session = req.context["session"]
@@ -318,7 +324,7 @@ class Token(BaseResource):
     ########################################
     # DELETE
     ########################################
-    def on_delete(self, req, res, contract_address=None):
+    def on_delete(self, req, res, contract_address=None, **kwargs):
         LOG.info("v2.token.Token(DELETE)")
 
         session = req.context["session"]

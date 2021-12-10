@@ -47,8 +47,18 @@ class Token:
 
     @property
     def name(self):
-        return self.contract.functions.name().call()
+        return Contract.call_function(
+            contract=self.contract,
+            function_name="name",
+            args=(),
+            default_returns=""
+        )
 
     @property
     def owner_address(self):
-        return self.contract.functions.owner().call()
+        return Contract.call_function(
+            contract=self.contract,
+            function_name="owner",
+            args=(),
+            default_returns=""
+        )

@@ -224,6 +224,8 @@ paths:
                           type: string
                         balance:
                           type: integer
+                        pending_transfer:
+                          type: integer
                         exchange_balance:
                           type: integer
                         exchange_commitment:
@@ -358,6 +360,8 @@ paths:
                       transfer_approval_required:
                         type: boolean
                   balance:
+                    type: integer
+                  pending_transfer:
                     type: integer
                   exchange_balance:
                     type: integer
