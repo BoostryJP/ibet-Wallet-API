@@ -20,6 +20,7 @@ import json
 
 from eth_utils import to_checksum_address
 from web3 import contract
+from web3.exceptions import BadFunctionCallOutput
 
 from app.utils.web3_utils import Web3Wrapper
 
@@ -100,17 +101,17 @@ class Contract:
         :param contract: Contract
         :param function_name: Function name
         :param args: Function args
-        :param default_returns: Default return when an Exception is raised
+        :param default_returns: Default return when BadFunctionCallOutput is raised
         :return: Return from function or default return
         """
         _function = getattr(contract.functions, function_name)
 
         try:
             result = _function(*args).call()
-        except Exception as err:
+        except BadFunctionCallOutput:
             if default_returns is not None:
                 return default_returns
             else:
-                raise err
+                raise BadFunctionCallOutput
 
         return result
