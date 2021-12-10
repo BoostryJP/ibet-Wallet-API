@@ -2898,6 +2898,8 @@ paths:
                           type: boolean
                     balance:
                       type: integer
+                    pending_transfer:
+                      type: integer
                     exchange_balance:
                       type: integer
                     exchange_commitment:

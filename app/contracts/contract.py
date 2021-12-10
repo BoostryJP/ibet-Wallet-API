@@ -19,9 +19,12 @@ SPDX-License-Identifier: Apache-2.0
 import json
 
 from eth_utils import to_checksum_address
+from web3 import contract
 
 from app.utils.web3_utils import Web3Wrapper
+from app import log
 
+LOG = log.get_logger()
 web3 = Web3Wrapper()
 
 
@@ -51,7 +54,9 @@ class Contract:
         return contract
 
     @staticmethod
-    def deploy_contract(contract_name: str, args: list, deployer: str):
+    def deploy_contract(contract_name: str,
+                        args: list,
+                        deployer: str):
         """
         コントラクトデプロイ
 
@@ -86,3 +91,29 @@ class Contract:
                 contract_address = tx['contractAddress']
 
         return contract_address, contract_json['abi']
+
+    @staticmethod
+    def call_function(contract: contract,
+                      function_name: str,
+                      args: tuple,
+                      default_returns=None):
+        """Call contract function
+
+        :param contract: Contract
+        :param function_name: Function name
+        :param args: Function args
+        :param default_returns: Default return when an Exception is raised
+        :return: Return from function or default return
+        """
+        _function = getattr(contract.functions, function_name)
+
+        try:
+            result = _function(*args).call()
+        except Exception as err:
+            if default_returns is not None:
+                return default_returns
+            else:
+                LOG.exception(err)
+                raise err
+
+        return result

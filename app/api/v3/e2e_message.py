@@ -37,7 +37,7 @@ LOG = log.get_logger()
 class EncryptionKey(BaseResource):
     """Message encryption key"""
 
-    def on_get(self, req, res, account_address=None):
+    def on_get(self, req, res, account_address=None, **kwargs):
         """Retrieve message encryption key"""
         LOG.info("v3.e2e_message.EncryptionKey")
 
@@ -54,8 +54,12 @@ class EncryptionKey(BaseResource):
             contract_name="E2EMessaging",
             address=config.E2E_MESSAGING_CONTRACT_ADDRESS
         )
-        key, key_type = messaging_contract.functions.getPublicKey(account_address).call()
-
+        key, key_type = Contract.call_function(
+            contract=messaging_contract,
+            function_name="getPublicKey",
+            args=(account_address, ),
+            default_returns=("", "")
+        )
         if key == "":  # not registered
             raise DataNotExistsError(f"account_address: {account_address}")
         else:

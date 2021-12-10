@@ -42,7 +42,7 @@ LOG = log.get_logger()
 class Token(BaseResource):
     """トークン別統計値取得"""
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.statistics.Token')
 
         session = req.context["session"]
@@ -67,8 +67,16 @@ class Token(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # Get dex address
-        TokenContract = Contract.get_contract('IbetStandardTokenInterface', contract_address)
-        dex_address = TokenContract.functions.tradableExchange().call()
+        _token_contract = Contract.get_contract(
+            contract_name='IbetStandardTokenInterface',
+            address=contract_address
+        )
+        dex_address = Contract.call_function(
+            contract=_token_contract,
+            function_name="tradableExchange",
+            args=(),
+            default_returns=0
+        )
 
         # Get holders count
         holders_count = session.query(func.count()). \

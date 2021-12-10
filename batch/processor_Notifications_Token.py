@@ -39,7 +39,8 @@ from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS
+    TOKEN_LIST_CONTRACT_ADDRESS,
+    ZERO_ADDRESS
 )
 from app.model.db import (
     Notification,
@@ -178,11 +179,26 @@ class WatchTransfer(Watcher):
         company_list = CompanyList.get()
         for entry in log_entries:
             # Exchangeアドレスが移転元の場合、処理をSKIPする
-            tradable_exchange = token_contract.functions.tradableExchange().call()
+            tradable_exchange = Contract.call_function(
+                contract=token_contract,
+                function_name="tradableExchange",
+                args=(),
+                default_returns=ZERO_ADDRESS
+            )
             if entry["args"]["from"] == tradable_exchange:
                 continue
-            token_owner_address = token_contract.functions.owner().call()
-            token_name = token_contract.functions.name().call()
+            token_owner_address = Contract.call_function(
+                contract=token_contract,
+                function_name="owner",
+                args=(),
+                default_returns=""
+            )
+            token_name = Contract.call_function(
+                contract=token_contract,
+                function_name="name",
+                args=(),
+                default_returns=""
+            )
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,

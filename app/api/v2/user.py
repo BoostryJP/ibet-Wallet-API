@@ -36,20 +36,25 @@ class PaymentAccount(BaseResource):
     """
     Endpoint: /User/PaymentAccount
     """
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info("v2.user.PaymentAccount")
 
         request_json = PaymentAccount.validate(req)
 
-        PaymentGatewayContract = Contract.get_contract(
-            "PaymentGateway", config.PAYMENT_GATEWAY_CONTRACT_ADDRESS)
+        pg_contract = Contract.get_contract(
+            contract_name="PaymentGateway",
+            address=config.PAYMENT_GATEWAY_CONTRACT_ADDRESS
+        )
 
         # 口座登録・承認状況を参照
-        account_info = PaymentGatewayContract.functions.payment_accounts(
-            to_checksum_address(request_json["account_address"]),
-            to_checksum_address(request_json["agent_address"])
-        ).call()
-
+        account_info = Contract.call_function(
+            contract=pg_contract,
+            function_name="payment_accounts",
+            args=(
+                to_checksum_address(request_json["account_address"]),
+                to_checksum_address(request_json["agent_address"]),
+            ),
+        )
         if account_info[0] == "0x0000000000000000000000000000000000000000":
             response_json = {
                 "account_address": request_json["account_address"],
@@ -96,7 +101,7 @@ class PersonalInfo(BaseResource):
     """
     Endpoint: /User/PersonalInfo
     """
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info("v2.user.PersonalInfo")
 
         # Validation
@@ -107,17 +112,20 @@ class PersonalInfo(BaseResource):
             _personal_info_address = request_json["personal_info_address"]
         else:
             _personal_info_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
-        PersonalInfoContract = Contract.get_contract(
+        personal_info_contract = Contract.get_contract(
             contract_name="PersonalInfo",
             address=_personal_info_address
         )
 
         # Get registration status of personal information
-        info = PersonalInfoContract.functions.personal_info(
-            to_checksum_address(request_json["account_address"]),
-            to_checksum_address(request_json["owner_address"])
-        ).call()
-
+        info = Contract.call_function(
+            contract=personal_info_contract,
+            function_name="personal_info",
+            args=(
+                to_checksum_address(request_json["account_address"]),
+                to_checksum_address(request_json["owner_address"]),
+            ),
+        )
         if info[0] == config.ZERO_ADDRESS:
             response_json = {
                 "account_address": request_json["account_address"],

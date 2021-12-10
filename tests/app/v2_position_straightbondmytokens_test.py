@@ -252,6 +252,7 @@ class TestV2StraightBondMyTokens:
                 'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -337,6 +338,7 @@ class TestV2StraightBondMyTokens:
                 'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -423,6 +425,7 @@ class TestV2StraightBondMyTokens:
                 'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -515,6 +518,7 @@ class TestV2StraightBondMyTokens:
                 'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -562,6 +566,7 @@ class TestV2StraightBondMyTokens:
                 'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -651,6 +656,7 @@ class TestV2StraightBondMyTokens:
                 'transfer_approval_required': False,
             },
             'balance': 50,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 50,
         }
@@ -734,6 +740,7 @@ class TestV2StraightBondMyTokens:
                 'transfer_approval_required': False,
             },
             'balance': 50,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }

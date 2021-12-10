@@ -87,12 +87,20 @@ class CompanyInfoList(BaseResource):
         for token in available_tokens:
             try:
                 token_address = to_checksum_address(token.token_address)
-                token_contract = Contract.get_contract('Ownable', token_address)
-                owner_address = token_contract.functions.owner().call()
+                token_contract = Contract.get_contract(
+                    contract_name="Ownable",
+                    address=token_address
+                )
+                owner_address = Contract.call_function(
+                    contract=token_contract,
+                    function_name="owner",
+                    args=(),
+                    default_returns=config.ZERO_ADDRESS
+                )
                 listing_owner_list.append(owner_address)
             except Exception as e:
                 LOG.warning(e)
-                pass
+
         has_listing_owner_function = self.has_listing_owner_function_creator(listing_owner_list)
         filtered_company_list = filter(has_listing_owner_function, company_list)
 
@@ -125,7 +133,10 @@ class CompanyTokenList(BaseResource):
 
         session = req.context['session']
 
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_list = session.query(Listing).\
@@ -137,7 +148,12 @@ class CompanyTokenList(BaseResource):
         token_list = []
         for available_token in available_list:
             token_address = to_checksum_address(available_token.token_address)
-            token_info = ListContract.functions.getTokenByAddress(token_address).call()
+            token_info = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
             if token_info[0] != config.ZERO_ADDRESS:  # TokenListに公開されているもののみを対象とする
                 token_template = token_info[1]
                 if self.available_token_template(token_template):  # 取扱対象のトークン種別のみ対象とする
