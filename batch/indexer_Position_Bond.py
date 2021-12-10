@@ -216,45 +216,14 @@ class Processor:
         """
         for token in self.token_list:
             try:
-                tmp_events = []
+                events = token.events.Transfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
 
-                # Get exchange contract address
                 exchange_contract_address = token.functions.tradableExchange().call()
 
-                # Get "HolderChanged" events from exchange contract
-                exchange_contract = Contract.get_contract(
-                    "IbetExchangeInterface", exchange_contract_address)
-
-                exchange_contract_events = exchange_contract.events.HolderChanged.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-
-                for _event in exchange_contract_events:
-                    if token.address == _event["args"]["token"]:
-                        tmp_events.append({
-                            "event": _event["event"],
-                            "args": dict(_event["args"]),
-                            "transaction_hash": _event["transactionHash"].hex(),
-                            "block_number": _event["blockNumber"],
-                            "log_index": _event["logIndex"]
-                        })
-
-                token_transfer_events = token.events.Transfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-
-                for _event in token_transfer_events:
-                    tmp_events.append({
-                        "event": _event["event"],
-                        "args": dict(_event["args"]),
-                        "transaction_hash": _event["transactionHash"].hex(),
-                        "block_number": _event["blockNumber"],
-                        "log_index": _event["logIndex"]
-                    })
-
-                for event in tmp_events:
+                for event in events:
                     args = event["args"]
                     # from address
                     from_account = args.get("from", ZERO_ADDRESS)
