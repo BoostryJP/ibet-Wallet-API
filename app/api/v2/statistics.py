@@ -25,6 +25,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
+from app import config
 from app.contracts import Contract
 from app.model.db import (
     IDXPosition,
@@ -75,7 +76,7 @@ class Token(BaseResource):
             contract=_token_contract,
             function_name="tradableExchange",
             args=(),
-            default_returns=0
+            default_returns=config.ZERO_ADDRESS
         )
 
         # Get holders count
