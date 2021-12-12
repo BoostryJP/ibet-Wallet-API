@@ -75,7 +75,11 @@ class BaseOrderList(object):
 
         order_list = []
         for (id, order_id, order_timestamp) in _order_events:
-            order_book = exchange_contract.functions.getOrder(order_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
             # If there are no remaining orders, skip this process
             if order_book[2] != 0:
                 _order = {
@@ -131,8 +135,16 @@ class BaseOrderList(object):
 
         settlement_list = []
         for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in _agreement_events:
-            order_book = exchange_contract.functions.getOrder(order_id).call()
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id, ),
+            )
             _settlement = {
                 "agreement": {
                     "exchange_address": exchange_contract_address,
@@ -203,8 +215,16 @@ class BaseOrderList(object):
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ""
-            order_book = exchange_contract.functions.getOrder(order_id).call()
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id,),
+            )
             _complete = {
                 "agreement": {
                     "exchange_address": exchange_contract_address,
@@ -260,7 +280,11 @@ class BaseOrderList(object):
                 contract_name="IbetExchange",
                 address=exchange_contract_address
             )
-            order_book = exchange_contract.functions.getOrder(order_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
             # If there are no remaining orders, skip this process
             if order_book[2] != 0:
                 _order = {
@@ -314,7 +338,11 @@ class BaseOrderList(object):
                 contract_name="IbetExchange",
                 address=exchange_contract_address
             )
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id,),
+            )
             _settlement = {
                 "token": {
                     "token_address": token_address
@@ -383,7 +411,11 @@ class BaseOrderList(object):
                 contract_name="IbetExchange",
                 address=exchange_contract_address
             )
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id,),
+            )
             _complete = {
                 "token": {
                     "token_address": token_address
@@ -414,7 +446,7 @@ class OrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/{token_address}
     """
 
-    def on_post(self, req, res, token_address: str = None):
+    def on_post(self, req, res, token_address: str = None, **kwargs):
         LOG.info("v2.order_list.OrderList")
         session = req.context["session"]
 
@@ -515,7 +547,7 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/StraightBond
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.StraightBondOrderList")
         session = req.context["session"]
 
@@ -612,7 +644,7 @@ class MembershipOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/Membership
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.MembershipOrderList")
         session = req.context["session"]
 
@@ -710,7 +742,7 @@ class CouponOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/Coupon
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.CouponOrderList")
         session = req.context["session"]
 
@@ -808,7 +840,7 @@ class ShareOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/Share
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.ShareOrderList")
         session = req.context["session"]
 

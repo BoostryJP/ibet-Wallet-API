@@ -258,6 +258,7 @@ class TestPositionAccountAddressStraightBondContractAddress:
                 'transfer_approval_required': False,
             },
             "balance": 1000000,
+            "pending_transfer": 0,
             "exchange_balance": 0,
             "exchange_commitment": 0,
         }
@@ -357,6 +358,7 @@ class TestPositionAccountAddressStraightBondContractAddress:
                 'transfer_approval_required': False,
             },
             "balance": 999900,
+            "pending_transfer": 0,
             "exchange_balance": 0,
             "exchange_commitment": 100,
         }
@@ -456,6 +458,7 @@ class TestPositionAccountAddressStraightBondContractAddress:
                 'transfer_approval_required': False,
             },
             "balance": 0,
+            "pending_transfer": 0,
             "exchange_balance": 0,
             "exchange_commitment": 1000000,
         }

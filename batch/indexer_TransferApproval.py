@@ -191,7 +191,7 @@ class Processor:
     def get_contract_list(self):
         self.token_list = []
         self.exchange_list = []
-        ListContract = Contract.get_contract(
+        list_contract = Contract.get_contract(
             contract_name="TokenList",
             address=TOKEN_LIST_CONTRACT_ADDRESS
         )
@@ -199,7 +199,12 @@ class Processor:
 
         _exchange_list_tmp = []
         for listed_token in listed_tokens:
-            token_info = ListContract.functions.getTokenByAddress(listed_token.token_address).call()
+            token_info = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(listed_token.token_address,),
+                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+            )
             token_type = token_info[1]
             if token_type == "IbetShare" or token_type == "IbetStraightBond":
                 token_contract = Contract.get_contract(
@@ -207,7 +212,12 @@ class Processor:
                     address=listed_token.token_address
                 )
                 self.token_list.append(token_contract)
-                tradable_exchange_address = token_contract.functions.tradableExchange().call()
+                tradable_exchange_address = Contract.call_function(
+                    contract=token_contract,
+                    function_name="tradableExchange",
+                    args=(),
+                    default_returns=ZERO_ADDRESS
+                )
                 if tradable_exchange_address != ZERO_ADDRESS:
                     _exchange_list_tmp.append(tradable_exchange_address)
 

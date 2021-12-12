@@ -25,6 +25,7 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
+from app import config
 from app.contracts import Contract
 from app.model.db import (
     IDXPosition,
@@ -42,7 +43,7 @@ LOG = log.get_logger()
 class Token(BaseResource):
     """トークン別統計値取得"""
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.statistics.Token')
 
         session = req.context["session"]
@@ -65,6 +66,7 @@ class Token(BaseResource):
             owner_address = row[0]
         else:
             raise DataNotExistsError('contract_address: %s' % contract_address)
+
 
         # Get holders count
         holders_count = session.query(func.count()). \
