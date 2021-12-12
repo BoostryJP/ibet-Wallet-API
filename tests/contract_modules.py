@@ -607,7 +607,7 @@ def create_security_token_escrow(invoker, exchange, token, recipient_address, ag
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
-def get_latest_escrow_id(exchange):
+def get_latest_security_escrow_id(exchange):
     IbetSecurityTokenEscrowContract = Contract. \
         get_contract('IbetSecurityTokenEscrow', exchange['address'])
     latest_escrow_id = \
@@ -620,6 +620,33 @@ def finish_security_token_escrow(invoker, exchange, escrow_id):
     IbetSecurityTokenEscrowContract = Contract. \
         get_contract('IbetSecurityTokenEscrow', exchange['address'])
     tx_hash = IbetSecurityTokenEscrowContract.functions. \
+        finishEscrow(escrow_id).transact(
+            {'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+# エスクローの作成
+def create_token_escrow(invoker, exchange, token, recipient_address, agent_address, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetEscrow = Contract. \
+        get_contract('IbetEscrow', exchange['address'])
+    tx_hash = IbetEscrow.functions. \
+        createEscrow(token['address'], recipient_address, amount, agent_address, "{}"). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+def get_latest_escrow_id(exchange):
+    IbetEscrow = Contract. \
+        get_contract('IbetEscrow', exchange['address'])
+    latest_escrow_id = \
+        IbetEscrow.functions.latestEscrowId().call()
+    return latest_escrow_id
+
+# エスクローの完了
+def finish_token_escrow(invoker, exchange, escrow_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetEscrow = Contract. \
+        get_contract('IbetEscrow', exchange['address'])
+    tx_hash = IbetEscrow.functions. \
         finishEscrow(escrow_id).transact(
             {'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)

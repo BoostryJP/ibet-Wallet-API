@@ -45,7 +45,7 @@ from tests.contract_modules import (
     take_sell,
     get_latest_agreementid,
     get_latest_orderid,
-    get_latest_escrow_id
+    get_latest_security_escrow_id
 )
 from tests.utils import PersonalInfoUtils
 
@@ -786,7 +786,7 @@ class TestProcessor:
         create_security_token_escrow(self.issuer, {"address": escrow_contract.address},
                                      token, self.trader["account_address"], self.issuer["account_address"], 200)
         finish_security_token_escrow(
-            self.issuer, {"address": escrow_contract.address}, get_latest_escrow_id({"address": escrow_contract.address}))
+            self.issuer, {"address": escrow_contract.address}, get_latest_security_escrow_id({"address": escrow_contract.address}))
         create_security_token_escrow(self.issuer, {"address": escrow_contract.address},
                                      token, self.trader["account_address"], self.issuer["account_address"], 300)
 
