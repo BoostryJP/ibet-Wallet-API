@@ -141,7 +141,12 @@ class Processor:
                 token_contract = Contract.get_contract("IbetShare", listed_token.token_address)
                 self.token_list.append(token_contract)
                 self.token_address_list.append(token_contract.address)
-                tradable_exchange_address = token_contract.functions.tradableExchange().call()
+                tradable_exchange_address = Contract.call_function(
+                        contract=token_contract,
+                        function_name="tradableExchange",
+                        args=(),
+                        default_returns=ZERO_ADDRESS
+                    )
                 if tradable_exchange_address != ZERO_ADDRESS:
                     _exchange_list_tmp.append(tradable_exchange_address)
 
@@ -218,7 +223,12 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                exchange_contract_address = token.functions.tradableExchange().call()
+                exchange_contract_address = Contract.call_function(
+                        contract=token,
+                        function_name="tradableExchange",
+                        args=(),
+                        default_returns=ZERO_ADDRESS
+                    )
 
                 for event in events:
                     args = event["args"]

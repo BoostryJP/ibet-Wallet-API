@@ -40,10 +40,6 @@ from sqlalchemy.orm import (
 )
 from eth_utils import to_checksum_address
 
-from web3.exceptions import (
-    BadFunctionCallOutput
-)
-
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
@@ -148,7 +144,12 @@ class Processor:
                     "IbetStraightBond", listed_token.token_address)
                 self.token_list.append(token_contract)
                 self.token_address_list.append(token_contract.address)
-                tradable_exchange_address = token_contract.functions.tradableExchange().call()
+                tradable_exchange_address = Contract.call_function(
+                        contract=token_contract,
+                        function_name="tradableExchange",
+                        args=(),
+                        default_returns=ZERO_ADDRESS
+                    )
                 if tradable_exchange_address != ZERO_ADDRESS:
                     _exchange_list_tmp.append(tradable_exchange_address)
 
@@ -225,8 +226,12 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-
-                exchange_contract_address = token.functions.tradableExchange().call()
+                exchange_contract_address = Contract.call_function(
+                        contract=token,
+                        function_name="tradableExchange",
+                        args=(),
+                        default_returns=ZERO_ADDRESS
+                    )
 
                 for event in events:
                     args = event["args"]
@@ -494,49 +499,42 @@ class Processor:
                         target_events.append(event)
                 for event in target_events:
                     args = event["args"]
-                    from_exchange_balance = 0
-                    from_exchange_commitment = 0
-                    try:
-                        from_exchange_balance = Contract.call_function(
-                            contract=exchange,
-                            function_name="balanceOf",
-                            args=(args.get("from", ZERO_ADDRESS), args.get("token", ZERO_ADDRESS),),
-                            default_returns=0
-                        )   
-                        from_exchange_commitment = Contract.call_function(
-                            contract=exchange,
-                            function_name="commitmentOf",
-                            args=(args.get("from", ZERO_ADDRESS), args.get("token", ZERO_ADDRESS),),
-                            default_returns=0
-                        )  
-                    except BadFunctionCallOutput:
-                        pass
+                    token_address = args.get("token", ZERO_ADDRESS)
+                    from_account_address = args.get("from", ZERO_ADDRESS)
+                    to_account_address = args.get("to", ZERO_ADDRESS)
+                    from_exchange_balance = Contract.call_function(
+                        contract=exchange,
+                        function_name="balanceOf",
+                        args=(from_account_address, token_address,),
+                        default_returns=0
+                    )   
+                    from_exchange_commitment = Contract.call_function(
+                        contract=exchange,
+                        function_name="commitmentOf",
+                        args=(from_account_address, token_address,),
+                        default_returns=0
+                    )  
                     self.sink.on_position(
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        account_address=args.get("from", ZERO_ADDRESS),
+                        token_address=token_address,
+                        account_address=from_account_address,
                         exchange_balance=from_exchange_balance,
                         exchange_commitment=from_exchange_commitment
                     )
-                    to_exchange_balance = 0
-                    to_exchange_commitment = 0
-                    try:
-                        to_exchange_balance = Contract.call_function(
-                            contract=exchange,
-                            function_name="balanceOf",
-                            args=(args.get("to", ZERO_ADDRESS), args.get("token", ZERO_ADDRESS),),
-                            default_returns=0
-                        )   
-                        to_exchange_commitment = Contract.call_function(
-                            contract=exchange,
-                            function_name="commitmentOf",
-                            args=(args.get("to", ZERO_ADDRESS), args.get("token", ZERO_ADDRESS),),
-                            default_returns=0
-                        )  
-                    except BadFunctionCallOutput:
-                        pass
+                    to_exchange_balance = Contract.call_function(
+                        contract=exchange,
+                        function_name="balanceOf",
+                        args=(to_account_address, token_address,),
+                        default_returns=0
+                    )   
+                    to_exchange_commitment = Contract.call_function(
+                        contract=exchange,
+                        function_name="commitmentOf",
+                        args=(to_account_address, token_address,),
+                        default_returns=0
+                    )  
                     self.sink.on_position(
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        account_address=args.get("to", ZERO_ADDRESS),
+                        token_address=token_address,
+                        account_address=to_account_address,
                         exchange_balance=to_exchange_balance,
                         exchange_commitment=to_exchange_commitment
                     )
@@ -569,30 +567,27 @@ class Processor:
                 ))
                 target_events = []
                 for event in order_events:
-                    if event["args"].get("tokenAddress") in self.token_address_list:
+                    if token_address in self.token_address_list:
                         target_events.append(event)
                 for event in target_events:
                     args = event["args"]
-                    exchange_balance = 0
-                    exchange_commitment = 0
-                    try:
-                        exchange_balance = Contract.call_function(
-                            contract=exchange,
-                            function_name="balanceOf",
-                            args=(args.get("accountAddress", ZERO_ADDRESS), args.get("tokenAddress", ZERO_ADDRESS),),
-                            default_returns=0
-                        )   
-                        exchange_commitment = Contract.call_function(
-                            contract=exchange,
-                            function_name="commitmentOf",
-                            args=(args.get("accountAddress", ZERO_ADDRESS), args.get("tokenAddress", ZERO_ADDRESS),),
-                            default_returns=0
-                        )                    
-                    except BadFunctionCallOutput:
-                        pass
+                    token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    account_address = args.get("accountAddress", ZERO_ADDRESS)
+                    exchange_balance = Contract.call_function(
+                        contract=exchange,
+                        function_name="balanceOf",
+                        args=(account_address, token_address,),
+                        default_returns=0
+                    )   
+                    exchange_commitment = Contract.call_function(
+                        contract=exchange,
+                        function_name="commitmentOf",
+                        args=(account_address, token_address,),
+                        default_returns=0
+                    )                    
                     self.sink.on_position(
-                        token_address=args.get("tokenAddress", ZERO_ADDRESS),
-                        account_address=args.get("accountAddress", ZERO_ADDRESS),
+                        token_address=token_address,
+                        account_address=account_address,
                         exchange_balance=exchange_balance,
                         exchange_commitment=exchange_commitment
                     )
@@ -611,26 +606,27 @@ class Processor:
                         target_events.append(event)
                 for event in target_events:
                     args = event["args"]
+                    token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    sell_address = args.get("sellAddress", ZERO_ADDRESS)
                     exchange_balance = Contract.call_function(
                         contract=exchange,
                         function_name="balanceOf",
-                        args=(args.get("sellAddress", ZERO_ADDRESS), args.get("tokenAddress", ZERO_ADDRESS),),
+                        args=(sell_address, token_address,),
                         default_returns=0
                     )   
                     exchange_commitment = Contract.call_function(
                         contract=exchange,
                         function_name="commitmentOf",
-                        args=(args.get("sellAddress", ZERO_ADDRESS), args.get("tokenAddress", ZERO_ADDRESS),),
+                        args=(sell_address, token_address,),
                         default_returns=0
                     )
                     self.sink.on_position(
-                        token_address=args.get("tokenAddress", ZERO_ADDRESS),
-                        account_address=args.get("sellAddress", ZERO_ADDRESS),
+                        token_address=token_address,
+                        account_address=sell_address,
                         exchange_balance=exchange_balance,
                         exchange_commitment=exchange_commitment
                     )
                 escrow_events = []
-                # sync for IbetSecurityTokenEscrow without HolderChanged
                 escrow_events.append(exchange.events.EscrowCreated.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
@@ -645,21 +641,23 @@ class Processor:
                         target_events.append(event)
                 for event in target_events:
                     args = event["args"]
+                    token_address = args.get("token", ZERO_ADDRESS)
+                    sender_address = args.get("sender", ZERO_ADDRESS)
                     exchange_balance = Contract.call_function(
                         contract=exchange,
                         function_name="balanceOf",
-                        args=(args.get("sender", ZERO_ADDRESS), args.get("token", ZERO_ADDRESS),),
+                        args=(sender_address, token_address,),
                         default_returns=0
                     )   
                     exchange_commitment = Contract.call_function(
                         contract=exchange,
                         function_name="commitmentOf",
-                        args=(args.get("sender", ZERO_ADDRESS), args.get("token", ZERO_ADDRESS),),
+                        args=(sender_address, token_address,),
                         default_returns=0
                     )
                     self.sink.on_position(
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        account_address=args.get("sender", ZERO_ADDRESS),
+                        token_address=token_address,
+                        account_address=sender_address,
                         exchange_balance=exchange_balance,
                         exchange_commitment=exchange_commitment
                     )
@@ -670,14 +668,13 @@ class Processor:
     @staticmethod
     def __get_account_balance(token_contract, account_address: str):
         """Get balance of account"""
-
-        balance =  Contract.call_function(
+        balance = Contract.call_function(
                         contract=token_contract,
                         function_name="balanceOf",
                         args=(account_address,),
                         default_returns=0
                     )
-        pending_transfer =  Contract.call_function(
+        pending_transfer = Contract.call_function(
                         contract=token_contract,
                         function_name="pendingTransfer",
                         args=(account_address,),
