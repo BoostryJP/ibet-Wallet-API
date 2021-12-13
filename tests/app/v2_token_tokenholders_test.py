@@ -110,14 +110,15 @@ class TestV2TokenHolders:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         # Assertion
-        assumed_body = [{
-            "token_address": self.token_address,
-            "account_address": self.account_address,
-            "amount": None,
-            "pending_transfer": 5,
-            "exchange_balance": None,
-            "exchange_commitment": None
-        },
+        assumed_body = [
+            {
+                "token_address": self.token_address,
+                "account_address": self.account_address,
+                "amount": None,
+                "pending_transfer": 5,
+                "exchange_balance": None,
+                "exchange_commitment": None
+            },
             {
                 "token_address": self.token_address,
                 "account_address": self.account_address,
@@ -125,7 +126,7 @@ class TestV2TokenHolders:
                 "pending_transfer": None,
                 "exchange_balance": 10,
                 "exchange_commitment": None
-        }
+            }
         ]
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}

@@ -217,14 +217,6 @@ class TestV2StatisticsToken:
             balance=100
         )
 
-        # prepare data (DEX)
-        self.insert_position(
-            session=session,
-            token_address=token["address"],
-            account_address=shared_contract["IbetCouponExchange"]["address"],
-            pending_transfer=100
-        )
-
         # prepare data (normal account)
         self.insert_position(
             session=session,
