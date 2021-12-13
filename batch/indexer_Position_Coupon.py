@@ -26,6 +26,7 @@ from sqlalchemy.orm import (
     scoped_session
 )
 from eth_utils import to_checksum_address
+from typing import Optional
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -43,7 +44,6 @@ from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
 import log
 
-from typing import Optional
 
 process_name = "INDEXER-POSITION-COUPON"
 LOG = log.get_logger(process_name=process_name)
@@ -88,21 +88,23 @@ class DBSink:
             filter(IDXPosition.token_address == token_address). \
             filter(IDXPosition.account_address == account_address). \
             first()
-        if position is None:
-            LOG.debug(f"Position created (Coupon): token_address={token_address}, account_address={account_address}")
-            position = IDXPosition()
-            position.token_address = token_address
-            position.account_address = account_address
-            position.balance = balance or 0
-            position.exchange_balance = exchange_balance or 0
-            position.exchange_commitment = exchange_commitment or 0
-        else:
-            if balance is not None:
-                position.balance = balance
-            if exchange_balance is not None:
-                position.exchange_balance = exchange_balance
-            if exchange_commitment is not None:
-                position.exchange_commitment = exchange_commitment
+        if position is not None:
+                if balance is not None:
+                    position.balance = balance
+                if exchange_balance is not None:
+                    position.exchange_balance = exchange_balance
+                if exchange_commitment is not None:
+                    position.exchange_commitment = exchange_commitment
+        elif any(value is not None and value > 0 for value in [balance, exchange_balance, exchange_commitment]):
+                LOG.debug(
+                    f"Position created (Coupon): token_address={token_address}, account_address={account_address}")
+                position = IDXPosition()
+                position.token_address = token_address
+                position.account_address = account_address
+                position.balance = balance or 0
+                position.exchange_balance = exchange_balance or 0
+                position.exchange_commitment = exchange_commitment or 0
+
         self.db.merge(position)
 
     def flush(self):
@@ -119,7 +121,7 @@ class Processor:
     def get_contract_list(self):
         self.token_list = []
         self.token_address_list = []
-        self.exchange_list = []
+        self.exchange_address_list = []
         list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
         _exchange_list_tmp = []
@@ -144,13 +146,7 @@ class Processor:
                     _exchange_list_tmp.append(tradable_exchange_address)
 
         # Remove duplicate exchanges from a list
-        for _exchange_address in list(set(_exchange_list_tmp)):
-            exchange_contract = Contract.get_contract(
-                # exchange_contract is only used for event logs, so anything is OK
-                contract_name="IbetExchangeInterface",
-                address=_exchange_address
-            )
-            self.exchange_list.append(exchange_contract)
+        self.exchange_address_list = list(set(_exchange_list_tmp))
 
     def initial_sync(self):
         self.get_contract_list()
@@ -267,6 +263,7 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
+
     def __sync_holder_changed(self, block_from: int, block_to: int):
         """[DEX]Sync HolderChanged Events
 
@@ -274,17 +271,15 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for exchange_address in self.exchange_address_list:
             try:
+                exchange = Contract.get_contract("IbetEscrow", exchange_address)
                 events = exchange.events.HolderChanged.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                target_events = []
+                events = filter(lambda e: e["args"].get("token", ZERO_ADDRESS) in self.token_address_list, events)
                 for event in events:
-                    if event["args"].get("token") in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("token", ZERO_ADDRESS)
                     from_account_address = args.get("from", ZERO_ADDRESS)
@@ -336,26 +331,27 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for exchange_address in self.exchange_address_list:
             try:
+                exchange = Contract.get_contract("IbetExchange", exchange_address)
                 order_events = []
-                order_events.append(exchange.events.NewOrder.getLogs(
+                order_events.extend(exchange.events.NewOrder.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                order_events.append(exchange.events.CancelOrder.getLogs(
+                order_events.extend(exchange.events.CancelOrder.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                order_events.append(exchange.events.ForceCancelOrder.getLogs(
+                order_events.extend(exchange.events.ForceCancelOrder.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                target_events = []
+                order_events = sorted(
+                    filter(lambda e: e["args"].get("tokenAddress", ZERO_ADDRESS) in self.token_address_list, order_events), 
+                    key=lambda x: (x["blockNumber"], x["logIndex"])
+                )
                 for event in order_events:
-                    if token_address in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("tokenAddress", ZERO_ADDRESS)
                     account_address = args.get("accountAddress", ZERO_ADDRESS)
@@ -378,19 +374,19 @@ class Processor:
                         exchange_commitment=exchange_commitment
                     )
                 settlement_events = []
-                settlement_events.append(exchange.events.Agree.getLogs(
+                settlement_events.extend(exchange.events.Agree.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                settlement_events.append(exchange.events.SettlementNG.getLogs(
+                settlement_events.extend(exchange.events.SettlementNG.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                target_events = []
+                settlement_events = sorted(
+                    filter(lambda e: e["args"].get("tokenAddress", ZERO_ADDRESS) in self.token_address_list, settlement_events), 
+                    key=lambda x: (x["blockNumber"], x["logIndex"])
+                )
                 for event in settlement_events:
-                    if event["args"].get("tokenAddress") in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("tokenAddress", ZERO_ADDRESS)
                     sell_address = args.get("sellAddress", ZERO_ADDRESS)
@@ -413,30 +409,31 @@ class Processor:
                         exchange_commitment=exchange_commitment
                     )
                 escrow_events = []
-                escrow_events.append(exchange.events.EscrowCreated.getLogs(
+                escrow = Contract.get_contract("IbetEscrow", exchange_address)
+                escrow_events.extend(escrow.events.EscrowCreated.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                escrow_events.append(exchange.events.EscrowCanceled.getLogs(
+                escrow_events.extend(escrow.events.EscrowCanceled.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                target_events = []
+                escrow_events = sorted(
+                    filter(lambda e: e["args"].get("tokenAddress", ZERO_ADDRESS) in self.token_address_list, escrow_events), 
+                    key=lambda x: (x["block_number"], x["log_index"])
+                )
                 for event in escrow_events:
-                    if event["args"].get("token") in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("token", ZERO_ADDRESS)
                     sender_address = args.get("sender", ZERO_ADDRESS)
                     exchange_balance = Contract.call_function(
-                        contract=exchange,
+                        contract=escrow,
                         function_name="balanceOf",
                         args=(sender_address, token_address,),
                         default_returns=0
                     )   
                     exchange_commitment = Contract.call_function(
-                        contract=exchange,
+                        contract=escrow,
                         function_name="commitmentOf",
                         args=(sender_address, token_address,),
                         default_returns=0
@@ -447,7 +444,6 @@ class Processor:
                         exchange_balance=exchange_balance,
                         exchange_commitment=exchange_commitment
                     )
-
             except Exception as e:
                 LOG.exception(e)
 

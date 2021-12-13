@@ -16,7 +16,21 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import log
+import os
+import sys
+import time
+
+from typing import Optional
+from sqlalchemy import create_engine
+from sqlalchemy.orm import (
+    sessionmaker,
+    scoped_session
+)
+from eth_utils import to_checksum_address
+
+path = os.path.join(os.path.dirname(__file__), "../")
+sys.path.append(path)
+
 from app.utils.web3_utils import Web3Wrapper
 from app.contracts import Contract
 from app.model.db import (
@@ -28,20 +42,7 @@ from app.config import (
     TOKEN_LIST_CONTRACT_ADDRESS,
     ZERO_ADDRESS,
 )
-from typing import Optional
-import os
-import sys
-import time
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
-from eth_utils import to_checksum_address
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
+import log
 
 
 process_name = "INDEXER-POSITION-BOND"
@@ -91,7 +92,16 @@ class DBSink:
             filter(IDXPosition.token_address == token_address). \
             filter(IDXPosition.account_address == account_address). \
             first()
-        if position is None:
+        if position is not None:
+            if balance is not None:
+                position.balance = balance
+            if pending_transfer is not None:
+                position.pending_transfer = pending_transfer
+            if exchange_balance is not None:
+                position.exchange_balance = exchange_balance
+            if exchange_commitment is not None:
+                position.exchange_commitment = exchange_commitment
+        elif any(value is not None and value > 0 for value in [balance, pending_transfer, exchange_balance, exchange_commitment]):
             LOG.debug(
                 f"Position created (Bond): token_address={token_address}, account_address={account_address}")
             position = IDXPosition()
@@ -101,15 +111,6 @@ class DBSink:
             position.pending_transfer = pending_transfer or 0
             position.exchange_balance = exchange_balance or 0
             position.exchange_commitment = exchange_commitment or 0
-        else:
-            if balance is not None:
-                position.balance = balance
-            if pending_transfer is not None:
-                position.pending_transfer = pending_transfer
-            if exchange_balance is not None:
-                position.exchange_balance = exchange_balance
-            if exchange_commitment is not None:
-                position.exchange_commitment = exchange_commitment
 
         self.db.merge(position)
 
@@ -127,8 +128,9 @@ class Processor:
     def get_contract_list(self):
         self.token_list = []
         self.token_address_list = []
-        self.exchange_list = []
-        list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
+        self.exchange_address_list = []
+        list_contract = Contract.get_contract(
+            "TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
         listed_tokens = self.db.query(Listing).all()
 
         _exchange_list_tmp = []
@@ -140,26 +142,21 @@ class Processor:
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
             )
             if token_info[1] == "IbetStraightBond":
-                token_contract = Contract.get_contract("IbetStraightBond", listed_token.token_address)
+                token_contract = Contract.get_contract(
+                    "IbetStraightBond", listed_token.token_address)
                 self.token_list.append(token_contract)
                 self.token_address_list.append(token_contract.address)
                 tradable_exchange_address = Contract.call_function(
-                        contract=token_contract,
-                        function_name="tradableExchange",
-                        args=(),
-                        default_returns=ZERO_ADDRESS
-                    )
+                    contract=token_contract,
+                    function_name="tradableExchange",
+                    args=(),
+                    default_returns=ZERO_ADDRESS
+                )
                 if tradable_exchange_address != ZERO_ADDRESS:
                     _exchange_list_tmp.append(tradable_exchange_address)
 
         # Remove duplicate exchanges from a list
-        for _exchange_address in list(set(_exchange_list_tmp)):
-            exchange_contract = Contract.get_contract(
-                # exchange_contract is only used for event logs, so anything is OK
-                contract_name="IbetExchangeInterface",
-                address=_exchange_address
-            )
-            self.exchange_list.append(exchange_contract)
+        self.exchange_address_list = list(set(_exchange_list_tmp))
 
     def initial_sync(self):
         self.get_contract_list()
@@ -226,11 +223,11 @@ class Processor:
                     toBlock=block_to
                 )
                 exchange_contract_address = Contract.call_function(
-                        contract=token,
-                        function_name="tradableExchange",
-                        args=(),
-                        default_returns=ZERO_ADDRESS
-                    )
+                    contract=token,
+                    function_name="tradableExchange",
+                    args=(),
+                    default_returns=ZERO_ADDRESS
+                )
 
                 for event in events:
                     args = event["args"]
@@ -496,17 +493,15 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for exchange_address in self.exchange_address_list:
             try:
+                exchange = Contract.get_contract("IbetExchangeInterface", exchange_address)
                 events = exchange.events.HolderChanged.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                target_events = []
+                events = filter(lambda e: e["args"].get("token", ZERO_ADDRESS) in self.token_address_list, events)
                 for event in events:
-                    if event["args"].get("token") in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("token", ZERO_ADDRESS)
                     from_account_address = args.get("from", ZERO_ADDRESS)
@@ -516,13 +511,13 @@ class Processor:
                         function_name="balanceOf",
                         args=(from_account_address, token_address,),
                         default_returns=0
-                    )   
+                    )
                     from_exchange_commitment = Contract.call_function(
                         contract=exchange,
                         function_name="commitmentOf",
                         args=(from_account_address, token_address,),
                         default_returns=0
-                    )  
+                    )
                     self.sink.on_position(
                         token_address=token_address,
                         account_address=from_account_address,
@@ -534,20 +529,19 @@ class Processor:
                         function_name="balanceOf",
                         args=(to_account_address, token_address,),
                         default_returns=0
-                    )   
+                    )
                     to_exchange_commitment = Contract.call_function(
                         contract=exchange,
                         function_name="commitmentOf",
                         args=(to_account_address, token_address,),
                         default_returns=0
-                    )  
+                    )
                     self.sink.on_position(
                         token_address=token_address,
                         account_address=to_account_address,
                         exchange_balance=to_exchange_balance,
                         exchange_commitment=to_exchange_commitment
                     )
-
             except Exception as e:
                 LOG.exception(e)
 
@@ -558,26 +552,27 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for exchange_address in self.exchange_address_list:
             try:
+                exchange = Contract.get_contract("IbetExchange", exchange_address)
                 order_events = []
-                order_events.append(exchange.events.NewOrder.getLogs(
+                order_events.extend(exchange.events.NewOrder.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                order_events.append(exchange.events.CancelOrder.getLogs(
+                order_events.extend(exchange.events.CancelOrder.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                order_events.append(exchange.events.ForceCancelOrder.getLogs(
+                order_events.extend(exchange.events.ForceCancelOrder.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                target_events = []
+                order_events = sorted(
+                    filter(lambda e: e["args"].get("tokenAddress", ZERO_ADDRESS) in self.token_address_list, order_events), 
+                    key=lambda x: (x["blockNumber"], x["logIndex"])
+                )
                 for event in order_events:
-                    if token_address in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("tokenAddress", ZERO_ADDRESS)
                     account_address = args.get("accountAddress", ZERO_ADDRESS)
@@ -586,13 +581,13 @@ class Processor:
                         function_name="balanceOf",
                         args=(account_address, token_address,),
                         default_returns=0
-                    )   
+                    )
                     exchange_commitment = Contract.call_function(
                         contract=exchange,
                         function_name="commitmentOf",
                         args=(account_address, token_address,),
                         default_returns=0
-                    )                    
+                    )
                     self.sink.on_position(
                         token_address=token_address,
                         account_address=account_address,
@@ -600,19 +595,19 @@ class Processor:
                         exchange_commitment=exchange_commitment
                     )
                 settlement_events = []
-                settlement_events.append(exchange.events.Agree.getLogs(
+                settlement_events.extend(exchange.events.Agree.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                settlement_events.append(exchange.events.SettlementNG.getLogs(
+                settlement_events.extend(exchange.events.SettlementNG.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                target_events = []
+                settlement_events = sorted(
+                    filter(lambda e: e["args"].get("tokenAddress", ZERO_ADDRESS) in self.token_address_list, settlement_events), 
+                    key=lambda x: (x["blockNumber"], x["logIndex"])
+                )
                 for event in settlement_events:
-                    if event["args"].get("tokenAddress") in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("tokenAddress", ZERO_ADDRESS)
                     sell_address = args.get("sellAddress", ZERO_ADDRESS)
@@ -621,7 +616,7 @@ class Processor:
                         function_name="balanceOf",
                         args=(sell_address, token_address,),
                         default_returns=0
-                    )   
+                    )
                     exchange_commitment = Contract.call_function(
                         contract=exchange,
                         function_name="commitmentOf",
@@ -634,31 +629,32 @@ class Processor:
                         exchange_balance=exchange_balance,
                         exchange_commitment=exchange_commitment
                     )
+                escrow = Contract.get_contract("IbetSecurityTokenEscrow", exchange_address)
                 escrow_events = []
-                escrow_events.append(exchange.events.EscrowCreated.getLogs(
+                escrow_events.extend(escrow.events.EscrowCreated.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                escrow_events.append(exchange.events.EscrowCanceled.getLogs(
+                escrow_events.extend(escrow.events.EscrowCanceled.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 ))
-                target_events = []
+                escrow_events = sorted(
+                    filter(lambda e: e["args"].get("tokenAddress", ZERO_ADDRESS) in self.token_address_list, escrow_events), 
+                    key=lambda x: (x["blockNumber"], x["logIndex"])
+                )
                 for event in escrow_events:
-                    if event["args"].get("token") in self.token_address_list:
-                        target_events.append(event)
-                for event in target_events:
                     args = event["args"]
                     token_address = args.get("token", ZERO_ADDRESS)
                     sender_address = args.get("sender", ZERO_ADDRESS)
                     exchange_balance = Contract.call_function(
-                        contract=exchange,
+                        contract=escrow,
                         function_name="balanceOf",
                         args=(sender_address, token_address,),
                         default_returns=0
-                    )   
+                    )
                     exchange_commitment = Contract.call_function(
-                        contract=exchange,
+                        contract=escrow,
                         function_name="commitmentOf",
                         args=(sender_address, token_address,),
                         default_returns=0
@@ -669,7 +665,6 @@ class Processor:
                         exchange_balance=exchange_balance,
                         exchange_commitment=exchange_commitment
                     )
-
             except Exception as e:
                 LOG.exception(e)
 
@@ -677,40 +672,40 @@ class Processor:
     def __get_account_balance(token_contract, account_address: str):
         """Get balance of account"""
         balance = Contract.call_function(
-                        contract=token_contract,
-                        function_name="balanceOf",
-                        args=(account_address,),
-                        default_returns=0
-                    )
+            contract=token_contract,
+            function_name="balanceOf",
+            args=(account_address,),
+            default_returns=0
+        )
         pending_transfer = Contract.call_function(
-                        contract=token_contract,
-                        function_name="pendingTransfer",
-                        args=(account_address,),
-                        default_returns=0
-                    )
+            contract=token_contract,
+            function_name="pendingTransfer",
+            args=(account_address,),
+            default_returns=0
+        )
         exchange_balance = 0
         exchange_commitment = 0
         tradable_exchange_address = Contract.call_function(
-                        contract=token_contract,
-                        function_name="tradableExchange",
-                        args=(),
-                        default_returns=ZERO_ADDRESS
-                    )
+            contract=token_contract,
+            function_name="tradableExchange",
+            args=(),
+            default_returns=ZERO_ADDRESS
+        )
         if tradable_exchange_address != ZERO_ADDRESS:
             exchange_contract = Contract.get_contract(
                 "IbetExchangeInterface", tradable_exchange_address)
             exchange_balance = Contract.call_function(
-                    contract=exchange_contract,
-                    function_name="balanceOf",
-                    args=(account_address, token_contract.address,),
-                    default_returns=0
-                )
+                contract=exchange_contract,
+                function_name="balanceOf",
+                args=(account_address, token_contract.address,),
+                default_returns=0
+            )
             exchange_commitment = Contract.call_function(
-                    contract=exchange_contract,
-                    function_name="commitmentOf",
-                    args=(account_address, token_contract.address,),
-                    default_returns=0
-                )
+                contract=exchange_contract,
+                function_name="commitmentOf",
+                args=(account_address, token_contract.address,),
+                default_returns=0
+            )
         return balance, pending_transfer, exchange_balance, exchange_commitment
 
 
