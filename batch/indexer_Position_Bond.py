@@ -140,8 +140,7 @@ class Processor:
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
             )
             if token_info[1] == "IbetStraightBond":
-                token_contract = Contract.get_contract(
-                    "IbetStraightBond", listed_token.token_address)
+                token_contract = Contract.get_contract("IbetStraightBond", listed_token.token_address)
                 self.token_list.append(token_contract)
                 self.token_address_list.append(token_contract.address)
                 tradable_exchange_address = Contract.call_function(
@@ -214,7 +213,7 @@ class Processor:
         self.sink.flush()
 
     def __sync_transfer(self, block_from: int, block_to: int):
-        """Transferイベントの同期
+        """Sync Transfer Events
 
         :param block_from: From block
         :param block_to: To block
@@ -239,7 +238,8 @@ class Processor:
                     from_account = args.get("from", ZERO_ADDRESS)
                     if from_account != exchange_contract_address:
                         from_account_balance, from_account_pending_transfer, from_account_exchange_balance, from_account_exchange_commitment = self.__get_account_balance(
-                            token, from_account)
+                            token, from_account
+                        )
                         self.sink.on_position(
                             token_address=to_checksum_address(token.address),
                             account_address=from_account,
@@ -252,7 +252,8 @@ class Processor:
                     to_account = args.get("to", ZERO_ADDRESS)
                     if to_account != exchange_contract_address:
                         to_account_balance, to_account_pending_transfer, to_account_exchange_balance, to_account_exchange_commitment = self.__get_account_balance(
-                            token, to_account)
+                            token, to_account
+                        )
                         self.sink.on_position(
                             token_address=to_checksum_address(token.address),
                             account_address=to_account,
@@ -265,7 +266,7 @@ class Processor:
                 LOG.exception(e)
 
     def __sync_lock(self, block_from: int, block_to: int):
-        """Lockイベントの同期
+        """Sync Lock Events
 
         :param block_from: From block
         :param block_to: To block
@@ -281,7 +282,8 @@ class Processor:
                     args = event["args"]
                     account = args.get("accountAddress", ZERO_ADDRESS)
                     balance, pending_transfer, exchange_balance, exchange_commitment = self.__get_account_balance(
-                        token, account)
+                        token, account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -310,7 +312,8 @@ class Processor:
                     args = event["args"]
                     account = args.get("recipientAddress", ZERO_ADDRESS)
                     balance, pending_transfer, exchange_balance, exchange_commitment = self.__get_account_balance(
-                        token, account)
+                        token, account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -339,7 +342,8 @@ class Processor:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
                     balance, pending_transfer, exchange_balance, exchange_commitment = self.__get_account_balance(
-                        token, account)
+                        token, account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -368,7 +372,8 @@ class Processor:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
                     balance, pending_transfer, exchange_balance, exchange_commitment = self.__get_account_balance(
-                        token, account)
+                        token, account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -397,7 +402,8 @@ class Processor:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
                     balance, pending_transfer, exchange_balance, exchange_commitment = self.__get_account_balance(
-                        token, account)
+                        token, account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -426,7 +432,8 @@ class Processor:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
                     balance, pending_transfer, exchange_balance, exchange_commitment = self.__get_account_balance(
-                        token, account)
+                        token, account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=account,
@@ -456,7 +463,8 @@ class Processor:
                     # from address
                     from_account = args.get("from", ZERO_ADDRESS)
                     from_account_balance, from_account_pending_transfer, from_account_exchange_balance, from_account_exchange_commitment = self.__get_account_balance(
-                        token, from_account)
+                        token, from_account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=from_account,
@@ -468,7 +476,8 @@ class Processor:
                     # to address
                     to_account = args.get("to", ZERO_ADDRESS)
                     to_account_balance, to_account_pending_transfer, to_account_exchange_balance, to_account_exchange_commitment = self.__get_account_balance(
-                        token, to_account)
+                        token, to_account
+                    )
                     self.sink.on_position(
                         token_address=to_checksum_address(token.address),
                         account_address=to_account,
@@ -551,7 +560,6 @@ class Processor:
         """
         for exchange in self.exchange_list:
             try:
-                # sync for IbetExchange without HolderChanged
                 order_events = []
                 order_events.append(exchange.events.NewOrder.getLogs(
                     fromBlock=block_from,

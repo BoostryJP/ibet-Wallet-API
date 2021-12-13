@@ -128,6 +128,7 @@ class Processor:
         self.token_address_list = []
         self.exchange_list = []
         list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
+        listed_tokens = self.db.query(Listing).all()
 
         _exchange_list_tmp = []
         for listed_token in listed_tokens:
@@ -549,7 +550,6 @@ class Processor:
         """
         for exchange in self.exchange_list:
             try:
-                # sync for IbetExchange without HolderChanged
                 order_events = []
                 order_events.append(exchange.events.NewOrder.getLogs(
                     fromBlock=block_from,

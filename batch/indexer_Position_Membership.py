@@ -310,7 +310,6 @@ class Processor:
         """
         for exchange in self.exchange_list:
             try:
-                # sync for IbetExchange without HolderChanged
                 order_events = []
                 order_events.append(exchange.events.NewOrder.getLogs(
                     fromBlock=block_from,
