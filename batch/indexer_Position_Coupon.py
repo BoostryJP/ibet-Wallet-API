@@ -367,7 +367,7 @@ class Processor:
                 LOG.exception(e)
 
     def __sync_escrow(self, block_from: int, block_to: int):
-        """Sync Events from IbetSecurityTokenEscrow
+        """Sync Events from IbetEscrow
 
         :param block_from: From block
         :param block_to: To block
@@ -375,7 +375,7 @@ class Processor:
         """
         for exchange_address in self.exchange_address_list:
             try:
-                escrow = Contract.get_contract("IbetSecurityTokenEscrow", exchange_address)
+                escrow = Contract.get_contract("IbetEscrow", exchange_address)
 
                 account_list_tmp = []
 
