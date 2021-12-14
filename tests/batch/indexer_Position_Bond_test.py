@@ -764,9 +764,9 @@ class TestProcessor:
 
     # <Normal_11>
     # Single Token
-    # Multi event with Excrow logs
+    # Multi event with Escrow logs
     # - CreateEscrow
-    # - HolderChanged
+    # - EscrowFinished
     # - CreateEscrow
     def test_normal_11(self, processor, shared_contract, session):
         # Issue Token
