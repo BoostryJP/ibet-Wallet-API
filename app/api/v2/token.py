@@ -17,7 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from cerberus import Validator
-from sqlalchemy import or_
+from sqlalchemy import (
+    or_,
+    desc
+)
 from web3 import Web3
 from eth_utils import to_checksum_address
 
@@ -144,9 +147,15 @@ class TokenHolders(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # Get token holders
+        # add order_by id to bridge the difference between postgres and mysql
         holders = session.query(IDXPosition). \
             filter(IDXPosition.token_address == contract_address). \
-            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0)). \
+            filter(or_(
+                IDXPosition.balance > 0,
+                IDXPosition.pending_transfer > 0,
+                IDXPosition.exchange_balance > 0,
+                IDXPosition.exchange_commitment > 0)). \
+            order_by(desc(IDXPosition.id)) .\
             all()
 
         resp_body = []
@@ -155,7 +164,9 @@ class TokenHolders(BaseResource):
                 "token_address": holder.token_address,
                 "account_address": holder.account_address,
                 "amount": holder.balance,
-                "pending_transfer": holder.pending_transfer
+                "pending_transfer": holder.pending_transfer,
+                "exchange_balance": holder.exchange_balance,
+                "exchange_commitment": holder.exchange_commitment
             })
 
         self.on_success(res, resp_body)

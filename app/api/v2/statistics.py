@@ -25,8 +25,6 @@ from eth_utils import to_checksum_address
 
 from app import log
 from app.api.common import BaseResource
-from app import config
-from app.contracts import Contract
 from app.model.db import (
     IDXPosition,
     Listing
@@ -67,24 +65,16 @@ class Token(BaseResource):
         else:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # Get dex address
-        _token_contract = Contract.get_contract(
-            contract_name='IbetStandardTokenInterface',
-            address=contract_address
-        )
-        dex_address = Contract.call_function(
-            contract=_token_contract,
-            function_name="tradableExchange",
-            args=(),
-            default_returns=config.ZERO_ADDRESS
-        )
 
         # Get holders count
         holders_count = session.query(func.count()). \
             filter(IDXPosition.token_address == contract_address). \
             filter(IDXPosition.account_address != owner_address). \
-            filter(IDXPosition.account_address != dex_address). \
-            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0)). \
+            filter(or_(
+                IDXPosition.balance > 0,
+                IDXPosition.pending_transfer > 0,
+                IDXPosition.exchange_balance > 0,
+                IDXPosition.exchange_commitment > 0)). \
             first()
 
         res_data = {
