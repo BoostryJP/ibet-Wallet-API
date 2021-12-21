@@ -742,8 +742,185 @@ class TestEventsIbetSecurityTokenEscrow:
         ]
 
     # Normal_6_1
-    # event = EscrowFinished & ApproveTransfer
+    # event = ApproveTransfer
     def test_normal_6_1(self, client, session, shared_contract):
+        issuer = eth_account["issuer"]["account_address"]
+        user1 = eth_account["user1"]["account_address"]
+        agent = eth_account["agent"]["account_address"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+
+        # Issue token
+        token_contract = IbetShareUtils.issue(
+            tx_from=issuer,
+            args={
+                "name": "test_token",
+                "symbol": "TEST",
+                "issuePrice": 100000,
+                "totalSupply": 1000,
+                "dividends": 100,
+                "dividendRecordDate": "20201231",
+                "dividendPaymentDate": "20210101",
+                "cancellationDate": "20251231",
+                "principalValue": 10000,
+                "tradableExchange": escrow_contract.address,
+                "transferable": True,
+                "transferApprovalRequired": True
+            }
+        )
+
+        # Deposit token to escrow contract
+        token_contract.functions.transfer(
+            escrow_contract.address,
+            1000
+        ).transact({
+            "from": issuer
+        })  # Deposited
+
+        # Create escrow
+        escrow_contract.functions.createEscrow(
+            token_contract.address,
+            user1,
+            1000,
+            agent,
+            "test_application_data",
+            "test_data"
+        ).transact({
+            "from": issuer
+        })  # EscrowCreated
+        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+
+        # Approve transfer
+        tx_hash = escrow_contract.functions.approveTransfer(
+            latest_escrow_id,
+            "test_approval_data"
+        ).transact({
+            "from": issuer
+        })
+
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == [
+            {
+                "event": "ApproveTransfer",
+                "args": {
+                    "escrowId": latest_escrow_id,
+                    "token": token_contract.address,
+                    "data": "test_approval_data"
+                },
+                "transaction_hash": tx_hash.hex(),
+                "block_number": latest_block_number,
+                "log_index": 0
+            }
+        ]
+
+    # Normal_6_2
+    # event = ApproveTransfer (filter)
+    def test_normal_6_2(self, client, session, shared_contract):
+        issuer = eth_account["issuer"]["account_address"]
+        user1 = eth_account["user1"]["account_address"]
+        agent = eth_account["agent"]["account_address"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+
+        # Issue token
+        token_contract = IbetShareUtils.issue(
+            tx_from=issuer,
+            args={
+                "name": "test_token",
+                "symbol": "TEST",
+                "issuePrice": 100000,
+                "totalSupply": 1000,
+                "dividends": 100,
+                "dividendRecordDate": "20201231",
+                "dividendPaymentDate": "20210101",
+                "cancellationDate": "20251231",
+                "principalValue": 10000,
+                "tradableExchange": escrow_contract.address,
+                "transferable": True,
+                "transferApprovalRequired": True
+            }
+        )
+
+        # Deposit token to escrow contract
+        token_contract.functions.transfer(
+            escrow_contract.address,
+            1000
+        ).transact({
+            "from": issuer
+        })  # Deposited
+
+        # Create escrow
+        escrow_contract.functions.createEscrow(
+            token_contract.address,
+            user1,
+            1000,
+            agent,
+            "test_application_data",
+            "test_data"
+        ).transact({
+            "from": issuer
+        })  # EscrowCreated
+        latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
+
+        # Approve transfer
+        tx_hash = escrow_contract.functions.approveTransfer(
+            latest_escrow_id,
+            "test_approval_data"
+        ).transact({
+            "from": issuer
+        })
+
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "event": "ApproveTransfer"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == [
+            {
+                "event": "ApproveTransfer",
+                "args": {
+                    "escrowId": latest_escrow_id,
+                    "token": token_contract.address,
+                    "data": "test_approval_data"
+                },
+                "transaction_hash": tx_hash.hex(),
+                "block_number": latest_block_number,
+                "log_index": 0
+            }
+        ]
+
+    # Normal_7_1
+    # event = EscrowFinished & FinishTransfer
+    def test_normal_7_1(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -824,7 +1001,7 @@ class TestEventsIbetSecurityTokenEscrow:
         }
         assert resp.json["data"] == [
             {
-                "event": "ApproveTransfer",
+                "event": "FinishTransfer",
                 "args": {
                     "escrowId": latest_escrow_id,
                     "token": token_contract.address,
@@ -852,9 +1029,9 @@ class TestEventsIbetSecurityTokenEscrow:
             }
         ]
 
-    # Normal_6_2
+    # Normal_7_2
     # event = EscrowFinished (filter)
-    def test_normal_6_2(self, client, session, shared_contract):
+    def test_normal_7_2(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -951,9 +1128,9 @@ class TestEventsIbetSecurityTokenEscrow:
             }
         ]
 
-    # Normal_6_3
-    # event = ApproveTransfer (filter)
-    def test_normal_6_3(self, client, session, shared_contract):
+    # Normal_7_3
+    # event = FinishTransfer (filter)
+    def test_normal_7_3(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -1023,7 +1200,7 @@ class TestEventsIbetSecurityTokenEscrow:
             params={
                 "from_block": latest_block_number,
                 "to_block": latest_block_number,
-                "event": "ApproveTransfer"
+                "event": "FinishTransfer"
             }
         )
 
@@ -1035,7 +1212,7 @@ class TestEventsIbetSecurityTokenEscrow:
         }
         assert resp.json["data"] == [
             {
-                "event": "ApproveTransfer",
+                "event": "FinishTransfer",
                 "args": {
                     "escrowId": latest_escrow_id,
                     "token": token_contract.address,

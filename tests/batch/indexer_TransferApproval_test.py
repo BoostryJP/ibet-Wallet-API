@@ -208,6 +208,7 @@ class TestProcessor:
         assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.transfer_approved is None
 
     # <Normal_1_2>
     # Single Token
@@ -296,6 +297,7 @@ class TestProcessor:
                datetime.strptime("2020/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.transfer_approved is True
 
     # <Normal_1_3>
     # Single Token
@@ -383,6 +385,7 @@ class TestProcessor:
         assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is True
+        assert _transfer_approval.transfer_approved is None
 
     # <Normal_1_4>
     # Multi Token
@@ -505,6 +508,7 @@ class TestProcessor:
                datetime.strptime("2020/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.transfer_approved is True
 
         _transfer_approval = _transfer_approval_list[1]
         assert _transfer_approval.id == 2
@@ -520,6 +524,7 @@ class TestProcessor:
                datetime.strptime("2020/12/31 12:34:57", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.transfer_approved is True
 
     # <Normal_1_5>
     # No event logs
@@ -722,6 +727,7 @@ class TestProcessor:
         assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.transfer_approved is None
 
     # <Normal_2_2>
     # IbetSecurityTokenEscrow
@@ -821,12 +827,115 @@ class TestProcessor:
         assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is True
+        assert _transfer_approval.transfer_approved is None
 
     # <Normal_2_3>
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
     #  - ApproveTransfer
     def test_normal_2_3(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=st_escrow_contract,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token.address,
+            db_session=session
+        )
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=10000
+        )
+
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Deposit token to escrow
+        transfer_token(
+            token_contract=token,
+            from_address=self.account1["account_address"],
+            to_address=st_escrow_contract.address,
+            amount=10000
+        )
+
+        # Create escrow
+        st_escrow_contract.functions.createEscrow(
+            token.address,
+            self.account2["account_address"],
+            10000,
+            self.escrow_agent["account_address"],
+            "978266096",  # 2000/12/31 12:34:56
+            "test_escrow_data"
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        escrow_id = st_escrow_contract.functions.latestEscrowId().call()
+
+        # Approve transfer
+        st_escrow_contract.functions.approveTransfer(
+            escrow_id,
+            "1609418096"  # 2020/12/31 12:34:56
+        ).transact({
+            "from": self.issuer["account_address"]
+        })
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 1
+
+        _transfer_approval = _transfer_approval_list[0]
+        assert _transfer_approval.id == 1
+        assert _transfer_approval.token_address == token.address
+        assert _transfer_approval.exchange_address == st_escrow_contract.address
+        assert _transfer_approval.application_id == escrow_id
+        assert _transfer_approval.from_address == self.account1["account_address"]
+        assert _transfer_approval.to_address == self.account2["account_address"]
+        assert _transfer_approval.value == 10000
+        assert _transfer_approval.application_datetime == \
+               datetime.strptime("2000/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
+        assert _transfer_approval.application_blocktimestamp is not None
+        assert _transfer_approval.approval_datetime is None
+        assert _transfer_approval.approval_blocktimestamp is None
+        assert _transfer_approval.cancelled is None
+        assert _transfer_approval.transfer_approved is True
+
+    # <Normal_2_4>
+    # IbetSecurityTokenEscrow
+    #  - ApplyForTransfer
+    #  - FinishTransfer
+    def test_normal_2_4(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         st_escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -930,6 +1039,7 @@ class TestProcessor:
                datetime.strptime("2020/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.transfer_approved is True
 
     ###########################################################################
     # Error Case

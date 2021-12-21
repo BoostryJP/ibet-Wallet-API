@@ -2112,6 +2112,9 @@ paths:
                           type: string
                         cancelled:
                           type: boolean
+                        transfer_approved:
+                          description: transfer approval status
+                          type: boolean
         400:
           description: Invalid Parameter Error
           schema:

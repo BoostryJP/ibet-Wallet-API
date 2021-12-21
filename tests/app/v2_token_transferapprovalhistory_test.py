@@ -67,6 +67,7 @@ class TestV2TransferApprovalHistory:
         _transfer_approval.approval_datetime = transfer_approval.get("approval_datetime")  # nullable
         _transfer_approval.approval_blocktimestamp = transfer_approval.get("approval_blocktimestamp")  # nullable
         _transfer_approval.cancelled = transfer_approval.get("cancelled")
+        _transfer_approval.transfer_approved = transfer_approval.get("transfer_approved")
         session.add(_transfer_approval)
 
     ####################################################################
@@ -132,7 +133,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -163,7 +165,7 @@ class TestV2TransferApprovalHistory:
         data = resp.json["data"]["transfer_approval_history"]
         for i, item in enumerate(data):
             assert item["token_address"] == self.token_address
-            assert item["exchange_address"] == None
+            assert item["exchange_address"] is None
             assert item["application_id"] == i
             assert item["from_address"] == self.from_address
             assert item["to_address"] == self.to_address
@@ -172,6 +174,7 @@ class TestV2TransferApprovalHistory:
             assert before_datetime < item["approval_datetime"] < after_datetime
             assert before_datetime < item["approval_blocktimestamp"] < after_datetime
             assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
 
     # Normal_2_2
     # Data exists (exchange events)
@@ -202,7 +205,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -242,6 +246,7 @@ class TestV2TransferApprovalHistory:
             assert before_datetime < item["approval_datetime"] < after_datetime
             assert before_datetime < item["approval_blocktimestamp"] < after_datetime
             assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
 
     # Normal_3
     # Data exists
@@ -271,7 +276,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -310,6 +316,7 @@ class TestV2TransferApprovalHistory:
             assert before_datetime < item["approval_datetime"] < after_datetime
             assert before_datetime < item["approval_blocktimestamp"] < after_datetime
             assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
 
     # Normal_4
     # Data exists
@@ -339,7 +346,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -377,6 +385,7 @@ class TestV2TransferApprovalHistory:
         assert before_datetime < data[0]["approval_datetime"] < after_datetime
         assert before_datetime < data[0]["approval_blocktimestamp"] < after_datetime
         assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
 
     # Normal_5
     # Data exists
@@ -406,7 +415,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -444,6 +454,7 @@ class TestV2TransferApprovalHistory:
         assert before_datetime < data[0]["approval_datetime"] < after_datetime
         assert before_datetime < data[0]["approval_blocktimestamp"] < after_datetime
         assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
 
     # Normal_6
     # Data exists
@@ -467,7 +478,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,

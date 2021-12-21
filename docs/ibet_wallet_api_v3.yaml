@@ -1026,6 +1026,71 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+  /Events/IbetSecurityTokenEscrow:
+    get:
+        - name: from_block
+          in: query
+          description: from block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: to_block
+          in: query
+          description: to block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: event
+          in: query
+          description: events to get
+          required: false
+          type: string
+          enum: [
+              Deposited,
+              Withdrawn,
+              EscrowCreated,
+              EscrowCanceled,
+              EscrowFinished,
+              ApplyForTransfer,
+              CancelTransfer,
+              ApproveTransfer,
+              FinishTransfer
+          ]
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    event:
+                      description: the event name
+                      type: string
+                    args:
+                      description: event args
+                      type: object
+                    transaction_hash:
+                      description: transaction hash
+                      type: string
+                    block_number:
+                      description: the block number where this log was in
+                      type: integer
+                    log_index:
+                      description: integer of the log index position in the block
+                      type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
 definitions:
   ResultSet:
     type: object
