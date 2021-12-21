@@ -59,12 +59,14 @@ class IDXTransferApproval(Base):
     application_datetime = Column(DateTime)
     # Application Blocktimestamp
     application_blocktimestamp = Column(DateTime)
-    # Approval Datetime
+    # Approval Datetime (ownership vesting datetime)
     approval_datetime = Column(DateTime)
-    # Approval Blocktimestamp
+    # Approval Blocktimestamp (ownership vesting block timestamp)
     approval_blocktimestamp = Column(DateTime)
     # Cancellation Status
     cancelled = Column(Boolean)
+    # Approve Status
+    transfer_approved = Column(Boolean)
 
     @staticmethod
     def format_datetime(_datetime: datetime) -> str:
@@ -85,7 +87,8 @@ class IDXTransferApproval(Base):
             "application_blocktimestamp": self.format_datetime(self.application_blocktimestamp),
             "approval_datetime": self.format_datetime(self.approval_datetime),
             "approval_blocktimestamp": self.format_datetime(self.approval_blocktimestamp),
-            "cancelled": self.cancelled
+            "cancelled": self.cancelled,
+            "transfer_approved": self.transfer_approved
         }
 
     FIELDS = {
@@ -99,6 +102,7 @@ class IDXTransferApproval(Base):
         "application_blocktimestamp": alchemy.datetime_to_timestamp,
         "approval_datetime": alchemy.datetime_to_timestamp,
         "approval_blocktimestamp": alchemy.datetime_to_timestamp,
-        "cancelled": bool
+        "cancelled": bool,
+        "transfer_approved": bool
     }
     FIELDS.update(Base.FIELDS)
