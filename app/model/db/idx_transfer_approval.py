@@ -94,6 +94,7 @@ class IDXTransferApproval(Base):
     FIELDS = {
         "id": int,
         "token_address": str,
+        "exchange_address": str,
         "application_id": int,
         "from_address": str,
         "to_address": str,
