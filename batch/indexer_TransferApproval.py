@@ -106,7 +106,7 @@ class DBSink:
                              block_timestamp: Optional[int] = None):
         """Update Transfer Approval data in DB
 
-        :param event_type: event type [ApplyFor, Cancel, Approve]
+        :param event_type: event type [ApplyFor, Cancel, Approve, Finish]
         :param token_address: token address
         :param exchange_address: exchange address (value is set if the event is from exchange)
         :param application_id: application id
