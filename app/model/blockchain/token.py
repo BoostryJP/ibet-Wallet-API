@@ -21,13 +21,13 @@ import json
 from decimal import Decimal
 from datetime import datetime, timedelta
 
-import requests
 from eth_utils import to_checksum_address
 
 from app import config
 from app import log
 from app.contracts import Contract
 from app.model.db import Listing
+from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
 
@@ -45,9 +45,15 @@ class TokenBase:
     contact_information: str
     privacy_policy: str
     status: bool
+    max_holding_quantity: int
+    max_sell_amount: int
 
 
 class BondToken(TokenBase):
+    personal_info_address: str
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
     face_value: int
     interest_rate: float
     interest_payment_date1: str
@@ -68,14 +74,7 @@ class BondToken(TokenBase):
     return_amount: str
     purpose: str
     memo: str
-    initial_offering_status: bool
-    isRedeemed: bool
-    transferable: bool
-    personal_info_address: str
-    image_url: object
-    certification: str
-    max_holding_quantity: int
-    max_sell_amount: int
+    is_redeemed: bool
 
     # トークン情報のキャッシュ
     cache = {}
@@ -90,10 +89,8 @@ class BondToken(TokenBase):
         :return: BondToken
         """
 
-        certification = []  # NOTE:現状項目未使用であるため空のリストを返す
-
         # IbetStraightBond コントラクトへの接続
-        TokenContract = Contract.get_contract('IbetStraightBond', token_address)
+        token_contract = Contract.get_contract('IbetStraightBond', token_address)
 
         # キャッシュを利用する場合
         if config.TOKEN_CACHE:
@@ -103,39 +100,29 @@ class BondToken(TokenBase):
                     # キャッシュ情報を取得
                     bondtoken = token_cache["token"]
                     # キャッシュ情報以外の情報を取得
-                    isRedeemed = TokenContract.functions.isRedeemed().call()
-                    transferable = TokenContract.functions.transferable().call()
-                    initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
-                    status = TokenContract.functions.status().call()
-                    bondtoken.isRedeemed = isRedeemed
-                    bondtoken.transferable = transferable
-                    bondtoken.initial_offering_status = initial_offering_status
-                    bondtoken.status = status
-                    bondtoken.certification = certification
+                    bondtoken.total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+                    bondtoken.is_offering = Contract.call_function(token_contract, "isOffering", (), False)
+                    bondtoken.status = Contract.call_function(token_contract, "status", (), True)
+                    bondtoken.transferable = Contract.call_function(token_contract, "transferable", (), False)
+                    bondtoken.transfer_approval_required = Contract.call_function(
+                        token_contract, "transferApprovalRequired", (), False
+                    )
+                    bondtoken.is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
                     return bondtoken
 
         # キャッシュ未利用の場合
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
         # Contractから情報を取得する
-        name = TokenContract.functions.name().call()
-        symbol = TokenContract.functions.symbol().call()
-        total_supply = TokenContract.functions.totalSupply().call()
-        face_value = TokenContract.functions.faceValue().call()
-        interest_rate = TokenContract.functions.interestRate().call()
+        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        name = Contract.call_function(token_contract, "name", (), "")
+        symbol = Contract.call_function(token_contract, "symbol", (), "")
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        face_value = Contract.call_function(token_contract, "faceValue", (), 0)
+        interest_rate = Contract.call_function(token_contract, "interestRate", (), 0)
 
-        interest_payment_date_string = TokenContract.functions.interestPaymentDate().call()
+        interest_payment_date_string = Contract.call_function(token_contract, "interestPaymentDate", (), "{}")
         interest_payment_date1 = ''
         interest_payment_date2 = ''
         interest_payment_date3 = ''
@@ -153,58 +140,53 @@ class BondToken(TokenBase):
                 interest_payment_date_string.replace("'", '"').replace('True', 'true').replace('False', 'false')
             )
             if 'interestPaymentDate1' in interest_payment_date:
-                interest_payment_date1 = interest_payment_date['interestPaymentDate1']
+                interest_payment_date1 = interest_payment_date.get('interestPaymentDate1', '')
             if 'interestPaymentDate2' in interest_payment_date:
-                interest_payment_date2 = interest_payment_date['interestPaymentDate2']
+                interest_payment_date2 = interest_payment_date.get('interestPaymentDate2', '')
             if 'interestPaymentDate3' in interest_payment_date:
-                interest_payment_date3 = interest_payment_date['interestPaymentDate3']
+                interest_payment_date3 = interest_payment_date.get('interestPaymentDate3', '')
             if 'interestPaymentDate4' in interest_payment_date:
-                interest_payment_date4 = interest_payment_date['interestPaymentDate4']
+                interest_payment_date4 = interest_payment_date.get('interestPaymentDate4', '')
             if 'interestPaymentDate5' in interest_payment_date:
-                interest_payment_date5 = interest_payment_date['interestPaymentDate5']
+                interest_payment_date5 = interest_payment_date.get('interestPaymentDate5', '')
             if 'interestPaymentDate6' in interest_payment_date:
-                interest_payment_date6 = interest_payment_date['interestPaymentDate6']
+                interest_payment_date6 = interest_payment_date.get('interestPaymentDate6', '')
             if 'interestPaymentDate7' in interest_payment_date:
-                interest_payment_date7 = interest_payment_date['interestPaymentDate7']
+                interest_payment_date7 = interest_payment_date.get('interestPaymentDate7', '')
             if 'interestPaymentDate8' in interest_payment_date:
-                interest_payment_date8 = interest_payment_date['interestPaymentDate8']
+                interest_payment_date8 = interest_payment_date.get('interestPaymentDate8', '')
             if 'interestPaymentDate9' in interest_payment_date:
-                interest_payment_date9 = interest_payment_date['interestPaymentDate9']
+                interest_payment_date9 = interest_payment_date.get('interestPaymentDate9', '')
             if 'interestPaymentDate10' in interest_payment_date:
-                interest_payment_date10 = interest_payment_date['interestPaymentDate10']
+                interest_payment_date10 = interest_payment_date.get('interestPaymentDate10', '')
             if 'interestPaymentDate11' in interest_payment_date:
-                interest_payment_date11 = interest_payment_date['interestPaymentDate11']
+                interest_payment_date11 = interest_payment_date.get('interestPaymentDate11', '')
             if 'interestPaymentDate12' in interest_payment_date:
-                interest_payment_date12 = interest_payment_date['interestPaymentDate12']
+                interest_payment_date12 = interest_payment_date.get('interestPaymentDate12', '')
         except Exception as err:
             LOG.warning("Failed to load interestPaymentDate: ", err)
 
-        redemption_date = TokenContract.functions.redemptionDate().call()
-        redemption_value = TokenContract.functions.redemptionValue().call()
-        return_date = TokenContract.functions.returnDate().call()
-        return_amount = TokenContract.functions.returnAmount().call()
-        purpose = TokenContract.functions.purpose().call()
-        isRedeemed = TokenContract.functions.isRedeemed().call()
-        transferable = TokenContract.functions.transferable().call()
-        initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
-        image_url_1 = TokenContract.functions.getImageURL(0).call()
-        image_url_2 = TokenContract.functions.getImageURL(1).call()
-        image_url_3 = TokenContract.functions.getImageURL(2).call()
-        owner_address = TokenContract.functions.owner().call()
-        contact_information = TokenContract.functions.contactInformation().call()
-        privacy_policy = TokenContract.functions.privacyPolicy().call()
-        tradable_exchange = TokenContract.functions.tradableExchange().call()
-        status = TokenContract.functions.status().call()
-        memo = TokenContract.functions.memo().call()
-        personal_info_address = TokenContract.functions.personalInfoAddress().call()
+        redemption_date = Contract.call_function(token_contract, "redemptionDate", (), "")
+        redemption_value = Contract.call_function(token_contract, "redemptionValue", (), 0)
+
+        return_date = Contract.call_function(token_contract, "returnDate", (), "")
+        return_amount = Contract.call_function(token_contract, "returnAmount", (), "")
+        purpose = Contract.call_function(token_contract, "purpose", (), "")
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
+        contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
+        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
+        status = Contract.call_function(token_contract, "status", (), True)
+        memo = Contract.call_function(token_contract, "memo", (), "")
+        personal_info_address = Contract.call_function(token_contract, "personalInfoAddress", (), config.ZERO_ADDRESS)
+        transfer_approval_required = Contract.call_function(token_contract, "transferApprovalRequired", (), False)
+        is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
 
         # 企業リストから、企業名を取得する
-        company_name = ""
-        rsa_publickey = ""
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
@@ -218,6 +200,18 @@ class BondToken(TokenBase):
         bondtoken.name = name
         bondtoken.symbol = symbol
         bondtoken.total_supply = total_supply
+        bondtoken.tradable_exchange = tradable_exchange
+        bondtoken.contact_information = contact_information
+        bondtoken.privacy_policy = privacy_policy
+        bondtoken.status = status
+        bondtoken.max_holding_quantity = listed_token.max_holding_quantity \
+            if hasattr(listed_token, "max_holding_quantity") else 0
+        bondtoken.max_sell_amount = listed_token.max_sell_amount \
+            if hasattr(listed_token, "max_sell_amount") else 0
+        bondtoken.personal_info_address = personal_info_address
+        bondtoken.transferable = transferable
+        bondtoken.is_offering = is_offering
+        bondtoken.transfer_approval_required = transfer_approval_required
         bondtoken.face_value = face_value
         bondtoken.interest_rate = float(Decimal(str(interest_rate)) * Decimal('0.0001'))
         bondtoken.interest_payment_date1 = interest_payment_date1
@@ -237,25 +231,8 @@ class BondToken(TokenBase):
         bondtoken.return_date = return_date
         bondtoken.return_amount = return_amount
         bondtoken.purpose = purpose
-        bondtoken.image_url = [
-            {'id': 1, 'url': image_url_1},
-            {'id': 2, 'url': image_url_2},
-            {'id': 3, 'url': image_url_3}
-        ]
-        bondtoken.max_holding_quantity = listed_token.max_holding_quantity \
-            if hasattr(listed_token, "max_holding_quantity") else 0
-        bondtoken.max_sell_amount = listed_token.max_sell_amount \
-            if hasattr(listed_token, "max_sell_amount") else 0
-        bondtoken.contact_information = contact_information
-        bondtoken.privacy_policy = privacy_policy
-        bondtoken.isRedeemed = isRedeemed
-        bondtoken.transferable = transferable
-        bondtoken.initial_offering_status = initial_offering_status
-        bondtoken.certification = certification
-        bondtoken.tradable_exchange = tradable_exchange
-        bondtoken.status = status
         bondtoken.memo = memo
-        bondtoken.personal_info_address = personal_info_address
+        bondtoken.is_redeemed = is_redeemed
 
         if config.TOKEN_CACHE:
             BondToken.cache[token_address] = {
@@ -268,18 +245,15 @@ class BondToken(TokenBase):
 
 class ShareToken(TokenBase):
     personal_info_address: str
+    transferable: bool
+    is_offering: bool
+    transfer_approval_required: bool
     issue_price: int
     cancellation_date: str
     memo: str
-    transferable: bool
-    offering_status: bool
     principal_value: int
-    transfer_approval_required: bool
     is_canceled: bool
     dividend_information: object
-    reference_urls: object
-    max_holding_quantity: int
-    max_sell_amount: int
 
     # トークン情報のキャッシュ
     cache = {}
@@ -295,7 +269,7 @@ class ShareToken(TokenBase):
         """
 
         # IbetShare コントラクトへの接続
-        TokenContract = Contract.get_contract("IbetShare", token_address)
+        token_contract = Contract.get_contract("IbetShare", token_address)
 
         # キャッシュを利用する場合
         if config.TOKEN_CACHE:
@@ -305,64 +279,54 @@ class ShareToken(TokenBase):
                     # キャッシュ情報を取得
                     sharetoken = token_cache["token"]
                     # キャッシュ情報以外の情報を取得
-                    sharetoken.total_supply = TokenContract.functions.totalSupply().call()
-                    sharetoken.principal_value = TokenContract.functions.principalValue().call()
-                    dividend_information = TokenContract.functions.dividendInformation().call()
+                    sharetoken.total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+                    sharetoken.principal_value = Contract.call_function(token_contract, "principalValue", (), 0)
+                    dividend_information = Contract.call_function(
+                        token_contract, "dividendInformation", (), (0, "", "")
+                    )
                     sharetoken.dividend_information = {
                         'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
                         'dividend_record_date': dividend_information[1],
                         'dividend_payment_date': dividend_information[2],
                     }
-                    sharetoken.transferable = TokenContract.functions.transferable().call()
-                    sharetoken.offering_status = TokenContract.functions.offeringStatus().call()
-                    sharetoken.status = TokenContract.functions.status().call()
-                    sharetoken.transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
-                    sharetoken.is_canceled = TokenContract.functions.isCanceled().call()
+                    sharetoken.is_offering = Contract.call_function(token_contract, "isOffering", (), False)
+                    sharetoken.status = Contract.call_function(token_contract, "status", (), True)
+                    sharetoken.transferable = Contract.call_function(token_contract, "transferable", (), False)
+                    sharetoken.transfer_approval_required = Contract.call_function(
+                        token_contract, "transferApprovalRequired", (), False
+                    )
+                    sharetoken.is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
                     return sharetoken
 
         # キャッシュ未利用の場合
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
-        owner_address = TokenContract.functions.owner().call()
-        name = TokenContract.functions.name().call()
-        symbol = TokenContract.functions.symbol().call()
-        total_supply = TokenContract.functions.totalSupply().call()
-        issue_price = TokenContract.functions.issuePrice().call()
-        principal_value = TokenContract.functions.principalValue().call()
-        dividend_information = TokenContract.functions.dividendInformation().call()
-        cancellation_date = TokenContract.functions.cancellationDate().call()
-        reference_url_1 = TokenContract.functions.referenceUrls(0).call()
-        reference_url_2 = TokenContract.functions.referenceUrls(1).call()
-        reference_url_3 = TokenContract.functions.referenceUrls(2).call()
-        memo = TokenContract.functions.memo().call()
-        transferable = TokenContract.functions.transferable().call()
-        offering_status = TokenContract.functions.offeringStatus().call()
-        status = TokenContract.functions.status().call()
-        transfer_approval_required = TokenContract.functions.transferApprovalRequired().call()
-        is_canceled = TokenContract.functions.isCanceled().call()
-        contact_information = TokenContract.functions.contactInformation().call()
-        privacy_policy = TokenContract.functions.privacyPolicy().call()
-        tradable_exchange = TokenContract.functions.tradableExchange().call()
-        personal_info_address = TokenContract.functions.personalInfoAddress().call()
+        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        name = Contract.call_function(token_contract, "name", (), "")
+        symbol = Contract.call_function(token_contract, "symbol", (), "")
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        issue_price = Contract.call_function(token_contract, "issuePrice", (), 0)
+        principal_value = Contract.call_function(token_contract, "principalValue", (), 0)
+        dividend_information = Contract.call_function(
+            token_contract, "dividendInformation", (), (0, "", "")
+        )
+        cancellation_date = Contract.call_function(token_contract, "cancellationDate", (), "")
+        memo = Contract.call_function(token_contract, "memo", (), "")
+        status = Contract.call_function(token_contract, "status", (), True)
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        transfer_approval_required = Contract.call_function(token_contract, "transferApprovalRequired", (), False)
+        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
+        contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
+        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
+        personal_info_address = Contract.call_function(token_contract, "personalInfoAddress", (), config.ZERO_ADDRESS)
+        is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
 
         # 企業リストから、企業名とRSA鍵を取得する
-        company_name = ''
-        rsa_publickey = ''
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
@@ -384,15 +348,9 @@ class ShareToken(TokenBase):
             'dividend_payment_date': dividend_information[2],
         }
         sharetoken.cancellation_date = cancellation_date
-        sharetoken.reference_urls = [
-            {'id': 1, 'url': reference_url_1},
-            {'id': 2, 'url': reference_url_2},
-            {'id': 3, 'url': reference_url_3},
-        ]
-        sharetoken.image_url = []
         sharetoken.memo = memo
         sharetoken.transferable = transferable
-        sharetoken.offering_status = offering_status
+        sharetoken.is_offering = is_offering
         sharetoken.status = status
         sharetoken.transfer_approval_required = transfer_approval_required
         sharetoken.is_canceled = is_canceled
@@ -422,8 +380,6 @@ class MembershipToken(TokenBase):
     transferable: str
     initial_offering_status: bool
     image_url: object
-    max_holding_quantity: int
-    max_sell_amount: int
 
     # トークン情報のキャッシュ
     cache = {}
@@ -439,7 +395,7 @@ class MembershipToken(TokenBase):
         """
 
         # Token-Contractへの接続
-        TokenContract = Contract.get_contract('IbetMembership', token_address)
+        token_contract = Contract.get_contract('IbetMembership', token_address)
 
         # キャッシュを利用する場合
         if config.TOKEN_CACHE:
@@ -449,9 +405,11 @@ class MembershipToken(TokenBase):
                     # キャッシュ情報を取得
                     membershiptoken = token_cache["token"]
                     # キャッシュ情報以外の情報を取得
-                    transferable = TokenContract.functions.transferable().call()
-                    status = TokenContract.functions.status().call()
-                    initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
+                    transferable = Contract.call_function(token_contract, "transferable", (), False)
+                    status = Contract.call_function(token_contract, "status", (), True)
+                    initial_offering_status = Contract.call_function(
+                        token_contract, "initialOfferingStatus", (), False
+                    )
                     membershiptoken.transferable = transferable
                     membershiptoken.status = status
                     membershiptoken.initial_offering_status = initial_offering_status
@@ -461,42 +419,31 @@ class MembershipToken(TokenBase):
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
         # Token-Contractから情報を取得する
-        name = TokenContract.functions.name().call()
-        symbol = TokenContract.functions.symbol().call()
-        total_supply = TokenContract.functions.totalSupply().call()
-        details = TokenContract.functions.details().call()
-        return_details = TokenContract.functions.returnDetails().call()
-        expiration_date = TokenContract.functions.expirationDate().call()
-        memo = TokenContract.functions.memo().call()
-        transferable = TokenContract.functions.transferable().call()
-        status = TokenContract.functions.status().call()
-        initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
-        image_url_1 = TokenContract.functions.image_urls(0).call()
-        image_url_2 = TokenContract.functions.image_urls(1).call()
-        image_url_3 = TokenContract.functions.image_urls(2).call()
-        contact_information = TokenContract.functions.contactInformation().call()
-        privacy_policy = TokenContract.functions.privacyPolicy().call()
-        owner_address = TokenContract.functions.owner().call()
-        tradable_exchange = TokenContract.functions.tradableExchange().call()
+        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        name = Contract.call_function(token_contract, "name", (), "")
+        symbol = Contract.call_function(token_contract, "symbol", (), "")
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        details = Contract.call_function(token_contract, "details", (), "")
+        return_details = Contract.call_function(token_contract, "returnDetails", (), "")
+        expiration_date = Contract.call_function(token_contract, "expirationDate", (), "")
+        memo = Contract.call_function(token_contract, "memo", (), "")
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        status = Contract.call_function(token_contract, "status", (), True)
+        initial_offering_status = Contract.call_function(
+            token_contract, "initialOfferingStatus", (), False
+        )
+        image_url_1 = Contract.call_function(token_contract, "image_urls", (0,), "")
+        image_url_2 = Contract.call_function(token_contract, "image_urls", (1,), "")
+        image_url_3 = Contract.call_function(token_contract, "image_urls", (2,), "")
+        contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
+        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
 
         # 企業リストから、企業名を取得する
-        company_name = ""
-        rsa_publickey = ""
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()
@@ -547,8 +494,6 @@ class CouponToken(TokenBase):
     transferable: str
     initial_offering_status: bool
     image_url: object
-    max_holding_quantity: int
-    max_sell_amount: int
 
     # トークン情報のキャッシュ
     cache = {}
@@ -564,7 +509,7 @@ class CouponToken(TokenBase):
         """
 
         # Token-Contractへの接続
-        TokenContract = Contract.get_contract('IbetCoupon', token_address)
+        token_contract = Contract.get_contract('IbetCoupon', token_address)
 
         # キャッシュを利用する場合
         if config.TOKEN_CACHE:
@@ -574,9 +519,11 @@ class CouponToken(TokenBase):
                     # キャッシュ情報を取得
                     coupontoken = token_cache["token"]
                     # キャッシュ情報以外の情報を取得
-                    transferable = TokenContract.functions.transferable().call()
-                    status = TokenContract.functions.status().call()
-                    initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
+                    transferable = Contract.call_function(token_contract, "transferable", (), False)
+                    status = Contract.call_function(token_contract, "status", (), True)
+                    initial_offering_status = Contract.call_function(
+                        token_contract, "initialOfferingStatus", (), False
+                    )
                     coupontoken.transferable = transferable
                     coupontoken.status = status
                     coupontoken.initial_offering_status = initial_offering_status
@@ -586,42 +533,31 @@ class CouponToken(TokenBase):
         # または、キャッシュに情報が存在しない場合
         # または、キャッシュの有効期限が切れている場合
 
-        # 企業リストの情報を取得する
-        company_list = []
-        if config.APP_ENV == 'local' or config.COMPANY_LIST_LOCAL_MODE is True:
-            company_list = json.load(open('data/company_list.json', 'r'))
-        else:
-            try:
-                company_list = requests.get(config.COMPANY_LIST_URL, timeout=config.REQUEST_TIMEOUT).json()
-            except Exception as err:
-                LOG.exception(f"Failed to get company list: {err}")
-
         # Token-Contractから情報を取得する
-        name = TokenContract.functions.name().call()
-        symbol = TokenContract.functions.symbol().call()
-        total_supply = TokenContract.functions.totalSupply().call()
-        details = TokenContract.functions.details().call()
-        return_details = TokenContract.functions.returnDetails().call()
-        expiration_date = TokenContract.functions.expirationDate().call()
-        memo = TokenContract.functions.memo().call()
-        transferable = TokenContract.functions.transferable().call()
-        status = TokenContract.functions.status().call()
-        initial_offering_status = TokenContract.functions.initialOfferingStatus().call()
-        image_url_1 = TokenContract.functions.image_urls(0).call()
-        image_url_2 = TokenContract.functions.image_urls(1).call()
-        image_url_3 = TokenContract.functions.image_urls(2).call()
-        contact_information = TokenContract.functions.contactInformation().call()
-        privacy_policy = TokenContract.functions.privacyPolicy().call()
-        owner_address = TokenContract.functions.owner().call()
-        tradable_exchange = TokenContract.functions.tradableExchange().call()
+        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        name = Contract.call_function(token_contract, "name", (), "")
+        symbol = Contract.call_function(token_contract, "symbol", (), "")
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        details = Contract.call_function(token_contract, "details", (), "")
+        return_details = Contract.call_function(token_contract, "returnDetails", (), "")
+        expiration_date = Contract.call_function(token_contract, "expirationDate", (), "")
+        memo = Contract.call_function(token_contract, "memo", (), "")
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        status = Contract.call_function(token_contract, "status", (), True)
+        initial_offering_status = Contract.call_function(
+            token_contract, "initialOfferingStatus", (), False
+        )
+        image_url_1 = Contract.call_function(token_contract, "image_urls", (0,), "")
+        image_url_2 = Contract.call_function(token_contract, "image_urls", (1,), "")
+        image_url_3 = Contract.call_function(token_contract, "image_urls", (2,), "")
+        contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
+        privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
 
         # 企業リストから、企業名を取得する
-        company_name = ""
-        rsa_publickey = ""
-        for company in company_list:
-            if to_checksum_address(company['address']) == owner_address:
-                company_name = company['corporate_name']
-                rsa_publickey = company['rsa_publickey']
+        company = CompanyList.get_find(to_checksum_address(owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
 
         # 取扱トークンリストからその他属性情報を取得
         listed_token = session.query(Listing).filter(Listing.token_address == token_address).first()

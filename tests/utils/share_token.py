@@ -55,30 +55,40 @@ class IbetShareUtils:
         )
 
         # update
-        TokenContract = Contract.get_contract(
+        share_contract = Contract.get_contract(
             contract_name="IbetShare",
             address=contract_address
         )
         if "tradableExchange" in args:
-            TokenContract.functions.setTradableExchange(args["tradableExchange"]). \
-                transact({"from": tx_from, "gas": gas_limit})
+            share_contract.functions.setTradableExchange(
+                args["tradableExchange"]
+            ).transact({"from": tx_from})
         if "personalInfoAddress" in args:
-            TokenContract.functions.setPersonalInfoAddress(args["personalInfoAddress"]). \
-                transact({"from": tx_from, "gas": gas_limit})
+            share_contract.functions.setPersonalInfoAddress(
+                args["personalInfoAddress"]
+            ).transact({"from": tx_from})
         if "contactInformation" in args:
-            TokenContract.functions.setContactInformation(args["contactInformation"]). \
-                transact({"from": tx_from, "gas": gas_limit})
+            share_contract.functions.setContactInformation(
+                args["contactInformation"]
+            ).transact({"from": tx_from})
         if "privacyPolicy" in args:
-            TokenContract.functions.setPrivacyPolicy(args["privacyPolicy"]). \
-                transact({"from": tx_from, "gas": gas_limit})
+            share_contract.functions.setPrivacyPolicy(
+                args["privacyPolicy"]
+            ).transact({"from": tx_from})
         if "memo" in args:
-            TokenContract.functions.setMemo(args["memo"]). \
-                transact({"from": tx_from, "gas": gas_limit})
+            share_contract.functions.setMemo(
+                args["memo"]
+            ).transact({"from": tx_from})
         if "transferable" in args:
-            TokenContract.functions.setTransferable(args["transferable"]). \
-                transact({"from": tx_from, "gas": gas_limit})
+            share_contract.functions.setTransferable(
+                args["transferable"]
+            ).transact({"from": tx_from})
+        if "transferApprovalRequired" in args:
+            share_contract.functions.setTransferApprovalRequired(
+                args["transferApprovalRequired"]
+            ).transact({"from": tx_from})
 
-        return {"address": contract_address, "abi": abi}
+        return share_contract
 
     @staticmethod
     def register_token_list(tx_from: str, token_address, token_list_contract_address):

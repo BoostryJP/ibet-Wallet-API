@@ -48,9 +48,11 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_order_list(
-            session, token_model,
+            session,
+            token_model,
             exchange_contract_address,
-            account_address
+            account_address,
+            include_canceled_items
     ):
         """List all orders from the account (DEX)"""
         # Get exchange contract
@@ -58,15 +60,26 @@ class BaseOrderList(object):
         exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter order events that are generated from account_address
-        _order_events = session.query(Order.id, Order.order_id, Order.order_timestamp). \
+        query = session.query(
+                Order.id,
+                Order.order_id,
+                Order.order_timestamp
+            ). \
             filter(Order.exchange_address == exchange_address). \
-            filter(Order.is_cancelled == False). \
-            filter(Order.account_address == account_address). \
-            all()
+            filter(Order.account_address == account_address)
+
+        if include_canceled_items is not None and include_canceled_items is True:
+            _order_events = query.all()
+        else:  # default
+            _order_events = query.filter(Order.is_cancelled == False).all()
 
         order_list = []
         for (id, order_id, order_timestamp) in _order_events:
-            order_book = exchange_contract.functions.getOrder(order_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
             # If there are no remaining orders, skip this process
             if order_book[2] != 0:
                 _order = {
@@ -94,7 +107,8 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_settlement_list(
-            session, token_model,
+            session,
+            token_model,
             exchange_contract_address,
             account_address
     ):
@@ -105,17 +119,32 @@ class BaseOrderList(object):
 
         # Filter agreement events (settlement not completed) generated from account_address
         _agreement_events = session.query(
-                Agreement.id, Agreement.order_id, Agreement.agreement_id,
-                Agreement.agreement_timestamp, Agreement.buyer_address). \
+                Agreement.id,
+                Agreement.order_id,
+                Agreement.agreement_id,
+                Agreement.agreement_timestamp,
+                Agreement.buyer_address
+            ). \
             filter(Agreement.exchange_address == exchange_address). \
-            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
+            filter(or_(
+                Agreement.buyer_address == account_address,
+                Agreement.seller_address == account_address
+            )). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
         settlement_list = []
         for (id, order_id, agreement_id, agreement_timestamp, buyer_address) in _agreement_events:
-            order_book = exchange_contract.functions.getOrder(order_id).call()
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id, ),
+            )
             _settlement = {
                 "agreement": {
                     "exchange_address": exchange_contract_address,
@@ -142,9 +171,11 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_complete_list(
-            session, token_model,
+            session,
+            token_model,
             exchange_contract_address,
-            account_address
+            account_address,
+            include_canceled_items
     ):
         """List all orders that have been settled (DEX)"""
         # Get exchange contract
@@ -152,13 +183,31 @@ class BaseOrderList(object):
         exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # Filter agreement events (settlement completed) generated from account_address
-        _agreement_events = session.query(
-                Agreement.id, Agreement.order_id, Agreement.agreement_id,
-                Agreement.agreement_timestamp, Agreement.settlement_timestamp, Agreement.buyer_address). \
+        query = session.query(
+                Agreement.id,
+                Agreement.order_id,
+                Agreement.agreement_id,
+                Agreement.agreement_timestamp,
+                Agreement.settlement_timestamp,
+                Agreement.buyer_address
+            ). \
             filter(Agreement.exchange_address == exchange_address). \
-            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
+            filter(or_(
+                Agreement.buyer_address == account_address,
+                Agreement.seller_address == account_address
+            ))
+
+        if include_canceled_items is not None and include_canceled_items is True:
+            _agreement_events = query. \
+                filter(or_(
+                    Agreement.status == AgreementStatus.DONE.value,
+                    Agreement.status == AgreementStatus.CANCELED.value
+                )). \
+                all()
+        else:  # default
+            _agreement_events = query. \
+                filter(Agreement.status == AgreementStatus.DONE.value). \
+                all()
 
         complete_list = []
         for (id, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in _agreement_events:
@@ -166,8 +215,16 @@ class BaseOrderList(object):
                 settlement_timestamp_jp = settlement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
             else:
                 settlement_timestamp_jp = ""
-            order_book = exchange_contract.functions.getOrder(order_id).call()
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id,),
+            )
             _complete = {
                 "agreement": {
                     "exchange_address": exchange_contract_address,
@@ -176,6 +233,7 @@ class BaseOrderList(object):
                     "amount": agreement[1],
                     "price": agreement[2],
                     "is_buy": buyer_address == account_address,
+                    "canceled": agreement[3],
                     "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 "settlement_timestamp": settlement_timestamp_jp,
@@ -194,16 +252,27 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_order_list_filtered_by_token(
-            session, token_address, account_address
+            session,
+            token_address,
+            account_address,
+            include_canceled_items
     ):
         """List orders from accounts filtered by token address (DEX)"""
 
         # Filter order events that are generated from account_address
-        _order_events = session.query(Order.id, Order.exchange_address, Order.order_id, Order.order_timestamp). \
+        query = session.query(
+                Order.id,
+                Order.exchange_address,
+                Order.order_id,
+                Order.order_timestamp
+            ). \
             filter(Order.token_address == token_address). \
-            filter(Order.is_cancelled == False). \
-            filter(Order.account_address == account_address). \
-            all()
+            filter(Order.account_address == account_address)
+
+        if include_canceled_items is not None and include_canceled_items is True:
+            _order_events = query.all()
+        else:  # default
+            _order_events = query.filter(Order.is_cancelled == False).all()
 
         order_list = []
         for (id, exchange_contract_address, order_id, order_timestamp) in _order_events:
@@ -211,7 +280,11 @@ class BaseOrderList(object):
                 contract_name="IbetExchange",
                 address=exchange_contract_address
             )
-            order_book = exchange_contract.functions.getOrder(order_id).call()
+            order_book = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getOrder",
+                args=(order_id,),
+            )
             # If there are no remaining orders, skip this process
             if order_book[2] != 0:
                 _order = {
@@ -235,17 +308,27 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_settlement_list_filtered_by_token(
-            session, token_address, account_address
+            session,
+            token_address,
+            account_address
     ):
         """List all orders in process of settlement (DEX)"""
 
         # Filter agreement events (settlement not completed) generated from account_address
         _agreement_events = session.query(
-                Agreement.id, Agreement.exchange_address, Agreement.order_id, Agreement.agreement_id,
-                Agreement.agreement_timestamp, Agreement.buyer_address). \
+                Agreement.id,
+                Agreement.exchange_address,
+                Agreement.order_id,
+                Agreement.agreement_id,
+                Agreement.agreement_timestamp,
+                Agreement.buyer_address
+            ). \
             outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id). \
             filter(Order.token_address == token_address). \
-            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
+            filter(or_(
+                Agreement.buyer_address == account_address,
+                Agreement.seller_address == account_address
+            )). \
             filter(Agreement.status == AgreementStatus.PENDING.value). \
             all()
 
@@ -255,7 +338,11 @@ class BaseOrderList(object):
                 contract_name="IbetExchange",
                 address=exchange_contract_address
             )
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id,),
+            )
             _settlement = {
                 "token": {
                     "token_address": token_address
@@ -278,19 +365,41 @@ class BaseOrderList(object):
 
     @staticmethod
     def get_complete_list_filtered_by_token(
-            session, token_address, account_address
+            session,
+            token_address,
+            account_address,
+            include_canceled_items
     ):
         """List all orders that have been settled (DEX)"""
 
         # Filter agreement events (settlement completed) generated from account_address
-        _agreement_events = session.query(
-                Agreement.id, Agreement.exchange_address, Agreement.order_id, Agreement.agreement_id,
-                Agreement.agreement_timestamp, Agreement.settlement_timestamp, Agreement.buyer_address). \
+        query = session.query(
+                Agreement.id,
+                Agreement.exchange_address,
+                Agreement.order_id,
+                Agreement.agreement_id,
+                Agreement.agreement_timestamp,
+                Agreement.settlement_timestamp,
+                Agreement.buyer_address
+            ). \
             outerjoin(Order, Agreement.unique_order_id == Order.unique_order_id). \
-            filter(or_(Agreement.buyer_address == account_address, Agreement.seller_address == account_address)). \
-            filter(Order.token_address == token_address). \
-            filter(Agreement.status == AgreementStatus.DONE.value). \
-            all()
+            filter(or_(
+                Agreement.buyer_address == account_address,
+                Agreement.seller_address == account_address
+            )). \
+            filter(Order.token_address == token_address)
+
+        if include_canceled_items is not None and include_canceled_items is True:
+            _agreement_events = query. \
+                filter(or_(
+                    Agreement.status == AgreementStatus.DONE.value,
+                    Agreement.status == AgreementStatus.CANCELED.value
+                )). \
+                all()
+        else:  # default
+            _agreement_events = query. \
+                filter(Agreement.status == AgreementStatus.DONE.value). \
+                all()
 
         complete_list = []
         for (id, exchange_contract_address, order_id, agreement_id, agreement_timestamp, settlement_timestamp, buyer_address) in _agreement_events:
@@ -302,7 +411,11 @@ class BaseOrderList(object):
                 contract_name="IbetExchange",
                 address=exchange_contract_address
             )
-            agreement = exchange_contract.functions.getAgreement(order_id, agreement_id).call()
+            agreement = Contract.call_function(
+                contract=exchange_contract,
+                function_name="getAgreement",
+                args=(order_id, agreement_id,),
+            )
             _complete = {
                 "token": {
                     "token_address": token_address
@@ -314,6 +427,7 @@ class BaseOrderList(object):
                     "amount": agreement[1],
                     "price": agreement[2],
                     "is_buy": buyer_address == account_address,
+                    "canceled": agreement[3],
                     "agreement_timestamp": agreement_timestamp.strftime("%Y/%m/%d %H:%M:%S")
                 },
                 "settlement_timestamp": settlement_timestamp_jp,
@@ -332,7 +446,7 @@ class OrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/{token_address}
     """
 
-    def on_post(self, req, res, token_address: str = None):
+    def on_post(self, req, res, token_address: str = None, **kwargs):
         LOG.info("v2.order_list.OrderList")
         session = req.context["session"]
 
@@ -359,7 +473,8 @@ class OrderList(BaseOrderList, BaseResource):
                     self.get_order_list_filtered_by_token(
                         session=session,
                         token_address=token_address,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -379,7 +494,8 @@ class OrderList(BaseOrderList, BaseResource):
                     self.get_complete_list_filtered_by_token(
                         session=session,
                         token_address=token_address,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -406,6 +522,10 @@ class OrderList(BaseOrderList, BaseResource):
                 "schema": {"type": "string"},
                 "empty": False,
                 "required": True
+            },
+            "include_canceled_items": {
+                "type": "boolean",
+                "required": False
             }
         })
 
@@ -427,7 +547,7 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/StraightBond
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.StraightBondOrderList")
         session = req.context["session"]
 
@@ -448,7 +568,8 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=BondToken,
                         exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -470,7 +591,8 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=BondToken,
                         exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -497,6 +619,10 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
                 "schema": {"type": "string"},
                 "empty": False,
                 "required": True
+            },
+            "include_canceled_items": {
+                "type": "boolean",
+                "required": False
             }
         })
 
@@ -518,7 +644,7 @@ class MembershipOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/Membership
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.MembershipOrderList")
         session = req.context["session"]
 
@@ -540,7 +666,8 @@ class MembershipOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=MembershipToken,
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -562,7 +689,8 @@ class MembershipOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=MembershipToken,
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -589,6 +717,10 @@ class MembershipOrderList(BaseOrderList, BaseResource):
                 "schema": {"type": "string"},
                 "empty": False,
                 "required": True
+            },
+            "include_canceled_items": {
+                "type": "boolean",
+                "required": False
             }
         })
 
@@ -610,7 +742,7 @@ class CouponOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/Coupon
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.CouponOrderList")
         session = req.context["session"]
 
@@ -632,7 +764,8 @@ class CouponOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=CouponToken,
                         exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -654,7 +787,8 @@ class CouponOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=CouponToken,
                         exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -681,6 +815,10 @@ class CouponOrderList(BaseOrderList, BaseResource):
                 "schema": {"type": "string"},
                 "empty": False,
                 "required": True
+            },
+            "include_canceled_items": {
+                "type": "boolean",
+                "required": False
             }
         })
 
@@ -702,7 +840,7 @@ class ShareOrderList(BaseOrderList, BaseResource):
     Endpoint: /v2/OrderList/Share
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.order_list.ShareOrderList")
         session = req.context["session"]
 
@@ -724,7 +862,8 @@ class ShareOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=ShareToken,
                         exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -746,7 +885,8 @@ class ShareOrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_model=ShareToken,
                         exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
+                        account_address=account_address,
+                        include_canceled_items=request_json.get("include_canceled_items")
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -773,6 +913,10 @@ class ShareOrderList(BaseOrderList, BaseResource):
                 "schema": {"type": "string"},
                 "empty": False,
                 "required": True
+            },
+            "include_canceled_items": {
+                "type": "boolean",
+                "required": False
             }
         })
 

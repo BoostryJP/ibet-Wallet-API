@@ -66,12 +66,15 @@ class TestV2StatisticsToken:
     @staticmethod
     def insert_position(session,
                         token_address: str, account_address: str,
-                        balance: Optional[int] = None, pending_transfer: Optional[int] = None):
+                        balance: Optional[int] = None, pending_transfer: Optional[int] = None,
+                        exchange_balance: Optional[int] = None, exchange_commitment: Optional[int] = None):
         position = IDXPosition()
         position.token_address = token_address
         position.account_address = account_address
         position.balance = balance
         position.pending_transfer = pending_transfer
+        position.exchange_balance = exchange_balance
+        position.exchange_commitment = exchange_commitment
         session.add(position)
 
     @staticmethod
@@ -81,7 +84,8 @@ class TestV2StatisticsToken:
         exchange_address = \
             to_checksum_address(
                 shared_contract["IbetCouponExchange"]["address"])
-        token = issue_coupon_token(issuer, TestV2StatisticsToken.token_attribute(exchange_address))
+        token = issue_coupon_token(
+            issuer, TestV2StatisticsToken.token_attribute(exchange_address))
 
         TestV2StatisticsToken.list_token(session, token, issuer)
 
@@ -127,18 +131,34 @@ class TestV2StatisticsToken:
             pending_transfer=200
         )
 
+        # prepare data (exchange_balance > 0)
+        self.insert_position(
+            session=session,
+            token_address=token["address"],
+            account_address="0x213e5a8582Fb1Be10bf5D14100adF8dFB12Ba722",
+            exchange_balance=300
+        )
+
+        # prepare data (exchange_commitment > 0)
+        self.insert_position(
+            session=session,
+            token_address=token["address"],
+            account_address="0x9982f688af88ee715015dc3d351d8cdc23024ff4",
+            exchange_commitment=400
+        )
+
         apiurl = self.apiurl_base + token["address"]
         query_string = ""
         resp = client.simulate_get(apiurl, query_string=query_string)
 
-        assumed_body = {"holders_count": 2}
+        assumed_body = {"holders_count": 4}
 
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert resp.json["data"] == assumed_body
 
     # Normal_3
-    # balance = 0, pending_transfer = 0
+    # balance = 0, pending_transfer = 0, exchange_balance = 0, exchange_commitment = 0
     def test_normal_3(self, client, session, shared_contract):
         token = TestV2StatisticsToken.prepare_token(session, shared_contract)
 
@@ -156,6 +176,22 @@ class TestV2StatisticsToken:
             token_address=token["address"],
             account_address="0x8587F9Ba6E5910e693A5E6190C98F029689A1dA3",
             pending_transfer=0
+        )
+
+        # prepare data (exchange_balance = 0)
+        self.insert_position(
+            session=session,
+            token_address=token["address"],
+            account_address="0x213e5a8582Fb1Be10bf5D14100adF8dFB12Ba722",
+            exchange_balance=0
+        )
+
+        # prepare data (exchange_commitment = 0)
+        self.insert_position(
+            session=session,
+            token_address=token["address"],
+            account_address="0x9982f688af88ee715015dc3d351d8cdc23024ff4",
+            exchange_commitment=0
         )
 
         apiurl = self.apiurl_base + token["address"]
@@ -179,14 +215,6 @@ class TestV2StatisticsToken:
             token_address=token["address"],
             account_address=eth_account["issuer"]["account_address"],
             balance=100
-        )
-
-        # prepare data (DEX)
-        self.insert_position(
-            session=session,
-            token_address=token["address"],
-            account_address=shared_contract["IbetCouponExchange"]["address"],
-            pending_transfer=100
         )
 
         # prepare data (normal account)

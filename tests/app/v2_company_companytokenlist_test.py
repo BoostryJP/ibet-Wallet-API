@@ -207,15 +207,9 @@ class TestV2CompanyCompanyTokenList:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'transferable': True,
-                'image_url': [
-                    {'id': 1, 'url': ''},
-                    {'id': 2, 'url': ''},
-                    {'id': 3, 'url': ''}
-                ],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': None,
                 'max_sell_amount': None,
                 'contact_information': '問い合わせ先',
@@ -224,6 +218,7 @@ class TestV2CompanyCompanyTokenList:
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False
             }
         ]
 
@@ -266,15 +261,9 @@ class TestV2CompanyCompanyTokenList:
                     'dividend_payment_date': '20201001'
                 },
                 'cancellation_date': '20210101',
-                'reference_urls': [
-                    {'id': 1, 'url': ''},
-                    {'id': 2, 'url': ''},
-                    {'id': 3, 'url': ''}
-                ],
-                'image_url': [],
                 'memo': 'メモ',
                 'transferable': True,
-                'offering_status': False,
+                'is_offering': False,
                 'status': True,
                 'transfer_approval_required': False,
                 'contact_information': '問い合わせ先',

@@ -238,30 +238,21 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'image_url': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'tradable_exchange': bond_exchange["address"],
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -333,30 +324,21 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'image_url': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'tradable_exchange': bond_exchange["address"],
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -429,30 +411,21 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'image_url': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'tradable_exchange': bond_exchange["address"],
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -531,30 +504,21 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'image_url': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'tradable_exchange': bond_exchange["address"],
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -588,30 +552,21 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'image_url': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'tradable_exchange': bond_exchange["address"],
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False,
             },
             'balance': 100,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -687,30 +642,21 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'image_url': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'tradable_exchange': bond_exchange["address"],
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False,
             },
             'balance': 50,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 50,
         }
@@ -718,10 +664,8 @@ class TestV2StraightBondMyTokens:
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
 
-        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
-                count = 1
                 assert token == assumed_body
 
     # ＜正常系5-2＞
@@ -782,30 +726,21 @@ class TestV2StraightBondMyTokens:
                 'return_date': '20191231',
                 'return_amount': '商品券をプレゼント',
                 'purpose': '新商品の開発資金として利用。',
-                'image_url': [{
-                    'id': 1,
-                    'url': ''
-                }, {
-                    'id': 2,
-                    'url': ''
-                }, {
-                    'id': 3,
-                    'url': ''
-                }],
-                'certification': [],
-                'initial_offering_status': False,
+                'is_offering': False,
                 'max_holding_quantity': 1,
                 'max_sell_amount': 1000,
                 'contact_information': '問い合わせ先',
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
-                'isRedeemed': False,
+                'is_redeemed': False,
                 'tradable_exchange': bond_exchange["address"],
                 'status': True,
                 'memo': 'メモ',
                 'personal_info_address': personal_info["address"],
+                'transfer_approval_required': False,
             },
             'balance': 50,
+            'pending_transfer': 0,
             'exchange_balance': 0,
             "exchange_commitment": 0,
         }
@@ -813,10 +748,8 @@ class TestV2StraightBondMyTokens:
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
 
-        count = 0
         for token in resp.json['data']:
             if token['token']['token_address'] == token_address:
-                count = 1
                 assert token == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）

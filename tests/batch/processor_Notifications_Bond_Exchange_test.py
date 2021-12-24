@@ -38,6 +38,7 @@ from tests.contract_modules import (
     make_sell,
     take_buy,
     cancel_order,
+    force_cancel_order,
     confirm_agreement,
     cancel_agreement
 )
@@ -408,6 +409,236 @@ class TestWatchBondCancelOrder:
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
         watcher, _ = watcher_factory("WatchBondCancelOrder")
+
+        # Run target process
+        watcher.loop()
+
+        # Assertion
+        _notification = session.query(Notification).order_by(Notification.created).first()
+        assert _notification is None
+
+
+class TestWatchBondForceCancelOrder:
+    issuer = eth_account["issuer"]
+    agent = eth_account["agent"]
+
+    ###########################################################################
+    # Normal Case
+    ###########################################################################
+
+    # <Normal_1>
+    # Single event logs
+    def test_normal_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchBondForceCancelOrder")
+
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(
+            issuer=self.issuer,
+            exchange_contract_address=exchange_contract_address,
+            personal_info_contract_address=personal_info_contract_address,
+            token_list=token_list_contract
+        )
+
+        # Create Order
+        bond_transfer_to_exchange(
+            invoker=self.issuer,
+            bond_exchange={"address": exchange_contract_address},
+            bond_token=token,
+            amount=1000000
+        )
+        make_sell(
+            invoker=self.issuer,
+            exchange={"address": exchange_contract_address},
+            token=token,
+            amount=1000000,
+            price=100
+        )
+
+        # Force Cancel Order
+        force_cancel_order(
+            invoker=eth_account["agent"],
+            exchange={"address": exchange_contract_address},
+            order_id=1
+        )
+
+        # Run target process
+        watcher.loop()
+
+        # Assertion
+        block_number = web3.eth.blockNumber
+        _notification = session.query(Notification).order_by(Notification.created).first()
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
+        assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
+        assert _notification.priority == 2
+        assert _notification.address == self.issuer["account_address"]
+        assert _notification.block_timestamp is not None
+        assert _notification.args == {
+            "tokenAddress": token["address"],
+            "orderId": 1,
+            "accountAddress": self.issuer["account_address"],
+            "isBuy": False,
+            "price": 100,
+            "amount": 1000000,
+            "agentAddress": self.agent["account_address"],
+        }
+        assert _notification.metainfo == {
+            "company_name": "株式会社DEMO",
+            "token_address": token["address"],
+            "token_name": "テスト債券",
+            "exchange_address": exchange_contract_address,
+            "token_type": "IbetStraightBond"
+        }
+
+    # <Normal_2>
+    # Multi event logs
+    def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchBondForceCancelOrder")
+
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(
+            issuer=self.issuer,
+            exchange_contract_address=exchange_contract_address,
+            personal_info_contract_address=personal_info_contract_address,
+            token_list=token_list_contract
+        )
+
+        # Create Order
+        bond_transfer_to_exchange(
+            invoker=self.issuer,
+            bond_exchange={"address": exchange_contract_address},
+            bond_token=token,
+            amount=5000
+        )
+        make_sell(
+            invoker=self.issuer,
+            exchange={"address": exchange_contract_address},
+            token=token,
+            amount=1000,
+            price=100
+        )
+        make_sell(
+            invoker=self.issuer,
+            exchange={"address": exchange_contract_address},
+            token=token,
+            amount=4000,
+            price=10
+        )
+
+        # Force Cancel Order
+        force_cancel_order(
+            invoker=eth_account["agent"],
+            exchange={"address": exchange_contract_address},
+            order_id=1
+        )
+        force_cancel_order(
+            invoker=eth_account["agent"],
+            exchange={"address": exchange_contract_address},
+            order_id=2
+        )
+
+        # Run target process
+        watcher.loop()
+
+        # Assertion
+        block_number = web3.eth.blockNumber
+        _notification_list = session.query(Notification).order_by(Notification.created).all()
+        assert len(_notification_list) == 2
+
+        _notification = _notification_list[0]
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 0)
+        assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
+        assert _notification.priority == 2
+        assert _notification.address == self.issuer["account_address"]
+        assert _notification.block_timestamp is not None
+        assert _notification.args == {
+            "tokenAddress": token["address"],
+            "orderId": 1,
+            "accountAddress": self.issuer["account_address"],
+            "isBuy": False,
+            "price": 100,
+            "amount": 1000,
+            "agentAddress": self.agent["account_address"],
+        }
+        assert _notification.metainfo == {
+            "company_name": "株式会社DEMO",
+            "token_address": token["address"],
+            "token_name": "テスト債券",
+            "exchange_address": exchange_contract_address,
+            "token_type": "IbetStraightBond"
+        }
+
+        _notification = _notification_list[1]
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
+        assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
+        assert _notification.priority == 2
+        assert _notification.address == self.issuer["account_address"]
+        assert _notification.block_timestamp is not None
+        assert _notification.args == {
+            "tokenAddress": token["address"],
+            "orderId": 2,
+            "accountAddress": self.issuer["account_address"],
+            "isBuy": False,
+            "price": 10,
+            "amount": 4000,
+            "agentAddress": self.agent["account_address"],
+        }
+        assert _notification.metainfo == {
+            "company_name": "株式会社DEMO",
+            "token_address": token["address"],
+            "token_name": "テスト債券",
+            "exchange_address": exchange_contract_address,
+            "token_type": "IbetStraightBond"
+        }
+
+    # <Normal_3>
+    # No event logs
+    def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, exchange_contract_address = watcher_factory("WatchBondForceCancelOrder")
+
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = issue_token(
+            issuer=self.issuer,
+            exchange_contract_address=exchange_contract_address,
+            personal_info_contract_address=personal_info_contract_address,
+            token_list=token_list_contract
+        )
+
+        # Create Order
+        bond_transfer_to_exchange(
+            invoker=self.issuer,
+            bond_exchange={"address": exchange_contract_address},
+            bond_token=token,
+            amount=1000000
+        )
+        make_sell(
+            invoker=self.issuer,
+            exchange={"address": exchange_contract_address},
+            token=token,
+            amount=1000000,
+            price=100
+        )
+
+        # Not Cancel Order
+
+        # Run target process
+        watcher.loop()
+
+        # Assertion
+        _notification = session.query(Notification).order_by(Notification.created).first()
+        assert _notification is None
+
+    ###########################################################################
+    # Error Case
+    ###########################################################################
+
+    # <Error_1>
+    # Error occur
+    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
+    def test_error_1(self, watcher_factory, session, shared_contract, mocked_company_list):
+        watcher, _ = watcher_factory("WatchBondForceCancelOrder")
 
         # Run target process
         watcher.loop()

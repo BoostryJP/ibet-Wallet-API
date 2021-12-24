@@ -51,7 +51,7 @@ class GetTransactionCount(BaseResource):
     Endpoint: /Eth/TransactionCount/{eth_address}
     """
 
-    def on_get(self, req, res, eth_address: ChecksumAddress = None):
+    def on_get(self, req, res, eth_address: ChecksumAddress = None, **kwargs):
         LOG.info('v2.eth.GetTransactionCount')
 
         try:
@@ -101,7 +101,7 @@ class SendRawTransaction(BaseResource):
     Endpoint: /Eth/SendRawTransaction
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.eth.SendRawTransaction")
 
         session = req.context["session"]
@@ -110,9 +110,9 @@ class SendRawTransaction(BaseResource):
         raw_tx_hex_list = request_json["raw_tx_hex_list"]
 
         # Get TokenList Contract
-        ListContract = Contract.get_contract(
-            "TokenList",
-            config.TOKEN_LIST_CONTRACT_ADDRESS
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
         # Check token status
@@ -128,17 +128,24 @@ class SendRawTransaction(BaseResource):
             listed_token = session.query(Listing). \
                 filter(Listing.token_address == to_contract_address). \
                 first()
-
             if listed_token is not None:
-                LOG.info(f"Token Address: {to_contract_address}")
-                token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
+                LOG.debug(f"Token Address: {to_contract_address}")
+                token_attribute = Contract.call_function(
+                    contract=list_contract,
+                    function_name="getTokenByAddress",
+                    args=(to_contract_address,),
+                    default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+                )
                 if token_attribute[1] != "":
                     try:
-                        TokenContract = Contract.get_contract(token_attribute[1], to_contract_address)
+                        token_contract = Contract.get_contract(
+                            contract_name=token_attribute[1],
+                            address=to_contract_address
+                        )
                     except Exception as err:
                         LOG.warning(f"Could not get token status: {err}")
                         continue
-                    if TokenContract.functions.status().call() is False:
+                    if Contract.call_function(token_contract, "status", (), True) is False:
                         raise SuspendedTokenError("Token is currently suspended")
 
         # Send transaction
@@ -167,6 +174,7 @@ class SendRawTransaction(BaseResource):
                         to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS and \
                         to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS:
                     result.append({"id": i + 1, "status": 0})
                     LOG.error("Not executable")
@@ -257,7 +265,7 @@ class SendRawTransactionNoWait(BaseResource):
     Endpoint: /v2/Eth/SendRawTransactionNoWait
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info("v2.eth.SendRawTransactionNoWait")
 
         session = req.context["session"]
@@ -266,9 +274,9 @@ class SendRawTransactionNoWait(BaseResource):
         raw_tx_hex_list = request_json["raw_tx_hex_list"]
 
         # Get TokenList Contract
-        ListContract = Contract.get_contract(
-            "TokenList",
-            config.TOKEN_LIST_CONTRACT_ADDRESS
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
         # Check token status
@@ -287,14 +295,22 @@ class SendRawTransactionNoWait(BaseResource):
 
             if listed_token is not None:
                 LOG.info(f"Token Address: {to_contract_address}")
-                token_attribute = ListContract.functions.getTokenByAddress(to_contract_address).call()
+                token_attribute = Contract.call_function(
+                    contract=list_contract,
+                    function_name="getTokenByAddress",
+                    args=(to_contract_address,),
+                    default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+                )
                 if token_attribute[1] != "":
                     try:
-                        TokenContract = Contract.get_contract(token_attribute[1], to_contract_address)
+                        token_contract = Contract.get_contract(
+                            contract_name=token_attribute[1],
+                            address=to_contract_address
+                        )
                     except Exception as err:
                         LOG.warning(f"Could not get token status: {err}")
                         continue
-                    if TokenContract.functions.status().call() is False:
+                    if Contract.call_function(token_contract, "status", (), True) is False:
                         raise SuspendedTokenError("Token is currently suspended")
 
         # Send transaction
@@ -323,6 +339,7 @@ class SendRawTransactionNoWait(BaseResource):
                         to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS and \
                         to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS and \
+                        to_contract_address != config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS and \
                         to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS:
                     result.append({"id": i + 1, "status": 0})
                     LOG.error("Not executable")
@@ -381,7 +398,7 @@ class WaitForTransactionReceipt(BaseResource):
     Endpoint: /Eth/WaitForTransactionReceipt
     """
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, **kwargs):
         LOG.info('v2.eth.WaitForTransactionReceipt')
 
         request_json = self.validate(req)

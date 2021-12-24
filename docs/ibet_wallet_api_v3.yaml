@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.9.0"
+  version: "21.12.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -144,24 +144,11 @@ paths:
                             type: string
                       cancellation_date:
                         type: string
-                      reference_urls:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: integer
-                            url:
-                              type: string
-                      image_url:
-                        type: array
-                        items:
-                          type: object
                       memo:
                         type: string
                       transferable:
                         type: boolean
-                      offering_status:
+                      is_offering:
                         type: boolean
                       status:
                         type: boolean
@@ -236,6 +223,8 @@ paths:
                         token_address:
                           type: string
                         balance:
+                          type: integer
+                        pending_transfer:
                           type: integer
                         exchange_balance:
                           type: integer
@@ -348,22 +337,9 @@ paths:
                         description: purpose of issue
                       transferable:
                         type: boolean
-                      isRedeemed:
+                      is_redeemed:
                         type: boolean
-                      image_url:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: integer
-                            url:
-                              type: string
-                      certification:
-                        type: array
-                        items:
-                          type: string
-                      initial_offering_status:
+                      is_offering:
                         type: boolean
                       max_holding_quantity:
                         type: integer
@@ -381,7 +357,11 @@ paths:
                         type: string
                       personal_info_address:
                         type: string
+                      transfer_approval_required:
+                        type: boolean
                   balance:
+                    type: integer
+                  pending_transfer:
                     type: integer
                   exchange_balance:
                     type: integer
@@ -734,12 +714,20 @@ paths:
           in: query
           required: false
           type: string
-          enum: [ "NewOrder", "NewOrderCounterpart", "CancelOrder", "CancelOrderCounterpart", "BuyAgreement",
-                  "BuySettlementOK", "BuySettlementNG", "SellAgreement", "SellSettlementOK",
-                  "SellSettlementNG", "StartInitialOffering", "StopInitialOffering", "StartOffering",
-                  "StopOffering", "Redeem", "Suspend", "ApplyForOffering", "Allot", "Transfer",
-                  "PaymentAccountRegister", "PaymentAccountApprove", "PaymentAccountUnapprove",
-                  "PaymentAccountWarn", "PaymentAccountBan" ]
+          enum: [
+            "NewOrder",
+            "NewOrderCounterpart",
+            "CancelOrder",
+            "ForceCancelOrder",
+            "CancelOrderCounterpart",
+            "BuyAgreement",
+            "BuySettlementOK",
+            "BuySettlementNG",
+            "SellAgreement",
+            "SellSettlementOK",
+            "SellSettlementNG",
+            "Transfer"
+          ]
         - name: priority
           in: query
           required: false
@@ -792,13 +780,17 @@ paths:
                           example:
                             NewOrder
                           enum: [
-                            NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
-                            BuyAgreement,BuySettlementOK,BuySettlementNG,
-                            SellAgreement,SellSettlementOK,SellSettlementNG,
-                            StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
-                            Redeem,Suspend,ApplyForOffering,Allot,Transfer,
-                            PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
-                            PaymentAccountWarn,PaymentAccountBan
+                            NewOrder,
+                            NewOrderCounterpart,
+                            CancelOrder,
+                            CancelOrderCounterpart,
+                            BuyAgreement,
+                            BuySettlementOK,
+                            BuySettlementNG,
+                            SellAgreement,
+                            SellSettlementOK,
+                            SellSettlementNG,
+                            Transfer
                           ]
                         id:
                           type: string
@@ -999,6 +991,71 @@ paths:
           required: false
           type: string
           enum: [Deposited, Withdrawn, EscrowCreated, EscrowCanceled, EscrowFinished]
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    event:
+                      description: the event name
+                      type: string
+                    args:
+                      description: event args
+                      type: object
+                    transaction_hash:
+                      description: transaction hash
+                      type: string
+                    block_number:
+                      description: the block number where this log was in
+                      type: integer
+                    log_index:
+                      description: integer of the log index position in the block
+                      type: integer
+        400:
+          description: "Invalid Parameter Error"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+  /Events/IbetSecurityTokenEscrow:
+    get:
+        - name: from_block
+          in: query
+          description: from block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: to_block
+          in: query
+          description: to block number
+          required: true
+          type: integer
+          minimum: 1
+        - name: event
+          in: query
+          description: events to get
+          required: false
+          type: string
+          enum: [
+              Deposited,
+              Withdrawn,
+              EscrowCreated,
+              EscrowCanceled,
+              EscrowFinished,
+              ApplyForTransfer,
+              CancelTransfer,
+              ApproveTransfer,
+              FinishTransfer
+          ]
       responses:
         200:
           description: "Successful Operation"

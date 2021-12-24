@@ -38,8 +38,10 @@ class TestV2ShareMyTokens:
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account, exchange_contract,
-                            personal_info_contract, token_list_contract):
+    def create_balance_data(account,
+                            exchange_contract,
+                            personal_info_contract,
+                            token_list_contract):
         # Issue token
         args = {
             "name": "テスト株式",
@@ -64,7 +66,7 @@ class TestV2ShareMyTokens:
         )
         IbetShareUtils.register_token_list(
             tx_from=account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             token_list_contract_address=token_list_contract["address"]
         )
         return token
@@ -72,8 +74,10 @@ class TestV2ShareMyTokens:
     # Prepare pending_transfer data
     # balance = 999900, pending_transfer = 100
     @staticmethod
-    def create_pending_transfer_data(account, exchange_contract,
-                                     personal_info_contract, token_list_contract):
+    def create_pending_transfer_data(account,
+                                     exchange_contract,
+                                     personal_info_contract,
+                                     token_list_contract):
         # Issue token
         args = {
             "name": "テスト株式",
@@ -98,18 +102,18 @@ class TestV2ShareMyTokens:
         )
         IbetShareUtils.register_token_list(
             tx_from=account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             token_list_contract_address=token_list_contract["address"]
         )
         # Apply for transfer
         IbetShareUtils.set_transfer_approval_required(
             tx_from=account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             required=True
         )
         IbetShareUtils.apply_for_transfer(
             tx_from=account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             to=account["account_address"],
             value=100
         )
@@ -118,7 +122,10 @@ class TestV2ShareMyTokens:
     # Prepare commitment data
     # balance = 999900, commitment = 100
     @staticmethod
-    def create_commitment_data(account, exchange_contract, personal_info_contract, token_list_contract):
+    def create_commitment_data(account,
+                               exchange_contract,
+                               personal_info_contract,
+                               token_list_contract):
         PersonalInfoUtils.register(
             tx_from=account["account_address"],
             personal_info_address=personal_info_contract["address"],
@@ -148,23 +155,23 @@ class TestV2ShareMyTokens:
         )
         IbetShareUtils.register_token_list(
             tx_from=account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             token_list_contract_address=token_list_contract["address"]
         )
         # Sell order
         IbetShareUtils.sell(
             tx_from=account["account_address"],
             exchange_address=exchange_contract["address"],
-            token_address=token["address"],
+            token_address=token.address,
             amount=100,
             price=1000
         )
         return token
 
     @staticmethod
-    def list_token(session, token):
+    def list_token(session, token_address):
         listed_token = Listing()
-        listed_token.token_address = token["address"]
+        listed_token.token_address = token_address
         listed_token.is_public = True
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
@@ -189,8 +196,8 @@ class TestV2ShareMyTokens:
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
         )
-        token_address = token["address"]
-        self.list_token(session, token)
+        token_address = token.address
+        self.list_token(session, token_address)
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange_contract["address"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
@@ -230,21 +237,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -261,10 +257,10 @@ class TestV2ShareMyTokens:
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
 
         count = 0
-        for token in resp.json["data"]:
-            if token["token"]["token_address"] == token_address:
+        for _token in resp.json["data"]:
+            if _token["token"]["token_address"] == token_address:
                 count = 1
-                assert token == assumed_body
+                assert _token == assumed_body
         assert count == 1
 
     # Normal_2
@@ -282,8 +278,8 @@ class TestV2ShareMyTokens:
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
         )
-        token_address = token["address"]
-        self.list_token(session, token)
+        token_address = token.address
+        self.list_token(session, token_address)
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange_contract["address"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
@@ -325,21 +321,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": True,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -354,10 +339,10 @@ class TestV2ShareMyTokens:
             "exchange_commitment": 0,
         }
         count = 0
-        for token in resp.json["data"]:
-            if token["token"]["token_address"] == token_address:
+        for _token in resp.json["data"]:
+            if _token["token"]["token_address"] == token_address:
                 count = 1
-                assert token == assumed_body
+                assert _token == assumed_body
         assert count == 1
 
     # Normal_3
@@ -375,8 +360,8 @@ class TestV2ShareMyTokens:
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
         )
-        token_address = token["address"]
-        self.list_token(session, token)
+        token_address = token.address
+        self.list_token(session, token_address)
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange_contract["address"]
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
@@ -418,21 +403,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -440,17 +414,16 @@ class TestV2ShareMyTokens:
                 'tradable_exchange': exchange_contract["address"],
                 'personal_info_address': personal_info_contract["address"],
             },
-
             "balance": 999900,
             "pending_transfer": 0,
             "exchange_balance": 0,
             "exchange_commitment": 100,
         }
         count = 0
-        for token in resp.json["data"]:
-            if token["token"]["token_address"] == token_address:
+        for _token in resp.json["data"]:
+            if _token["token"]["token_address"] == token_address:
                 count = 1
-                assert token == assumed_body
+                assert _token == assumed_body
         assert count == 1
 
     # Normal_4
@@ -469,8 +442,8 @@ class TestV2ShareMyTokens:
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
         )
-        token_address = token["address"]
-        self.list_token(session, token)
+        token_address = token.address
+        self.list_token(session, token_address)
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None  # Exchange address not set
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
@@ -512,21 +485,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -540,10 +502,10 @@ class TestV2ShareMyTokens:
             "exchange_commitment": 0,
         }
         count = 0
-        for token in resp.json["data"]:
-            if token["token"]["token_address"] == token_address:
+        for _token in resp.json["data"]:
+            if _token["token"]["token_address"] == token_address:
                 count = 1
-                assert token == assumed_body
+                assert _token == assumed_body
         assert count == 1
 
     # Normal_5
@@ -561,8 +523,8 @@ class TestV2ShareMyTokens:
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
         )
-        token_address_1 = token_1["address"]
-        self.list_token(session, token_1)
+        token_address_1 = token_1.address
+        self.list_token(session, token_address_1)
 
         # Prepare data (2)
         token_2 = self.create_balance_data(
@@ -571,8 +533,8 @@ class TestV2ShareMyTokens:
             personal_info_contract=personal_info_contract,
             token_list_contract=token_list_contract
         )
-        token_address_2 = token_2["address"]
-        self.list_token(session, token_2)
+        token_address_2 = token_2.address
+        self.list_token(session, token_address_2)
 
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange_contract["address"]
@@ -615,21 +577,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -663,21 +614,10 @@ class TestV2ShareMyTokens:
                 "cancellation_date": "20200603",
                 "memo": "メモ",
                 "transferable": True,
-                "offering_status": False,
+                "is_offering": False,
                 "status": True,
                 "transfer_approval_required": False,
                 "is_canceled": False,
-                "reference_urls": [{
-                    "id": 1,
-                    "url": ""
-                }, {
-                    "id": 2,
-                    "url": ""
-                }, {
-                    "id": 3,
-                    "url": ""
-                }],
-                "image_url": [],
                 "max_holding_quantity": 1,
                 "max_sell_amount": 1000,
                 "contact_information": "問い合わせ先",
@@ -691,13 +631,13 @@ class TestV2ShareMyTokens:
             "exchange_commitment": 0,
         }
         count = 0
-        for token in resp.json["data"]:
-            if token["token"]["token_address"] == token_address_1:
+        for _token in resp.json["data"]:
+            if _token["token"]["token_address"] == token_address_1:
                 count += 1
-                assert token == assumed_body_1
-            if token["token"]["token_address"] == token_address_2:
+                assert _token == assumed_body_1
+            if _token["token"]["token_address"] == token_address_2:
                 count += 1
-                assert token == assumed_body_2
+                assert _token == assumed_body_2
         assert count == 2
 
     ###########################################################################

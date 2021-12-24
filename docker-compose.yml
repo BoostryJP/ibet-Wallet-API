@@ -17,6 +17,8 @@ services:
       - MYSQL_ROOT_PASSWORD=password
     ports:
       - 3306:3306
+    command:
+      mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
   ganache-cli:
     image: "trufflesuite/ganache-cli:latest"
     ports:

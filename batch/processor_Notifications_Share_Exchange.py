@@ -40,8 +40,7 @@ from app.config import (
     WORKER_COUNT,
     SLEEP_INTERVAL,
     IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    COMPANY_LIST_URL
+    TOKEN_LIST_CONTRACT_ADDRESS
 )
 from app.model.db import (
     Notification,
@@ -50,7 +49,7 @@ from app.model.db import (
 from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.token import TokenFactory
-from batch.lib.company_list import CompanyListFactory
+from app.utils.company_list import CompanyList
 from batch.lib.token_list import TokenList
 from batch.lib.misc import wait_all_futures
 import log
@@ -68,7 +67,6 @@ db_session = scoped_session(sessionmaker())
 db_session.configure(bind=engine)
 
 token_factory = TokenFactory(web3)
-company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
@@ -158,7 +156,7 @@ class WatchShareNewOrder(Watcher):
         super().__init__(share_exchange_contract, "NewOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -195,7 +193,7 @@ class WatchShareCancelOrder(Watcher):
         super().__init__(share_exchange_contract, "CancelOrder", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -226,13 +224,50 @@ class WatchShareCancelOrder(Watcher):
             db_session.merge(notification)
 
 
+# イベント：強制注文取消
+class WatchShareForceCancelOrder(Watcher):
+    def __init__(self):
+        super().__init__(share_exchange_contract, "ForceCancelOrder", {})
+
+    def watch(self, entries):
+        company_list = CompanyList.get()
+
+        for entry in entries:
+            token_address = entry["args"]["tokenAddress"]
+
+            if not token_list.is_registered(token_address):
+                continue
+
+            token = token_factory.get_share(token_address)
+
+            company = company_list.find(token.owner_address)
+
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": token_address,
+                "token_name": token.name,
+                "exchange_address": IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+                "token_type": "IbetShare"
+            }
+
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = NotificationType.FORCE_CANCEL_ORDER.value
+            notification.priority = 2
+            notification.address = entry["args"]["accountAddress"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+
 # イベント：約定（買）
 class WatchShareBuyAgreement(Watcher):
     def __init__(self):
         super().__init__(share_exchange_contract, "Agree", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -269,7 +304,7 @@ class WatchShareSellAgreement(Watcher):
         super().__init__(share_exchange_contract, "Agree", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -306,7 +341,7 @@ class WatchShareBuySettlementOK(Watcher):
         super().__init__(share_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -343,7 +378,7 @@ class WatchShareSellSettlementOK(Watcher):
         super().__init__(share_exchange_contract, "SettlementOK", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -380,7 +415,7 @@ class WatchShareBuySettlementNG(Watcher):
         super().__init__(share_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -417,7 +452,7 @@ class WatchShareSellSettlementNG(Watcher):
         super().__init__(share_exchange_contract, "SettlementNG", {})
 
     def watch(self, entries):
-        company_list = company_list_factory.get()
+        company_list = CompanyList.get()
 
         for entry in entries:
             token_address = entry["args"]["tokenAddress"]
@@ -452,6 +487,7 @@ def main():
     watchers = [
         WatchShareNewOrder(),
         WatchShareCancelOrder(),
+        WatchShareForceCancelOrder(),
         WatchShareBuyAgreement(),
         WatchShareSellAgreement(),
         WatchShareBuySettlementOK(),

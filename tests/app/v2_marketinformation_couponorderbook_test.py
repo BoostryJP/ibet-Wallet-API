@@ -82,6 +82,7 @@ class TestV2CouponOrderBook:
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [
             {
+                "exchange_address": exchange_address,
                 "order_id": 1,
                 "price": 1000,
                 "amount": 100,
@@ -134,6 +135,7 @@ class TestV2CouponOrderBook:
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [
             {
+                "exchange_address": exchange_address,
                 "order_id": 1,
                 "price": 1000,
                 "amount": 100,
@@ -321,6 +323,7 @@ class TestV2CouponOrderBook:
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [
             {
+                "exchange_address": exchange_address,
                 "order_id": sys.maxsize,
                 "price": sys.maxsize,
                 "amount": sys.maxsize,
@@ -420,6 +423,7 @@ class TestV2CouponOrderBook:
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [
             {
+                "exchange_address": exchange_address,
                 "order_id": 1,
                 "price": 1000,
                 "amount": 100,
@@ -607,6 +611,7 @@ class TestV2CouponOrderBook:
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [
             {
+                "exchange_address": exchange_address,
                 "order_id": sys.maxsize,
                 "price": sys.maxsize,
                 "amount": sys.maxsize,
@@ -714,11 +719,13 @@ class TestV2CouponOrderBook:
 
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [{
+            "exchange_address": exchange_address,
             'order_id': 2,
             'price': 999,
             'amount': 100,
             'account_address': account_address,
         }, {
+            "exchange_address": exchange_address,
             'order_id': 1,
             'price': 1000,
             'amount': 100,
@@ -780,11 +787,13 @@ class TestV2CouponOrderBook:
 
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [{
+            "exchange_address": exchange_address,
             'order_id': 2,
             'price': 1001,
             'amount': 100,
             'account_address': account_address,
         }, {
+            "exchange_address": exchange_address,
             'order_id': 1,
             'price': 1000,
             'amount': 100,
@@ -927,11 +936,13 @@ class TestV2CouponOrderBook:
 
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [{
+            "exchange_address": exchange_address,
             "order_id": 2,
             "price": 3000,
             "amount": 50,
             "account_address": account_addresses[2],
         }, {
+            "exchange_address": exchange_address,
             "order_id": 3,
             "price": 6000,
             "amount": 70,
@@ -1074,6 +1085,7 @@ class TestV2CouponOrderBook:
 
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [{
+            "exchange_address": exchange_address,
             "order_id": 2,
             "price": 3000,
             "amount": 50,
@@ -1215,16 +1227,19 @@ class TestV2CouponOrderBook:
 
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [{
+            "exchange_address": exchange_address,
             "order_id": 0,
             "price": 1000,
             "amount": 100,
             "account_address": account_addresses[0],
         }, {
+            "exchange_address": exchange_address,
             "order_id": 2,
             "price": 3000,
             "amount": 50,
             "account_address": account_addresses[2],
         }, {
+            "exchange_address": exchange_address,
             "order_id": 3,
             "price": 6000,
             "amount": 70,
@@ -1366,11 +1381,13 @@ class TestV2CouponOrderBook:
 
         resp = client.simulate_post(self.apiurl, json=request_body)
         assumed_body = [{
+            "exchange_address": exchange_address,
             "order_id": 2,
             "price": 3000,
             "amount": 50,
             "account_address": account_addresses[2],
         }, {
+            "exchange_address": exchange_address,
             "order_id": 0,
             "price": 1000,
             "amount": 100,

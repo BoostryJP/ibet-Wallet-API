@@ -34,12 +34,15 @@ class TestPositionAccountAddressShare:
     issuer = eth_account["issuer"]
     account_1 = eth_account["deployer"]
     account_2 = eth_account["trader"]
+    zero_address = {"address": config.ZERO_ADDRESS}
 
     # Prepare balance data
     # balance = 1000000
     @staticmethod
-    def create_balance_data(account, exchange_contract,
-                            personal_info_contract, token_list_contract):
+    def create_balance_data(account,
+                            exchange_contract,
+                            personal_info_contract,
+                            token_list_contract):
         issuer_address = TestPositionAccountAddressShare.issuer["account_address"]
 
         # Issue token
@@ -66,7 +69,7 @@ class TestPositionAccountAddressShare:
         )
         IbetShareUtils.register_token_list(
             tx_from=issuer_address,
-            token_address=token["address"],
+            token_address=token.address,
             token_list_contract_address=token_list_contract["address"]
         )
         PersonalInfoUtils.register(
@@ -77,7 +80,7 @@ class TestPositionAccountAddressShare:
         IbetShareUtils.transfer_to_exchange(
             tx_from=issuer_address,
             exchange_address=account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             amount=1000000
         )
 
@@ -86,18 +89,26 @@ class TestPositionAccountAddressShare:
     # Prepare pending_transfer data
     # balance = 1000000, pending_transfer = [args pending_transfer]
     @staticmethod
-    def create_pending_transfer_data(account, to_account, exchange_contract,
-                                     personal_info_contract, token_list_contract, pending_transfer):
+    def create_pending_transfer_data(account,
+                                     to_account,
+                                     exchange_contract,
+                                     personal_info_contract,
+                                     token_list_contract,
+                                     pending_transfer):
         issuer_address = TestPositionAccountAddressShare.issuer["account_address"]
 
         # Issue token
         token = TestPositionAccountAddressShare.create_balance_data(
-            account, exchange_contract, personal_info_contract, token_list_contract)
+            account,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract
+        )
 
         # Apply for transfer
         IbetShareUtils.set_transfer_approval_required(
             tx_from=issuer_address,
-            token_address=token["address"],
+            token_address=token.address,
             required=True
         )
         PersonalInfoUtils.register(
@@ -107,7 +118,7 @@ class TestPositionAccountAddressShare:
         )
         IbetShareUtils.apply_for_transfer(
             tx_from=account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             to=to_account["account_address"],
             value=pending_transfer
         )
@@ -120,13 +131,17 @@ class TestPositionAccountAddressShare:
     def create_commitment_data(account, exchange_contract, personal_info_contract, token_list_contract, commitment):
         # Issue token
         token = TestPositionAccountAddressShare.create_balance_data(
-            account, exchange_contract, personal_info_contract, token_list_contract)
+            account,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract
+        )
 
         # Sell order
         IbetShareUtils.sell(
             tx_from=account["account_address"],
             exchange_address=exchange_contract["address"],
-            token_address=token["address"],
+            token_address=token.address,
             amount=commitment,
             price=1000
         )
@@ -142,7 +157,11 @@ class TestPositionAccountAddressShare:
 
         # Issue token
         token = TestPositionAccountAddressShare.create_balance_data(
-            account, exchange_contract, personal_info_contract, token_list_contract)
+            account,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract
+        )
 
         # Transfer all amount
         PersonalInfoUtils.register(
@@ -153,7 +172,7 @@ class TestPositionAccountAddressShare:
         IbetShareUtils.transfer_to_exchange(
             tx_from=account["account_address"],
             exchange_address=to_account["account_address"],
-            token_address=token["address"],
+            token_address=token.address,
             amount=1000000
         )
 
@@ -181,49 +200,111 @@ class TestPositionAccountAddressShare:
 
         # Prepare data
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
             token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+        self.list_token(token_non.address, session)  # not target
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_1 = self.create_balance_data(
-            self.account_1, {"address": config.ZERO_ADDRESS}, personal_info_contract, token_list_contract)
-        self.list_token(token_1["address"], session)
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_1.address, session)
+
         token_2 = self.create_balance_data(
-            self.account_1, {"address": config.ZERO_ADDRESS}, personal_info_contract, token_list_contract)
-        self.list_token(token_2["address"], session)
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_2.address, session)
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_3 = self.create_pending_transfer_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract, 100)
-        self.list_token(token_3["address"], session)
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.list_token(token_3.address, session)
+
         token_4 = self.create_pending_transfer_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract, 1000000)
-        self.list_token(token_4["address"], session)
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.list_token(token_4.address, session)
+
         token_5 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
-        self.list_token(token_5["address"], session)
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.list_token(token_5.address, session)
+
         token_6 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
-        self.list_token(token_6["address"], session)
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.list_token(token_6.address, session)
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
@@ -241,42 +322,42 @@ class TestPositionAccountAddressShare:
             },
             "positions": [
                 {
-                    "token_address": token_1["address"],
+                    "token_address": token_1.address,
                     "balance": 1000000,
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
                 },
                 {
-                    "token_address": token_2["address"],
+                    "token_address": token_2.address,
                     "balance": 1000000,
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
                 },
                 {
-                    "token_address": token_3["address"],
+                    "token_address": token_3.address,
                     "balance": 999900,
                     "pending_transfer": 100,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
                 },
                 {
-                    "token_address": token_4["address"],
+                    "token_address": token_4.address,
                     "balance": 0,
                     "pending_transfer": 1000000,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
                 },
                 {
-                    "token_address": token_5["address"],
+                    "token_address": token_5.address,
                     "balance": 999900,
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
                 },
                 {
-                    "token_address": token_6["address"],
+                    "token_address": token_6.address,
                     "balance": 0,
                     "pending_transfer": 0,
                     "exchange_balance": 0,
@@ -294,49 +375,112 @@ class TestPositionAccountAddressShare:
 
         # Prepare data
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_1 = self.create_balance_data(
-            self.account_1, {"address": config.ZERO_ADDRESS}, personal_info_contract, token_list_contract)
-        self.list_token(token_1["address"], session)
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_1.address, session)
+
         token_2 = self.create_balance_data(
-            self.account_1, {"address": config.ZERO_ADDRESS}, personal_info_contract, token_list_contract)
-        self.list_token(token_2["address"], session)
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_2.address, session)
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_3 = self.create_pending_transfer_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract, 100)
-        self.list_token(token_3["address"], session)
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.list_token(token_3.address, session)
+
         token_4 = self.create_pending_transfer_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract, 1000000)
-        self.list_token(token_4["address"], session)
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.list_token(token_4.address, session)
+
         token_5 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 100)
-        self.list_token(token_5["address"], session)
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.list_token(token_5.address, session)
+
         token_6 = self.create_commitment_data(
-            self.account_1, exchange_contract, personal_info_contract, token_list_contract, 1000000)
-        self.list_token(token_6["address"], session)
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.list_token(token_6.address, session)
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
+
         token_non = self.create_non_balance_data(
-            self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, personal_info_contract,
-            token_list_contract)
-        self.list_token(token_non["address"], session)  # not target
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.list_token(token_non.address, session)  # not target
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
@@ -359,14 +503,14 @@ class TestPositionAccountAddressShare:
             },
             "positions": [
                 {
-                    "token_address": token_2["address"],
+                    "token_address": token_2.address,
                     "balance": 1000000,
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
                 },
                 {
-                    "token_address": token_3["address"],
+                    "token_address": token_3.address,
                     "balance": 999900,
                     "pending_transfer": 100,
                     "exchange_balance": 0,

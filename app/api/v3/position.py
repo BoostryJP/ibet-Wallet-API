@@ -88,10 +88,14 @@ class BasePosition(BaseResource):
         limit_count = 0
         count = 0
         for _token in _token_list:
-            token_info = _list_contract.functions.getTokenByAddress(_token.token_address).call()
+            token_info = Contract.call_function(
+                contract=_list_contract,
+                function_name="getTokenByAddress",
+                args=(_token.token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
             token_address = token_info[0]
             token_template = token_info[1]
-
             if token_template == self.token_type:
 
                 # Get Position
@@ -158,7 +162,12 @@ class BasePosition(BaseResource):
             contract_name="TokenList",
             address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
-        token_info = _list_contract.functions.getTokenByAddress(token_address).call()
+        token_info = Contract.call_function(
+            contract=_list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        )
         token_template = token_info[1]
         if token_template != self.token_type:
             raise DataNotExistsError(description="contract_address: %s" % contract_address)
@@ -176,10 +185,25 @@ class BasePosition(BaseResource):
         _token_contract, _exchange_contract = self._get_contract(token_address)
 
         try:
-            balance = _token_contract.functions.balanceOf(account_address).call()
+            balance = Contract.call_function(
+                contract=_token_contract,
+                function_name="balanceOf",
+                args=(account_address,),
+                default_returns=0
+            )
             if _exchange_contract is not None:
-                _exchange_balance = _exchange_contract.functions.balanceOf(account_address, token_address).call()
-                _exchange_commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
+                _exchange_balance = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="balanceOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
+                _exchange_commitment = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="commitmentOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                 _exchange_balance = 0
@@ -216,7 +240,12 @@ class BasePosition(BaseResource):
         )
 
         # Get Exchange Contract
-        exchange_address = _token_contract.functions.tradableExchange().call()
+        exchange_address = Contract.call_function(
+            contract=_token_contract,
+            function_name="tradableExchange",
+            args=(),
+            default_returns=config.ZERO_ADDRESS
+        )
         _exchange_contract = None
         if exchange_address != config.ZERO_ADDRESS:
             _exchange_contract = Contract.get_contract(
@@ -269,20 +298,42 @@ class BasePositionShare(BasePosition):
         _token_contract, _exchange_contract = self._get_contract(token_address)
 
         try:
-            balance = _token_contract.functions.balanceOf(account_address).call()
+            balance = Contract.call_function(
+                contract=_token_contract,
+                function_name="balanceOf",
+                args=(account_address,),
+                default_returns=0
+            )
+            pending_transfer = Contract.call_function(
+                contract=_token_contract,
+                function_name="pendingTransfer",
+                args=(account_address,),
+                default_returns=0
+            )
             if _exchange_contract is not None:
-                _exchange_balance = _exchange_contract.functions.balanceOf(account_address, token_address).call()
-                _exchange_commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
+                _exchange_balance = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="balanceOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
+                _exchange_commitment = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="commitmentOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                 _exchange_balance = 0
                 _exchange_commitment = 0
 
-            pending_transfer = _token_contract.functions.pendingTransfer(account_address).call()
             # If balance, pending_transfer, and commitment are non-zero,
             # get the token information from TokenContract.
-            if balance == 0 and pending_transfer == 0 \
-                    and _exchange_balance == 0 and _exchange_commitment == 0:
+            if balance == 0 and \
+                    pending_transfer == 0 and \
+                    _exchange_balance == 0 and \
+                    _exchange_commitment == 0:
                 return None
             else:
                 token = ShareToken.get(
@@ -291,9 +342,9 @@ class BasePositionShare(BasePosition):
                 )
                 position = {
                     "balance": balance,
+                    "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
-                    "exchange_commitment": _exchange_commitment,
-                    "pending_transfer": pending_transfer
+                    "exchange_commitment": _exchange_commitment
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -311,6 +362,69 @@ class BasePositionStraightBond(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetStraightBond"
         self.token_model = BondToken
+
+    def _get_position(self, account_address, token_address, session, is_detail=False):
+
+        # Get Contract
+        _token_contract, _exchange_contract = self._get_contract(token_address)
+
+        try:
+            balance = Contract.call_function(
+                contract=_token_contract,
+                function_name="balanceOf",
+                args=(account_address,),
+                default_returns=0
+            )
+            pending_transfer = Contract.call_function(
+                contract=_token_contract,
+                function_name="pendingTransfer",
+                args=(account_address,),
+                default_returns=0
+            )
+            if _exchange_contract is not None:
+                _exchange_balance = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="balanceOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
+                _exchange_commitment = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="commitmentOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
+            else:
+                # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
+                _exchange_balance = 0
+                _exchange_commitment = 0
+
+            # If balance, pending_transfer, and commitment are non-zero,
+            # get the token information from TokenContract.
+            if balance == 0 and \
+                    pending_transfer == 0 and \
+                    _exchange_balance == 0 and \
+                    _exchange_commitment == 0:
+                return None
+            else:
+                token = BondToken.get(
+                    session=session,
+                    token_address=token_address
+                )
+                position = {
+                    "balance": balance,
+                    "pending_transfer": pending_transfer,
+                    "exchange_balance": _exchange_balance,
+                    "exchange_commitment": _exchange_commitment
+                }
+                if is_detail is True:
+                    position["token"] = token.__dict__
+                else:
+                    position["token_address"] = token_address
+                return position
+        except Exception as e:
+            LOG.error(e)
+            return None
 
 
 class BasePositionMembership(BasePosition):
@@ -333,15 +447,36 @@ class BasePositionCoupon(BasePosition):
         _token_contract, _exchange_contract = self._get_contract(token_address)
 
         try:
-            balance = _token_contract.functions.balanceOf(account_address).call()
+            balance = Contract.call_function(
+                contract=_token_contract,
+                function_name="balanceOf",
+                args=(account_address,),
+                default_returns=0
+            )
+            used = Contract.call_function(
+                contract=_token_contract,
+                function_name="usedOf",
+                args=(account_address,),
+                default_returns=0
+            )
             if _exchange_contract is not None:
-                _exchange_balance = _exchange_contract.functions.balanceOf(account_address, token_address).call()
-                _exchange_commitment = _exchange_contract.functions.commitmentOf(account_address, token_address).call()
+                _exchange_balance = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="balanceOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
+                _exchange_commitment = Contract.call_function(
+                    contract=_exchange_contract,
+                    function_name="commitmentOf",
+                    args=(account_address, token_address,),
+                    default_returns=0
+                )
             else:
                 # If EXCHANGE_CONTRACT_ADDRESS is not set, set commitment to zero.
                 _exchange_balance = 0
                 _exchange_commitment = 0
-            used = _token_contract.functions.usedOf(account_address).call()
+
             # Retrieving token receipt history from IDXTransfer
             # NOTE: Index data has a lag from the most recent transfer state.
             received_history = session.query(IDXTransfer). \
@@ -351,8 +486,10 @@ class BasePositionCoupon(BasePosition):
             # If balance, commitment, and used are non-zero, and exist received history,
             # get the token information from TokenContract.
             if balance == 0 and \
-                    _exchange_balance == 0 and _exchange_commitment == 0 and \
-                    used == 0 and received_history is None:
+                    _exchange_balance == 0 and \
+                    _exchange_commitment == 0 and \
+                    used == 0 and \
+                    received_history is None:
                 return None
             else:
                 token = CouponToken.get(
@@ -383,7 +520,7 @@ class PositionShare(BasePositionShare):
     Endpoint: /Position/{account_address}/Share
     """
 
-    def on_get(self, req, res, account_address=None):
+    def on_get(self, req, res, account_address=None, **kwargs):
         LOG.info('v3.position.PositionShare(GET)')
         super().on_get_list(req, res, account_address)
 
@@ -396,7 +533,7 @@ class PositionStraightBond(BasePositionStraightBond):
     Endpoint: /Position/{account_address}/StraightBond
     """
 
-    def on_get(self, req, res, account_address=None):
+    def on_get(self, req, res, account_address=None, **kwargs):
         LOG.info('v3.position.PositionStraightBond(GET)')
         super().on_get_list(req, res, account_address)
 
@@ -409,7 +546,7 @@ class PositionMembership(BasePositionMembership):
     Endpoint: /Position/{account_address}/Membership
     """
 
-    def on_get(self, req, res, account_address=None):
+    def on_get(self, req, res, account_address=None, **kwargs):
         LOG.info('v3.position.PositionMembership(GET)')
         super().on_get_list(req, res, account_address)
 
@@ -422,7 +559,7 @@ class PositionCoupon(BasePositionCoupon):
     Endpoint: /Position/{account_address}/Coupon
     """
 
-    def on_get(self, req, res, account_address=None):
+    def on_get(self, req, res, account_address=None, **kwargs):
         LOG.info('v3.position.PositionCoupon(GET)')
         super().on_get_list(req, res, account_address)
 

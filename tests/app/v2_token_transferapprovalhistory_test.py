@@ -41,6 +41,7 @@ class TestV2TransferApprovalHistory:
     apiurl_base = "/v2/Token/{contract_address}/TransferApprovalHistory"
 
     token_address = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A740"
+    exchange_address = "0x4Dd3E334ea551402482003bbf72031b366155B0A"
     application_id = 123
     from_address = "0xF13D2aCe101F1e4B55d96d66fBF18aD8a8aF22bF"
     to_address = "0x6431d02363FC69fFD9F69CAa4E05E96d4e79f3da"
@@ -56,6 +57,7 @@ class TestV2TransferApprovalHistory:
     def insert_transfer_approval(session, transfer_approval: dict):
         _transfer_approval = IDXTransferApproval()
         _transfer_approval.token_address = transfer_approval["token_address"]
+        _transfer_approval.exchange_address = transfer_approval.get("exchange_address")
         _transfer_approval.application_id = transfer_approval["application_id"]
         _transfer_approval.from_address = transfer_approval["from_address"]
         _transfer_approval.to_address = transfer_approval["to_address"]
@@ -65,6 +67,7 @@ class TestV2TransferApprovalHistory:
         _transfer_approval.approval_datetime = transfer_approval.get("approval_datetime")  # nullable
         _transfer_approval.approval_blocktimestamp = transfer_approval.get("approval_blocktimestamp")  # nullable
         _transfer_approval.cancelled = transfer_approval.get("cancelled")
+        _transfer_approval.transfer_approved = transfer_approval.get("transfer_approved")
         session.add(_transfer_approval)
 
     ####################################################################
@@ -102,10 +105,10 @@ class TestV2TransferApprovalHistory:
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert resp.json["data"] == assumed_body
 
-    # Normal_2
+    # Normal_2_1
     # Data exists
     # offset=設定なし、 limit=設定なし
-    def test_normal_2(self, client, session):
+    def test_normal_2_1(self, client, session):
         # prepare data
         listing = {
             "token_address": self.token_address,
@@ -130,7 +133,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -161,6 +165,7 @@ class TestV2TransferApprovalHistory:
         data = resp.json["data"]["transfer_approval_history"]
         for i, item in enumerate(data):
             assert item["token_address"] == self.token_address
+            assert item["exchange_address"] is None
             assert item["application_id"] == i
             assert item["from_address"] == self.from_address
             assert item["to_address"] == self.to_address
@@ -169,6 +174,79 @@ class TestV2TransferApprovalHistory:
             assert before_datetime < item["approval_datetime"] < after_datetime
             assert before_datetime < item["approval_blocktimestamp"] < after_datetime
             assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
+
+    # Normal_2_2
+    # Data exists (exchange events)
+    # offset=設定なし、 limit=設定なし
+    def test_normal_2_2(self, client, session):
+        # prepare data
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        before_datetime = datetime.utcnow().\
+            replace(tzinfo=UTC).\
+            astimezone(JST).\
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+        time.sleep(1)
+
+        for i in range(2, -1, -1):
+            transfer_approval = {
+                "token_address": self.token_address,
+                "exchange_address": self.exchange_address,
+                "application_id": i,
+                "from_address": self.from_address,
+                "to_address": self.to_address,
+                "value": 10,
+                "application_datetime": datetime.utcnow(),
+                "application_blocktimestamp": datetime.utcnow(),
+                "approval_datetime": datetime.utcnow(),
+                "approval_blocktimestamp": datetime.utcnow(),
+                "cancelled": False,
+                "transfer_approved": True
+            }
+            self.insert_transfer_approval(
+                session,
+                transfer_approval=transfer_approval
+            )
+
+        time.sleep(1)
+        after_datetime = datetime.utcnow().\
+            replace(tzinfo=UTC).\
+            astimezone(JST).\
+            strftime("%Y/%m/%d %H:%M:%S.%f")
+
+        # request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = ""
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+
+        assert resp.json["data"]["result_set"] == {
+                "count": 3,
+                "offset": None,
+                "limit": None,
+                "total": 3
+        }
+        data = resp.json["data"]["transfer_approval_history"]
+        for i, item in enumerate(data):
+            assert item["token_address"] == self.token_address
+            assert item["exchange_address"] == self.exchange_address
+            assert item["application_id"] == i
+            assert item["from_address"] == self.from_address
+            assert item["to_address"] == self.to_address
+            assert before_datetime < item["application_datetime"] < after_datetime
+            assert before_datetime < item["application_blocktimestamp"] < after_datetime
+            assert before_datetime < item["approval_datetime"] < after_datetime
+            assert before_datetime < item["approval_blocktimestamp"] < after_datetime
+            assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
 
     # Normal_3
     # Data exists
@@ -198,7 +276,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -237,6 +316,7 @@ class TestV2TransferApprovalHistory:
             assert before_datetime < item["approval_datetime"] < after_datetime
             assert before_datetime < item["approval_blocktimestamp"] < after_datetime
             assert item["cancelled"] is False
+            assert item["transfer_approved"] is True
 
     # Normal_4
     # Data exists
@@ -266,7 +346,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -304,6 +385,7 @@ class TestV2TransferApprovalHistory:
         assert before_datetime < data[0]["approval_datetime"] < after_datetime
         assert before_datetime < data[0]["approval_blocktimestamp"] < after_datetime
         assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
 
     # Normal_5
     # Data exists
@@ -333,7 +415,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,
@@ -371,6 +454,7 @@ class TestV2TransferApprovalHistory:
         assert before_datetime < data[0]["approval_datetime"] < after_datetime
         assert before_datetime < data[0]["approval_blocktimestamp"] < after_datetime
         assert data[0]["cancelled"] is False
+        assert data[0]["transfer_approved"] is True
 
     # Normal_6
     # Data exists
@@ -394,7 +478,8 @@ class TestV2TransferApprovalHistory:
                 "application_blocktimestamp": datetime.utcnow(),
                 "approval_datetime": datetime.utcnow(),
                 "approval_blocktimestamp": datetime.utcnow(),
-                "cancelled": False
+                "cancelled": False,
+                "transfer_approved": True
             }
             self.insert_transfer_approval(
                 session,

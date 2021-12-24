@@ -31,6 +31,14 @@ from app.model.db import (
 from batch import indexer_Position_Coupon
 from tests.account_config import eth_account
 from tests.contract_modules import (
+    cancel_order,
+    coupon_transfer_to_exchange,
+    create_token_escrow,
+    finish_token_escrow,
+    force_cancel_order,
+    get_latest_escrow_id,
+    get_latest_orderid,
+    make_sell,
     membership_transfer_to_exchange,
     issue_coupon_token,
     coupon_register_list,
@@ -155,18 +163,24 @@ class TestProcessor:
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[2]
         assert _position.id == 3
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
 
     # <Normal_3>
     # Multi Token
@@ -198,36 +212,48 @@ class TestProcessor:
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[2]
         assert _position.id == 3
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[3]
         assert _position.id == 4
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 5000 - 3000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[4]
         assert _position.id == 5
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 5000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[5]
         assert _position.id == 6
         assert _position.token_address == token2["address"]
         assert _position.account_address == self.trader2["account_address"]
         assert _position.balance == 3000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
 
     # <Normal_4>
     # Single Token
@@ -258,16 +284,105 @@ class TestProcessor:
         assert _position.account_address == self.issuer["account_address"]
         assert _position.balance == 1000000 - 10000 - 3000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
         assert _position.account_address == self.trader["account_address"]
         assert _position.balance == 10000
         assert _position.pending_transfer is None
+        assert _position.exchange_balance == 0
+        assert _position.exchange_commitment == 0
 
     # <Normal_5>
-    # No event logs
+    # Single Token
+    # Multi event logs
+    # Exchange
+    # - Transfer
+    # - Commitment
     def test_normal_5(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        coupon_exchange = shared_contract["IbetCouponExchange"]
+        agent = eth_account['agent']
+        token = self.issue_token_coupon(self.issuer, coupon_exchange["address"], token_list_contract)
+        self.listing_token(token["address"], session)
+
+        # Transfer
+        coupon_transfer_to_exchange(self.issuer, {"address": coupon_exchange["address"]}, token, 10000)
+        make_sell(self.issuer, coupon_exchange, token, 111, 1000)
+        cancel_order(self.issuer, coupon_exchange, get_latest_orderid(coupon_exchange))
+        make_sell(self.issuer, coupon_exchange, token, 222, 1000)
+        force_cancel_order(agent, coupon_exchange, get_latest_orderid(coupon_exchange))
+        make_sell(self.issuer, coupon_exchange, token, 333, 1000)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _position_list = session.query(
+            IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 1
+        _position: IDXPosition = _position_list[0]
+        assert _position.id == 1
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000 + 111 + 222
+        assert _position.pending_transfer is None
+        assert _position.exchange_balance == 10000 - 111 - 222 - 333
+        assert _position.exchange_commitment == 333
+
+    # <Normal_6>
+    # Single Token
+    # Multi event logs
+    # Escrow
+    # - Transfer
+    # - Commitment
+    def test_normal_6(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        escrow_contract = shared_contract["IbetEscrow"]
+        token = self.issue_token_coupon(self.issuer, escrow_contract.address, token_list_contract)
+        self.listing_token(token["address"], session)
+
+        # Deposit and Escrow
+        coupon_transfer_to_exchange(
+            self.issuer, {"address": escrow_contract.address}, token, 10000)
+        create_token_escrow(self.issuer, {"address": escrow_contract.address},
+                                     token, self.trader["account_address"], self.issuer["account_address"], 200)
+        finish_token_escrow(
+            self.issuer, {"address": escrow_contract.address}, get_latest_escrow_id({"address": escrow_contract.address}))
+        create_token_escrow(self.issuer, {"address": escrow_contract.address},
+                                     token, self.trader["account_address"], self.issuer["account_address"], 300)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _position_list = session.query(
+            IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 2
+        _position: IDXPosition = _position_list[0]
+        assert _position.id == 1
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000
+        assert _position.pending_transfer is None
+        assert _position.exchange_balance == 10000 - 200 - 300
+        assert _position.exchange_commitment == 300
+        _position: IDXPosition = _position_list[1]
+        assert _position.id == 2
+        assert _position.token_address == token["address"]
+        assert _position.account_address == self.trader["account_address"]
+        assert _position.balance == 0
+        assert _position.pending_transfer is None
+        assert _position.exchange_balance == 200
+        assert _position.exchange_commitment == 0
+
+    # <Normal_7>
+    # No event logs
+    def test_normal_7(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
@@ -281,9 +396,9 @@ class TestProcessor:
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
 
-    # <Normal_6>
+    # <Normal_8>
     # Not Listing Token
-    def test_normal_6(self, processor, shared_contract, session):
+    def test_normal_8(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)

@@ -16,9 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import json
-import falcon
 
 from app.errors import InvalidParameterError
 
@@ -27,10 +25,9 @@ class JSONTranslator(object):
     def process_request(self, req, res):
         if self.__get_content_type(req) == 'application/json':
             try:
-                raw_json = req.stream.read()
+                raw_json = req.bounded_stream.read()
             except Exception:
-                message = 'Read Error'
-                raise falcon('Bad request', message)
+                raise InvalidParameterError('Content-Length is not set correctly')
             try:
                 req.context['raw_data'] = raw_json.decode('utf-8')
                 req.context['data'] = json.loads(raw_json.decode('utf-8'))

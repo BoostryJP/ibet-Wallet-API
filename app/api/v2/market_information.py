@@ -71,18 +71,24 @@ class GetAgreement(BaseResource):
         address_list = [to_checksum_address(address) for address in address_list if address is not None]
         if exchange_address not in address_list:
             raise InvalidParameterError(description="Invalid Address")
-        ExchangeContract = Contract.get_contract("IbetExchange", exchange_address)
+        exchange_contract = Contract.get_contract("IbetExchange", exchange_address)
 
         # 注文情報の取得
-        maker_address, token_address, _, _, is_buy, _, _ = \
-            ExchangeContract.functions.getOrder(order_id).call()
+        maker_address, token_address, _, _, is_buy, _, _ = Contract.call_function(
+            contract=exchange_contract,
+            function_name="getOrder",
+            args=(order_id,)
+        )
 
         if maker_address == config.ZERO_ADDRESS:
             raise InvalidParameterError("Data not found")
 
         # 約定情報の取得
-        taker_address, amount, price, canceled, paid, expiry = \
-            ExchangeContract.functions.getAgreement(order_id, agreement_id).call()
+        taker_address, amount, price, canceled, paid, expiry = Contract.call_function(
+            contract=exchange_contract,
+            function_name="getAgreement",
+            args=(order_id, agreement_id, )
+        )
 
         if taker_address == config.ZERO_ADDRESS:
             raise InvalidParameterError("Data not found")
@@ -268,6 +274,7 @@ class StraightBondOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
+                "exchange_address": exchange_address,
                 "order_id": order_id,
                 "price": price,
                 "amount": amount,
@@ -330,19 +337,19 @@ class StraightBondLastPrice(BaseResource):
 
         request_json = StraightBondLastPrice.validate(req)
 
-        ExchangeContract = Contract.get_contract(
+        exchange_contract = Contract.get_contract(
             "IbetExchange",
             config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
         for token_address in request_json["address_list"]:
-            try:
-                last_price = ExchangeContract.functions.lastPrice(
-                    to_checksum_address(token_address)).call()
-            except Exception as e:
-                LOG.error(e)
-                last_price = 0
+            last_price = Contract.call_function(
+                contract=exchange_contract,
+                function_name="lastPrice",
+                args=(to_checksum_address(token_address),),
+                default_returns=0
+            )
             price_list.append({
                 "token_address": token_address,
                 "last_price": last_price
@@ -573,6 +580,7 @@ class MembershipOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
+                "exchange_address": exchange_address,
                 "order_id": order_id,
                 "price": price,
                 "amount": amount,
@@ -635,19 +643,19 @@ class MembershipLastPrice(BaseResource):
 
         request_json = MembershipLastPrice.validate(req)
 
-        ExchangeContract = Contract.get_contract(
+        exchange_contract = Contract.get_contract(
             "IbetExchange",
             config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
         for token_address in request_json["address_list"]:
-            try:
-                last_price = ExchangeContract.functions. \
-                    lastPrice(to_checksum_address(token_address)).call()
-            except Exception as e:
-                LOG.error(e)
-                last_price = 0
+            last_price = Contract.call_function(
+                contract=exchange_contract,
+                function_name="lastPrice",
+                args=(to_checksum_address(token_address),),
+                default_returns=0
+            )
 
             price_list.append({
                 "token_address": token_address,
@@ -880,6 +888,7 @@ class CouponOrderBook(BaseResource):
                 continue
 
             order_list_tmp.append({
+                "exchange_address": exchange_address,
                 "order_id": order_id,
                 "price": price,
                 "amount": amount,
@@ -942,20 +951,19 @@ class CouponLastPrice(BaseResource):
 
         request_json = CouponLastPrice.validate(req)
 
-        ExchangeContract = Contract.get_contract(
+        exchange_contract = Contract.get_contract(
             "IbetExchange",
             config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
         )
 
         price_list = []
         for token_address in request_json["address_list"]:
-            try:
-                last_price = ExchangeContract.functions. \
-                    lastPrice(to_checksum_address(token_address)).call()
-            except Exception as e:
-                LOG.error(e)
-                last_price = 0
-
+            last_price = Contract.call_function(
+                contract=exchange_contract,
+                function_name="lastPrice",
+                args=(to_checksum_address(token_address),),
+                default_returns=0
+            )
             price_list.append({
                 "token_address": token_address,
                 "last_price": last_price

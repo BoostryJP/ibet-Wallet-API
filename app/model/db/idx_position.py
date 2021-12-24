@@ -37,6 +37,10 @@ class IDXPosition(Base):
     account_address = Column(String(42))
     # Balance
     balance = Column(BigInteger)
+    # Exchange Balance
+    exchange_balance = Column(BigInteger)
+    # Commitment Volume on Exchange
+    exchange_commitment = Column(BigInteger)
     # Pending Transfer
     pending_transfer = Column(BigInteger)
 
@@ -45,6 +49,8 @@ class IDXPosition(Base):
         "token_address": str,
         "account_address": str,
         "balance": int,
+        "exchange_balance": int,
+        "exchange_commitment": int,
         "pending_transfer": int
     }
     FIELDS.update(Base.FIELDS)

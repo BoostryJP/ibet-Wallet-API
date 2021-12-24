@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.9.0"
+  version: "21.12.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -11,29 +11,29 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 basePath: "/v2"
 tags:
-- name: Admin
-  description: System administration
-- name: Node
-  description: Information about blockchain and contracts
-- name: Company
-  description: Company information
-- name: User
-  description: User information
-- name: Notification
-  description: Notifications for users
-- name: Transaction
-  description: Send blockchain transaction
-- name: Token
-  description: Attribute information of the listed tokens
-- name: IbetExchange
-  description: Trade related features on IbetExchage
-- name: Position
-  description: Token balance held by the user
-- name: Statistics
-  description: Statistical information
+  - name: Admin
+    description: System administration
+  - name: Node
+    description: Information about blockchain and contracts
+  - name: Company
+    description: Company information
+  - name: User
+    description: User information
+  - name: Notification
+    description: Notifications for users
+  - name: Transaction
+    description: Send blockchain transaction
+  - name: Token
+    description: Attribute information of the listed tokens
+  - name: IbetExchange
+    description: Trade related features on IbetExchage
+  - name: Position
+    description: Token balance held by the user
+  - name: Statistics
+    description: Statistical information
 schemes:
-- "https"
-- "http"
+  - "https"
+  - "http"
 paths:
   /Admin/Tokens:
     get:
@@ -308,6 +308,10 @@ paths:
                     type: string
                   ibet_escrow_abi:
                     type: object
+                  ibet_security_token_escrow_address:
+                    type: string
+                  ibet_security_token_escrow_abi:
+                    type: object
                   e2e_messaging_address:
                     type: string
                   e2e_messaging_abi:
@@ -422,13 +426,11 @@ paths:
                   properties:
                     id:
                       type: integer
-                      example:
-                        1
+                      example: 1
                       description: transaction send order
                     status:
                       type: integer
-                      example:
-                        1
+                      example: 1
                       description: execution failure:0, execution success:1, execution success(pending transaction):2
         400:
           description: Invalid Parameter Error or Suspended Token
@@ -483,13 +485,11 @@ paths:
                   properties:
                     id:
                       type: integer
-                      example:
-                        1
+                      example: 1
                       description: transaction send order
                     status:
                       type: integer
-                      example:
-                        1
+                      example: 1
                       description: execution failure:0, execution success:1
                     transaction_hash:
                       type: string
@@ -698,7 +698,7 @@ paths:
                     homepage:
                       type: string
   /Company/{eth_address}/Tokens:
-   get:
+    get:
       tags:
         - "Company"
       summary: "List of tokens issued by issuer"
@@ -737,12 +737,16 @@ paths:
                       type: string
                     total_supply:
                       type: string
-                    image_url:
-                      type: string
                     contact_information:
                       type: string
                     privacy_policy:
                       type: string
+                    status:
+                      type: boolean
+                    max_holding_quantity:
+                      type: integer
+                    max_sell_amount:
+                      type: integer
         400:
           description: Invalid Parameter Error
           schema:
@@ -869,8 +873,7 @@ paths:
                       type: string
                     token_template:
                       type: string
-                      example:
-                        IbetStraightBond
+                      example: IbetStraightBond
                     owner_address:
                       type: string
                       description: issuer address
@@ -925,20 +928,7 @@ paths:
                     purpose:
                       type: string
                       description: purpose of issue
-                    image_url:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          url:
-                            type: string
-                    certification:
-                      type: array
-                      items:
-                        type: string
-                    initial_offering_status:
+                    is_offering:
                       type: boolean
                     max_holding_quantity:
                       type: integer
@@ -958,6 +948,8 @@ paths:
                       type: string
                     personal_info_address:
                       type: string
+                    transfer_approval_required:
+                      type: boolean
                     id:
                       type: integer
                       description: cursor id
@@ -1051,8 +1043,7 @@ paths:
                     type: string
                   token_template:
                     type: string
-                    example:
-                      IbetStraightBond
+                    example: IbetStraightBond
                   owner_address:
                     type: string
                     description: issuer address
@@ -1096,7 +1087,7 @@ paths:
                     type: string
                   interest_payment_date12:
                     type: string
-                  isRedeemed:
+                  is_redeemed:
                     type: boolean
                   redemption_date:
                     type: string
@@ -1109,18 +1100,7 @@ paths:
                   purpose:
                     type: string
                     description: purpose of issue
-                  image_url:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        url:
-                          type: string
-                  certification:
-                    type: string
-                  initial_offering_status:
+                  is_offering:
                     type: boolean
                   max_holding_quantity:
                     type: integer
@@ -1140,6 +1120,8 @@ paths:
                     type: string
                   personal_info_address:
                     type: string
+                  transfer_approval_required:
+                    type: boolean
         400:
           description: Invalid Parameter Error
           schema:
@@ -1188,8 +1170,7 @@ paths:
                       type: string
                     token_template:
                       type: string
-                      example:
-                        IbetShare
+                      example: IbetShare
                     owner_address:
                       type: string
                       description: issuer address
@@ -1220,24 +1201,11 @@ paths:
                           type: string
                     cancellation_date:
                       type: string
-                    reference_urls:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                          url:
-                            type: string
-                    image_url:
-                      type: array
-                      items:
-                        type: object
                     memo:
                       type: string
                     transferable:
                       type: boolean
-                    offering_status:
+                    is_offering:
                       type: boolean
                     status:
                       type: boolean
@@ -1350,8 +1318,7 @@ paths:
                     type: string
                   token_template:
                     type: string
-                    example:
-                      IbetShare
+                    example: IbetShare
                   owner_address:
                     type: string
                     description: issuer address
@@ -1382,24 +1349,11 @@ paths:
                         type: string
                   cancellation_date:
                     type: string
-                  reference_urls:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        url:
-                          type: string
-                  image_url:
-                    type: array
-                    items:
-                      type: object
                   memo:
                     type: string
                   transferable:
                     type: boolean
-                  offering_status:
+                  is_offering:
                     type: boolean
                   status:
                     type: boolean
@@ -1467,8 +1421,7 @@ paths:
                       type: string
                     token_template:
                       type: string
-                      example:
-                        IbetMembership
+                      example: IbetMembership
                     owner_address:
                       type: string
                       description: issuer address
@@ -1610,8 +1563,7 @@ paths:
                     type: string
                   token_template:
                     type: string
-                    example:
-                      IbetMembership
+                    example: IbetMembership
                   owner_address:
                     type: string
                     description: issuer address
@@ -1708,8 +1660,7 @@ paths:
                       type: string
                     token_template:
                       type: string
-                      example:
-                        IbetCoupon
+                      example: IbetCoupon
                     owner_address:
                       type: string
                       description: issuer address
@@ -1851,8 +1802,7 @@ paths:
                     type: string
                   token_template:
                     type: string
-                    example:
-                      IbetCoupon
+                    example: IbetCoupon
                   owner_address:
                     type: string
                     description: issuer address
@@ -1941,8 +1891,7 @@ paths:
                 properties:
                   token_template:
                     type: string
-                    example:
-                      IbetStraightBond
+                    example: IbetStraightBond
                   status:
                     type: boolean
                   transferable:
@@ -1993,6 +1942,10 @@ paths:
                     amount:
                       type: integer
                     pending_transfer:
+                      type: integer
+                    exchange_balance:
+                      type: integer
+                    exchange_commitment:
                       type: integer
         400:
           description: Invalid Parameter Error
@@ -2159,6 +2112,9 @@ paths:
                           type: string
                         cancelled:
                           type: boolean
+                        transfer_approved:
+                          description: transfer approval status
+                          type: boolean
         400:
           description: Invalid Parameter Error
           schema:
@@ -2177,7 +2133,7 @@ paths:
     post:
       tags:
         - IbetExchange
-      summary: "StraightBond Token Orderbook"
+      summary: "StraightBond Token Order Book"
       operationId: "StraightBondOrderBook"
       parameters:
         - name: "body"
@@ -2187,13 +2143,13 @@ paths:
             type: "object"
             properties:
               account_address:
-                description: Account address
+                description: Orderer's account address. Orders from the given address will not be included in the response.
                 type: string
               token_address:
                 description: Token address
                 type: string
               order_type:
-                description: Order type
+                description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
                 type: string
                 enum: [buy, sell]
             required:
@@ -2212,13 +2168,20 @@ paths:
                 items:
                   type: object
                   properties:
+                    exchange_address:
+                      description: Exchnage contract address
+                      type: string
                     order_id:
+                      description: Order id
                       type: integer
                     price:
+                      description: Order price
                       type: integer
                     amount:
+                      description: Order volume
                       type: integer
                     account_address:
+                      description: An orderer of each order book
                       type: string
         400:
           description: Invalid Parameter Error
@@ -2238,7 +2201,7 @@ paths:
     post:
       tags:
         - IbetExchange
-      summary: "Membership Token Orderbook"
+      summary: "Membership Token Order Book"
       operationId: "MembershipOrderBook"
       parameters:
         - name: "body"
@@ -2248,13 +2211,13 @@ paths:
             type: "object"
             properties:
               account_address:
-                description: Account address
+                description: Orderer's account address. Orders from the given address will not be included in the response.
                 type: string
               token_address:
                 description: Token address
                 type: string
               order_type:
-                description: Order type
+                description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
                 type: string
                 enum: [buy, sell]
             required:
@@ -2273,13 +2236,20 @@ paths:
                 items:
                   type: object
                   properties:
+                    exchange_address:
+                      description: Exchnage contract address
+                      type: string
                     order_id:
+                      description: Order id
                       type: integer
                     price:
+                      description: Order price
                       type: integer
                     amount:
+                      description: Order volume
                       type: integer
                     account_address:
+                      description: An orderer of each order book
                       type: string
         400:
           description: Invalid Parameter Error
@@ -2299,7 +2269,7 @@ paths:
     post:
       tags:
         - IbetExchange
-      summary: "Coupon Token Orderbook"
+      summary: "Coupon Token Order Book"
       operationId: "CouponOrderBook"
       parameters:
         - name: "body"
@@ -2309,13 +2279,13 @@ paths:
             type: "object"
             properties:
               account_address:
-                description: Account address
+                description: Orderer's account address. Orders from the given address will not be included in the response.
                 type: string
               token_address:
                 description: Token address
                 type: string
               order_type:
-                description: Order type
+                description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
                 type: string
                 enum: [buy, sell]
             required:
@@ -2334,13 +2304,20 @@ paths:
                 items:
                   type: object
                   properties:
+                    exchange_address:
+                      description: Exchnage contract address
+                      type: string
                     order_id:
+                      description: Order id
                       type: integer
                     price:
+                      description: Order price
                       type: integer
                     amount:
+                      description: Order volume
                       type: integer
                     account_address:
+                      description: An orderer of each order book
                       type: string
         400:
           description: Invalid Parameter Error
@@ -2833,8 +2810,7 @@ paths:
                           type: string
                         token_template:
                           type: string
-                          example:
-                            IbetStraightBond
+                          example: IbetStraightBond
                         owner_address:
                           type: string
                           description: issuer address
@@ -2891,22 +2867,9 @@ paths:
                           description: purpose of issue
                         transferable:
                           type: boolean
-                        isRedeemed:
+                        is_redeemed:
                           type: boolean
-                        image_url:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              id:
-                                type: integer
-                              url:
-                                type: string
-                        certification:
-                          type: array
-                          items:
-                            type: string
-                        initial_offering_status:
+                        is_offering:
                           type: boolean
                         max_holding_quantity:
                           type: integer
@@ -2924,7 +2887,11 @@ paths:
                           type: string
                         personal_info_address:
                           type: string
+                        transfer_approval_required:
+                          type: boolean
                     balance:
+                      type: integer
+                    pending_transfer:
                       type: integer
                     exchange_balance:
                       type: integer
@@ -2984,8 +2951,7 @@ paths:
                           type: string
                         token_template:
                           type: string
-                          example:
-                            IbetShare
+                          example: IbetShare
                         owner_address:
                           type: string
                           description: issuer address
@@ -3016,24 +2982,11 @@ paths:
                               type: string
                         cancellation_date:
                           type: string
-                        reference_urls:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              id:
-                                type: integer
-                              url:
-                                type: string
-                        image_url:
-                          type: array
-                          items:
-                            type: object
                         memo:
                           type: string
                         transferable:
                           type: boolean
-                        offering_status:
+                        is_offering:
                           type: boolean
                         status:
                           type: boolean
@@ -3115,8 +3068,7 @@ paths:
                           type: string
                         token_template:
                           type: string
-                          example:
-                            IbetMembership
+                          example: IbetMembership
                         owner_address:
                           type: string
                           description: issuer address
@@ -3225,8 +3177,7 @@ paths:
                           type: string
                         token_template:
                           type: string
-                          example:
-                            IbetCoupon
+                          example: IbetCoupon
                         owner_address:
                           type: string
                           description: issuer address
@@ -3380,6 +3331,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -3513,6 +3467,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -3538,8 +3495,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetStraightBond
+                              example: IbetStraightBond
                             owner_address:
                               type: string
                               description: issuer address
@@ -3596,22 +3552,9 @@ paths:
                               description: purpose of issue
                             transferable:
                               type: boolean
-                            isRedeemed:
+                            is_redeemed:
                               type: boolean
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            certification:
-                              type: array
-                              items:
-                                type: string
-                            initial_offering_status:
+                            is_offering:
                               type: boolean
                             max_holding_quantity:
                               type: integer
@@ -3629,6 +3572,8 @@ paths:
                               type: string
                             personal_info_address:
                               type: string
+                            transfer_approval_required:
+                              type: boolean
                         order:
                           type: object
                           properties:
@@ -3658,8 +3603,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetStraightBond
+                              example: IbetStraightBond
                             owner_address:
                               type: string
                               description: issuer address
@@ -3716,22 +3660,9 @@ paths:
                               description: purpose of issue
                             transferable:
                               type: boolean
-                            isRedeemed:
+                            is_redeemed:
                               type: boolean
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            certification:
-                              type: array
-                              items:
-                                type: string
-                            initial_offering_status:
+                            is_offering:
                               type: boolean
                             max_holding_quantity:
                               type: integer
@@ -3749,6 +3680,8 @@ paths:
                               type: string
                             personal_info_address:
                               type: string
+                            transfer_approval_required:
+                              type: boolean
                         agreement:
                           type: object
                           properties:
@@ -3780,8 +3713,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetStraightBond
+                              example: IbetStraightBond
                             owner_address:
                               type: string
                               description: issuer address
@@ -3838,22 +3770,9 @@ paths:
                               description: purpose of issue
                             transferable:
                               type: boolean
-                            isRedeemed:
+                            is_redeemed:
                               type: boolean
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            certification:
-                              type: array
-                              items:
-                                type: string
-                            initial_offering_status:
+                            is_offering:
                               type: boolean
                             max_holding_quantity:
                               type: integer
@@ -3871,6 +3790,8 @@ paths:
                               type: string
                             personal_info_address:
                               type: string
+                            transfer_approval_required:
+                              type: boolean
                         agreement:
                           type: object
                           properties:
@@ -3925,6 +3846,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -3950,8 +3874,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetShare
+                              example: IbetShare
                             owner_address:
                               type: string
                             company_name:
@@ -3975,37 +3898,17 @@ paths:
                                   type: number
                                 dividend_record_date:
                                   type: string
-                                  example:
-                                    20200930
+                                  example: 20200930
                                 dividend_payment_date:
                                   type: string
-                                  example:
-                                    20201231
+                                  example: 20201231
                             cancellation_date:
                               type: string
-                            reference_urls:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
-                            image_url:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  id:
-                                    type: integer
-                                  url:
-                                    type: string
                             memo:
                               type: string
                             transferable:
                               type: boolean
-                            offering_status:
+                            is_offering:
                               type: boolean
                             status:
                               type: boolean
@@ -4131,6 +4034,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -4156,8 +4062,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetMembership
+                              example: IbetMembership
                             owner_address:
                               type: string
                               description: issuer address
@@ -4235,8 +4140,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetMembership
+                              example: IbetMembership
                             owner_address:
                               type: string
                               description: issuer address
@@ -4316,8 +4220,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetMembership
+                              example: IbetMembership
                             owner_address:
                               type: string
                               description: issuer address
@@ -4420,6 +4323,9 @@ paths:
                 type: array
                 items:
                   type: string
+              include_canceled_items:
+                description: Whether to include canceled orders or canceled agreements.
+                type: boolean
             required:
               - account_address_list
       responses:
@@ -4445,8 +4351,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetCoupon
+                              example: IbetCoupon
                             owner_address:
                               type: string
                               description: issuer address
@@ -4524,8 +4429,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetCoupon
+                              example: IbetCoupon
                             owner_address:
                               type: string
                               description: issuer address
@@ -4605,8 +4509,7 @@ paths:
                               type: string
                             token_template:
                               type: string
-                              example:
-                                IbetCoupon
+                              example: IbetCoupon
                             owner_address:
                               type: string
                               description: issuer address
@@ -4715,12 +4618,12 @@ paths:
           in: query
           required: false
           type: string
-          enum: ["id","priority","is_flagged"]
+          enum: ["id", "priority", "is_flagged"]
         - name: status
           in: query
           required: false
           type: string
-          enum: ["flagged","deleted"]
+          enum: ["flagged", "deleted"]
       responses:
         200:
           description: Successful Operation
@@ -4739,21 +4642,24 @@ paths:
                       properties:
                         notification_type:
                           type: string
-                          example:
-                            NewOrder
-                          enum: [
-                            NewOrder,NewOrderCounterpart,CancelOrder,CancelOrderCounterpart,
-                            BuyAgreement,BuySettlementOK,BuySettlementNG,
-                            SellAgreement,SellSettlementOK,SellSettlementNG,
-                            StartInitialOffering,StopInitialOffering,StartOffering,StopOffering,
-                            Redeem,Suspend,ApplyForOffering,Allot,Transfer,
-                            PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
-                            PaymentAccountWarn,PaymentAccountBan
-                          ]
+                          example: NewOrder
+                          enum:
+                            [
+                              NewOrder,
+                              NewOrderCounterpart,
+                              CancelOrder,
+                              CancelOrderCounterpart,
+                              BuyAgreement,
+                              BuySettlementOK,
+                              BuySettlementNG,
+                              SellAgreement,
+                              SellSettlementOK,
+                              SellSettlementNG,
+                              Transfer,
+                            ]
                         id:
                           type: string
-                          example:
-                            "0x00000373ca8600000000000000"
+                          example: "0x00000373ca8600000000000000"
                         priority:
                           type: integer
                         block_timestamp:
@@ -4776,14 +4682,15 @@ paths:
                             company_name:
                               type: string
                             token_address:
-                              type: string  
+                              type: string
                             token_name:
                               type: string
                             exchange_address:
                               type: string
                             token_type:
                               type: string
-                              enum: [IbetStraightBond,IbetMembership,IbetCoupon]
+                              enum:
+                                [IbetStraightBond, IbetMembership, IbetCoupon]
                         account_address:
                           type: string
                         sort_id:
@@ -4838,21 +4745,22 @@ paths:
                 properties:
                   notification_type:
                     type: string
-                    example:
-                      NewOrder
-                    enum: [
-                      NewOrder,CancelOrder,
-                      BuyAgreement,BuySettlementOK,BuySettlementNG,
-                      SellAgreement,SellSettlementOK,SellSettlementNG,
-                      StartInitialOffering,StopInitialOffering,
-                      Redeem,ApplyForOffering,Allot,Transfer,
-                      PaymentAccountRegister,PaymentAccountApprove,PaymentAccountUnapprove,
-                      PaymentAccountWarn,PaymentAccountBan
-                    ]
+                    example: NewOrder
+                    enum:
+                      [
+                        NewOrder,
+                        CancelOrder,
+                        BuyAgreement,
+                        BuySettlementOK,
+                        BuySettlementNG,
+                        SellAgreement,
+                        SellSettlementOK,
+                        SellSettlementNG,
+                        Transfer,
+                      ]
                   id:
                     type: string
-                    example:
-                      "0x00000373ca8600000000000000"
+                    example: "0x00000373ca8600000000000000"
                   priority:
                     type: integer
                   block_timestamp:
@@ -4882,7 +4790,7 @@ paths:
                         type: string
                       token_type:
                         type: string
-                        enum: [IbetStraightBond,IbetMembership,IbetCoupon]
+                        enum: [IbetStraightBond, IbetMembership, IbetCoupon]
                   account_address:
                     type: string
                   sort_id:

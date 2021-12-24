@@ -70,6 +70,16 @@ def register_payment_gateway(invoker, payment_gateway):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# トークン移転
+def transfer_token(token_contract, from_address, to_address, amount):
+    token_contract.functions.transfer(
+        to_address,
+        amount
+    ).transact({
+        'from': from_address
+    })
+
+
 '''
 Straight Bond Token （普通社債）
 '''
@@ -128,6 +138,8 @@ def issue_bond_token(invoker, attribute):
         transact({'from': invoker['account_address'], 'gas': 4000000})
     TokenContract.functions.setMemo(attribute['memo']). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
+    TokenContract.functions.setTransferable(True). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
 
     return {'address': contract_address, 'abi': abi}
 
@@ -169,7 +181,7 @@ def bond_redeem(invoker, token):
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
 
-    tx_hash = TokenContract.functions.redeem(). \
+    tx_hash = TokenContract.functions.changeToRedeemed(). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -269,19 +281,6 @@ def register_share_list(invoker, share_token, token_list):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
-# 株式トークンの関連URL追加
-def register_share_reference_url(invoker, token, url_list):
-    web3.eth.defaultAccount = invoker['account_address']
-
-    TokenContract = Contract.get_contract('IbetShare', token['address'])
-    i = 0
-    for url in url_list:
-        tx_hash = TokenContract.functions.setReferenceUrls(i, url). \
-            transact({'from': invoker['account_address'], 'gas': 4000000})
-        web3.eth.waitForTransactionReceipt(tx_hash)
-        i = i + 1
-
-
 # 株式Tokenの募集（売出）
 def share_offer(invoker, exchange, token, amount, price):
     share_transfer_to_exchange(invoker, exchange, token, amount)
@@ -353,7 +352,8 @@ def coupon_register_list(invoker, token, token_list):
 # クーポントークンの割当
 def transfer_coupon_token(invoker, coupon_token, to, value):
     web3.eth.defaultAccount = invoker['account_address']
-    coupon_contract = Contract.get_contract('IbetCoupon', coupon_token['address'])
+    coupon_contract = Contract.get_contract(
+        'IbetCoupon', coupon_token['address'])
     tx_hash = coupon_contract.functions.transfer(to, value). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
@@ -429,7 +429,8 @@ def membership_issue(invoker, attribute):
         attribute['contactInformation'], attribute['privacyPolicy']
     ]
     contract_address, abi = Contract. \
-        deploy_contract('IbetMembership', arguments, invoker['account_address'])
+        deploy_contract('IbetMembership', arguments,
+                        invoker['account_address'])
     return {'address': contract_address, 'abi': abi}
 
 
@@ -555,6 +556,17 @@ def cancel_order(invoker, exchange, order_id):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 注文の強制取消
+def force_cancel_order(invoker, exchange, order_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    ExchangeContract = Contract. \
+        get_contract('IbetExchange', exchange['address'])
+    tx_hash = ExchangeContract.functions. \
+        forceCancelOrder(order_id). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 # 直近約定IDを取得
 def get_latest_agreementid(exchange, order_id):
     ExchangeContract = Contract. \
@@ -583,4 +595,58 @@ def cancel_agreement(invoker, exchange, order_id, agreement_id):
     tx_hash = ExchangeContract.functions. \
         cancelAgreement(order_id, agreement_id). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+# エスクローの作成
+def create_security_token_escrow(invoker, exchange, token, recipient_address, agent_address, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetSecurityTokenEscrowContract = Contract. \
+        get_contract('IbetSecurityTokenEscrow', exchange['address'])
+    tx_hash = IbetSecurityTokenEscrowContract.functions. \
+        createEscrow(token['address'], recipient_address, amount, agent_address, "{}", "{}"). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+def get_latest_security_escrow_id(exchange):
+    IbetSecurityTokenEscrowContract = Contract. \
+        get_contract('IbetSecurityTokenEscrow', exchange['address'])
+    latest_escrow_id = \
+        IbetSecurityTokenEscrowContract.functions.latestEscrowId().call()
+    return latest_escrow_id
+
+# エスクローの完了
+def finish_security_token_escrow(invoker, exchange, escrow_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetSecurityTokenEscrowContract = Contract. \
+        get_contract('IbetSecurityTokenEscrow', exchange['address'])
+    tx_hash = IbetSecurityTokenEscrowContract.functions. \
+        finishEscrow(escrow_id).transact(
+            {'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+# エスクローの作成
+def create_token_escrow(invoker, exchange, token, recipient_address, agent_address, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetEscrow = Contract. \
+        get_contract('IbetEscrow', exchange['address'])
+    tx_hash = IbetEscrow.functions. \
+        createEscrow(token['address'], recipient_address, amount, agent_address, "{}"). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+def get_latest_escrow_id(exchange):
+    IbetEscrow = Contract. \
+        get_contract('IbetEscrow', exchange['address'])
+    latest_escrow_id = \
+        IbetEscrow.functions.latestEscrowId().call()
+    return latest_escrow_id
+
+# エスクローの完了
+def finish_token_escrow(invoker, exchange, escrow_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetEscrow = Contract. \
+        get_contract('IbetEscrow', exchange['address'])
+    tx_hash = IbetEscrow.functions. \
+        finishEscrow(escrow_id).transact(
+            {'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)

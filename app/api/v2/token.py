@@ -17,7 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from cerberus import Validator
-from sqlalchemy import or_
+from sqlalchemy import (
+    or_,
+    desc
+)
 from web3 import Web3
 from eth_utils import to_checksum_address
 
@@ -59,7 +62,7 @@ class TokenStatus(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.token.TokenStatus')
 
         # 入力アドレスフォーマットチェック
@@ -80,18 +83,31 @@ class TokenStatus(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
+        token = Contract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        )
 
         token_template = token[1]
         try:
             # Token-Contractへの接続
-            TokenContract = Contract.get_contract(token_template, token_address)
-            status = TokenContract.functions.status().call()
-            transferable = TokenContract.functions.transferable().call()
+            token_contract = Contract.get_contract(token_template, token_address)
+            status = Contract.call_function(
+                contract=token_contract,
+                function_name="status",
+                args=()
+            )
+            transferable = Contract.call_function(
+                contract=token_contract,
+                function_name="transferable",
+                args=()
+            )
         except Exception as e:
             LOG.error(e)
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -108,7 +124,7 @@ class TokenStatus(BaseResource):
 class TokenHolders(BaseResource):
     """トークン保有者一覧"""
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.token.TokenHolders')
 
         session = req.context["session"]
@@ -131,9 +147,15 @@ class TokenHolders(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # Get token holders
+        # add order_by id to bridge the difference between postgres and mysql
         holders = session.query(IDXPosition). \
             filter(IDXPosition.token_address == contract_address). \
-            filter(or_(IDXPosition.balance > 0, IDXPosition.pending_transfer > 0)). \
+            filter(or_(
+                IDXPosition.balance > 0,
+                IDXPosition.pending_transfer > 0,
+                IDXPosition.exchange_balance > 0,
+                IDXPosition.exchange_commitment > 0)). \
+            order_by(desc(IDXPosition.id)) .\
             all()
 
         resp_body = []
@@ -142,7 +164,9 @@ class TokenHolders(BaseResource):
                 "token_address": holder.token_address,
                 "account_address": holder.account_address,
                 "amount": holder.balance,
-                "pending_transfer": holder.pending_transfer
+                "pending_transfer": holder.pending_transfer,
+                "exchange_balance": holder.exchange_balance,
+                "exchange_commitment": holder.exchange_commitment
             })
 
         self.on_success(res, resp_body)
@@ -152,7 +176,7 @@ class TokenHolders(BaseResource):
 class TransferHistory(BaseResource):
     """トークン移転履歴"""
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.token.TransferHistory')
 
         session = req.context["session"]
@@ -238,7 +262,7 @@ class TransferHistory(BaseResource):
 class TransferApprovalHistory(BaseResource):
     """トークン移転承諾履歴"""
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info("v2.token.TransferApprovalHistory")
         db_session = req.context["session"]
 
@@ -262,7 +286,10 @@ class TransferApprovalHistory(BaseResource):
         # Get transfer approval data
         query = db_session.query(IDXTransferApproval). \
             filter(IDXTransferApproval.token_address == contract_address). \
-            order_by(IDXTransferApproval.application_id)
+            order_by(
+                IDXTransferApproval.exchange_address,
+                IDXTransferApproval.application_id
+            )
         list_length = query.count()
 
         # パラメータを設定
@@ -328,7 +355,7 @@ class StraightBondTokens(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.StraightBondTokens')
 
         session = req.context["session"]
@@ -340,7 +367,10 @@ class StraightBondTokens(BaseResource):
         request_json = StraightBondTokens.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -368,7 +398,12 @@ class StraightBondTokens(BaseResource):
 
             # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions.getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
             token_detail = StraightBondTokenDetails.get_token_detail(
                 session=session,
                 token_id=i,
@@ -424,7 +459,7 @@ class StraightBondTokenAddresses(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.StraightBondAddresses')
 
         session = req.context["session"]
@@ -436,7 +471,10 @@ class StraightBondTokenAddresses(BaseResource):
         request_json = self.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -462,11 +500,16 @@ class StraightBondTokenAddresses(BaseResource):
             if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions.getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
             if token[1] == 'IbetStraightBond':  # ibetStraightBond以外は処理をスキップ
                 # トークンコントラクトへの接続
-                TokenContract = Contract.get_contract("IbetStraightBond", token_address)
-                if TokenContract.functions.isRedeemed().call() is False:  # 償還済みの場合は処理をスキップ
+                token_contract = Contract.get_contract("IbetStraightBond", token_address)
+                if Contract.call_function(token_contract, "isRedeemed", (), False) is False:  # 償還済みの場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
                     count += 1
 
@@ -514,7 +557,7 @@ class StraightBondTokenDetails(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, *args, **kwargs):
         LOG.info('v2.token.StraightBondTokenDetails')
 
         if config.BOND_TOKEN_ENABLED is False:
@@ -541,18 +584,25 @@ class StraightBondTokenDetails(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
+        token = Contract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
             token_template=token[1]
         )
-
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
@@ -573,9 +623,9 @@ class StraightBondTokenDetails(BaseResource):
         if token_template == 'IbetStraightBond':
             try:
                 # トークンコントラクトへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
+                token_contract = Contract.get_contract(token_template, token_address)
                 # 取扱停止銘柄はリストに返さない
-                if not TokenContract.functions.status().call():
+                if not Contract.call_function(token_contract, "status", (), True):
                     return None
                 bondtoken = BondToken.get(session=session, token_address=token_address)
                 bondtoken = bondtoken.__dict__
@@ -599,7 +649,7 @@ class ShareTokens(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.ShareTokens')
 
         session = req.context["session"]
@@ -611,7 +661,10 @@ class ShareTokens(BaseResource):
         request_json = ShareTokens.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -640,13 +693,18 @@ class ShareTokens(BaseResource):
 
             # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions.getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
+
             token_detail = ShareTokenDetails.get_token_detail(
                 session=session,
                 token_address=token_address,
                 token_template=token[1],
             )
-
             if token_detail is not None:
                 token_detail["id"] = i
                 token_list.append(token_detail)
@@ -696,7 +754,7 @@ class ShareTokenAddresses(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.ShareTokenAddresses')
 
         session = req.context["session"]
@@ -708,7 +766,10 @@ class ShareTokenAddresses(BaseResource):
         request_json = self.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -735,11 +796,16 @@ class ShareTokenAddresses(BaseResource):
             if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions.getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
             if token[1] == 'IbetShare':  # ibetShare以外は処理をスキップ
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract("IbetShare", token_address)
-                if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
+                token_contract = Contract.get_contract("IbetShare", token_address)
+                if Contract.call_function(token_contract, "status", (), True):  # 取扱停止の場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
                     count += 1
 
@@ -787,7 +853,7 @@ class ShareTokenDetails(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.token.ShareTokenDetails')
 
         if config.SHARE_TOKEN_ENABLED is False:
@@ -814,18 +880,22 @@ class ShareTokenDetails(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
 
         # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
+        token = Contract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
             token_template=token[1]
         )
-
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
@@ -846,9 +916,9 @@ class ShareTokenDetails(BaseResource):
         if token_template == 'IbetShare':
             try:
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
+                token_contract = Contract.get_contract(token_template, token_address)
                 # 取扱停止銘柄はリストに返さない
-                if not TokenContract.functions.status().call():
+                if not Contract.call_function(token_contract, "status", (), True):
                     return None
                 sharetoken = ShareToken.get(session=session, token_address=token_address)
                 sharetoken = sharetoken.__dict__
@@ -872,7 +942,7 @@ class MembershipTokens(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.MembershipTokens')
 
         session = req.context["session"]
@@ -884,8 +954,10 @@ class MembershipTokens(BaseResource):
         request_json = MembershipTokens.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract(
-            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -914,8 +986,12 @@ class MembershipTokens(BaseResource):
 
             # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions. \
-                getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
 
             token_detail = MembershipTokenDetails.get_token_detail(
                 session=session,
@@ -971,7 +1047,7 @@ class MembershipTokenAddresses(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.MembershipTokenAddresses')
 
         session = req.context["session"]
@@ -983,8 +1059,10 @@ class MembershipTokenAddresses(BaseResource):
         request_json = MembershipTokens.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract(
-            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -1010,11 +1088,16 @@ class MembershipTokenAddresses(BaseResource):
             if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions.getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
             if token[1] == 'IbetMembership':  # ibetMembership以外は処理をスキップ
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract("IbetMembership", token_address)
-                if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
+                token_contract = Contract.get_contract("IbetMembership", token_address)
+                if Contract.call_function(token_contract, "status", (), True):  # 取扱停止の場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
                     count += 1
 
@@ -1062,7 +1145,7 @@ class MembershipTokenDetails(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.token.MembershipTokenDetails')
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
@@ -1089,18 +1172,25 @@ class MembershipTokenDetails(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
+        token = Contract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
             token_template=token[1],
         )
-
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
@@ -1121,9 +1211,9 @@ class MembershipTokenDetails(BaseResource):
         if token_template == 'IbetMembership':
             try:
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
+                token_contract = Contract.get_contract(token_template, token_address)
                 # 取扱停止銘柄はリストに返さない
-                if not TokenContract.functions.status().call():
+                if not Contract.call_function(token_contract, "status", (), True):
                     return None
                 membershiptoken = MembershipToken.get(session=session, token_address=token_address)
                 membershiptoken = membershiptoken.__dict__
@@ -1147,7 +1237,7 @@ class CouponTokens(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.CouponTokens')
 
         session = req.context["session"]
@@ -1159,8 +1249,10 @@ class CouponTokens(BaseResource):
         request_json = CouponTokens.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract(
-            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -1190,7 +1282,12 @@ class CouponTokens(BaseResource):
 
             # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions.getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
 
             token_detail = CouponTokenDetails.get_token_detail(
                 session=session,
@@ -1246,7 +1343,7 @@ class CouponTokenAddresses(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.token.CouponTokenAddresses')
 
         session = req.context["session"]
@@ -1258,8 +1355,10 @@ class CouponTokenAddresses(BaseResource):
         request_json = CouponTokens.validate(req)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract(
-            'TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # 取扱トークンリストを取得
         available_tokens = session.query(Listing).\
@@ -1286,11 +1385,16 @@ class CouponTokenAddresses(BaseResource):
             if count >= limit:
                 break
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = ListContract.functions.getTokenByAddress(token_address).call()
+            token = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(token_address,),
+                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+            )
             if token[1] == 'IbetCoupon':  # ibetCoupon以外は処理をスキップ
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract("IbetCoupon", token_address)
-                if TokenContract.functions.status().call():  # 取扱停止の場合は処理をスキップ
+                token_contract = Contract.get_contract("IbetCoupon", token_address)
+                if Contract.call_function(token_contract, "status", (), True):  # 取扱停止の場合は処理をスキップ
                     token_list.append({"id": i, "token_address": token_address})
                     count += 1
 
@@ -1338,7 +1442,7 @@ class CouponTokenDetails(BaseResource):
         super().__init__()
         self.web3 = Web3Wrapper()
 
-    def on_get(self, req, res, contract_address=None):
+    def on_get(self, req, res, contract_address=None, **kwargs):
         LOG.info('v2.token.CouponTokenDetails')
 
         if config.COUPON_TOKEN_ENABLED is False:
@@ -1365,18 +1469,25 @@ class CouponTokenDetails(BaseResource):
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
         # TokenList-Contractへの接続
-        ListContract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
+        list_contract = Contract.get_contract(
+            contract_name='TokenList',
+            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+        )
 
         # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = ListContract.functions.getTokenByAddress(token_address).call()
+        token = Contract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
             token_template=token[1],
         )
-
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
@@ -1397,9 +1508,9 @@ class CouponTokenDetails(BaseResource):
         if token_template == 'IbetCoupon':
             try:
                 # Token-Contractへの接続
-                TokenContract = Contract.get_contract(token_template, token_address)
+                token_contract = Contract.get_contract(token_template, token_address)
                 # 取扱停止銘柄はリストに返さない
-                if not TokenContract.functions.status().call():
+                if not Contract.call_function(token_contract, "status", (), True):
                     return None
                 coupontoken = CouponToken.get(session=session, token_address=token_address)
                 coupontoken = coupontoken.__dict__

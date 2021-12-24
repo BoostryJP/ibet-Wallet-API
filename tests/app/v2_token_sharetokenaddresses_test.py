@@ -31,7 +31,6 @@ from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_share_token,
     register_share_list,
-    register_share_reference_url,
     invalidate_share_token
 )
 
@@ -108,7 +107,6 @@ class TestV2TokenShareTokenAddresses:
         attribute = TestV2TokenShareTokenAddresses.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
         url_list = ['http://hogehoge/1', 'http://hogehoge/2', 'http://hogehoge/3']
-        register_share_reference_url(issuer, share_token, url_list)
         register_share_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
@@ -289,8 +287,6 @@ class TestV2TokenShareTokenAddresses:
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         attribute = TestV2TokenShareTokenAddresses.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
-        url_list = ['http://hogehoge/1', 'http://hogehoge/2', 'http://hogehoge/3']
-        register_share_reference_url(issuer, share_token, url_list)
         register_share_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
