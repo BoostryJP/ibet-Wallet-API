@@ -15,7 +15,7 @@
 - [python3](https://www.python.org/)
   - Version 3.8 or greater
 - RDB
-  - [PostgreSQL](https://www.postgresql.org/) - Version 10
+  - [PostgreSQL](https://www.postgresql.org/) - Version 13
   - [MySQL](https://www.mysql.com/) - Version 5.7
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
