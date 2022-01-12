@@ -1084,20 +1084,29 @@ class TestV2CouponOrderBook:
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = [{
-            "exchange_address": exchange_address,
-            "order_id": 2,
-            "price": 3000,
-            "amount": 50,
-            "account_address": account_addresses[2],
-        }]
+
+        assumed_body = [
+            {
+                'exchange_address': exchange_address,
+                'order_id': 3,
+                'price': 6000,
+                'amount': 70,
+                'account_address': account_addresses[1]
+            }, {
+                'exchange_address': exchange_address,
+                'order_id': 2,
+                'price': 3000,
+                'amount': 50,
+                'account_address': account_addresses[2]
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
     # ＜正常系4-3＞
-    # 約定済み（※部分約定,約定否認含む）の売り注文が複数存在:アカウントアドレス指定なし
+    # 約定済み（※部分約定、約定取消含む）の売り注文が複数存在:アカウントアドレス指定なし
     #  -> 未約定のOrderBookリストが返却される
     def test_coupon_orderbook_normal_4_3(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
@@ -1251,7 +1260,7 @@ class TestV2CouponOrderBook:
         assert resp.json['data'] == assumed_body
 
     # ＜正常系4-4＞
-    # 約定済み（※部分約定,約定否認含む）の買い注文が複数存在:アカウントアドレス指定なし
+    # 約定済み（※部分約定、約定取消含む）の買い注文が複数存在:アカウントアドレス指定なし
     #  -> 未約定のOrderBookリストが返却される
     def test_coupon_orderbook_normal_4_4(self, client, session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
@@ -1380,19 +1389,28 @@ class TestV2CouponOrderBook:
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = [{
-            "exchange_address": exchange_address,
-            "order_id": 2,
-            "price": 3000,
-            "amount": 50,
-            "account_address": account_addresses[2],
-        }, {
-            "exchange_address": exchange_address,
-            "order_id": 0,
-            "price": 1000,
-            "amount": 100,
-            "account_address": account_addresses[0],
-        }]
+
+        assumed_body = [
+            {
+                'exchange_address': exchange_address,
+                'order_id': 3,
+                'price': 6000,
+                'amount': 70,
+                'account_address': account_addresses[1]
+            }, {
+                'exchange_address': exchange_address,
+                'order_id': 2,
+                'price': 3000,
+                'amount': 50,
+                'account_address': account_addresses[2]
+            }, {
+                'exchange_address': exchange_address,
+                'order_id': 0,
+                'price': 1000,
+                'amount': 100,
+                'account_address': account_addresses[0]
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
