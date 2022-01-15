@@ -17,7 +17,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-PROC_LIST="${PROC_LIST} batch/processor_Notifications_Token.py"
+PROC_LIST="${PROC_LIST}"
+
+if [ "${TOKEN_NOTIFICATION_ENABLED}" = 1 ]; then
+  PROC_LIST="${PROC_LIST} batch/processor_Notifications_Token.py"
+fi
 
 if [ "${BOND_TOKEN_ENABLED}" = 1 ]; then
   if [ ! -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" ]; then
