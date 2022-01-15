@@ -117,3 +117,6 @@ TOKEN_CACHE_TTL = int(os.environ.get("TOKEN_CACHE_TTL")) if os.environ.get("TOKE
 # テスト用設定：Locust
 BASIC_AUTH_USER = os.environ.get('BASIC_AUTH_USER')
 BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
+
+# トークン関連通知
+TOKEN_NOTIFICATION_ENABLED = False if os.environ.get('TOKEN_NOTIFICATION_ENABLED') == '0' else True

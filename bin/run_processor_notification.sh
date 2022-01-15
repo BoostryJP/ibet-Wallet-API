@@ -22,7 +22,9 @@ source ~/.bash_profile
 
 cd /app/ibet-Wallet-API
 
-python batch/processor_Notifications_Token.py &
+if [ "$TOKEN_NOTIFICATION_ENABLED" = 1 ]; then
+  python batch/processor_Notifications_Token.py &
+fi
 
 if [ "$BOND_TOKEN_ENABLED" = 1 ]; then
   if [ ! -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" ]; then
