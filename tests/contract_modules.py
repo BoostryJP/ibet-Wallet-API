@@ -404,12 +404,32 @@ def coupon_offer(invoker, exchange, token, amount, price):
 # クーポンDEXコントラクトにクーポントークンをデポジット
 def coupon_transfer_to_exchange(invoker, exchange, token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    TokenContract = Contract. \
-        get_contract('IbetCoupon', token['address'])
-    tx_hash = TokenContract.functions. \
-        transfer(exchange['address'], amount). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
+    token_contract = Contract.get_contract(
+        contract_name='IbetCoupon',
+        address=token['address']
+    )
+    token_contract.functions.transfer(
+        exchange['address'],
+        amount
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
+
+
+# クーポンDEXコントラクトからクーポントークンを引き出し
+def coupon_withdraw_from_exchange(invoker, exchange, token, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    exchange_contract = Contract.get_contract(
+        contract_name='IbetExchange',
+        address=exchange['address']
+    )
+    exchange_contract.functions.withdraw(
+        token['address']
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
 
 
 '''
