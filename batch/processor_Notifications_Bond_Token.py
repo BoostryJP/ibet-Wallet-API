@@ -318,16 +318,21 @@ class WatchAllot(Watcher):
 
 # イベント：トークン移転（受領時）
 class WatchTransfer(Watcher):
+    """Watch Token Receive Event
+
+    - Process for registering a notification when a token is received
+    - Register a notification only if the account address (private key address) is the source of the transfer.
+    """
     def __init__(self):
         super().__init__("Transfer", {})
 
     def db_merge(self, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
-            # Exchangeアドレスが移転元の場合、処理をSKIPする
-            tradable_exchange = token_contract.functions.tradableExchange().call()
-            if entry["args"]["from"] == tradable_exchange:
+            # If the contract address is the source of the transfer, skip the process
+            if web3.eth.getCode(entry["args"]["from"]).hex() != "0x":
                 continue
+
             token_owner_address = token_contract.functions.owner().call()
             token_name = token_contract.functions.name().call()
             company = company_list.find(token_owner_address)
