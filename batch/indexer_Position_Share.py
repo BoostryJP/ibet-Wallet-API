@@ -119,8 +119,6 @@ class DBSink:
             position.exchange_commitment = exchange_commitment or 0
             self.db.add(position)
 
-        self.db.merge(position)
-
     def flush(self):
         self.db.commit()
 
