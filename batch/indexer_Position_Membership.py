@@ -205,16 +205,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                exchange_contract_address = Contract.call_function(
-                    contract=token,
-                    function_name="tradableExchange",
-                    args=(),
-                    default_returns=ZERO_ADDRESS
-                )
                 for event in events:
                     args = event["args"]
                     for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
-                        if _account != exchange_contract_address:
+                        if web3.eth.getCode(_account).hex() == "0x":
                             _balance, _exchange_balance, _exchange_commitment = \
                                 self.__get_account_balance_all(token, _account)
                             self.sink.on_position(
