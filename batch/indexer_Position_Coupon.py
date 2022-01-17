@@ -102,6 +102,7 @@ class DBSink:
                 position.exchange_balance = exchange_balance
             if exchange_commitment is not None:
                 position.exchange_commitment = exchange_commitment
+            self.db.merge(position)
         elif any(value is not None and value > 0 for value in [balance, exchange_balance, exchange_commitment]):
             LOG.debug(
                 f"Position created (Coupon): token_address={token_address}, account_address={account_address}"
@@ -112,8 +113,7 @@ class DBSink:
             position.balance = balance or 0
             position.exchange_balance = exchange_balance or 0
             position.exchange_commitment = exchange_commitment or 0
-
-        self.db.merge(position)
+            self.db.add(position)
 
     def flush(self):
         self.db.commit()
