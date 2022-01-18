@@ -183,7 +183,7 @@ class TestV2MembershipTick:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'address_list': 'required field'}
+            'description': {'address_list': ['required field']}
         }
 
     # エラー系2：入力値エラー（headersなし）

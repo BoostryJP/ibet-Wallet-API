@@ -556,12 +556,12 @@ class TestNotificationsGet:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "notification_type": "unallowed value hoge",
-                "priority": "min value is 0",
-                "sort_item": "unallowed value fuga",
-                "sort_order": "min value is 0",
-                "offset": "min value is 0",
-                "limit": "min value is 0",
+                "notification_type": ["unallowed value hoge"],
+                "priority": ["min value is 0"],
+                "sort_item": ["unallowed value fuga"],
+                "sort_order": ["min value is 0"],
+                "offset": ["min value is 0"],
+                "limit": ["min value is 0"],
             }
         }
 
@@ -584,8 +584,8 @@ class TestNotificationsGet:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "priority": "max value is 2",
-                "sort_order": "max value is 1",
+                "priority": ["max value is 2"],
+                "sort_order": ["max value is 1"],
             }
         }
 

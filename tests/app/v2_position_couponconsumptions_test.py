@@ -145,8 +145,8 @@ class TestV2CouponConsumptions:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'token_address': 'required field',
-                'account_address_list': 'required field'
+                'token_address': ['required field'],
+                'account_address_list': ['required field']
             }
         }
 
@@ -217,7 +217,7 @@ class TestV2CouponConsumptions:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'token_address': 'must be of string type'}
+            'description': {'token_address': ['must be of string type']}
         }
 
     # ＜エラー系4-1＞
@@ -269,7 +269,9 @@ class TestV2CouponConsumptions:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'account_address_list': {'0': 'must be of string type'}
+                'account_address_list': [
+                    {'0': ['must be of string type']}
+                ]
             }
         }
 

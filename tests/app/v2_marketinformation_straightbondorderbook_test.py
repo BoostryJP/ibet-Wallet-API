@@ -1491,8 +1491,8 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'token_address': 'required field',
-                'order_type': 'required field',
+                'token_address': ['required field'],
+                'order_type': ['required field'],
             }
         }
 
@@ -1576,7 +1576,7 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'token_address': 'must be of string type'
+                'token_address': ['must be of string type']
             }
         }
 
@@ -1633,7 +1633,7 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'account_address': 'must be of string type'
+                'account_address': ['must be of string type']
             }
         }
 
@@ -1663,7 +1663,7 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'order_type': 'unallowed value buyyyyy'
+                'order_type': ['unallowed value buyyyyy']
             }
         }
 

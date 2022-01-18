@@ -584,8 +584,8 @@ class TestPositionAccountAddressShare:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "offset": "min value is 0",
-                "limit": "min value is 0",
+                "offset": ["min value is 0"],
+                "limit": ["min value is 0"],
             }
         }
 
@@ -608,7 +608,17 @@ class TestPositionAccountAddressShare:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "offset": ["field 'offset' could not be coerced", "must be of integer type"],
-                "limit": ["field 'limit' could not be coerced", "must be of integer type"],
+                'code': 88,
+                'message': 'Invalid Parameter',
+                'description': {
+                    'limit': [
+                        "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'test'",
+                        'must be of integer type'
+                    ],
+                    'offset': [
+                        "field 'offset' cannot be coerced: invalid literal for int() with base 10: 'test'",
+                        'must be of integer type'
+                    ]
+                }
             }
         }

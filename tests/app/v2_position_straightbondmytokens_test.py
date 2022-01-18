@@ -767,7 +767,7 @@ class TestV2StraightBondMyTokens:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'account_address_list': 'required field'
+                'account_address_list': ['required field']
             }
         }
 
@@ -827,9 +827,9 @@ class TestV2StraightBondMyTokens:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'account_address_list': {
-                    '0': 'must be of string type'
-                }
+                'account_address_list': [
+                    {'0': ['must be of string type']}
+                ]
             }
         }
 
