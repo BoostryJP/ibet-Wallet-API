@@ -118,7 +118,7 @@ class TestPaymentAccount:
             'message': 'Invalid Parameter',
             'description': {
                 'account_address':
-                ['null value not allowed', 'must be of string type']
+                ['null value not allowed']
             }
         }
 
@@ -158,7 +158,7 @@ class TestPaymentAccount:
             'message': 'Invalid Parameter',
             'description': {
                 'agent_address':
-                ['null value not allowed', 'must be of string type']
+                ['null value not allowed']
             }
         }
 

@@ -207,8 +207,8 @@ class TestNotificationRead:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'address': 'must be of string type',
-                'is_read': 'must be of boolean type'
+                'address': ['must be of string type'],
+                'is_read': ['must be of boolean type']
             }
         }
 
@@ -230,8 +230,8 @@ class TestNotificationRead:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'address': 'empty values not allowed',
-                'is_read': ['null value not allowed', 'must be of boolean type']
+                'address': ['empty values not allowed'],
+                'is_read': ['null value not allowed']
             }
         }
 

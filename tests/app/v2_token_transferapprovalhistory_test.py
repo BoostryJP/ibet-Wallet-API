@@ -551,7 +551,7 @@ class TestV2TransferApprovalHistory:
             'message': 'Invalid Parameter',
             'description': {
                 'offset': [
-                    "field 'offset' could not be coerced",
+                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: 'string'",
                     'must be of integer type'
                 ]
             }
@@ -569,7 +569,7 @@ class TestV2TransferApprovalHistory:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'offset': 'min value is 0'}
+            'description': {'offset': ['min value is 0']}
         }
 
     # Error_3_3
@@ -586,7 +586,7 @@ class TestV2TransferApprovalHistory:
             'message': 'Invalid Parameter',
             'description': {
                 'offset': [
-                    "field 'offset' could not be coerced",
+                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: '1.5'",
                     'must be of integer type'
                 ]
             }
@@ -606,7 +606,7 @@ class TestV2TransferApprovalHistory:
             'message': 'Invalid Parameter',
             'description': {
                 'limit': [
-                    "field 'limit' could not be coerced",
+                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'string'",
                     'must be of integer type'
                 ]
             }
@@ -624,7 +624,7 @@ class TestV2TransferApprovalHistory:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'limit': 'min value is 0'}
+            'description': {'limit': ['min value is 0']}
         }
 
     # Error_4_3
@@ -641,7 +641,7 @@ class TestV2TransferApprovalHistory:
             'message': 'Invalid Parameter',
             'description': {
                 'limit': [
-                    "field 'limit' could not be coerced",
+                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: '1.5'",
                     'must be of integer type'
                 ]
             }

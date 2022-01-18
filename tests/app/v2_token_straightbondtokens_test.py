@@ -660,7 +660,7 @@ class TestV2TokenStraightBondTokens:
             'message': 'Invalid Parameter',
             'description': {
                 'cursor': [
-                    "field 'cursor' could not be coerced",
+                    "field 'cursor' cannot be coerced: invalid literal for int() with base 10: 'a'",
                     'must be of integer type'
                 ]
             }
@@ -678,7 +678,7 @@ class TestV2TokenStraightBondTokens:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'cursor': 'min value is 0'}
+            'description': {'cursor': ['min value is 0']}
         }
 
     # ＜エラー系2-3＞
@@ -695,7 +695,7 @@ class TestV2TokenStraightBondTokens:
             'message': 'Invalid Parameter',
             'description': {
                 'cursor': [
-                    "field 'cursor' could not be coerced",
+                    "field 'cursor' cannot be coerced: invalid literal for int() with base 10: '0.1'",
                     'must be of integer type'
                 ]
             }
@@ -730,7 +730,7 @@ class TestV2TokenStraightBondTokens:
             'message': 'Invalid Parameter',
             'description': {
                 'limit': [
-                    "field 'limit' could not be coerced",
+                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'a'",
                     'must be of integer type'
                 ]
             }
@@ -748,7 +748,7 @@ class TestV2TokenStraightBondTokens:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'limit': 'min value is 0'}
+            'description': {'limit': ['min value is 0']}
         }
 
     # ＜エラー系3-3＞
@@ -765,7 +765,7 @@ class TestV2TokenStraightBondTokens:
             'message': 'Invalid Parameter',
             'description': {
                 'limit': [
-                    "field 'limit' could not be coerced",
+                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: '0.1'",
                     'must be of integer type'
                 ]
             }

@@ -86,25 +86,9 @@ class TestEthSendRawTransaction:
     ###########################################################################
 
     # <Normal_1>
-    # Input list is empty
-    def test_normal_1(self, client, session):
-
-        config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
-        request_params = {"raw_tx_hex_list": []}
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-
-    # <Normal_2>
     # Input list exists (1 entry)
     # Web3 FailOver
-    def test_normal_2(self, client, session):
+    def test_normal_1(self, client, session):
         with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
             insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546")
             insert_node_data(session, is_synced=True, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=1)
@@ -169,9 +153,9 @@ class TestEthSendRawTransaction:
                 "status": 1
             }]
 
-    # <Normal_3>
+    # <Normal_2>
     # Input list exists (multiple entries)
-    def test_normal_3(self, client, session):
+    def test_normal_2(self, client, session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -275,9 +259,9 @@ class TestEthSendRawTransaction:
             "status": 1
         }]
 
-    # <Normal_4>
+    # <Normal_3>
     # pending transaction
-    def test_normal_4(self, client, session):
+    def test_normal_3(self, client, session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -386,10 +370,33 @@ class TestEthSendRawTransaction:
             'message': 'Invalid Parameter'
         }
 
-    # <Error_3>
+    # <Error_3_1>
+    # Input list is empty
+    # -> 400 InvalidParameterError
+    def test_error_3_1(self, client, session):
+
+        config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
+        request_params = {"raw_tx_hex_list": []}
+
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        resp = client.simulate_post(
+            self.apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'raw_tx_hex_list': ['empty values not allowed']
+            }
+        }
+
+    # <Error_3_2>
     # No inputs
     # -> 400 InvalidParameterError
-    def test_error_3(self, client, session):
+    def test_error_3_2(self, client, session):
         request_params = {}
 
         headers = {'Content-Type': 'application/json'}
@@ -403,7 +410,7 @@ class TestEthSendRawTransaction:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'raw_tx_hex_list': 'required field'
+                'raw_tx_hex_list': ['required field']
             }
         }
 
@@ -425,7 +432,7 @@ class TestEthSendRawTransaction:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'raw_tx_hex_list': 'must be of list type'
+                'raw_tx_hex_list': ['must be of list type']
             }
         }
 
@@ -448,9 +455,11 @@ class TestEthSendRawTransaction:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'raw_tx_hex_list': {
-                    '0': 'must be of string type'
-                }
+                'raw_tx_hex_list': [
+                    {
+                        '0': ['must be of string type']
+                    }
+                ]
             }
         }
 

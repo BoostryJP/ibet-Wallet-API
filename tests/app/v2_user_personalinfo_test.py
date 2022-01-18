@@ -154,14 +154,8 @@ class TestPersonalInfo:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "account_address": [
-                    "null value not allowed",
-                    "must be of string type"
-                ],
-                "owner_address": [
-                    "null value not allowed",
-                    "must be of string type"
-                ]
+                "account_address": ["null value not allowed"],
+                "owner_address": ["null value not allowed"]
             }
         }
 
