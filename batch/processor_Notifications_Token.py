@@ -39,8 +39,7 @@ from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
     SLEEP_INTERVAL,
-    TOKEN_LIST_CONTRACT_ADDRESS,
-    ZERO_ADDRESS
+    TOKEN_LIST_CONTRACT_ADDRESS
 )
 from app.model.db import (
     Notification,
@@ -172,21 +171,21 @@ class Watcher:
 
 # イベント：トークン移転（受領時）
 class WatchTransfer(Watcher):
+    """Watch Token Receive Event
+
+    - Process for registering a notification when a token is received
+    - Register a notification only if the account address (private key address) is the source of the transfer.
+    """
     def __init__(self):
         super().__init__("Transfer", {})
 
     def db_merge(self, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
         for entry in log_entries:
-            # Exchangeアドレスが移転元の場合、処理をSKIPする
-            tradable_exchange = Contract.call_function(
-                contract=token_contract,
-                function_name="tradableExchange",
-                args=(),
-                default_returns=ZERO_ADDRESS
-            )
-            if entry["args"]["from"] == tradable_exchange:
+            # If the contract address is the source of the transfer, skip the process
+            if web3.eth.getCode(entry["args"]["from"]).hex() != "0x":
                 continue
+
             token_owner_address = Contract.call_function(
                 contract=token_contract,
                 function_name="owner",
