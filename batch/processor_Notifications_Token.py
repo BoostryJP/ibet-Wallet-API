@@ -41,12 +41,13 @@ from app.config import (
     SLEEP_INTERVAL,
     TOKEN_LIST_CONTRACT_ADDRESS
 )
+from app.contracts import Contract
+from app.errors import ServiceUnavailable
 from app.model.db import (
     Notification,
     NotificationType,
     Listing
 )
-from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
 from app.utils.company_list import CompanyList
 from batch.lib.token_list import TokenList
@@ -164,6 +165,8 @@ class Watcher:
                     db_session.commit()
 
             self.from_block = _next_from
+        except ServiceUnavailable:
+            LOG.warning("An external service was unavailable")
         finally:
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))

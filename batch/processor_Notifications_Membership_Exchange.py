@@ -42,11 +42,12 @@ from app.config import (
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
     TOKEN_LIST_CONTRACT_ADDRESS
 )
+from app.contracts import Contract
+from app.errors import ServiceUnavailable
 from app.model.db import (
     Notification,
     NotificationType
 )
-from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.token import TokenFactory
 from app.utils.company_list import CompanyList
@@ -135,6 +136,8 @@ class Watcher:
                 db_session.commit()
 
             self.from_block = _next_from
+        except ServiceUnavailable:
+            LOG.warning("An external service was unavailable")
         except Exception as err:  # Exceptionが発生した場合は処理を継続
             LOG.error(err)
         finally:

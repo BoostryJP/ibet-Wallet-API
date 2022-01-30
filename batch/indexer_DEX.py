@@ -38,13 +38,14 @@ from app.config import (
     IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
     IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
 )
+from app.contracts import Contract
+from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXAgreement as Agreement,
     AgreementStatus,
     IDXOrder as Order,
     Listing
 )
-from app.contracts import Contract
 from app.utils.web3_utils import Web3Wrapper
 import log
 
@@ -427,7 +428,14 @@ def main():
 
     processor.initial_sync()
     while True:
-        processor.sync_new_logs()
+        try:
+            processor.sync_new_logs()
+            LOG.debug("Processed")
+        except ServiceUnavailable:
+            LOG.warning("An external service was unavailable")
+        except Exception as ex:
+            LOG.exception(ex)
+
         time.sleep(1)
 
 
