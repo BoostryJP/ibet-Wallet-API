@@ -401,7 +401,7 @@ def main():
             processor.sync_new_logs()
             LOG.debug("Processed")
         except ServiceUnavailable:
-            LOG.error("An external service was unavailable")
+            LOG.warning("An external service was unavailable")
         except Exception as ex:
             LOG.exception(ex)
 
