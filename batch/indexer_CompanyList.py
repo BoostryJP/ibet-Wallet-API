@@ -38,6 +38,7 @@ from app.config import (
     COMPANY_LIST_SLEEP_INTERVAL,
     REQUEST_TIMEOUT
 )
+from app.errors import ServiceUnavailable
 from app.model.db import Company
 import log
 
@@ -159,6 +160,8 @@ def main():
         try:
             processor.process()
             LOG.debug("Processed")
+        except ServiceUnavailable:
+            LOG.warning("An external service was unavailable")
         except Exception as ex:
             # Unexpected errors(DB error, etc)
             LOG.exception(ex)
