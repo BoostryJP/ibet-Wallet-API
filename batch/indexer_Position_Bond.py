@@ -32,17 +32,18 @@ from eth_utils import to_checksum_address
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.utils.web3_utils import Web3Wrapper
-from app.contracts import Contract
-from app.model.db import (
-    Listing,
-    IDXPosition
-)
 from app.config import (
     DATABASE_URL,
     TOKEN_LIST_CONTRACT_ADDRESS,
     ZERO_ADDRESS,
 )
+from app.contracts import Contract
+from app.errors import ServiceUnavailable
+from app.model.db import (
+    Listing,
+    IDXPosition
+)
+from app.utils.web3_utils import Web3Wrapper
 import log
 
 
@@ -707,7 +708,14 @@ def main():
 
     processor.initial_sync()
     while True:
-        processor.sync_new_logs()
+        try:
+            processor.sync_new_logs()
+            LOG.debug("Processed")
+        except ServiceUnavailable:
+            LOG.warning("An external service was unavailable")
+        except Exception as ex:
+            LOG.exception(ex)
+
         time.sleep(10)
 
 
