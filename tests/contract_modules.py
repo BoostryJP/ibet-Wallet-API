@@ -151,16 +151,37 @@ def offer_bond_token(invoker, bond_exchange, bond_token, amount, price):
     make_sell(invoker, bond_exchange, bond_token, amount, price)
 
 
-# 取引コントラクトに債券トークンをチャージ
+# DEXコントラクトにトークンをチャージ
 def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
     web3.eth.defaultAccount = invoker['account_address']
 
-    TokenContract = Contract.get_contract(
-        'IbetStraightBond', bond_token['address'])
+    token_contract = Contract.get_contract(
+        'IbetStraightBond',
+        bond_token['address']
+    )
 
-    tx_hash = TokenContract.functions.transfer(bond_exchange['address'], amount). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
+    token_contract.functions.transfer(
+        bond_exchange['address'],
+        amount
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
+
+# DEXコントラクトからトークンを引き出し
+def bond_withdraw_from_exchange(invoker, bond_exchange, bond_token, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    exchange_contract = Contract.get_contract(
+        contract_name='IbetExchange',
+        address=bond_exchange['address']
+    )
+    exchange_contract.functions.withdraw(
+        bond_token['address']
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
 
 
 # 債券の償還
@@ -288,15 +309,35 @@ def share_offer(invoker, exchange, token, amount, price):
     make_sell(invoker, exchange, token, amount, price)
 
 
-# 取引コントラクトに株式トークンをチャージ
+# DEXコントラクトにトークンをデポジット
 def share_transfer_to_exchange(invoker, exchange, token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    TokenContract = Contract. \
-        get_contract('IbetShare', token['address'])
-    tx_hash = TokenContract.functions. \
-        transfer(exchange['address'], amount). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
+    token_contract = Contract.get_contract(
+        contract_name='IbetShare',
+        address=token['address']
+    )
+    token_contract.functions.transfer(
+        exchange['address'],
+        amount
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
+
+
+# DEXコントラクトからトークンを引き出し
+def share_withdraw_from_exchange(invoker, exchange, token, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    exchange_contract = Contract.get_contract(
+        contract_name='IbetExchange',
+        address=exchange['address']
+    )
+    exchange_contract.functions.withdraw(
+        token['address']
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
 
 
 # 株式トークンの無効化
@@ -404,12 +445,32 @@ def coupon_offer(invoker, exchange, token, amount, price):
 # クーポンDEXコントラクトにクーポントークンをデポジット
 def coupon_transfer_to_exchange(invoker, exchange, token, amount):
     web3.eth.defaultAccount = invoker['account_address']
-    TokenContract = Contract. \
-        get_contract('IbetCoupon', token['address'])
-    tx_hash = TokenContract.functions. \
-        transfer(exchange['address'], amount). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.waitForTransactionReceipt(tx_hash)
+    token_contract = Contract.get_contract(
+        contract_name='IbetCoupon',
+        address=token['address']
+    )
+    token_contract.functions.transfer(
+        exchange['address'],
+        amount
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
+
+
+# クーポンDEXコントラクトからクーポントークンを引き出し
+def coupon_withdraw_from_exchange(invoker, exchange, token, amount):
+    web3.eth.defaultAccount = invoker['account_address']
+    exchange_contract = Contract.get_contract(
+        contract_name='IbetExchange',
+        address=exchange['address']
+    )
+    exchange_contract.functions.withdraw(
+        token['address']
+    ).transact({
+        'from': invoker['account_address'],
+        'gas': 4000000
+    })
 
 
 '''
