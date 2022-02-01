@@ -35,6 +35,21 @@ paths:
           description: "account address"
           required: true
           type: "string"
+        - name: include_token_details
+          in: query
+          description: "include token details"
+          required: false
+          type: boolean
+        - name: offset
+          in: query
+          description: "start position"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "number of get"
+          required: false
+          type: integer
       responses:
         200:
           description: "Successful Operation"
@@ -55,6 +70,71 @@ paths:
                       properties:
                         token_address:
                           type: string
+                          description: set when include_token_details=false or null
+                        token:
+                          type: object
+                          description: set when include_token_details=true
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetShare
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            issue_price:
+                              type: integer
+                            principal_value:
+                              type: integer
+                            dividend_information:
+                              type: object
+                              properties:
+                                dividends:
+                                  type: number
+                                dividend_record_date:
+                                  type: string
+                                divicend_payment_date:
+                                  type: string
+                            cancellation_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            is_offering:
+                              type: boolean
+                            status:
+                              type: boolean
+                            transfer_approval_required:
+                              type: boolean
+                            is_canceled:
+                              type: boolean
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            tradable_exchange:
+                              type: string
+                            personal_info_address:
+                              type: string
                         balance:
                           type: integer
                         pending_transfer:
@@ -202,6 +282,21 @@ paths:
           description: "account address"
           required: true
           type: "string"
+        - name: include_token_details
+          in: query
+          description: "include token details"
+          required: false
+          type: boolean
+        - name: offset
+          in: query
+          description: "start position"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "number of get"
+          required: false
+          type: integer
       responses:
         200:
           description: "Successful Operation"
@@ -222,6 +317,95 @@ paths:
                       properties:
                         token_address:
                           type: string
+                          description: set when include_token_details=false or null
+                        token:
+                          type: object
+                          description: set when include_token_details=true
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetStraightBond
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            face_value:
+                              type: integer
+                            interest_rate:
+                              type: number
+                            interest_payment_date1:
+                              type: string
+                            interest_payment_date2:
+                              type: string
+                            interest_payment_date3:
+                              type: string
+                            interest_payment_date4:
+                              type: string
+                            interest_payment_date5:
+                              type: string
+                            interest_payment_date6:
+                              type: string
+                            interest_payment_date7:
+                              type: string
+                            interest_payment_date8:
+                              type: string
+                            interest_payment_date9:
+                              type: string
+                            interest_payment_date10:
+                              type: string
+                            interest_payment_date11:
+                              type: string
+                            interest_payment_date12:
+                              type: string
+                            redemption_date:
+                              type: string
+                            redemption_value:
+                              type: integer
+                            return_date:
+                              type: string
+                            return_amount:
+                              type: string
+                            purpose:
+                              type: string
+                              description: purpose of issue
+                            transferable:
+                              type: boolean
+                            is_redeemed:
+                              type: boolean
+                            is_offering:
+                              type: boolean
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                            tradable_exchange:
+                              type: string
+                            status:
+                              type: boolean
+                            memo:
+                              type: string
+                            personal_info_address:
+                              type: string
+                            transfer_approval_required:
+                              type: boolean
                         balance:
                           type: integer
                         pending_transfer:
@@ -393,6 +577,21 @@ paths:
           description: "account address"
           required: true
           type: "string"
+        - name: include_token_details
+          in: query
+          description: "include token details"
+          required: false
+          type: boolean
+        - name: offset
+          in: query
+          description: "start position"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "number of get"
+          required: false
+          type: integer
       responses:
         200:
           description: "Successful Operation"
@@ -413,6 +612,65 @@ paths:
                       properties:
                         token_address:
                           type: string
+                          description: set when include_token_details=false or null
+                        token:
+                          type: object
+                          description: set when include_token_details=true
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetMembership
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                            tradable_exchange:
+                              type: string
                         balance:
                           type: integer
                         exchange_balance:
@@ -550,6 +808,21 @@ paths:
           description: "account address"
           required: true
           type: "string"
+        - name: include_token_details
+          in: query
+          description: "include token details"
+          required: false
+          type: boolean
+        - name: offset
+          in: query
+          description: "start position"
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: "number of get"
+          required: false
+          type: integer
       responses:
         200:
           description: "Successful Operation"
@@ -570,6 +843,65 @@ paths:
                       properties:
                         token_address:
                           type: string
+                          description: set when include_token_details=false or null
+                        token:
+                          type: object
+                          description: set when include_token_details=true
+                          properties:
+                            token_address:
+                              type: string
+                            token_template:
+                              type: string
+                              example:
+                                IbetCoupon
+                            owner_address:
+                              type: string
+                              description: issuer address
+                            company_name:
+                              type: string
+                            rsa_publickey:
+                              type: string
+                            name:
+                              type: string
+                              description: token name
+                            symbol:
+                              type: string
+                              description: token symbol
+                            total_supply:
+                              type: integer
+                            details:
+                              type: string
+                            return_details:
+                              type: string
+                            expiration_date:
+                              type: string
+                            memo:
+                              type: string
+                            transferable:
+                              type: boolean
+                            status:
+                              type: boolean
+                            initial_offering_status:
+                              type: boolean
+                            image_url:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  url:
+                                    type: string
+                            max_holding_quantity:
+                              type: integer
+                            max_sell_amount:
+                              type: integer
+                            contact_information:
+                              type: string
+                            privacy_policy:
+                              type: string
+                            tradable_exchange:
+                              type: string
                         balance:
                           type: integer
                         exchange_balance:
@@ -973,6 +1305,11 @@ paths:
                 $ref: "#/definitions/400InvalidParameterError"
   /Events/IbetEscrow:
     get:
+      tags:
+        - Events
+      summary: List all IbetEscrow event logs
+      operationId: IbetEscrowEvents
+      parameters:
         - name: from_block
           in: query
           description: from block number
@@ -1028,6 +1365,11 @@ paths:
                 $ref: "#/definitions/400InvalidParameterError"
   /Events/IbetSecurityTokenEscrow:
     get:
+      tags:
+        - Events
+      summary: List all IbetSecurityTokenEscrow event logs
+      operationId: IbetSecurityTokenEscrowEvents
+      parameters:
         - name: from_block
           in: query
           description: from block number

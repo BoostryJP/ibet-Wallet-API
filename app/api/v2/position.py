@@ -48,6 +48,7 @@ class ShareMyTokens(BaseResource):
     """保有一覧参照（Share）"""
 
     def on_post(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: v2.position.ShareMyTokens"))
         LOG.info("v2.position.ShareMyTokens")
 
         session = req.context["session"]
@@ -175,6 +176,7 @@ class StraightBondMyTokens(BaseResource):
     """保有一覧参照（StraightBond）"""
 
     def on_post(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: v2.position.StraightBondMyTokens"))
         LOG.info("v2.position.StraightBondMyTokens")
 
         session = req.context["session"]
@@ -303,6 +305,7 @@ class MembershipMyTokens(BaseResource):
     """保有一覧参照（Membership）"""
 
     def on_post(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: v2.position.MembershipMyTokens"))
         LOG.info("v2.position.MembershipMyTokens")
 
         session = req.context["session"]
@@ -421,6 +424,7 @@ class CouponMyTokens(BaseResource):
     """保有一覧参照（Coupon）"""
 
     def on_post(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: v2.position.CouponMyTokens"))
         LOG.info("v2.position.CouponMyTokens")
 
         session = req.context["session"]
@@ -557,6 +561,7 @@ class CouponConsumptions(BaseResource):
     """Coupon消費履歴参照"""
 
     def on_post(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: v2.position.CouponConsumptions"))
         LOG.info("v2.position.CouponConsumptions")
         session = req.context["session"]
 

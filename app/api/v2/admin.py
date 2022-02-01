@@ -48,7 +48,7 @@ class Tokens(BaseResource):
     # GET
     ########################################
     def on_get(self, req, res, **kwargs):
-        LOG.info("v2.token.Tokens(GET)")
+        LOG.info("v2.admin.Tokens(GET)")
 
         session = req.context["session"]
 
@@ -68,7 +68,7 @@ class Tokens(BaseResource):
     # POST
     ########################################
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.token.Tokens(POST)")
+        LOG.info("v2.admin.Tokens(POST)")
 
         session = req.context["session"]
 
@@ -202,7 +202,7 @@ class TokenType(BaseResource):
     # GET
     ########################################
     def on_get(self, req, res, **kwargs):
-        LOG.info("v2.token.TokenType")
+        LOG.info("v2.admin.TokenType")
 
         res_body = {
             "IbetStraightBond": config.BOND_TOKEN_ENABLED,
@@ -229,7 +229,7 @@ class Token(BaseResource):
     # GET
     ########################################
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info("v2.token.Token(GET)")
+        LOG.info("v2.admin.Token(GET)")
 
         session = req.context["session"]
 
@@ -325,7 +325,7 @@ class Token(BaseResource):
     # DELETE
     ########################################
     def on_delete(self, req, res, contract_address=None, **kwargs):
-        LOG.info("v2.token.Token(DELETE)")
+        LOG.info("v2.admin.Token(DELETE)")
 
         session = req.context["session"]
 

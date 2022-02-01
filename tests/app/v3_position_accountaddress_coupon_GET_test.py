@@ -337,6 +337,7 @@ class TestPositionAccountAddressCoupon:
             resp = client.simulate_get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
+                    "include_token_details": "false",
                     "offset": 1,
                     "limit": 2,
                 }
@@ -364,6 +365,68 @@ class TestPositionAccountAddressCoupon:
                     "balance": 999900,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                    "used": 0,
+                },
+            ]
+        }
+
+    # <Normal_3>
+    # token details
+    def test_normal_3(self, client, session, shared_contract):
+        token_list_contract = shared_contract["TokenList"]
+
+        # Prepare data
+        token_1 = self.create_balance_data(
+            self.account_1, {"address": config.ZERO_ADDRESS}, token_list_contract)
+        self.list_token(token_1["address"], session)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            # Request target API
+            resp = client.simulate_get(
+                self.apiurl.format(account_address=self.account_1["account_address"]),
+                params={
+                    "include_token_details": "true",
+                }
+            )
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "result_set": {
+                "count": 1,
+                "offset": None,
+                "limit": None,
+                "total": 1,
+            },
+            "positions": [
+                {
+                    "token": {
+                        'token_address': token_1["address"],
+                        'token_template': 'IbetCoupon',
+                        'owner_address': self.issuer["account_address"],
+                        'company_name': '',
+                        'rsa_publickey': '',
+                        'name': 'テストクーポン',
+                        'symbol': 'COUPON',
+                        'total_supply': 1000000,
+                        'details': 'クーポン詳細',
+                        'return_details': 'リターン詳細',
+                        'expiration_date': '20191231',
+                        'memo': 'クーポンメモ欄',
+                        'transferable': True,
+                        'status': True,
+                        'initial_offering_status': False,
+                        'image_url': [
+                            {'id': 1, 'url': ''}, {'id': 2, 'url': ''}, {'id': 3, 'url': ''}
+                        ],
+                        'max_holding_quantity': 1,
+                        'max_sell_amount': 1000,
+                        'contact_information': '問い合わせ先',
+                        'privacy_policy': 'プライバシーポリシー',
+                        'tradable_exchange': config.ZERO_ADDRESS,
+                    },
+                    "balance": 1000000,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
                     "used": 0,
                 },
             ]
@@ -440,13 +503,14 @@ class TestPositionAccountAddressCoupon:
         }
 
     # <Error_4>
-    # ParameterError: offset/limit(not int)
+    # ParameterError: offset/limit(not int), include_token_details(not bool)
     def test_error_4(self, client, session):
 
         # Request target API
         resp = client.simulate_get(
             self.apiurl.format(account_address=self.account_1["account_address"]),
             params={
+                "include_token_details": "test",
                 "offset": "test",
                 "limit": "test",
             }
@@ -458,6 +522,9 @@ class TestPositionAccountAddressCoupon:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
+                'include_token_details': [
+                    'unallowed value test'
+                ],
                 'limit': [
                     "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'test'",
                     'must be of integer type'

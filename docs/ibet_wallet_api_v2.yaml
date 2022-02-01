@@ -2772,6 +2772,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/StraightBond:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "StraightBond Token Position (Bulk Get)"
@@ -2913,6 +2914,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Share:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Share Token Position (Bulk Get)"
@@ -3030,6 +3032,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Membership:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Membership Token Position (Bulk Get)"
@@ -3139,6 +3142,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Coupon:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Coupon Token Position (Bulk Get)"
@@ -3250,6 +3254,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Coupon/Consumptions:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Coupon Consumption History (Bulk Get)"
