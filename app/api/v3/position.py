@@ -70,6 +70,7 @@ class BasePosition(BaseResource):
         request_json = BasePosition.validate(req)
         offset = request_json["offset"]
         limit = request_json["limit"]
+        include_token_details = True if request_json["include_token_details"] == "true" else False
 
         session = req.context["session"]
 
@@ -99,7 +100,7 @@ class BasePosition(BaseResource):
             if token_template == self.token_type:
 
                 # Get Position
-                position = self._get_position(account_address, token_address, session)
+                position = self._get_position(account_address, token_address, session, is_detail=include_token_details)
 
                 # Filter
                 if position is None:
@@ -258,11 +259,18 @@ class BasePosition(BaseResource):
     @staticmethod
     def validate(req):
         request_json = {
+            "include_token_details": req.get_param("include_token_details"),
             "offset": req.get_param("offset"),
             "limit": req.get_param("limit"),
         }
 
         validator = Validator({
+            "include_token_details": {
+                "type": "string",
+                "required": False,
+                "nullable": True,
+                "allowed": ["true", "false"],
+            },
             "offset": {
                 "type": "integer",
                 "coerce": int,
