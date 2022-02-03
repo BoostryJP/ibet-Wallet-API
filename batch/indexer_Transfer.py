@@ -70,61 +70,62 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
+        try:
+            self.__get_token_list(local_session)
+            skip_timestamp = self.__get_latest_registered_block_timestamp(local_session)
 
-        self.__get_token_list(local_session)
-        skip_timestamp = self.__get_latest_registered_block_timestamp(local_session)
-
-        # Synchronize 1,000,000 blocks at a time
-        _to_block = 999999
-        _from_block = 0
-        if self.latest_block > 999999:
-            while _to_block < self.latest_block:
+            # Synchronize 1,000,000 blocks at a time
+            _to_block = 999999
+            _from_block = 0
+            if self.latest_block > 999999:
+                while _to_block < self.latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_from=_from_block,
+                        block_to=_to_block,
+                        skip_timestamp=skip_timestamp
+                    )
+                    _to_block += 1000000
+                    _from_block += 1000000
+                    local_session.commit()
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
-                    block_to=_to_block,
+                    block_to=self.latest_block,
                     skip_timestamp=skip_timestamp
                 )
-                _to_block += 1000000
-                _from_block += 1000000
                 local_session.commit()
-            self.__sync_all(
-                db_session=local_session,
-                block_from=_from_block,
-                block_to=self.latest_block,
-                skip_timestamp=skip_timestamp
-            )
-            local_session.commit()
-        else:
-            self.__sync_all(
-                db_session=local_session,
-                block_from=_from_block,
-                block_to=self.latest_block,
-                skip_timestamp=skip_timestamp
-            )
-            local_session.commit()
+            else:
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=self.latest_block,
+                    skip_timestamp=skip_timestamp
+                )
+                local_session.commit()
+        finally:
+            local_session.close()
 
-        local_session.close()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
+        try:
+            self.__get_token_list(local_session)
 
-        self.__get_token_list(local_session)
+            blockTo = web3.eth.blockNumber
+            if blockTo == self.latest_block:
+                return
 
-        blockTo = web3.eth.blockNumber
-        if blockTo == self.latest_block:
-            return
-
-        self.__sync_all(
-            db_session=local_session,
-            block_from=self.latest_block + 1,
-            block_to=blockTo
-        )
-        self.latest_block = blockTo
-
-        local_session.commit()
-        local_session.close()
+            self.__sync_all(
+                db_session=local_session,
+                block_from=self.latest_block + 1,
+                block_to=blockTo
+            )
+            self.latest_block = blockTo
+            local_session.commit()
+        finally:
+            local_session.close()
 
     @staticmethod
     def __gen_block_timestamp(event):

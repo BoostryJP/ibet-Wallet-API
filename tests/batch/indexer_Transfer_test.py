@@ -26,7 +26,8 @@ from web3.middleware import geth_poa_middleware
 from app import config
 from app.model.db import (
     Listing,
-    IDXTransfer
+    IDXTransfer,
+    Node
 )
 from batch import indexer_Transfer
 from tests.account_config import eth_account
@@ -58,6 +59,13 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
+    node = Node()
+    node.is_synced = True
+    node.endpoint_uri = config.WEB3_HTTP_PROVIDER
+    node.priority = 0
+    session.add(node)
+    session.commit()
+
     processor = test_module.Processor()
     processor.initial_sync()
     return processor
@@ -69,7 +77,10 @@ class TestProcessor:
     trader2 = eth_account["agent"]
 
     @staticmethod
-    def issue_token_bond(issuer, exchange_contract_address, personal_info_contract_address, token_list):
+    def issue_token_bond(issuer,
+                         exchange_contract_address,
+                         personal_info_contract_address,
+                         token_list):
         # Issue token
         args = {
             'name': 'テスト債券',
@@ -108,7 +119,9 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_membership(issuer, exchange_contract_address, token_list):
+    def issue_token_membership(issuer,
+                               exchange_contract_address,
+                               token_list):
         # Issue token
         args = {
             'name': 'テスト会員権',
@@ -129,7 +142,9 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_coupon(issuer, exchange_contract_address, token_list):
+    def issue_token_coupon(issuer,
+                           exchange_contract_address,
+                           token_list):
         # Issue token
         args = {
             'name': 'テストクーポン',
@@ -150,7 +165,10 @@ class TestProcessor:
         return token
 
     @staticmethod
-    def issue_token_share(issuer, exchange_contract_address, personal_info_contract_address, token_list):
+    def issue_token_share(issuer,
+                          exchange_contract_address,
+                          personal_info_contract_address,
+                          token_list):
         # Issue token
         args = {
             "name": "テスト株式",
@@ -196,15 +214,27 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         share_token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
         self.listing_token(share_token["address"], session)
+        session.commit()
 
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
 
         # Transfer
         share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            share_token,
+            100000
+        )
         block_number = web3.eth.blockNumber
 
         # Run target process
@@ -213,6 +243,7 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 1
+
         block = web3.eth.getBlock(block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
@@ -228,25 +259,44 @@ class TestProcessor:
     # IbetShare
     # Multi event logs
     def test_normal_2(self, processor, shared_contract, session):
-        # Issue Token
+        # Prepare data
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         share_token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
         self.listing_token(share_token["address"], session)
 
-        PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+        session.commit()
 
         PersonalInfoUtils.register(
-            self.trader2["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
+        PersonalInfoUtils.register(
+            self.trader2["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
 
         # Transfer
         share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            share_token,
+            100000
+        )
         block_number = web3.eth.blockNumber
         share_transfer_to_exchange(
-            self.issuer, {"address": self.trader2["account_address"]}, share_token, 200000)
+            self.issuer,
+            {"address": self.trader2["account_address"]},
+            share_token,
+            200000
+        )
         block_number2 = web3.eth.blockNumber
 
         # Run target process
@@ -255,6 +305,7 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 2
+
         block = web3.eth.getBlock(block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
@@ -265,6 +316,7 @@ class TestProcessor:
         assert _transfer.value == 100000
         assert _transfer.created is not None
         assert _transfer.modified is not None
+
         block = web3.eth.getBlock(block_number2)
         _transfer = _transfer_list[1]
         assert _transfer.id == 2
@@ -279,31 +331,62 @@ class TestProcessor:
     # <Normal_3>
     # IbetStraightBond, IbetMembership, IbetCoupon
     def test_normal_3(self, processor, shared_contract, session):
-        # Issue Token
+        # Prepare data
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         bond_token = self.issue_token_bond(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
         self.listing_token(bond_token["address"], session)
+
         membership_token = self.issue_token_membership(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(membership_token["address"], session)
+
         coupon_token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(coupon_token["address"], session)
 
+        session.commit()
+
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
 
         # Transfer
         bond_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, bond_token, 100000)
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            bond_token,
+            100000
+        )
         bond_block_number = web3.eth.blockNumber
+
         membership_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, membership_token, 200000)
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            membership_token,
+            200000
+        )
         membership_block_number = web3.eth.blockNumber
+
         transfer_coupon_token(
-            self.issuer, coupon_token, self.trader["account_address"], 300000)
+            self.issuer,
+            coupon_token,
+            self.trader["account_address"],
+            300000
+        )
         coupon_block_number = web3.eth.blockNumber
 
         # Run target process
@@ -312,6 +395,7 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 3
+
         block = web3.eth.getBlock(bond_block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
@@ -322,6 +406,7 @@ class TestProcessor:
         assert _transfer.value == 100000
         assert _transfer.created is not None
         assert _transfer.modified is not None
+
         block = web3.eth.getBlock(membership_block_number)
         _transfer = _transfer_list[1]
         assert _transfer.id == 2
@@ -332,6 +417,7 @@ class TestProcessor:
         assert _transfer.value == 200000
         assert _transfer.created is not None
         assert _transfer.modified is not None
+
         block = web3.eth.getBlock(coupon_block_number)
         _transfer = _transfer_list[2]
         assert _transfer.id == 3
@@ -346,15 +432,25 @@ class TestProcessor:
     # <Normal_4>
     # No event logs
     def test_normal_4(self, processor, shared_contract, session):
-        # Issue Token
+        # Prepare data
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+
         share_token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
         self.listing_token(share_token["address"], session)
 
+        session.commit()
+
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
 
         # Not Transfer
         # Run target process
@@ -367,24 +463,39 @@ class TestProcessor:
     # <Normal_5>
     # Already Proceed
     def test_normal_5(self, processor, shared_contract, session):
-        # Prepare run
+        # Prepare data
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+
         share_token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
         self.listing_token(share_token["address"], session)
 
+        session.commit()
+
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
 
         share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            share_token,
+            100000)
         block_number = web3.eth.blockNumber
 
+        # Run target process (1)
         processor.sync_new_logs()
 
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 1
+
         block = web3.eth.getBlock(block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
@@ -396,7 +507,7 @@ class TestProcessor:
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
-        # Run target process
+        # Run target process (2)
         processor.sync_new_logs()
 
         # Assertion
@@ -406,19 +517,30 @@ class TestProcessor:
     # <Normal_6>
     # Not Listing Token
     def test_normal_6(self, processor, shared_contract, session):
-        # Issue Token
+        # Prepare data
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         share_token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
+        session.commit()
 
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
 
         # Transfer
         share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
-        block_number = web3.eth.blockNumber
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            share_token,
+            100000
+        )
 
         # Run target process
         processor.sync_new_logs()
@@ -435,20 +557,31 @@ class TestProcessor:
     # Error occur
     @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
     def test_error_1(self, processor, shared_contract, session):
-        # Issue Token
+        # Prepare data
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         share_token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
         self.listing_token(share_token["address"], session)
+        session.commit()
 
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
 
         # Transfer
         share_transfer_to_exchange(
-            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
-        block_number = web3.eth.blockNumber
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            share_token,
+            100000
+        )
 
         # Run target process
         processor.sync_new_logs()
