@@ -64,6 +64,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 @pytest.fixture(scope="function")
 def processor_factory(session, shared_contract):
     def _processor(bond=False, membership=False, coupon=False, share=False):
+        # Pre-setup
         node = Node()
         node.is_synced = True
         node.endpoint_uri = config.WEB3_HTTP_PROVIDER
