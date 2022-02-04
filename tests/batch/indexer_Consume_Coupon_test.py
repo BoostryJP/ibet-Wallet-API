@@ -26,7 +26,8 @@ from web3.middleware import geth_poa_middleware
 from app import config
 from app.model.db import (
     Listing,
-    IDXConsumeCoupon
+    IDXConsumeCoupon,
+    Node
 )
 from batch import indexer_Consume_Coupon
 from tests.account_config import eth_account
@@ -49,9 +50,14 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    _sink = test_module.Sinks()
-    _sink.register(test_module.DBSink(session))
-    processor = test_module.Processor(_sink, session)
+    node = Node()
+    node.is_synced = True
+    node.endpoint_uri = config.WEB3_HTTP_PROVIDER
+    node.priority = 0
+    session.add(node)
+    session.commit()
+
+    processor = test_module.Processor()
     processor.initial_sync()
     return processor
 
@@ -102,8 +108,12 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
@@ -115,6 +125,7 @@ class TestProcessor:
         # Assertion
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 1
+
         block = web3.eth.getBlock(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
@@ -131,14 +142,30 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Consume
-        consume_coupon_token(self.issuer, token, 1000)
+        consume_coupon_token(
+            self.issuer,
+            token,
+            1000
+        )
         block_number = web3.eth.blockNumber
-        transfer_coupon_token(self.issuer, token, self.trader["account_address"], 2000)
-        consume_coupon_token(self.trader, token, 2000)
+        transfer_coupon_token(
+            self.issuer, token,
+            self.trader["account_address"],
+            2000
+        )
+        consume_coupon_token(
+            self.trader,
+            token,
+            2000
+        )
         block_number2 = web3.eth.blockNumber
 
         # Run target process
@@ -147,6 +174,7 @@ class TestProcessor:
         # Assertion
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 2
+
         block = web3.eth.getBlock(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
@@ -155,6 +183,7 @@ class TestProcessor:
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
+
         block = web3.eth.getBlock(block_number2)
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
@@ -171,11 +200,18 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(token["address"], session)
         token2 = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(token2["address"], session)
+        session.commit()
 
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
@@ -195,6 +231,7 @@ class TestProcessor:
         # Assertion
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 4
+
         block = web3.eth.getBlock(block_number)
         _consume_coupon = _consume_coupon_list[0]
         assert _consume_coupon.id == 1
@@ -203,6 +240,7 @@ class TestProcessor:
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 1000
         assert _consume_coupon.block_timestamp is not None
+
         block = web3.eth.getBlock(block_number2)
         _consume_coupon = _consume_coupon_list[1]
         assert _consume_coupon.id == 2
@@ -211,6 +249,7 @@ class TestProcessor:
         assert _consume_coupon.account_address == self.trader["account_address"]
         assert _consume_coupon.amount == 2000
         assert _consume_coupon.block_timestamp is not None
+
         block = web3.eth.getBlock(block_number3)
         _consume_coupon = _consume_coupon_list[2]
         assert _consume_coupon.id == 3
@@ -219,6 +258,7 @@ class TestProcessor:
         assert _consume_coupon.account_address == self.issuer["account_address"]
         assert _consume_coupon.amount == 3000
         assert _consume_coupon.block_timestamp is not None
+
         block = web3.eth.getBlock(block_number4)
         _consume_coupon = _consume_coupon_list[3]
         assert _consume_coupon.id == 4
@@ -234,8 +274,12 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Not Consume
         # Run target process
@@ -251,7 +295,11 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
+        session.commit()
 
         # Consume
         consume_coupon_token(self.issuer, token, 1000)
@@ -274,8 +322,12 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(
-            self.issuer, config.ZERO_ADDRESS, token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            token_list_contract
+        )
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Consume
         consume_coupon_token(self.issuer, token, 1000)

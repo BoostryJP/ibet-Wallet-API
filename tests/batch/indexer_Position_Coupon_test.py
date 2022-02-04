@@ -25,8 +25,9 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.model.db import (
+    Listing,
     IDXPosition,
-    Listing
+    Node
 )
 from batch import indexer_Position_Coupon
 from tests.account_config import eth_account
@@ -50,9 +51,14 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    _sink = test_module.Sinks()
-    _sink.register(test_module.DBSink(session))
-    processor = test_module.Processor(_sink, session)
+    node = Node()
+    node.is_synced = True
+    node.endpoint_uri = config.WEB3_HTTP_PROVIDER
+    node.priority = 0
+    session.add(node)
+    session.commit()
+
+    processor = test_module.Processor()
     processor.initial_sync()
     return processor
 
@@ -106,6 +112,7 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
@@ -138,6 +145,7 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
@@ -179,6 +187,7 @@ class TestProcessor:
         self.listing_token(token["address"], session)
         token2 = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token2["address"], session)
+        session.commit()
 
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
@@ -239,6 +248,7 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
@@ -272,6 +282,7 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Not Event
         # Run target process
@@ -287,6 +298,7 @@ class TestProcessor:
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        session.commit()
 
         # Transfer
         membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
@@ -310,6 +322,7 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         token = self.issue_token_coupon(self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)

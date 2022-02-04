@@ -106,6 +106,7 @@ class TestWatchTransfer:
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(self.issuer, exchange_contract, token_list_contract, session)
+        session.commit()
 
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 100)
@@ -143,6 +144,7 @@ class TestWatchTransfer:
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(self.issuer, exchange_contract, token_list_contract, session)
+        session.commit()
 
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 100)
@@ -200,6 +202,7 @@ class TestWatchTransfer:
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(self.issuer, exchange_contract, token_list_contract, session)
+        session.commit()
 
         # Not Transfer
         # Run target process
@@ -217,6 +220,7 @@ class TestWatchTransfer:
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(self.issuer, exchange_contract, token_list_contract, session)
+        session.commit()
 
         # Transfer to DEX
         coupon_transfer_to_exchange(
@@ -277,6 +281,7 @@ class TestWatchTransfer:
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
         issue_token(self.issuer, exchange_contract, token_list_contract, session)
+        session.commit()
 
         # Run target process
         watcher.loop()

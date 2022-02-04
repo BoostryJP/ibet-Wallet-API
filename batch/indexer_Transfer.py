@@ -25,12 +25,13 @@ from datetime import (
     timedelta
 )
 
+from eth_utils import to_checksum_address
 from sqlalchemy import (
     create_engine,
     desc
 )
+from sqlalchemy.exc import OperationalError as SAOperationalError
 from sqlalchemy.orm import Session
-from eth_utils import to_checksum_address
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -128,8 +129,11 @@ class Processor:
             local_session.close()
 
     @staticmethod
-    def __gen_block_timestamp(event):
-        return datetime.fromtimestamp(web3.eth.getBlock(event["blockNumber"])["timestamp"], UTC)
+    def __get_block_timestamp(event) -> datetime:
+        return datetime.fromtimestamp(
+            web3.eth.getBlock(event["blockNumber"])["timestamp"],
+            UTC
+        )
 
     @staticmethod
     def __get_latest_registered_block_timestamp(db_session):
@@ -182,7 +186,7 @@ class Processor:
                     if value > sys.maxsize:
                         pass
                     else:
-                        event_created = self.__gen_block_timestamp(event=event)
+                        event_created = self.__get_block_timestamp(event=event)
                         if skip_timestamp is not None and event_created <= skip_timestamp.replace(tzinfo=UTC):
                             LOG.debug(f"Skip Registry Transfer data in DB: blockNumber={event['blockNumber']}")
                             continue
@@ -199,13 +203,13 @@ class Processor:
                 LOG.exception(e)
 
     @staticmethod
-    def __sink_on_transfer(db_session,
-                           transaction_hash,
-                           token_address,
-                           from_account_address,
-                           to_account_address,
-                           value,
-                           event_created):
+    def __sink_on_transfer(db_session: Session,
+                           transaction_hash: str,
+                           token_address: str,
+                           from_account_address: str,
+                           to_account_address: str,
+                           value: int,
+                           event_created: datetime):
         """Registry Transfer data in DB
 
         :param transaction_hash: transaction hash (same value for bulk transfer of token contract)
@@ -237,6 +241,8 @@ def main():
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SAOperationalError:
+            LOG.error("Cannot connect to database")
         except Exception as ex:
             LOG.exception(ex)
 
