@@ -27,10 +27,8 @@ from datetime import (
 )
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
+from sqlalchemy.exc import OperationalError as SAOperationalError
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -62,10 +60,7 @@ WORKER_COUNT = int(WORKER_COUNT)
 SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
 web3 = Web3Wrapper()
-
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
 
@@ -98,7 +93,7 @@ class Watcher:
     def _gen_block_timestamp(self, entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def _get_bond_token_public_list(self):
+    def _get_bond_token_public_list(self, db_session: Session):
         res = []
         registered_token_list = db_session.query(Listing).filter(Listing.is_public == True).all()
         for registered_token in registered_token_list:
@@ -108,7 +103,7 @@ class Watcher:
                 res.append(registered_token)
         return res
 
-    def _get_bond_token_all_list(self):
+    def _get_bond_token_all_list(self, db_session: Session):
         res = []
         registered_token_list = db_session.query(Listing).all()
         for registered_token in registered_token_list:
@@ -118,11 +113,16 @@ class Watcher:
                 res.append(registered_token)
         return res
 
-    def db_merge(self, token_contract, entries):
+    @staticmethod
+    def __get_db_session():
+        return Session(autocommit=False, autoflush=True, bind=db_engine)
+
+    def db_merge(self, db_session: Session, token_contract, entries):
         pass
 
     def loop(self):
         start_time = time.time()
+        local_session = self.__get_db_session()
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
 
@@ -136,9 +136,9 @@ class Watcher:
 
             # 登録済みの債券リストを取得
             if self.__class__.__name__ == "WatchTransfer":
-                bond_token_list = self._get_bond_token_all_list()
+                bond_token_list = self._get_bond_token_all_list(local_session)
             else:
-                bond_token_list = self._get_bond_token_public_list()
+                bond_token_list = self._get_bond_token_public_list(local_session)
 
             # レスポンスタイムアウト抑止
             # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
@@ -166,13 +166,20 @@ class Watcher:
                     LOG.error(err)
                     continue
                 if len(entries) > 0:
-                    self.db_merge(bond_contract, entries)
-                    db_session.commit()
+                    self.db_merge(
+                        db_session=local_session,
+                        token_contract=bond_contract,
+                        entries=entries
+                    )
+                    local_session.commit()
 
             self.from_block = _next_from
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SAOperationalError:
+            LOG.error("Cannot connect to database")
         finally:
+            local_session.close()
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
@@ -182,7 +189,7 @@ class WatchStartInitialOffering(Watcher):
     def __init__(self):
         super().__init__("ChangeInitialOfferingStatus", {"filter": {"status": True}})
 
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, db_session: Session, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
@@ -210,7 +217,7 @@ class WatchStopInitialOffering(Watcher):
     def __init__(self):
         super().__init__("ChangeInitialOfferingStatus", {"filter": {"status": False}})
 
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, db_session: Session, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
@@ -238,7 +245,7 @@ class WatchRedeem(Watcher):
     def __init__(self):
         super().__init__("Redeem", {})
 
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, db_session: Session, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
@@ -266,7 +273,7 @@ class WatchApplyForOffering(Watcher):
     def __init__(self):
         super().__init__("ApplyFor", {})
 
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, db_session: Session, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
@@ -295,7 +302,7 @@ class WatchAllot(Watcher):
     def __init__(self):
         super().__init__("Allot", {})
 
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, db_session: Session, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
             token_owner_address = token_contract.functions.owner().call()
@@ -329,7 +336,7 @@ class WatchTransfer(Watcher):
     def __init__(self):
         super().__init__("Transfer", {})
 
-    def db_merge(self, token_contract, entries):
+    def db_merge(self, db_session: Session, token_contract, entries):
         company_list = company_list_factory.get()
         for entry in entries:
             # If the contract address is the source of the transfer, skip the process

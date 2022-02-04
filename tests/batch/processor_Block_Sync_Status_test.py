@@ -26,11 +26,7 @@ from web3.middleware import geth_poa_middleware
 
 from app import config
 from app.model.db import Node
-from batch.processor_Block_Sync_Status import (
-    Sinks,
-    DBSink,
-    Processor
-)
+from batch.processor_Block_Sync_Status import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -38,9 +34,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope='function')
 def processor(session):
-    _sink = Sinks()
-    _sink.register(DBSink(session))
-    return Processor(sink=_sink, db=session)
+    return Processor()
 
 
 class TestProcessor:
@@ -58,6 +52,7 @@ class TestProcessor:
     def test_normal_1(self, processor, session):
         # Run 1st: synced
         processor.process()
+        session.commit()
 
         # assertion
         _node = session.query(Node).first()
@@ -68,9 +63,11 @@ class TestProcessor:
 
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
 
-        # Run 2st: block generation speed down(same the previous)
+
+        # Run 2nd: block generation speed down(same the previous)
         with mock.patch("app.config.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
             processor.process()
+            session.commit()
 
         # assertion
         _node = session.query(Node).first()
@@ -80,6 +77,7 @@ class TestProcessor:
 
         # Run 3rd: synced
         processor.process()
+        session.commit()
 
         # assertion
         _node = session.query(Node).first()
@@ -97,6 +95,7 @@ class TestProcessor:
                 }
             ]
             processor.process()
+            session.commit()
 
         # assertion
         _node = session.query(Node).first()
@@ -114,6 +113,7 @@ class TestProcessor:
                 }
             ]
             processor.process()
+            session.commit()
 
         # assertion
         _node = session.query(Node).first()
@@ -123,9 +123,7 @@ class TestProcessor:
     # standby node is down to sync
     @mock.patch("app.config.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000"])
     def test_normal_2(self, session):
-        _sink = Sinks()
-        _sink.register(DBSink(session))
-        processor = Processor(sink=_sink, db=session)
+        processor = Processor()
 
         # pre assertion
         _node = session.query(Node).first()
@@ -138,6 +136,7 @@ class TestProcessor:
         org_value = processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri
         processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri = config.WEB3_HTTP_PROVIDER
         processor.process()
+        session.commit()
         processor.node_info["http://test1:1000"]["web3"].manager.provider.endpoint_uri = org_value
 
         # assertion
@@ -153,9 +152,7 @@ class TestProcessor:
     @mock.patch("app.config.WEB3_HTTP_PROVIDER_STANDBY", ["http://test1:1000", "http://test2:2000"])
     @mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=Exception()))
     def test_error_1(self, session):
-        _sink = Sinks()
-        _sink.register(DBSink(session))
-        Processor(sink=_sink, db=session)
+        Processor()
 
         # assertion
         _node_list = session.query(Node).order_by(Node.id).all()
@@ -180,6 +177,7 @@ class TestProcessor:
     # node down(processing)
     def test_error_2(self, processor, session):
         processor.process()
+        session.commit()
 
         # assertion
         _node = session.query(Node).first()
@@ -192,6 +190,7 @@ class TestProcessor:
         org_value = processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri
         processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri = "http://hogehoge"
         processor.process()
+        session.commit()
         processor.node_info[config.WEB3_HTTP_PROVIDER]["web3"].manager.provider.endpoint_uri = org_value
 
         # assertion

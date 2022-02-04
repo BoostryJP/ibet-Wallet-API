@@ -28,7 +28,8 @@ from app import config
 from app.contracts import Contract
 from app.model.db import (
     Listing,
-    IDXTransferApproval
+    IDXTransferApproval,
+    Node
 )
 from batch import indexer_TransferApproval
 from tests.account_config import eth_account
@@ -51,9 +52,14 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    _sink = test_module.Sinks()
-    _sink.register(test_module.DBSink(session))
-    processor = test_module.Processor(_sink, session)
+    node = Node()
+    node.is_synced = True
+    node.endpoint_uri = config.WEB3_HTTP_PROVIDER
+    node.priority = 0
+    session.add(node)
+    session.commit()
+
+    processor = test_module.Processor()
     processor.initial_sync()
     return processor
 
@@ -112,6 +118,7 @@ class TestProcessor:
         token = self.issue_token_share(
             self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
@@ -163,6 +170,7 @@ class TestProcessor:
         token = self.issue_token_share(
             self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
@@ -221,6 +229,7 @@ class TestProcessor:
         token = self.issue_token_share(
             self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
@@ -281,6 +290,7 @@ class TestProcessor:
         token2 = self.issue_token_share(
             self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
         self.listing_token(token2["address"], session)
+        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
@@ -363,6 +373,7 @@ class TestProcessor:
         personal_info_contract = shared_contract["PersonalInfo"]
         token = self.issue_token_share(
             self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
+        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
@@ -392,6 +403,7 @@ class TestProcessor:
         personal_info_contract = shared_contract["PersonalInfo"]
         token = self.issue_token_share(
             self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
+        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
@@ -433,6 +445,7 @@ class TestProcessor:
         token = self.issue_token_share(
             self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
         self.listing_token(token["address"], session)
+        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])

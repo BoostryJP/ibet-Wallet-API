@@ -27,10 +27,8 @@ from datetime import (
 )
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
+from sqlalchemy.exc import OperationalError as SAOperationalError
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -63,10 +61,7 @@ WORKER_COUNT = int(WORKER_COUNT)
 SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
 web3 = Web3Wrapper()
-
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 token_factory = TokenFactory(web3)
 company_list_factory = CompanyListFactory(COMPANY_LIST_URL)
@@ -105,11 +100,16 @@ class Watcher:
     def _gen_block_timestamp(self, entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def watch(self, entries):
+    @staticmethod
+    def __get_db_session():
+        return Session(autocommit=False, autoflush=True, bind=db_engine)
+
+    def watch(self, db_session: Session, entries):
         pass
 
     def loop(self):
         start_time = time.time()
+        local_session = self.__get_db_session()
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
 
@@ -134,15 +134,21 @@ class Watcher:
                 toBlock=self.filter_params["toBlock"]
             )
             if len(entries) > 0:
-                self.watch(entries)
-                db_session.commit()
+                self.watch(
+                    db_session=local_session,
+                    entries=entries
+                )
+                local_session.commit()
 
             self.from_block = _next_from
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SAOperationalError:
+            LOG.error("Cannot connect to database")
         except Exception as err:  # Exceptionが発生した場合は処理を継続
             LOG.error(err)
         finally:
+            local_session.close()
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
@@ -157,7 +163,7 @@ class WatchMembershipNewOrder(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "NewOrder", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
@@ -194,7 +200,7 @@ class WatchMembershipCancelOrder(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "CancelOrder", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
@@ -231,7 +237,7 @@ class WatchMembershipBuyAgreement(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "Agree", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
@@ -268,7 +274,7 @@ class WatchMembershipSellAgreement(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "Agree", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
@@ -305,7 +311,7 @@ class WatchMembershipBuySettlementOK(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementOK", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
@@ -342,7 +348,7 @@ class WatchMembershipSellSettlementOK(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementOK", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
@@ -379,7 +385,7 @@ class WatchMembershipBuySettlementNG(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementNG", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
@@ -416,7 +422,7 @@ class WatchMembershipSellSettlementNG(Watcher):
     def __init__(self):
         super().__init__(membership_exchange_contract, "SettlementNG", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = company_list_factory.get()
 
         for entry in entries:
