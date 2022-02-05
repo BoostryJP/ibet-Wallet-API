@@ -97,7 +97,7 @@ class Processor:
                     block_from=_from_block,
                     block_to=self.latest_block
                 )
-            local_session.commit()
+                local_session.commit()
         finally:
             local_session.close()
 
