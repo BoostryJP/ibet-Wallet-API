@@ -28,8 +28,7 @@ from app import config
 from app.model.db import (
     Notification,
     NotificationType,
-    Listing,
-    Node
+    Listing
 )
 from app.contracts import Contract
 from tests.account_config import eth_account
@@ -48,14 +47,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 @pytest.fixture(scope="function")
 def watcher_factory(session, shared_contract):
     def _watcher(cls_name):
-        # Pre-setup
-        node = Node()
-        node.is_synced = True
-        node.endpoint_uri = config.WEB3_HTTP_PROVIDER
-        node.priority = 0
-        session.add(node)
-        session.commit()
-
         config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
 
         from batch import processor_Notifications_Share_Token
@@ -97,6 +88,7 @@ def issue_token(issuer, exchange, personal_info, token_list, session):
     _listing.max_sell_amount = 1000000
     _listing.owner_address = issuer["account_address"]
     session.add(_listing)
+    session.commit()
 
     return token
 
@@ -120,7 +112,6 @@ class TestWatchStartOffering:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Offering Start
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -163,7 +154,6 @@ class TestWatchStartOffering:
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
         token2 = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Offering Start
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -227,7 +217,6 @@ class TestWatchStartOffering:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Not Offering Start
         # Run target process
@@ -252,7 +241,6 @@ class TestWatchStartOffering:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Run target process
         watcher.loop()
@@ -281,7 +269,6 @@ class TestWatchStopOffering:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Offering Start
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -324,7 +311,6 @@ class TestWatchStopOffering:
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
         token2 = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Offering Stop
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -388,7 +374,6 @@ class TestWatchStopOffering:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Not Offering Stop
         # Run target process
@@ -413,7 +398,6 @@ class TestWatchStopOffering:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Run target process
         watcher.loop()
@@ -442,7 +426,6 @@ class TestWatchSuspend:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Suspend
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -485,7 +468,6 @@ class TestWatchSuspend:
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
         token2 = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Suspend
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -549,7 +531,6 @@ class TestWatchSuspend:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Not Suspend
         # Run target process
@@ -574,7 +555,6 @@ class TestWatchSuspend:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Run target process
         watcher.loop()
@@ -603,7 +583,6 @@ class TestWatchApplyForOffering:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Offering Start
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -656,7 +635,6 @@ class TestWatchApplyForOffering:
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
         token2 = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Offering Start
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -736,7 +714,6 @@ class TestWatchApplyForOffering:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Not Apply For Offering
         # Run target process
@@ -761,7 +738,6 @@ class TestWatchApplyForOffering:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Run target process
         watcher.loop()
@@ -790,7 +766,6 @@ class TestWatchAllot:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Allot
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -832,7 +807,6 @@ class TestWatchAllot:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Allot
         token_contract = Contract.get_contract("IbetShare", token["address"])
@@ -897,7 +871,6 @@ class TestWatchAllot:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Not Allot
         # Run target process
@@ -922,7 +895,6 @@ class TestWatchAllot:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Run target process
         watcher.loop()
@@ -951,7 +923,6 @@ class TestWatchTransfer:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Transfer
         PersonalInfoUtils.register(
@@ -992,7 +963,6 @@ class TestWatchTransfer:
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Transfer
         PersonalInfoUtils.register(
@@ -1056,7 +1026,6 @@ class TestWatchTransfer:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Not Transfer
         # Run target process
@@ -1081,7 +1050,6 @@ class TestWatchTransfer:
             token_list_contract,
             session
         )
-        session.commit()
 
         # Transfer to DEX
         share_transfer_to_exchange(
@@ -1144,7 +1112,6 @@ class TestWatchTransfer:
         token_list_contract = shared_contract["TokenList"]
         issue_token(
             self.issuer, exchange_contract, personal_info_contract, token_list_contract, session)
-        session.commit()
 
         # Run target process
         watcher.loop()
