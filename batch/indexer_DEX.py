@@ -114,20 +114,18 @@ class Processor:
                     )
                     _to_block += 1000000
                     _from_block += 1000000
-                    local_session.commit()
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=self.latest_block
                 )
-                local_session.commit()
             else:
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=self.latest_block
                 )
-                local_session.commit()
+            local_session.commit()
         finally:
             local_session.close()
 
