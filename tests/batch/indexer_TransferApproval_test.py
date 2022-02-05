@@ -51,9 +51,7 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    _sink = test_module.Sinks()
-    _sink.register(test_module.DBSink(session))
-    processor = test_module.Processor(_sink, session)
+    processor = test_module.Processor()
     processor.initial_sync()
     return processor
 
@@ -108,6 +106,7 @@ class TestProcessor:
         _listing.is_public = True
         _listing.owner_address = TestProcessor.issuer["account_address"]
         db_session.add(_listing)
+        db_session.commit()
 
     @staticmethod
     def register_personal_info(account_address,

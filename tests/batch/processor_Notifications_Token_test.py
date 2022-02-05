@@ -85,6 +85,7 @@ def issue_token(issuer, exchange, token_list, session):
     _listing.max_sell_amount = 1000000
     _listing.owner_address = issuer["account_address"]
     session.add(_listing)
+    session.commit()
 
     return token
 
