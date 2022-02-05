@@ -27,8 +27,7 @@ from web3.middleware import geth_poa_middleware
 from app import config
 from app.model.db import (
     Notification,
-    NotificationType,
-    Node
+    NotificationType
 )
 from tests.conftest import ibet_exchange_contract
 from tests.account_config import eth_account
@@ -50,14 +49,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 @pytest.fixture(scope="function")
 def watcher_factory(session, shared_contract):
     def _watcher(cls_name):
-        # Pre-setup
-        node = Node()
-        node.is_synced = True
-        node.endpoint_uri = config.WEB3_HTTP_PROVIDER
-        node.priority = 0
-        session.add(node)
-        session.commit()
-
         # Create exchange contract for each test method.
         membership_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
 

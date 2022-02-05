@@ -26,8 +26,7 @@ from web3.middleware import geth_poa_middleware
 from app import config
 from app.model.db import (
     Listing,
-    IDXTransfer,
-    Node
+    IDXTransfer
 )
 from batch import indexer_Transfer
 from tests.account_config import eth_account
@@ -59,13 +58,6 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    node = Node()
-    node.is_synced = True
-    node.endpoint_uri = config.WEB3_HTTP_PROVIDER
-    node.priority = 0
-    session.add(node)
-    session.commit()
-
     processor = test_module.Processor()
     processor.initial_sync()
     return processor
@@ -201,6 +193,7 @@ class TestProcessor:
         _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
         session.add(_listing)
+        session.commit()
 
     ###########################################################################
     # Normal Case
@@ -220,7 +213,6 @@ class TestProcessor:
             token_list_contract
         )
         self.listing_token(share_token["address"], session)
-        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"],
@@ -269,8 +261,6 @@ class TestProcessor:
             token_list_contract
         )
         self.listing_token(share_token["address"], session)
-
-        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"],
@@ -355,8 +345,6 @@ class TestProcessor:
             token_list_contract
         )
         self.listing_token(coupon_token["address"], session)
-
-        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"],
@@ -444,8 +432,6 @@ class TestProcessor:
         )
         self.listing_token(share_token["address"], session)
 
-        session.commit()
-
         PersonalInfoUtils.register(
             self.trader["account_address"],
             personal_info_contract_address,
@@ -474,8 +460,6 @@ class TestProcessor:
             token_list_contract
         )
         self.listing_token(share_token["address"], session)
-
-        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"],
@@ -526,7 +510,6 @@ class TestProcessor:
             personal_info_contract_address,
             token_list_contract
         )
-        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"],
@@ -567,7 +550,6 @@ class TestProcessor:
             token_list_contract
         )
         self.listing_token(share_token["address"], session)
-        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"],

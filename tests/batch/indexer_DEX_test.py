@@ -28,8 +28,7 @@ from app.model.db import (
     IDXOrder,
     IDXAgreement,
     AgreementStatus,
-    Listing,
-    Node
+    Listing
 )
 from tests.conftest import ibet_exchange_contract
 from tests.account_config import eth_account
@@ -64,14 +63,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 @pytest.fixture(scope="function")
 def processor_factory(session, shared_contract):
     def _processor(bond=False, membership=False, coupon=False, share=False):
-        # Pre-setup
-        node = Node()
-        node.is_synced = True
-        node.endpoint_uri = config.WEB3_HTTP_PROVIDER
-        node.priority = 0
-        session.add(node)
-        session.commit()
-
         # Create exchange contract for each test method.
         exchange_address = {
             "bond": None,
@@ -227,6 +218,7 @@ class TestProcessor:
         _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
         session.add(_listing)
+        session.commit()
 
     ###########################################################################
     # Normal Case
@@ -245,7 +237,6 @@ class TestProcessor:
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
-        session.commit()
 
         # Create Order
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
@@ -289,7 +280,6 @@ class TestProcessor:
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
-        session.commit()
 
         # Create Order
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
@@ -336,7 +326,6 @@ class TestProcessor:
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
-        session.commit()
 
         # Create Order
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
@@ -399,7 +388,6 @@ class TestProcessor:
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
-        session.commit()
 
         PersonalInfoUtils.register(
             self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
@@ -467,7 +455,6 @@ class TestProcessor:
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
-        session.commit()
 
         # Create Order
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
@@ -534,7 +521,6 @@ class TestProcessor:
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
-        session.commit()
 
         # Create Order
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
@@ -609,7 +595,6 @@ class TestProcessor:
         share_token = self.issue_token_share(
             self.issuer, share_exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(share_token["address"], session)
-        session.commit()
 
         # Create Order
         membership_transfer_to_exchange(
@@ -745,7 +730,6 @@ class TestProcessor:
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
-        session.commit()
 
         # Create Order
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
@@ -773,7 +757,6 @@ class TestProcessor:
         coupon_token = self.issue_token_coupon(
             self.issuer, config.ZERO_ADDRESS, token_list_contract)
         self.listing_token(coupon_token["address"], session)
-        session.commit()
 
         # Run target process
         processor.sync_new_logs()
@@ -815,7 +798,6 @@ class TestProcessor:
         token = self.issue_token_bond(
             self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
         self.listing_token(token["address"], session)
-        session.commit()
 
         # Create Order
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
