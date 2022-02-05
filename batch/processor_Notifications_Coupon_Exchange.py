@@ -27,10 +27,8 @@ from datetime import (
 )
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
+from sqlalchemy.exc import OperationalError as SAOperationalError
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -63,9 +61,7 @@ SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
 web3 = Web3Wrapper()
 
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 token_factory = TokenFactory(web3)
 
@@ -86,13 +82,15 @@ token_list = TokenList(list_contract, "IbetCoupon")
 
 # Watcher
 class Watcher:
+
     def __init__(self, contract, filter_name, filter_params):
         self.contract = contract
         self.filter_name = filter_name
         self.filter_params = filter_params
         self.from_block = 0
 
-    def _gen_notification_id(self, entry, option_type=0):
+    @staticmethod
+    def _gen_notification_id(entry, option_type=0):
         return "0x{:012x}{:06x}{:06x}{:02x}".format(
             entry["blockNumber"],
             entry["transactionIndex"],
@@ -100,14 +98,16 @@ class Watcher:
             option_type,
         )
 
-    def _gen_block_timestamp(self, entry):
+    @staticmethod
+    def _gen_block_timestamp(entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         pass
 
     def loop(self):
         start_time = time.time()
+        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
 
@@ -135,15 +135,21 @@ class Watcher:
                 toBlock=self.filter_params["toBlock"]
             )
             if len(entries) > 0:
-                self.watch(entries)
+                self.watch(
+                    db_session=db_session,
+                    entries=entries
+                )
                 db_session.commit()
 
             self.from_block = _next_from
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SAOperationalError:
+            LOG.error("Cannot connect to database")
         except Exception as err:  # Exceptionが発生した場合は処理を継続
             LOG.exception(err)
         finally:
+            db_session.close()
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
@@ -158,7 +164,7 @@ class WatchCouponNewOrder(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "NewOrder", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -195,7 +201,7 @@ class WatchCouponCancelOrder(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "CancelOrder", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -232,7 +238,7 @@ class WatchCouponForceCancelOrder(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "ForceCancelOrder", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -269,7 +275,7 @@ class WatchCouponBuyAgreement(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "Agree", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -306,7 +312,7 @@ class WatchCouponSellAgreement(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "Agree", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -343,7 +349,7 @@ class WatchCouponBuySettlementOK(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementOK", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -380,7 +386,7 @@ class WatchCouponSellSettlementOK(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementOK", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -417,7 +423,7 @@ class WatchCouponBuySettlementNG(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementNG", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:
@@ -454,7 +460,7 @@ class WatchCouponSellSettlementNG(Watcher):
     def __init__(self):
         super().__init__(cp_exchange_contract, "SettlementNG", {})
 
-    def watch(self, entries):
+    def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
 
         for entry in entries:

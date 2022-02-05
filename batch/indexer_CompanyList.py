@@ -20,14 +20,14 @@ import os
 import sys
 import time
 
+from eth_utils import to_checksum_address
 import requests
 from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
+from sqlalchemy.exc import (
+    IntegrityError,
+    OperationalError as SAOperationalError
 )
-from sqlalchemy.exc import IntegrityError
-from eth_utils import to_checksum_address
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -45,49 +45,11 @@ import log
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
 
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
-
-
-class Sinks:
-    def __init__(self):
-        self.sinks = []
-
-    def register(self, sink):
-        self.sinks.append(sink)
-
-    def on_company(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_company(*args, **kwargs)
-
-    def flush(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.flush(*args, **kwargs)
-
-
-class DBSink:
-    def __init__(self, db):
-        self.db = db
-
-    def on_company(self, address, corporate_name, rsa_publickey, homepage):
-        _company = self.db.query(Company).filter(Company.address == address).first()
-        if _company is None:
-            _company = Company()
-            _company.address = address
-            _company.corporate_name = corporate_name
-            _company.rsa_publickey = rsa_publickey
-            _company.homepage = homepage
-            self.db.add(_company)
-
-    def flush(self):
-        self.db.commit()
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 
 class Processor:
-    def __init__(self, sink, db):
-        self.sink = sink
-        self.db = db
+    """Processor for indexing company list"""
 
     def process(self):
         LOG.info("syncing company list")
@@ -102,11 +64,12 @@ class Processor:
             LOG.exception(f"Failed to get company list: {e}")
             return
 
+        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
             # Delete all company list from DB
-            _company_list = self.db.query(Company).all()
+            _company_list = db_session.query(Company).all()
             for _company in _company_list:
-                self.db.delete(_company)
+                db_session.delete(_company)
 
             # Insert company list
             for i, company in enumerate(company_list_json):
@@ -127,7 +90,8 @@ class Processor:
                         LOG.warning(f"invalid address error: index={i} address={address}")
                         continue
                     try:
-                        self.sink.on_company(
+                        self.__sink_on_company(
+                            db_session=db_session,
                             address=to_checksum_address(address),
                             corporate_name=corporate_name,
                             rsa_publickey=rsa_publickey,
@@ -139,21 +103,32 @@ class Processor:
                 else:
                     LOG.warning(f"required error: index={i}")
                     continue
+            db_session.commit()
+            db_session.close()
         except Exception as e:
-            self.db.rollback()
+            db_session.rollback()
+            db_session.close()
             raise e
 
-        self.sink.flush()
-
-
-_sink = Sinks()
-_sink.register(DBSink(db_session))
-processor = Processor(_sink, db_session)
+    @staticmethod
+    def __sink_on_company(db_session: Session,
+                          address: str,
+                          corporate_name: str,
+                          rsa_publickey: str,
+                          homepage: str):
+        _company = db_session.query(Company).filter(Company.address == address).first()
+        if _company is None:
+            _company = Company()
+            _company.address = address
+            _company.corporate_name = corporate_name
+            _company.rsa_publickey = rsa_publickey
+            _company.homepage = homepage
+            db_session.add(_company)
 
 
 def main():
     LOG.info("Service started successfully")
-
+    processor = Processor()
     while True:
         start_time = time.time()
 
@@ -162,8 +137,9 @@ def main():
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
-        except Exception as ex:
-            # Unexpected errors(DB error, etc)
+        except SAOperationalError:
+            LOG.error("Cannot connect to database")
+        except Exception as ex:  # Unexpected errors
             LOG.exception(ex)
 
         elapsed_time = time.time() - start_time
