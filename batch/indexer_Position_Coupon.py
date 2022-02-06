@@ -149,7 +149,7 @@ class Processor:
         self.exchange_address_list = list(set(_exchange_list_tmp))
 
     def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(db_session, block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(db_session, block_from, block_to)
         self.__sync_consume(db_session, block_from, block_to)
         self.__sync_exchange(db_session, block_from, block_to)
