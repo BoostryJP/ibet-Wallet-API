@@ -72,7 +72,7 @@ class Processor:
         try:
             self.__get_token_list(local_session)
 
-            # Synchronize 1,000,000 blocks at a time
+            # Synchronize 1,000,000 blocks each
             _to_block = 999999
             _from_block = 0
             if self.latest_block > 999999:
