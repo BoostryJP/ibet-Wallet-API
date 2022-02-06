@@ -130,7 +130,12 @@ class Processor:
         )
         listed_tokens = db_session.query(Listing).all()
         for listed_token in listed_tokens:
-            token_info = list_contract.functions.getTokenByAddress(listed_token.token_address).call()
+            token_info = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(listed_token.token_address,),
+                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+            )
             if token_info[1] == "IbetCoupon":
                 coupon_token_contract = Contract.get_contract(
                     contract_name="IbetCoupon",
