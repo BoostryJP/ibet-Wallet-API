@@ -176,7 +176,7 @@ class Processor:
             local_session.close()
 
     def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(db_session, block_from, block_to))
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_token_apply_for_transfer(db_session, block_from, block_to)
         self.__sync_token_cancel_transfer(db_session, block_from, block_to)
         self.__sync_token_approve_transfer(db_session, block_from, block_to)
