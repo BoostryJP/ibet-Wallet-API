@@ -22,7 +22,7 @@ import time
 from typing import Any, Callable
 
 from sqlalchemy import create_engine
-from sqlalchemy.exc import OperationalError as SAOperationalError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -252,8 +252,8 @@ def main():
         try:
             processor.process()
             LOG.debug("Processed")
-        except SAOperationalError:
-            LOG.error("Cannot connect to database")
+        except SQLAlchemyError as sa_err:
+            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:  # Unexpected errors
             LOG.exception(ex)
 
