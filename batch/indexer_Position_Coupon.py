@@ -22,12 +22,10 @@ import sys
 import time
 from itertools import groupby
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
 from eth_utils import to_checksum_address
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -46,93 +44,83 @@ from app.model.db import (
 from app.utils.web3_utils import Web3Wrapper
 import log
 
-
 process_name = "INDEXER-POSITION-COUPON"
 LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3Wrapper()
-
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
-
-
-class Sinks:
-    def __init__(self):
-        self.sinks = []
-
-    def register(self, _sink):
-        self.sinks.append(_sink)
-
-    def on_position(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_position(*args, **kwargs)
-
-    def flush(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.flush(*args, **kwargs)
-
-
-class DBSink:
-    def __init__(self, db):
-        self.db = db
-
-    def on_position(self,
-                    token_address: str,
-                    account_address: str,
-                    balance: Optional[int] = None,
-                    exchange_balance: Optional[int] = None,
-                    exchange_commitment: Optional[int] = None):
-        """Update Position data in DB
-
-        :param token_address: token address
-        :param account_address: account address
-        :param balance: updated balance
-        :param exchange_balance: balance on exchange
-        :param exchange_commitment: commitment volume on exchange
-        :return: None
-        """
-        position = self.db.query(IDXPosition). \
-            filter(IDXPosition.token_address == token_address). \
-            filter(IDXPosition.account_address == account_address). \
-            first()
-        if position is not None:
-            if balance is not None:
-                position.balance = balance
-            if exchange_balance is not None:
-                position.exchange_balance = exchange_balance
-            if exchange_commitment is not None:
-                position.exchange_commitment = exchange_commitment
-            self.db.merge(position)
-        elif any(value is not None and value > 0 for value in [balance, exchange_balance, exchange_commitment]):
-            LOG.debug(
-                f"Position created (Coupon): token_address={token_address}, account_address={account_address}"
-            )
-            position = IDXPosition()
-            position.token_address = token_address
-            position.account_address = account_address
-            position.balance = balance or 0
-            position.exchange_balance = exchange_balance or 0
-            position.exchange_commitment = exchange_commitment or 0
-            self.db.add(position)
-
-    def flush(self):
-        self.db.commit()
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 
 class Processor:
-    def __init__(self, sink, db):
-        self.sink = sink
+    """Processor for indexing Coupon balances"""
+
+    def __init__(self):
         self.latest_block = web3.eth.blockNumber
-        self.db = db
         self.token_list = []
 
-    def get_contract_list(self):
+    @staticmethod
+    def __get_db_session():
+        return Session(autocommit=False, autoflush=True, bind=db_engine)
+
+    def initial_sync(self):
+        local_session = self.__get_db_session()
+        try:
+            self.__get_contract_list(local_session)
+            # Synchronize 1,000,000 blocks each
+            _to_block = 999999
+            _from_block = 0
+            if self.latest_block > 999999:
+                while _to_block < self.latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_from=_from_block,
+                        block_to=_to_block
+                    )
+                    _to_block += 1000000
+                    _from_block += 1000000
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=self.latest_block
+                )
+            else:
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=self.latest_block
+                )
+            local_session.commit()
+        finally:
+            local_session.close()
+        LOG.info(f"<{process_name}> Initial sync has been completed")
+
+    def sync_new_logs(self):
+        local_session = self.__get_db_session()
+        try:
+            self.__get_contract_list(local_session)
+            blockTo = web3.eth.blockNumber
+            if blockTo == self.latest_block:
+                return
+            self.__sync_all(
+                db_session=local_session,
+                block_from=self.latest_block + 1,
+                block_to=blockTo
+            )
+            self.latest_block = blockTo
+            local_session.commit()
+        finally:
+            local_session.close()
+
+    def __get_contract_list(self, db_session: Session):
         self.token_list = []
         self.token_address_list = []
         self.exchange_address_list = []
-        list_contract = Contract.get_contract("TokenList", TOKEN_LIST_CONTRACT_ADDRESS)
-        listed_tokens = self.db.query(Listing).all()
+        list_contract = Contract.get_contract(
+            contract_name="TokenList",
+            address=TOKEN_LIST_CONTRACT_ADDRESS
+        )
+        listed_tokens = db_session.query(Listing).all()
+
         _exchange_list_tmp = []
         for listed_token in listed_tokens:
             token_info = Contract.call_function(
@@ -142,14 +130,17 @@ class Processor:
                 default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
             )
             if token_info[1] == "IbetCoupon":
-                token_contract = Contract.get_contract("IbetCoupon", listed_token.token_address)
+                token_contract = Contract.get_contract(
+                    contract_name="IbetCoupon",
+                    address=listed_token.token_address
+                )
                 self.token_list.append(token_contract)
                 self.token_address_list.append(token_contract.address)
                 tradable_exchange_address = Contract.call_function(
-                        contract=token_contract,
-                        function_name="tradableExchange",
-                        args=(),
-                        default_returns=ZERO_ADDRESS
+                    contract=token_contract,
+                    function_name="tradableExchange",
+                    args=(),
+                    default_returns=ZERO_ADDRESS
                 )
                 if tradable_exchange_address != ZERO_ADDRESS:
                     _exchange_list_tmp.append(tradable_exchange_address)
@@ -157,48 +148,17 @@ class Processor:
         # Remove duplicate exchanges from a list
         self.exchange_address_list = list(set(_exchange_list_tmp))
 
-    def initial_sync(self):
-        self.get_contract_list()
-        # Synchronise 1,000,000 blocks each
-        _to_block = 999999
-        _from_block = 0
-        if self.latest_block > 999999:
-            while _to_block < self.latest_block:
-                self.__init_sync_all(_from_block, _to_block)
-                _to_block += 1000000
-                _from_block += 1000000
-            self.__init_sync_all(_from_block, self.latest_block)
-        else:
-            self.__init_sync_all(_from_block, self.latest_block)
-        self.sink.flush()
-        LOG.info(f"<{process_name}> Initial sync has been completed")
-
-    def sync_new_logs(self):
-        self.get_contract_list()
-        blockTo = web3.eth.blockNumber
-        if blockTo == self.latest_block:
-            return
-        self.__sync_all(self.latest_block + 1, blockTo)
-        self.latest_block = blockTo
-
-    def __init_sync_all(self, block_from: int, block_to: int):
+    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
         LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_transfer(block_from, block_to)
-        self.__sync_consume(block_from, block_to)
-        self.__sync_exchange(block_from, block_to)
-        self.__sync_escrow(block_from, block_to)
+        self.__sync_transfer(db_session, block_from, block_to)
+        self.__sync_consume(db_session, block_from, block_to)
+        self.__sync_exchange(db_session, block_from, block_to)
+        self.__sync_escrow(db_session, block_from, block_to)
 
-    def __sync_all(self, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_transfer(block_from, block_to)
-        self.__sync_consume(block_from, block_to)
-        self.__sync_exchange(block_from, block_to)
-        self.__sync_escrow(block_from, block_to)
-        self.sink.flush()
-
-    def __sync_transfer(self, block_from: int, block_to: int):
+    def __sync_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync Transfer Events
 
+        :param db_session: ORM session
         :param block_from: From block
         :param block_to: To block
         :return: None
@@ -215,7 +175,8 @@ class Processor:
                         if web3.eth.getCode(_account).hex() == "0x":
                             _balance, _exchange_balance, _exchange_commitment = \
                                 self.__get_account_balance_all(token, _account)
-                            self.sink.on_position(
+                            self.__sink_on_position(
+                                db_session=db_session,
                                 token_address=to_checksum_address(token.address),
                                 account_address=_account,
                                 balance=_balance,
@@ -225,9 +186,10 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_consume(self, block_from: int, block_to: int):
+    def __sync_consume(self, db_session: Session, block_from: int, block_to: int):
         """Sync Consume Events
 
+        :param db_session: ORM session
         :param block_from: From block
         :param block_to: To block
         :return: None
@@ -241,9 +203,9 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     consumer_address = args.get("consumer", ZERO_ADDRESS)
-                    balance = self.__get_account_balance_token(
-                        token, consumer_address)
-                    self.sink.on_position(
+                    balance = self.__get_account_balance_token(token, consumer_address)
+                    self.__sink_on_position(
+                        db_session=db_session,
                         token_address=to_checksum_address(token.address),
                         account_address=consumer_address,
                         balance=balance
@@ -251,9 +213,10 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_exchange(self, block_from: int, block_to: int):
+    def __sync_exchange(self, db_session: Session, block_from: int, block_to: int):
         """Sync Events from IbetExchange
 
+        :param db_session: ORM session
         :param block_from: From block
         :param block_to: To block
         :return: None
@@ -352,7 +315,8 @@ class Processor:
                         token_address=token_address,
                         account_address=account_address
                     )
-                    self.sink.on_position(
+                    self.__sink_on_position(
+                        db_session=db_session,
                         token_address=token_address,
                         account_address=account_address,
                         exchange_balance=exchange_balance,
@@ -361,9 +325,10 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_escrow(self, block_from: int, block_to: int):
+    def __sync_escrow(self, db_session: Session, block_from: int, block_to: int):
         """Sync Events from IbetEscrow
 
+        :param db_session: ORM session
         :param block_from: From block
         :param block_to: To block
         :return: None
@@ -426,7 +391,8 @@ class Processor:
                         token_address=token_address,
                         account_address=account_address
                     )
-                    self.sink.on_position(
+                    self.__sink_on_position(
+                        db_session=db_session,
                         token_address=token_address,
                         account_address=account_address,
                         exchange_balance=exchange_balance,
@@ -503,15 +469,51 @@ class Processor:
         )
         return exchange_balance, exchange_commitment
 
+    @staticmethod
+    def __sink_on_position(db_session: Session,
+                           token_address: str,
+                           account_address: str,
+                           balance: Optional[int] = None,
+                           exchange_balance: Optional[int] = None,
+                           exchange_commitment: Optional[int] = None):
+        """Update Position data in DB
 
-_sink = Sinks()
-_sink.register(DBSink(db_session))
-processor = Processor(_sink, db_session)
+        :param db_session: ORM session
+        :param token_address: token address
+        :param account_address: account address
+        :param balance: updated balance
+        :param exchange_balance: balance on exchange
+        :param exchange_commitment: commitment volume on exchange
+        :return: None
+        """
+        position = db_session.query(IDXPosition). \
+            filter(IDXPosition.token_address == token_address). \
+            filter(IDXPosition.account_address == account_address). \
+            first()
+        if position is not None:
+            if balance is not None:
+                position.balance = balance
+            if exchange_balance is not None:
+                position.exchange_balance = exchange_balance
+            if exchange_commitment is not None:
+                position.exchange_commitment = exchange_commitment
+            db_session.merge(position)
+        elif any(value is not None and value > 0 for value in [balance, exchange_balance, exchange_commitment]):
+            LOG.debug(
+                f"Position created (Coupon): token_address={token_address}, account_address={account_address}"
+            )
+            position = IDXPosition()
+            position.token_address = token_address
+            position.account_address = account_address
+            position.balance = balance or 0
+            position.exchange_balance = exchange_balance or 0
+            position.exchange_commitment = exchange_commitment or 0
+            db_session.add(position)
 
 
 def main():
     LOG.info("Service started successfully")
-
+    processor = Processor()
     processor.initial_sync()
     while True:
         try:
@@ -519,6 +521,8 @@ def main():
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SQLAlchemyError as sa_err:
+            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
             LOG.exception(ex)
 

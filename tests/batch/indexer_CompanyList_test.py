@@ -24,18 +24,12 @@ from unittest.mock import MagicMock
 import requests
 
 from app.model.db import Company
-from batch.indexer_CompanyList import (
-    Sinks,
-    DBSink,
-    Processor
-)
+from batch.indexer_CompanyList import Processor
 
 
 @pytest.fixture(scope='function')
 def processor(session):
-    _sink = Sinks()
-    _sink.register(DBSink(session))
-    return Processor(sink=_sink, db=session)
+    return Processor()
 
 
 class MockResponse:
@@ -43,7 +37,7 @@ class MockResponse:
         self.data = data
         self.status_code = status_code
 
-    def json(self) -> dict:
+    def json(self) -> object:
         return self.data
 
 

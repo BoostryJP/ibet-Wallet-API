@@ -91,10 +91,10 @@ def processor_factory(session, shared_contract):
             share_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
             indexer_DEX.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = share_exchange["address"]
             exchange_address["share"] = share_exchange["address"]
-        _sink = indexer_DEX.Sinks()
-        _sink.register(indexer_DEX.DBSink(session))
-        processor = indexer_DEX.Processor(_sink, session)
+
+        processor = indexer_DEX.Processor()
         processor.initial_sync()
+
         return processor, exchange_address
 
     return _processor
@@ -220,6 +220,7 @@ class TestProcessor:
         _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
         session.add(_listing)
+        session.commit()
 
     ###########################################################################
     # Normal Case

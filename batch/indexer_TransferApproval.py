@@ -26,10 +26,8 @@ from datetime import (
 )
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -52,10 +50,7 @@ process_name = "INDEXER-TRANSFER-APPROVAL"
 LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3Wrapper()
-
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 """
 Batch process for indexing security token transfer approval events
@@ -74,39 +69,353 @@ ibetSecurityTokenEscrow
 """
 
 
-class Sinks:
+class Processor:
+    """Processor for indexing Token transfer approval events"""
+
     def __init__(self):
-        self.sinks = []
+        self.latest_block = web3.eth.blockNumber
+        self.token_list = []
 
-    def register(self, _sink):
-        self.sinks.append(_sink)
+    @staticmethod
+    def get_block_timestamp(event) -> int:
+        block_timestamp = web3.eth.getBlock(event["blockNumber"])["timestamp"]
+        return block_timestamp
 
-    def on_transfer_approval(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_transfer_approval(*args, **kwargs)
+    def __get_contract_list(self, db_session: Session):
+        self.token_list = []
+        self.exchange_list = []
+        list_contract = Contract.get_contract(
+            contract_name="TokenList",
+            address=TOKEN_LIST_CONTRACT_ADDRESS
+        )
+        listed_tokens = db_session.query(Listing).all()
 
-    def flush(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.flush(*args, **kwargs)
+        _exchange_list_tmp = []
+        for listed_token in listed_tokens:
+            token_info = Contract.call_function(
+                contract=list_contract,
+                function_name="getTokenByAddress",
+                args=(listed_token.token_address,),
+                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
+            )
+            token_type = token_info[1]
+            if token_type == "IbetShare" or token_type == "IbetStraightBond":
+                token_contract = Contract.get_contract(
+                    contract_name="IbetSecurityTokenInterface",
+                    address=listed_token.token_address
+                )
+                self.token_list.append(token_contract)
+                tradable_exchange_address = Contract.call_function(
+                    contract=token_contract,
+                    function_name="tradableExchange",
+                    args=(),
+                    default_returns=ZERO_ADDRESS
+                )
+                if tradable_exchange_address != ZERO_ADDRESS:
+                    _exchange_list_tmp.append(tradable_exchange_address)
 
+        # Remove duplicate exchanges from a list
+        for _exchange_address in list(set(_exchange_list_tmp)):
+            exchange_contract = Contract.get_contract(
+                contract_name="IbetSecurityTokenEscrow",
+                address=_exchange_address
+            )
+            self.exchange_list.append(exchange_contract)
 
-class DBSink:
-    def __init__(self, db):
-        self.db = db
+    @staticmethod
+    def __get_db_session():
+        return Session(autocommit=False, autoflush=True, bind=db_engine)
 
-    def on_transfer_approval(self,
-                             event_type: str,
-                             token_address: str,
-                             exchange_address: str,
-                             application_id: int,
-                             from_address: Optional[str] = None,
-                             to_address: Optional[str] = None,
-                             value: Optional[int] = None,
-                             optional_data_applicant: Optional[str] = None,
-                             optional_data_approver: Optional[str] = None,
-                             block_timestamp: Optional[int] = None):
+    def initial_sync(self):
+        local_session = self.__get_db_session()
+        try:
+            self.__get_contract_list(local_session)
+            # Synchronize 1,000,000 blocks each
+            _to_block = 999999
+            _from_block = 0
+            if self.latest_block > 999999:
+                while _to_block < self.latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_from=_from_block,
+                        block_to=_to_block
+                    )
+                    _to_block += 1000000
+                    _from_block += 1000000
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=self.latest_block
+                )
+            else:
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=self.latest_block
+                )
+            local_session.commit()
+        finally:
+            local_session.close()
+        LOG.info(f"<{process_name}> Initial sync has been completed")
+
+    def sync_new_logs(self):
+        local_session = self.__get_db_session()
+        try:
+            self.__get_contract_list(local_session)
+            blockTo = web3.eth.blockNumber
+            if blockTo == self.latest_block:
+                return
+            self.__sync_all(
+                db_session=local_session,
+                block_from=self.latest_block + 1,
+                block_to=blockTo
+            )
+            self.latest_block = blockTo
+            local_session.commit()
+        finally:
+            local_session.close()
+
+    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
+        LOG.info("syncing from={}, to={}".format(block_from, block_to))
+        self.__sync_token_apply_for_transfer(db_session, block_from, block_to)
+        self.__sync_token_cancel_transfer(db_session, block_from, block_to)
+        self.__sync_token_approve_transfer(db_session, block_from, block_to)
+        self.__sync_exchange_apply_for_transfer(db_session, block_from, block_to)
+        self.__sync_exchange_cancel_transfer(db_session, block_from, block_to)
+        self.__sync_exchange_approve_transfer(db_session, block_from, block_to)
+        self.__sync_exchange_finish_transfer(db_session, block_from, block_to)
+
+    def __sync_token_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
+        """Sync ApplyForTransfer events of tokens
+
+        :param db_session: ORM session
+        :param block_from: From Block
+        :param block_to: To Block
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                events = token.events.ApplyForTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    args = event["args"]
+                    value = args.get("value", 0)
+                    if value > sys.maxsize:  # suppress overflow
+                        pass
+                    else:
+                        block_timestamp = self.get_block_timestamp(event=event)
+                        self.__sink_on_transfer_approval(
+                            db_session=db_session,
+                            event_type="ApplyFor",
+                            token_address=token.address,
+                            exchange_address=None,
+                            application_id=args.get("index"),
+                            from_address=args.get("from", ZERO_ADDRESS),
+                            to_address=args.get("to", ZERO_ADDRESS),
+                            value=args.get("value"),
+                            optional_data_applicant=args.get("data"),
+                            block_timestamp=block_timestamp
+                        )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_token_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
+        """Sync CancelTransfer events of tokens
+
+        :param db_session: ORM session
+        :param block_from: From Block
+        :param block_to: To Block
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                events = token.events.CancelTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    args = event["args"]
+                    self.__sink_on_transfer_approval(
+                        db_session=db_session,
+                        event_type="Cancel",
+                        token_address=token.address,
+                        exchange_address=None,
+                        application_id=args.get("index"),
+                        from_address=args.get("from", ZERO_ADDRESS),
+                        to_address=args.get("to", ZERO_ADDRESS),
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_token_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
+        """Sync ApproveTransfer events of tokens
+
+        :param db_session: ORM session
+        :param block_from: From Block
+        :param block_to: To Block
+        :return: None
+        """
+        for token in self.token_list:
+            try:
+                events = token.events.ApproveTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    args = event["args"]
+                    block_timestamp = self.get_block_timestamp(event=event)
+                    self.__sink_on_transfer_approval(
+                        db_session=db_session,
+                        event_type="Finish",
+                        token_address=token.address,
+                        exchange_address=None,
+                        application_id=args.get("index"),
+                        from_address=args.get("from", ZERO_ADDRESS),
+                        to_address=args.get("to", ZERO_ADDRESS),
+                        optional_data_approver=args.get("data"),
+                        block_timestamp=block_timestamp
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_exchange_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
+        """Sync ApplyForTransfer events of exchanges
+
+        :param db_session: ORM session
+        :param block_from: From Block
+        :param block_to: To Block
+        :return: None
+        """
+        for exchange in self.exchange_list:
+            try:
+                events = exchange.events.ApplyForTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    args = event["args"]
+                    value = args.get("value", 0)
+                    if value > sys.maxsize:  # suppress overflow
+                        pass
+                    else:
+                        block_timestamp = self.get_block_timestamp(event=event)
+                        self.__sink_on_transfer_approval(
+                            db_session=db_session,
+                            event_type="ApplyFor",
+                            token_address=args.get("token", ZERO_ADDRESS),
+                            exchange_address=exchange.address,
+                            application_id=args.get("escrowId"),
+                            from_address=args.get("from", ZERO_ADDRESS),
+                            to_address=args.get("to", ZERO_ADDRESS),
+                            value=args.get("value"),
+                            optional_data_applicant=args.get("data"),
+                            block_timestamp=block_timestamp
+                        )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_exchange_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
+        """Sync CancelTransfer events of exchanges
+
+        :param db_session: ORM session
+        :param block_from: From Block
+        :param block_to: To Block
+        :return: None
+        """
+        for exchange in self.exchange_list:
+            try:
+                events = exchange.events.CancelTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    args = event["args"]
+                    self.__sink_on_transfer_approval(
+                        db_session=db_session,
+                        event_type="Cancel",
+                        token_address=args.get("token", ZERO_ADDRESS),
+                        exchange_address=exchange.address,
+                        application_id=args.get("escrowId"),
+                        from_address=args.get("from", ZERO_ADDRESS),
+                        to_address=args.get("to", ZERO_ADDRESS),
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_exchange_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
+        """Sync ApproveTransfer events of exchanges
+
+        :param db_session: ORM session
+        :param block_from: From Block
+        :param block_to: To Block
+        :return: None
+        """
+        for exchange in self.exchange_list:
+            try:
+                events = exchange.events.ApproveTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    args = event["args"]
+                    self.__sink_on_transfer_approval(
+                        db_session=db_session,
+                        event_type="Approve",
+                        token_address=args.get("token", ZERO_ADDRESS),
+                        exchange_address=exchange.address,
+                        application_id=args.get("escrowId")
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    def __sync_exchange_finish_transfer(self, db_session: Session, block_from: int, block_to: int):
+        """Sync FinishTransfer events of exchanges
+
+        :param db_session: ORM session
+        :param block_from: From Block
+        :param block_to: To Block
+        :return: None
+        """
+        for exchange in self.exchange_list:
+            try:
+                events = exchange.events.FinishTransfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+                for event in events:
+                    args = event["args"]
+                    block_timestamp = self.get_block_timestamp(event=event)
+                    self.__sink_on_transfer_approval(
+                        db_session=db_session,
+                        event_type="Finish",
+                        token_address=args.get("token", ZERO_ADDRESS),
+                        exchange_address=exchange.address,
+                        application_id=args.get("escrowId"),
+                        from_address=args.get("from", ZERO_ADDRESS),
+                        to_address=args.get("to", ZERO_ADDRESS),
+                        optional_data_approver=args.get("data"),
+                        block_timestamp=block_timestamp
+                    )
+            except Exception as e:
+                LOG.exception(e)
+
+    @staticmethod
+    def __sink_on_transfer_approval(db_session: Session,
+                                    event_type: str,
+                                    token_address: str,
+                                    application_id: int,
+                                    exchange_address: str = None,
+                                    from_address: Optional[str] = None,
+                                    to_address: Optional[str] = None,
+                                    value: Optional[int] = None,
+                                    optional_data_applicant: Optional[str] = None,
+                                    optional_data_approver: Optional[str] = None,
+                                    block_timestamp: Optional[int] = None):
         """Update Transfer Approval data in DB
 
+        :param db_session: ORM session
         :param event_type: event type [ApplyFor, Cancel, Approve, Finish]
         :param token_address: token address
         :param exchange_address: exchange address (value is set if the event is from exchange)
@@ -119,7 +428,7 @@ class DBSink:
         :param block_timestamp: block timestamp
         :return: None
         """
-        transfer_approval = self.db.query(IDXTransferApproval). \
+        transfer_approval = db_session.query(IDXTransferApproval). \
             filter(IDXTransferApproval.token_address == token_address). \
             filter(IDXTransferApproval.exchange_address == exchange_address). \
             filter(IDXTransferApproval.application_id == application_id). \
@@ -176,310 +485,12 @@ class DBSink:
                 tz=timezone.utc
             )
             transfer_approval.transfer_approved = True
-        self.db.merge(transfer_approval)
-
-    def flush(self):
-        self.db.commit()
-
-
-class Processor:
-    def __init__(self, sink, db):
-        self.sink = sink
-        self.latest_block = web3.eth.blockNumber
-        self.db = db
-        self.token_list = []
-
-    @staticmethod
-    def get_block_timestamp(event) -> datetime:
-        block_timestamp = web3.eth.getBlock(event["blockNumber"])["timestamp"]
-        return block_timestamp
-
-    def get_contract_list(self):
-        self.token_list = []
-        self.exchange_list = []
-        list_contract = Contract.get_contract(
-            contract_name="TokenList",
-            address=TOKEN_LIST_CONTRACT_ADDRESS
-        )
-        listed_tokens = self.db.query(Listing).all()
-
-        _exchange_list_tmp = []
-        for listed_token in listed_tokens:
-            token_info = Contract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(listed_token.token_address,),
-                default_returns=(ZERO_ADDRESS, "", ZERO_ADDRESS)
-            )
-            token_type = token_info[1]
-            if token_type == "IbetShare" or token_type == "IbetStraightBond":
-                token_contract = Contract.get_contract(
-                    contract_name="IbetSecurityTokenInterface",
-                    address=listed_token.token_address
-                )
-                self.token_list.append(token_contract)
-                tradable_exchange_address = Contract.call_function(
-                    contract=token_contract,
-                    function_name="tradableExchange",
-                    args=(),
-                    default_returns=ZERO_ADDRESS
-                )
-                if tradable_exchange_address != ZERO_ADDRESS:
-                    _exchange_list_tmp.append(tradable_exchange_address)
-
-        # Remove duplicate exchanges from a list
-        for _exchange_address in list(set(_exchange_list_tmp)):
-            exchange_contract = Contract.get_contract(
-                contract_name="IbetSecurityTokenEscrow",
-                address=_exchange_address
-            )
-            self.exchange_list.append(exchange_contract)
-
-    def initial_sync(self):
-        self.get_contract_list()
-        # 1,000,000ブロックずつ同期処理を行う
-        _to_block = 999999
-        _from_block = 0
-        if self.latest_block > 999999:
-            while _to_block < self.latest_block:
-                self.__sync_all(_from_block, _to_block)
-                _to_block += 1000000
-                _from_block += 1000000
-            self.__sync_all(_from_block, self.latest_block)
-        else:
-            self.__sync_all(_from_block, self.latest_block)
-        LOG.info(f"<{process_name}> Initial sync has been completed")
-
-    def sync_new_logs(self):
-        self.get_contract_list()
-        blockTo = web3.eth.blockNumber
-        if blockTo == self.latest_block:
-            return
-        self.__sync_all(self.latest_block + 1, blockTo)
-        self.latest_block = blockTo
-
-    def __sync_all(self, block_from, block_to):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_token_apply_for_transfer(block_from, block_to)
-        self.__sync_token_cancel_transfer(block_from, block_to)
-        self.__sync_token_approve_transfer(block_from, block_to)
-        self.__sync_exchange_apply_for_transfer(block_from, block_to)
-        self.__sync_exchange_cancel_transfer(block_from, block_to)
-        self.__sync_exchange_approve_transfer(block_from, block_to)
-        self.__sync_exchange_finish_transfer(block_from, block_to)
-        self.sink.flush()
-
-    def __sync_token_apply_for_transfer(self, block_from, block_to):
-        """Sync ApplyForTransfer events of tokens
-
-        :param block_from: From Block
-        :param block_to: To Block
-        :return: None
-        """
-        for token in self.token_list:
-            try:
-                events = token.events.ApplyForTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-                for event in events:
-                    args = event["args"]
-                    value = args.get("value", 0)
-                    if value > sys.maxsize:  # suppress overflow
-                        pass
-                    else:
-                        block_timestamp = self.get_block_timestamp(event=event)
-                        self.sink.on_transfer_approval(
-                            event_type="ApplyFor",
-                            token_address=token.address,
-                            exchange_address=None,
-                            application_id=args.get("index"),
-                            from_address=args.get("from", ZERO_ADDRESS),
-                            to_address=args.get("to", ZERO_ADDRESS),
-                            value=args.get("value"),
-                            optional_data_applicant=args.get("data"),
-                            block_timestamp=block_timestamp
-                        )
-            except Exception as e:
-                LOG.exception(e)
-
-    def __sync_token_cancel_transfer(self, block_from, block_to):
-        """Sync CancelTransfer events of tokens
-
-        :param block_from: From Block
-        :param block_to: To Block
-        :return: None
-        """
-        for token in self.token_list:
-            try:
-                events = token.events.CancelTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-                for event in events:
-                    args = event["args"]
-                    self.sink.on_transfer_approval(
-                        event_type="Cancel",
-                        token_address=token.address,
-                        exchange_address=None,
-                        application_id=args.get("index"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                    )
-            except Exception as e:
-                LOG.exception(e)
-
-    def __sync_token_approve_transfer(self, block_from, block_to):
-        """Sync ApproveTransfer events of tokens
-
-        :param block_from: From Block
-        :param block_to: To Block
-        :return: None
-        """
-        for token in self.token_list:
-            try:
-                events = token.events.ApproveTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-                for event in events:
-                    args = event["args"]
-                    block_timestamp = self.get_block_timestamp(event=event)
-                    self.sink.on_transfer_approval(
-                        event_type="Finish",
-                        token_address=token.address,
-                        exchange_address=None,
-                        application_id=args.get("index"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                        optional_data_approver=args.get("data"),
-                        block_timestamp=block_timestamp
-                    )
-            except Exception as e:
-                LOG.exception(e)
-
-    def __sync_exchange_apply_for_transfer(self, block_from, block_to):
-        """Sync ApplyForTransfer events of exchanges
-
-        :param block_from: From Block
-        :param block_to: To Block
-        :return: None
-        """
-        for exchange in self.exchange_list:
-            try:
-                events = exchange.events.ApplyForTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-                for event in events:
-                    args = event["args"]
-                    value = args.get("value", 0)
-                    if value > sys.maxsize:  # suppress overflow
-                        pass
-                    else:
-                        block_timestamp = self.get_block_timestamp(event=event)
-                        self.sink.on_transfer_approval(
-                            event_type="ApplyFor",
-                            token_address=args.get("token", ZERO_ADDRESS),
-                            exchange_address=exchange.address,
-                            application_id=args.get("escrowId"),
-                            from_address=args.get("from", ZERO_ADDRESS),
-                            to_address=args.get("to", ZERO_ADDRESS),
-                            value=args.get("value"),
-                            optional_data_applicant=args.get("data"),
-                            block_timestamp=block_timestamp
-                        )
-            except Exception as e:
-                LOG.exception(e)
-
-    def __sync_exchange_cancel_transfer(self, block_from, block_to):
-        """Sync CancelTransfer events of exchanges
-
-        :param block_from: From Block
-        :param block_to: To Block
-        :return: None
-        """
-        for exchange in self.exchange_list:
-            try:
-                events = exchange.events.CancelTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-                for event in events:
-                    args = event["args"]
-                    self.sink.on_transfer_approval(
-                        event_type="Cancel",
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        exchange_address=exchange.address,
-                        application_id=args.get("escrowId"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                    )
-            except Exception as e:
-                LOG.exception(e)
-
-    def __sync_exchange_approve_transfer(self, block_from, block_to):
-        """Sync ApproveTransfer events of exchanges
-
-        :param block_from: From Block
-        :param block_to: To Block
-        :return: None
-        """
-        for exchange in self.exchange_list:
-            try:
-                events = exchange.events.ApproveTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-                for event in events:
-                    args = event["args"]
-                    self.sink.on_transfer_approval(
-                        event_type="Approve",
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        exchange_address=exchange.address,
-                        application_id=args.get("escrowId")
-                    )
-            except Exception as e:
-                LOG.exception(e)
-
-    def __sync_exchange_finish_transfer(self, block_from, block_to):
-        """Sync FinishTransfer events of exchanges
-
-        :param block_from: From Block
-        :param block_to: To Block
-        :return: None
-        """
-        for exchange in self.exchange_list:
-            try:
-                events = exchange.events.FinishTransfer.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
-                for event in events:
-                    args = event["args"]
-                    block_timestamp = self.get_block_timestamp(event=event)
-                    self.sink.on_transfer_approval(
-                        event_type="Finish",
-                        token_address=args.get("token", ZERO_ADDRESS),
-                        exchange_address=exchange.address,
-                        application_id=args.get("escrowId"),
-                        from_address=args.get("from", ZERO_ADDRESS),
-                        to_address=args.get("to", ZERO_ADDRESS),
-                        optional_data_approver=args.get("data"),
-                        block_timestamp=block_timestamp
-                    )
-            except Exception as e:
-                LOG.exception(e)
-
-
-_sink = Sinks()
-_sink.register(DBSink(db_session))
-processor = Processor(_sink, db_session)
+        db_session.merge(transfer_approval)
 
 
 def main():
     LOG.info("Service started successfully")
-
+    processor = Processor()
     processor.initial_sync()
     while True:
         try:
@@ -487,6 +498,8 @@ def main():
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SQLAlchemyError as sa_err:
+            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
             LOG.exception(ex)
 
