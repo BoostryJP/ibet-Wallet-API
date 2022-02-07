@@ -26,7 +26,8 @@ from datetime import (
 )
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -55,217 +56,105 @@ process_name = "INDEXER-DEX"
 LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3Wrapper()
-
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
-
-
-class Sinks:
-    def __init__(self):
-        self.sinks = []
-
-    def register(self, sink):
-        self.sinks.append(sink)
-
-    def on_new_order(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_new_order(*args, **kwargs)
-
-    def on_cancel_order(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_cancel_order(*args, **kwargs)
-
-    def on_force_cancel_order(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_force_cancel_order(*args, **kwargs)
-
-    def on_agree(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_agree(*args, **kwargs)
-
-    def on_settlement_ok(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_settlement_ok(*args, **kwargs)
-
-    def on_settlement_ng(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.on_settlement_ng(*args, **kwargs)
-
-    def flush(self, *args, **kwargs):
-        for sink in self.sinks:
-            sink.flush(*args, **kwargs)
-
-
-class DBSink:
-    def __init__(self, db):
-        self.db = db
-
-    def on_new_order(self, transaction_hash: str, token_address: str, exchange_address: str,
-                     order_id: int, account_address: str, counterpart_address: str, is_buy: bool, price: int,
-                     amount: int,
-                     agent_address: str, order_timestamp: datetime):
-        order = self.__get_order(exchange_address, order_id)
-        if order is None:
-            LOG.debug(f"NewOrder: exchange_address={exchange_address}, order_id={order_id}")
-            order = Order()
-            order.transaction_hash = transaction_hash
-            order.token_address = token_address
-            order.exchange_address = exchange_address
-            order.order_id = order_id
-            order.unique_order_id = exchange_address + "_" + str(order_id)
-            order.account_address = account_address
-            order.counterpart_address = counterpart_address
-            order.is_buy = is_buy
-            order.price = price
-            order.amount = amount
-            order.agent_address = agent_address
-            order.is_cancelled = False
-            order.order_timestamp = order_timestamp
-            self.db.merge(order)
-
-    def on_cancel_order(self, exchange_address: str, order_id: int):
-        order = self.__get_order(exchange_address, order_id)
-        if order is not None:
-            LOG.debug(f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}")
-            order.is_cancelled = True
-
-    def on_force_cancel_order(self, exchange_address: str, order_id: int):
-        order = self.__get_order(exchange_address, order_id)
-        if order is not None:
-            LOG.debug(f"ForceCancelOrder: exchange_address={exchange_address}, order_id={order_id}")
-            order.is_cancelled = True
-
-    def on_agree(self, transaction_hash: str, exchange_address: str, order_id: int, agreement_id: int,
-                 buyer_address: str, seller_address: str, counterpart_address: str,
-                 amount: int, agreement_timestamp: datetime):
-        agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
-        if agreement is None:
-            LOG.debug(f"Agree: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
-            agreement = Agreement()
-            agreement.transaction_hash = transaction_hash
-            agreement.exchange_address = exchange_address
-            agreement.order_id = order_id
-            agreement.agreement_id = agreement_id
-            agreement.unique_order_id = exchange_address + "_" + str(order_id)
-            agreement.buyer_address = buyer_address
-            agreement.seller_address = seller_address
-            agreement.counterpart_address = counterpart_address
-            agreement.amount = amount
-            agreement.status = AgreementStatus.PENDING.value
-            agreement.agreement_timestamp = agreement_timestamp
-            self.db.merge(agreement)
-
-    def on_settlement_ok(self, exchange_address: str, order_id: int, agreement_id: int, settlement_timestamp: datetime):
-        agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
-        if agreement is not None:
-            LOG.debug(f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
-            agreement.status = AgreementStatus.DONE.value
-            agreement.settlement_timestamp = settlement_timestamp
-
-    def on_settlement_ng(self, exchange_address: str, order_id: int, agreement_id: int):
-        agreement = self.__get_agreement(exchange_address, order_id, agreement_id)
-        if agreement is not None:
-            LOG.debug(f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
-            agreement.status = AgreementStatus.CANCELED.value
-
-    def flush(self):
-        self.db.commit()
-
-    def __get_order(self, exchange_address: str, order_id: int):
-        return self.db.query(Order). \
-            filter(Order.exchange_address == exchange_address). \
-            filter(Order.order_id == order_id). \
-            first()
-
-    def __get_agreement(self, exchange_address: str, order_id: int, agreement_id: int):
-        return self.db.query(Agreement). \
-            filter(Agreement.exchange_address == exchange_address). \
-            filter(Agreement.order_id == order_id). \
-            filter(Agreement.agreement_id == agreement_id). \
-            first()
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 
 class Processor:
-    def __init__(self, sink, db):
+    """Processor for indexing IbetExchange events"""
+
+    def __init__(self):
         self.exchange_list = []
-        # 債券取引コントラクト登録
+        # BOND Exchange
         if IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
             bond_exchange_contract = Contract.get_contract(
                 "IbetExchange",
                 IBET_SB_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(bond_exchange_contract)
-        # 会員権取引コントラクト登録
+        # MEMBERSHIP Exchange
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             membership_exchange_contract = Contract.get_contract(
                 "IbetExchange",
                 IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(membership_exchange_contract)
-        # クーポン取引コントラクト登録
+        # COUPON Exchange
         if IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
             coupon_exchange_contract = Contract.get_contract(
                 "IbetExchange",
                 IBET_CP_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(coupon_exchange_contract)
-        # 株式取引コントラクト登録
+        # SHARE Exchange
         if IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
-            self.share_exchange_contract = Contract.get_contract(
+            share_exchange_contract = Contract.get_contract(
                 "IbetExchange",
                 IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
             )
-            self.exchange_list.append(self.share_exchange_contract)
-        else:
-            self.share_exchange_contract = ""
-        self.sink = sink
+            self.exchange_list.append(share_exchange_contract)
         self.latest_block = web3.eth.blockNumber
-        self.db = db
+
+    @staticmethod
+    def __get_db_session():
+        return Session(autocommit=False, autoflush=True, bind=db_engine)
 
     def initial_sync(self):
-        # 1,000,000ブロックずつ同期処理を行う
-        _to_block = 999999
-        _from_block = 0
-        if self.latest_block > 999999:
-            while _to_block < self.latest_block:
-                self.__init_sync_all(_from_block, _to_block)
-                _to_block += 1000000
-                _from_block += 1000000
-            self.__init_sync_all(_from_block, self.latest_block)
-        else:
-            self.__init_sync_all(_from_block, self.latest_block)
-        self.sink.flush()
+        local_session = self.__get_db_session()
+        try:
+            # Synchronize 1,000,000 blocks each
+            _to_block = 999999
+            _from_block = 0
+            if self.latest_block > 999999:
+                while _to_block < self.latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_from=_from_block,
+                        block_to=_to_block
+                    )
+                    _to_block += 1000000
+                    _from_block += 1000000
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=self.latest_block
+                )
+            else:
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=self.latest_block
+                )
+            local_session.commit()
+        finally:
+            local_session.close()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
-        blockTo = web3.eth.blockNumber
-        if blockTo == self.latest_block:
-            return
+        local_session = self.__get_db_session()
+        try:
+            blockTo = web3.eth.blockNumber
+            if blockTo == self.latest_block:
+                return
+            self.__sync_all(
+                db_session=local_session,
+                block_from=self.latest_block + 1,
+                block_to=blockTo
+            )
+            self.latest_block = blockTo
+            local_session.commit()
+        finally:
+            local_session.close()
 
-        self.__sync_all(self.latest_block + 1, blockTo)
-        self.latest_block = blockTo
-
-    def __init_sync_all(self, block_from, block_to):
+    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
         LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_new_order(block_from, block_to)
-        self.__sync_cancel_order(block_from, block_to)
-        self.__sync_force_cancel_order(block_from, block_to)
-        self.__sync_agree(block_from, block_to)
-        self.__sync_settlement_ok(block_from, block_to)
-        self.__sync_settlement_ng(block_from, block_to)
+        self.__sync_new_order(db_session, block_from, block_to)
+        self.__sync_cancel_order(db_session, block_from, block_to)
+        self.__sync_force_cancel_order(db_session, block_from, block_to)
+        self.__sync_agree(db_session, block_from, block_to)
+        self.__sync_settlement_ok(db_session, block_from, block_to)
+        self.__sync_settlement_ng(db_session, block_from, block_to)
 
-    def __sync_all(self, block_from, block_to):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_new_order(block_from, block_to)
-        self.__sync_cancel_order(block_from, block_to)
-        self.__sync_force_cancel_order(block_from, block_to)
-        self.__sync_agree(block_from, block_to)
-        self.__sync_settlement_ok(block_from, block_to)
-        self.__sync_settlement_ng(block_from, block_to)
-        self.sink.flush()
-
-    def __sync_new_order(self, block_from, block_to):
+    def __sync_new_order(self, db_session: Session, block_from: int, block_to: int):
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.NewOrder.getLogs(
@@ -277,7 +166,7 @@ class Processor:
                     if args["price"] > sys.maxsize or args["amount"] > sys.maxsize:
                         pass
                     else:
-                        available_token = self.db.query(Listing). \
+                        available_token = db_session.query(Listing). \
                             filter(Listing.token_address == args["tokenAddress"]). \
                             first()
                         transaction_hash = event["transactionHash"].hex()
@@ -290,7 +179,8 @@ class Processor:
                             counterpart_address = ""
                             is_buy = args["isBuy"]
 
-                            self.sink.on_new_order(
+                            self.__sink_on_new_order(
+                                db_session=db_session,
                                 transaction_hash=transaction_hash,
                                 token_address=args["tokenAddress"],
                                 exchange_address=exchange_contract.address,
@@ -306,7 +196,7 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_cancel_order(self, block_from, block_to):
+    def __sync_cancel_order(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.CancelOrder.getLogs(
@@ -314,14 +204,15 @@ class Processor:
                     toBlock=block_to
                 )
                 for event in events:
-                    self.sink.on_cancel_order(
+                    self.__sink_on_cancel_order(
+                        db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=event["args"]["orderId"]
                     )
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_force_cancel_order(self, block_from, block_to):
+    def __sync_force_cancel_order(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.ForceCancelOrder.getLogs(
@@ -329,14 +220,15 @@ class Processor:
                     toBlock=block_to
                 )
                 for event in events:
-                    self.sink.on_force_cancel_order(
+                    self.__sink_on_force_cancel_order(
+                        db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=event["args"]["orderId"]
                     )
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_agree(self, block_from, block_to):
+    def __sync_agree(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.Agree.getLogs(
@@ -364,7 +256,8 @@ class Processor:
                             web3.eth.getBlock(event["blockNumber"])["timestamp"],
                             JST
                         )
-                        self.sink.on_agree(
+                        self.__sink_on_agree(
+                            db_session=db_session,
                             transaction_hash=transaction_hash,
                             exchange_address=exchange_contract.address,
                             order_id=args["orderId"],
@@ -378,7 +271,7 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_settlement_ok(self, block_from, block_to):
+    def __sync_settlement_ok(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.SettlementOK.getLogs(
@@ -391,7 +284,8 @@ class Processor:
                         web3.eth.getBlock(event["blockNumber"])["timestamp"],
                         JST
                     )
-                    self.sink.on_settlement_ok(
+                    self.__sink_on_settlement_ok(
+                        db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=args["orderId"],
                         agreement_id=args["agreementId"],
@@ -400,7 +294,7 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
-    def __sync_settlement_ng(self, block_from, block_to):
+    def __sync_settlement_ng(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
             try:
                 events = exchange_contract.events.SettlementNG.getLogs(
@@ -409,7 +303,8 @@ class Processor:
                 )
                 for event in events:
                     args = event["args"]
-                    self.sink.on_settlement_ng(
+                    self.__sink_on_settlement_ng(
+                        db_session=db_session,
                         exchange_address=exchange_contract.address,
                         order_id=args["orderId"],
                         agreement_id=args["agreementId"]
@@ -417,15 +312,148 @@ class Processor:
             except Exception as e:
                 LOG.exception(e)
 
+    def __sink_on_new_order(self,
+                            db_session: Session,
+                            transaction_hash: str,
+                            token_address: str,
+                            exchange_address: str,
+                            order_id: int,
+                            account_address: str,
+                            counterpart_address: str,
+                            is_buy: bool,
+                            price: int,
+                            amount: int,
+                            agent_address: str,
+                            order_timestamp: datetime):
+        order = self.__get_order(
+            db_session=db_session,
+            exchange_address=exchange_address,
+            order_id=order_id
+        )
+        if order is None:
+            LOG.debug(f"NewOrder: exchange_address={exchange_address}, order_id={order_id}")
+            order = Order()
+            order.transaction_hash = transaction_hash
+            order.token_address = token_address
+            order.exchange_address = exchange_address
+            order.order_id = order_id
+            order.unique_order_id = exchange_address + "_" + str(order_id)
+            order.account_address = account_address
+            order.counterpart_address = counterpart_address
+            order.is_buy = is_buy
+            order.price = price
+            order.amount = amount
+            order.agent_address = agent_address
+            order.is_cancelled = False
+            order.order_timestamp = order_timestamp
+            db_session.merge(order)
 
-_sink = Sinks()
-_sink.register(DBSink(db_session))
-processor = Processor(_sink, db_session)
+    def __sink_on_cancel_order(self, db_session: Session, exchange_address: str, order_id: int):
+        order = self.__get_order(
+            db_session=db_session,
+            exchange_address=exchange_address,
+            order_id=order_id
+        )
+        if order is not None:
+            LOG.debug(f"CancelOrder: exchange_address={exchange_address}, order_id={order_id}")
+            order.is_cancelled = True
+
+    def __sink_on_force_cancel_order(self, db_session: Session, exchange_address: str, order_id: int):
+        order = self.__get_order(
+            db_session=db_session,
+            exchange_address=exchange_address,
+            order_id=order_id
+        )
+        if order is not None:
+            LOG.debug(f"ForceCancelOrder: exchange_address={exchange_address}, order_id={order_id}")
+            order.is_cancelled = True
+
+    def __sink_on_agree(self,
+                        db_session: Session,
+                        transaction_hash: str,
+                        exchange_address: str,
+                        order_id: int,
+                        agreement_id: int,
+                        buyer_address: str,
+                        seller_address: str,
+                        counterpart_address: str,
+                        amount: int,
+                        agreement_timestamp: datetime):
+        agreement = self.__get_agreement(
+            db_session=db_session,
+            exchange_address=exchange_address,
+            order_id=order_id,
+            agreement_id=agreement_id
+        )
+        if agreement is None:
+            LOG.debug(f"Agree: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            agreement = Agreement()
+            agreement.transaction_hash = transaction_hash
+            agreement.exchange_address = exchange_address
+            agreement.order_id = order_id
+            agreement.agreement_id = agreement_id
+            agreement.unique_order_id = exchange_address + "_" + str(order_id)
+            agreement.buyer_address = buyer_address
+            agreement.seller_address = seller_address
+            agreement.counterpart_address = counterpart_address
+            agreement.amount = amount
+            agreement.status = AgreementStatus.PENDING.value
+            agreement.agreement_timestamp = agreement_timestamp
+            db_session.merge(agreement)
+
+    def __sink_on_settlement_ok(self,
+                                db_session: Session,
+                                exchange_address: str,
+                                order_id: int,
+                                agreement_id: int,
+                                settlement_timestamp: datetime):
+        agreement = self.__get_agreement(
+            db_session=db_session,
+            exchange_address=exchange_address,
+            order_id=order_id,
+            agreement_id=agreement_id
+        )
+        if agreement is not None:
+            LOG.debug(
+                f"SettlementOK: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            agreement.status = AgreementStatus.DONE.value
+            agreement.settlement_timestamp = settlement_timestamp
+
+    def __sink_on_settlement_ng(self,
+                                db_session: Session,
+                                exchange_address: str,
+                                order_id: int,
+                                agreement_id: int):
+        agreement = self.__get_agreement(
+            db_session=db_session,
+            exchange_address=exchange_address,
+            order_id=order_id,
+            agreement_id=agreement_id
+        )
+        if agreement is not None:
+            LOG.debug(
+                f"SettlementNG: exchange_address={exchange_address}, orderId={order_id}, agreementId={agreement_id}")
+            agreement.status = AgreementStatus.CANCELED.value
+
+    @staticmethod
+    def __get_order(db_session: Session, exchange_address: str, order_id: int):
+        return db_session.query(Order). \
+            filter(Order.exchange_address == exchange_address). \
+            filter(Order.order_id == order_id). \
+            first()
+
+    @staticmethod
+    def __get_agreement(db_session: Session, exchange_address: str, order_id: int, agreement_id: int):
+        return db_session.query(Agreement). \
+            filter(Agreement.exchange_address == exchange_address). \
+            filter(Agreement.order_id == order_id). \
+            filter(Agreement.agreement_id == agreement_id). \
+            first()
 
 
 def main():
     LOG.info("Service started successfully")
-
+    processor = Processor()
     processor.initial_sync()
     while True:
         try:
@@ -433,6 +461,8 @@ def main():
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SQLAlchemyError as sa_err:
+            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
             LOG.exception(ex)
 

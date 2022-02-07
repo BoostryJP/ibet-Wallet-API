@@ -27,10 +27,8 @@ from datetime import (
 )
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    sessionmaker,
-    scoped_session
-)
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -62,9 +60,7 @@ SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
 web3 = Web3Wrapper()
 
-engine = create_engine(DATABASE_URL, echo=False)
-db_session = scoped_session(sessionmaker())
-db_session.configure(bind=engine)
+db_engine = create_engine(DATABASE_URL, echo=False)
 
 # 起動時のblockNumberを取得
 NOW_BLOCKNUMBER = web3.eth.blockNumber
@@ -85,7 +81,8 @@ class Watcher:
         self.filter_params = filter_params
         self.from_block = 0
 
-    def _gen_notification_id(self, entry, option_type=0):
+    @staticmethod
+    def _gen_notification_id(entry, option_type=0):
         return "0x{:012x}{:06x}{:06x}{:02x}".format(
             entry["blockNumber"],
             entry["transactionIndex"],
@@ -93,10 +90,12 @@ class Watcher:
             option_type,
         )
 
-    def _gen_block_timestamp(self, entry):
+    @staticmethod
+    def _gen_block_timestamp(entry):
         return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
 
-    def _get_token_all_list(self):
+    @staticmethod
+    def _get_token_all_list(db_session: Session):
         _tokens = []
         listed_tokens = db_session.query(Listing).all()
         for listed_token in listed_tokens:
@@ -110,11 +109,12 @@ class Watcher:
                 })
         return _tokens
 
-    def db_merge(self, token_contract, token_type, log_entries):
+    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
         pass
 
     def loop(self):
         start_time = time.time()
+        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
 
@@ -127,7 +127,7 @@ class Watcher:
                 return
 
             # リスティング済みトークンを取得
-            _token_list = self._get_token_all_list()
+            _token_list = self._get_token_all_list(db_session)
 
             # レスポンスタイムアウト抑止
             # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
@@ -158,6 +158,7 @@ class Watcher:
                     continue
                 if len(entries) > 0:
                     self.db_merge(
+                        db_session=db_session,
                         token_contract=token_contract,
                         token_type=_token["token_type"],
                         log_entries=entries
@@ -167,7 +168,10 @@ class Watcher:
             self.from_block = _next_from
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
+        except SQLAlchemyError as sa_err:
+            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         finally:
+            db_session.close()
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
@@ -182,7 +186,7 @@ class WatchTransfer(Watcher):
     def __init__(self):
         super().__init__("Transfer", {})
 
-    def db_merge(self, token_contract, token_type, log_entries):
+    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
         for entry in log_entries:
             # If the contract address is the source of the transfer, skip the process

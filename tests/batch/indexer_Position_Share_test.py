@@ -61,9 +61,7 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    _sink = test_module.Sinks()
-    _sink.register(test_module.DBSink(session))
-    processor = test_module.Processor(_sink, session)
+    processor = test_module.Processor()
     processor.initial_sync()
     return processor
 
@@ -107,6 +105,7 @@ class TestProcessor:
         _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
         session.add(_listing)
+        session.commit()
 
     ###########################################################################
     # Normal Case
