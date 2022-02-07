@@ -30,7 +30,7 @@ from sqlalchemy import (
     create_engine,
     desc
 )
-from sqlalchemy.exc import OperationalError as SAOperationalError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 path = os.path.join(os.path.dirname(__file__), "../")
@@ -255,8 +255,8 @@ def main():
             LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
-        except SAOperationalError:
-            LOG.error("Cannot connect to database")
+        except SQLAlchemyError as sa_err:
+            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
             LOG.exception(ex)
 
