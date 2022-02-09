@@ -89,7 +89,7 @@ class TestEthSendRawTransaction:
     # Input list exists (1 entry)
     # Web3 FailOver
     def test_normal_1(self, client, session):
-        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
             insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546")
             insert_node_data(session, is_synced=True, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=1)
 
@@ -536,7 +536,7 @@ class TestEthSendRawTransaction:
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
-        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
             insert_node_data(session, is_synced=False)
             insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546", priority=1)
             resp = client.simulate_post(

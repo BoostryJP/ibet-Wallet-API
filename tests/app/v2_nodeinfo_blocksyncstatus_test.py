@@ -47,7 +47,7 @@ class TestNodeInfoBlockSyncStatus:
     # Normal_1
     # Node is synced
     def test_normal_1(self, client, session):
-        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
             # prepare test data
             self.insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546")
             self.insert_node_data(session, is_synced=True, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=1)
@@ -70,7 +70,7 @@ class TestNodeInfoBlockSyncStatus:
     # Normal_2
     # Node is not synced
     def test_normal_2(self, client, session):
-        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.is_default", False):
+        with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
             # prepare test data
             self.insert_node_data(session, is_synced=False)
             self.insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546", priority=1)
