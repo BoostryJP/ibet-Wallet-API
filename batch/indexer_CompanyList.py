@@ -45,7 +45,7 @@ import log
 process_name = "INDEXER-COMPANY-LIST"
 LOG = log.get_logger(process_name=process_name)
 
-db_engine = create_engine(DATABASE_URL, echo=False)
+db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:

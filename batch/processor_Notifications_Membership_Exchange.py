@@ -61,7 +61,7 @@ SLEEP_INTERVAL = int(SLEEP_INTERVAL)
 
 web3 = Web3Wrapper()
 
-db_engine = create_engine(DATABASE_URL, echo=False)
+db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 token_factory = TokenFactory(web3)
 
