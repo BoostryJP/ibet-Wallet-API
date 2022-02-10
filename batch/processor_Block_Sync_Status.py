@@ -40,7 +40,7 @@ import log
 
 LOG = log.get_logger(process_name="PROCESSOR-BLOCK_SYNC_STATUS")
 
-db_engine = create_engine(config.DATABASE_URL, echo=False)
+db_engine = create_engine(config.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Web3WrapperException(Exception):
