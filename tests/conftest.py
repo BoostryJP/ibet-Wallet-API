@@ -212,6 +212,11 @@ def shared_contract(payment_gateway_contract,
 # テーブルの自動作成・自動削除
 @pytest.fixture(scope='function')
 def db(request):
+    from app.model.db import Notification
+    if engine.name != "mysql":
+        # NOTE:MySQLの場合はSEQ機能が利用できない
+        Notification.notification_id_seq.create(bind=engine)
+
     from app.model.db import Base
     Base.metadata.create_all(engine)
 
