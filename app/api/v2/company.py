@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from cerberus import Validator
 from eth_utils import to_checksum_address
 from sqlalchemy import desc
 from web3 import Web3
@@ -48,7 +49,7 @@ class CompanyInfo(BaseResource):
     Endpoint: /Company/{eth_address}
     """
 
-    def on_get(self, req, res, eth_address=None):
+    def on_get(self, req, res, eth_address=None, **kwargs):
         LOG.info('v2.company.CompanyInfo')
 
         if not Web3.isAddress(eth_address):
@@ -70,19 +71,26 @@ class CompanyInfoList(BaseResource):
     Endpoint: /v2/Companies
     """
 
-    def on_get(self, req, res):
+    def on_get(self, req, res, **kwargs):
         LOG.info('v2.company.CompanyInfoList')
 
         session = req.context["session"]
 
-        # 会社リストを取得
+        # Validation
+        request_json = self.validate(req)
+        include_private_listing = True if request_json["include_private_listing"] == "true" else False
+
+        # Get company list
         _company_list = CompanyList.get()
         company_list = [company.json() for company in _company_list.all()]
 
-        # 取扱トークンリストを取得
-        available_tokens = session.query(Listing).filter(Listing.is_public == True).all()
+        # Get the token listed
+        if include_private_listing:
+            available_tokens = session.query(Listing).all()
+        else:
+            available_tokens = session.query(Listing).filter(Listing.is_public == True).all()
 
-        # 取扱トークンのownerAddressと会社リストを突合
+        # Filter only issuers that issue the listed tokens
         listing_owner_list = []
         for token in available_tokens:
             try:
@@ -107,6 +115,25 @@ class CompanyInfoList(BaseResource):
         self.on_success(res, list(filtered_company_list))
 
     @staticmethod
+    def validate(req):
+        request_json = {
+            "include_private_listing": req.get_param("include_private_listing")
+        }
+
+        validator = Validator({
+            "include_private_listing": {
+                "type": "string",
+                "required": False,
+                "nullable": True,
+                "allowed": ["true", "false"],
+            }
+        })
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+    @staticmethod
     def has_listing_owner_function_creator(listing_owner_list):
         def has_listing_owner_function(company_info):
             for address in listing_owner_list:
@@ -124,27 +151,38 @@ class CompanyTokenList(BaseResource):
     Endpoint: /v2/Company/{eth_address}/Tokens
     """
 
-    def on_get(self, req, res, eth_address=None):
+    def on_get(self, req, res, eth_address=None, **kwargs):
         LOG.info('v2.company.CompanyTokenList')
+        session = req.context['session']
 
+        # Validation
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'
             raise InvalidParameterError(description=description)
 
-        session = req.context['session']
+        request_json = self.validate(req)
+        include_private_listing = True if request_json["include_private_listing"] == "true" else False
 
+        # TokenList contract
         list_contract = Contract.get_contract(
             contract_name='TokenList',
             address=config.TOKEN_LIST_CONTRACT_ADDRESS
         )
 
-        # 取扱トークンリストを取得
-        available_list = session.query(Listing).\
-            filter(Listing.owner_address == eth_address).\
-            filter(Listing.is_public == True).\
-            order_by(desc(Listing.id)).\
-            all()
+        # Get the token listed
+        if include_private_listing:
+            available_list = session.query(Listing). \
+                filter(Listing.owner_address == eth_address). \
+                order_by(desc(Listing.id)). \
+                all()
+        else:
+            available_list = session.query(Listing). \
+                filter(Listing.owner_address == eth_address). \
+                filter(Listing.is_public == True). \
+                order_by(desc(Listing.id)). \
+                all()
 
+        # Get token attributes
         token_list = []
         for available_token in available_list:
             token_address = to_checksum_address(available_token.token_address)
@@ -154,9 +192,11 @@ class CompanyTokenList(BaseResource):
                 args=(token_address,),
                 default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
             )
-            if token_info[0] != config.ZERO_ADDRESS:  # TokenListに公開されているもののみを対象とする
+            # Only those items published in TokenList will be processed
+            if token_info[0] != config.ZERO_ADDRESS:
                 token_template = token_info[1]
-                if self.available_token_template(token_template):  # 取扱対象のトークン種別のみ対象とする
+                # Filter only the token types used in the system
+                if self.available_token_template(token_template):
                     token_model = self.get_token_model(token_template)
                     token = token_model.get(session=session, token_address=token_address)
                     token_list.append(token.__dict__)
@@ -166,12 +206,30 @@ class CompanyTokenList(BaseResource):
         self.on_success(res, token_list)
 
     @staticmethod
-    def available_token_template(token_template: str) -> bool:
-        """
-        取扱トークン種別判定
+    def validate(req):
+        request_json = {
+            "include_private_listing": req.get_param("include_private_listing")
+        }
 
-        :param token_template: トークン種別
-        :return: 判定結果（Boolean）
+        validator = Validator({
+            "include_private_listing": {
+                "type": "string",
+                "required": False,
+                "nullable": True,
+                "allowed": ["true", "false"],
+            }
+        })
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        return validator.document
+
+    @staticmethod
+    def available_token_template(token_template: str) -> bool:
+        """Availability of token type
+
+        :param token_template: Token type
+        :return: available (True) or not available (False)
         """
         if token_template == "IbetShare":
             return config.SHARE_TOKEN_ENABLED
@@ -186,11 +244,10 @@ class CompanyTokenList(BaseResource):
 
     @staticmethod
     def get_token_model(token_template: str):
-        """
-        トークンModelの取得
+        """Get token model
 
-        :param token_template: トークン種別
-        :return: 商品別のトークンモデル
+        :param token_template: Token type
+        :return: Token model
         """
         if token_template == "IbetShare":
             return ShareToken
