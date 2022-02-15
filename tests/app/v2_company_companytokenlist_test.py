@@ -135,10 +135,10 @@ class TestV2CompanyCompanyTokenList:
         return attribute
 
     @staticmethod
-    def _insert_listing(session, token_address, owner_address):
+    def _insert_listing(session, token_address, owner_address, is_public: bool = True):
         listing = Listing()
         listing.token_address = token_address
-        listing.is_public = True
+        listing.is_public = is_public
         listing.owner_address = owner_address
         session.add(listing)
 
@@ -482,14 +482,107 @@ class TestV2CompanyCompanyTokenList:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+    # Normal_7
+    # include_private_listing=true
+    def test_normal_7(self, client, session, shared_contract):
+        issuer = eth_account['issuer']
+
+        # 環境変数設定変更
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.COUPON_TOKEN_ENABLED = True
+        _, membership_exchange, coupon_exchange, _, _, _, token_list = self._set_env(shared_contract)
+
+        # データ準備
+        attribute = self._membership_attribute(membership_exchange["address"])
+        membership_token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, membership_token, token_list)
+        self._insert_listing(session, membership_token["address"], issuer["account_address"], True)
+
+        attribute = self._coupon_attribute(coupon_exchange["address"])
+        coupon_token = issue_coupon_token(issuer, attribute)
+        coupon_register_list(issuer, coupon_token, token_list)
+        self._insert_listing(session, coupon_token["address"], issuer["account_address"], False)
+
+        # テスト対象API呼び出し
+        query_string = f'include_private_listing=true'
+        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        resp = client.simulate_get(
+            url,
+            query_string=query_string
+        )
+
+        # 検証
+        assumed_body = [
+            {
+                'token_address': coupon_token["address"],
+                'token_template': 'IbetCoupon',
+                'owner_address': issuer["account_address"],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 1000000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'クーポンメモ欄',
+                'transferable': True,
+                'status': True,
+                'initial_offering_status': False,
+                'image_url': [
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
+                ],
+                'max_holding_quantity': None,
+                'max_sell_amount': None,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': coupon_exchange["address"],
+            },
+            {
+                'token_address': membership_token["address"],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer["account_address"],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': True,
+                'initial_offering_status': False,
+                'image_url': [
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
+                ],
+                'max_holding_quantity': None,
+                'max_sell_amount': None,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': membership_exchange["address"],
+            }
+        ]
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     ###########################################################################
     # Error
     ###########################################################################
 
-    # エラー系：入力値エラー（eth_addressがアドレスフォーマットではない）
+    # Error_1
+    # Invalid Parameter
+    # {eth_address}: invalid eth_address
     def test_error_1(self, client, session):
         eth_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
 
+        # テスト対象API呼び出し
         url = self.apiurl.replace("{eth_address}", eth_address)
         resp = client.simulate_get(url)
 
@@ -498,4 +591,25 @@ class TestV2CompanyCompanyTokenList:
             'code': 88,
             'message': "Invalid Parameter",
             "description": "invalid eth_address"
+        }
+
+    # Error_2
+    # Invalid Parameter
+    # include_private_listing: unallowed value
+    def test_error_2(self, client, session):
+        issuer = eth_account['issuer']
+
+        # テスト対象API呼び出し
+        query_string = f'include_private_listing=hoge'
+        url = self.apiurl.replace("{eth_address}", issuer["account_address"])
+        resp = client.simulate_get(
+            url,
+            query_string=query_string
+        )
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'include_private_listing': ['unallowed value hoge']}
         }
