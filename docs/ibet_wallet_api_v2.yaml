@@ -9,6 +9,7 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "localhost:5000"
 basePath: "/v2"
 tags:
   - name: Admin
@@ -676,6 +677,12 @@ paths:
         - "Company"
       summary: "Issuer Information List"
       operationId: "Companies"
+      parameters:
+        - name: include_private_listing
+          in: query
+          description: "include private listing token issuers"
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
@@ -709,6 +716,11 @@ paths:
           description: "address"
           required: true
           type: "string"
+        - name: include_private_listing
+          in: query
+          description: "include private listing token issuers"
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
