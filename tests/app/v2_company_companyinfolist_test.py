@@ -344,7 +344,7 @@ class TestCompanyCompanyInfoList:
     # include_private_listing: unallowed value
     def test_error_1(self, client, session, shared_contract, mocked_company_list):
         # テスト対象API呼び出し
-        query_string = f'include_private_listing=hoge'
+        query_string = f'include_private_listing=test'
         resp = client.simulate_get(
             self.apiurl,
             query_string=query_string
@@ -356,6 +356,6 @@ class TestCompanyCompanyInfoList:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'include_private_listing': ['unallowed value hoge']
+                'include_private_listing': ['unallowed value test']
             }
         }

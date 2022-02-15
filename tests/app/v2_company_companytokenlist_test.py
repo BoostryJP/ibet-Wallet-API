@@ -663,7 +663,7 @@ class TestV2CompanyCompanyTokenList:
         issuer = eth_account['issuer']
 
         # テスト対象API呼び出し
-        query_string = f'include_private_listing=hoge'
+        query_string = f'include_private_listing=test'
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
         resp = client.simulate_get(
             url,
@@ -674,5 +674,5 @@ class TestV2CompanyCompanyTokenList:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'include_private_listing': ['unallowed value hoge']}
+            'description': {'include_private_listing': ['unallowed value test']}
         }
