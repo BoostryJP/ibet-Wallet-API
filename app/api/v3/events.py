@@ -24,10 +24,11 @@ from app import (
 )
 from app.api.common import BaseResource
 from app.contracts import Contract
+from app.utils.web3_utils import Web3Wrapper
 from app.errors import InvalidParameterError
 
 LOG = log.get_logger()
-
+web3 = Web3Wrapper()
 
 # /Events/E2EMessaging
 class E2EMessagingEvents(BaseResource):
@@ -60,11 +61,14 @@ class E2EMessagingEvents(BaseResource):
                 toBlock=request_json["to_block"]
             )
             for event in events:
+                block_number = event["blockNumber"]
+                block_timestamp = web3.eth.getBlock(block_number)["timestamp"]
                 tmp_list.append({
                     "event": event["event"],
                     "args": dict(event["args"]),
                     "transaction_hash": event["transactionHash"].hex(),
-                    "block_number": event["blockNumber"],
+                    "block_number": block_number,
+                    "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"]
                 })
 
@@ -156,11 +160,14 @@ class IbetEscrowEvents(BaseResource):
                 toBlock=request_json["to_block"]
             )
             for event in events:
+                block_number = event["blockNumber"]
+                block_timestamp = web3.eth.getBlock(block_number)["timestamp"]
                 tmp_list.append({
                     "event": event["event"],
                     "args": dict(event["args"]),
                     "transaction_hash": event["transactionHash"].hex(),
-                    "block_number": event["blockNumber"],
+                    "block_number": block_number,
+                    "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"]
                 })
 
@@ -270,11 +277,14 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
                 toBlock=request_json["to_block"]
             )
             for event in events:
+                block_number = event["blockNumber"]
+                block_timestamp = web3.eth.getBlock(block_number)["timestamp"]
                 tmp_list.append({
                     "event": event["event"],
                     "args": dict(event["args"]),
                     "transaction_hash": event["transactionHash"].hex(),
-                    "block_number": event["blockNumber"],
+                    "block_number": block_number,
+                    "block_timestamp": block_timestamp,
                     "log_index": event["logIndex"]
                 })
 

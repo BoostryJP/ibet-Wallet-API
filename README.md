@@ -1,7 +1,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-21.12-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-22.3-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -15,7 +15,7 @@
 - [python3](https://www.python.org/)
   - Version 3.8 or greater
 - RDB
-  - [PostgreSQL](https://www.postgresql.org/) - Version 10
+  - [PostgreSQL](https://www.postgresql.org/) - Version 13
   - [MySQL](https://www.mysql.com/) - Version 5.7
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
@@ -238,7 +238,7 @@ $ pytest tests/
 ## Branching model
 
 <p align='center'>
-  <img alt="ibet" src="https://user-images.githubusercontent.com/963333/128963415-df122a46-b813-4832-a64e-7830a175f825.png"/>
+  <img alt="ibet_oss_branching_model" src="https://user-images.githubusercontent.com/963333/153906146-51104713-c93c-4c5d-8b0a-5cf59651ffff.png"/>
 </p>
 
 

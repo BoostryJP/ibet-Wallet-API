@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "21.12.0"
+  version: "22.3.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -9,6 +9,7 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "localhost:5000"
 basePath: "/v2"
 tags:
   - name: Admin
@@ -676,6 +677,12 @@ paths:
         - "Company"
       summary: "Issuer Information List"
       operationId: "Companies"
+      parameters:
+        - name: include_private_listing
+          in: query
+          description: "include private listing token issuers"
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
@@ -709,6 +716,11 @@ paths:
           description: "address"
           required: true
           type: "string"
+        - name: include_private_listing
+          in: query
+          description: "include private listing token issuers"
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
@@ -2772,6 +2784,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/StraightBond:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "StraightBond Token Position (Bulk Get)"
@@ -2913,6 +2926,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Share:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Share Token Position (Bulk Get)"
@@ -3030,6 +3044,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Membership:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Membership Token Position (Bulk Get)"
@@ -3139,6 +3154,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Coupon:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Coupon Token Position (Bulk Get)"
@@ -3250,6 +3266,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Position/Coupon/Consumptions:
     post:
+      deprecated: true
       tags:
         - "Position"
       summary: "Coupon Consumption History (Bulk Get)"

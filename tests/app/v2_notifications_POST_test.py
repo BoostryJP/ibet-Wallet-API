@@ -324,7 +324,7 @@ class TestNotificationsPOST:
         assert resp.json["meta"] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'address': 'empty values not allowed'}
+            'description': {'address': ['empty values not allowed']}
         }
 
     # <Error_4>

@@ -145,6 +145,6 @@ class TestEthTransactionCount:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'block_identifier': 'unallowed value hoge'
+                'block_identifier': ['unallowed value hoge']
             }
         }

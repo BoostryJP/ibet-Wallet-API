@@ -1140,13 +1140,22 @@ class TestV2StraightBondOrderBook:
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = [{
-            "exchange_address": exchange_address,
-            "order_id": 2,
-            "price": 3000,
-            "amount": 50,
-            "account_address": account_addresses[2],
-        }]
+
+        assumed_body = [
+            {
+                'exchange_address': exchange_address,
+                'order_id': 3,
+                'price': 6000,
+                'amount': 70,
+                'account_address': account_addresses[1]
+            }, {
+                'exchange_address': exchange_address,
+                'order_id': 2,
+                'price': 3000,
+                'amount': 50,
+                'account_address': account_addresses[2]
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -1438,19 +1447,28 @@ class TestV2StraightBondOrderBook:
         }
 
         resp = client.simulate_post(self.apiurl, json=request_body)
-        assumed_body = [{
-            "exchange_address": exchange_address,
-            "order_id": 2,
-            "price": 3000,
-            "amount": 50,
-            "account_address": account_addresses[2],
-        }, {
-            "exchange_address": exchange_address,
-            "order_id": 0,
-            "price": 1000,
-            "amount": 100,
-            "account_address": account_addresses[0],
-        }]
+
+        assumed_body = [
+            {
+                'exchange_address': exchange_address,
+                'order_id': 3,
+                'price': 6000,
+                'amount': 70,
+                'account_address': account_addresses[1]
+            }, {
+                'exchange_address': exchange_address,
+                'order_id': 2,
+                'price': 3000,
+                'amount': 50,
+                'account_address': account_addresses[2]
+            }, {
+                'exchange_address': exchange_address,
+                'order_id': 0,
+                'price': 1000,
+                'amount': 100,
+                'account_address': account_addresses[0]
+            }
+        ]
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -1473,8 +1491,8 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'token_address': 'required field',
-                'order_type': 'required field',
+                'token_address': ['required field'],
+                'order_type': ['required field'],
             }
         }
 
@@ -1558,7 +1576,7 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'token_address': 'must be of string type'
+                'token_address': ['must be of string type']
             }
         }
 
@@ -1615,7 +1633,7 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'account_address': 'must be of string type'
+                'account_address': ['must be of string type']
             }
         }
 
@@ -1645,7 +1663,7 @@ class TestV2StraightBondOrderBook:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'order_type': 'unallowed value buyyyyy'
+                'order_type': ['unallowed value buyyyyy']
             }
         }
 

@@ -195,7 +195,7 @@ class TestV2StraightBondLastPrice:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'address_list': 'required field'
+                'address_list': ['required field']
             }
         }
 

@@ -130,7 +130,7 @@ class TestEthWaitForTransactionReceipt:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'timeout': 'min value is 1'}
+            'description': {'timeout': ['min value is 1']}
         }
 
     # Error_5_2
@@ -155,7 +155,7 @@ class TestEthWaitForTransactionReceipt:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'timeout': 'max value is 30'}
+            'description': {'timeout': ['max value is 30']}
         }
 
     # Error_6_1
@@ -180,7 +180,7 @@ class TestEthWaitForTransactionReceipt:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'transaction_hash': 'must be of string type'}
+            'description': {'transaction_hash': ['must be of string type']}
         }
 
     # Error_6_2
@@ -205,5 +205,5 @@ class TestEthWaitForTransactionReceipt:
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'timeout': 'must be of integer type'}
+            'description': {'timeout': ['must be of integer type']}
         }

@@ -34,7 +34,9 @@ from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_coupon_token,
     coupon_register_list,
-    transfer_coupon_token
+    transfer_coupon_token,
+    coupon_transfer_to_exchange,
+    coupon_withdraw_from_exchange
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -83,6 +85,7 @@ def issue_token(issuer, exchange, token_list, session):
     _listing.max_sell_amount = 1000000
     _listing.owner_address = issuer["account_address"]
     session.add(_listing)
+    session.commit()
 
     return token
 
@@ -212,26 +215,39 @@ class TestWatchTransfer:
     def test_normal_4(self, watcher_factory, session, shared_contract, mocked_company_list):
         watcher = watcher_factory("WatchTransfer")
 
-        exchange_contract = {"address": self.trader2["account_address"]}  # Dummy DEX(TX send able address)
+        exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
         token = issue_token(self.issuer, exchange_contract, token_list_contract, session)
 
-        # Transfer(to DEX)
-        transfer_coupon_token(self.issuer, token, exchange_contract["address"], 100)
+        # Transfer to DEX
+        coupon_transfer_to_exchange(
+            invoker=self.issuer,
+            exchange=exchange_contract,
+            token=token,
+            amount=100
+        )
 
-        # Transfer(from DEX)
-        transfer_coupon_token(
-            {"account_address": exchange_contract["address"]}, token, self.trader["account_address"], 100)
+        # Withdraw from DEX
+        coupon_withdraw_from_exchange(
+            invoker=self.issuer,
+            exchange=exchange_contract,
+            token=token,
+            amount=100
+        )
 
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.blockNumber
-        _notification_list = session.query(Notification).order_by(Notification.created).all()
-        assert len(_notification_list) == 1  # Not Transfer from DEX
+        _notification_list = session.query(Notification).\
+            order_by(Notification.created).\
+            all()
+
+        assert len(_notification_list) == 1  # Notification from which the DEX is the transferor will not be registered.
+
         _notification = _notification_list[0]
-        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
+        assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
         assert _notification.priority == 0
         assert _notification.address == exchange_contract["address"]

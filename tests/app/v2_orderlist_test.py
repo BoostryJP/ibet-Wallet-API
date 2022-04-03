@@ -646,7 +646,7 @@ class TestV2OrderList:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "account_address_list": "required field"
+                "account_address_list": ["required field"]
             }
         }
 
@@ -1432,7 +1432,7 @@ class TestV2OrderListBond:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "account_address_list": "required field"
+                "account_address_list": ["required field"]
             }
         }
 
@@ -1500,12 +1500,12 @@ class TestV2OrderListBond:
 
         assert resp.status_code == 400
         assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": {
-                    "0": "must be of string type"
-                }
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': [
+                    {'0': ['must be of string type']}
+                ]
             }
         }
 
@@ -1535,7 +1535,7 @@ class TestV2OrderListBond:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "include_canceled_items": "must be of boolean type"
+                "include_canceled_items": ["must be of boolean type"]
             }
         }
 
@@ -2213,7 +2213,7 @@ class TestV2OrderListMembership:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "account_address_list": "required field"
+                "account_address_list": ["required field"]
             }
         }
 
@@ -2283,12 +2283,12 @@ class TestV2OrderListMembership:
 
         assert resp.status_code == 400
         assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": {
-                    "0": "must be of string type"
-                }
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': [
+                    {'0': ['must be of string type']}
+                ]
             }
         }
 
@@ -2317,7 +2317,7 @@ class TestV2OrderListMembership:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "include_canceled_items": "must be of boolean type"
+                "include_canceled_items": ["must be of boolean type"]
             }
         }
 
@@ -2994,7 +2994,7 @@ class TestV2OrderListCoupon:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "account_address_list": "required field"
+                "account_address_list": ["required field"]
             }
         }
 
@@ -3066,12 +3066,12 @@ class TestV2OrderListCoupon:
         # assertion
         assert resp.status_code == 400
         assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": {
-                    "0": "must be of string type"
-                }
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': [
+                    {'0': ['must be of string type']}
+                ]
             }
         }
 
@@ -3100,7 +3100,7 @@ class TestV2OrderListCoupon:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "include_canceled_items": "must be of boolean type"
+                "include_canceled_items": ["must be of boolean type"]
             }
         }
 
@@ -3821,7 +3821,7 @@ class TestV2OrderListShare:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "account_address_list": "required field"
+                "account_address_list": ["required field"]
             }
         }
 
@@ -3893,12 +3893,12 @@ class TestV2OrderListShare:
         # assertion
         assert resp.status_code == 400
         assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": {
-                    "0": "must be of string type"
-                }
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'account_address_list': [
+                    {'0': ['must be of string type']}
+                ]
             }
         }
 
@@ -3928,7 +3928,7 @@ class TestV2OrderListShare:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "include_canceled_items": "must be of boolean type"
+                "include_canceled_items": ["must be of boolean type"]
             }
         }
 

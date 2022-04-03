@@ -530,7 +530,7 @@ class TestNotificationsGet:
         assert resp.json["meta"] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'cursor': 'min value is 0'}
+            'description': {'cursor': ['min value is 0']}
         }
 
     # <Error_1_2>
@@ -553,7 +553,7 @@ class TestNotificationsGet:
             'message': 'Invalid Parameter',
             'description': {
                 'cursor': [
-                    "field 'cursor' could not be coerced",
+                    "field 'cursor' cannot be coerced: invalid literal for int() with base 10: '0.1'",
                     'must be of integer type'
                 ]
             }
@@ -577,7 +577,7 @@ class TestNotificationsGet:
         assert resp.json["meta"] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'limit': 'min value is 0'}
+            'description': {'limit': ['min value is 0']}
         }
 
     # <Error_2_2>
@@ -600,7 +600,7 @@ class TestNotificationsGet:
             'message': 'Invalid Parameter',
             'description': {
                 'limit': [
-                    "field 'limit' could not be coerced",
+                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: '0.1'",
                     'must be of integer type'
                 ]
             }
@@ -621,7 +621,7 @@ class TestNotificationsGet:
         assert resp.json["meta"] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': {'address': ['null value not allowed', 'must be of string type']}
+            'description': {'address': ['null value not allowed']}
         }
 
     # <Error_3_2>

@@ -148,7 +148,7 @@ class TestNotificationCount:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'address': ['null value not allowed', 'must be of string type']
+                'address': ['null value not allowed']
             }
         }
 

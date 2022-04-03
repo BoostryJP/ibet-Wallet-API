@@ -304,6 +304,7 @@ class TestPositionAccountAddressStraightBond:
             resp = client.simulate_get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
+                    "include_token_details": "false",
                     "offset": 1,
                     "limit": 2,
                 }
@@ -332,6 +333,84 @@ class TestPositionAccountAddressStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                },
+            ]
+        }
+
+    # <Normal_3>
+    # token details
+    def test_normal_3(self, client, session, shared_contract):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Prepare data
+        token_1 = self.create_balance_data(
+            self.account_1, {"address": config.ZERO_ADDRESS}, personal_info_contract, token_list_contract)
+        self.list_token(token_1["address"], session)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            # Request target API
+            resp = client.simulate_get(
+                self.apiurl.format(account_address=self.account_1["account_address"]),
+                params={
+                    "include_token_details": "true",
+                }
+            )
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "result_set": {
+                "count": 1,
+                "offset": None,
+                "limit": None,
+                "total": 1,
+            },
+            "positions": [
+                {
+                    "token": {
+                        'token_address': token_1["address"],
+                        'token_template': 'IbetStraightBond',
+                        'owner_address': self.issuer["account_address"],
+                        'company_name': '',
+                        'rsa_publickey': '',
+                        'name': 'テスト債券',
+                        'symbol': 'BOND',
+                        'total_supply': 1000000,
+                        'face_value': 10000, 'interest_rate': 0.0602,
+                        'interest_payment_date1': '0101',
+                        'interest_payment_date2': '0201',
+                        'interest_payment_date3': '0301',
+                        'interest_payment_date4': '0401',
+                        'interest_payment_date5': '0501',
+                        'interest_payment_date6': '0601',
+                        'interest_payment_date7': '0701',
+                        'interest_payment_date8': '0801',
+                        'interest_payment_date9': '0901',
+                        'interest_payment_date10': '1001',
+                        'interest_payment_date11': '1101',
+                        'interest_payment_date12': '1201',
+                        'redemption_date': '20191231',
+                        'redemption_value': 10000,
+                        'return_date': '20191231',
+                        'return_amount': '商品券をプレゼント',
+                        'purpose': '新商品の開発資金として利用。',
+                        'max_holding_quantity': 1,
+                        'max_sell_amount': 1000,
+                        'contact_information': '問い合わせ先',
+                        'privacy_policy': 'プライバシーポリシー',
+                        'is_redeemed': False,
+                        'transferable': True,
+                        'is_offering': False,
+                        'tradable_exchange': config.ZERO_ADDRESS,
+                        'status': True,
+                        'memo': 'メモ',
+                        'personal_info_address': personal_info_contract["address"],
+                        'transfer_approval_required': False,
+                    },
+                    "balance": 1000000,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
                 },
             ]
         }
@@ -401,19 +480,20 @@ class TestPositionAccountAddressStraightBond:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "offset": "min value is 0",
-                "limit": "min value is 0",
+                "offset": ["min value is 0"],
+                "limit": ["min value is 0"],
             }
         }
 
     # <Error_4>
-    # ParameterError: offset/limit(not int)
+    # ParameterError: offset/limit(not int), include_token_details(not bool)
     def test_error_4(self, client, session):
 
         # Request target API
         resp = client.simulate_get(
             self.apiurl.format(account_address=self.account_1["account_address"]),
             params={
+                "include_token_details": "test",
                 "offset": "test",
                 "limit": "test",
             }
@@ -425,7 +505,16 @@ class TestPositionAccountAddressStraightBond:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "offset": ["field 'offset' could not be coerced", "must be of integer type"],
-                "limit": ["field 'limit' could not be coerced", "must be of integer type"],
+                'include_token_details': [
+                    'unallowed value test'
+                ],
+                'limit': [
+                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'test'",
+                    'must be of integer type'
+                ],
+                'offset': [
+                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: 'test'",
+                    'must be of integer type'
+                ]
             }
         }

@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from unittest.mock import ANY
+
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -81,6 +83,7 @@ class TestEventsE2EMessaging:
             "from": user1
         })
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -108,6 +111,7 @@ class TestEventsE2EMessaging:
                 },
                 "transaction_hash": tx.hex(),
                 "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
                 "log_index": 0
             }
         ]
@@ -132,6 +136,7 @@ class TestEventsE2EMessaging:
             "from": user1
         })
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -149,13 +154,21 @@ class TestEventsE2EMessaging:
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"][0]["event"] == "Message"
-        assert resp.json["data"][0]["args"]["sender"] == user1
-        assert resp.json["data"][0]["args"]["receiver"] == user2
-        assert resp.json["data"][0]["args"]["text"] == "test_message"
-        assert resp.json["data"][0]["transaction_hash"] == tx.hex()
-        assert resp.json["data"][0]["block_number"] == latest_block_number
-        assert resp.json["data"][0]["log_index"] == 0
+        assert resp.json["data"] == [
+            {
+                "event": "Message",
+                "args": {
+                    "sender": user1,
+                    "receiver": user2,
+                    "time": ANY,
+                    "text": "test_message"
+                },
+                "transaction_hash": tx.hex(),
+                "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
+                "log_index": 0
+            }
+        ]
 
     # Normal_2_3
     # event = None
@@ -176,6 +189,7 @@ class TestEventsE2EMessaging:
             "from": user1
         })
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -202,6 +216,7 @@ class TestEventsE2EMessaging:
                 },
                 "transaction_hash": tx.hex(),
                 "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
                 "log_index": 0
             }
         ]
@@ -233,6 +248,8 @@ class TestEventsE2EMessaging:
             "from": user1
         })
         latest_block_number = web3.eth.blockNumber
+        block_timestamp_1 = web3.eth.getBlock(latest_block_number - 1)["timestamp"]
+        block_timestamp_2 = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -250,22 +267,34 @@ class TestEventsE2EMessaging:
             "code": 200,
             "message": "OK"
         }
-
-        assert resp.json["data"][0]["event"] == "Message"
-        assert resp.json["data"][0]["args"]["sender"] == user1
-        assert resp.json["data"][0]["args"]["receiver"] == user2
-        assert resp.json["data"][0]["args"]["text"] == "test_message"
-        assert resp.json["data"][0]["transaction_hash"] == tx_1.hex()
-        assert resp.json["data"][0]["block_number"] == latest_block_number - 1
-        assert resp.json["data"][0]["log_index"] == 0
-
-        assert resp.json["data"][1]["event"] == "Message"
-        assert resp.json["data"][1]["args"]["sender"] == user1
-        assert resp.json["data"][1]["args"]["receiver"] == user2
-        assert resp.json["data"][1]["args"]["text"] == "test_message"
-        assert resp.json["data"][1]["block_number"] == latest_block_number
-        assert resp.json["data"][1]["transaction_hash"] == tx_2.hex()
-        assert resp.json["data"][1]["log_index"] == 0
+        assert resp.json["data"] == [
+            {
+                "event": "Message",
+                "args": {
+                    "sender": user1,
+                    "receiver": user2,
+                    "time": ANY,
+                    "text": "test_message"
+                },
+                "transaction_hash": tx_1.hex(),
+                "block_number": latest_block_number - 1,
+                "block_timestamp": block_timestamp_1,
+                "log_index": 0
+            },
+            {
+                "event": "Message",
+                "args": {
+                    "sender": user1,
+                    "receiver": user2,
+                    "time": ANY,
+                    "text": "test_message"
+                },
+                "transaction_hash": tx_2.hex(),
+                "block_number": latest_block_number,
+                "block_timestamp": block_timestamp_2,
+                "log_index": 0
+            },
+        ]
 
     ###########################################################################
     # Error
@@ -287,18 +316,16 @@ class TestEventsE2EMessaging:
         # assertion
         assert resp.status_code == 400
         assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "from_block": [
-                    "null value not allowed",
-                    "field 'from_block' could not be coerced",
-                    "must be of integer type"
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'from_block': [
+                    "field 'from_block' cannot be coerced: int() argument must be a string, a bytes-like object or a number, not 'NoneType'",
+                    'null value not allowed'
                 ],
-                "to_block": [
-                    "null value not allowed",
-                    "field 'to_block' could not be coerced",
-                    "must be of integer type"
+                'to_block': [
+                    "field 'to_block' cannot be coerced: int() argument must be a string, a bytes-like object or a number, not 'NoneType'",
+                    'null value not allowed'
                 ]
             }
         }
@@ -325,8 +352,8 @@ class TestEventsE2EMessaging:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "from_block": "min value is 1",
-                "to_block": "min value is 1"
+                "from_block": ["min value is 1"],
+                "to_block": ["min value is 1"]
             }
         }
 
@@ -353,7 +380,7 @@ class TestEventsE2EMessaging:
         assert resp.json["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": {"event": "unallowed value some_event"}
+            "description": {"event": ["unallowed value some_event"]}
         }
 
     # Error_4

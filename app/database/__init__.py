@@ -32,6 +32,7 @@ def get_engine(uri):
         'pool_recycle': 3600,
         'pool_size': 10,
         'pool_timeout': 30,
+        'pool_pre_ping': True,
         'max_overflow': 30,
         'echo': config.DB_ECHO,
         'execution_options': {
@@ -47,12 +48,3 @@ engine = get_engine(config.DATABASE_URL)
 
 def init_session():
     db_session.configure(bind=engine)
-
-    from app.model.db import Notification
-
-    if engine.name != "mysql":
-        # NOTE:MySQLの場合はSEQ機能が利用できない
-        Notification.notification_id_seq.create(bind=engine)
-
-    from app.model.db import Base
-    Base.metadata.create_all(engine)

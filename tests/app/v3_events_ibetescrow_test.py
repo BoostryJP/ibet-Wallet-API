@@ -86,6 +86,7 @@ class TestEventsIbetEscrow:
             "from": issuer
         })
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -111,6 +112,7 @@ class TestEventsIbetEscrow:
                 },
                 "transaction_hash": tx_hash.hex(),
                 "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
                 "log_index": 0
             }
         ]
@@ -149,6 +151,7 @@ class TestEventsIbetEscrow:
         })  # Withdrawn
 
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -174,6 +177,7 @@ class TestEventsIbetEscrow:
                 },
                 "transaction_hash": tx_hash.hex(),
                 "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
                 "log_index": 1
             }
         ]
@@ -218,6 +222,7 @@ class TestEventsIbetEscrow:
         })  # EscrowCreated
 
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # request target API
@@ -249,6 +254,7 @@ class TestEventsIbetEscrow:
                 },
                 "transaction_hash": tx_hash.hex(),
                 "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
                 "log_index": 0
             }
         ]
@@ -300,6 +306,7 @@ class TestEventsIbetEscrow:
         })  # EscrowCanceled
 
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -329,6 +336,7 @@ class TestEventsIbetEscrow:
                 },
                 "transaction_hash": tx_hash.hex(),
                 "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
                 "log_index": 0
             }
         ]
@@ -380,6 +388,7 @@ class TestEventsIbetEscrow:
         })  # EscrowFinished
 
         latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -409,6 +418,7 @@ class TestEventsIbetEscrow:
                 },
                 "transaction_hash": tx_hash.hex(),
                 "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
                 "log_index": 0
             }
         ]
@@ -433,18 +443,16 @@ class TestEventsIbetEscrow:
         # assertion
         assert resp.status_code == 400
         assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "from_block": [
-                    "null value not allowed",
-                    "field 'from_block' could not be coerced",
-                    "must be of integer type"
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {
+                'from_block': [
+                    "field 'from_block' cannot be coerced: int() argument must be a string, a bytes-like object or a number, not 'NoneType'",
+                    'null value not allowed'
                 ],
-                "to_block": [
-                    "null value not allowed",
-                    "field 'to_block' could not be coerced",
-                    "must be of integer type"
+                'to_block': [
+                    "field 'to_block' cannot be coerced: int() argument must be a string, a bytes-like object or a number, not 'NoneType'",
+                    'null value not allowed'
                 ]
             }
         }
@@ -471,8 +479,8 @@ class TestEventsIbetEscrow:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "from_block": "min value is 1",
-                "to_block": "min value is 1"
+                "from_block": ["min value is 1"],
+                "to_block": ["min value is 1"]
             }
         }
 
@@ -499,7 +507,7 @@ class TestEventsIbetEscrow:
         assert resp.json["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
-            "description": {"event": "unallowed value some_event"}
+            "description": {"event": ["unallowed value some_event"]}
         }
 
     # Error_4

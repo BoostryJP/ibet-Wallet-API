@@ -229,8 +229,8 @@ class TestAdminTokensPOST:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'contract_address': 'required field',
-                'is_public': 'required field',
+                'contract_address': ['required field'],
+                'is_public': ['required field'],
             }
         }
 
@@ -274,10 +274,10 @@ class TestAdminTokensPOST:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'contract_address': 'must be of string type',
-                'is_public': 'must be of boolean type',
-                'max_holding_quantity': 'must be of integer type',
-                'max_sell_amount': 'must be of integer type',
+                'contract_address': ['must be of string type'],
+                'is_public': ['must be of boolean type'],
+                'max_holding_quantity': ['must be of integer type'],
+                'max_sell_amount': ['must be of integer type'],
             }
         }
 
@@ -300,8 +300,8 @@ class TestAdminTokensPOST:
             'code': 88,
             'message': 'Invalid Parameter',
             'description': {
-                'max_holding_quantity': 'min value is 0',
-                'max_sell_amount': 'min value is 0'
+                'max_holding_quantity': ['min value is 0'],
+                'max_sell_amount': ['min value is 0']
             }
         }
 
