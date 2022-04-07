@@ -30,6 +30,7 @@ from app.errors import InvalidParameterError
 LOG = log.get_logger()
 web3 = Web3Wrapper()
 
+
 # /Events/E2EMessaging
 class E2EMessagingEvents(BaseResource):
     """E2EMessaging Event Logs"""
@@ -58,7 +59,8 @@ class E2EMessagingEvents(BaseResource):
             contract_event = getattr(contract.events, attr)
             events = contract_event.getLogs(
                 fromBlock=request_json["from_block"],
-                toBlock=request_json["to_block"]
+                toBlock=request_json["to_block"],
+                argument_filters=request_json["argument_filters"]
             )
             for event in events:
                 block_number = event["blockNumber"]
@@ -85,9 +87,9 @@ class E2EMessagingEvents(BaseResource):
         request_json = {
             "from_block": req.get_param("from_block"),
             "to_block": req.get_param("to_block"),
-            "event": req.get_param("event")
+            "event": req.get_param("event"),
+            "argument_filters": req.get_param_as_json("argument_filters")
         }
-
         validator = Validator({
             "from_block": {
                 "type": "integer",
@@ -106,6 +108,15 @@ class E2EMessagingEvents(BaseResource):
                 "required": False,
                 "nullable": True,
                 "allowed": ["Message", "PublicKeyUpdated"]
+            },
+            "argument_filters": {
+                "required": False,
+                "nullable": True,
+                "schema": {
+                    "sender": {"type": "string"},
+                    "receiver": {"type": "string"},
+                    "who": {"type": "string"}
+                }
             }
         })
         if not validator.validate(request_json):
@@ -157,7 +168,8 @@ class IbetEscrowEvents(BaseResource):
             contract_event = getattr(contract.events, attr)
             events = contract_event.getLogs(
                 fromBlock=request_json["from_block"],
-                toBlock=request_json["to_block"]
+                toBlock=request_json["to_block"],
+                argument_filters=request_json["argument_filters"]
             )
             for event in events:
                 block_number = event["blockNumber"]
@@ -184,7 +196,8 @@ class IbetEscrowEvents(BaseResource):
         request_json = {
             "from_block": req.get_param("from_block"),
             "to_block": req.get_param("to_block"),
-            "event": req.get_param("event")
+            "event": req.get_param("event"),
+            "argument_filters": req.get_param_as_json("argument_filters")
         }
 
         validator = Validator({
@@ -211,6 +224,21 @@ class IbetEscrowEvents(BaseResource):
                     "EscrowCanceled",
                     "EscrowFinished"
                 ]
+            },
+            "argument_filters": {
+                "required": False,
+                "nullable": True,
+                "schema": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "account": {
+                        "type": "string"
+                    },
+                    "escrowId": {
+                        "type": "integer"
+                    }
+                }
             }
         })
         if not validator.validate(request_json):
@@ -274,7 +302,8 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
             contract_event = getattr(contract.events, attr)
             events = contract_event.getLogs(
                 fromBlock=request_json["from_block"],
-                toBlock=request_json["to_block"]
+                toBlock=request_json["to_block"],
+                argument_filters=request_json["argument_filters"]
             )
             for event in events:
                 block_number = event["blockNumber"]
@@ -301,7 +330,8 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
         request_json = {
             "from_block": req.get_param("from_block"),
             "to_block": req.get_param("to_block"),
-            "event": req.get_param("event")
+            "event": req.get_param("event"),
+            "argument_filters": req.get_param_as_json("argument_filters")
         }
 
         validator = Validator({
@@ -332,6 +362,21 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
                     "ApproveTransfer",
                     "FinishTransfer"
                 ]
+            },
+            "argument_filters": {
+                "required": False,
+                "nullable": True,
+                "schema": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "account": {
+                        "type": "string"
+                    },
+                    "escrowId": {
+                        "type": "integer"
+                    }
+                }
             }
         })
         if not validator.validate(request_json):

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import json
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -1255,6 +1256,136 @@ class TestEventsIbetSecurityTokenEscrow:
             }
         ]
 
+    # Normal_8_1
+    # event = Deposited
+    # query with filter argument {"token": token_contract.address, "account": issuer}
+    # results 1 record.
+    def test_normal_8_1(self, client, session, shared_contract):
+        issuer = eth_account["issuer"]["account_address"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+
+        # Issue token
+        token_contract = IbetShareUtils.issue(
+            tx_from=issuer,
+            args={
+                "name": "test_token",
+                "symbol": "TEST",
+                "issuePrice": 100000,
+                "totalSupply": 1000,
+                "dividends": 100,
+                "dividendRecordDate": "20201231",
+                "dividendPaymentDate": "20210101",
+                "cancellationDate": "20251231",
+                "principalValue": 10000,
+                "tradableExchange": escrow_contract.address,
+                "transferable": True
+            }
+        )
+
+        # Deposit token to escrow contract
+        tx_hash = token_contract.functions.transfer(
+            escrow_contract.address,
+            1000
+        ).transact({
+            "from": issuer
+        })
+        latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+
+        # Request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "token": token_contract.address,
+                    "account": issuer
+                }),
+                "event": "Deposited"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == [
+            {
+                "event": "Deposited",
+                "args": {
+                    "token": token_contract.address,
+                    "account": issuer
+                },
+                "transaction_hash": tx_hash.hex(),
+                "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
+                "log_index": 0
+            }
+        ]
+
+    # Normal_8_2
+    # event = Deposited
+    # query with filter argument {"token": "0x00..0", "account": "0x00..0"}
+    # results no record.
+    def test_normal_8_2(self, client, session, shared_contract):
+        issuer = eth_account["issuer"]["account_address"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+
+        # Issue token
+        token_contract = IbetShareUtils.issue(
+            tx_from=issuer,
+            args={
+                "name": "test_token",
+                "symbol": "TEST",
+                "issuePrice": 100000,
+                "totalSupply": 1000,
+                "dividends": 100,
+                "dividendRecordDate": "20201231",
+                "dividendPaymentDate": "20210101",
+                "cancellationDate": "20251231",
+                "principalValue": 10000,
+                "tradableExchange": escrow_contract.address,
+                "transferable": True
+            }
+        )
+
+        # Deposit token to escrow contract
+        _tx_hash = token_contract.functions.transfer(
+            escrow_contract.address,
+            1000
+        ).transact({
+            "from": issuer
+        })
+        latest_block_number = web3.eth.blockNumber
+        _latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+
+        # Request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "account": "0x0000000000000000000000000000000000000000"
+                }),
+                "event": "Deposited"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == []
+
     ###########################################################################
     # Error
     ###########################################################################
@@ -1316,10 +1447,10 @@ class TestEventsIbetSecurityTokenEscrow:
             }
         }
 
-    # Error_3
+    # Error_3_1
     # InvalidParameterError
     # event: unallowed value
-    def test_error_3(self, client, session, shared_contract):
+    def test_error_3_1(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
         latest_block_number = web3.eth.blockNumber
@@ -1340,6 +1471,64 @@ class TestEventsIbetSecurityTokenEscrow:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {"event": ["unallowed value some_event"]}
+        }
+
+    # Error_3_2
+    # InvalidParameterError
+    # event: unallowed value in filter argument
+    def test_error_3_2(self, client, session, shared_contract):
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "escrowId": "0"
+                }),
+                "event": "EscrowCreated"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": {"argument_filters": [{"escrowId": ["must be of integer type"]}]}
+        }
+
+    # Error_3_3
+    # InvalidParameterError
+    # event: unknown field in filter argument
+    def test_error_3_3(self, client, session, shared_contract):
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "some key": "some field"
+                }),
+                "event": "EscrowCreated"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": {"argument_filters": [{"some key": ["unknown field"]}]}
         }
 
     # Error_4
