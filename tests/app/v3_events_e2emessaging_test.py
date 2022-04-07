@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import json
 from unittest.mock import ANY
 
 from web3 import Web3
@@ -296,6 +297,105 @@ class TestEventsE2EMessaging:
             },
         ]
 
+    # Normal_4_1
+    # event = PublicKeyUpdated
+    # query with filter argument {"who": user1}
+    # results 1 record.
+    def test_normal_4_1(self, client, session, shared_contract):
+        user1 = eth_account["user1"]["account_address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+
+        # prepare data
+        e2e_messaging_contract = Contract.get_contract(
+            contract_name="E2EMessaging",
+            address=e2e_messaging_contract.address
+        )
+        tx = e2e_messaging_contract.functions.setPublicKey(
+            "test_key",
+            "test_key_type"
+        ).transact({
+            "from": user1
+        })
+        latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "who": user1
+                }),
+                "event": "PublicKeyUpdated"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == [
+            {
+                "event": "PublicKeyUpdated",
+                "args": {
+                    "key": "test_key",
+                    "key_type": "test_key_type",
+                    "who": user1
+                },
+                "transaction_hash": tx.hex(),
+                "block_number": latest_block_number,
+                "block_timestamp": latest_block_timestamp,
+                "log_index": 0
+            }
+        ]
+
+    # Normal_4_2
+    # event = PublicKeyUpdated
+    # query with filter argument {"who": "0x0000000000000000000000000000000000000000"}
+    # results no record.
+    def test_normal_4_2(self, client, session, shared_contract):
+        user1 = eth_account["user1"]["account_address"]
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+
+        # prepare data
+        e2e_messaging_contract = Contract.get_contract(
+            contract_name="E2EMessaging",
+            address=e2e_messaging_contract.address
+        )
+        tx = e2e_messaging_contract.functions.setPublicKey(
+            "test_key",
+            "test_key_type"
+        ).transact({
+            "from": user1
+        })
+        latest_block_number = web3.eth.blockNumber
+        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "who": "0x0000000000000000000000000000000000000000"
+                }),
+                "event": "PublicKeyUpdated"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 200
+        assert resp.json["meta"] == {
+            "code": 200,
+            "message": "OK"
+        }
+        assert resp.json["data"] == []
+
     ###########################################################################
     # Error
     ###########################################################################
@@ -352,15 +452,15 @@ class TestEventsE2EMessaging:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                "from_block": ["min value is 1"],
+                    "from_block": ["min value is 1"],
                 "to_block": ["min value is 1"]
             }
         }
 
-    # Error_3
+    # Error_3_1
     # InvalidParameterError
     # event: unallowed value
-    def test_error_3(self, client, session, shared_contract):
+    def test_error_3_1(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.blockNumber
@@ -381,6 +481,68 @@ class TestEventsE2EMessaging:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {"event": ["unallowed value some_event"]}
+        }
+
+    # Error_3_2
+    # InvalidParameterError
+    # event: unallowed value in filter argument
+    def test_error_3_2(self, client, session, shared_contract):
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "who": 0
+                }),
+                "event": "PublicKeyUpdated"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": {
+                "argument_filters": [{"who": ["must be of string type"]}]
+            }
+        }
+
+    # Error_3_3
+    # InvalidParameterError
+    # event: unknown field in filter argument
+    def test_error_3_3(self, client, session, shared_contract):
+        e2e_messaging_contract = shared_contract["E2EMessaging"]
+        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
+        latest_block_number = web3.eth.blockNumber
+
+        # request target API
+        resp = client.simulate_get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number,
+                "argument_filters": json.dumps({
+                    "some_key": "some_value"
+                }),
+                "event": "PublicKeyUpdated"
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": {
+                "argument_filters": [{"some_key": ["unknown field"]}]
+            }
         }
 
     # Error_4

@@ -1269,6 +1269,14 @@ paths:
           required: false
           type: string
           enum: [PublicKeyUpdated, Message]
+        - name: argument_filters
+          in: query
+          description: |
+            filter argument. serialize obj to a JSON formatted str required.
+          required: false
+          example: |
+            {"sender": "0x0000000000000000000000000000000000000000"}
+          type: string
       responses:
         200:
           description: "Successful Operation"
@@ -1329,6 +1337,17 @@ paths:
           required: false
           type: string
           enum: [Deposited, Withdrawn, EscrowCreated, EscrowCanceled, EscrowFinished]
+        - name: argument_filters
+          in: query
+          description: |
+            filter argument. serialize obj to a JSON formatted str required.
+          required: false
+          example: |
+            {
+              "escrowId": 0,
+              "token": "0x0000000000000000000000000000000000000000" 
+            }
+          type: string
       responses:
         200:
           description: "Successful Operation"
@@ -1399,6 +1418,17 @@ paths:
               ApproveTransfer,
               FinishTransfer
           ]
+        - name: argument_filters
+          in: query
+          description: |
+            filter argument. serialize obj to a JSON formatted str required.
+          required: false
+          example: |
+            {
+              "escrowId": 0,
+              "token": "0x0000000000000000000000000000000000000000" 
+            }
+          type: string
       responses:
         200:
           description: "Successful Operation"
