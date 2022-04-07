@@ -367,14 +367,14 @@ class TestEventsE2EMessaging:
             contract_name="E2EMessaging",
             address=e2e_messaging_contract.address
         )
-        tx = e2e_messaging_contract.functions.setPublicKey(
+        _tx = e2e_messaging_contract.functions.setPublicKey(
             "test_key",
             "test_key_type"
         ).transact({
             "from": user1
         })
         latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        _latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
         # request target API
         resp = client.simulate_get(
             self.apiurl,
@@ -452,7 +452,7 @@ class TestEventsE2EMessaging:
             "code": 88,
             "message": "Invalid Parameter",
             "description": {
-                    "from_block": ["min value is 1"],
+                "from_block": ["min value is 1"],
                 "to_block": ["min value is 1"]
             }
         }

@@ -1355,14 +1355,14 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # Deposit token to escrow contract
-        tx_hash = token_contract.functions.transfer(
+        _tx_hash = token_contract.functions.transfer(
             escrow_contract.address,
             1000
         ).transact({
             "from": issuer
         })
         latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        _latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
 
         # Request target API
         resp = client.simulate_get(
