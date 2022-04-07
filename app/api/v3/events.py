@@ -90,7 +90,6 @@ class E2EMessagingEvents(BaseResource):
             "event": req.get_param("event"),
             "argument_filters": req.get_param_as_json("argument_filters")
         }
-        print(request_json)
         validator = Validator({
             "from_block": {
                 "type": "integer",
@@ -111,7 +110,6 @@ class E2EMessagingEvents(BaseResource):
                 "allowed": ["Message", "PublicKeyUpdated"]
             },
             "argument_filters": {
-                # "type": "dict",
                 "required": False,
                 "nullable": True,
                 "schema": {
