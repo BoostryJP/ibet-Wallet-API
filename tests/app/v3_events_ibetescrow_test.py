@@ -463,8 +463,7 @@ class TestEventsIbetEscrow:
                 "argument_filters": json.dumps({
                     "token": token_contract.address,
                     "account": issuer
-                }),
-                # "event": "Deposited"
+                })
             }
         )
 
