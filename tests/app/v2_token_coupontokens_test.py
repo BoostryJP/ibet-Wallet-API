@@ -89,17 +89,17 @@ class TestV2TokenCouponTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenCouponTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
-        attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
+        attribute = self.token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV2TokenCouponTokens.list_token(session, token)
+        self.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -149,19 +149,19 @@ class TestV2TokenCouponTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenCouponTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
         exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
+            attribute = self.token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenCouponTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -238,20 +238,20 @@ class TestV2TokenCouponTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenCouponTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
         exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenCouponTokens. \
+            attribute = self. \
                 token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenCouponTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -328,19 +328,19 @@ class TestV2TokenCouponTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenCouponTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
         exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
+            attribute = self.token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenCouponTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -388,19 +388,19 @@ class TestV2TokenCouponTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenCouponTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         issued_list = []
         exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
+            attribute = self.token_attribute(exchange_address)
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenCouponTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = 'cursor=1&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -448,17 +448,17 @@ class TestV2TokenCouponTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenCouponTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：新規発行
         exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
-        attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
+        attribute = self.token_attribute(exchange_address)
         token = issue_coupon_token(issuer, attribute)
         coupon_register_list(issuer, token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV2TokenCouponTokens.list_token(session, token)
+        self.list_token(session, token)
 
         # Tokenの無効化
         invalidate_coupon_token(issuer, token)
@@ -467,6 +467,70 @@ class TestV2TokenCouponTokens:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系7＞
+    # 発行済クーポンあり（5件）
+    # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
+    # -> 5件返却
+    def test_couponlist_normal_7(self, client, session, shared_contract):
+        config.COUPON_TOKEN_ENABLED = True
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
+        attribute = self.token_attribute(exchange_address)
+        assumed_body = []
+        for i in range(5):
+            token = issue_coupon_token(issuer, attribute)
+            coupon_register_list(issuer, token, token_list)
+            # 取扱トークンデータ挿入
+            self.list_token(session, token)
+            status = True
+            if i % 2 == 0:
+                invalidate_coupon_token(issuer, token)
+                status = False
+            assumed_body_element = {
+                'id': i,
+                'token_address': token['address'],
+                'token_template': 'IbetCoupon',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テストクーポン',
+                'symbol': 'COUPON',
+                'total_supply': 10000,
+                'details': 'クーポン詳細',
+                'return_details': 'リターン詳細',
+                'memo': 'クーポンメモ欄',
+                'expiration_date': '20191231',
+                'transferable': True,
+                'status': status,
+                'initial_offering_status': False,
+                'image_url': [
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
+                ],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
+            }
+            assumed_body = [assumed_body_element] + assumed_body
+
+        resp = client.simulate_get(self.apiurl, params={
+            'include_inactive_tokens': 'true'
+        })
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -614,6 +678,21 @@ class TestV2TokenCouponTokens:
                     'must be of integer type'
                 ]
             }
+        }
+
+    # ＜エラー系3-4＞
+    # statusが非boolean
+    # -> 入力エラー
+    def test_couponlist_error_3_4(self, client, session):
+        config.COUPON_TOKEN_ENABLED = True
+        query_string = 'include_inactive_tokens=some_value'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'include_inactive_tokens': ['unallowed value some_value']}
         }
 
     # ＜エラー系4＞

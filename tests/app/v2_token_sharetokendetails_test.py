@@ -40,7 +40,7 @@ class TestV2TokenShareTokenDetails:
     Test Case for v2.token.ShareTokenDetails
     """
 
-    # テスト対象API
+    # Target API
     apiurl_base = '/v2/Token/Share/'  # {contract_address}
 
     @staticmethod
@@ -81,32 +81,35 @@ class TestV2TokenShareTokenDetails:
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
 
-    # ＜正常系1＞
-    #   データあり
-    def test_sharedetails_normal_1(self, client, session, shared_contract):
+    ###########################################################################
+    # Normal
+    ###########################################################################
+
+    # Normal_1
+    def test_normal_1(self, client, session, shared_contract):
         config.SHARE_TOKEN_ENABLED = True
-        # テスト用アカウント
         issuer = eth_account['issuer']
 
-        # TokenListコントラクト
-        token_list = TestV2TokenShareTokenDetails.tokenlist_contract()
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
-        # データ準備：株式新規発行
+        # Issue token
         exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
-        attribute = TestV2TokenShareTokenDetails.share_token_attribute(exchange_address, personal_info)
+        attribute = self.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
-        url_list = ['http://hogehoge/1', 'http://hogehoge/2', 'http://hogehoge/3']
         register_share_list(issuer, share_token, token_list)
 
-        # 取扱トークンデータ挿入
-        TestV2TokenShareTokenDetails.list_token(session, share_token)
+        # Register tokens on the list
+        self.list_token(session, share_token)
 
+        # Request target API
         apiurl = self.apiurl_base + share_token['address']
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
         assumed_body = {
             'token_address': share_token['address'],
             'token_template': 'IbetShare',
@@ -137,21 +140,89 @@ class TestV2TokenShareTokenDetails:
             'tradable_exchange': exchange_address,
             'personal_info_address': personal_info,
         }
-
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-    # ＜エラー系1＞
-    #   無効なコントラクトアドレス
-    #   -> 400エラー
-    def test_sharedetails_error_1(self, client, session):
+    # Normal_2
+    # status = False
+    def test_normal_2(self, client, session, shared_contract):
         config.SHARE_TOKEN_ENABLED = True
-        apiurl = self.apiurl_base + '0xabcd'
+        issuer = eth_account['issuer']
 
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # Issue token
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = self.share_token_attribute(exchange_address, personal_info)
+        share_token = issue_share_token(issuer, attribute)
+        register_share_list(issuer, share_token, token_list)
+
+        # Register tokens on the list
+        self.list_token(session, share_token)
+
+        # Invalidate token
+        invalidate_share_token(issuer, share_token)
+
+        # Request target API
+        apiurl = self.apiurl_base + share_token['address']
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
+        assumed_body = {
+            'token_address': share_token['address'],
+            'token_template': 'IbetShare',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト株式',
+            'symbol': 'SHARE',
+            'total_supply': 1000000,
+            'issue_price': 10000,
+            'principal_value': 10000,
+            'dividend_information': {
+                'dividends': 1.01,
+                'dividend_record_date': '20200909',
+                'dividend_payment_date': '20201001'
+            },
+            'cancellation_date': '20210101',
+            'is_offering': False,
+            'memo':  'メモ',
+            'max_holding_quantity': 1,
+            'max_sell_amount': 1000,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー',
+            'transferable': True,
+            'status': False,
+            'transfer_approval_required': False,
+            'is_canceled': False,
+            'tradable_exchange': exchange_address,
+            'personal_info_address': personal_info,
+        }
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # Error_1
+    # Invalid Parameter: invalid contract_address
+    # -> 400
+    def test_error_1(self, client, session):
+        config.SHARE_TOKEN_ENABLED = True
+        apiurl = self.apiurl_base + '0xabcd'
+
+        # Request target API
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        # Assertion
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
@@ -159,30 +230,30 @@ class TestV2TokenShareTokenDetails:
             'description': 'invalid contract_address'
         }
 
-    # ＜エラー系2＞
-    #   取扱トークン（DB）に情報が存在しない
-    def test_sharedetails_error_2(self, client, shared_contract, session):
+    # Error_2
+    # Not registered on the list
+    # -> 404
+    def test_error_2(self, client, shared_contract, session):
         config.SHARE_TOKEN_ENABLED = True
-        # テスト用アカウント
         issuer = eth_account['issuer']
 
-        # TokenListコントラクト
-        token_list = TestV2TokenShareTokenDetails.tokenlist_contract()
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
-        # データ準備：新規発行
+        # Prepare data: issue token
         exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
-        attribute = TestV2TokenShareTokenDetails.share_token_attribute(exchange_address, personal_info)
+        attribute = self.share_token_attribute(exchange_address, personal_info)
         token = issue_share_token(issuer, attribute)
         register_share_list(issuer, token, token_list)
 
-        # NOTE:取扱トークンデータを挿入しない
-
+        # Request target API
         apiurl = self.apiurl_base + token['address']
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
         assert resp.status_code == 404
         assert resp.json['meta'] == {
             'code': 30,
@@ -190,47 +261,16 @@ class TestV2TokenShareTokenDetails:
             'description': 'contract_address: ' + token['address']
         }
 
-    # ＜エラー系3＞
-    #   トークン無効化（データなし）
-    def test_sharedetails_error_3(self, client, session, shared_contract):
-        config.COUPON_TOKEN_ENABLED = True
-        # テスト用アカウント
-        issuer = eth_account['issuer']
-
-        # TokenListコントラクト
-        token_list = TestV2TokenShareTokenDetails.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
-
-        # データ準備：株式新規発行
-        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
-        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
-        attribute = TestV2TokenShareTokenDetails.share_token_attribute(exchange_address, personal_info)
-        share_token = issue_share_token(issuer, attribute)
-        register_share_list(issuer, share_token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestV2TokenShareTokenDetails.list_token(session, share_token)
-
-        # トークン無効化
-        invalidate_share_token(issuer, share_token)
-
-        apiurl = self.apiurl_base + share_token['address']
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
-
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 30,
-            'message': 'Data Not Exists',
-            'description': 'contract_address: ' + share_token['address']
-        }
-
-    # ＜エラー系3＞
-    #  取扱トークン対象外
-    def test_sharedetails_error_4(self, client, session):
+    # Error_3
+    # Not Supported
+    # -> 404
+    def test_error_3(self, client, session):
         config.SHARE_TOKEN_ENABLED = False
+
+        # Request target API
         resp = client.simulate_get(self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765")
 
+        # Assertion
         assert resp.status_code == 404
         assert resp.json['meta'] == {
             'code': 10,
