@@ -488,9 +488,9 @@ class TestV2TokenMembershipTokens:
         assert resp.json['data'] == assumed_body
 
     # ＜正常系7＞
-    # 発行済会員権あり（2件）
-    # cursor=設定なし、 limit=設定なし、status=False
-    # -> 2件返却
+    # 発行済会員権あり（4件）
+    # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
+    # -> 4件返却
     def test_membershiplist_normal_7(self, client, session, shared_contract):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         # テスト用アカウント
@@ -506,13 +506,15 @@ class TestV2TokenMembershipTokens:
                 shared_contract['IbetMembershipExchange']['address'])
         attribute = TestV2TokenMembershipTokens.token_attribute(exchange_address)
         assumed_body = []
-        for i in range(2):
+        for i in range(5):
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             # 取扱トークンデータ挿入
             TestV2TokenMembershipTokens.list_token(session, token)
-            # statusをFalseに変更
-            membership_invalidate(issuer, token)
+            status = True
+            if i % 2 == 0:
+                membership_invalidate(issuer, token)
+                status = False
             assumed_body_element = {
                 'id': i,
                 'token_address': token['address'],
@@ -528,7 +530,7 @@ class TestV2TokenMembershipTokens:
                 'expiration_date': '20191231',
                 'memo': 'メモ',
                 'transferable': True,
-                'status': False,
+                'status': status,
                 'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
@@ -544,7 +546,7 @@ class TestV2TokenMembershipTokens:
             assumed_body = [assumed_body_element] + assumed_body
 
         resp = client.simulate_get(self.apiurl, params={
-            'status': 'false'
+            'include_inactive_tokens': 'true'
         })
 
         assert resp.status_code == 200
@@ -700,14 +702,14 @@ class TestV2TokenMembershipTokens:
     # -> 入力エラー
     def test_membershiplist_error_3_4(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        query_string = 'status=some_value'
+        query_string = 'include_inactive_tokens=some_value'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': 'The "status" parameter is invalid. The value of the parameter must be "true" or "false".'
+            'description': {'include_inactive_tokens': ['unallowed value some_value']}
         }
 
     # ＜エラー系4＞

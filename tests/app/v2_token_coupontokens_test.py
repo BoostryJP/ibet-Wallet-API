@@ -474,8 +474,8 @@ class TestV2TokenCouponTokens:
 
     # ＜正常系7＞
     # 発行済クーポンあり（2件）
-    # cursor=設定なし、 limit=設定なし、status=False
-    # -> 2件返却
+    # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
+    # -> 4件返却
     def test_couponlist_normal_7(self, client, session, shared_contract):
         config.COUPON_TOKEN_ENABLED = True
         # テスト用アカウント
@@ -489,13 +489,15 @@ class TestV2TokenCouponTokens:
         exchange_address = to_checksum_address(shared_contract['IbetCouponExchange']['address'])
         attribute = TestV2TokenCouponTokens.token_attribute(exchange_address)
         assumed_body = []
-        for i in range(2):
+        for i in range(5):
             token = issue_coupon_token(issuer, attribute)
             coupon_register_list(issuer, token, token_list)
             # 取扱トークンデータ挿入
             TestV2TokenCouponTokens.list_token(session, token)
-            # statusをFalseに変更
-            invalidate_coupon_token(issuer, token)
+            status = True
+            if i % 2 == 0:
+                invalidate_coupon_token(issuer, token)
+                status = False
             assumed_body_element = {
                 'id': i,
                 'token_address': token['address'],
@@ -511,7 +513,7 @@ class TestV2TokenCouponTokens:
                 'memo': 'クーポンメモ欄',
                 'expiration_date': '20191231',
                 'transferable': True,
-                'status': False,
+                'status': status,
                 'initial_offering_status': False,
                 'image_url': [
                     {'id': 1, 'url': ''},
@@ -527,7 +529,7 @@ class TestV2TokenCouponTokens:
             assumed_body = [assumed_body_element] + assumed_body
 
         resp = client.simulate_get(self.apiurl, params={
-            'status': 'false'
+            'include_inactive_tokens': 'true'
         })
 
         assert resp.status_code == 200
@@ -683,14 +685,14 @@ class TestV2TokenCouponTokens:
     # -> 入力エラー
     def test_couponlist_error_3_4(self, client, session):
         config.COUPON_TOKEN_ENABLED = True
-        query_string = 'status=some_value'
+        query_string = 'include_inactive_tokens=some_value'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': 'The "status" parameter is invalid. The value of the parameter must be "true" or "false".'
+            'description': {'include_inactive_tokens': ['unallowed value some_value']}
         }
 
     # ＜エラー系4＞

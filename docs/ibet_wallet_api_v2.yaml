@@ -868,12 +868,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
-        - name: status
+        - name: include_inactive_tokens
           in: query
-          description: "status: token status"
+          description: Whether to include inactive tokens.
           required: false
           type: boolean
-          default: true
       responses:
         200:
           description: Successful Operation
@@ -1171,12 +1170,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
-        - name: status
+        - name: include_inactive_tokens
           in: query
-          description: "status: token status"
+          description: Whether to include inactive tokens.
           required: false
           type: boolean
-          default: true
       responses:
         200:
           description: Successful Operation
@@ -1428,12 +1426,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
-        - name: status
+        - name: include_inactive_tokens
           in: query
-          description: "status: token status"
+          description: Whether to include inactive tokens.
           required: false
           type: boolean
-          default: true
       responses:
         200:
           description: Successful Operation
@@ -1673,12 +1670,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
-        - name: status
+        - name: include_inactive_tokens
           in: query
-          description: "status: token status"
+          description: Whether to include inactive tokens.
           required: false
           type: boolean
-          default: true
       responses:
         200:
           description: Successful Operation

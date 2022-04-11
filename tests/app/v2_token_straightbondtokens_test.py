@@ -646,13 +646,15 @@ class TestV2TokenStraightBondTokens:
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
         assumed_body = []
-        for i in range(2):
+        for i in range(5):
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             # 取扱トークンデータ挿入
             TestV2TokenStraightBondTokens.list_token(session, bond_token)
-            # statusをFalseに変更
-            bond_invalidate(issuer, bond_token)
+            status = True
+            if i % 2 == 0:
+                bond_invalidate(issuer, bond_token)
+                status = False
             assumed_body_element = {
                 'id': i,
                 'token_address': bond_token['address'],
@@ -690,7 +692,7 @@ class TestV2TokenStraightBondTokens:
                 'privacy_policy': 'プライバシーポリシー',
                 'transferable': True,
                 'tradable_exchange': exchange_address,
-                'status': False,
+                'status': status,
                 'memo': 'メモ',
                 'personal_info_address': personal_info,
                 'transfer_approval_required': False,
@@ -698,7 +700,7 @@ class TestV2TokenStraightBondTokens:
             assumed_body = [assumed_body_element] + assumed_body
 
         resp = client.simulate_get(self.apiurl, params={
-            'status': 'false'
+            'include_inactive_tokens': 'true'
         })
 
         assert resp.status_code == 200
@@ -853,14 +855,14 @@ class TestV2TokenStraightBondTokens:
     # -> 入力エラー
     def test_bondlist_error_3_4(self, client, session):
         config.BOND_TOKEN_ENABLED = True
-        query_string = 'status=some_value'
+        query_string = 'include_inactive_tokens=some_value'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
-            'description': 'The "status" parameter is invalid. The value of the parameter must be "true" or "false".'
+            'description': {'include_inactive_tokens': ['unallowed value some_value']}
         }
 
     # ＜エラー系4＞
