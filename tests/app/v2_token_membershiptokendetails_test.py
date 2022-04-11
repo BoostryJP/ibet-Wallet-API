@@ -40,7 +40,7 @@ class TestV2TokenMembershipTokenDetails:
     Test Case for v2.token.MembershipTokenDetails
     """
 
-    # テスト対象API
+    # Target API
     apiurl_base = '/v2/Token/Membership/'  # {contract_address}
 
     @staticmethod
@@ -77,32 +77,34 @@ class TestV2TokenMembershipTokenDetails:
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
 
-    # ＜正常系1＞
-    #   データあり
-    def test_membershipdetails_normal_1(self, client, session, shared_contract):
+    ###########################################################################
+    # Normal
+    ###########################################################################
+
+    # Normal_1
+    def test_normal_1(self, client, session, shared_contract):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        # テスト用アカウント
         issuer = eth_account['issuer']
 
-        # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokenDetails.tokenlist_contract()
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
-        # データ準備：会員権新規発行
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetMembershipExchange']['address'])
-        attribute = TestV2TokenMembershipTokenDetails.token_attribute(exchange_address)
+        # Issue token
+        exchange_address = to_checksum_address(shared_contract['IbetMembershipExchange']['address'])
+        attribute = self.token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 
-        # 取扱トークンデータ挿入
-        TestV2TokenMembershipTokenDetails.list_token(session, token)
+        # Register tokens on the list
+        self.list_token(session, token)
 
+        # Request target API
         apiurl = self.apiurl_base + token['address']
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
         assumed_body = {
             'token_address': token['address'],
             'token_template': 'IbetMembership',
@@ -130,21 +132,85 @@ class TestV2TokenMembershipTokenDetails:
             'privacy_policy': 'プライバシーポリシー',
             'tradable_exchange': exchange_address,
         }
-
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
-    # ＜エラー系1＞
-    #   無効なコントラクトアドレス
-    #   -> 400エラー
-    def test_membershipdetails_error_1(self, client, session):
+    # Normal_2
+    # status = False
+    def test_normal_2(self, client, session, shared_contract):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        apiurl = self.apiurl_base + '0xabcd'
+        issuer = eth_account['issuer']
 
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # Issue token
+        exchange_address = to_checksum_address(shared_contract['IbetMembershipExchange']['address'])
+        attribute = self.token_attribute(exchange_address)
+        token = membership_issue(issuer, attribute)
+        membership_register_list(issuer, token, token_list)
+
+        # Register tokens on the list
+        self.list_token(session, token)
+
+        # Invalidate token
+        membership_invalidate(issuer, token)
+
+        # Request target API
+        apiurl = self.apiurl_base + token['address']
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
+        assumed_body = {
+            'token_address': token['address'],
+            'token_template': 'IbetMembership',
+            'owner_address': issuer['account_address'],
+            'company_name': '',
+            'rsa_publickey': '',
+            'name': 'テスト会員権',
+            'symbol': 'MEMBERSHIP',
+            'total_supply': 1000000,
+            'details': '詳細',
+            'return_details': 'リターン詳細',
+            'expiration_date': '20191231',
+            'memo': 'メモ',
+            'transferable': True,
+            'status': False,
+            'initial_offering_status': False,
+            'image_url': [
+                {'id': 1, 'url': ''},
+                {'id': 2, 'url': ''},
+                {'id': 3, 'url': ''}
+            ],
+            'max_holding_quantity': 1,
+            'max_sell_amount': 1000,
+            'contact_information': '問い合わせ先',
+            'privacy_policy': 'プライバシーポリシー',
+            'tradable_exchange': exchange_address,
+        }
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # Error_1
+    # Invalid Parameter: invalid contract_address
+    # -> 400
+    def test_error_1(self, client, session):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        apiurl = self.apiurl_base + '0xabcd'
+
+        # Request target API
+        query_string = ''
+        resp = client.simulate_get(apiurl, query_string=query_string)
+
+        # Assertion
         assert resp.status_code == 400
         assert resp.json['meta'] == {
             'code': 88,
@@ -152,31 +218,29 @@ class TestV2TokenMembershipTokenDetails:
             'description': 'invalid contract_address'
         }
 
-    # ＜エラー系2＞
-    #   取扱トークン（DB）に情報が存在しない
-    def test_membershipdetails_error_2(self, client, shared_contract, session):
+    # Error_2
+    # Not registered on the list
+    # -> 404
+    def test_error_2(self, client, shared_contract, session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        # テスト用アカウント
         issuer = eth_account['issuer']
 
-        # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokenDetails.tokenlist_contract()
+        # Set up TokenList contract
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
-        # データ準備：会員権新規発行
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetMembershipExchange']['address'])
-        attribute = TestV2TokenMembershipTokenDetails.token_attribute(exchange_address)
+        # Prepare data: issue token
+        exchange_address = to_checksum_address(shared_contract['IbetMembershipExchange']['address'])
+        attribute = self.token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 
-        # NOTE:取扱トークンデータを挿入しない
-
+        # Request target API
         apiurl = self.apiurl_base + token['address']
         query_string = ''
         resp = client.simulate_get(apiurl, query_string=query_string)
 
+        # Assertion
         assert resp.status_code == 404
         assert resp.json['meta'] == {
             'code': 30,
@@ -184,50 +248,16 @@ class TestV2TokenMembershipTokenDetails:
             'description': 'contract_address: ' + token['address']
         }
 
-    # ＜エラー系3＞
-    #   トークン無効化（データなし）
-    #   -> 404エラー
-    def test_membershipdetails_error_3(self, client, session, shared_contract):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
-        # テスト用アカウント
-        issuer = eth_account['issuer']
-
-        # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokenDetails.tokenlist_contract()
-        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
-
-        # データ準備：会員権新規発行
-        exchange_address = \
-            to_checksum_address(
-                shared_contract['IbetMembershipExchange']['address'])
-        attribute = TestV2TokenMembershipTokenDetails. \
-            token_attribute(exchange_address)
-        token = membership_issue(issuer, attribute)
-        membership_register_list(issuer, token, token_list)
-
-        # 取扱トークンデータ挿入
-        TestV2TokenMembershipTokenDetails.list_token(session, token)
-
-        # Tokenの無効化
-        membership_invalidate(issuer, token)
-
-        apiurl = self.apiurl_base + token['address']
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
-
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 30,
-            'message': 'Data Not Exists',
-            'description': 'contract_address: ' + token['address']
-        }
-
-    # ＜エラー系4＞
-    #  取扱トークン対象外
-    def test_error_4(self, client, session):
+    # Error_3
+    # Not registered in tokenList contract
+    # -> 404
+    def test_error_3(self, client, session):
         config.MEMBERSHIP_TOKEN_ENABLED = False
+
+        # Request target API
         resp = client.simulate_get(self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765")
 
+        # Assertion
         assert resp.status_code == 404
         assert resp.json['meta'] == {
             'code': 10,

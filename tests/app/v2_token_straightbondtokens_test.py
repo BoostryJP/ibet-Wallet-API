@@ -106,18 +106,18 @@ class TestV2TokenStraightBondTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
-        attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+        attribute = self.bond_token_attribute(exchange_address, personal_info)
         bond_token = issue_bond_token(issuer, attribute)
         register_bond_list(issuer, bond_token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV2TokenStraightBondTokens.list_token(session, bond_token)
+        self.list_token(session, bond_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -179,7 +179,7 @@ class TestV2TokenStraightBondTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
@@ -187,12 +187,12 @@ class TestV2TokenStraightBondTokens:
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+            attribute = self.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV2TokenStraightBondTokens.list_token(session, bond_token)
+            self.list_token(session, bond_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -294,7 +294,7 @@ class TestV2TokenStraightBondTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
@@ -302,12 +302,12 @@ class TestV2TokenStraightBondTokens:
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+            attribute = self.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV2TokenStraightBondTokens.list_token(session, bond_token)
+            self.list_token(session, bond_token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -410,7 +410,7 @@ class TestV2TokenStraightBondTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
@@ -418,12 +418,12 @@ class TestV2TokenStraightBondTokens:
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+            attribute = self.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV2TokenStraightBondTokens.list_token(session, bond_token)
+            self.list_token(session, bond_token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -485,7 +485,7 @@ class TestV2TokenStraightBondTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
@@ -493,12 +493,12 @@ class TestV2TokenStraightBondTokens:
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+            attribute = self.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV2TokenStraightBondTokens.list_token(session, bond_token)
+            self.list_token(session, bond_token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -560,7 +560,7 @@ class TestV2TokenStraightBondTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
@@ -568,12 +568,12 @@ class TestV2TokenStraightBondTokens:
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+            attribute = self.bond_token_attribute(exchange_address, personal_info)
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             bond_list.append(bond_token)
             # 取扱トークンデータ挿入
-            TestV2TokenStraightBondTokens.list_token(session, bond_token)
+            self.list_token(session, bond_token)
 
         # Tokenの無効化
         bond_invalidate(issuer, bond_list[0])
@@ -638,19 +638,19 @@ class TestV2TokenStraightBondTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenStraightBondTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：債券新規発行
         exchange_address = to_checksum_address(shared_contract['IbetStraightBondExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
-        attribute = TestV2TokenStraightBondTokens.bond_token_attribute(exchange_address, personal_info)
+        attribute = self.bond_token_attribute(exchange_address, personal_info)
         assumed_body = []
         for i in range(5):
             bond_token = issue_bond_token(issuer, attribute)
             register_bond_list(issuer, bond_token, token_list)
             # 取扱トークンデータ挿入
-            TestV2TokenStraightBondTokens.list_token(session, bond_token)
+            self.list_token(session, bond_token)
             status = True
             if i % 2 == 0:
                 bond_invalidate(issuer, bond_token)

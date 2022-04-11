@@ -23,14 +23,13 @@ from sqlalchemy import (
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
-from falcon.errors import HTTPInvalidParam
 
 from app import log
 from app.api.common import BaseResource
 from app.errors import (
     InvalidParameterError,
     DataNotExistsError,
-    NotSupportedError, AppError
+    NotSupportedError
 )
 from app import config
 from app.contracts import Contract
@@ -345,7 +344,7 @@ class TransferApprovalHistory(BaseResource):
 
 
 # ------------------------------
-# [普通社債]公開中トークン一覧
+# [普通社債]トークン一覧
 # ------------------------------
 class StraightBondTokens(BaseResource):
     """
@@ -461,7 +460,7 @@ class StraightBondTokens(BaseResource):
 
 
 # ------------------------------
-# [普通社債]公開中トークン一覧（トークンアドレス）
+# [普通社債]トークン一覧（トークンアドレス）
 # ------------------------------
 class StraightBondTokenAddresses(BaseResource):
     """
@@ -614,7 +613,8 @@ class StraightBondTokenDetails(BaseResource):
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
-            token_template=token[1]
+            token_template=token[1],
+            include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -622,7 +622,11 @@ class StraightBondTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, include_inactive_tokens: bool = False):
+    def get_token_detail(session,
+                         token_address: str,
+                         token_template: str,
+                         token_id: int = None,
+                         include_inactive_tokens: bool = False):
         """
         トークン詳細の取得
 
@@ -638,7 +642,8 @@ class StraightBondTokenDetails(BaseResource):
             try:
                 # トークンコントラクトへの接続
                 token_contract = Contract.get_contract(token_template, token_address)
-                if not include_inactive_tokens and not Contract.call_function(token_contract, "status", (), True):
+                if not include_inactive_tokens and \
+                        not Contract.call_function(token_contract, "status", (), True):
                     return None
                 bondtoken = BondToken.get(session=session, token_address=token_address)
                 bondtoken = bondtoken.__dict__
@@ -651,7 +656,7 @@ class StraightBondTokenDetails(BaseResource):
 
 
 # ------------------------------
-# [株式]公開中トークン一覧
+# [株式]トークン一覧
 # ------------------------------
 class ShareTokens(BaseResource):
     """
@@ -768,7 +773,7 @@ class ShareTokens(BaseResource):
 
 
 # ------------------------------
-# [株式]公開中トークン一覧（トークンアドレス）
+# [株式]トークン一覧（トークンアドレス）
 # ------------------------------
 class ShareTokenAddresses(BaseResource):
     """
@@ -919,7 +924,8 @@ class ShareTokenDetails(BaseResource):
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
-            token_template=token[1]
+            token_template=token[1],
+            include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -927,7 +933,11 @@ class ShareTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, include_inactive_tokens: bool = False):
+    def get_token_detail(session,
+                         token_address: str,
+                         token_template: str,
+                         token_id: int = None,
+                         include_inactive_tokens: bool = False):
         """
         トークン詳細の取得
 
@@ -956,7 +966,7 @@ class ShareTokenDetails(BaseResource):
 
 
 # ------------------------------
-# [会員権]公開中トークン一覧
+# [会員権]トークン一覧
 # ------------------------------
 class MembershipTokens(BaseResource):
     """
@@ -1073,7 +1083,7 @@ class MembershipTokens(BaseResource):
 
 
 # ------------------------------
-# [会員権]公開中トークン一覧（トークンアドレス）
+# [会員権]トークン一覧（トークンアドレス）
 # ------------------------------
 class MembershipTokenAddresses(BaseResource):
     """
@@ -1227,6 +1237,7 @@ class MembershipTokenDetails(BaseResource):
             session=session,
             token_address=token_address,
             token_template=token[1],
+            include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -1234,7 +1245,11 @@ class MembershipTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, include_inactive_tokens: bool = False):
+    def get_token_detail(session,
+                         token_address: str,
+                         token_template: str,
+                         token_id: int = None,
+                         include_inactive_tokens: bool = False):
         """
         トークン詳細の取得
 
@@ -1263,7 +1278,7 @@ class MembershipTokenDetails(BaseResource):
 
 
 # ------------------------------
-# [クーポン]公開中トークン一覧
+# [クーポン]トークン一覧
 # ------------------------------
 class CouponTokens(BaseResource):
     """
@@ -1379,7 +1394,7 @@ class CouponTokens(BaseResource):
 
 
 # ------------------------------
-# [クーポン]公開中トークン一覧（トークンアドレス）
+# [クーポン]トークン一覧（トークンアドレス）
 # ------------------------------
 class CouponTokenAddresses(BaseResource):
     """
@@ -1534,6 +1549,7 @@ class CouponTokenDetails(BaseResource):
             session=session,
             token_address=token_address,
             token_template=token[1],
+            include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
@@ -1541,7 +1557,11 @@ class CouponTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, include_inactive_tokens: bool = False):
+    def get_token_detail(session,
+                         token_address: str,
+                         token_template: str,
+                         token_id: int = None,
+                         include_inactive_tokens: bool = False):
         """
         トークン詳細の取得
 
