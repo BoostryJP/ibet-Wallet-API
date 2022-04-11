@@ -262,7 +262,7 @@ class TestV2TokenShareTokenDetails:
         }
 
     # Error_3
-    # Not registered in tokenList contract
+    # Not Supported
     # -> 404
     def test_error_3(self, client, session):
         config.SHARE_TOKEN_ENABLED = False

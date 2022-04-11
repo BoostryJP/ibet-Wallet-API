@@ -295,7 +295,7 @@ class TestV2TokenStraightBondTokenDetails:
         }
 
     # Error_3
-    # Not registered in tokenList contract
+    # Not Supported
     # -> 404
     def test_error_3(self, client, session):
         config.BOND_TOKEN_ENABLED = False
