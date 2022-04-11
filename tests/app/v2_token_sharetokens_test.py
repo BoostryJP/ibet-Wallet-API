@@ -461,9 +461,9 @@ class TestV2TokenShareTokens:
         assert resp.json['data'] == assumed_body
 
     # ＜正常系6＞
-    # 発行済株式あり（4件）
+    # 発行済株式あり（5件）
     # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
-    # -> 4件返却
+    # -> 5件返却
     def test_sharelist_normal_6(self, client, session, shared_contract):
         config.SHARE_TOKEN_ENABLED = True
         # テスト用アカウント
