@@ -868,6 +868,12 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: status
+          in: query
+          description: "status: token status"
+          required: false
+          type: boolean
+          default: true
       responses:
         200:
           description: Successful Operation
@@ -1165,6 +1171,12 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: status
+          in: query
+          description: "status: token status"
+          required: false
+          type: boolean
+          default: true
       responses:
         200:
           description: Successful Operation
@@ -1416,6 +1428,12 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: status
+          in: query
+          description: "status: token status"
+          required: false
+          type: boolean
+          default: true
       responses:
         200:
           description: Successful Operation
@@ -1655,6 +1673,12 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: status
+          in: query
+          description: "status: token status"
+          required: false
+          type: boolean
+          default: true
       responses:
         200:
           description: Successful Operation

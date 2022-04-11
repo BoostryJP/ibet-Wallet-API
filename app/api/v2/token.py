@@ -23,13 +23,14 @@ from sqlalchemy import (
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
+from falcon.errors import HTTPInvalidParam
 
 from app import log
 from app.api.common import BaseResource
 from app.errors import (
     InvalidParameterError,
     DataNotExistsError,
-    NotSupportedError
+    NotSupportedError, AppError
 )
 from app import config
 from app.contracts import Contract
@@ -389,6 +390,9 @@ class StraightBondTokens(BaseResource):
         limit = request_json['limit']
         if limit is None:
             limit = 10
+        status = request_json["status"]
+        if status is None:
+            status = True
 
         token_list = []
         count = 0
@@ -408,7 +412,8 @@ class StraightBondTokens(BaseResource):
                 session=session,
                 token_id=i,
                 token_address=token_address,
-                token_template=token[1]
+                token_template=token[1],
+                status=status,
             )
 
             if token_detail is not None:
@@ -419,32 +424,45 @@ class StraightBondTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = {
-            'cursor': req.get_param('cursor'),
-            'limit': req.get_param('limit'),
-        }
+        try:
+            request_json = {
+                "cursor": req.get_param("cursor"),
+                "limit": req.get_param("limit"),
+                "status": req.get_param_as_bool("status", blank_as_true=True),
+            }
+        except HTTPInvalidParam as e:
+            raise InvalidParameterError(description=e.description) from e
+        except Exception as e:
+            raise AppError(description=e) from e
+        else:
+            validator = Validator(
+                {
+                    "cursor": {
+                        "type": "integer",
+                        "coerce": int,
+                        "min": 0,
+                        "required": False,
+                        "nullable": True,
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "coerce": int,
+                        "min": 0,
+                        "required": False,
+                        "nullable": True,
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "required": False,
+                        "nullable": True,
+                    },
+                }
+            )
 
-        validator = Validator({
-            'cursor': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-            'limit': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-        })
+            if not validator.validate(request_json):
+                raise InvalidParameterError(validator.errors)
 
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
+            return validator.document
 
 
 # ------------------------------
@@ -609,7 +627,7 @@ class StraightBondTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None):
+    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, status: bool = True):
         """
         トークン詳細の取得
 
@@ -617,6 +635,7 @@ class StraightBondTokenDetails(BaseResource):
         :param token_address: トークンアドレス
         :param token_template: トークンテンプレート
         :param token_id: シーケンスID（任意）
+        :param status: トークンステータス（default=True）
         :return: BondToken(dict)
         """
 
@@ -624,8 +643,8 @@ class StraightBondTokenDetails(BaseResource):
             try:
                 # トークンコントラクトへの接続
                 token_contract = Contract.get_contract(token_template, token_address)
-                # 取扱停止銘柄はリストに返さない
-                if not Contract.call_function(token_contract, "status", (), True):
+                # 取扱ステータスの指定に合致する銘柄をリストとして返す
+                if not Contract.call_function(token_contract, "status", (), True) == status:
                     return None
                 bondtoken = BondToken.get(session=session, token_address=token_address)
                 bondtoken = bondtoken.__dict__
@@ -683,6 +702,9 @@ class ShareTokens(BaseResource):
         limit = request_json['limit']
         if limit is None:
             limit = 10
+        status = request_json["status"]
+        if status is None:
+            status = True
 
         token_list = []
         count = 0
@@ -704,6 +726,7 @@ class ShareTokens(BaseResource):
                 session=session,
                 token_address=token_address,
                 token_template=token[1],
+                status=status,
             )
             if token_detail is not None:
                 token_detail["id"] = i
@@ -714,32 +737,45 @@ class ShareTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = {
-            'cursor': req.get_param('cursor'),
-            'limit': req.get_param('limit'),
-        }
+        try:
+            request_json = {
+                "cursor": req.get_param("cursor"),
+                "limit": req.get_param("limit"),
+                "status": req.get_param_as_bool("status", blank_as_true=True),
+            }
+        except HTTPInvalidParam as e:
+            raise InvalidParameterError(description=e.description) from e
+        except Exception as e:
+            raise AppError(description=e) from e
+        else:
+            validator = Validator(
+                {
+                    "cursor": {
+                        "type": "integer",
+                        "coerce": int,
+                        "min": 0,
+                        "required": False,
+                        "nullable": True,
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "coerce": int,
+                        "min": 0,
+                        "required": False,
+                        "nullable": True,
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "required": False,
+                        "nullable": True,
+                    },
+                }
+            )
 
-        validator = Validator({
-            'cursor': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-            'limit': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-        })
+            if not validator.validate(request_json):
+                raise InvalidParameterError(validator.errors)
 
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
+            return validator.document
 
 
 # ------------------------------
@@ -902,7 +938,7 @@ class ShareTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None):
+    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, status: bool = True):
         """
         トークン詳細の取得
 
@@ -910,15 +946,16 @@ class ShareTokenDetails(BaseResource):
         :param token_address: トークンアドレス
         :param token_template: トークンテンプレート
         :param token_id: シーケンスID（任意）
+        :param status: トークンステータス（default=True）
         :return: ShareToken(dict)
         """
 
-        if token_template == 'IbetShare':
+        if token_template == "IbetShare":
             try:
                 # Token-Contractへの接続
                 token_contract = Contract.get_contract(token_template, token_address)
-                # 取扱停止銘柄はリストに返さない
-                if not Contract.call_function(token_contract, "status", (), True):
+                # 取扱ステータスの指定に合致する銘柄をリストとして返す
+                if not Contract.call_function(token_contract, "status", (), True) == status:
                     return None
                 sharetoken = ShareToken.get(session=session, token_address=token_address)
                 sharetoken = sharetoken.__dict__
@@ -976,6 +1013,9 @@ class MembershipTokens(BaseResource):
         limit = request_json['limit']
         if limit is None:
             limit = 10
+        status = request_json["status"]
+        if status is None:
+            status = True
 
         token_list = []
         count = 0
@@ -997,7 +1037,8 @@ class MembershipTokens(BaseResource):
                 session=session,
                 token_id=i,
                 token_address=token[0],
-                token_template=token[1]
+                token_template=token[1],
+                status=status,
             )
             if token_detail is not None:
                 token_list.append(token_detail)
@@ -1007,32 +1048,45 @@ class MembershipTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = {
-            'cursor': req.get_param('cursor'),
-            'limit': req.get_param('limit'),
-        }
+        try:
+            request_json = {
+                "cursor": req.get_param("cursor"),
+                "limit": req.get_param("limit"),
+                "status": req.get_param_as_bool("status", blank_as_true=True),
+            }
+        except HTTPInvalidParam as e:
+            raise InvalidParameterError(description=e.description) from e
+        except Exception as e:
+            raise AppError(description=e) from e
+        else:
+            validator = Validator(
+                {
+                    "cursor": {
+                        "type": "integer",
+                        "coerce": int,
+                        "min": 0,
+                        "required": False,
+                        "nullable": True,
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "coerce": int,
+                        "min": 0,
+                        "required": False,
+                        "nullable": True,
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "required": False,
+                        "nullable": True,
+                    },
+                }
+            )
 
-        validator = Validator({
-            'cursor': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-            'limit': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-        })
+            if not validator.validate(request_json):
+                raise InvalidParameterError(validator.errors)
 
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
+            return validator.document
 
 
 # ------------------------------
@@ -1197,7 +1251,7 @@ class MembershipTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None):
+    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, status: bool = True):
         """
         トークン詳細の取得
 
@@ -1205,6 +1259,7 @@ class MembershipTokenDetails(BaseResource):
         :param token_address: トークンアドレス
         :param token_template: トークンテンプレート
         :param token_id: シーケンスID（任意）
+        :param status: トークンステータス（default=True）
         :return: MembershipToken(dict)
         """
 
@@ -1212,8 +1267,8 @@ class MembershipTokenDetails(BaseResource):
             try:
                 # Token-Contractへの接続
                 token_contract = Contract.get_contract(token_template, token_address)
-                # 取扱停止銘柄はリストに返さない
-                if not Contract.call_function(token_contract, "status", (), True):
+                # 取扱ステータスの指定に合致する銘柄をリストとして返す
+                if not Contract.call_function(token_contract, "status", (), True) == status:
                     return None
                 membershiptoken = MembershipToken.get(session=session, token_address=token_address)
                 membershiptoken = membershiptoken.__dict__
@@ -1272,6 +1327,9 @@ class CouponTokens(BaseResource):
         limit = request_json['limit']
         if limit is None:
             limit = 10
+        status = request_json["status"]
+        if status is None:
+            status = True
 
         token_list = []
         count = 0
@@ -1294,6 +1352,7 @@ class CouponTokens(BaseResource):
                 token_id=i,
                 token_address=token_address,
                 token_template=token[1],
+                status=status,
             )
             if token_detail is not None:
                 token_list.append(token_detail)
@@ -1303,32 +1362,43 @@ class CouponTokens(BaseResource):
 
     @staticmethod
     def validate(req):
-        request_json = {
-            'cursor': req.get_param('cursor'),
-            'limit': req.get_param('limit'),
-        }
+        try:
+            request_json = {
+                'cursor': req.get_param('cursor'),
+                'limit': req.get_param('limit'),
+                "status": req.get_param_as_bool("status", blank_as_true=True),
+            }
+        except HTTPInvalidParam as e:
+            raise InvalidParameterError(description=e.description) from e
+        except Exception as e:
+            raise AppError(description=e) from e
+        else:
+            validator = Validator({
+                'cursor': {
+                    'type': 'integer',
+                    'coerce': int,
+                    'min': 0,
+                    'required': False,
+                    'nullable': True,
+                },
+                'limit': {
+                    'type': 'integer',
+                    'coerce': int,
+                    'min': 0,
+                    'required': False,
+                    'nullable': True,
+                },
+                "status": {
+                    "type": "boolean",
+                    "required": False,
+                    "nullable": True,
+                },
+            })
 
-        validator = Validator({
-            'cursor': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-            'limit': {
-                'type': 'integer',
-                'coerce': int,
-                'min': 0,
-                'required': False,
-                'nullable': True,
-            },
-        })
+            if not validator.validate(request_json):
+                raise InvalidParameterError(validator.errors)
 
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
+            return validator.document
 
 
 # ------------------------------
@@ -1494,7 +1564,7 @@ class CouponTokenDetails(BaseResource):
         self.on_success(res, token_detail)
 
     @staticmethod
-    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None):
+    def get_token_detail(session, token_address: str, token_template: str, token_id: int = None, status: bool = True):
         """
         トークン詳細の取得
 
@@ -1502,6 +1572,7 @@ class CouponTokenDetails(BaseResource):
         :param token_address: トークンアドレス
         :param token_template: トークンテンプレート
         :param token_id: シーケンスID（任意）
+        :param status: トークンステータス（default=True）
         :return: CouponToken(dict)
         """
 
@@ -1509,8 +1580,8 @@ class CouponTokenDetails(BaseResource):
             try:
                 # Token-Contractへの接続
                 token_contract = Contract.get_contract(token_template, token_address)
-                # 取扱停止銘柄はリストに返さない
-                if not Contract.call_function(token_contract, "status", (), True):
+                # 取扱ステータスの指定に合致する銘柄をリストとして返す
+                if not Contract.call_function(token_contract, "status", (), True) == status:
                     return None
                 coupontoken = CouponToken.get(session=session, token_address=token_address)
                 coupontoken = coupontoken.__dict__

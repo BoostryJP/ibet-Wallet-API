@@ -487,6 +487,70 @@ class TestV2TokenMembershipTokens:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+    # ＜正常系7＞
+    # 発行済会員権あり（2件）
+    # cursor=設定なし、 limit=設定なし、status=False
+    # -> 2件返却
+    def test_membershiplist_normal_7(self, client, session, shared_contract):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenMembershipTokens.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：会員権新規発行
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
+        attribute = TestV2TokenMembershipTokens.token_attribute(exchange_address)
+        assumed_body = []
+        for i in range(2):
+            token = membership_issue(issuer, attribute)
+            membership_register_list(issuer, token, token_list)
+            # 取扱トークンデータ挿入
+            TestV2TokenMembershipTokens.list_token(session, token)
+            # statusをFalseに変更
+            membership_invalidate(issuer, token)
+            assumed_body_element = {
+                'id': i,
+                'token_address': token['address'],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': False,
+                'initial_offering_status': False,
+                'image_url': [
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
+                ],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
+            }
+            assumed_body = [assumed_body_element] + assumed_body
+
+        resp = client.simulate_get(self.apiurl, params={
+            'status': 'false'
+        })
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
@@ -629,6 +693,21 @@ class TestV2TokenMembershipTokens:
                     'must be of integer type'
                 ]
             }
+        }
+
+    # ＜エラー系3-4＞
+    # statusが非boolean
+    # -> 入力エラー
+    def test_membershiplist_error_3_4(self, client, session):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        query_string = 'status=some_value'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': 'The "status" parameter is invalid. The value of the parameter must be "true" or "false".'
         }
 
     # ＜エラー系4＞

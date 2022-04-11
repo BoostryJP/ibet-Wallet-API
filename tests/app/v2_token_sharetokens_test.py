@@ -30,7 +30,7 @@ from app.contracts import Contract
 from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_share_token,
-    register_share_list
+    register_share_list, invalidate_share_token
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -460,6 +460,72 @@ class TestV2TokenShareTokens:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+    # ＜正常系6＞
+    # 発行済株式あり（2件）
+    # cursor=設定なし、 limit=設定なし、status=False
+    # -> 2件返却
+    def test_sharelist_normal_6(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = TestV2TokenShareTokens.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：株式新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
+        assumed_body = []
+        for i in range(2):
+            share_token = issue_share_token(issuer, attribute)
+            register_share_list(issuer, share_token, token_list)
+            # 取扱トークンデータ挿入
+            TestV2TokenShareTokens.list_token(session, share_token)
+            # statusをFalseに変更
+            invalidate_share_token(issuer, share_token)
+            assumed_body_element = {
+                'id': i,
+                'token_address': share_token['address'],
+                'token_template': 'IbetShare',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト株式',
+                'symbol': 'SHARE',
+                'total_supply': 1000000,
+                'issue_price': 10000,
+                'principal_value': 10000,
+                'dividend_information': {
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200909',
+                    'dividend_payment_date': '20201001'
+                },
+                'cancellation_date': '20210101',
+                'is_offering': False,
+                'memo': 'メモ',
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'transferable': True,
+                'status': False,
+                'transfer_approval_required': False,
+                'is_canceled': False,
+                'tradable_exchange': exchange_address,
+                'personal_info_address': personal_info,
+            }
+            assumed_body = [assumed_body_element] + assumed_body
+
+        resp = client.simulate_get(self.apiurl, params={
+            'status': 'false'
+        })
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
@@ -602,6 +668,21 @@ class TestV2TokenShareTokens:
                     'must be of integer type'
                 ]
             }
+        }
+
+    # ＜エラー系3-4＞
+    # statusが非boolean
+    # -> 入力エラー
+    def test_sharelist_error_3_4(self, client, session):
+        config.SHARE_TOKEN_ENABLED = True
+        query_string = 'status=some_value'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': 'The "status" parameter is invalid. The value of the parameter must be "true" or "false".'
         }
 
     # ＜エラー系4＞
