@@ -473,9 +473,9 @@ class TestV2TokenCouponTokens:
         assert resp.json['data'] == assumed_body
 
     # ＜正常系7＞
-    # 発行済クーポンあり（2件）
+    # 発行済クーポンあり（5件）
     # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
-    # -> 4件返却
+    # -> 5件返却
     def test_couponlist_normal_7(self, client, session, shared_contract):
         config.COUPON_TOKEN_ENABLED = True
         # テスト用アカウント

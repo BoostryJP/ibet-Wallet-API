@@ -629,9 +629,9 @@ class TestV2TokenStraightBondTokens:
         assert resp.json['data'] == assumed_body
 
     # ＜正常系7＞
-    # 発行済債券あり（2件）
-    # cursor=設定なし、 limit=設定なし、status=False
-    # -> 2件返却
+    # 発行済債券あり（5件）
+    # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
+    # -> 5件返却
     def test_bondlist_normal_7(self, client, session, shared_contract):
         config.BOND_TOKEN_ENABLED = True
         # テスト用アカウント
