@@ -65,6 +65,13 @@ class IDXPositionBondBlockNumber(Base):
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
+
 
 class IDXPositionShareBlockNumber(Base):
     """Synchronized blockNumber of IDXPosition(Share token)"""
@@ -74,6 +81,13 @@ class IDXPositionShareBlockNumber(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
 
 
 class IDXPositionCouponBlockNumber(Base):
@@ -85,6 +99,13 @@ class IDXPositionCouponBlockNumber(Base):
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
+
 
 class IDXPositionMembershipBlockNumber(Base):
     """Synchronized blockNumber of IDXPosition(Membership token)"""
@@ -94,3 +115,10 @@ class IDXPositionMembershipBlockNumber(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)

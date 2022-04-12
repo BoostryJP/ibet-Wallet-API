@@ -29,6 +29,7 @@ from app.model.db import (
     Listing,
     IDXPosition
 )
+from app.model.db.idx_position import IDXPositionMembershipBlockNumber
 from batch import indexer_Position_Membership
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -116,11 +117,13 @@ class TestProcessor:
         membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -137,6 +140,7 @@ class TestProcessor:
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single Token
@@ -153,11 +157,13 @@ class TestProcessor:
         membership_transfer_to_exchange(self.issuer, {"address": self.trader2["account_address"]}, token, 3000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 3
+        _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -182,6 +188,7 @@ class TestProcessor:
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi Token
@@ -202,11 +209,13 @@ class TestProcessor:
         membership_transfer_to_exchange(self.issuer, {"address": self.trader2["account_address"]}, token2, 3000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 6
+        _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -255,6 +264,7 @@ class TestProcessor:
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # Single Token
@@ -279,12 +289,14 @@ class TestProcessor:
         make_sell(self.issuer, membership_exchange, token, 333, 1000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+        _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -293,6 +305,7 @@ class TestProcessor:
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 10000 - 111 - 222 - 333
         assert _position.exchange_commitment == 333
+        assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_5>
     # Single Token
@@ -318,12 +331,14 @@ class TestProcessor:
                                      token, self.trader["account_address"], self.issuer["account_address"], 300)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -340,7 +355,7 @@ class TestProcessor:
         assert _position.pending_transfer is None
         assert _position.exchange_balance == 200
         assert _position.exchange_commitment == 0
-
+        assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_6>
     # No event logs
@@ -352,11 +367,14 @@ class TestProcessor:
 
         # Not Transfer
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
+        _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).first()
+        assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_7>
     # Not Listing Token
@@ -369,11 +387,14 @@ class TestProcessor:
         membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
+        _idx_position_membership_block_number = session.query(IDXPositionMembershipBlockNumber).first()
+        assert _idx_position_membership_block_number.latest_block_number == block_number
 
     # <Normal_8>
     # Single Token
@@ -398,81 +419,6 @@ class TestProcessor:
         assert len(events) == 5
         filtered_events = list(processor.remove_duplicate_event_by_token_account_desc(events, ["from", "to"]))
         assert len(filtered_events) == 2
-
-    # <Normal_9>
-    # Single Token
-    # Multi event logs
-    # - Transfer
-    # Last event log block number to be stored in block number processor
-    def test_normal_9(self, processor, shared_contract, session):
-        # Issue Token
-        token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_membership(self.issuer, config.ZERO_ADDRESS, token_list_contract)
-        self.listing_token(token["address"], session)
-        for i in range(0, 5):
-            # Transfer
-            membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-
-        # Run target process
-        processor.sync_new_logs()
-
-        # Get events for token address
-        events = Contract.get_contract('IbetCoupon', token["address"]).events.Transfer.getLogs(
-                    fromBlock=0,
-                    toBlock=10000
-                )
-
-        idx_position_block_number = processor.get_idx_position_block_number(session)
-
-        # Ensure last block number is properly stored in db
-        assert events[-1]['blockNumber'] == idx_position_block_number
-
-    # <Normal_10>
-    # Single Token
-    # Multi event logs
-    # - Transfer
-    # Expect that "sync new log" process starts from the latest block index.
-    def test_normal_10(self, processor, shared_contract, session):
-        # Issue Token
-        token_list_contract = shared_contract["TokenList"]
-        token = self.issue_token_membership(self.issuer, config.ZERO_ADDRESS, token_list_contract)
-
-        self.listing_token(token["address"], session)
-        for i in range(0, 5):
-            # Transfer
-            membership_transfer_to_exchange(
-                self.issuer, {"address": self.trader["account_address"]}, token, 1000)
-
-        # Set index position
-        processor.set_idx_position_block_number(session, 10000)
-        session.commit()
-
-        latest_block_bf = processor.get_idx_position_block_number(session)
-        # Stored index is higher than current block number, so init sync is skipped.
-        processor.initial_sync()
-
-        # Run target process
-        processor.sync_new_logs()
-        latest_block_af = processor.get_idx_position_block_number(session)
-
-        # Expect that processor doesn't sync any blocks.
-        assert latest_block_bf == latest_block_af == 10000
-
-        processor.set_idx_position_block_number(session, -1)
-        session.commit()
-        assert processor.get_idx_position_block_number(session) == -1
-
-        # Run target process
-        processor.sync_new_logs()
-        # Get events for token address
-        events = Contract.get_contract('IbetMembership', token["address"]).events.Transfer.getLogs(
-                    fromBlock=0,
-                    toBlock=10000
-                )
-        idx_position_block_number = processor.get_idx_position_block_number(session)
-
-        # Ensure last block number is properly stored in db
-        assert events[-1]['blockNumber'] == idx_position_block_number
 
     ###########################################################################
     # Error Case

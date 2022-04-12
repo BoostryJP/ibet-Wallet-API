@@ -67,12 +67,12 @@ class Processor:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
             # if some blocks have already synced, sync starting from next block
-            idx_position_block_number = self.get_idx_position_block_number(db_session=local_session)
+            idx_position_block_number = self.__get_idx_position_block_number(db_session=local_session)
             latest_block = web3.eth.blockNumber
             if idx_position_block_number >= latest_block:
                 LOG.debug(
                     f"Initial Sync is skipped since current block number({web3.eth.blockNumber}) is equal to or less "
-                    f"than last synced block number({idx_position_block_number} this processor does. "
+                    f"than last synced block number({idx_position_block_number}) this processor does. "
                 )
                 pass
             else:
@@ -98,7 +98,7 @@ class Processor:
                         block_from=_from_block,
                         block_to=latest_block
                     )
-                self.set_idx_position_block_number(local_session, latest_block)
+                self.__set_idx_position_block_number(local_session, latest_block)
                 local_session.commit()
         finally:
             local_session.close()
@@ -110,11 +110,11 @@ class Processor:
             self.__get_contract_list(local_session)
             latest_block = web3.eth.blockNumber
             # if some blocks have already synced, sync starting from next block
-            idx_position_block_number = self.get_idx_position_block_number(db_session=local_session)
+            idx_position_block_number = self.__get_idx_position_block_number(db_session=local_session)
             if idx_position_block_number >= latest_block:
                 LOG.debug(
                     f"Initial Sync is skipped since current block number({latest_block}) is equal to or less "
-                    f"than last synced block number({idx_position_block_number} this processor does. "
+                    f"than last synced block number({idx_position_block_number}) this processor does. "
                 )
                 pass
             else:
@@ -124,7 +124,7 @@ class Processor:
                     block_from=_from_block,
                     block_to=latest_block
                 )
-                self.set_idx_position_block_number(local_session, latest_block)
+                self.__set_idx_position_block_number(local_session, latest_block)
                 local_session.commit()
         finally:
             local_session.close()
@@ -392,7 +392,7 @@ class Processor:
                 LOG.exception(e)
 
     @staticmethod
-    def get_idx_position_block_number(db_session: Session):
+    def __get_idx_position_block_number(db_session: Session):
         """Get position index for Membership """
         _idx_position_block_number = db_session.query(IDXPositionMembershipBlockNumber).first()
         if _idx_position_block_number is None:
@@ -401,7 +401,7 @@ class Processor:
             return _idx_position_block_number.latest_block_number
 
     @staticmethod
-    def set_idx_position_block_number(db_session: Session, block_number: int):
+    def __set_idx_position_block_number(db_session: Session, block_number: int):
         """Set position index for Membership """
         _idx_position_block_number = db_session.query(IDXPositionMembershipBlockNumber). \
             first()
