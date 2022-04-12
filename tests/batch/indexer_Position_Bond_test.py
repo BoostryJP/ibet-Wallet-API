@@ -29,6 +29,7 @@ from app.model.db import (
     Listing,
     IDXPosition
 )
+from app.model.db.idx_position import IDXPositionBondBlockNumber
 from batch import indexer_Position_Bond
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -944,6 +945,123 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
+
+    # <Normal_16>
+    # Single Token
+    # Multi event logs
+    # - Transfer
+    # Duplicate events to be removed
+    def test_normal_16(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        token = self.issue_token_bond(
+            self.issuer, escrow_contract.address, personal_info_contract["address"], token_list_contract)
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
+        for i in range(0, 5):
+            # Transfer
+            bond_transfer_to_exchange(
+                self.issuer, {"address": self.trader["account_address"]}, token, 1000)
+
+        # Get events for token address
+        events = Contract.get_contract('IbetStraightBond', token["address"]).events.Transfer.getLogs(
+                    fromBlock=0,
+                    toBlock=10000
+                )
+        # Ensure 5 events squashed to 2 events
+        assert len(events) == 5
+        filtered_events = list(processor.remove_duplicate_event_by_token_account_desc(events, ["from", "to"]))
+        assert len(filtered_events) == 2
+
+    # <Normal_17>
+    # Single Token
+    # Multi event logs
+    # - Transfer
+    # Last event log block number to be stored in block number processor
+    def test_normal_17(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        token = self.issue_token_bond(
+            self.issuer, escrow_contract.address, personal_info_contract["address"], token_list_contract)
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
+        for i in range(0, 5):
+            # Transfer
+            bond_transfer_to_exchange(
+                self.issuer, {"address": self.trader["account_address"]}, token, 1000)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Get events for token address
+        events = Contract.get_contract('IbetStraightBond', token["address"]).events.Transfer.getLogs(
+                    fromBlock=0,
+                    toBlock=10000
+                )
+        idx_position_block_number = processor.get_idx_position_block_number(session)
+
+        # Ensure last block number is properly stored in db
+        assert events[-1]['blockNumber'] == idx_position_block_number
+
+    # <Normal_18>
+    # Single Token
+    # Multi event logs
+    # - Transfer
+    # Expect that "sync new log" process starts from the latest block index.
+    def test_normal_18(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        token = self.issue_token_bond(
+            self.issuer, escrow_contract.address, personal_info_contract["address"], token_list_contract)
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
+        for i in range(0, 5):
+            # Transfer
+            bond_transfer_to_exchange(
+                self.issuer, {"address": self.trader["account_address"]}, token, 1000)
+
+        # Set index position
+        processor.set_idx_position_block_number(session, 10000)
+        session.commit()
+
+        latest_block_bf = processor.get_idx_position_block_number(session)
+        # Stored index is higher than current block number, so init sync is skipped.
+        processor.initial_sync()
+
+        # Run target process
+        processor.sync_new_logs()
+        latest_block_af = processor.get_idx_position_block_number(session)
+
+        # Expect that processor doesn't sync any blocks.
+        assert latest_block_bf == latest_block_af == 10000
+
+        processor.set_idx_position_block_number(session, -1)
+        session.commit()
+        assert processor.get_idx_position_block_number(session) == -1
+
+        # Run target process
+        processor.sync_new_logs()
+        # Get events for token address
+        events = Contract.get_contract('IbetStraightBond', token["address"]).events.Transfer.getLogs(
+                    fromBlock=0,
+                    toBlock=10000
+                )
+        idx_position_block_number = processor.get_idx_position_block_number(session)
+
+        # Ensure last block number is properly stored in db
+        assert events[-1]['blockNumber'] == idx_position_block_number
 
     ###########################################################################
     # Error Case

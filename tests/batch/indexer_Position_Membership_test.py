@@ -24,6 +24,7 @@ from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from app import config
+from app.contracts import Contract
 from app.model.db import (
     Listing,
     IDXPosition
@@ -373,6 +374,105 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
+
+    # <Normal_8>
+    # Single Token
+    # Multi event logs
+    # - Transfer
+    # Duplicate events to be removed
+    def test_normal_8(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        token = self.issue_token_membership(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        self.listing_token(token["address"], session)
+        for i in range(0, 5):
+            # Transfer
+            membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+
+        # Get events for token address
+        events = Contract.get_contract('IbetMembership', token["address"]).events.Transfer.getLogs(
+                    fromBlock=0,
+                    toBlock=10000
+                )
+        # Ensure 5 events squashed to 2 events
+        assert len(events) == 5
+        filtered_events = list(processor.remove_duplicate_event_by_token_account_desc(events, ["from", "to"]))
+        assert len(filtered_events) == 2
+
+    # <Normal_9>
+    # Single Token
+    # Multi event logs
+    # - Transfer
+    # Last event log block number to be stored in block number processor
+    def test_normal_9(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        token = self.issue_token_membership(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+        self.listing_token(token["address"], session)
+        for i in range(0, 5):
+            # Transfer
+            membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Get events for token address
+        events = Contract.get_contract('IbetCoupon', token["address"]).events.Transfer.getLogs(
+                    fromBlock=0,
+                    toBlock=10000
+                )
+
+        idx_position_block_number = processor.get_idx_position_block_number(session)
+
+        # Ensure last block number is properly stored in db
+        assert events[-1]['blockNumber'] == idx_position_block_number
+
+    # <Normal_10>
+    # Single Token
+    # Multi event logs
+    # - Transfer
+    # Expect that "sync new log" process starts from the latest block index.
+    def test_normal_10(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        token = self.issue_token_membership(self.issuer, config.ZERO_ADDRESS, token_list_contract)
+
+        self.listing_token(token["address"], session)
+        for i in range(0, 5):
+            # Transfer
+            membership_transfer_to_exchange(
+                self.issuer, {"address": self.trader["account_address"]}, token, 1000)
+
+        # Set index position
+        processor.set_idx_position_block_number(session, 10000)
+        session.commit()
+
+        latest_block_bf = processor.get_idx_position_block_number(session)
+        # Stored index is higher than current block number, so init sync is skipped.
+        processor.initial_sync()
+
+        # Run target process
+        processor.sync_new_logs()
+        latest_block_af = processor.get_idx_position_block_number(session)
+
+        # Expect that processor doesn't sync any blocks.
+        assert latest_block_bf == latest_block_af == 10000
+
+        processor.set_idx_position_block_number(session, -1)
+        session.commit()
+        assert processor.get_idx_position_block_number(session) == -1
+
+        # Run target process
+        processor.sync_new_logs()
+        # Get events for token address
+        events = Contract.get_contract('IbetMembership', token["address"]).events.Transfer.getLogs(
+                    fromBlock=0,
+                    toBlock=10000
+                )
+        idx_position_block_number = processor.get_idx_position_block_number(session)
+
+        # Ensure last block number is properly stored in db
+        assert events[-1]['blockNumber'] == idx_position_block_number
 
     ###########################################################################
     # Error Case
