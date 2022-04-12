@@ -726,6 +726,7 @@ class TestProcessor:
         assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.escrow_finished is None
         assert _transfer_approval.transfer_approved is None
 
     # <Normal_2_2>
@@ -826,12 +827,13 @@ class TestProcessor:
         assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is True
+        assert _transfer_approval.escrow_finished is None
         assert _transfer_approval.transfer_approved is None
 
     # <Normal_2_3>
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
-    #  - ApproveTransfer
+    #  - FinishTransfer
     def test_normal_2_3(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -894,15 +896,13 @@ class TestProcessor:
         ).transact({
             "from": self.account1["account_address"]
         })
-
         escrow_id = st_escrow_contract.functions.latestEscrowId().call()
 
-        # Approve transfer
-        st_escrow_contract.functions.approveTransfer(
-            escrow_id,
-            "1609418096"  # 2020/12/31 12:34:56
+        # Finish escrow
+        st_escrow_contract.functions.finishEscrow(
+            escrow_id
         ).transact({
-            "from": self.issuer["account_address"]
+            "from": self.escrow_agent["account_address"]
         })
 
         # Run target process
@@ -928,12 +928,13 @@ class TestProcessor:
         assert _transfer_approval.approval_datetime is None
         assert _transfer_approval.approval_blocktimestamp is None
         assert _transfer_approval.cancelled is None
-        assert _transfer_approval.transfer_approved is True
+        assert _transfer_approval.escrow_finished is True
+        assert _transfer_approval.transfer_approved is None
 
     # <Normal_2_4>
     # IbetSecurityTokenEscrow
     #  - ApplyForTransfer
-    #  - FinishTransfer
+    #  - ApproveTransfer
     def test_normal_2_4(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -996,8 +997,14 @@ class TestProcessor:
         ).transact({
             "from": self.account1["account_address"]
         })
-
         escrow_id = st_escrow_contract.functions.latestEscrowId().call()
+
+        # Finish escrow
+        st_escrow_contract.functions.finishEscrow(
+            escrow_id
+        ).transact({
+            "from": self.escrow_agent["account_address"]
+        })
 
         # Approve transfer
         st_escrow_contract.functions.approveTransfer(
@@ -1005,13 +1012,6 @@ class TestProcessor:
             "1609418096"  # 2020/12/31 12:34:56
         ).transact({
             "from": self.issuer["account_address"]
-        })
-
-        # Finish escrow
-        st_escrow_contract.functions.finishEscrow(
-            escrow_id
-        ).transact({
-            "from": self.escrow_agent["account_address"]
         })
 
         # Run target process
@@ -1038,6 +1038,7 @@ class TestProcessor:
                datetime.strptime("2020/12/31 12:34:56", '%Y/%m/%d %H:%M:%S')
         assert _transfer_approval.approval_blocktimestamp is not None
         assert _transfer_approval.cancelled is None
+        assert _transfer_approval.escrow_finished is True
         assert _transfer_approval.transfer_approved is True
 
     ###########################################################################
