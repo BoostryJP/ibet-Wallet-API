@@ -761,7 +761,7 @@ class TestEventsIbetSecurityTokenEscrow:
         ]
 
     # Normal_6_1
-    # event = EscrowFinished & FinishTransfer
+    # event = EscrowFinished
     def test_normal_6_1(self, client, session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
