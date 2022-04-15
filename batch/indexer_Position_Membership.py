@@ -72,13 +72,13 @@ class Processor:
             if idx_position_block_number >= latest_block:
                 LOG.debug(
                     f"Initial Sync is skipped since current block number({web3.eth.blockNumber}) is equal to or less "
-                    f"than last synced block number({idx_position_block_number}) this processor does. "
+                    f"than last synced block number({idx_position_block_number}) this processor did."
                 )
                 pass
             else:
                 _from_block = idx_position_block_number + 1
-                _to_block = 999999
-                if latest_block > 999999:
+                _to_block = 999999 + _from_block
+                if latest_block > _to_block:
                     while _to_block < latest_block:
                         self.__sync_all(
                             db_session=local_session,
@@ -114,7 +114,7 @@ class Processor:
             if idx_position_block_number >= latest_block:
                 LOG.debug(
                     f"Initial Sync is skipped since current block number({latest_block}) is equal to or less "
-                    f"than last synced block number({idx_position_block_number}) this processor does. "
+                    f"than last synced block number({idx_position_block_number}) this processor did."
                 )
                 pass
             else:

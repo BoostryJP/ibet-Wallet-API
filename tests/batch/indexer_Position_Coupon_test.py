@@ -31,6 +31,7 @@ from app.model.db import (
 )
 from app.model.db.idx_position import IDXPositionCouponBlockNumber
 from batch import indexer_Position_Coupon
+from batch.indexer_Position_Coupon import Processor
 from tests.account_config import eth_account
 from tests.contract_modules import (
     cancel_order,
@@ -462,6 +463,28 @@ class TestProcessor:
         filtered_events = list(processor.remove_duplicate_event_by_token_account_desc(events, ["from", "to"]))
         assert len(filtered_events) == 2
 
+    # <Normal_10>
+    # When stored index is 9,999,999 and current block number is 19,999,999,
+    # then processor must process "__sync_all" method 10 times.
+    def test_normal_10(self, processor, shared_contract, session):
+        current_block_number = 20000000 - 1
+        latest_block_number = 10000000 - 1
+
+        mock_lib = MagicMock()
+        # Setting current block number to 19,999,999
+        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+            with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
+                idx_position_coupon_block_number = IDXPositionCouponBlockNumber()
+                idx_position_coupon_block_number.id = 1
+                # Setting stored index to 9,999,999
+                idx_position_coupon_block_number.latest_block_number = latest_block_number
+                session.merge(idx_position_coupon_block_number)
+                session.commit()
+                __sync_all_mock.return_value = None
+                processor.initial_sync()
+                # Then processor call "__sync_all" method 10 times.
+                assert __sync_all_mock.call_count == 10
+                
     ###########################################################################
     # Error Case
     ###########################################################################
