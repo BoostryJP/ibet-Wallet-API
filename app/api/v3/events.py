@@ -282,8 +282,6 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
             attr_list = ["CancelTransfer"]
         elif request_json["event"] == "ApproveTransfer":
             attr_list = ["ApproveTransfer"]
-        elif request_json["event"] == "FinishTransfer":
-            attr_list = ["FinishTransfer"]
         else:  # All events
             attr_list = [
                 "Deposited",
@@ -293,8 +291,7 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
                 "EscrowFinished",
                 "ApplyForTransfer",
                 "CancelTransfer",
-                "ApproveTransfer",
-                "FinishTransfer"
+                "ApproveTransfer"
             ]
 
         tmp_list = []

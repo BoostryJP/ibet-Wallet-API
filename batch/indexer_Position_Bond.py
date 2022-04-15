@@ -538,19 +538,19 @@ class Processor:
                         "account_address": _event["args"].get("sender", ZERO_ADDRESS)  # only sender has changed
                     })
 
-                # EscrowFinished event
-                _event_list = escrow.events.EscrowFinished.getLogs(
+                # HolderChanged event
+                _event_list = escrow.events.HolderChanged.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
                 )
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("sender", ZERO_ADDRESS)
+                        "account_address": _event["args"].get("from", ZERO_ADDRESS)
                     })
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
-                        "account_address": _event["args"].get("recipient", ZERO_ADDRESS)
+                        "account_address": _event["args"].get("to", ZERO_ADDRESS)
                     })
 
                 # Make temporary list unique
