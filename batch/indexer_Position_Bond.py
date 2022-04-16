@@ -196,7 +196,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["from", "to"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from", "to"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
@@ -229,7 +232,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["accountAddress"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["accountAddress"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     account = args.get("accountAddress", ZERO_ADDRESS)
@@ -258,7 +264,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["recipientAddress"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["recipientAddress"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     account = args.get("recipientAddress", ZERO_ADDRESS)
@@ -287,7 +296,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["targetAddress"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["targetAddress"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
@@ -316,7 +328,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["targetAddress"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["targetAddress"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
@@ -345,7 +360,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["from"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
@@ -374,7 +392,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["from"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
@@ -403,7 +424,10 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(events, ["from", "to"])
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from", "to"]
+                )
                 for event in events_filtered:
                     args = event["args"]
                     for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
@@ -753,7 +777,8 @@ class Processor:
             db_session.add(position)
 
     @staticmethod
-    def remove_duplicate_event_by_token_account_desc(events: [], account_keys: List[str]):
+    def remove_duplicate_event_by_token_account_desc(events: List,
+                                                     account_keys: List[str]) -> List:
         """Remove duplicate event from event list.
         Events that have same account key will be removed.
 
@@ -779,7 +804,7 @@ class Processor:
                 seen.add(record_tuple[1])
 
         # return events in original order
-        return reversed(remove_duplicate_list)
+        return list(reversed(remove_duplicate_list))
 
 
 def main():

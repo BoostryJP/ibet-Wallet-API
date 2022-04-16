@@ -418,7 +418,7 @@ class TestProcessor:
                 )
         # Ensure 5 events squashed to 2 events
         assert len(events) == 5
-        filtered_events = list(processor.remove_duplicate_event_by_token_account_desc(events, ["from", "to"]))
+        filtered_events = processor.remove_duplicate_event_by_token_account_desc(events, ["from", "to"])
         assert len(filtered_events) == 2
 
     # <Normal_9>
