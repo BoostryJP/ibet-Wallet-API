@@ -29,7 +29,9 @@ from app.model.db import (
     Listing,
     IDXPosition
 )
+from app.model.db.idx_position import IDXPositionShareBlockNumber
 from batch import indexer_Position_Share
+from batch.indexer_Position_Share import Processor
 from tests.account_config import eth_account
 from tests.contract_modules import (
     cancel_agreement,
@@ -130,11 +132,13 @@ class TestProcessor:
         share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -151,7 +155,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
-
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Single Token
@@ -174,11 +178,13 @@ class TestProcessor:
         share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 3000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -195,6 +201,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # Multi Token
@@ -224,11 +231,13 @@ class TestProcessor:
         share_transfer_to_exchange(self.issuer, {"address": self.trader2["account_address"]}, token2, 3000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 6
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -277,6 +286,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # Single Token
@@ -307,11 +317,13 @@ class TestProcessor:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -320,6 +332,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_5>
     # Single Token
@@ -358,11 +371,13 @@ class TestProcessor:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -379,6 +394,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_6>
     # Single Token
@@ -401,11 +417,13 @@ class TestProcessor:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -414,6 +432,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_7>
     # Single Token
@@ -436,11 +455,13 @@ class TestProcessor:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -449,6 +470,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_8>
     # Single Token
@@ -484,11 +506,13 @@ class TestProcessor:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -505,6 +529,7 @@ class TestProcessor:
         assert _position.pending_transfer == 2000
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_9>
     # Single Token
@@ -547,11 +572,13 @@ class TestProcessor:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 3
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -576,6 +603,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_10>
     # Single Token
@@ -618,11 +646,13 @@ class TestProcessor:
         web3.eth.waitForTransactionReceipt(tx_hash)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -639,6 +669,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_11>
     # Single Token
@@ -669,12 +700,14 @@ class TestProcessor:
                                      token, self.trader["account_address"], self.issuer["account_address"], 300)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -691,6 +724,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 200
         assert _position.exchange_commitment == 0
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_12>
     # Single Token
@@ -720,12 +754,14 @@ class TestProcessor:
         make_sell(self.issuer, exchange_contract, token, 333, 1000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -734,8 +770,9 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 10000 - 111 - 222 - 333
         assert _position.exchange_commitment == 333
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
-    # <Normal_12>
+    # <Normal_13>
     # Single Token
     # Multi event with IbetExchange logs
     # - Transfer
@@ -744,7 +781,7 @@ class TestProcessor:
     # - CancelAgreement
     # - MakeOrder
     # - TakeOrder
-    def test_normal_12(self, processor, shared_contract, session):
+    def test_normal_13(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetShareExchange"]
@@ -766,12 +803,14 @@ class TestProcessor:
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -780,6 +819,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 10000 - 55 - 66
         assert _position.exchange_commitment == 66
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_14>
     # No event logs
@@ -793,11 +833,14 @@ class TestProcessor:
 
         # Not Event
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
+        assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_15>
     # Not Listing Token
@@ -815,11 +858,65 @@ class TestProcessor:
         share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Run target process
+        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
+        _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).first()
+        assert _idx_position_share_block_number.latest_block_number == block_number
+
+    # <Normal_16>
+    # Single Token
+    # Multi event logs
+    # - Transfer
+    # Duplicate events to be removed
+    def test_normal_16(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        token = self.issue_token_share(
+            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
+        self.listing_token(token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
+        for i in range(0, 5):
+            # Transfer
+            share_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
+
+        # Get events for token address
+        events = Contract.get_contract('IbetShare', token["address"]).events.Transfer.getLogs(
+                    fromBlock=0,
+                    toBlock=10000
+                )
+        # Ensure 5 events squashed to 2 events
+        assert len(events) == 5
+        filtered_events = processor.remove_duplicate_event_by_token_account_desc(events, ["from", "to"])
+        assert len(filtered_events) == 2
+
+    # <Normal_17>
+    # When stored index is 9,999,999 and current block number is 19,999,999,
+    # then processor must process "__sync_all" method 10 times.
+    def test_normal_17(self, processor, shared_contract, session):
+        current_block_number = 20000000 - 1
+        latest_block_number = 10000000 - 1
+
+        mock_lib = MagicMock()
+        # Setting current block number to 19,999,999
+        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+            with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
+                idx_position_share_block_number = IDXPositionShareBlockNumber()
+                idx_position_share_block_number.id = 1
+                # Setting stored index to 9,999,999
+                idx_position_share_block_number.latest_block_number = latest_block_number
+                session.merge(idx_position_share_block_number)
+                session.commit()
+                __sync_all_mock.return_value = None
+                processor.initial_sync()
+                # Then processor call "__sync_all" method 10 times.
+                assert __sync_all_mock.call_count == 10
 
     ###########################################################################
     # Error Case

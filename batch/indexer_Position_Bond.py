@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional
+from typing import Optional, List
 import os
 import sys
 import time
@@ -26,6 +26,8 @@ from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
+from app.model.db.idx_position import IDXPositionBondBlockNumber
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -55,7 +57,6 @@ class Processor:
     """Processor for indexing Bond balances"""
 
     def __init__(self):
-        self.latest_block = web3.eth.blockNumber
         self.token_list = []
 
     @staticmethod
@@ -67,29 +68,40 @@ class Processor:
         try:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            _to_block = 999999
-            _from_block = 0
-            if self.latest_block > 999999:
-                while _to_block < self.latest_block:
+            # if some blocks have already synced, sync starting from next block
+            idx_position_block_number = self.__get_idx_position_block_number(db_session=local_session)
+            latest_block = web3.eth.blockNumber
+            if idx_position_block_number >= latest_block:
+                LOG.debug(
+                    f"Initial Sync is skipped since current block number({web3.eth.blockNumber}) is equal to or less "
+                    f"than last synced block number({idx_position_block_number}) this processor did."
+                )
+                pass
+            else:
+                _from_block = idx_position_block_number + 1
+                _to_block = 999999 + _from_block
+                if latest_block > _to_block:
+                    while _to_block < latest_block:
+                        self.__sync_all(
+                            db_session=local_session,
+                            block_from=_from_block,
+                            block_to=_to_block
+                        )
+                        _to_block += 1000000
+                        _from_block += 1000000
                     self.__sync_all(
                         db_session=local_session,
                         block_from=_from_block,
-                        block_to=_to_block
+                        block_to=latest_block
                     )
-                    _to_block += 1000000
-                    _from_block += 1000000
-                self.__sync_all(
-                    db_session=local_session,
-                    block_from=_from_block,
-                    block_to=self.latest_block
-                )
-            else:
-                self.__sync_all(
-                    db_session=local_session,
-                    block_from=_from_block,
-                    block_to=self.latest_block
-                )
-            local_session.commit()
+                else:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_from=_from_block,
+                        block_to=latest_block
+                    )
+                self.__set_idx_position_block_number(local_session, latest_block)
+                local_session.commit()
         finally:
             local_session.close()
         LOG.info(f"<{process_name}> Initial sync has been completed")
@@ -98,16 +110,24 @@ class Processor:
         local_session = self.__get_db_session()
         try:
             self.__get_contract_list(local_session)
-            blockTo = web3.eth.blockNumber
-            if blockTo == self.latest_block:
-                return
-            self.__sync_all(
-                db_session=local_session,
-                block_from=self.latest_block + 1,
-                block_to=blockTo
-            )
-            self.latest_block = blockTo
-            local_session.commit()
+            latest_block = web3.eth.blockNumber
+            # if some blocks have already synced, sync starting from next block
+            idx_position_block_number = self.__get_idx_position_block_number(db_session=local_session)
+            if idx_position_block_number >= latest_block:
+                LOG.debug(
+                    f"Initial Sync is skipped since current block number({latest_block}) is equal to or less "
+                    f"than last synced block number({idx_position_block_number}) this processor did."
+                )
+                pass
+            else:
+                _from_block = idx_position_block_number + 1
+                self.__sync_all(
+                    db_session=local_session,
+                    block_from=_from_block,
+                    block_to=latest_block
+                )
+                self.__set_idx_position_block_number(local_session, latest_block)
+                local_session.commit()
         finally:
             local_session.close()
 
@@ -176,7 +196,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from", "to"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
                         if web3.eth.getCode(_account).hex() == "0x":
@@ -208,7 +232,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["accountAddress"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     account = args.get("accountAddress", ZERO_ADDRESS)
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
@@ -236,7 +264,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["recipientAddress"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     account = args.get("recipientAddress", ZERO_ADDRESS)
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
@@ -264,7 +296,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["targetAddress"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
@@ -292,7 +328,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["targetAddress"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     account = args.get("targetAddress", ZERO_ADDRESS)
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
@@ -320,7 +360,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
@@ -348,7 +392,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
@@ -376,7 +424,11 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
-                for event in events:
+                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                    events=events,
+                    account_keys=["from", "to"]
+                )
+                for event in events_filtered:
                     args = event["args"]
                     for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
                         _balance, _pending_transfer = self.__get_account_balance_token(token, _account)
@@ -579,6 +631,25 @@ class Processor:
                 LOG.exception(e)
 
     @staticmethod
+    def __get_idx_position_block_number(db_session: Session):
+        """Get position index for Bond """
+        _idx_position_block_number = db_session.query(IDXPositionBondBlockNumber).first()
+        if _idx_position_block_number is None:
+            return -1
+        else:
+            return _idx_position_block_number.latest_block_number
+
+    @staticmethod
+    def __set_idx_position_block_number(db_session: Session, block_number: int):
+        """Set position index for Bond """
+        _idx_position_block_number = db_session.query(IDXPositionBondBlockNumber). \
+            first()
+        if _idx_position_block_number is None:
+            _idx_position_block_number = IDXPositionBondBlockNumber()
+        _idx_position_block_number.latest_block_number = block_number
+        db_session.merge(_idx_position_block_number)
+
+    @staticmethod
     def __get_account_balance_all(token_contract, account_address: str):
         """Get balance"""
         balance = Contract.call_function(
@@ -704,6 +775,36 @@ class Processor:
             position.exchange_balance = exchange_balance or 0
             position.exchange_commitment = exchange_commitment or 0
             db_session.add(position)
+
+    @staticmethod
+    def remove_duplicate_event_by_token_account_desc(events: List,
+                                                     account_keys: List[str]) -> List:
+        """Remove duplicate event from event list.
+        Events that have same account key will be removed.
+
+        :param events: event list
+        :param account_keys: keys in which event contains account address
+        :return: events: event list filtered
+        """
+        event_token_account_list = []
+
+        # reversed events loop for removing duplicates from the front
+        for event in reversed(events):
+            args = event["args"]
+            for arg_key in account_keys:
+                account_address = args.get(arg_key, ZERO_ADDRESS)
+                if account_address != ZERO_ADDRESS:
+                    event_token_account_list.append([event, account_address])
+        seen = set()
+        remove_duplicate_list = []
+        for record in event_token_account_list:
+            record_tuple = tuple(record)
+            if record_tuple[1] not in seen:
+                remove_duplicate_list.append(record[0])
+                seen.add(record_tuple[1])
+
+        # return events in original order
+        return list(reversed(remove_duplicate_list))
 
 
 def main():

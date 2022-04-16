@@ -54,3 +54,71 @@ class IDXPosition(Base):
         "pending_transfer": int
     }
     FIELDS.update(Base.FIELDS)
+
+
+class IDXPositionBondBlockNumber(Base):
+    """Synchronized blockNumber of IDXPosition(Bond token)"""
+    __tablename__ = "idx_position_bond_block_number"
+
+    # sequence id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # latest blockNumber
+    latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
+
+
+class IDXPositionShareBlockNumber(Base):
+    """Synchronized blockNumber of IDXPosition(Share token)"""
+    __tablename__ = "idx_position_share_block_number"
+
+    # sequence id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # latest blockNumber
+    latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
+
+
+class IDXPositionCouponBlockNumber(Base):
+    """Synchronized blockNumber of IDXPosition(Coupon token)"""
+    __tablename__ = "idx_position_coupon_block_number"
+
+    # sequence id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # latest blockNumber
+    latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
+
+
+class IDXPositionMembershipBlockNumber(Base):
+    """Synchronized blockNumber of IDXPosition(Membership token)"""
+    __tablename__ = "idx_position_membership_block_number"
+
+    # sequence id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # latest blockNumber
+    latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
