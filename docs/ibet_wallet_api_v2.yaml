@@ -2002,7 +2002,6 @@ paths:
         description: token address
     post:
       tags:
-        - "Holder"
         - "Token"
       summary: "Execute Batch Getting Token Holders At Specific BlockNumber"
       operationId: "TokenHolderListAtSpecificBlockNumber"
@@ -2037,6 +2036,10 @@ paths:
                     description: |
                       Unique id to be assigned to each token holder list.
                       This must be Version4 UUID.
+                      eg.
+                      ```
+                      cfd83622-34dc-4efe-a68b-2cc275d3d824
+                      ```
                       If existing combinations of block_number and contract_address is given, 
                       existing list_id will be returned.
                     type: string
@@ -2072,9 +2075,12 @@ paths:
         description:  |
           Unique id to be assigned to each token holder list.
           This must be Version4 UUID.
+          eg.
+          ```
+          cfd83622-34dc-4efe-a68b-2cc275d3d824
+          ```
     get:
       tags:
-        - "Holder"
         - "Token"
       summary: "Token Holder At Specific BlockNumber"
       operationId: "TokenHolderList"
