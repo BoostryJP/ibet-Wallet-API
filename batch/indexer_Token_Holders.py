@@ -68,7 +68,14 @@ class Processor:
         def __init__(self):
             self.pages = {}
 
-        def store(self, account_address: str, balance: int = 0, pending_transfer: int = 0, exchange_balance: int = 0, exchange_commitment: int = 0):
+        def store(
+            self,
+            account_address: str,
+            balance: int = 0,
+            pending_transfer: int = 0,
+            exchange_balance: int = 0,
+            exchange_commitment: int = 0,
+        ):
             if account_address not in self.pages:
                 token_holder = TokenHolder()
                 token_holder.balance = balance
@@ -107,17 +114,13 @@ class Processor:
 
     def __load_target(self, db_session: Session) -> bool:
         self.target: TokenHoldersList = (
-            db_session.query(TokenHoldersList)
-            .filter(TokenHoldersList.batch_status == BatchStatus.PENDING.value)
-            .first()
+            db_session.query(TokenHoldersList).filter(TokenHoldersList.batch_status == BatchStatus.PENDING.value).first()
         )
         return True if self.target else False
 
     def __load_token_info(self) -> bool:
         # Fetch token list information from TokenList Contract
-        list_contract = ContractOperator.get_contract(
-            contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
+        list_contract = ContractOperator.get_contract(contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS)
         token_info = TokenList(list_contract).get_token(self.target.token_address)
         if token_info[1] == "" or token_info[1] not in [t.value for t in TokenType]:
             return False
@@ -137,20 +140,23 @@ class Processor:
         return True
 
     def __load_checkpoint(self, local_session: Session) -> bool:
-        _checkpoint: Optional[TokenHoldersList] = local_session.query(TokenHoldersList).\
-            filter(TokenHoldersList.token_address == self.target.token_address).\
-            filter(TokenHoldersList.block_number < self.target.block_number).\
-            filter(TokenHoldersList.batch_status == BatchStatus.DONE.value).\
-            order_by(TokenHoldersList.block_number.desc()).first()
+        _checkpoint: Optional[TokenHoldersList] = (
+            local_session.query(TokenHoldersList)
+            .filter(TokenHoldersList.token_address == self.target.token_address)
+            .filter(TokenHoldersList.block_number < self.target.block_number)
+            .filter(TokenHoldersList.batch_status == BatchStatus.DONE.value)
+            .order_by(TokenHoldersList.block_number.desc())
+            .first()
+        )
         if _checkpoint:
             _holders: List[TokenHolder] = local_session.query(TokenHolder).filter(TokenHolder.holder_list == _checkpoint.id).all()
             for holder in _holders:
                 self.balance_book.store(
-                    account_address = holder.account_address,
-                    balance= holder.balance,
-                    pending_transfer= holder.pending_transfer,
-                    exchange_balance= holder.exchange_balance,
-                    exchange_commitment= holder.exchange_commitment
+                    account_address=holder.account_address,
+                    balance=holder.balance,
+                    pending_transfer=holder.pending_transfer,
+                    exchange_balance=holder.exchange_balance,
+                    exchange_commitment=holder.exchange_commitment,
                 )
             self.block_from = _checkpoint.block_number + 1
             self.checkpoint_used = True
@@ -213,7 +219,9 @@ class Processor:
             if self.token_category == TokenType.IbetCoupon:
                 self.__sync_consume(block_from, block_to, target_contract)
 
-            self.__save_holders(db_session, self.balance_book, self.target.id, self.target.token_address, self.token_owner_address)
+            self.__save_holders(
+                db_session, self.balance_book, self.target.id, self.target.token_address, self.token_owner_address
+            )
 
     def __sync_transfer(self, block_from: int, block_to: int, token: Contract):
         """Sync Transfer Events
@@ -235,18 +243,10 @@ class Processor:
                 _to_exchange = _to == self.tradable_exchange_address
                 if _from_exchange and not _to_exchange:
                     # exchange_address -> token_address => withdraw from exchange
-                    self.balance_book.store(
-                        account_address=_to,
-                        balance=+_value,
-                        exchange_balance=-_value
-                    )
+                    self.balance_book.store(account_address=_to, balance=+_value, exchange_balance=-_value)
                 elif not _from_exchange and _to_exchange:
                     # token_address -> exchange_address => deposit to exchange
-                    self.balance_book.store(
-                        account_address=_from,
-                        balance=-_value,
-                        exchange_balance=+_value
-                    )
+                    self.balance_book.store(account_address=_from, balance=-_value, exchange_balance=+_value)
                 else:
                     # token_address -> token_address => transfer
                     self.balance_book.store(
@@ -405,11 +405,7 @@ class Processor:
                 _from = args.get("from", ZERO_ADDRESS)
                 _to = args.get("to", ZERO_ADDRESS)
                 _value = int(args.get("value", 0))
-                self.balance_book.store(
-                    account_address=_from,
-                    balance=-_value,
-                    pending_transfer=+_value
-                )
+                self.balance_book.store(account_address=_from, balance=-_value, pending_transfer=+_value)
         except Exception as e:
             LOG.exception(e)
 
@@ -431,11 +427,7 @@ class Processor:
                 _, _, _value, _ = ContractOperator.call_function(
                     contract=token, function_name="applicationsForTransfer", args=(_index,)
                 )
-                self.balance_book.store(
-                    account_address=_from,
-                    balance=+_value,
-                    pending_transfer=-_value
-                )
+                self.balance_book.store(account_address=_from, balance=+_value, pending_transfer=-_value)
         except Exception as e:
             LOG.exception(e)
 
@@ -457,11 +449,7 @@ class Processor:
                 _, _, _value, _ = ContractOperator.call_function(
                     contract=token, function_name="applicationsForTransfer", args=(_index,)
                 )
-                self.balance_book.store(
-                    account_address=_from,
-                    balance=+_value,
-                    pending_transfer=-_value
-                )
+                self.balance_book.store(account_address=_from, balance=+_value, pending_transfer=-_value)
         except Exception as e:
             LOG.exception(e)
 
@@ -577,9 +565,7 @@ class Processor:
                         _order_is_buy,
                         _,
                         _,
-                    ) = ContractOperator.call_function(
-                        contract=exchange, function_name="getOrder", args=(_order_id,)
-                    )
+                    ) = ContractOperator.call_function(contract=exchange, function_name="getOrder", args=(_order_id,))
                     if _order_is_buy:
                         # If settlementNG is emitted, seller commitment must be released.
                         _sell_address = args.get("sellAddress", ZERO_ADDRESS)
@@ -649,10 +635,7 @@ class Processor:
                             account_address=_recipient,
                             exchange_balance=+_amount,
                         )
-                        self.balance_book.store(
-                            account_address=_sender,
-                            exchange_commitment=-_amount
-                        )
+                        self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
             if escrow_type == "IbetSecurityTokenEscrow":
                 # ApproveTransfer event
                 _event_list = escrow.events.ApproveTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
@@ -669,15 +652,14 @@ class Processor:
                             account_address=_recipient,
                             exchange_balance=+_amount,
                         )
-                        self.balance_book.store(
-                            account_address=_sender,
-                            exchange_commitment=-_amount
-                        )
+                        self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
         except Exception as e:
             LOG.exception(e)
 
     @staticmethod
-    def __save_holders(db_session: Session, balance_book: BalanceBook, holder_list: int, token_address: str, token_owner_address: str):
+    def __save_holders(
+        db_session: Session, balance_book: BalanceBook, holder_list: int, token_address: str, token_owner_address: str
+    ):
         for account_address, page in zip(balance_book.pages.keys(), balance_book.pages.values()):
             if page.account_address == token_owner_address:
                 continue
@@ -701,11 +683,10 @@ class Processor:
                 value is not None and value > 0
                 for value in [page.balance, page.pending_transfer, page.exchange_balance, page.exchange_commitment]
             ):
-                LOG.debug(
-                    f"Collection record created : token_address={token_address}, account_address={account_address}"
-                )
+                LOG.debug(f"Collection record created : token_address={token_address}, account_address={account_address}")
                 page.holder_list = holder_list
                 db_session.add(page)
+
 
 def main():
     LOG.info("Service started successfully")
