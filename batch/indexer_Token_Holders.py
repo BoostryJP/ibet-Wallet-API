@@ -45,7 +45,7 @@ from app.utils.web3_utils import Web3Wrapper
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-process_name = "INDEXER-TOKENHOLDER"
+process_name = "INDEXER-TOKEN_HOLDERS"
 LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3Wrapper()
