@@ -1993,6 +1993,131 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/404NotFoundError"
+  /Token/{contract_address}/Holders/Collection:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    post:
+      tags:
+        - "Holder"
+        - "Token"
+      summary: "Execute Batch Getting Token Holders At Specific BlockNumber"
+      operationId: "TokenHolderListAtSpecificBlockNumber"
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              list_id:
+                description: |
+                  Unique id to be assigned to each token holder list.
+                  This must be Version4 UUID.
+                example: "cfd83622-34dc-4efe-a68b-2cc275d3d824"
+                type: string
+              block_number:
+                description: block number
+                type: integer
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  list_id:
+                    description: |
+                      Unique id to be assigned to each token holder list.
+                      This must be Version4 UUID.
+                      If existing combinations of block_number and contract_address is given, 
+                      existing list_id will be returned.
+                    type: string
+                  status:
+                    description: status code of batch job
+                    type: string
+                    enum: [pending, done, failed]
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Token/{contract_address}/Holders/Collections/{list_id}:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+      - type: string
+        name: list_id
+        in: path
+        required: true
+        description:  |
+          Unique id to be assigned to each token holder list.
+          This must be Version4 UUID.
+    get:
+      tags:
+        - "Holder"
+        - "Token"
+      summary: "Token Holder At Specific BlockNumber"
+      operationId: "TokenHolderList"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    description: Result set
+                    type: object
+                    properties:
+                      status:
+                        description: status code of batch job
+                        type: string
+                        enum: [pending, done, failed]
+                      holders:
+                        description: | 
+                          Token holder address list.
+                          This list is excluding token owner address.
+                        type: array
+                        items:
+                          type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/{contract_address}/TransferHistory:
     parameters:
       - type: string

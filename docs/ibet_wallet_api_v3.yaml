@@ -1273,9 +1273,11 @@ paths:
           in: query
           description: |
             filter argument. serialize obj to a JSON formatted str required.
-          required: false
-          example: |
+            eg.
+            ```
             {"sender": "0x0000000000000000000000000000000000000000"}
+            ```
+          required: false
           type: string
       responses:
         200:
@@ -1341,12 +1343,14 @@ paths:
           in: query
           description: |
             filter argument. serialize obj to a JSON formatted str required.
-          required: false
-          example: |
+            eg.
+            ```
             {
               "escrowId": 0,
               "token": "0x0000000000000000000000000000000000000000" 
             }
+            ```
+          required: false
           type: string
       responses:
         200:
@@ -1422,12 +1426,14 @@ paths:
           in: query
           description: |
             filter argument. serialize obj to a JSON formatted str required.
-          required: false
-          example: |
+            eg.
+            ```
             {
               "escrowId": 0,
               "token": "0x0000000000000000000000000000000000000000" 
             }
+            ```
+          required: false
           type: string
       responses:
         200:

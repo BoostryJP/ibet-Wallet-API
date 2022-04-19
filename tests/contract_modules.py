@@ -217,6 +217,107 @@ def bond_untransferable(invoker, token):
     web3.eth.waitForTransactionReceipt(tx_hash)
 
 
+# 移転承諾要否フラグの更新
+def bond_set_transfer_approval_required(invoker, token, required: bool):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.setTransferApprovalRequired(required).transact({
+        'from': invoker['account_address']
+    })
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン移転申請
+def bond_apply_for_transfer(invoker, token, recipient, amount, application_data):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.applyForTransfer(recipient["account_address"], amount, application_data). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン移転申請取消
+def bond_cancel_transfer(invoker, token, application_id, application_data):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.cancelTransfer(application_id, application_data). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン移転申請承認
+def bond_approve_transfer(invoker, token, application_id, application_data):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.approveTransfer(application_id, application_data). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 資産ロックアドレスの認可
+def bond_authorize_lock_address(invoker, token, lock_address: str, auth: bool):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.authorizeLockAddress(lock_address, auth). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン資産ロック
+def bond_lock(invoker, token, lock_address: str, amount: int):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.lock(lock_address, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン資産アンロック
+def bond_unlock(invoker, token, target: str, recipient: str, amount: int):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.unlock(target, recipient, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン追加発行
+def bond_issue_from(invoker, token, target: str, amount: int, lock_address: str = config.ZERO_ADDRESS):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.issueFrom(target, lock_address, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン発行数量の削減
+def bond_redeem_from(invoker, token, target_address: str, amount: int, lock_address: str = config.ZERO_ADDRESS):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.redeemFrom(target_address, lock_address, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 取引コントラクトの更新
+def bond_set_tradable_exchange(invoker, token, exchange_address: str):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions.setTradableExchange(exchange_address). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Share Token （株式）
 '''
@@ -312,6 +413,107 @@ def untransferable_share_token(invoker, token):
     web3.eth.defaultAccount = invoker['account_address']
     ShareTokenContract = Contract.get_contract('IbetShare', token['address'])
     tx_hash = ShareTokenContract.functions.setTransferable(False). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 移転承諾要否フラグの更新
+def share_set_transfer_approval_required(invoker, token, required: bool):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.setTransferApprovalRequired(required).transact({
+        'from': invoker['account_address']
+    })
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン移転申請
+def share_apply_for_transfer(invoker, token, recipient, amount, application_data):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.applyForTransfer(recipient["account_address"], amount, application_data). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン移転申請取消
+def share_cancel_transfer(invoker, token, application_id, application_data):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.cancelTransfer(application_id, application_data). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン移転申請承認
+def share_approve_transfer(invoker, token, application_id, application_data):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.approveTransfer(application_id, application_data). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 資産ロックアドレスの認可
+def share_authorize_lock_address(invoker, token, lock_address: str, auth: bool):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.authorizeLockAddress(lock_address, auth). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン資産ロック
+def share_lock(invoker, token, lock_address: str, amount: int):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.lock(lock_address, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン資産アンロック
+def share_unlock(invoker, token, target: str, recipient: str, amount: int):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.unlock(target, recipient, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン追加発行
+def share_issue_from(invoker, token, target: str, amount: int, lock_address: str = config.ZERO_ADDRESS):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.issueFrom(target, lock_address, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# トークン発行数量の削減
+def share_redeem_from(invoker, token, target_address: str, amount: int, lock_address: str = config.ZERO_ADDRESS):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.redeemFrom(target_address, lock_address, amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 取引コントラクトの更新
+def share_set_tradable_exchange(invoker, token, exchange_address: str):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions.setTradableExchange(exchange_address). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -432,6 +634,16 @@ def coupon_withdraw_from_exchange(invoker, exchange, token, amount):
     })
 
 
+# 取引コントラクトの更新
+def coupon_set_tradable_exchange(invoker, token, exchange_address: str):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetCoupon', token['address'])
+    tx_hash = TokenContract.functions.setTradableExchange(exchange_address). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
 '''
 Membership Token （会員権）
 '''
@@ -502,6 +714,16 @@ def membership_transfer_to_exchange(invoker, exchange, token, amount):
         get_contract('IbetMembership', token['address'])
     tx_hash = TokenContract.functions. \
         transfer(exchange['address'], amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+
+# 取引コントラクトの更新
+def membership_set_tradable_exchange(invoker, token, exchange_address: str):
+    web3.eth.defaultAccount = invoker['account_address']
+
+    TokenContract = Contract.get_contract('IbetMembership', token['address'])
+    tx_hash = TokenContract.functions.setTradableExchange(exchange_address). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.waitForTransactionReceipt(tx_hash)
 
@@ -633,6 +855,25 @@ def get_latest_security_escrow_id(exchange):
     latest_escrow_id = \
         IbetSecurityTokenEscrowContract.functions.latestEscrowId().call()
     return latest_escrow_id
+
+# エスクローのキャンセル
+def cancel_security_token_escrow(invoker, exchange, escrow_id):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetSecurityTokenEscrowContract = Contract. \
+        get_contract('IbetSecurityTokenEscrow', exchange['address'])
+    tx_hash = IbetSecurityTokenEscrowContract.functions. \
+        cancelEscrow(escrow_id).transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
+
+# 移転の承認
+def approve_transfer_security_token_escrow(invoker, exchange, escrow_id, transfer_approval_data: str):
+    web3.eth.defaultAccount = invoker['account_address']
+    IbetSecurityTokenEscrowContract = Contract. \
+        get_contract('IbetSecurityTokenEscrow', exchange['address'])
+    tx_hash = IbetSecurityTokenEscrowContract.functions. \
+        approveTransfer(escrow_id, transfer_approval_data).transact(
+            {'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
 # エスクローの完了
 def finish_security_token_escrow(invoker, exchange, escrow_id):

@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import uuid
 from cerberus import Validator
 from sqlalchemy import (
     or_,
@@ -23,6 +24,8 @@ from sqlalchemy import (
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
+from falcon import Request, Response
+from sqlalchemy.orm import Session
 
 from app import log
 from app.api.common import BaseResource
@@ -33,6 +36,7 @@ from app.errors import (
 )
 from app import config
 from app.contracts import Contract
+from app.model.db.tokenholders import TokenHoldersList, BatchStatus, TokenHolder
 from app.utils.web3_utils import Web3Wrapper
 from app.model.db import (
     Listing,
@@ -48,6 +52,7 @@ from app.model.blockchain import (
 )
 
 LOG = log.get_logger()
+web3 = Web3Wrapper()
 
 
 # ------------------------------
@@ -1587,3 +1592,164 @@ class CouponTokenDetails(BaseResource):
             except Exception as e:
                 LOG.error(e)
                 return None
+
+
+class TokenHoldersCollection(BaseResource):
+
+    def on_post(self, req: Request, res: Response, *args, **kwargs):
+        """Token holders collection"""
+        LOG.info("v3.token.TokenHoldersCollection(POST)")
+
+        session: Session = req.context["session"]
+
+        # body部の入力値チェック
+        request_json = self.validate(req)
+        list_id = request_json["list_id"]
+        block_number = request_json["block_number"]
+
+        # contract_addressのフォーマットチェック
+        contract_address = kwargs.get("contract_address", "")
+        try:
+            if not Web3.isAddress(contract_address):
+                raise InvalidParameterError("Invalid contract address")
+        except Exception as err:
+            LOG.warning(f"invalid contract address: {err}")
+            raise InvalidParameterError("Invalid contract address")
+
+        # ブロックナンバーのチェック
+        if block_number > web3.eth.blockNumber:
+            raise InvalidParameterError("Block number must be current or past one.")
+
+        # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address).\
+            first()
+        if listed_token is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        # list_idの衝突チェック
+        _same_list_id_record = session.query(TokenHoldersList). \
+            filter(TokenHoldersList.list_id == list_id). \
+            first()
+        if _same_list_id_record is not None:
+            raise InvalidParameterError("list_id must be unique.")
+
+        _same_combi_record = session.query(TokenHoldersList).\
+            filter(TokenHoldersList.token_address == contract_address).\
+            filter(TokenHoldersList.block_number == block_number).\
+            filter(TokenHoldersList.batch_status != BatchStatus.FAILED.value).first()
+
+        if _same_combi_record is not None:
+            # 同じブロックナンバー・トークンアドレスのコレクションが、PENDINGかDONEで既に存在する場合、
+            # そのlist_idとstatusを返却する。
+            return self.on_success(res, {
+                "list_id": _same_combi_record.list_id,
+                "status": _same_combi_record.batch_status,
+            })
+
+        token_holder_list = TokenHoldersList()
+        token_holder_list.list_id = list_id
+        token_holder_list.batch_status = BatchStatus.PENDING.value
+        token_holder_list.block_number = block_number
+        token_holder_list.token_address = contract_address
+        session.add(token_holder_list)
+        session.commit()
+        return self.on_success(res, {
+            "list_id": token_holder_list.list_id,
+            "status": token_holder_list.batch_status,
+        })
+
+    @staticmethod
+    def validate(req):
+        request_json = req.context['data']
+        if request_json is None:
+            raise InvalidParameterError
+
+        validator = Validator({
+            "list_id": {
+                "type": "string",
+                "required": True
+            },
+            "block_number": {
+                "type": "integer",
+                "required": True
+            },
+        })
+
+        if not validator.validate(request_json):
+            raise InvalidParameterError(validator.errors)
+
+        # UUIDのフォーマットチェック
+        try:
+            if not uuid.UUID(request_json["list_id"]).version == 4:
+                description = "list_id must be UUIDv4."
+                raise InvalidParameterError(description=description)
+        except:
+            description = "list_id must be UUIDv4."
+            raise InvalidParameterError(description=description)
+        return request_json
+
+
+class TokenHoldersCollectionId(BaseResource):
+
+    def on_get(self, req: Request, res: Response, *args, **kwargs):
+        """Token holders collection Id"""
+        LOG.info("v3.token.TokenHoldersCollectionId(GET)")
+        contract_address = kwargs.get("contract_address", "")
+        list_id = kwargs.get("list_id", "")
+
+        # 入力アドレスフォーマットチェック
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                description = 'invalid contract_address'
+                raise InvalidParameterError(description=description)
+        except:
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+        # 入力IDフォーマットチェック
+        try:
+            if not uuid.UUID(list_id).version == 4:
+                description = "list_id must be UUIDv4."
+                raise InvalidParameterError(description=description)
+        except:
+            description = "list_id must be UUIDv4."
+            raise InvalidParameterError(description=description)
+
+        session: Session = req.context["session"]
+
+        # 取扱トークンチェック
+        # NOTE:非公開トークンも取扱対象とする
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address).\
+            first()
+        if listed_token is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        # 既存レコードの存在チェック
+        _same_list_id_record: TokenHoldersList = session.query(TokenHoldersList). \
+            filter(TokenHoldersList.list_id == list_id).first()
+
+        if not _same_list_id_record:
+            raise DataNotExistsError("list_id: %s"%list_id)
+        if _same_list_id_record.token_address != contract_address:
+            description = "list_id: %s is not collection for contract_address: %s"%(list_id, contract_address)
+            raise InvalidParameterError(description=description)
+
+        holders = []
+        if _same_list_id_record.batch_status == BatchStatus.PENDING.value:
+            return self.on_success(res, {
+                "status": _same_list_id_record.batch_status,
+                "holders": holders
+            })
+
+        token_holders = session.query(TokenHolder).filter(TokenHolder.holder_list == _same_list_id_record.id).all()
+
+        for th in token_holders:
+            holders.append(th.account_address)
+
+        return self.on_success(res, {
+            "status": _same_list_id_record.batch_status,
+            "holders": holders
+        })

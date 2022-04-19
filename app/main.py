@@ -109,6 +109,8 @@ class App(falcon.App):
         self.add_route('/v2/Token/Coupon/{contract_address}', v2_token.CouponTokenDetails())
         self.add_route('/v2/Token/{contract_address}/Status', v2_token.TokenStatus())
         self.add_route('/v2/Token/{contract_address}/Holders', v2_token.TokenHolders())
+        self.add_route('/v2/Token/{contract_address}/Holders/Collection', v2_token.TokenHoldersCollection())
+        self.add_route('/v2/Token/{contract_address}/Holders/Collection/{list_id}', v2_token.TokenHoldersCollectionId())
         self.add_route('/v2/Token/{contract_address}/TransferHistory', v2_token.TransferHistory())
         self.add_route('/v2/Token/{contract_address}/TransferApprovalHistory', v2_token.TransferApprovalHistory())
 

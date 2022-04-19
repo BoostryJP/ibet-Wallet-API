@@ -29,6 +29,9 @@ import pytest
 from falcon import testing
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.types import (
+    RPCEndpoint,
+)
 
 from app.main import App
 from app.middleware import (
@@ -227,6 +230,16 @@ def db(request):
     request.addfinalizer(teardown)
     return db_session
 
+
+# ブロックナンバーの保存・復元
+@pytest.fixture(scope='function')
+def block_number(request):
+    evm_snapshot = web3.provider.make_request(RPCEndpoint("evm_snapshot"), [])
+
+    def teardown():
+        web3.provider.make_request(RPCEndpoint("evm_revert"), [int(evm_snapshot['result'], 16), ])
+
+    request.addfinalizer(teardown)
 
 # セッションの作成・自動ロールバック
 @pytest.fixture(scope='function')
