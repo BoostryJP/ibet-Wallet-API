@@ -2068,9 +2068,9 @@ class TestProcessor:
         session.commit()
 
         mock_lib = MagicMock()
-        with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_initial_issue_mock:
+        with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
             # Then execute processor.
-            __sync_initial_issue_mock.return_value = None
+            __sync_all_mock.return_value = None
             processor.collect()
             _records: List[TokenHolder] = (
                 session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id).all()

@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from enum import Enum
 from typing import Optional, List, Dict
 import os
 import sys
@@ -36,8 +35,6 @@ sys.path.append(path)
 
 from app.model.db.tokenholders import TokenHoldersList, BatchStatus, TokenHolder
 from app.contracts import Contract as ContractOperator
-from batch.lib.token_list import TokenList
-
 from app import config
 from app.config import (
     DATABASE_URL,
@@ -45,19 +42,13 @@ from app.config import (
 )
 from app.errors import ServiceUnavailable
 from app.utils.web3_utils import Web3Wrapper
+from batch.lib.token_list import TokenList
 
 process_name = "INDEXER-TOKEN_HOLDERS"
 LOG = log.get_logger(process_name=process_name)
 
 web3 = Web3Wrapper()
 db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
-
-
-class TokenType(Enum):
-    IbetStraightBond = "IbetStraightBond"
-    IbetShare = "IbetShare"
-    IbetCoupon = "IbetCoupon"
-    IbetMembership = "IbetMembership"
 
 
 class Processor:
@@ -92,7 +83,6 @@ class Processor:
                 self.pages[account_address].exchange_commitment += exchange_commitment
 
     target: Optional[TokenHoldersList]
-    token_category: Optional[TokenType]
     balance_book: BalanceBook
 
     tradable_exchange_address: str
@@ -102,9 +92,12 @@ class Processor:
     block_to: int
     checkpoint_used: bool
 
+    token_contract: Optional[Contract]
+    exchange_contract: Optional[Contract]
+    escrow_contract: Optional[Contract]
+
     def __init__(self):
         self.target = None
-        self.token_category = None
         self.balance_book = self.BalanceBook()
         self.tradable_exchange_address = ""
         self.checkpoint_used = False
@@ -123,21 +116,33 @@ class Processor:
         # Fetch token list information from TokenList Contract
         list_contract = ContractOperator.get_contract(contract_name="TokenList", address=config.TOKEN_LIST_CONTRACT_ADDRESS)
         token_info = TokenList(list_contract).get_token(self.target.token_address)
-        if token_info[1] == "" or token_info[1] not in [t.value for t in TokenType]:
-            return False
-        self.token_category = TokenType(token_info[1])
         self.token_owner_address = token_info[2]
-        # Fetch token contract.
-        self.token_contract = ContractOperator.get_contract(
-            contract_name=self.token_category.value, address=self.target.token_address
-        )
-        # Fetch current tradable exchange.
+        # Store token contract.
+        if token_info[1] == "":
+            return False
+        elif token_info[1] == "IbetCoupon":
+            self.token_contract = ContractOperator.get_contract("IbetCoupon", self.target.token_address)
+        elif token_info[1] == "IbetMembership":
+            self.token_contract = ContractOperator.get_contract("IbetMembership", self.target.token_address)
+        elif token_info[1] == "IbetStraightBond":
+            self.token_contract = ContractOperator.get_contract("IbetStraightBond", self.target.token_address)
+        elif token_info[1] == "IbetShare":
+            self.token_contract = ContractOperator.get_contract("IbetShare", self.target.token_address)
+
+        # Fetch current tradable exchange to store exchange contract.
         self.tradable_exchange_address = ContractOperator.call_function(
             contract=self.token_contract,
             function_name="tradableExchange",
             args=(),
             default_returns=ZERO_ADDRESS,
         )
+        self.exchange_contract = ContractOperator.get_contract(contract_name="IbetExchange", address=self.tradable_exchange_address)
+
+        # Store escrow contract.
+        if token_info[1] in ["IbetStraightBond", "IbetShare"]:
+            self.escrow_contract = ContractOperator.get_contract("IbetSecurityTokenEscrow", self.tradable_exchange_address)
+        else:
+            self.escrow_contract = ContractOperator.get_contract("IbetEscrow", self.tradable_exchange_address)
         return True
 
     def __load_checkpoint(self, local_session: Session) -> bool:
@@ -181,6 +186,7 @@ class Processor:
             self.__update_status(local_session, BatchStatus.DONE)
             local_session.commit()
         except Exception as e:
+            local_session.rollback()
             self.__update_status(local_session, BatchStatus.FAILED)
             local_session.commit()
         finally:
@@ -193,46 +199,43 @@ class Processor:
         LOG.info(f"Token holder list({self.target.list_id}) status changes to be {status.value}.")
 
         self.target = None
-        self.token_category = None
         self.balance_book = self.BalanceBook()
         self.tradable_exchange_address = ""
+        self.token_owner_address = ""
         self.block_from = 0
         self.checkpoint_used = False
+        self.token_contract = None
+        self.exchange_contract = None
+        self.escrow_contract = None
 
     def __sync_all(self, db_session: Session, block_from: int, block_to: int):
         LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        target_contract = self.token_contract
 
-        if target_contract:
-            self.__sync_transfer(block_from, block_to, target_contract)
-            self.__sync_exchange(block_from, block_to)
-            self.__sync_escrow(block_from, block_to)
+        self.__sync_transfer(block_from, block_to)
+        self.__sync_exchange(block_from, block_to)
+        self.__sync_escrow(block_from, block_to)
+        self.__sync_issue(block_from, block_to)
+        self.__sync_redeem(block_from, block_to)
+        self.__sync_lock(block_from, block_to)
+        self.__sync_unlock(block_from, block_to)
+        self.__sync_apply_for_transfer(block_from, block_to)
+        self.__sync_cancel_transfer(block_from, block_to)
+        self.__sync_approve_transfer(block_from, block_to)
+        self.__sync_consume(block_from, block_to)
 
-            if self.token_category in [TokenType.IbetStraightBond, TokenType.IbetShare]:
-                self.__sync_issue(block_from, block_to, target_contract)
-                self.__sync_redeem(block_from, block_to, target_contract)
-                self.__sync_lock(block_from, block_to, target_contract)
-                self.__sync_unlock(block_from, block_to, target_contract)
-                self.__sync_apply_for_transfer(block_from, block_to, target_contract)
-                self.__sync_cancel_transfer(block_from, block_to, target_contract)
-                self.__sync_approve_transfer(block_from, block_to, target_contract)
+        self.__save_holders(
+            db_session, self.balance_book, self.target.id, self.target.token_address, self.token_owner_address
+        )
 
-            if self.token_category == TokenType.IbetCoupon:
-                self.__sync_consume(block_from, block_to, target_contract)
-
-            self.__save_holders(
-                db_session, self.balance_book, self.target.id, self.target.token_address, self.token_owner_address
-            )
-
-    def __sync_transfer(self, block_from: int, block_to: int, token: Contract):
+    def __sync_transfer(self, block_from: int, block_to: int):
         """Sync Transfer Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
         try:
+            token = self.token_contract
             events = token.events.Transfer.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 args = event["args"]
@@ -261,15 +264,15 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_consume(self, block_from: int, block_to: int, token: Contract):
+    def __sync_consume(self, block_from: int, block_to: int):
         """Sync Consume Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
         try:
+            token = self.token_contract
             events = token.events.Consume.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 args = event["args"]
@@ -283,16 +286,16 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_lock(self, block_from: int, block_to: int, token: Contract):
+    def __sync_lock(self, block_from: int, block_to: int):
         """Sync Lock Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
 
         try:
+            token = self.token_contract
             events = token.events.Lock.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 # event Lock(
@@ -314,16 +317,16 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_unlock(self, block_from: int, block_to: int, token: Contract):
+    def __sync_unlock(self, block_from: int, block_to: int):
         """Sync Unlock Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
 
         try:
+            token = self.token_contract
             events = token.events.Unlock.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 args = event["args"]
@@ -338,15 +341,15 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_issue(self, block_from: int, block_to: int, token: Contract):
+    def __sync_issue(self, block_from: int, block_to: int):
         """Sync Issue Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
         try:
+            token = self.token_contract
             events = token.events.Issue.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 args = event["args"]
@@ -364,15 +367,15 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_redeem(self, block_from: int, block_to: int, token: Contract):
+    def __sync_redeem(self, block_from: int, block_to: int):
         """Sync Redeem Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
         try:
+            token = self.token_contract
             events = token.events.Redeem.getLogs(fromBlock=block_from, toBlock=block_to)
 
             for event in events:
@@ -391,15 +394,15 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_apply_for_transfer(self, block_from: int, block_to: int, token: Contract):
+    def __sync_apply_for_transfer(self, block_from: int, block_to: int):
         """Sync ApplyForTransfer Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
         try:
+            token = self.token_contract
             events = token.events.ApplyForTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 args = event["args"]
@@ -410,15 +413,15 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_cancel_transfer(self, block_from: int, block_to: int, token: Contract):
+    def __sync_cancel_transfer(self, block_from: int, block_to: int):
         """Sync CancelTransfer Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
         try:
+            token = self.token_contract
             events = token.events.CancelTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 args = event["args"]
@@ -432,15 +435,15 @@ class Processor:
         except Exception as e:
             LOG.exception(e)
 
-    def __sync_approve_transfer(self, block_from: int, block_to: int, token: Contract):
+    def __sync_approve_transfer(self, block_from: int, block_to: int):
         """Sync ApproveTransfer Events
 
         :param block_from: From block
         :param block_to: To block
-        :param token: Token contract
         :return: None
         """
         try:
+            token = self.token_contract
             events = token.events.ApproveTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
             for event in events:
                 args = event["args"]
@@ -463,8 +466,8 @@ class Processor:
         """
         exchange_address = self.tradable_exchange_address
         try:
+            token = self.token_contract
             exchange = ContractOperator.get_contract(contract_name="IbetExchange", address=exchange_address)
-
             # NewOrder event
             _event_list = exchange.events.NewOrder.getLogs(fromBlock=block_from, toBlock=block_to)
             for _event in _event_list:
@@ -475,7 +478,7 @@ class Processor:
                     _is_buy = args.get("isBuy", False)
                     _amount = args.get("amount", 0)
                     if not _is_buy:
-                        # If order is made by sell side, seller assets is committed.
+                        # If order is made by sell side, seller assets must be committed.
                         self.balance_book.store(
                             account_address=_account_address,
                             exchange_balance=-_amount,
@@ -492,7 +495,7 @@ class Processor:
                     _is_buy = args.get("isBuy", False)
                     _amount = args.get("amount", 0)
                     if not _is_buy:
-                        # If order made by sell side is cancelled, seller commitment is released.
+                        # If order made by sell side is cancelled, seller commitment must be released.
                         self.balance_book.store(
                             account_address=_account_address,
                             exchange_balance=+_amount,
@@ -508,7 +511,7 @@ class Processor:
                     _is_buy = args.get("isBuy", False)
                     _amount = args.get("amount", 0)
                     if not _is_buy:
-                        # If order made by sell side is cancelled, seller commitment is released.
+                        # If order made by sell side is cancelled, seller commitment must be released.
                         self.balance_book.store(
                             account_address=_account_address,
                             exchange_balance=+_amount,
@@ -587,18 +590,15 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        exchange_address = self.tradable_exchange_address
-        escrow_type = "IbetSecurityTokenEscrow"
-        if self.token_category in [TokenType.IbetCoupon, TokenType.IbetMembership]:
-            escrow_type = "IbetEscrow"
+        escrow_contract = self.escrow_contract
         try:
-            escrow = ContractOperator.get_contract(escrow_type, exchange_address)
-            _event_list = escrow.events.EscrowCreated.getLogs(fromBlock=block_from, toBlock=block_to)
+            # EscrowCreated event
+            _event_list = escrow_contract.events.EscrowCreated.getLogs(fromBlock=block_from, toBlock=block_to)
             for _event in _event_list:
                 args = _event["args"]
                 _token_address = args.get("token", ZERO_ADDRESS)
                 if _token_address == self.target.token_address:
-                    # 送り主の銀行残高を拘束する
+                    # If EscrowCreated is emitted, sender seller assets must be committed.
                     _account_address = args.get("sender", ZERO_ADDRESS)
                     _amount = args.get("amount", 0)
                     self.balance_book.store(
@@ -607,12 +607,12 @@ class Processor:
                         exchange_commitment=+_amount,
                     )
             # EscrowCanceled event
-            _event_list = escrow.events.EscrowCanceled.getLogs(fromBlock=block_from, toBlock=block_to)
+            _event_list = escrow_contract.events.EscrowCanceled.getLogs(fromBlock=block_from, toBlock=block_to)
             for _event in _event_list:
                 args = _event["args"]
                 _token_address = args.get("token", ZERO_ADDRESS)
                 if _token_address == self.target.token_address:
-                    # If EscrowCanceled is emmited, sender commitment must be released.
+                    # If EscrowCanceled is emitted, sender commitment must be released.
                     _account_address = args.get("sender", ZERO_ADDRESS)
                     _amount = args.get("amount", 0)
                     self.balance_book.store(
@@ -621,14 +621,14 @@ class Processor:
                         exchange_commitment=-_amount,
                     )
             # EscrowFinished event
-            _event_list = escrow.events.EscrowFinished.getLogs(fromBlock=block_from, toBlock=block_to)
+            _event_list = escrow_contract.events.EscrowFinished.getLogs(fromBlock=block_from, toBlock=block_to)
             for _event in _event_list:
                 args = _event["args"]
                 _token_address = args.get("token", ZERO_ADDRESS)
                 if _token_address == self.target.token_address:
                     _transfer_approval_required = args.get("transferApprovalRequired", False)
                     if not _transfer_approval_required:
-                        # If EscrowCanceled is emmited, sender commitment must be released.
+                        # If the finished escrow need no approval, sender commitment must be transferred to recipient.
                         _sender = args.get("sender", ZERO_ADDRESS)
                         _recipient = args.get("recipient", ZERO_ADDRESS)
                         _amount = args.get("amount", 0)
@@ -637,23 +637,22 @@ class Processor:
                             exchange_balance=+_amount,
                         )
                         self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
-            if escrow_type == "IbetSecurityTokenEscrow":
-                # ApproveTransfer event
-                _event_list = escrow.events.ApproveTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
-                for _event in _event_list:
-                    args = _event["args"]
-                    _token_address = args.get("token", ZERO_ADDRESS)
-                    _escrow_id = args.get("escrowId", ZERO_ADDRESS)
-                    _, _sender, _recipient, _amount, _, _ = ContractOperator.call_function(
-                        contract=escrow, function_name="getEscrow", args=(_escrow_id,)
+            # ApproveTransfer event
+            _event_list = escrow_contract.events.ApproveTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
+            for _event in _event_list:
+                args = _event["args"]
+                _token_address = args.get("token", ZERO_ADDRESS)
+                _escrow_id = args.get("escrowId", ZERO_ADDRESS)
+                _, _sender, _recipient, _amount, _, _ = ContractOperator.call_function(
+                    contract=escrow_contract, function_name="getEscrow", args=(_escrow_id,)
+                )
+                if _token_address == self.target.token_address:
+                    # If ApproveTransfer is emitted, sender commitment must be transferred to recipient.
+                    self.balance_book.store(
+                        account_address=_recipient,
+                        exchange_balance=+_amount,
                     )
-                    if _token_address == self.target.token_address:
-                        # 送り主の銀行残高拘束を減産し、受け取り側の残高を増やす
-                        self.balance_book.store(
-                            account_address=_recipient,
-                            exchange_balance=+_amount,
-                        )
-                        self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
+                    self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
         except Exception as e:
             LOG.exception(e)
 
