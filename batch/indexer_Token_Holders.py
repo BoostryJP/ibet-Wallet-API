@@ -30,6 +30,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 import log
+
+path = os.path.join(os.path.dirname(__file__), "../")
+sys.path.append(path)
+
 from app.model.db.tokenholders import TokenHoldersList, BatchStatus, TokenHolder
 from app.contracts import Contract as ContractOperator
 from batch.lib.token_list import TokenList
@@ -41,9 +45,6 @@ from app.config import (
 )
 from app.errors import ServiceUnavailable
 from app.utils.web3_utils import Web3Wrapper
-
-path = os.path.join(os.path.dirname(__file__), "../")
-sys.path.append(path)
 
 process_name = "INDEXER-TOKEN_HOLDERS"
 LOG = log.get_logger(process_name=process_name)
@@ -691,7 +692,6 @@ class Processor:
 def main():
     LOG.info("Service started successfully")
     processor = Processor()
-    processor.collect()
     while True:
         try:
             processor.collect()

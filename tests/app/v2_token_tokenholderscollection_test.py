@@ -286,10 +286,24 @@ class TestV2TokenHoldersCollection:
 
     # Error_4
     # 400: Invalid Parameter Error
-    # Block number is future one.
+    # Block number is future one or negative.
     def test_error_4(self, client, session):
         apiurl = self.apiurl_base.format(contract_address=config.ZERO_ADDRESS)
         block_number = web3.eth.blockNumber + 100
+        request_params = {"block_number": block_number, "list_id": str(uuid.uuid4())}
+        headers = {"Content-Type": "application/json"}
+        request_body = json.dumps(request_params)
+        resp = client.simulate_post(apiurl, headers=headers, body=request_body)
+
+        assert resp.status_code == 400
+        assert resp.json["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": "Block number must be current or past one.",
+        }
+
+        apiurl = self.apiurl_base.format(contract_address=config.ZERO_ADDRESS)
+        block_number = 0
         request_params = {"block_number": block_number, "list_id": str(uuid.uuid4())}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)

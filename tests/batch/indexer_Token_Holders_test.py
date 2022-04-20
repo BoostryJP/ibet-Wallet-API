@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import logging
+import os
+import sys
 import uuid
 from typing import Type, List
 from unittest import mock
@@ -26,6 +28,9 @@ from sqlalchemy.orm import Session
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+
+path = os.path.join(os.path.dirname(__file__), "../")
+sys.path.append(path)
 
 from app import config
 from app.config import ZERO_ADDRESS
@@ -1950,8 +1955,14 @@ class TestProcessor:
 
     # <Normal_14>
     # StraightBond
-    # Pending jobs are to be processed one by one.
+    # Jobs are queued and pending jobs are to be processed one by one.
     def test_normal_14(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+        processor.collect()
+        LOG.addHandler(caplog.handler)
+        with caplog.at_level(logging.DEBUG):
+            processor.collect()
+            assert f"There are no pending collect batch" in caplog.text
+
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
