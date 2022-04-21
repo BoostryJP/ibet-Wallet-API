@@ -155,7 +155,7 @@ class Processor:
             .first()
         )
         if _checkpoint:
-            _holders: List[TokenHolder] = local_session.query(TokenHolder).filter(TokenHolder.holder_list == _checkpoint.id).all()
+            _holders: List[TokenHolder] = local_session.query(TokenHolder).filter(TokenHolder.holder_list_id == _checkpoint.id).all()
             for holder in _holders:
                 self.balance_book.store(
                     account_address=holder.account_address,
@@ -658,14 +658,14 @@ class Processor:
 
     @staticmethod
     def __save_holders(
-        db_session: Session, balance_book: BalanceBook, holder_list: int, token_address: str, token_owner_address: str
+        db_session: Session, balance_book: BalanceBook, holder_list_id: int, token_address: str, token_owner_address: str
     ):
         for account_address, page in zip(balance_book.pages.keys(), balance_book.pages.values()):
             if page.account_address == token_owner_address:
                 continue
             token_holder: TokenHolder = (
                 db_session.query(TokenHolder)
-                .filter(TokenHolder.holder_list == holder_list)
+                .filter(TokenHolder.holder_list_id == holder_list_id)
                 .filter(TokenHolder.account_address == account_address)
                 .first()
             )
@@ -684,7 +684,7 @@ class Processor:
                 for value in [page.balance, page.pending_transfer, page.exchange_balance, page.exchange_commitment]
             ):
                 LOG.debug(f"Collection record created : token_address={token_address}, account_address={account_address}")
-                page.holder_list = holder_list
+                page.holder_list_id = holder_list_id
                 db_session.add(page)
 
 

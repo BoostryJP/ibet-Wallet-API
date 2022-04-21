@@ -407,13 +407,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -428,7 +428,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -537,13 +537,13 @@ class TestProcessor:
         processor.collect()
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -558,7 +558,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -657,13 +657,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -678,7 +678,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -782,13 +782,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -803,7 +803,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -918,13 +918,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -939,7 +939,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1038,13 +1038,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1059,7 +1059,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1146,13 +1146,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1167,7 +1167,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1261,13 +1261,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1282,7 +1282,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1373,13 +1373,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1394,7 +1394,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1481,19 +1481,19 @@ class TestProcessor:
 
         issuer_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.issuer["account_address"])
             .first()
         )
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1508,7 +1508,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1601,13 +1601,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1622,7 +1622,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1711,13 +1711,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1732,7 +1732,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == 0
         assert trader_record.pending_transfer == 0
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
 
         _user1_record_validator: IDXPosition = (
             session.query(IDXPosition)
@@ -1799,13 +1799,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list1.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list1.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1856,13 +1856,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list2.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list2.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list2.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list2.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1919,13 +1919,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list3.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list3.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list == target_token_holders_list3.id)
+            .filter(TokenHolder.holder_list_id == target_token_holders_list3.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -2073,6 +2073,6 @@ class TestProcessor:
             __sync_all_mock.return_value = None
             processor.collect()
             _records: List[TokenHolder] = (
-                session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id).all()
+                session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
             )
             assert len(_records) == 0

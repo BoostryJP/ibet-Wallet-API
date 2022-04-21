@@ -52,8 +52,8 @@ class TokenHolder(Base):
     """Token Holder (INDEX)"""
     __tablename__ = "token_holder"
 
-    # Related list primary key
-    holder_list = Column(BigInteger, primary_key=True)
+    # Related to TokenHoldersList primary key
+    holder_list_id = Column(BigInteger, primary_key=True)
 
     # Account Address
     account_address = Column(String(42), primary_key=True)

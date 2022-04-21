@@ -1744,7 +1744,7 @@ class TokenHoldersCollectionId(BaseResource):
                 "holders": holders
             })
 
-        token_holders = session.query(TokenHolder).filter(TokenHolder.holder_list == _same_list_id_record.id).all()
+        token_holders = session.query(TokenHolder).filter(TokenHolder.holder_list_id == _same_list_id_record.id).all()
 
         for th in token_holders:
             holders.append(th.account_address)
