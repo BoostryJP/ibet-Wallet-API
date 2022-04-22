@@ -26,7 +26,7 @@ from app import config
 
 from web3.middleware import geth_poa_middleware
 from web3 import Web3
-from app.model.db.tokenholders import BatchStatus, TokenHoldersList
+from app.model.db.tokenholders import TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -159,7 +159,7 @@ class TestV2TokenHoldersCollection:
 
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == {"list_id": list_id, "status": BatchStatus.PENDING.value}
+        assert resp.json["data"] == {"list_id": list_id, "status": TokenHolderBatchStatus.PENDING.value}
 
         processor.collect()
 
@@ -169,7 +169,7 @@ class TestV2TokenHoldersCollection:
         holders = [self.trader["account_address"]]
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == {"status": BatchStatus.DONE.value, "holders": holders}
+        assert resp.json["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}
 
     # Normal_2
     # POST collection request twice.
@@ -204,7 +204,7 @@ class TestV2TokenHoldersCollection:
 
             assert resp.status_code == 200
             assert resp.json["meta"] == {"code": 200, "message": "OK"}
-            assert resp.json["data"] == {"list_id": list_id, "status": BatchStatus.PENDING.value}
+            assert resp.json["data"] == {"list_id": list_id, "status": TokenHolderBatchStatus.PENDING.value}
 
     # Normal_3
     # POST collection request with same contract_address and block_number.
@@ -235,7 +235,7 @@ class TestV2TokenHoldersCollection:
 
             assert resp.status_code == 200
             assert resp.json["meta"] == {"code": 200, "message": "OK"}
-            assert resp.json["data"] == {"list_id": list_id1, "status": BatchStatus.PENDING.value}
+            assert resp.json["data"] == {"list_id": list_id1, "status": TokenHolderBatchStatus.PENDING.value}
 
     ####################################################################
     # Error
@@ -324,7 +324,7 @@ class TestV2TokenHoldersCollection:
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = self.token_address
         target_token_holders_list.list_id = list_id
-        target_token_holders_list.batch_status = BatchStatus.PENDING.value
+        target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
         target_token_holders_list.block_number = 1000
         session.merge(target_token_holders_list)
         session.commit()

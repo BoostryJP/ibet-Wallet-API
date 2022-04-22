@@ -36,7 +36,7 @@ from app import config
 from app.config import ZERO_ADDRESS
 from app.contracts import Contract
 from app.model.db import Listing, IDXPosition
-from app.model.db.tokenholders import TokenHoldersList, BatchStatus, TokenHolder
+from app.model.db.tokenholders import TokenHoldersList, TokenHolderBatchStatus, TokenHolder
 from batch import (
     indexer_Position_Bond,
     indexer_Position_Share,
@@ -298,7 +298,7 @@ class TestProcessor:
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.list_id = str(uuid.uuid4())
         target_token_holders_list.token_address = token["address"]
-        target_token_holders_list.batch_status = BatchStatus.PENDING.value
+        target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
         target_token_holders_list.block_number = block_number
         return target_token_holders_list
 
@@ -2019,7 +2019,7 @@ class TestProcessor:
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = ZERO_ADDRESS
         target_token_holders_list.list_id = str(uuid.uuid4())
-        target_token_holders_list.batch_status = BatchStatus.PENDING.value
+        target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
         target_token_holders_list.block_number = 1000
         session.add(target_token_holders_list)
         session.commit()
@@ -2033,7 +2033,7 @@ class TestProcessor:
 
         # Batch status of token holders list expects to be "ERROR"
         error_record_num = len(
-            list(session.query(TokenHoldersList).filter(TokenHoldersList.batch_status == BatchStatus.FAILED.value))
+            list(session.query(TokenHoldersList).filter(TokenHoldersList.batch_status == TokenHolderBatchStatus.FAILED.value))
         )
         assert error_record_num == 1
 

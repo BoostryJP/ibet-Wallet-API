@@ -28,7 +28,7 @@ from app.model.db import Base
 
 
 class TokenHoldersList(Base):
-    """DEX Agreement Events (INDEX)"""
+    """Token Holder List"""
     __tablename__ = "token_holders_list"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -42,14 +42,14 @@ class TokenHoldersList(Base):
     batch_status = Column(String(256))
 
 
-class BatchStatus(Enum):
+class TokenHolderBatchStatus(Enum):
     PENDING = "pending"
     DONE = "done"
     FAILED = "failed"
 
 
 class TokenHolder(Base):
-    """Token Holder (INDEX)"""
+    """Token Holder"""
     __tablename__ = "token_holder"
 
     # Related to TokenHoldersList primary key

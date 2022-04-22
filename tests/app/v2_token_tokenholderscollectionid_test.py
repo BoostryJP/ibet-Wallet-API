@@ -25,7 +25,7 @@ from app import config
 
 from web3.middleware import geth_poa_middleware
 from web3 import Web3
-from app.model.db.tokenholders import BatchStatus, TokenHoldersList
+from app.model.db.tokenholders import TokenHolderBatchStatus, TokenHoldersList
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -130,7 +130,7 @@ class TestV2TokenHoldersCollectionId:
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = self.token_address
         target_token_holders_list.list_id = str(uuid.uuid4())
-        target_token_holders_list.batch_status = BatchStatus.PENDING.value
+        target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
         target_token_holders_list.block_number = 1000
         session.merge(target_token_holders_list)
         session.commit()
@@ -144,7 +144,7 @@ class TestV2TokenHoldersCollectionId:
 
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == {"status": BatchStatus.PENDING.value, "holders": []}
+        assert resp.json["data"] == {"status": TokenHolderBatchStatus.PENDING.value, "holders": []}
 
     # Normal_2
     # GET
@@ -170,7 +170,7 @@ class TestV2TokenHoldersCollectionId:
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = token["address"]
         target_token_holders_list.list_id = str(uuid.uuid4())
-        target_token_holders_list.batch_status = BatchStatus.PENDING.value
+        target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
         target_token_holders_list.block_number = web3.eth.blockNumber
         session.merge(target_token_holders_list)
         session.commit()
@@ -184,7 +184,7 @@ class TestV2TokenHoldersCollectionId:
         holders = [self.trader["account_address"]]
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == {"status": BatchStatus.DONE.value, "holders": holders}
+        assert resp.json["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}
 
     ####################################################################
     # Error

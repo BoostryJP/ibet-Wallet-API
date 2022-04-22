@@ -33,7 +33,7 @@ import log
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.model.db.tokenholders import TokenHoldersList, BatchStatus, TokenHolder
+from app.model.db.tokenholders import TokenHoldersList, TokenHolderBatchStatus, TokenHolder
 from app.contracts import Contract as ContractOperator
 from app import config
 from app.config import (
@@ -108,7 +108,7 @@ class Processor:
 
     def __load_target(self, db_session: Session) -> bool:
         self.target: TokenHoldersList = (
-            db_session.query(TokenHoldersList).filter(TokenHoldersList.batch_status == BatchStatus.PENDING.value).first()
+            db_session.query(TokenHoldersList).filter(TokenHoldersList.batch_status == TokenHolderBatchStatus.PENDING.value).first()
         )
         return True if self.target else False
 
@@ -150,7 +150,7 @@ class Processor:
             local_session.query(TokenHoldersList)
             .filter(TokenHoldersList.token_address == self.target.token_address)
             .filter(TokenHoldersList.block_number < self.target.block_number)
-            .filter(TokenHoldersList.batch_status == BatchStatus.DONE.value)
+            .filter(TokenHoldersList.batch_status == TokenHolderBatchStatus.DONE.value)
             .order_by(TokenHoldersList.block_number.desc())
             .first()
         )
@@ -176,24 +176,24 @@ class Processor:
                 return
             if not self.__load_token_info():
                 LOG.debug(f"Token contract must be listed to TokenList contract.")
-                self.__update_status(local_session, BatchStatus.FAILED)
+                self.__update_status(local_session, TokenHolderBatchStatus.FAILED)
                 local_session.commit()
                 return
             self.block_from = 0
             self.block_to = self.target.block_number
             self.__load_checkpoint(local_session)
             self.__sync_all(local_session, self.block_from, self.block_to)
-            self.__update_status(local_session, BatchStatus.DONE)
+            self.__update_status(local_session, TokenHolderBatchStatus.DONE)
             local_session.commit()
         except Exception as e:
             local_session.rollback()
-            self.__update_status(local_session, BatchStatus.FAILED)
+            self.__update_status(local_session, TokenHolderBatchStatus.FAILED)
             local_session.commit()
         finally:
             local_session.close()
             LOG.info(f"<{process_name}> Collect job has been completed")
 
-    def __update_status(self, local_session: Session, status: BatchStatus):
+    def __update_status(self, local_session: Session, status: TokenHolderBatchStatus):
         self.target.batch_status = status.value
         local_session.merge(self.target)
         LOG.info(f"Token holder list({self.target.list_id}) status changes to be {status.value}.")
