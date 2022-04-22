@@ -185,22 +185,24 @@ class TestV2TokenHoldersCollectionId:
         resp = client.simulate_get(apiurl)
 
         holders = [{
-            "account_address": self.user1["account_address"],
-            "balance": 20000,
-            "pending_transfer": 0,
-            "exchange_balance": 30000,
-            "exchange_commitment": 0
-        }, {
             "account_address": self.trader["account_address"],
             "balance": 30000,
             "pending_transfer": 0,
             "exchange_balance": 0,
             "exchange_commitment": 0
+        }, {
+            "account_address": self.user1["account_address"],
+            "balance": 20000,
+            "pending_transfer": 0,
+            "exchange_balance": 30000,
+            "exchange_commitment": 0
         }]
+
+        sorted_holders = sorted(holders, key=lambda x: x['account_address'])
 
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}
+        assert resp.json["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": sorted_holders}
 
     ####################################################################
     # Error

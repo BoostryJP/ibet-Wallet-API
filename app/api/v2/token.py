@@ -338,7 +338,8 @@ class TokenHoldersCollectionId(BaseResource):
 
         _token_holders: List[TokenHolder] = session.query(TokenHolder). \
             filter(TokenHolder.holder_list_id == _same_list_id_record.id). \
-            order_by(asc(TokenHolder.holder_list_id)).all()
+            order_by(asc(TokenHolder.account_address)).\
+            all()
         token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
         return self.on_success(res, {
