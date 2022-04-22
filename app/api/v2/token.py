@@ -21,7 +21,8 @@ from typing import List
 from cerberus import Validator
 from sqlalchemy import (
     or_,
-    desc
+    desc,
+    asc
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
@@ -337,7 +338,7 @@ class TokenHoldersCollectionId(BaseResource):
 
         _token_holders: List[TokenHolder] = session.query(TokenHolder). \
             filter(TokenHolder.holder_list_id == _same_list_id_record.id). \
-            all()
+            order_by(asc(TokenHolder.holder_list_id)).all()
         token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
         return self.on_success(res, {
