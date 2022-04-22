@@ -28,12 +28,18 @@ from web3.contract import (
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
+
 import log
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.model.db.tokenholders import TokenHoldersList, TokenHolderBatchStatus, TokenHolder
+from app.model.db.tokenholders import (
+    TokenHoldersList,
+    TokenHolderBatchStatus,
+    TokenHolder
+)
 from app.contracts import Contract as ContractOperator
 from app import config
 from app.config import (
@@ -185,7 +191,7 @@ class Processor:
             self.__sync_all(local_session, self.block_from, self.block_to)
             self.__update_status(local_session, TokenHolderBatchStatus.DONE)
             local_session.commit()
-        except Exception as e:
+        except Exception:
             local_session.rollback()
             self.__update_status(local_session, TokenHolderBatchStatus.FAILED)
             local_session.commit()
@@ -261,8 +267,10 @@ class Processor:
                         account_address=_to,
                         balance=+_value,
                     )
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_consume(self, block_from: int, block_to: int):
         """Sync Consume Events
@@ -283,8 +291,10 @@ class Processor:
                     account_address=_consumer,
                     balance=-_used,
                 )
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_lock(self, block_from: int, block_to: int):
         """Sync Lock Events
@@ -293,7 +303,6 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-
         try:
             token = self.token_contract
             events = token.events.Lock.getLogs(fromBlock=block_from, toBlock=block_to)
@@ -314,6 +323,8 @@ class Processor:
                     account_address=_account_address,
                     balance=-_value,
                 )
+        except ABIEventFunctionNotFound:
+            return
         except Exception as e:
             LOG.exception(e)
 
@@ -324,7 +335,6 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-
         try:
             token = self.token_contract
             events = token.events.Unlock.getLogs(fromBlock=block_from, toBlock=block_to)
@@ -338,8 +348,10 @@ class Processor:
                     account_address=_recipient_address,
                     balance=+_value,
                 )
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_issue(self, block_from: int, block_to: int):
         """Sync Issue Events
@@ -364,8 +376,10 @@ class Processor:
                         account_address=_target_address,
                         balance=+_amount,
                     )
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_redeem(self, block_from: int, block_to: int):
         """Sync Redeem Events
@@ -391,8 +405,10 @@ class Processor:
                         account_address=_target_address,
                         balance=-_amount,
                     )
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_apply_for_transfer(self, block_from: int, block_to: int):
         """Sync ApplyForTransfer Events
@@ -410,8 +426,10 @@ class Processor:
                 _to = args.get("to", ZERO_ADDRESS)
                 _value = int(args.get("value", 0))
                 self.balance_book.store(account_address=_from, balance=-_value, pending_transfer=+_value)
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_cancel_transfer(self, block_from: int, block_to: int):
         """Sync CancelTransfer Events
@@ -432,8 +450,10 @@ class Processor:
                     contract=token, function_name="applicationsForTransfer", args=(_index,)
                 )
                 self.balance_book.store(account_address=_from, balance=+_value, pending_transfer=-_value)
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_approve_transfer(self, block_from: int, block_to: int):
         """Sync ApproveTransfer Events
@@ -454,8 +474,10 @@ class Processor:
                     contract=token, function_name="applicationsForTransfer", args=(_index,)
                 )
                 self.balance_book.store(account_address=_from, balance=+_value, pending_transfer=-_value)
-        except Exception as e:
-            LOG.exception(e)
+        except ABIEventFunctionNotFound:
+            return
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_exchange(self, block_from: int, block_to: int):
         """Sync Events from IbetExchange
@@ -466,122 +488,145 @@ class Processor:
         """
         exchange_address = self.tradable_exchange_address
         try:
-            token = self.token_contract
             exchange = ContractOperator.get_contract(contract_name="IbetExchange", address=exchange_address)
+
             # NewOrder event
-            _event_list = exchange.events.NewOrder.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("tokenAddress", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    _account_address = args.get("accountAddress", ZERO_ADDRESS)
-                    _is_buy = args.get("isBuy", False)
-                    _amount = args.get("amount", 0)
-                    if not _is_buy:
-                        # If order is made by sell side, seller assets must be committed.
-                        self.balance_book.store(
-                            account_address=_account_address,
-                            exchange_balance=-_amount,
-                            exchange_commitment=+_amount,
-                        )
+            try:
+                _event_list = exchange.events.NewOrder.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        _account_address = args.get("accountAddress", ZERO_ADDRESS)
+                        _is_buy = args.get("isBuy", False)
+                        _amount = args.get("amount", 0)
+                        if not _is_buy:
+                            # If order is made by sell side, seller assets must be committed.
+                            self.balance_book.store(
+                                account_address=_account_address,
+                                exchange_balance=-_amount,
+                                exchange_commitment=+_amount,
+                            )
+            except ABIEventFunctionNotFound:
+                pass
 
             # CancelOrder event
-            _event_list = exchange.events.CancelOrder.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("tokenAddress", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    _account_address = args.get("accountAddress", ZERO_ADDRESS)
-                    _is_buy = args.get("isBuy", False)
-                    _amount = args.get("amount", 0)
-                    if not _is_buy:
-                        # If order made by sell side is cancelled, seller commitment must be released.
-                        self.balance_book.store(
-                            account_address=_account_address,
-                            exchange_balance=+_amount,
-                            exchange_commitment=-_amount,
-                        )
+            try:
+                _event_list = exchange.events.CancelOrder.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        _account_address = args.get("accountAddress", ZERO_ADDRESS)
+                        _is_buy = args.get("isBuy", False)
+                        _amount = args.get("amount", 0)
+                        if not _is_buy:
+                            # If order made by sell side is cancelled, seller commitment must be released.
+                            self.balance_book.store(
+                                account_address=_account_address,
+                                exchange_balance=+_amount,
+                                exchange_commitment=-_amount,
+                            )
+            except ABIEventFunctionNotFound:
+                pass
+
             # ForceCancelOrder event
-            _event_list = exchange.events.ForceCancelOrder.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("tokenAddress", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    _account_address = args.get("accountAddress", ZERO_ADDRESS)
-                    _is_buy = args.get("isBuy", False)
-                    _amount = args.get("amount", 0)
-                    if not _is_buy:
-                        # If order made by sell side is cancelled, seller commitment must be released.
-                        self.balance_book.store(
-                            account_address=_account_address,
-                            exchange_balance=+_amount,
-                            exchange_commitment=-_amount,
-                        )
+            try:
+                _event_list = exchange.events.ForceCancelOrder.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        _account_address = args.get("accountAddress", ZERO_ADDRESS)
+                        _is_buy = args.get("isBuy", False)
+                        _amount = args.get("amount", 0)
+                        if not _is_buy:
+                            # If order made by sell side is cancelled, seller commitment must be released.
+                            self.balance_book.store(
+                                account_address=_account_address,
+                                exchange_balance=+_amount,
+                                exchange_commitment=-_amount,
+                            )
+            except ABIEventFunctionNotFound:
+                pass
+
             # Agree event
-            _event_list = exchange.events.Agree.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("tokenAddress", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    _sell_address = args.get("sellAddress", ZERO_ADDRESS)
-                    _amount = args.get("amount", 0)
-                    _order_id = args.get("orderId", 0)
-                    _, _, _, _, _order_is_buy, _, _ = ContractOperator.call_function(
-                        contract=exchange, function_name="getOrder", args=(_order_id,)
-                    )
-                    if _order_is_buy:
-                        # If order is taken by sell side, seller assets must be committed.
-                        self.balance_book.store(
-                            account_address=_sell_address,
-                            exchange_balance=-_amount,
-                            exchange_commitment=+_amount,
-                        )
-            # SettlementOK event
-            _event_list = exchange.events.SettlementOK.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("tokenAddress", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    # If settlementOK is emitted, seller commitment must be subtracted.
-                    _buy_address = args.get("buyAddress", ZERO_ADDRESS)
-                    _sell_address = args.get("sellAddress", ZERO_ADDRESS)
-                    _amount = args.get("amount", 0)
-                    self.balance_book.store(
-                        account_address=_sell_address,
-                        exchange_commitment=-_amount,
-                    )
-                    self.balance_book.store(
-                        account_address=_buy_address,
-                        exchange_balance=+_amount,
-                    )
-            # SettlementNG event
-            _event_list = exchange.events.SettlementNG.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("tokenAddress", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    _order_id = args.get("orderId", ZERO_ADDRESS)
-                    (
-                        _maker_address,
-                        _token_address,
-                        _,
-                        _,
-                        _order_is_buy,
-                        _,
-                        _,
-                    ) = ContractOperator.call_function(contract=exchange, function_name="getOrder", args=(_order_id,))
-                    if _order_is_buy:
-                        # If settlementNG is emitted, seller commitment must be released.
+            try:
+                _event_list = exchange.events.Agree.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
                         _sell_address = args.get("sellAddress", ZERO_ADDRESS)
+                        _amount = args.get("amount", 0)
+                        _order_id = args.get("orderId", 0)
+                        _, _, _, _, _order_is_buy, _, _ = ContractOperator.call_function(
+                            contract=exchange, function_name="getOrder", args=(_order_id,)
+                        )
+                        if _order_is_buy:
+                            # If order is taken by sell side, seller assets must be committed.
+                            self.balance_book.store(
+                                account_address=_sell_address,
+                                exchange_balance=-_amount,
+                                exchange_commitment=+_amount,
+                            )
+            except ABIEventFunctionNotFound:
+                pass
+
+            # SettlementOK event
+            try:
+                _event_list = exchange.events.SettlementOK.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        # If settlementOK is emitted, seller commitment must be subtracted.
                         _buy_address = args.get("buyAddress", ZERO_ADDRESS)
+                        _sell_address = args.get("sellAddress", ZERO_ADDRESS)
                         _amount = args.get("amount", 0)
                         self.balance_book.store(
                             account_address=_sell_address,
-                            exchange_balance=+_amount,
                             exchange_commitment=-_amount,
                         )
-        except Exception as e:
-            LOG.exception(e)
+                        self.balance_book.store(
+                            account_address=_buy_address,
+                            exchange_balance=+_amount,
+                        )
+            except ABIEventFunctionNotFound:
+                pass
+
+            # SettlementNG event
+            try:
+                _event_list = exchange.events.SettlementNG.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("tokenAddress", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        _order_id = args.get("orderId", ZERO_ADDRESS)
+                        (
+                            _maker_address,
+                            _token_address,
+                            _,
+                            _,
+                            _order_is_buy,
+                            _,
+                            _,
+                        ) = ContractOperator.call_function(contract=exchange, function_name="getOrder", args=(_order_id,))
+                        if _order_is_buy:
+                            # If settlementNG is emitted, seller commitment must be released.
+                            _sell_address = args.get("sellAddress", ZERO_ADDRESS)
+                            _buy_address = args.get("buyAddress", ZERO_ADDRESS)
+                            _amount = args.get("amount", 0)
+                            self.balance_book.store(
+                                account_address=_sell_address,
+                                exchange_balance=+_amount,
+                                exchange_commitment=-_amount,
+                            )
+            except ABIEventFunctionNotFound:
+                pass
+
+        except Exception:
+            LOG.exception("An exception occurred during event synchronization")
 
     def __sync_escrow(self, block_from: int, block_to: int):
         """Sync Events from IbetSecurityTokenEscrow/IbetEscrow
@@ -593,66 +638,82 @@ class Processor:
         escrow_contract = self.escrow_contract
         try:
             # EscrowCreated event
-            _event_list = escrow_contract.events.EscrowCreated.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("token", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    # If EscrowCreated is emitted, sender seller assets must be committed.
-                    _account_address = args.get("sender", ZERO_ADDRESS)
-                    _amount = args.get("amount", 0)
-                    self.balance_book.store(
-                        account_address=_account_address,
-                        exchange_balance=-_amount,
-                        exchange_commitment=+_amount,
-                    )
-            # EscrowCanceled event
-            _event_list = escrow_contract.events.EscrowCanceled.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("token", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    # If EscrowCanceled is emitted, sender commitment must be released.
-                    _account_address = args.get("sender", ZERO_ADDRESS)
-                    _amount = args.get("amount", 0)
-                    self.balance_book.store(
-                        account_address=_account_address,
-                        exchange_balance=+_amount,
-                        exchange_commitment=-_amount,
-                    )
-            # EscrowFinished event
-            _event_list = escrow_contract.events.EscrowFinished.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("token", ZERO_ADDRESS)
-                if _token_address == self.target.token_address:
-                    _transfer_approval_required = args.get("transferApprovalRequired", False)
-                    if not _transfer_approval_required:
-                        # If the finished escrow need no approval, sender commitment must be transferred to recipient.
-                        _sender = args.get("sender", ZERO_ADDRESS)
-                        _recipient = args.get("recipient", ZERO_ADDRESS)
+            try:
+                _event_list = escrow_contract.events.EscrowCreated.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("token", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        # If EscrowCreated is emitted, sender seller assets must be committed.
+                        _account_address = args.get("sender", ZERO_ADDRESS)
                         _amount = args.get("amount", 0)
+                        self.balance_book.store(
+                            account_address=_account_address,
+                            exchange_balance=-_amount,
+                            exchange_commitment=+_amount,
+                        )
+            except ABIEventFunctionNotFound:
+                pass
+
+            # EscrowCanceled event
+            try:
+                _event_list = escrow_contract.events.EscrowCanceled.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("token", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        # If EscrowCanceled is emitted, sender commitment must be released.
+                        _account_address = args.get("sender", ZERO_ADDRESS)
+                        _amount = args.get("amount", 0)
+                        self.balance_book.store(
+                            account_address=_account_address,
+                            exchange_balance=+_amount,
+                            exchange_commitment=-_amount,
+                        )
+            except ABIEventFunctionNotFound:
+                pass
+
+            # EscrowFinished event
+            try:
+                _event_list = escrow_contract.events.EscrowFinished.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("token", ZERO_ADDRESS)
+                    if _token_address == self.target.token_address:
+                        _transfer_approval_required = args.get("transferApprovalRequired", False)
+                        if not _transfer_approval_required:
+                            # If the finished escrow need no approval, sender commitment must be transferred to recipient.
+                            _sender = args.get("sender", ZERO_ADDRESS)
+                            _recipient = args.get("recipient", ZERO_ADDRESS)
+                            _amount = args.get("amount", 0)
+                            self.balance_book.store(
+                                account_address=_recipient,
+                                exchange_balance=+_amount,
+                            )
+                            self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
+            except ABIEventFunctionNotFound:
+                pass
+
+            # ApproveTransfer event
+            try:
+                _event_list = escrow_contract.events.ApproveTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
+                for _event in _event_list:
+                    args = _event["args"]
+                    _token_address = args.get("token", ZERO_ADDRESS)
+                    _escrow_id = args.get("escrowId", ZERO_ADDRESS)
+                    _, _sender, _recipient, _amount, _, _ = ContractOperator.call_function(
+                        contract=escrow_contract, function_name="getEscrow", args=(_escrow_id,)
+                    )
+                    if _token_address == self.target.token_address:
+                        # If ApproveTransfer is emitted, sender commitment must be transferred to recipient.
                         self.balance_book.store(
                             account_address=_recipient,
                             exchange_balance=+_amount,
                         )
                         self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
-            # ApproveTransfer event
-            _event_list = escrow_contract.events.ApproveTransfer.getLogs(fromBlock=block_from, toBlock=block_to)
-            for _event in _event_list:
-                args = _event["args"]
-                _token_address = args.get("token", ZERO_ADDRESS)
-                _escrow_id = args.get("escrowId", ZERO_ADDRESS)
-                _, _sender, _recipient, _amount, _, _ = ContractOperator.call_function(
-                    contract=escrow_contract, function_name="getEscrow", args=(_escrow_id,)
-                )
-                if _token_address == self.target.token_address:
-                    # If ApproveTransfer is emitted, sender commitment must be transferred to recipient.
-                    self.balance_book.store(
-                        account_address=_recipient,
-                        exchange_balance=+_amount,
-                    )
-                    self.balance_book.store(account_address=_sender, exchange_commitment=-_amount)
+            except ABIEventFunctionNotFound:
+                pass
+
         except Exception as e:
             LOG.exception(e)
 
