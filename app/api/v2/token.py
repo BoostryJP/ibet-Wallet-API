@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import uuid
+from typing import List
 from cerberus import Validator
 from sqlalchemy import (
     or_,
@@ -334,23 +335,15 @@ class TokenHoldersCollectionId(BaseResource):
             description = "list_id: %s is not collection for contract_address: %s"%(list_id, contract_address)
             raise InvalidParameterError(description=description)
 
-        holders = []
-        if _same_list_id_record.batch_status == TokenHolderBatchStatus.PENDING.value:
-            return self.on_success(res, {
-                "status": _same_list_id_record.batch_status,
-                "holders": holders
-            })
-        else:
-            token_holders = session.query(TokenHolder). \
-                filter(TokenHolder.holder_list_id == _same_list_id_record.id). \
-                all()
-            for th in token_holders:
-                holders.append(th.account_address)
+        _token_holders: List[TokenHolder] = session.query(TokenHolder). \
+            filter(TokenHolder.holder_list_id == _same_list_id_record.id). \
+            all()
+        token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
-            return self.on_success(res, {
-                "status": _same_list_id_record.batch_status,
-                "holders": holders
-            })
+        return self.on_success(res, {
+            "status": _same_list_id_record.batch_status,
+            "holders": token_holders
+        })
 
 
 class TransferHistory(BaseResource):

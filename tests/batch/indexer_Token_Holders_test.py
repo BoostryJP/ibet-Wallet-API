@@ -828,21 +828,16 @@ class TestProcessor:
         assert trader_record.exchange_balance == _trader_record_validator.exchange_balance
         assert trader_record.exchange_commitment == _trader_record_validator.exchange_commitment
 
-    # <Normal 5>
+    # <Normal_5>
     # Share
     # Events
-    # - Transfer
-    # - Lock
-    # - Unlock
-    # - Exchange
-    #   - MakeOrder
-    #   - CancelOrder
-    #   - ForceCancelOrder
-    #   - TakeOrder
-    #   - CancelAgreement
-    #   - ConfirmAgreement
-    # - IssueFrom
-    # - RedeemFrom
+    # - ApplyForTransfer
+    # - CancelForTransfer
+    # - ApproveTransfer
+    # - Escrow
+    #   - CreateEscrow
+    #   - FinishEscrow
+    #   - ApproveTransfer
     def test_normal_5(
         self,
         processor: Processor,
@@ -965,7 +960,7 @@ class TestProcessor:
         assert trader_record.exchange_commitment == _trader_record_validator.exchange_commitment
 
     # <Normal_6>
-    # StraightBond
+    # Share
     # Events
     # - ApplyForTransfer - pending
     # - Escrow - pending

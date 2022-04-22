@@ -162,10 +162,13 @@ class TestV2TokenHoldersCollectionId:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
         token_contract = Contract.get_contract("IbetStraightBond", token["address"])
         register_personalinfo(self.trader, personal_info_contract)
+        register_personalinfo(self.user1, personal_info_contract)
 
         # Transfer
         bond_transfer_to_exchange(self.issuer, {"address": escrow_contract.address}, token, 10000)
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 30000)
+        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 50000)
+        bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 30000)
 
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = token["address"]
@@ -181,7 +184,20 @@ class TestV2TokenHoldersCollectionId:
         apiurl = self.apiurl_base.format(contract_address=token["address"], list_id=target_token_holders_list.list_id)
         resp = client.simulate_get(apiurl)
 
-        holders = [self.trader["account_address"]]
+        holders = [{
+            "account_address": self.trader["account_address"],
+            "balance": 30000,
+            "pending_transfer": 0,
+            "exchange_balance": 0,
+            "exchange_commitment": 0
+        }, {
+            "account_address": self.user1["account_address"],
+            "balance": 20000,
+            "pending_transfer": 0,
+            "exchange_balance": 30000,
+            "exchange_commitment": 0
+        }]
+
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert resp.json["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}

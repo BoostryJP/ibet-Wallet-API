@@ -64,8 +64,17 @@ class TokenHolder(Base):
     exchange_balance = Column(BigInteger)
     exchange_commitment = Column(BigInteger)
 
+    def json(self):
+        return {
+            "account_address": self.account_address,
+            "balance": self.balance,
+            "pending_transfer": self.pending_transfer,
+            "exchange_balance": self.exchange_balance,
+            "exchange_commitment": self.exchange_commitment,
+        }
+
     FIELDS = {
-        "holder_list": int,
+        "holder_list_id": int,
         "account_address": str,
         "balance": int,
         "pending_transfer": int,

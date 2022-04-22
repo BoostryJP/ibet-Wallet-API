@@ -2100,16 +2100,29 @@ paths:
                     type: object
                     properties:
                       status:
-                        description: status code of batch job
+                        description: Status code of token holders list batch job
                         type: string
                         enum: [pending, done, failed]
                       holders:
                         description: | 
-                          Token holder address list.
+                          Token holder list.
                           This list is excluding token owner address.
                         type: array
                         items:
-                          type: string
+                          type: object
+                          properties:
+                            balance:
+                              description: Amount of balance
+                              type: integer
+                            pending_transfer:
+                              description: Amount of pending transfer
+                              type: integer
+                            exchange_balance:
+                              description: Amount of balance in exchange
+                              type: integer
+                            exchange_commitment:
+                              description: Amount of commitment in exchange
+                              type: integer
         400:
           description: Invalid Parameter Error
           schema:
