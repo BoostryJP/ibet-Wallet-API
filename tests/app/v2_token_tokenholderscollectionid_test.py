@@ -17,13 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import uuid
+from unittest import mock
 import pytest
-from app.contracts import Contract
-
 
 from web3.middleware import geth_poa_middleware
 from web3 import Web3
 from app import config
+from app.contracts import Contract
 from app.model.db import TokenHolderBatchStatus, TokenHoldersList, Listing
 from batch.indexer_Token_Holders import Processor
 
@@ -177,7 +177,8 @@ class TestV2TokenHoldersCollectionId:
         session.merge(target_token_holders_list)
         session.commit()
 
-        processor.collect()
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=token["address"], list_id=target_token_holders_list.list_id)

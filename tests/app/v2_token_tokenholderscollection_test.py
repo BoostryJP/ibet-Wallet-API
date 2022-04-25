@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 import uuid
+from unittest import mock
 import pytest
 
 from web3.middleware import geth_poa_middleware
@@ -159,7 +160,8 @@ class TestV2TokenHoldersCollection:
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert resp.json["data"] == {"list_id": list_id, "status": TokenHolderBatchStatus.PENDING.value}
 
-        processor.collect()
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
 
         apiurl = self.apiurl_after_post.format(contract_address=token["address"], list_id=list_id)
         resp = client.simulate_get(apiurl)
