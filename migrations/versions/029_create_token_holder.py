@@ -13,10 +13,7 @@ table = Table(
     "token_holder", meta,
     Column("holder_list", BigInteger, primary_key=True),
     Column("account_address", String(42), primary_key=True),
-    Column("balance", BigInteger),
-    Column("pending_transfer", BigInteger),
-    Column("exchange_balance", BigInteger),
-    Column("exchange_commitment", BigInteger),
+    Column("hold_balance", BigInteger),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )

@@ -2111,17 +2111,13 @@ paths:
                         items:
                           type: object
                           properties:
-                            balance:
-                              description: Amount of balance
-                              type: integer
-                            pending_transfer:
-                              description: Amount of pending transfer
-                              type: integer
-                            exchange_balance:
-                              description: Amount of balance in exchange
-                              type: integer
-                            exchange_commitment:
-                              description: Amount of commitment in exchange
+                            account_address:
+                              description: Account address of token holder.
+                              type: string
+                            hold_balance:
+                              description: |
+                                Amount of balance.
+                                This includes balance/pending_transfer/exchange_balance/exchange_commitment.
                               type: integer
         400:
           description: Invalid Parameter Error

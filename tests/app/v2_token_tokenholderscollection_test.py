@@ -19,14 +19,12 @@ SPDX-License-Identifier: Apache-2.0
 import json
 import uuid
 import pytest
-from app.contracts import Contract
-
-from app.model.db import Listing
-from app import config
 
 from web3.middleware import geth_poa_middleware
 from web3 import Web3
-from app.model.db.tokenholders import TokenHolderBatchStatus, TokenHoldersList
+from app import config
+from app.contracts import Contract
+from app.model.db import TokenHolderBatchStatus, TokenHoldersList, Listing
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -165,13 +163,7 @@ class TestV2TokenHoldersCollection:
 
         apiurl = self.apiurl_after_post.format(contract_address=token["address"], list_id=list_id)
         resp = client.simulate_get(apiurl)
-        holders = [{
-            "account_address": self.trader["account_address"],
-            "balance": 30000,
-            "pending_transfer": 0,
-            "exchange_balance": 0,
-            "exchange_commitment": 0
-        }]
+        holders = [{"account_address": self.trader["account_address"], "hold_balance": 30000}]
         assert resp.status_code == 200
         assert resp.json["meta"] == {"code": 200, "message": "OK"}
         assert resp.json["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}

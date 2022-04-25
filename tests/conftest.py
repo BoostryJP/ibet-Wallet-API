@@ -241,6 +241,7 @@ def block_number(request):
 
     request.addfinalizer(teardown)
 
+
 # セッションの作成・自動ロールバック
 @pytest.fixture(scope='function')
 def session(request, db):

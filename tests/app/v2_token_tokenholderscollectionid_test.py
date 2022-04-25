@@ -20,12 +20,11 @@ import uuid
 import pytest
 from app.contracts import Contract
 
-from app.model.db import Listing
-from app import config
 
 from web3.middleware import geth_poa_middleware
 from web3 import Web3
-from app.model.db.tokenholders import TokenHolderBatchStatus, TokenHoldersList
+from app import config
+from app.model.db import TokenHolderBatchStatus, TokenHoldersList, Listing
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -186,16 +185,10 @@ class TestV2TokenHoldersCollectionId:
 
         holders = [{
             "account_address": self.trader["account_address"],
-            "balance": 30000,
-            "pending_transfer": 0,
-            "exchange_balance": 0,
-            "exchange_commitment": 0
+            "hold_balance": 30000
         }, {
             "account_address": self.user1["account_address"],
-            "balance": 20000,
-            "pending_transfer": 0,
-            "exchange_balance": 30000,
-            "exchange_commitment": 0
+            "hold_balance": 50000
         }]
 
         sorted_holders = sorted(holders, key=lambda x: x['account_address'])
