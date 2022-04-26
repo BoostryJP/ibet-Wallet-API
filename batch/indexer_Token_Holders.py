@@ -215,14 +215,21 @@ class Processor:
         :return: None
         """
         try:
-            # Get "HolderChanged" events from exchange contract
-            exchange_contract = ContractOperator.get_contract(
-                contract_name="IbetExchangeInterface", address=self.tradable_exchange_address
-            )
-
-            holder_changed_events = exchange_contract.events.HolderChanged.getLogs(fromBlock=block_from, toBlock=block_to)
-
             tmp_events = []
+
+            # Get "HolderChanged" events from exchange contract
+            try:
+                exchange_contract = ContractOperator.get_contract(
+                    contract_name="IbetExchangeInterface",
+                    address=self.tradable_exchange_address
+                )
+                holder_changed_events = exchange_contract.events.HolderChanged.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+            except ABIEventFunctionNotFound:
+                holder_changed_events = []
+
             for _event in holder_changed_events:
                 if self.token_contract.address == _event["args"]["token"]:
                     tmp_events.append(
@@ -235,7 +242,14 @@ class Processor:
                         }
                     )
 
-            token_transfer_events = self.token_contract.events.Transfer.getLogs(fromBlock=block_from, toBlock=block_to)
+            # Get "Transfer" events from token contract
+            try:
+                token_transfer_events = self.token_contract.events.Transfer.getLogs(
+                    fromBlock=block_from,
+                    toBlock=block_to
+                )
+            except ABIEventFunctionNotFound:
+                token_transfer_events = []
 
             for _event in token_transfer_events:
                 tmp_events.append(
@@ -264,11 +278,9 @@ class Processor:
                 if amount is not None and amount <= sys.maxsize:
                     # Update Balance（from account）
                     self.balance_book.store(account_address=from_account, amount=-amount)
-
                     # Update Balance（to account）
                     self.balance_book.store(account_address=to_account, amount=+amount)
-        except ABIEventFunctionNotFound:
-            return
+
         except Exception:
             LOG.exception("An exception occurred during event synchronization")
 
@@ -284,8 +296,10 @@ class Processor:
         """
         try:
             # Get "Issue" events from token contract
-            events = self.token_contract.events.Issue.getLogs(fromBlock=block_from, toBlock=block_to)
-
+            events = self.token_contract.events.Issue.getLogs(
+                fromBlock=block_from,
+                toBlock=block_to
+            )
             for event in events:
                 args = event["args"]
                 account_address = args.get("targetAddress", ZERO_ADDRESS)
@@ -313,8 +327,10 @@ class Processor:
         """
         try:
             # Get "Redeem" events from token contract
-            events = self.token_contract.events.Redeem.getLogs(fromBlock=block_from, toBlock=block_to)
-
+            events = self.token_contract.events.Redeem.getLogs(
+                fromBlock=block_from,
+                toBlock=block_to
+            )
             for event in events:
                 args = event["args"]
                 account_address = args.get("targetAddress", ZERO_ADDRESS)
@@ -342,8 +358,10 @@ class Processor:
         """
         try:
             # Get "Consume" events from token contract
-            events = self.token_contract.events.Consume.getLogs(fromBlock=block_from, toBlock=block_to)
-
+            events = self.token_contract.events.Consume.getLogs(
+                fromBlock=block_from,
+                toBlock=block_to
+            )
             for event in events:
                 args = event["args"]
                 account = args.get("consumer", ZERO_ADDRESS)

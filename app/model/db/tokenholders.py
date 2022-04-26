@@ -74,4 +74,3 @@ class TokenHolder(Base):
     }
 
     FIELDS.update(Base.FIELDS)
-
