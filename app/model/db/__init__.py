@@ -34,3 +34,8 @@ from .idx_agreement import (
 )
 from .idx_consume_coupon import IDXConsumeCoupon
 from .idx_position import IDXPosition
+from .tokenholders import (
+    TokenHoldersList,
+    TokenHolderBatchStatus,
+    TokenHolder
+)

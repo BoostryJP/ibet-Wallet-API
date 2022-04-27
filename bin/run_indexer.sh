@@ -39,6 +39,7 @@ if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
 fi
 
 python batch/indexer_Transfer.py &
+python batch/indexer_Token_Holders.py &
 
 if [ $SHARE_TOKEN_ENABLED = 1 ]; then
   python batch/indexer_Position_Share.py &
