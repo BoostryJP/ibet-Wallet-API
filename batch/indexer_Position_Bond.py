@@ -26,6 +26,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 from app.model.db.idx_position import IDXPositionBondBlockNumber
 
@@ -102,6 +103,10 @@ class Processor:
                     )
                 self.__set_idx_position_block_number(local_session, latest_block)
                 local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            raise e
         finally:
             local_session.close()
         LOG.info(f"<{process_name}> Initial sync has been completed")
@@ -128,6 +133,10 @@ class Processor:
                 )
                 self.__set_idx_position_block_number(local_session, latest_block)
                 local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            raise e
         finally:
             local_session.close()
 
@@ -196,6 +205,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from", "to"]
@@ -216,7 +228,7 @@ class Processor:
                                 exchange_commitment=_exchange_commitment
                             )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_lock(self, db_session: Session, block_from: int, block_to: int):
         """Sync Lock Events
@@ -232,6 +244,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["accountAddress"]
@@ -248,7 +263,7 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_unlock(self, db_session: Session, block_from: int, block_to: int):
         """Sync Unlock Events
@@ -264,6 +279,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["recipientAddress"]
@@ -280,7 +298,7 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_issue(self, db_session: Session, block_from: int, block_to: int):
         """Sync Issue Events
@@ -296,6 +314,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["targetAddress"]
@@ -312,7 +333,7 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_redeem(self, db_session: Session, block_from: int, block_to: int):
         """Sync Redeem Events
@@ -328,6 +349,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["targetAddress"]
@@ -344,7 +368,7 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync ApplyForTransfer Events
@@ -360,6 +384,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from"]
@@ -376,7 +403,7 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync CancelTransfer Events
@@ -392,6 +419,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from"]
@@ -408,7 +438,7 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync ApproveTransfer Events
@@ -424,6 +454,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 events_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from", "to"]
@@ -440,7 +473,7 @@ class Processor:
                             pending_transfer=_pending_transfer
                         )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_exchange(self, db_session: Session, block_from: int, block_to: int):
         """Sync Events from IbetExchange
@@ -460,10 +493,13 @@ class Processor:
                 account_list_tmp = []
 
                 # NewOrder event
-                _event_list = exchange.events.NewOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.NewOrder.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -471,10 +507,13 @@ class Processor:
                     })
 
                 # CancelOrder event
-                _event_list = exchange.events.CancelOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.CancelOrder.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -482,10 +521,13 @@ class Processor:
                     })
 
                 # ForceCancelOrder event
-                _event_list = exchange.events.ForceCancelOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.ForceCancelOrder.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -493,10 +535,13 @@ class Processor:
                     })
 
                 # Agree event
-                _event_list = exchange.events.Agree.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.Agree.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -504,10 +549,13 @@ class Processor:
                     })
 
                 # SettlementOK event
-                _event_list = exchange.events.SettlementOK.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.SettlementOK.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -519,10 +567,13 @@ class Processor:
                     })
 
                 # SettlementNG event
-                _event_list = exchange.events.SettlementNG.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.SettlementNG.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -552,7 +603,7 @@ class Processor:
                         exchange_commitment=exchange_commitment
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_escrow(self, db_session: Session, block_from: int, block_to: int):
         """Sync Events from IbetSecurityTokenEscrow
@@ -569,10 +620,13 @@ class Processor:
                 account_list_tmp = []
 
                 # EscrowCreated event
-                _event_list = escrow.events.EscrowCreated.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = escrow.events.EscrowCreated.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
@@ -580,10 +634,13 @@ class Processor:
                     })
 
                 # EscrowCanceled event
-                _event_list = escrow.events.EscrowCanceled.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = escrow.events.EscrowCanceled.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
@@ -591,10 +648,13 @@ class Processor:
                     })
 
                 # HolderChanged event
-                _event_list = escrow.events.HolderChanged.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = escrow.events.HolderChanged.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
@@ -628,7 +688,7 @@ class Processor:
                         exchange_commitment=exchange_commitment
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     @staticmethod
     def __get_idx_position_block_number(db_session: Session):
@@ -810,7 +870,18 @@ class Processor:
 def main():
     LOG.info("Service started successfully")
     processor = Processor()
-    processor.initial_sync()
+
+    initial_synced_completed = False
+    while not initial_synced_completed:
+        try:
+            processor.initial_sync()
+            LOG.debug("Initial sync is processed successfully")
+            initial_synced_completed = True
+        except Exception:
+            LOG.exception("Initial sync failed")
+
+        time.sleep(10)
+
     while True:
         try:
             processor.sync_new_logs()

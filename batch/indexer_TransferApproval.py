@@ -28,6 +28,7 @@ from datetime import (
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -71,9 +72,9 @@ ibetSecurityTokenEscrow
 
 class Processor:
     """Processor for indexing Token transfer approval events"""
+    latest_block = 0
 
     def __init__(self):
-        self.latest_block = web3.eth.blockNumber
         self.token_list = []
 
     @staticmethod
@@ -128,6 +129,8 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
+        self.latest_block = web3.eth.blockNumber
         try:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
@@ -154,12 +157,18 @@ class Processor:
                     block_to=self.latest_block
                 )
             local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
         try:
             self.__get_contract_list(local_session)
             blockTo = web3.eth.blockNumber
@@ -172,6 +181,11 @@ class Processor:
             )
             self.latest_block = blockTo
             local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -199,6 +213,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     value = args.get("value", 0)
@@ -219,7 +236,7 @@ class Processor:
                             block_timestamp=block_timestamp
                         )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_token_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync CancelTransfer events of tokens
@@ -235,6 +252,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     self.__sink_on_transfer_approval(
@@ -247,7 +267,7 @@ class Processor:
                         to_address=args.get("to", ZERO_ADDRESS),
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_token_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync ApproveTransfer events of tokens
@@ -263,6 +283,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     block_timestamp = self.get_block_timestamp(event=event)
@@ -278,7 +301,7 @@ class Processor:
                         block_timestamp=block_timestamp
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_exchange_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync ApplyForTransfer events of exchanges
@@ -294,6 +317,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     value = args.get("value", 0)
@@ -314,7 +340,7 @@ class Processor:
                             block_timestamp=block_timestamp
                         )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_exchange_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync CancelTransfer events of exchanges
@@ -330,6 +356,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     self.__sink_on_transfer_approval(
@@ -342,7 +371,7 @@ class Processor:
                         to_address=args.get("to", ZERO_ADDRESS),
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_exchange_escrow_finished(self, db_session: Session, block_from: int, block_to: int):
         """Sync EscrowFinished events of exchanges
@@ -359,6 +388,9 @@ class Processor:
                     toBlock=block_to,
                     argument_filters={"transferApprovalRequired": True}
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     self.__sink_on_transfer_approval(
@@ -371,7 +403,7 @@ class Processor:
                         to_address=args.get("recipient", ZERO_ADDRESS)
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_exchange_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync ApproveTransfer events of exchanges
@@ -387,6 +419,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     block_timestamp = self.get_block_timestamp(event=event)
@@ -400,7 +435,7 @@ class Processor:
                         block_timestamp=block_timestamp
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     @staticmethod
     def __sink_on_transfer_approval(db_session: Session,
@@ -480,7 +515,18 @@ class Processor:
 def main():
     LOG.info("Service started successfully")
     processor = Processor()
-    processor.initial_sync()
+
+    initial_synced_completed = False
+    while not initial_synced_completed:
+        try:
+            processor.initial_sync()
+            LOG.debug("Initial sync is processed successfully")
+            initial_synced_completed = True
+        except Exception:
+            LOG.exception("Initial sync failed")
+
+        time.sleep(5)
+
     while True:
         try:
             processor.sync_new_logs()
