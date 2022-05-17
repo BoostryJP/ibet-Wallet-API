@@ -104,7 +104,6 @@ class Contract:
         :param default_returns: Default return when BadFunctionCallOutput is raised
         :return: Return from function or default return
         """
-        _function = getattr(contract.functions, function_name)
 
         try:
             _function = getattr(contract.functions, function_name)
