@@ -546,11 +546,12 @@ class TestProcessor:
 
         # Run target process
         processor.sync_new_logs()
+
+        # Clear cache in DB session.
+        session.rollback()
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Clear cache in session.
-        session.expire_all()
         # Latest_block is incremented in "sync_new_logs" process.
         _idx_position_coupon_block_number = session.query(IDXPositionCouponBlockNumber).first()
         assert _idx_position_coupon_block_number.latest_block_number == block_number_current
@@ -572,11 +573,15 @@ class TestProcessor:
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
             processor.initial_sync()
+        # Clear cache in DB session.
+        session.rollback()
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
         _idx_position_coupon_block_number_af = session.query(IDXPositionCouponBlockNumber).first()
         assert _idx_position_coupon_block_number_bf.latest_block_number == _idx_position_coupon_block_number_af.latest_block_number
+        # Clear cache in DB session.
+        session.rollback()
 
         # Transfer
         coupon_transfer_to_exchange(
@@ -586,6 +591,8 @@ class TestProcessor:
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
+        # Clear cache in DB session.
+        session.rollback()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
@@ -611,11 +618,15 @@ class TestProcessor:
         with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
                 pytest.raises(ServiceUnavailable):
             processor.initial_sync()
+        # Clear cache in DB session.
+        session.rollback()
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
         _idx_position_coupon_block_number_af = session.query(IDXPositionCouponBlockNumber).first()
         assert _idx_position_coupon_block_number_bf.latest_block_number == _idx_position_coupon_block_number_af.latest_block_number
+        # Clear cache in DB session.
+        session.rollback()
 
         # Transfer
         coupon_transfer_to_exchange(
@@ -627,6 +638,8 @@ class TestProcessor:
                 pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
+        # Clear cache in DB session.
+        session.rollback()
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
@@ -651,12 +664,16 @@ class TestProcessor:
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
                 pytest.raises(SQLAlchemyError):
             processor.initial_sync()
+        # Clear cache in DB session.
+        session.rollback()
 
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
         _idx_position_coupon_block_number_af = session.query(IDXPositionCouponBlockNumber).first()
         assert _idx_position_coupon_block_number_bf.latest_block_number == _idx_position_coupon_block_number_af.latest_block_number
+        # Clear cache in DB session.
+        session.rollback()
 
         # Transfer
         coupon_transfer_to_exchange(
@@ -668,6 +685,8 @@ class TestProcessor:
                 pytest.raises(SQLAlchemyError):
             processor.sync_new_logs()
 
+        # Clear cache in DB session.
+        session.rollback()
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
