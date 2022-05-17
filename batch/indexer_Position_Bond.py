@@ -774,18 +774,7 @@ class Processor:
 def main():
     LOG.info("Service started successfully")
     processor = Processor()
-
-    initial_synced_completed = False
-    while initial_synced_completed:
-        try:
-            processor.initial_sync()
-            LOG.debug("Initial sync is processed successfully")
-            initial_synced_completed = True
-        except Exception:
-            LOG.exception("Initial sync failed")
-
-        time.sleep(10)
-
+    processor.initial_sync()
     while True:
         try:
             processor.sync_new_logs()

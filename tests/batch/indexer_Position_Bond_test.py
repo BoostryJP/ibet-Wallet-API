@@ -17,10 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import logging
+import time
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-import time
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -33,8 +33,7 @@ from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
-    IDXPosition,
-    Node
+    IDXPosition
 )
 from batch import indexer_Position_Bond
 from batch.indexer_Position_Bond import main, LOG
@@ -138,15 +137,6 @@ class TestProcessor:
         _listing.max_sell_amount = 1000000
         _listing.owner_address = TestProcessor.issuer["account_address"]
         session.add(_listing)
-        session.commit()
-
-    @staticmethod
-    def insert_node_data(session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=0):
-        node = Node()
-        node.is_synced = is_synced
-        node.endpoint_uri = endpoint_uri
-        node.priority = priority
-        session.add(node)
         session.commit()
 
     ###########################################################################
@@ -999,7 +989,7 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        block_number_bf = web3.eth.blockNumber
+        block_number_current = web3.eth.blockNumber
         # Run initial sync
         processor.initial_sync()
 
@@ -1007,13 +997,13 @@ class TestProcessor:
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
         # Latest_block is incremented in "initial_sync" process.
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block == block_number_current
 
         # Transfer
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        block_number_bf = web3.eth.blockNumber
+        block_number_current = web3.eth.blockNumber
         # Run target process
         processor.sync_new_logs()
 
@@ -1024,7 +1014,7 @@ class TestProcessor:
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
-        assert processor.latest_block == block_number_bf
+        assert processor.latest_block == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     @mock.patch("web3.eth.Eth.getCode", MagicMock(side_effect=ServiceUnavailable()))
@@ -1160,6 +1150,7 @@ class TestProcessor:
 
         # Run mainloop once and fail with web3 utils error
         with mock.patch("batch.indexer_Position_Bond.time", time_mock),\
+            mock.patch("batch.indexer_Position_Bond.Processor.initial_sync", return_value=True), \
             mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
                 pytest.raises(TypeError):
             # Expect that initial_sync() raises ServiceUnavailable and handled in mainloop.
@@ -1167,4 +1158,3 @@ class TestProcessor:
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
         caplog.clear()
-
