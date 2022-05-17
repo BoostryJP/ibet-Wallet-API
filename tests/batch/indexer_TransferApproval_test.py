@@ -1104,6 +1104,19 @@ class TestProcessor:
             to_address=self.account1["account_address"],
             amount=5000
         )
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
 
         block_number_current = web3.eth.blockNumber
 
@@ -1117,12 +1130,6 @@ class TestProcessor:
         assert len(_transfer_approval_list) == 0
         # Latest_block is incremented in "initial_sync" process.
         assert processor.latest_block == block_number_current
-
-        # Change transfer approval required to True
-        self.set_transfer_approval_required(
-            token_contract=token,
-            required=True
-        )
 
         # Apply for transfer
         token.functions.applyForTransfer(
@@ -1185,6 +1192,20 @@ class TestProcessor:
             to_address=self.account1["account_address"],
             amount=5000
         )
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -1196,12 +1217,6 @@ class TestProcessor:
             all()
         assert len(_transfer_approval_list) == 0
         assert processor.latest_block == block_number_bf
-
-        # Change transfer approval required to True
-        self.set_transfer_approval_required(
-            token_contract=token,
-            required=True
-        )
 
         # Apply for transfer
         token.functions.applyForTransfer(
@@ -1261,6 +1276,19 @@ class TestProcessor:
             to_address=self.account1["account_address"],
             amount=5000
         )
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
@@ -1273,12 +1301,6 @@ class TestProcessor:
             all()
         assert len(_transfer_approval_list) == 0
         assert processor.latest_block == block_number_bf
-
-        # Change transfer approval required to True
-        self.set_transfer_approval_required(
-            token_contract=token,
-            required=True
-        )
 
         # Apply for transfer
         token.functions.applyForTransfer(
@@ -1339,6 +1361,19 @@ class TestProcessor:
             to_address=self.account1["account_address"],
             amount=5000
         )
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises SQLAlchemyError.
@@ -1352,12 +1387,6 @@ class TestProcessor:
             all()
         assert len(_transfer_approval_list) == 0
         assert processor.latest_block == block_number_bf
-
-        # Change transfer approval required to True
-        self.set_transfer_approval_required(
-            token_contract=token,
-            required=True
-        )
 
         # Apply for transfer
         token.functions.applyForTransfer(
