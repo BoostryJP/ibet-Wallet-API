@@ -26,6 +26,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -52,8 +53,10 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
+    """Processor for indexing Membership balances"""
+    latest_block = 0
+
     def __init__(self):
-        self.latest_block = web3.eth.blockNumber
         self.token_list = []
 
     @staticmethod
@@ -62,6 +65,8 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
+        self.latest_block = web3.eth.blockNumber
         try:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
@@ -88,12 +93,18 @@ class Processor:
                     block_to=self.latest_block
                 )
             local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
         try:
             self.__get_contract_list(local_session)
             blockTo = web3.eth.blockNumber
@@ -106,6 +117,11 @@ class Processor:
             )
             self.latest_block = blockTo
             local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -165,6 +181,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
@@ -180,7 +199,7 @@ class Processor:
                                 exchange_commitment=_exchange_commitment
                             )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_exchange(self, db_session: Session, block_from: int, block_to: int):
         """Sync Events from IbetExchange
@@ -200,10 +219,13 @@ class Processor:
                 account_list_tmp = []
 
                 # NewOrder event
-                _event_list = exchange.events.NewOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.NewOrder.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -211,10 +233,13 @@ class Processor:
                     })
 
                 # CancelOrder event
-                _event_list = exchange.events.CancelOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.CancelOrder.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -222,10 +247,13 @@ class Processor:
                     })
 
                 # ForceCancelOrder event
-                _event_list = exchange.events.ForceCancelOrder.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.ForceCancelOrder.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -233,10 +261,13 @@ class Processor:
                     })
 
                 # Agree event
-                _event_list = exchange.events.Agree.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.Agree.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -244,10 +275,13 @@ class Processor:
                     })
 
                 # SettlementOK event
-                _event_list = exchange.events.SettlementOK.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.SettlementOK.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -259,10 +293,13 @@ class Processor:
                     })
 
                 # SettlementNG event
-                _event_list = exchange.events.SettlementNG.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = exchange.events.SettlementNG.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
@@ -309,10 +346,13 @@ class Processor:
                 account_list_tmp = []
 
                 # EscrowCreated event
-                _event_list = escrow.events.EscrowCreated.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = escrow.events.EscrowCreated.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
@@ -320,10 +360,13 @@ class Processor:
                     })
 
                 # EscrowCanceled event
-                _event_list = escrow.events.EscrowCanceled.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = escrow.events.EscrowCanceled.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
@@ -331,10 +374,13 @@ class Processor:
                     })
 
                 # EscrowFinished event
-                _event_list = escrow.events.EscrowFinished.getLogs(
-                    fromBlock=block_from,
-                    toBlock=block_to
-                )
+                try:
+                    _event_list = escrow.events.EscrowFinished.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+                except ABIEventFunctionNotFound:
+                    _event_list = []
                 for _event in _event_list:
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
@@ -368,7 +414,7 @@ class Processor:
                         exchange_commitment=exchange_commitment
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     @staticmethod
     def __get_account_balance_all(token_contract, account_address: str):

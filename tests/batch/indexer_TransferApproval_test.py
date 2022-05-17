@@ -16,21 +16,28 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import logging
+import time
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from unittest import mock
 from unittest.mock import MagicMock
 from datetime import datetime
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.exceptions import ABIEventFunctionNotFound
 
 from app import config
 from app.contracts import Contract
+from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
     IDXTransferApproval
 )
 from batch import indexer_TransferApproval
+from batch.indexer_TransferApproval import main, LOG
 from tests.account_config import eth_account
 from tests.contract_modules import (
     transfer_token,
@@ -54,6 +61,17 @@ def processor(test_module, session):
     processor = test_module.Processor()
     processor.initial_sync()
     return processor
+
+
+@pytest.fixture(scope="function")
+def main_func(test_module):
+    LOG = logging.getLogger("Processor")
+    default_log_level = LOG.level
+    LOG.setLevel(logging.DEBUG)
+    LOG.propagate = True
+    yield main
+    LOG.propagate = False
+    LOG.setLevel(default_log_level)
 
 
 class TestProcessor:
@@ -1043,11 +1061,15 @@ class TestProcessor:
     ###########################################################################
     # Error Case
     ###########################################################################
+    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
+    # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
+    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
-    # <Error_1>
-    # Exception on getting logs
-    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, processor, shared_contract, session):
+    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
+    def test_error_1_1(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1080,9 +1102,96 @@ class TestProcessor:
             token_contract=token,
             from_address=self.issuer["account_address"],
             to_address=self.account1["account_address"],
-            amount=10000
+            amount=5000
+        )
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        block_number_current = web3.eth.blockNumber
+
+        # Run initial sync
+        processor.initial_sync()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 0
+        # Latest_block is incremented in "initial_sync" process.
+        assert processor.latest_block == block_number_current
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+        block_number_current = web3.eth.blockNumber
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 0
+        # Latest_block is incremented in "initial_sync" process.
+        assert processor.latest_block == block_number_current
+
+    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    @mock.patch("web3.eth.Eth.getBlock", MagicMock(side_effect=ServiceUnavailable()))
+    def test_error_1_2(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token.address,
+            db_session=session
         )
 
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=5000
+        )
         # Change transfer approval required to True
         self.set_transfer_approval_required(
             token_contract=token,
@@ -1098,11 +1207,224 @@ class TestProcessor:
             "from": self.account1["account_address"]
         })
 
-        # Run target process
-        processor.sync_new_logs()
+        block_number_bf = processor.latest_block
+        # Expect that initial_sync() raises ServiceUnavailable.
+        with pytest.raises(ServiceUnavailable):
+            processor.initial_sync()
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 0
+        assert processor.latest_block == block_number_bf
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        block_number_bf = processor.latest_block
+        # Expect that sync_new_logs() raises ServiceUnavailable.
+        with pytest.raises(ServiceUnavailable):
+            processor.sync_new_logs()
 
         # Assertion
         _transfer_approval_list = session.query(IDXTransferApproval). \
             order_by(IDXTransferApproval.created). \
             all()
         assert len(_transfer_approval_list) == 0
+        # Latest_block is NOT incremented in "sync_new_logs" process.
+        assert processor.latest_block == block_number_bf
+
+    # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
+    def test_error_2_1(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token.address,
+            db_session=session
+        )
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=5000
+        )
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        block_number_bf = processor.latest_block
+        # Expect that initial_sync() raises ServiceUnavailable.
+        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+                pytest.raises(ServiceUnavailable):
+            processor.initial_sync()
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 0
+        assert processor.latest_block == block_number_bf
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        block_number_bf = processor.latest_block
+        # Expect that sync_new_logs() raises ServiceUnavailable.
+        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+                pytest.raises(ServiceUnavailable):
+            processor.sync_new_logs()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 0
+        # Latest_block is NOT incremented in "sync_new_logs" process.
+        assert processor.latest_block == block_number_bf
+
+    # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
+    def test_error_2_2(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Issue token
+        token = self.issue_token_share(
+            issuer=self.issuer,
+            exchange_contract=None,
+            personal_info_contract=personal_info_contract,
+            token_list_contract=token_list_contract
+        )
+        self.list_token(
+            token_address=token.address,
+            db_session=session
+        )
+
+        # Register personal info
+        self.register_personal_info(
+            account_address=self.account1["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+        self.register_personal_info(
+            account_address=self.account2["account_address"],
+            link_address=self.issuer["account_address"],
+            personal_info_contract=personal_info_contract
+        )
+
+        # Transfer token: from issuer to account1
+        transfer_token(
+            token_contract=token,
+            from_address=self.issuer["account_address"],
+            to_address=self.account1["account_address"],
+            amount=5000
+        )
+        # Change transfer approval required to True
+        self.set_transfer_approval_required(
+            token_contract=token,
+            required=True
+        )
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        block_number_bf = processor.latest_block
+        # Expect that initial_sync() raises SQLAlchemyError.
+        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
+                pytest.raises(SQLAlchemyError):
+            processor.initial_sync()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 0
+        assert processor.latest_block == block_number_bf
+
+        # Apply for transfer
+        token.functions.applyForTransfer(
+            self.account2["account_address"],
+            2000,
+            "978266096"  # 2000/12/31 12:34:56
+        ).transact({
+            "from": self.account1["account_address"]
+        })
+
+        block_number_bf = processor.latest_block
+        # Expect that sync_new_logs() raises SQLAlchemyError.
+        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
+                pytest.raises(SQLAlchemyError):
+            processor.sync_new_logs()
+
+        # Assertion
+        _transfer_approval_list = session.query(IDXTransferApproval). \
+            order_by(IDXTransferApproval.created). \
+            all()
+        assert len(_transfer_approval_list) == 0
+        # Latest_block is NOT incremented in "sync_new_logs" process.
+        assert processor.latest_block == block_number_bf
+
+    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
+    def test_error_3(self, main_func, shared_contract, session, caplog):
+        # Mocking time.sleep to break mainloop
+        time_mock = MagicMock(wraps=time)
+        time_mock.sleep.side_effect = TypeError()
+
+        # Run mainloop once and fail with web3 utils error
+        with mock.patch("batch.indexer_TransferApproval.time", time_mock),\
+            mock.patch("batch.indexer_TransferApproval.Processor.initial_sync", return_value=True), \
+            mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+                pytest.raises(TypeError):
+            # Expect that initial_sync() raises ServiceUnavailable and handled in mainloop.
+            main_func()
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
+        caplog.clear()
+

@@ -20,7 +20,7 @@ import json
 
 from eth_utils import to_checksum_address
 from web3 import contract
-from web3.exceptions import BadFunctionCallOutput
+from web3.exceptions import BadFunctionCallOutput, ABIFunctionNotFound
 
 from app.utils.web3_utils import Web3Wrapper
 
@@ -104,14 +104,14 @@ class Contract:
         :param default_returns: Default return when BadFunctionCallOutput is raised
         :return: Return from function or default return
         """
-        _function = getattr(contract.functions, function_name)
 
         try:
+            _function = getattr(contract.functions, function_name)
             result = _function(*args).call()
-        except BadFunctionCallOutput:
+        except (BadFunctionCallOutput, ABIFunctionNotFound) as web3_exception:
             if default_returns is not None:
                 return default_returns
             else:
-                raise BadFunctionCallOutput
+                raise web3_exception
 
         return result

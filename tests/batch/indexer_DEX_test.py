@@ -16,20 +16,27 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import logging
+import time
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from unittest import mock
 from unittest.mock import MagicMock
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.exceptions import ABIEventFunctionNotFound
 
 from app import config
+from app.errors import ServiceUnavailable
 from app.model.db import (
     IDXOrder,
     IDXAgreement,
     AgreementStatus,
     Listing
 )
+from batch.indexer_DEX import main, LOG
 from tests.conftest import ibet_exchange_contract
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -98,6 +105,17 @@ def processor_factory(session, shared_contract):
         return processor, exchange_address
 
     return _processor
+
+
+@pytest.fixture(scope="function")
+def main_func(processor_factory):
+    LOG = logging.getLogger("Processor")
+    default_log_level = LOG.level
+    LOG.setLevel(logging.DEBUG)
+    LOG.propagate = True
+    yield main
+    LOG.propagate = False
+    LOG.setLevel(default_log_level)
 
 
 class TestProcessor:
@@ -786,11 +804,15 @@ class TestProcessor:
     ###########################################################################
     # Error Case
     ###########################################################################
+    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
+    # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
+    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
-    # <Error_1>
-    # Error occur
-    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, processor_factory, shared_contract, session):
+    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
+    def test_error_1_1(self, processor_factory, shared_contract, session):
         processor, exchange_address = processor_factory(bond=True)
 
         # Issue Token
@@ -802,8 +824,29 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         # Create Order
-        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 1000000)
-        make_sell(self.issuer, {"address": exchange_contract_address}, token, 1000000, 100)
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_current = web3.eth.blockNumber
+        # Run initial sync
+        processor.initial_sync()
+
+        # Assertion
+        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        assert len(_order_list) == 0
+        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        assert len(_agreement_list) == 0
+
+        # Latest_block is incremented in "initial_sync" process.
+        assert processor.latest_block == block_number_current
+
+        # Create Order
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_current = web3.eth.blockNumber
+        # Run target process
+        processor.sync_new_logs()
 
         # Run target process
         processor.sync_new_logs()
@@ -813,3 +856,160 @@ class TestProcessor:
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
         assert len(_agreement_list) == 0
+        # Latest_block is incremented in "sync_new_logs" process.
+        assert processor.latest_block == block_number_current
+
+    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    @mock.patch("web3.eth.Eth.getBlock", MagicMock(side_effect=ServiceUnavailable()))
+    def test_error_1_2(self, processor_factory, shared_contract, session):
+        processor, exchange_address = processor_factory(bond=True)
+
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        exchange_contract_address = exchange_address["bond"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = self.issue_token_bond(
+            self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
+        self.listing_token(token["address"], session)
+
+        # Create Order
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_bf = processor.latest_block
+        # Expect that initial_sync() raises ServiceUnavailable.
+        with pytest.raises(ServiceUnavailable):
+            processor.initial_sync()
+        # Assertion
+        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        assert len(_order_list) == 0
+        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        assert len(_agreement_list) == 0
+        assert processor.latest_block == block_number_bf
+
+        # Create Order
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_bf = processor.latest_block
+        # Expect that sync_new_logs() raises ServiceUnavailable.
+        with pytest.raises(ServiceUnavailable):
+            processor.sync_new_logs()
+
+        # Assertion
+        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        assert len(_order_list) == 0
+        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        assert len(_agreement_list) == 0
+        # Latest_block is NOT incremented in "sync_new_logs" process.
+        assert processor.latest_block == block_number_bf
+
+    # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
+    def test_error_2_1(self, processor_factory, shared_contract, session):
+        processor, exchange_address = processor_factory(bond=True)
+
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        exchange_contract_address = exchange_address["bond"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = self.issue_token_bond(
+            self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
+        self.listing_token(token["address"], session)
+
+        # Create Order
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_bf = processor.latest_block
+        # Expect that initial_sync() raises ServiceUnavailable.
+        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+                pytest.raises(ServiceUnavailable):
+            processor.initial_sync()
+        # Assertion
+        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        assert len(_order_list) == 0
+        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        assert len(_agreement_list) == 0
+        assert processor.latest_block == block_number_bf
+
+        # Create Order
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_bf = processor.latest_block
+        # Expect that sync_new_logs() raises ServiceUnavailable.
+        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+                pytest.raises(ServiceUnavailable):
+            processor.sync_new_logs()
+
+        # Assertion
+        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        assert len(_order_list) == 0
+        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        assert len(_agreement_list) == 0
+        # Latest_block is NOT incremented in "sync_new_logs" process.
+        assert processor.latest_block == block_number_bf
+
+    # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
+    def test_error_2_2(self, processor_factory, shared_contract, session):
+        processor, exchange_address = processor_factory(bond=True)
+
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        exchange_contract_address = exchange_address["bond"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        token = self.issue_token_bond(
+            self.issuer, exchange_contract_address, personal_info_contract_address, token_list_contract)
+        self.listing_token(token["address"], session)
+
+        # Create Order
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_bf = processor.latest_block
+        # Expect that initial_sync() raises SQLAlchemyError.
+        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
+                pytest.raises(SQLAlchemyError):
+            processor.initial_sync()
+
+        # Assertion
+        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        assert len(_order_list) == 0
+        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        assert len(_agreement_list) == 0
+        assert processor.latest_block == block_number_bf
+
+        # Create Order
+        bond_transfer_to_exchange(self.issuer, {"address": exchange_contract_address}, token, 500000)
+        make_sell(self.issuer, {"address": exchange_contract_address}, token, 500000, 100)
+
+        block_number_bf = processor.latest_block
+        # Expect that sync_new_logs() raises SQLAlchemyError.
+        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
+                pytest.raises(SQLAlchemyError):
+            processor.sync_new_logs()
+
+        # Assertion
+        _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
+        assert len(_order_list) == 0
+        _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
+        assert len(_agreement_list) == 0
+        # Latest_block is NOT incremented in "sync_new_logs" process.
+        assert processor.latest_block == block_number_bf
+
+    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
+    def test_error_3(self, main_func, processor_factory, shared_contract, session, caplog):
+        # Mocking time.sleep to break mainloop
+        time_mock = MagicMock(wraps=time)
+        time_mock.sleep.side_effect = TypeError()
+
+        # Run mainloop once and fail with web3 utils error
+        with mock.patch("batch.indexer_DEX.time", time_mock),\
+            mock.patch("batch.indexer_DEX.Processor.initial_sync", return_value=True), \
+            mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+                pytest.raises(TypeError):
+            # Expect that initial_sync() raises ServiceUnavailable and handled in mainloop.
+            main_func()
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
+        caplog.clear()
