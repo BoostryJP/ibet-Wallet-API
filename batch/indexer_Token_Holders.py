@@ -345,9 +345,6 @@ class Processor:
                     if amount is not None and amount <= sys.maxsize:
                         # Update Balance
                         self.balance_book.store(account_address=account_address, amount=-amount)
-
-        except ABIEventFunctionNotFound:
-            return
         except Exception as e:
             raise e
 
@@ -375,8 +372,6 @@ class Processor:
                 account = args.get("consumer", ZERO_ADDRESS)
                 amount = args.get("value", ZERO_ADDRESS)
                 self.balance_book.store(account_address=account, amount=-amount)
-        except ABIEventFunctionNotFound:
-            return
         except Exception as e:
             raise e
 
