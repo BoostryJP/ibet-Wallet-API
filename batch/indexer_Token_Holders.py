@@ -167,11 +167,12 @@ class Processor:
             self.__process_all(local_session, self.block_from, self.block_to)
             self.__update_status(local_session, TokenHolderBatchStatus.DONE)
             local_session.commit()
-        except Exception:
+        except Exception as e:
             LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
             self.__update_status(local_session, TokenHolderBatchStatus.FAILED)
             local_session.commit()
+            raise e
         finally:
             local_session.close()
             LOG.info(f"<{process_name}> Collect job has been completed")
@@ -218,11 +219,11 @@ class Processor:
             tmp_events = []
 
             # Get "HolderChanged" events from exchange contract
+            exchange_contract = ContractOperator.get_contract(
+                contract_name="IbetExchangeInterface",
+                address=self.tradable_exchange_address
+            )
             try:
-                exchange_contract = ContractOperator.get_contract(
-                    contract_name="IbetExchangeInterface",
-                    address=self.tradable_exchange_address
-                )
                 holder_changed_events = exchange_contract.events.HolderChanged.getLogs(
                     fromBlock=block_from,
                     toBlock=block_to
@@ -281,8 +282,8 @@ class Processor:
                     # Update Balance（to account）
                     self.balance_book.store(account_address=to_account, amount=+amount)
 
-        except Exception:
-            LOG.exception("An exception occurred during event synchronization")
+        except Exception as e:
+            raise e
 
     def __process_issue(self, block_from: int, block_to: int):
         """Process Issue Event
@@ -300,6 +301,9 @@ class Processor:
                 fromBlock=block_from,
                 toBlock=block_to
             )
+        except ABIEventFunctionNotFound:
+            events = []
+        try:
             for event in events:
                 args = event["args"]
                 account_address = args.get("targetAddress", ZERO_ADDRESS)
@@ -310,10 +314,8 @@ class Processor:
                         # Update Balance
                         self.balance_book.store(account_address=account_address, amount=+amount)
 
-        except ABIEventFunctionNotFound:
-            return
-        except Exception:
-            LOG.exception("An exception occurred during event synchronization")
+        except Exception as e:
+            raise e
 
     def __process_redeem(self, block_from: int, block_to: int):
         """Process Redeem Event
@@ -331,6 +333,9 @@ class Processor:
                 fromBlock=block_from,
                 toBlock=block_to
             )
+        except ABIEventFunctionNotFound:
+            events = []
+        try:
             for event in events:
                 args = event["args"]
                 account_address = args.get("targetAddress", ZERO_ADDRESS)
@@ -343,8 +348,8 @@ class Processor:
 
         except ABIEventFunctionNotFound:
             return
-        except Exception:
-            LOG.exception("An exception occurred during event synchronization")
+        except Exception as e:
+            raise e
 
     def __process_consume(self, block_from: int, block_to: int):
         """Process Consume Event
@@ -362,6 +367,9 @@ class Processor:
                 fromBlock=block_from,
                 toBlock=block_to
             )
+        except ABIEventFunctionNotFound:
+            events = []
+        try:
             for event in events:
                 args = event["args"]
                 account = args.get("consumer", ZERO_ADDRESS)
@@ -369,8 +377,8 @@ class Processor:
                 self.balance_book.store(account_address=account, amount=-amount)
         except ABIEventFunctionNotFound:
             return
-        except Exception:
-            LOG.exception("An exception occurred during event synchronization")
+        except Exception as e:
+            raise e
 
     @staticmethod
     def __save_holders(

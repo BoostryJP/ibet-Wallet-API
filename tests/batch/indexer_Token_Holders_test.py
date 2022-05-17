@@ -28,6 +28,8 @@ from sqlalchemy.orm import Session
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.exceptions import ABIEventFunctionNotFound
+from app.errors import ServiceUnavailable
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -98,8 +100,16 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
+    LOG = logging.getLogger("Processor")
+    default_log_level = LOG.level
+    LOG.setLevel(logging.DEBUG)
+    LOG.propagate = True
+
     processor = test_module()
-    return processor
+    yield processor
+
+    LOG.propagate = False
+    LOG.setLevel(default_log_level)
 
 
 class TestProcessor:
@@ -108,6 +118,8 @@ class TestProcessor:
     user2 = eth_account["user2"]
     trader = eth_account["trader"]
     agent = eth_account["agent"]
+
+    target_process_name = "INDEXER-TOKEN_HOLDERS"
 
     @staticmethod
     def listing_token(token_address, session):
@@ -1495,11 +1507,9 @@ class TestProcessor:
 
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             processor.collect()
-        LOG.addHandler(caplog.handler)
-        with caplog.at_level(logging.DEBUG):
-            with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
-                processor.collect()
-            assert f"There are no pending collect batch" in caplog.text
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
+        assert 2 == caplog.record_tuples.count((LOG.name, logging.DEBUG, f"There are no pending collect batch"))
 
         # Issuer issues bond token.
         token = self.issue_token_bond(
@@ -1522,14 +1532,16 @@ class TestProcessor:
         session.add(target_token_holders_list2)
         session.commit()
 
+        caplog.clear()
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             processor.collect()
-        LOG.addHandler(caplog.handler)
-        with caplog.at_level(logging.INFO):
-            with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
-                processor.collect()
-        assert f"Token holder list({target_token_holders_list2.list_id}) status changes to be done." in caplog.text
-        assert f"Collect job has been completed" in caplog.text
+
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Token holder list({target_token_holders_list1.list_id}) status changes to be done."))
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Token holder list({target_token_holders_list2.list_id}) status changes to be done."))
+        assert 2 == caplog.record_tuples.count((LOG.name, logging.INFO, f"<{self.target_process_name}> Collect job has been completed"))
 
     ###########################################################################
     # Error Case
@@ -1540,12 +1552,11 @@ class TestProcessor:
     def test_error_1(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
         token_list_contract = shared_contract["TokenList"]
 
-        LOG.addHandler(caplog.handler)
-        with caplog.at_level(logging.DEBUG):
-            with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
-                processor.collect()
-        assert "There are no pending collect batch" in caplog.text
-        assert "Collect job has been completed" in caplog.text
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.DEBUG, f"There are no pending collect batch"))
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"<{self.target_process_name}> Collect job has been completed"))
 
     # <Error_2>
     # There is target token holders list id with batch_status PENDING.
@@ -1564,12 +1575,9 @@ class TestProcessor:
         session.commit()
 
         # Debug message should be shown that points out token contract must be listed.
-        LOG.addHandler(caplog.handler)
-        with caplog.at_level(logging.DEBUG):
-            with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
-                processor.collect()
-        assert "Token contract must be listed to TokenList contract." in caplog.text
-        assert f"Collect job has been completed" in caplog.text
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.DEBUG, f"Token contract must be listed to TokenList contract."))
 
         # Batch status of token holders list expects to be "ERROR"
         error_record_num = len(
@@ -1578,8 +1586,8 @@ class TestProcessor:
         assert error_record_num == 1
 
     # <Error_3>
-    # Failed to get Logs from blockchain.
-    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
+    # Failed to get Logs because of ABIEventFunctionNotFound.
+    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
     def test_error_3(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1607,13 +1615,67 @@ class TestProcessor:
         session.add(target_token_holders_list)
         session.commit()
 
-        mock_lib = MagicMock()
-        with mock.patch.object(Processor, "_Processor__process_all", return_value=mock_lib) as __sync_all_mock:
-            # Then execute processor.
-            __sync_all_mock.return_value = None
-            with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
-                processor.collect()
-            _records: List[TokenHolder] = (
-                session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
-            )
-            assert len(_records) == 0
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            processor.collect()
+        _records: List[TokenHolder] = (
+            session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
+        )
+        assert len(_records) == 0
+
+    # <Error_4>
+    # Failed to get Logs because of blockchain(ServiceUnavailable).
+    def test_error_4(self, processor: Processor, shared_contract, session: Session, caplog, block_number: None):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+
+        # Issuer issues bond token.
+        token = self.issue_token_bond(
+            self.issuer, escrow_contract.address, personal_info_contract["address"], token_list_contract
+        )
+        self.listing_token(token["address"], session)
+
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
+        token_contract = Contract.get_contract("IbetStraightBond", token["address"])
+
+        # User1 and trader must register personal information before they receive token.
+        register_personalinfo(self.user1, personal_info_contract)
+        register_personalinfo(self.trader, personal_info_contract)
+
+        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
+
+        block_number = web3.eth.blockNumber
+        # Insert collection record with above token and current block number
+        target_token_holders_list = self.token_holders_list(token, block_number)
+        session.add(target_token_holders_list)
+        session.commit()
+
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]), \
+                mock.patch("web3.eth.Eth.getCode", side_effect=ServiceUnavailable()), \
+                pytest.raises(ServiceUnavailable):
+            processor.collect()
+
+        _records: List[TokenHolder] = (
+            session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
+        )
+        assert len(_records) == 0
+
+        transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
+        bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
+
+        block_number = web3.eth.blockNumber
+        # Insert collection record with above token and current block number
+        target_token_holders_list = self.token_holders_list(token, block_number)
+        session.add(target_token_holders_list)
+        session.commit()
+
+        with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]), \
+                mock.patch("web3.eth.Eth.getCode", side_effect=ServiceUnavailable()), \
+                pytest.raises(ServiceUnavailable):
+            processor.collect()
+
+        _records: List[TokenHolder] = (
+            session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
+        )
+        assert len(_records) == 0
