@@ -25,6 +25,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -51,16 +52,20 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
+    """Processor for indexing Share balances"""
+    latest_block = 0
+
     def __init__(self):
-        self.latest_block = web3.eth.blockNumber
         self.token_list = []
 
     @staticmethod
     def __get_db_session():
         return Session(autocommit=False, autoflush=True, bind=db_engine)
-    
+
     def initial_sync(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
+        self.latest_block = web3.eth.blockNumber
         try:
             self.__get_token_list(local_session)
 
@@ -88,6 +93,11 @@ class Processor:
                     block_to=self.latest_block
                 )
             local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -95,6 +105,7 @@ class Processor:
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
         try:
             self.__get_token_list(local_session)
 
@@ -109,6 +120,11 @@ class Processor:
             )
             self.latest_block = blockTo
             local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -146,6 +162,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     # from address
@@ -167,7 +186,7 @@ class Processor:
                         balance=to_account_balance,
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_lock(self, db_session: Session, block_from: int, block_to: int):
         """Sync Lock Events
@@ -182,6 +201,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
@@ -193,7 +215,7 @@ class Processor:
                         balance=balance
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_unlock(self, db_session: Session, block_from: int, block_to: int):
         """Sync Unlock Events
@@ -208,6 +230,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     account = args.get("to", ZERO_ADDRESS)
@@ -219,7 +244,7 @@ class Processor:
                         balance=balance
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_issue(self, db_session: Session, block_from: int, block_to: int):
         """Sync Issue Events
@@ -234,6 +259,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     account = args.get("target_address", ZERO_ADDRESS)
@@ -245,7 +273,7 @@ class Processor:
                         balance=balance
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_redeem(self, db_session: Session, block_from: int, block_to: int):
         """Sync Redeem Events
@@ -260,6 +288,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     account = args.get("target_address", ZERO_ADDRESS)
@@ -271,7 +302,7 @@ class Processor:
                         balance=balance
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync ApplyForTransfer Events
@@ -286,6 +317,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
@@ -299,7 +333,7 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync CancelTransfer Events
@@ -314,6 +348,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     account = args.get("from", ZERO_ADDRESS)
@@ -327,11 +364,12 @@ class Processor:
                         pending_transfer=pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
         """Sync ApproveTransfer Events
 
+        :param db_session: ORM session
         :param block_from: From block
         :param block_to: To block
         :return: None
@@ -342,6 +380,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     # from address
@@ -367,7 +408,7 @@ class Processor:
                         pending_transfer=to_pending_transfer
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     @staticmethod
     def __sink_on_position(db_session: Session,

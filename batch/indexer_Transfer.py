@@ -32,6 +32,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -60,9 +61,10 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
+    """Processor for indexing Token transfer events"""
+    latest_block = 0
 
     def __init__(self):
-        self.latest_block = web3.eth.blockNumber
         self.token_list = []
 
     @staticmethod
@@ -71,6 +73,8 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
+        self.latest_block = web3.eth.blockNumber
         try:
             self.__get_token_list(local_session)
             skip_timestamp = self.__get_latest_registered_block_timestamp(local_session)
@@ -88,14 +92,12 @@ class Processor:
                     )
                     _to_block += 1000000
                     _from_block += 1000000
-                    local_session.commit()
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=self.latest_block,
                     skip_timestamp=skip_timestamp
                 )
-                local_session.commit()
             else:
                 self.__sync_all(
                     db_session=local_session,
@@ -103,7 +105,12 @@ class Processor:
                     block_to=self.latest_block,
                     skip_timestamp=skip_timestamp
                 )
-                local_session.commit()
+            local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -111,6 +118,7 @@ class Processor:
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
         try:
             self.__get_token_list(local_session)
 
@@ -125,6 +133,11 @@ class Processor:
             )
             self.latest_block = blockTo
             local_session.commit()
+        except Exception as e:
+            LOG.exception("An exception occurred during event synchronization")
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -180,6 +193,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     value = args.get("value", 0)
@@ -200,7 +216,7 @@ class Processor:
                             event_created=event_created
                         )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     @staticmethod
     def __sink_on_transfer(db_session: Session,
