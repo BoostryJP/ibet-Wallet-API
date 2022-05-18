@@ -27,12 +27,9 @@ from migrate import *
 meta = MetaData()
 
 table = Table(
-    "token_holders_list", meta,
+    "idx_position_membership_block_number", meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
-    Column("token_address", String(42)),
-    Column("block_number", BigInteger),
-    Column("list_id", String(36), index=False),
-    Column("batch_status", String(256)),
+    Column("latest_block_number", BigInteger),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
