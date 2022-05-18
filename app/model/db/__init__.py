@@ -33,7 +33,13 @@ from .idx_agreement import (
     AgreementStatus
 )
 from .idx_consume_coupon import IDXConsumeCoupon
-from .idx_position import IDXPosition
+from .idx_position import (
+    IDXPosition,
+    IDXPositionBondBlockNumber,
+    IDXPositionShareBlockNumber,
+    IDXPositionMembershipBlockNumber,
+    IDXPositionCouponBlockNumber
+)
 from .tokenholders import (
     TokenHoldersList,
     TokenHolderBatchStatus,
