@@ -1147,6 +1147,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_approval_list = session.query(IDXTransferApproval). \
             order_by(IDXTransferApproval.created). \
             all()
@@ -1232,6 +1233,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_approval_list = session.query(IDXTransferApproval). \
             order_by(IDXTransferApproval.created). \
             all()
@@ -1317,6 +1319,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_approval_list = session.query(IDXTransferApproval). \
             order_by(IDXTransferApproval.created). \
             all()
@@ -1403,6 +1406,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_approval_list = session.query(IDXTransferApproval). \
             order_by(IDXTransferApproval.created). \
             all()

@@ -851,6 +851,7 @@ class TestProcessor:
         # Run target process
         processor.sync_new_logs()
         # Assertion
+        session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
@@ -896,6 +897,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
@@ -942,6 +944,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()
@@ -989,6 +992,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
         _agreement_list = session.query(IDXAgreement).order_by(IDXAgreement.created).all()

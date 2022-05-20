@@ -320,6 +320,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is incremented in "sync_new_logs" process.
@@ -354,6 +355,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
@@ -389,6 +391,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
@@ -425,6 +428,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _consume_coupon_list = session.query(IDXConsumeCoupon).order_by(IDXConsumeCoupon.created).all()
         assert len(_consume_coupon_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
