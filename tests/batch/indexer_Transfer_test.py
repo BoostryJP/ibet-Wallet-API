@@ -419,6 +419,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 1  # prepare same
 
@@ -492,6 +493,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
         # Latest_block is incremented in "initial_sync" process.
@@ -533,6 +535,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
@@ -575,6 +578,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
@@ -618,6 +622,7 @@ class TestProcessor:
             processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.

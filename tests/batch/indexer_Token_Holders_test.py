@@ -1675,6 +1675,7 @@ class TestProcessor:
                 pytest.raises(ServiceUnavailable):
             processor.collect()
 
+        session.rollback()
         _records: List[TokenHolder] = (
             session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
         )
