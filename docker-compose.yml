@@ -24,7 +24,8 @@ services:
     ports:
       - "8545:8545"
     entrypoint:
-      - ganache
+      - node
+      - /app/dist/node/cli.js
       - --miner.defaultGasPrice 0
       - --chain.hardfork byzantium
   ibet-wallet-api-postgres:
