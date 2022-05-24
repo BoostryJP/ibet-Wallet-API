@@ -25,7 +25,7 @@ services:
       - "8545:8545"
     command:
       - -k
-      - 'byzantium'
+      - 'petersburg'
       - -g
       - '0'
   ibet-wallet-api-postgres:
