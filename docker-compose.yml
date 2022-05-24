@@ -23,8 +23,10 @@ services:
     image: "trufflesuite/ganache:latest"
     ports:
       - "8545:8545"
-    command:
-      - -g 0 --hardfork byzantium
+    entrypoint:
+      - ganache
+      - --miner.defaultGasPrice 0
+      - --chain.hardfork byzantium
   ibet-wallet-api-postgres:
     build:
       context: ./
