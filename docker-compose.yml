@@ -25,9 +25,9 @@ services:
       - "8545:8545"
     command:
       - -k
-      - byzantium
+      - 'byzantium'
       - -g
-      - 0
+      - '0'
   ibet-wallet-api-postgres:
     build:
       context: ./
