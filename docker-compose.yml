@@ -19,8 +19,8 @@ services:
       - 3306:3306
     command:
       mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  ganache-cli:
-    image: "trufflesuite/ganache-cli:latest"
+  ganache:
+    image: "trufflesuite/ganache:latest"
     ports:
       - "8545:8545"
     command:
@@ -35,10 +35,10 @@ services:
       - TEST_DATABASE_URL=postgresql://apluser:apluserpass@postgres/apldb
     links:
       - postgres:postgres
-      - ganache-cli:quorum
+      - ganache:quorum
     depends_on:
       - postgres
-      - ganache-cli
+      - ganache
   ibet-wallet-api-mysql:
     build:
       context: ./
@@ -49,7 +49,7 @@ services:
       - TEST_DATABASE_URL=mysql+pymysql://apluser:apluserpass@mysql:3306/apldb
     links:
       - mysql:mysql
-      - ganache-cli:quorum
+      - ganache:quorum
     depends_on:
       - mysql
-      - ganache-cli
+      - ganache
