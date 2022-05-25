@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from unittest.mock import patch
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -545,7 +546,7 @@ class TestEthSendRawTransactionNoWait:
 
         local_account_1 = web3.eth.account.create()
 
-        # NOTE: 残高なしの状態でクーポン消費
+        # NOTE: ネットワークエラー
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
@@ -557,8 +558,9 @@ class TestEthSendRawTransactionNoWait:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        with patch("web3.eth.Eth.sendRawTransaction", side_effect=ConnectionError):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
