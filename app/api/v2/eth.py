@@ -348,6 +348,15 @@ class SendRawTransactionNoWait(BaseResource):
             # Send raw transaction
             try:
                 transaction_hash = web3.eth.sendRawTransaction(raw_tx_hex)
+                # NOTE:
+                #   Should I check transaction result here.
+                transaction_receipt = web3.eth.waitForTransactionReceipt(
+                    transaction_hash=transaction_hash,
+                )
+                if transaction_receipt["status"] == 0:
+                    # NOTE:
+                    #   If you want to know the result of failure, eth_call to replay transaction here.
+                    raise ValueError
             except ValueError as err:
                 result.append({
                     "id": i + 1,
