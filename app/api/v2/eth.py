@@ -348,7 +348,7 @@ class SendRawTransactionNoWait(BaseResource):
             # Send raw transaction
             try:
                 transaction_hash = web3.eth.sendRawTransaction(raw_tx_hex)
-            except Exception as err:
+            except ValueError as err:
                 result.append({
                     "id": i + 1,
                     "status": 0,
