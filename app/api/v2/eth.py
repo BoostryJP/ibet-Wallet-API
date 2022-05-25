@@ -357,7 +357,7 @@ class SendRawTransactionNoWait(BaseResource):
                     # NOTE:
                     #   If you want to know the result of failure, eth_call to replay transaction here.
                     raise ValueError
-            except ValueError as err:
+            except Exception as err:
                 result.append({
                     "id": i + 1,
                     "status": 0,
