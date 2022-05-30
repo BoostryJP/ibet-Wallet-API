@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from cerberus import Validator
-from web3.exceptions import TimeExhausted
+from web3.exceptions import TimeExhausted, ContractLogicError
 from eth_account import Account
 from eth_typing import ChecksumAddress
 from eth_utils import to_checksum_address
@@ -37,6 +37,7 @@ from app.model.db import (
     Listing
 )
 from app.contracts import Contract
+from app.utils.contract_error_code import error_code_msg
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -194,6 +195,18 @@ class SendRawTransaction(BaseResource):
             # Handling a transaction execution result
             try:
                 tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
+                if tx["status"] == 0:
+                    # inspect reason of transaction fail
+                    err_msg = self.inspect_tx_failure(tx_hash.hex())
+                    code, message = error_code_msg(err_msg)
+                    result.append({
+                        "id": i + 1,
+                        "status": 0,
+                        "error_code": code,
+                        "error_msg": message
+                    })
+                    LOG.error(f"Contract logic error: code: {str(code)} message: {message}")
+                    continue
             except TimeExhausted as err:
                 status = 2  # execution success (pending transaction)
 
@@ -231,6 +244,32 @@ class SendRawTransaction(BaseResource):
             })
 
         self.on_success(res, result)
+
+    @staticmethod
+    def inspect_tx_failure(tx_hash: str) -> str:
+        tx = web3.eth.getTransaction(tx_hash)
+
+        # build a new transaction to replay:
+        replay_tx = {
+            'to': tx['to'],
+            'from': tx['from'],
+            'value': tx['value'],
+            'data': tx['input'],
+        }
+
+        # replay the transaction locally:
+        try:
+            web3.eth.call(replay_tx, tx.blockNumber - 1)
+        except ContractLogicError as e:
+            msg = ""
+            if e.args[0]:
+                if len(e.args[0].split("execution reverted: ")) == 2:
+                    # this format is specific to go-ethereum revert
+                    msg = e.args[0].split("execution reverted: ")[1]
+            return msg
+        except Exception as e:
+            raise e
+        raise Exception("Inspect transaction failure is failed. There is no message for message.")
 
     @staticmethod
     def validate(req):

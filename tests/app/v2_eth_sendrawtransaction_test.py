@@ -23,10 +23,11 @@ from unittest import mock
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.middleware import geth_poa_middleware
-from web3.exceptions import TimeExhausted
+from web3.exceptions import TimeExhausted, ContractLogicError
 from eth_utils import to_checksum_address
 
 from app import config
+from app.api.v2 import eth
 from app.contracts import Contract
 from app.model.db import (
     Listing,
@@ -711,15 +712,30 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        m = MagicMock()
+        successor = iter([True, True, True, True])
 
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 0
-        }]
+        def side_effect(*arg, **kwargs):
+            global web3
+            try:
+                if next(successor):
+                    return web3.eth.call(*arg, **kwargs)
+            except Exception as e:
+                raise ContractLogicError("execution reverted: 130401")
+
+        m.side_effect = side_effect
+        with mock.patch.object(eth.web3.eth, "call", m):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0,
+                "error_code": 130401,
+                "error_msg": "Message sender balance is insufficient.",
+            }]
 
     # <Error_11>
     # waitForTransactionReceipt error
