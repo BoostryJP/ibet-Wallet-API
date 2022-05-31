@@ -25,7 +25,6 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from web3 import Web3
-from web3.contract import ContractEvents, ContractEvent
 from web3.middleware import geth_poa_middleware
 from web3.exceptions import ABIEventFunctionNotFound
 
@@ -34,9 +33,9 @@ from app.errors import ServiceUnavailable
 from app.contracts import Contract
 from app.model.db import (
     Listing,
-    IDXPosition
+    IDXPosition,
+    IDXPositionBondBlockNumber
 )
-from app.model.db.idx_position import IDXPositionBondBlockNumber
 from batch import indexer_Position_Bond
 from batch.indexer_Position_Bond import Processor
 from batch.indexer_Position_Bond import main, LOG
@@ -999,7 +998,7 @@ class TestProcessor:
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_15>
-    # Not Listing Token is not indexed,
+    # Not listing Token is NOT indexed,
     # and indexed properly after listing
     def test_normal_15(self, processor, shared_contract, session):
         # Issue Token
@@ -1099,11 +1098,8 @@ class TestProcessor:
                 idx_position_bond_block_number.latest_block_number = latest_block_number
                 session.merge(idx_position_bond_block_number)
                 session.commit()
-                __sync_all_mock.return_value = []
+                __sync_all_mock.return_value = None
                 processor.initial_sync()
-
-                _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
-                    filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
@@ -1138,6 +1134,7 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
+        # Latest_block is incremented in "initial_sync" process.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
             filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number_current
@@ -1159,6 +1156,7 @@ class TestProcessor:
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
 
+        # Latest_block is incremented in "sync_new_logs" process.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
             filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number_current
@@ -1227,7 +1225,6 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        _idx_position_bond_block_number_bf = session.query(IDXPositionBondBlockNumber).first()
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
                 pytest.raises(ServiceUnavailable):
@@ -1237,7 +1234,7 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Any latest_block is not saved in "initial_sync" process.
+        # Any latest_block is not saved in "initial_sync" process when ServiceUnavailable occurs.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
         assert len(_idx_position_bond_block_number) == 0
         # Clear cache in DB session.
@@ -1246,7 +1243,6 @@ class TestProcessor:
         # Transfer
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
-        _idx_position_bond_block_number_bf = session.query(IDXPositionBondBlockNumber).first()
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
                 pytest.raises(ServiceUnavailable):
@@ -1257,7 +1253,7 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Any latest_block is not saved in "sync_new_logs" process.
+        # Any latest_block is not saved in "sync_new_logs" process when ServiceUnavailable occurs.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
         assert len(_idx_position_bond_block_number) == 0
 
@@ -1287,7 +1283,7 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Any latest_block is not saved in "initial_sync" process.
+        # Any latest_block is not saved in "initial_sync" process when SQLAlchemyError occurs.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
         assert len(_idx_position_bond_block_number) == 0
         # Clear cache in DB session.
@@ -1297,7 +1293,6 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        _idx_position_bond_block_number_bf = session.query(IDXPositionBondBlockNumber).first()
         # Expect that sync_new_logs() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
                 pytest.raises(SQLAlchemyError):
@@ -1308,7 +1303,7 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Any latest_block is not saved in "sync_new_logs" process.
+        # Any latest_block is not saved in "sync_new_logs" process when SQLAlchemyError occurs.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
         assert len(_idx_position_bond_block_number) == 0
 
