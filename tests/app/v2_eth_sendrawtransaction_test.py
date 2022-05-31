@@ -666,9 +666,9 @@ class TestEthSendRawTransaction:
             "status": 0
         }]
 
-    # <Error_10>
-    # Transaction failed
-    def test_error_10(self, client, session):
+    # <Error_10_1>
+    # Transaction failed and revert inspection success
+    def test_error_10_1(self, client, session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -712,7 +712,11 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        m = MagicMock()
+        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
+        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert 130401',...})
+        #         geth: ContractLogicError("execution reverted: 130401")
+        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
+        eth_call_mock = MagicMock()
         successor = iter([True, True, True, True])
 
         def side_effect(*arg, **kwargs):
@@ -723,8 +727,8 @@ class TestEthSendRawTransaction:
             except Exception as e:
                 raise ContractLogicError("execution reverted: 130401")
 
-        m.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", m):
+        eth_call_mock.side_effect = side_effect
+        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
             resp = client.simulate_post(
                 self.apiurl, headers=headers, body=request_body)
 
@@ -735,6 +739,213 @@ class TestEthSendRawTransaction:
                 "status": 0,
                 "error_code": 130401,
                 "error_msg": "Message sender balance is insufficient.",
+            }]
+
+    # <Error_10_2>
+    # Transaction failed and revert inspection success(no error code)
+    def test_error_10_2(self, client, session):
+
+        # トークンリスト登録
+        tokenlist = tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+        issuer = eth_account['issuer']
+        coupontoken_1 = issue_coupon_token(issuer, {
+            "name": "name_test1",
+            "symbol": "symbol_test1",
+            "totalSupply": 1000000,
+            "tradableExchange": config.ZERO_ADDRESS,
+            "details": "details_test1",
+            "returnDetails": "returnDetails_test1",
+            "memo": "memo_test1",
+            "expirationDate": "20211201",
+            "transferable": True,
+            "contactInformation": "contactInformation_test1",
+            "privacyPolicy": "privacyPolicy_test1"
+        })
+        coupon_register_list(issuer, coupontoken_1, tokenlist)
+
+        # Listing,実行可能コントラクト登録
+        listing_token(session, coupontoken_1)
+        executable_contract_token(session, coupontoken_1)
+
+        token_contract_1 = web3.eth.contract(
+            address=to_checksum_address(coupontoken_1["address"]),
+            abi=coupontoken_1["abi"],
+        )
+
+        local_account_1 = web3.eth.account.create()
+
+        # NOTE: 残高なしの状態でクーポン消費
+        tx = token_contract_1.functions.consume(10).buildTransaction({
+            "from": to_checksum_address(local_account_1.address),
+            "gas": 6000000
+        })
+        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+
+        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
+        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert Direct...',...})
+        #         geth: ContractLogicError("execution reverted: Direct transfer is...")
+        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
+        eth_call_mock = MagicMock()
+        successor = iter([True, True, True, True])
+
+        def side_effect(*arg, **kwargs):
+            global web3
+            try:
+                if next(successor):
+                    return web3.eth.call(*arg, **kwargs)
+            except Exception as e:
+                raise ContractLogicError("execution reverted: Message sender balance is insufficient.")
+
+        eth_call_mock.side_effect = side_effect
+        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0,
+                "error_code": 0,
+                "error_msg": "Message sender balance is insufficient.",
+            }]
+
+    # <Error_10_3>
+    # Transaction failed and revert inspection success(no revert message)
+    def test_error_10_3(self, client, session):
+
+        # トークンリスト登録
+        tokenlist = tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+        issuer = eth_account['issuer']
+        coupontoken_1 = issue_coupon_token(issuer, {
+            "name": "name_test1",
+            "symbol": "symbol_test1",
+            "totalSupply": 1000000,
+            "tradableExchange": config.ZERO_ADDRESS,
+            "details": "details_test1",
+            "returnDetails": "returnDetails_test1",
+            "memo": "memo_test1",
+            "expirationDate": "20211201",
+            "transferable": True,
+            "contactInformation": "contactInformation_test1",
+            "privacyPolicy": "privacyPolicy_test1"
+        })
+        coupon_register_list(issuer, coupontoken_1, tokenlist)
+
+        # Listing,実行可能コントラクト登録
+        listing_token(session, coupontoken_1)
+        executable_contract_token(session, coupontoken_1)
+
+        token_contract_1 = web3.eth.contract(
+            address=to_checksum_address(coupontoken_1["address"]),
+            abi=coupontoken_1["abi"],
+        )
+
+        local_account_1 = web3.eth.account.create()
+
+        # NOTE: 残高なしの状態でクーポン消費
+        tx = token_contract_1.functions.consume(10).buildTransaction({
+            "from": to_checksum_address(local_account_1.address),
+            "gas": 6000000
+        })
+        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+
+        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
+        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert',...})
+        #         geth: ContractLogicError("execution reverted")
+        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
+        eth_call_mock = MagicMock()
+        successor = iter([True, True, True, True])
+
+        def side_effect(*arg, **kwargs):
+            global web3
+            try:
+                if next(successor):
+                    return web3.eth.call(*arg, **kwargs)
+            except Exception as e:
+                raise ContractLogicError("execution reverted")
+
+        eth_call_mock.side_effect = side_effect
+        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0,
+                "error_code": 0,
+                "error_msg": "execution reverted",
+            }]
+
+    # <Error_10_4>
+    # Transaction failed and revert inspection failed
+    def test_error_10_4(self, client, session):
+
+        # トークンリスト登録
+        tokenlist = tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+        issuer = eth_account['issuer']
+        coupontoken_1 = issue_coupon_token(issuer, {
+            "name": "name_test1",
+            "symbol": "symbol_test1",
+            "totalSupply": 1000000,
+            "tradableExchange": config.ZERO_ADDRESS,
+            "details": "details_test1",
+            "returnDetails": "returnDetails_test1",
+            "memo": "memo_test1",
+            "expirationDate": "20211201",
+            "transferable": True,
+            "contactInformation": "contactInformation_test1",
+            "privacyPolicy": "privacyPolicy_test1"
+        })
+        coupon_register_list(issuer, coupontoken_1, tokenlist)
+
+        # Listing,実行可能コントラクト登録
+        listing_token(session, coupontoken_1)
+        executable_contract_token(session, coupontoken_1)
+
+        token_contract_1 = web3.eth.contract(
+            address=to_checksum_address(coupontoken_1["address"]),
+            abi=coupontoken_1["abi"],
+        )
+
+        local_account_1 = web3.eth.account.create()
+
+        # NOTE: 残高なしの状態でクーポン消費
+        tx = token_contract_1.functions.consume(10).buildTransaction({
+            "from": to_checksum_address(local_account_1.address),
+            "gas": 6000000
+        })
+        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+
+        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        with mock.patch.object(eth.web3.eth, "getTransaction", ConnectionError):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0
             }]
 
     # <Error_11>

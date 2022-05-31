@@ -555,6 +555,23 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 1
+                    description: transaction revert:0, transaction success:1
+                  error_code:
+                    type: integer
+                    example: 240202
+                    description: error code thrown from contract
+                  error_msg:
+                    type: string
+                    example: Message sender is not token owner.
+                    description: error message
+                required:
+                  - status
         400:
           description: Invalid Parameter Error
           schema:

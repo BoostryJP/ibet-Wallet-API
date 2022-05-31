@@ -261,15 +261,16 @@ class SendRawTransaction(BaseResource):
         try:
             web3.eth.call(replay_tx, tx.blockNumber - 1)
         except ContractLogicError as e:
-            msg = ""
-            if e.args[0]:
-                if len(e.args[0].split("execution reverted: ")) == 2:
-                    # this format is specific to go-ethereum revert
-                    msg = e.args[0].split("execution reverted: ")[1]
+            if len(e.args) == 0:
+                raise e
+            if len(e.args[0].split("execution reverted: ")) == 2:
+                msg = e.args[0].split("execution reverted: ")[1]
+            else:
+                msg = e.args[0]
             return msg
         except Exception as e:
             raise e
-        raise Exception("Inspect transaction failure is failed. There is no message for message.")
+        raise Exception("Inspecting transaction revert is failed.")
 
     @staticmethod
     def validate(req):
@@ -444,19 +445,28 @@ class WaitForTransactionReceipt(BaseResource):
         transaction_hash = request_json.get("transaction_hash")
         timeout = request_json.get("timeout", 5)
 
+        result = {}
         # transaction receipt の監視
         try:
             tx = web3.eth.waitForTransactionReceipt(
                 transaction_hash=transaction_hash,
                 timeout=timeout
             )
+            if tx["status"] == 0:
+                # inspect reason of transaction fail
+                err_msg = self.inspect_tx_failure(transaction_hash)
+                code, message = error_code_msg(err_msg)
+                result["status"] = 0
+                result["error_code"] = code
+                result["error_msg"] = message
+            else:
+                result["status"] = 1
         except Exception as err:
             raise DataNotExistsError
 
         if tx is None:
             raise DataNotExistsError
-
-        self.on_success(res)
+        self.on_success(res, result)
 
     @staticmethod
     def validate(req):
@@ -481,3 +491,30 @@ class WaitForTransactionReceipt(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return request_json
+
+    @staticmethod
+    def inspect_tx_failure(tx_hash: str) -> str:
+        tx = web3.eth.getTransaction(tx_hash)
+
+        # build a new transaction to replay:
+        replay_tx = {
+            'to': tx['to'],
+            'from': tx['from'],
+            'value': tx['value'],
+            'data': tx['input'],
+        }
+
+        # replay the transaction locally:
+        try:
+            web3.eth.call(replay_tx, tx.blockNumber - 1)
+        except ContractLogicError as e:
+            if len(e.args) == 0:
+                return str(e)
+            if len(e.args[0].split("execution reverted: ")) == 2:
+                msg = e.args[0].split("execution reverted: ")[1]
+            else:
+                msg = e.args[0]
+            return msg
+        except Exception as e:
+            raise e
+        raise Exception("Inspecting transaction revert is failed.")
