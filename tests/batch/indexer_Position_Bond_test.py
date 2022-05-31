@@ -25,6 +25,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from web3 import Web3
+from web3.contract import ContractEvents, ContractEvent
 from web3.middleware import geth_poa_middleware
 from web3.exceptions import ABIEventFunctionNotFound
 
@@ -173,7 +174,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -222,7 +224,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -280,7 +283,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 6
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -368,7 +372,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -424,7 +429,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -472,7 +478,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -516,7 +523,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -592,7 +600,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -687,7 +696,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 3
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -792,7 +802,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -847,7 +858,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -901,7 +913,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -950,7 +963,8 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -980,11 +994,13 @@ class TestProcessor:
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_15>
-    # Not Listing Token
+    # Not Listing Token is not indexed,
+    # and indexed properly after listing
     def test_normal_15(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -1000,14 +1016,29 @@ class TestProcessor:
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
         processor.sync_new_logs()
 
         # Assertion
         _position_list = session.query(
             IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).all()
+        assert len(_idx_position_bond_block_number) == 0
+
+        # Listing
+        self.listing_token(token["address"], session)
+
+        block_number = web3.eth.blockNumber
+        processor.sync_new_logs()
+
+        # Assertion
+        session.rollback()
+        _position_list = session.query(
+            IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 2
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
     # <Normal_16>
@@ -1045,21 +1076,34 @@ class TestProcessor:
     # When stored index is 9,999,999 and current block number is 19,999,999,
     # then processor must process "__sync_all" method 10 times.
     def test_normal_17(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
         current_block_number = 20000000 - 1
         latest_block_number = 10000000 - 1
 
         mock_lib = MagicMock()
+
+        token = self.issue_token_bond(
+            self.issuer, escrow_contract.address, personal_info_contract["address"], token_list_contract)
+
         # Setting current block number to 19,999,999
+        self.listing_token(token["address"], session)
         with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
             with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
                 idx_position_bond_block_number = IDXPositionBondBlockNumber()
                 idx_position_bond_block_number.id = 1
+                idx_position_bond_block_number.token_address = token["address"]
                 # Setting stored index to 9,999,999
                 idx_position_bond_block_number.latest_block_number = latest_block_number
                 session.merge(idx_position_bond_block_number)
                 session.commit()
-                __sync_all_mock.return_value = None
+                __sync_all_mock.return_value = []
                 processor.initial_sync()
+
+                _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+                    filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
@@ -1094,8 +1138,8 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Latest_block is incremented in "initial_sync" process.
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number_current
 
         # Transfer
@@ -1115,8 +1159,8 @@ class TestProcessor:
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
 
-        # Latest_block is incremented in "sync_new_logs" process.
-        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).first()
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token["address"]).first()
         assert _idx_position_bond_block_number.latest_block_number == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
@@ -1136,7 +1180,6 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        _idx_position_bond_block_number_bf = session.query(IDXPositionBondBlockNumber).first()
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
             processor.initial_sync()
@@ -1145,8 +1188,9 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        _idx_position_bond_block_number_af = session.query(IDXPositionBondBlockNumber).first()
-        assert _idx_position_bond_block_number_bf.latest_block_number == _idx_position_bond_block_number_af.latest_block_number
+        # Any latest_block is not saved in "initial_sync" process.
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
+        assert len(_idx_position_bond_block_number) == 0
         # Clear cache in DB session.
         session.rollback()
 
@@ -1154,7 +1198,6 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        _idx_position_bond_block_number_bf = session.query(IDXPositionBondBlockNumber).first()
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
@@ -1164,9 +1207,9 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Latest_block is NOT incremented in "sync_new_logs" process.
-        _idx_position_bond_block_number_af = session.query(IDXPositionBondBlockNumber).first()
-        assert _idx_position_bond_block_number_bf.latest_block_number == _idx_position_bond_block_number_af.latest_block_number
+        # Any latest_block is not saved in "sync_new_logs" process.
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
+        assert len(_idx_position_bond_block_number) == 0
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     def test_error_2_1(self, processor, shared_contract, session):
@@ -1194,8 +1237,9 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        _idx_position_bond_block_number_af = session.query(IDXPositionBondBlockNumber).first()
-        assert _idx_position_bond_block_number_bf.latest_block_number == _idx_position_bond_block_number_af.latest_block_number
+        # Any latest_block is not saved in "initial_sync" process.
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
+        assert len(_idx_position_bond_block_number) == 0
         # Clear cache in DB session.
         session.rollback()
 
@@ -1213,9 +1257,9 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Latest_block is NOT incremented in "sync_new_logs" process.
-        _idx_position_bond_block_number_af = session.query(IDXPositionBondBlockNumber).first()
-        assert _idx_position_bond_block_number_bf.latest_block_number == _idx_position_bond_block_number_af.latest_block_number
+        # Any latest_block is not saved in "sync_new_logs" process.
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
+        assert len(_idx_position_bond_block_number) == 0
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
     def test_error_2_2(self, processor, shared_contract, session):
@@ -1233,7 +1277,6 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        _idx_position_bond_block_number_bf = session.query(IDXPositionBondBlockNumber).first()
         # Expect that initial_sync() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
                 pytest.raises(SQLAlchemyError):
@@ -1244,8 +1287,9 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        _idx_position_bond_block_number_af = session.query(IDXPositionBondBlockNumber).first()
-        assert _idx_position_bond_block_number_bf.latest_block_number == _idx_position_bond_block_number_af.latest_block_number
+        # Any latest_block is not saved in "initial_sync" process.
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
+        assert len(_idx_position_bond_block_number) == 0
         # Clear cache in DB session.
         session.rollback()
 
@@ -1264,9 +1308,9 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 0
-        # Latest_block is NOT incremented in "sync_new_logs" process.
-        _idx_position_bond_block_number_af = session.query(IDXPositionBondBlockNumber).first()
-        assert _idx_position_bond_block_number_bf.latest_block_number == _idx_position_bond_block_number_af.latest_block_number
+        # Any latest_block is not saved in "sync_new_logs" process.
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
+        assert len(_idx_position_bond_block_number) == 0
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, shared_contract, session, caplog):

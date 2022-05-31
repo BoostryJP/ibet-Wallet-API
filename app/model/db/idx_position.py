@@ -62,6 +62,7 @@ class IDXPositionBondBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
@@ -79,6 +80,7 @@ class IDXPositionShareBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
@@ -96,6 +98,7 @@ class IDXPositionCouponBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
@@ -113,6 +116,7 @@ class IDXPositionMembershipBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
