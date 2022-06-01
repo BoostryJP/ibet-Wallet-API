@@ -62,11 +62,14 @@ class IDXPositionBondBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # target token address
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
+        'token_address': str,
         'latest_block_number': int,
     }
 
@@ -79,11 +82,14 @@ class IDXPositionShareBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # target token address
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
+        'token_address': str,
         'latest_block_number': int,
     }
 
@@ -96,11 +102,14 @@ class IDXPositionCouponBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # target token address
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
+        'token_address': str,
         'latest_block_number': int,
     }
 
@@ -113,11 +122,14 @@ class IDXPositionMembershipBlockNumber(Base):
 
     # sequence id
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # target token address
+    token_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
+        'token_address': str,
         'latest_block_number': int,
     }
 

@@ -54,7 +54,21 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 
 class Processor:
-    """Processor for indexing Share balances"""
+    """Processor for indexing Bond balances"""
+
+    class TargetToken:
+        """
+        Attributes:
+            token_contract: contract object
+            start_block_number(int): block number that the processor first reads
+            cursor(int): pointer where next process should be start
+        """
+        def __init__(self, token_contract, block_number: int):
+            self.token_contract = token_contract
+            self.start_block_number = block_number
+            self.cursor = block_number
+
+    token_list: List[TargetToken]
 
     def __init__(self):
         self.token_list = []
@@ -69,45 +83,34 @@ class Processor:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
             # if some blocks have already synced, sync starting from next block
-            idx_position_block_number = self.__get_idx_position_block_number(db_session=local_session)
             latest_block = web3.eth.blockNumber
-            if idx_position_block_number >= latest_block:
-                LOG.debug(
-                    f"Initial Sync is skipped since current block number({web3.eth.blockNumber}) is equal to or less "
-                    f"than last synced block number({idx_position_block_number}) this processor did."
+            _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
+            _to_block = 999999 + _from_block
+            if latest_block > _to_block:
+                while _to_block < latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_to=_to_block,
+                    )
+                    _to_block += 1000000
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
                 )
-                pass
             else:
-                _from_block = idx_position_block_number + 1
-                _to_block = 999999 + _from_block
-                if latest_block > _to_block:
-                    while _to_block < latest_block:
-                        self.__sync_all(
-                            db_session=local_session,
-                            block_from=_from_block,
-                            block_to=_to_block
-                        )
-                        _to_block += 1000000
-                        _from_block += 1000000
-                    self.__sync_all(
-                        db_session=local_session,
-                        block_from=_from_block,
-                        block_to=latest_block
-                    )
-                else:
-                    self.__sync_all(
-                        db_session=local_session,
-                        block_from=_from_block,
-                        block_to=latest_block
-                    )
-                self.__set_idx_position_block_number(local_session, latest_block)
-                local_session.commit()
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
+                )
+            self.__set_idx_position_block_number(local_session, self.token_list, latest_block)
+            local_session.commit()
         except Exception as e:
             LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
             raise e
         finally:
             local_session.close()
+            self.token_list = []
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
@@ -115,34 +118,25 @@ class Processor:
         try:
             self.__get_contract_list(local_session)
             latest_block = web3.eth.blockNumber
-            # if some blocks have already synced, sync starting from next block
-            idx_position_block_number = self.__get_idx_position_block_number(db_session=local_session)
-            if idx_position_block_number >= latest_block:
-                LOG.debug(
-                    f"Initial Sync is skipped since current block number({latest_block}) is equal to or less "
-                    f"than last synced block number({idx_position_block_number}) this processor did."
-                )
-                pass
-            else:
-                _from_block = idx_position_block_number + 1
-                self.__sync_all(
-                    db_session=local_session,
-                    block_from=_from_block,
-                    block_to=latest_block
-                )
-                self.__set_idx_position_block_number(local_session, latest_block)
-                local_session.commit()
+            self.__sync_all(
+                db_session=local_session,
+                block_to=latest_block
+            )
+            self.__set_idx_position_block_number(local_session, self.token_list, latest_block)
+            local_session.commit()
         except Exception as e:
             LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
             raise e
         finally:
+            self.token_list = []
             local_session.close()
 
     def __get_contract_list(self, db_session: Session):
         self.token_list = []
         self.token_address_list = []
         self.exchange_address_list = []
+
         list_contract = Contract.get_contract(
             contract_name="TokenList",
             address=TOKEN_LIST_CONTRACT_ADDRESS
@@ -162,8 +156,13 @@ class Processor:
                     contract_name="IbetShare",
                     address=listed_token.token_address
                 )
-                self.token_list.append(token_contract)
-                self.token_address_list.append(token_contract.address)
+                synced_block_number = self.__get_idx_position_block_number(
+                    db_session=db_session,
+                    token_address=listed_token.token_address
+                )
+                block_from = synced_block_number + 1
+                token = self.TargetToken(token_contract, block_from)
+                self.token_list.append(token)
                 tradable_exchange_address = Contract.call_function(
                     contract=token_contract,
                     function_name="tradableExchange",
@@ -176,28 +175,44 @@ class Processor:
         # Remove duplicate exchanges from a list
         self.exchange_address_list = list(set(_exchange_list_tmp))
 
-    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_transfer(db_session, block_from, block_to)
-        self.__sync_lock(db_session, block_from, block_to)
-        self.__sync_unlock(db_session, block_from, block_to)
-        self.__sync_issue(db_session, block_from, block_to)
-        self.__sync_redeem(db_session, block_from, block_to)
-        self.__sync_apply_for_transfer(db_session, block_from, block_to)
-        self.__sync_cancel_transfer(db_session, block_from, block_to)
-        self.__sync_approve_transfer(db_session, block_from, block_to)
-        self.__sync_exchange(db_session, block_from, block_to)
-        self.__sync_escrow(db_session, block_from, block_to)
+    def __sync_all(self, db_session: Session, block_to: int):
+        sync_from = self.__get_oldest_cursor(self.token_list, block_to)
+        LOG.info("syncing from={}, to={}".format(sync_from, block_to))
 
-    def __sync_transfer(self, db_session: Session, block_from: int, block_to: int):
+        self.__sync_transfer(db_session, block_to)
+        self.__sync_lock(db_session, block_to)
+        self.__sync_unlock(db_session, block_to)
+        self.__sync_issue(db_session, block_to)
+        self.__sync_redeem(db_session, block_to)
+        self.__sync_apply_for_transfer(db_session, block_to)
+        self.__sync_cancel_transfer(db_session, block_to)
+        self.__sync_approve_transfer(db_session, block_to)
+        self.__sync_exchange(db_session, block_to)
+        self.__sync_escrow(db_session, block_to)
+
+        self.__update_cursor(block_to + 1)
+
+    def __update_cursor(self, block_number):
+        """Memorize the block number where next processing should start from
+
+        :param block_number: block number to be set
+        :return: None
+        """
+        for target in self.token_list:
+            target.cursor = block_number
+
+    def __sync_transfer(self, db_session: Session, block_to: int):
         """Sync Transfer Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.Transfer.getLogs(
                     fromBlock=block_from,
@@ -228,15 +243,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_lock(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_lock(self, db_session: Session, block_to: int):
         """Sync Lock Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.Lock.getLogs(
                     fromBlock=block_from,
@@ -263,15 +281,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_unlock(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_unlock(self, db_session: Session, block_to: int):
         """Sync Unlock Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.Unlock.getLogs(
                     fromBlock=block_from,
@@ -298,15 +319,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_issue(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_issue(self, db_session: Session, block_to: int):
         """Sync Issue Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.Issue.getLogs(
                     fromBlock=block_from,
@@ -333,15 +357,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_redeem(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_redeem(self, db_session: Session, block_to: int):
         """Sync Redeem Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.Redeem.getLogs(
                     fromBlock=block_from,
@@ -368,15 +395,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_apply_for_transfer(self, db_session: Session, block_to: int):
         """Sync ApplyForTransfer Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.ApplyForTransfer.getLogs(
                     fromBlock=block_from,
@@ -403,15 +433,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_cancel_transfer(self, db_session: Session, block_to: int):
         """Sync CancelTransfer Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.CancelTransfer.getLogs(
                     fromBlock=block_from,
@@ -438,15 +471,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_approve_transfer(self, db_session: Session, block_to: int):
         """Sync ApproveTransfer Events
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.ApproveTransfer.getLogs(
                     fromBlock=block_from,
@@ -473,14 +509,16 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_exchange(self, db_session: Session, block_to: int):
         """Sync Events from IbetExchange
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
+        block_from = self.__get_oldest_cursor(self.token_list, block_to)
+        if block_from > block_to:
+            return
         for exchange_address in self.exchange_address_list:
             try:
                 exchange = Contract.get_contract(
@@ -580,9 +618,16 @@ class Processor:
 
                 # Make temporary list unique
                 account_list_tmp.sort(key=lambda x: (x["token_address"], x["account_address"]))
-                account_list = []
+                account_list_unfiltered = []
                 for k, g in groupby(account_list_tmp, lambda x: (x["token_address"], x["account_address"])):
-                    account_list.append({"token_address": k[0], "account_address": k[1]})
+                    account_list_unfiltered.append({"token_address": k[0], "account_address": k[1]})
+
+                # Filter account_list by listed token
+                token_address_list = [t.token_contract.address for t in self.token_list]
+                account_list = []
+                for _account in account_list_unfiltered:
+                    if _account["token_address"] in token_address_list:
+                        account_list.append(_account)
 
                 # Update position
                 for _account in account_list:
@@ -603,14 +648,16 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_escrow(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_escrow(self, db_session: Session, block_to: int):
         """Sync Events from IbetSecurityTokenEscrow
 
         :param db_session: ORM session
-        :param block_from: From block
         :param block_to: To block
         :return: None
         """
+        block_from = self.__get_oldest_cursor(self.token_list, block_to)
+        if block_from > block_to:
+            return
         for exchange_address in self.exchange_address_list:
             try:
                 escrow = Contract.get_contract("IbetSecurityTokenEscrow", exchange_address)
@@ -665,9 +712,16 @@ class Processor:
 
                 # Make temporary list unique
                 account_list_tmp.sort(key=lambda x: (x["token_address"], x["account_address"]))
-                account_list = []
+                account_list_unfiltered = []
                 for k, g in groupby(account_list_tmp, lambda x: (x["token_address"], x["account_address"])):
-                    account_list.append({"token_address": k[0], "account_address": k[1]})
+                    account_list_unfiltered.append({"token_address": k[0], "account_address": k[1]})
+
+                # Filter account_list by listed token
+                token_address_list = [t.token_contract.address for t in self.token_list]
+                account_list = []
+                for _account in account_list_unfiltered:
+                    if _account["token_address"] in token_address_list:
+                        account_list.append(_account)
 
                 # Update position
                 for _account in account_list:
@@ -689,23 +743,37 @@ class Processor:
                 raise e
 
     @staticmethod
-    def __get_idx_position_block_number(db_session: Session):
-        """Get position index for Coupon """
-        _idx_position_block_number = db_session.query(IDXPositionShareBlockNumber).first()
+    def __get_oldest_cursor(target_token_list: List[TargetToken], block_to: int) -> int:
+        """Get the oldest block number for given target token list"""
+        oldest_block_number = block_to
+        if len(target_token_list) == 0:
+            return 0
+        for target_token in target_token_list:
+            if target_token.cursor < oldest_block_number:
+                oldest_block_number = target_token.cursor
+        return oldest_block_number
+
+    @staticmethod
+    def __get_idx_position_block_number(db_session: Session, token_address: str):
+        """Get position index for Share """
+        _idx_position_block_number = db_session.query(IDXPositionShareBlockNumber).\
+            filter(IDXPositionShareBlockNumber.token_address == token_address).first()
         if _idx_position_block_number is None:
             return -1
         else:
             return _idx_position_block_number.latest_block_number
 
     @staticmethod
-    def __set_idx_position_block_number(db_session: Session, block_number: int):
-        """Set position index for Coupon """
-        _idx_position_block_number = db_session.query(IDXPositionShareBlockNumber). \
-            first()
-        if _idx_position_block_number is None:
-            _idx_position_block_number = IDXPositionShareBlockNumber()
-        _idx_position_block_number.latest_block_number = block_number
-        db_session.merge(_idx_position_block_number)
+    def __set_idx_position_block_number(db_session: Session, target_token_list: List[TargetToken], block_number: int):
+        """Set position index for Share """
+        for target_token in target_token_list:
+            _idx_position_block_number = db_session.query(IDXPositionShareBlockNumber). \
+                filter(IDXPositionShareBlockNumber.token_address == target_token.token_contract.address).first()
+            if _idx_position_block_number is None:
+                _idx_position_block_number = IDXPositionShareBlockNumber()
+            _idx_position_block_number.latest_block_number = block_number
+            _idx_position_block_number.token_address = target_token.token_contract.address
+            db_session.merge(_idx_position_block_number)
 
     @staticmethod
     def __get_account_balance_all(token_contract, account_address: str):
