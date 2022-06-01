@@ -16,9 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Tuple
 
 
-def error_code_msg(code_str: str) -> [int, str]:
+def error_code_msg(code_str: str) -> Tuple[int, str]:
     """Retrieve contract error message from error code.
 
     :param code_str: error code thrown by contract
@@ -27,10 +28,10 @@ def error_code_msg(code_str: str) -> [int, str]:
     if not code_str.isdigit():
         # If contract doesn't throw error code,
         # consider the raw message as an error log.
-        return [0, code_str]
+        return 0, code_str
 
     code = int(code_str)
-    return [code, {
+    return code, {
         # TokenList (10XXXX)
         100001: "The address has already been registered.",
         100002: "Message sender must be the token owner.",
@@ -187,6 +188,6 @@ def error_code_msg(code_str: str) -> [int, str]:
         610011: "Message sender is not E2E Message sender.",
         # FreezeLog (62XXXX)
         620001: "Log is frozen.",
-    }.get(code, "")]
+    }.get(code, "")
 
 
