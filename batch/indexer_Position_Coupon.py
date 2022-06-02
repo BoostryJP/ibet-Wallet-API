@@ -68,10 +68,45 @@ class Processor:
             self.start_block_number = block_number
             self.cursor = block_number
 
+    class TargetExchangeList:
+        class TargetExchange:
+            """
+            Attributes:
+                exchange_address: contract address of exchange or escrow
+                start_block_number(int): block number that the processor first reads
+                cursor(int): pointer where next process should be start
+            """
+            def __init__(self, exchange_address: str, block_number: int):
+                self.exchange_address = exchange_address
+                self.start_block_number = block_number
+                self.cursor = block_number
+
+        target_exchange_list: List[TargetExchange]
+
+        def __init__(self):
+            self.target_exchange_list = []
+
+        def append(self, exchange_address: str , block_number: int):
+            is_duplicate = False
+            for i, e in enumerate(self.target_exchange_list):
+                if e.exchange_address == exchange_address:
+                    is_duplicate = True
+                    if self.target_exchange_list[i].start_block_number > block_number:
+                        self.target_exchange_list[i].start_block_number = block_number
+                        self.target_exchange_list[i].cursor = block_number
+            if not is_duplicate:
+                target_exchange = self.TargetExchange(exchange_address, block_number)
+                self.target_exchange_list.append(target_exchange)
+
+        def __iter__(self):
+            return iter(self.target_exchange_list)
+
     token_list: List[TargetToken]
+    exchange_list: TargetExchangeList
 
     def __init__(self):
         self.token_list = []
+        self.exchange_list = self.TargetExchangeList()
 
     @staticmethod
     def __get_db_session():
@@ -111,17 +146,34 @@ class Processor:
         finally:
             local_session.close()
             self.token_list = []
+            self.exchange_list = self.TargetExchangeList()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
         try:
             self.__get_contract_list(local_session)
+            # Synchronize 1,000,000 blocks each
+            # if some blocks have already synced, sync starting from next block
             latest_block = web3.eth.blockNumber
-            self.__sync_all(
-                db_session=local_session,
-                block_to=latest_block
-            )
+            _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
+            _to_block = 999999 + _from_block
+            if latest_block > _to_block:
+                while _to_block < latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_to=_to_block,
+                    )
+                    _to_block += 1000000
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
+                )
+            else:
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
+                )
             self.__set_idx_position_block_number(local_session, self.token_list, latest_block)
             local_session.commit()
         except Exception as e:
@@ -129,13 +181,13 @@ class Processor:
             local_session.rollback()
             raise e
         finally:
-            self.token_list = []
             local_session.close()
+            self.token_list = []
+            self.exchange_list = self.TargetExchangeList()
 
     def __get_contract_list(self, db_session: Session):
         self.token_list = []
-        self.token_address_list = []
-        self.exchange_address_list = []
+        self.exchange_list = self.TargetExchangeList()
 
         list_contract = Contract.get_contract(
             contract_name="TokenList",
@@ -170,14 +222,10 @@ class Processor:
                     default_returns=ZERO_ADDRESS
                 )
                 if tradable_exchange_address != ZERO_ADDRESS:
-                    _exchange_list_tmp.append(tradable_exchange_address)
-
-        # Remove duplicate exchanges from a list
-        self.exchange_address_list = list(set(_exchange_list_tmp))
+                    self.exchange_list.append(tradable_exchange_address, block_from)
 
     def __sync_all(self, db_session: Session, block_to: int):
-        sync_from = self.__get_oldest_cursor(self.token_list, block_to)
-        LOG.info("syncing from={}, to={}".format(sync_from, block_to))
+        LOG.info("syncing to={}".format(block_to))
 
         self.__sync_transfer(db_session, block_to)
         self.__sync_exchange(db_session, block_to)
@@ -193,6 +241,8 @@ class Processor:
         """
         for target in self.token_list:
             target.cursor = block_number
+        for exchange in self.exchange_list:
+            exchange.cursor = block_number
 
     def __sync_transfer(self, db_session: Session, block_to: int):
         """Sync Transfer Events
@@ -279,10 +329,11 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        block_from = self.__get_oldest_cursor(self.token_list, block_to)
-        if block_from > block_to:
-            return
-        for exchange_address in self.exchange_address_list:
+        for exchange in self.exchange_list:
+            block_from = exchange.cursor
+            if block_from > block_to:
+                continue
+            exchange_address = exchange.exchange_address
             try:
                 exchange = Contract.get_contract(
                     contract_name="IbetExchange",
@@ -418,10 +469,11 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        block_from = self.__get_oldest_cursor(self.token_list, block_to)
-        if block_from > block_to:
-            return
-        for exchange_address in self.exchange_address_list:
+        for exchange in self.exchange_list:
+            block_from = exchange.cursor
+            if block_from > block_to:
+                continue
+            exchange_address = exchange.exchange_address
             try:
                 escrow = Contract.get_contract("IbetEscrow", exchange_address)
 
