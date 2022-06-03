@@ -466,6 +466,7 @@ class TestProcessor:
     # then processor must process "__sync_all" method 10 times.
     def test_normal_9(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
+        escrow_contract = shared_contract["IbetEscrow"]
         current_block_number = 20000000 - 1
         latest_block_number = 10000000 - 1
 
@@ -488,6 +489,26 @@ class TestProcessor:
                 processor.initial_sync()
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
+
+        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+            with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
+                # Stored index is 19,999,999
+                __sync_all_mock.return_value = None
+                processor.sync_new_logs()
+                # Then processor call "__sync_all" method once.
+                assert __sync_all_mock.call_count == 1
+
+        new_token = self.issue_token_membership(
+            self.issuer, escrow_contract.address, token_list_contract)
+        self.listing_token(new_token["address"], session)
+
+        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+            with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
+                # Stored index is 19,999,999
+                __sync_all_mock.return_value = None
+                processor.sync_new_logs()
+                # Then processor call "__sync_all" method 20 times.
+                assert __sync_all_mock.call_count == 20
 
     ###########################################################################
     # Error Case
