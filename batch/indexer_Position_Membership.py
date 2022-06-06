@@ -56,22 +56,89 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 class Processor:
     """Processor for indexing Membership balances"""
 
-    class TargetToken:
-        """
-        Attributes:
-            token_contract: contract object
-            start_block_number(int): block number that the processor first reads
-            cursor(int): pointer where next process should be start
-        """
-        def __init__(self, token_contract, block_number: int):
-            self.token_contract = token_contract
-            self.start_block_number = block_number
-            self.cursor = block_number
+    class TargetTokenList:
+        class TargetToken:
+            """
+            Attributes:
+                token_contract: contract object
+                exchange_address: address of associated exchange
+                start_block_number(int): block number that the processor first reads
+                cursor(int): pointer where next process should be start
+            """
+            def __init__(self, token_contract, exchange_address: str, block_number: int):
+                self.token_contract = token_contract
+                self.exchange_address = exchange_address
+                self.start_block_number = block_number
+                self.cursor = block_number
 
-    token_list: List[TargetToken]
+        target_token_list: List[TargetToken]
+
+        def __init__(self):
+            self.target_token_list = []
+
+        def append(self, token_contract, exchange_address: str, block_number: int):
+            is_duplicate = False
+            for i, t in enumerate(self.target_token_list):
+                if t.token_contract.address == token_contract.address:
+                    is_duplicate = True
+                    if self.target_token_list[i].start_block_number > block_number:
+                        self.target_token_list[i].start_block_number = block_number
+                        self.target_token_list[i].cursor = block_number
+            if not is_duplicate:
+                target_token = self.TargetToken(token_contract, exchange_address, block_number)
+                self.target_token_list.append(target_token)
+
+        def get_cursor(self, token_address: str) -> int:
+            for t in self.target_token_list:
+                if t.token_contract.address == token_address:
+                    return t.cursor
+            return 0
+
+        def __iter__(self):
+            return iter(self.target_token_list)
+
+        def __len__(self):
+            return len(self.target_token_list)
+
+    class TargetExchangeList:
+        class TargetExchange:
+            """
+            Attributes:
+                exchange_address: contract address of exchange or escrow
+                start_block_number(int): block number that the processor first reads
+                cursor(int): pointer where next process should be start
+            """
+            def __init__(self, exchange_address: str, block_number: int):
+                self.exchange_address = exchange_address
+                self.start_block_number = block_number
+                self.cursor = block_number
+
+        target_exchange_list: List[TargetExchange]
+
+        def __init__(self):
+            self.target_exchange_list = []
+
+        def append(self, exchange_address: str , block_number: int):
+            is_duplicate = False
+            for i, e in enumerate(self.target_exchange_list):
+                if e.exchange_address == exchange_address:
+                    is_duplicate = True
+                    if self.target_exchange_list[i].start_block_number > block_number:
+                        self.target_exchange_list[i].start_block_number = block_number
+                        self.target_exchange_list[i].cursor = block_number
+            if not is_duplicate:
+                target_exchange = self.TargetExchange(exchange_address, block_number)
+                self.target_exchange_list.append(target_exchange)
+
+        def __iter__(self):
+            return iter(self.target_exchange_list)
+
+    token_list: TargetTokenList
+    exchange_list: TargetExchangeList
 
     def __init__(self):
-        self.token_list = []
+        self.token_list = self.TargetTokenList()
+        self.exchange_list = self.TargetExchangeList()
 
     @staticmethod
     def __get_db_session():
@@ -110,18 +177,35 @@ class Processor:
             raise e
         finally:
             local_session.close()
-            self.token_list = []
+            self.token_list = self.TargetTokenList()
+            self.exchange_list = self.TargetExchangeList()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
         try:
             self.__get_contract_list(local_session)
+            # Synchronize 1,000,000 blocks each
+            # if some blocks have already synced, sync starting from next block
             latest_block = web3.eth.blockNumber
-            self.__sync_all(
-                db_session=local_session,
-                block_to=latest_block
-            )
+            _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
+            _to_block = 999999 + _from_block
+            if latest_block > _to_block:
+                while _to_block < latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_to=_to_block,
+                    )
+                    _to_block += 1000000
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
+                )
+            else:
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
+                )
             self.__set_idx_position_block_number(local_session, self.token_list, latest_block)
             local_session.commit()
         except Exception as e:
@@ -129,13 +213,13 @@ class Processor:
             local_session.rollback()
             raise e
         finally:
-            self.token_list = []
             local_session.close()
+            self.token_list = self.TargetTokenList()
+            self.exchange_list = self.TargetExchangeList()
 
     def __get_contract_list(self, db_session: Session):
-        self.token_list = []
-        self.token_address_list = []
-        self.exchange_address_list = []
+        self.token_list = self.TargetTokenList()
+        self.exchange_list = self.TargetExchangeList()
 
         list_contract = Contract.get_contract(
             contract_name="TokenList",
@@ -156,28 +240,25 @@ class Processor:
                     contract_name="IbetMembership",
                     address=listed_token.token_address
                 )
-                synced_block_number = self.__get_idx_position_block_number(
-                    db_session=db_session,
-                    token_address=listed_token.token_address
-                )
-                block_from = synced_block_number + 1
-                token = self.TargetToken(token_contract, block_from)
-                self.token_list.append(token)
                 tradable_exchange_address = Contract.call_function(
                     contract=token_contract,
                     function_name="tradableExchange",
                     args=(),
                     default_returns=ZERO_ADDRESS
                 )
+                synced_block_number = self.__get_idx_position_block_number(
+                    db_session=db_session,
+                    token_address=listed_token.token_address,
+                    exchange_address=tradable_exchange_address
+                )
+                block_from = synced_block_number + 1
+                self.token_list.append(token_contract, tradable_exchange_address, block_from)
                 if tradable_exchange_address != ZERO_ADDRESS:
-                    _exchange_list_tmp.append(tradable_exchange_address)
-
-        # Remove duplicate exchanges from a list
-        self.exchange_address_list = list(set(_exchange_list_tmp))
+                    self.exchange_list.append(tradable_exchange_address, block_from)
 
     def __sync_all(self, db_session: Session, block_to: int):
-        sync_from = self.__get_oldest_cursor(self.token_list, block_to)
-        LOG.info("syncing from={}, to={}".format(sync_from, block_to))
+        LOG.info("syncing to={}".format(block_to))
+
         self.__sync_transfer(db_session, block_to)
         self.__sync_exchange(db_session, block_to)
         self.__sync_escrow(db_session, block_to)
@@ -192,6 +273,8 @@ class Processor:
         """
         for target in self.token_list:
             target.cursor = block_number
+        for exchange in self.exchange_list:
+            exchange.cursor = block_number
 
     def __sync_transfer(self, db_session: Session, block_to: int):
         """Sync Transfer Events
@@ -241,10 +324,11 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        block_from = self.__get_oldest_cursor(self.token_list, block_to)
-        if block_from > block_to:
-            return
-        for exchange_address in self.exchange_address_list:
+        for exchange in self.exchange_list:
+            block_from = exchange.cursor
+            if block_from > block_to:
+                continue
+            exchange_address = exchange.exchange_address
             try:
                 exchange = Contract.get_contract(
                     contract_name="IbetExchange",
@@ -262,6 +346,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
                         "account_address": _event["args"].get("accountAddress", ZERO_ADDRESS)
@@ -276,6 +364,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
                         "account_address": _event["args"].get("accountAddress", ZERO_ADDRESS)
@@ -290,6 +382,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
                         "account_address": _event["args"].get("accountAddress", ZERO_ADDRESS)
@@ -304,6 +400,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
                         "account_address": _event["args"].get("sellAddress", ZERO_ADDRESS)  # only seller has changed
@@ -318,6 +418,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
                         "account_address": _event["args"].get("buyAddress", ZERO_ADDRESS)
@@ -336,6 +440,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("tokenAddress", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("tokenAddress", ZERO_ADDRESS),
                         "account_address": _event["args"].get("sellAddress", ZERO_ADDRESS)  # only seller has changed
@@ -380,10 +488,11 @@ class Processor:
         :param block_to: To block
         :return: None
         """
-        block_from = self.__get_oldest_cursor(self.token_list, block_to)
-        if block_from > block_to:
-            return
-        for exchange_address in self.exchange_address_list:
+        for exchange in self.exchange_list:
+            block_from = exchange.cursor
+            if block_from > block_to:
+                continue
+            exchange_address = exchange.exchange_address
             try:
                 escrow = Contract.get_contract("IbetEscrow", exchange_address)
 
@@ -398,6 +507,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("token", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
                         "account_address": _event["args"].get("sender", ZERO_ADDRESS)  # only sender has changed
@@ -412,6 +525,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("token", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
                         "account_address": _event["args"].get("sender", ZERO_ADDRESS)  # only sender has changed
@@ -426,6 +543,10 @@ class Processor:
                 except ABIEventFunctionNotFound:
                     _event_list = []
                 for _event in _event_list:
+                    event_block_number = _event.get("blockNumber", block_from)
+                    token_cursor = self.token_list.get_cursor(_event["args"].get("token", ZERO_ADDRESS))
+                    if event_block_number < token_cursor:
+                        continue
                     account_list_tmp.append({
                         "token_address": _event["args"].get("token", ZERO_ADDRESS),
                         "account_address": _event["args"].get("sender", ZERO_ADDRESS)
@@ -468,7 +589,7 @@ class Processor:
                 raise e
 
     @staticmethod
-    def __get_oldest_cursor(target_token_list: List[TargetToken], block_to: int) -> int:
+    def __get_oldest_cursor(target_token_list: TargetTokenList, block_to: int) -> int:
         """Get the oldest block number for given target token list"""
         oldest_block_number = block_to
         if len(target_token_list) == 0:
@@ -479,25 +600,28 @@ class Processor:
         return oldest_block_number
 
     @staticmethod
-    def __get_idx_position_block_number(db_session: Session, token_address: str):
+    def __get_idx_position_block_number(db_session: Session, token_address: str, exchange_address: str):
         """Get position index for Bond """
         _idx_position_block_number = db_session.query(IDXPositionMembershipBlockNumber).\
-            filter(IDXPositionMembershipBlockNumber.token_address == token_address).first()
+            filter(IDXPositionMembershipBlockNumber.token_address == token_address).\
+            filter(IDXPositionMembershipBlockNumber.exchange_address == exchange_address).first()
         if _idx_position_block_number is None:
             return -1
         else:
             return _idx_position_block_number.latest_block_number
 
     @staticmethod
-    def __set_idx_position_block_number(db_session: Session, target_token_list: List[TargetToken], block_number: int):
+    def __set_idx_position_block_number(db_session: Session, target_token_list: TargetTokenList, block_number: int):
         """Set position index for Bond """
         for target_token in target_token_list:
             _idx_position_block_number = db_session.query(IDXPositionMembershipBlockNumber). \
-                filter(IDXPositionMembershipBlockNumber.token_address == target_token.token_contract.address).first()
+                filter(IDXPositionMembershipBlockNumber.token_address == target_token.token_contract.address).\
+                filter(IDXPositionMembershipBlockNumber.exchange_address == target_token.exchange_address).first()
             if _idx_position_block_number is None:
                 _idx_position_block_number = IDXPositionMembershipBlockNumber()
             _idx_position_block_number.latest_block_number = block_number
             _idx_position_block_number.token_address = target_token.token_contract.address
+            _idx_position_block_number.exchange_address = target_token.exchange_address
             db_session.merge(_idx_position_block_number)
 
     @staticmethod
