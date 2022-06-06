@@ -433,6 +433,17 @@ paths:
                       type: integer
                       example: 1
                       description: execution failure:0, execution success:1, execution success(pending transaction):2
+                    error_code:
+                      type: integer
+                      example: 240202
+                      description: error code thrown from contract
+                    error_msg:
+                      type: string
+                      example: Message sender is not token owner.
+                      description: error message
+                  required:
+                  - id
+                  - status
         400:
           description: Invalid Parameter Error or Suspended Token
           schema:
@@ -544,6 +555,23 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 1
+                    description: transaction revert:0, transaction success:1
+                  error_code:
+                    type: integer
+                    example: 240202
+                    description: error code thrown from contract
+                  error_msg:
+                    type: string
+                    example: Message sender is not token owner.
+                    description: error message
+                required:
+                  - status
         400:
           description: Invalid Parameter Error
           schema:

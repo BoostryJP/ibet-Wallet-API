@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from cerberus import Validator
-from web3.exceptions import TimeExhausted
+from web3.exceptions import TimeExhausted, ContractLogicError
 from eth_account import Account
 from eth_typing import ChecksumAddress
 from eth_utils import to_checksum_address
@@ -37,6 +37,7 @@ from app.model.db import (
     Listing
 )
 from app.contracts import Contract
+from app.utils.contract_error_code import error_code_msg
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -194,6 +195,18 @@ class SendRawTransaction(BaseResource):
             # Handling a transaction execution result
             try:
                 tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
+                if tx["status"] == 0:
+                    # inspect reason of transaction fail
+                    err_msg = self.inspect_tx_failure(tx_hash.hex())
+                    code, message = error_code_msg(err_msg)
+                    result.append({
+                        "id": i + 1,
+                        "status": 0,
+                        "error_code": code,
+                        "error_msg": message
+                    })
+                    LOG.error(f"Contract logic error: code: {str(code)} message: {message}")
+                    continue
             except TimeExhausted as err:
                 status = 2  # execution success (pending transaction)
 
@@ -231,6 +244,33 @@ class SendRawTransaction(BaseResource):
             })
 
         self.on_success(res, result)
+
+    @staticmethod
+    def inspect_tx_failure(tx_hash: str) -> str:
+        tx = web3.eth.getTransaction(tx_hash)
+
+        # build a new transaction to replay:
+        replay_tx = {
+            'to': tx['to'],
+            'from': tx['from'],
+            'value': tx['value'],
+            'data': tx['input'],
+        }
+
+        # replay the transaction locally:
+        try:
+            web3.eth.call(replay_tx, tx.blockNumber - 1)
+        except ContractLogicError as e:
+            if len(e.args) == 0:
+                raise e
+            if len(e.args[0].split("execution reverted: ")) == 2:
+                msg = e.args[0].split("execution reverted: ")[1]
+            else:
+                msg = e.args[0]
+            return msg
+        except Exception as e:
+            raise e
+        raise Exception("Inspecting transaction revert is failed.")
 
     @staticmethod
     def validate(req):
@@ -405,19 +445,28 @@ class WaitForTransactionReceipt(BaseResource):
         transaction_hash = request_json.get("transaction_hash")
         timeout = request_json.get("timeout", 5)
 
+        result = {}
         # transaction receipt の監視
         try:
             tx = web3.eth.waitForTransactionReceipt(
                 transaction_hash=transaction_hash,
                 timeout=timeout
             )
+            if tx["status"] == 0:
+                # inspect reason of transaction fail
+                err_msg = self.inspect_tx_failure(transaction_hash)
+                code, message = error_code_msg(err_msg)
+                result["status"] = 0
+                result["error_code"] = code
+                result["error_msg"] = message
+            else:
+                result["status"] = 1
         except Exception as err:
             raise DataNotExistsError
 
         if tx is None:
             raise DataNotExistsError
-
-        self.on_success(res)
+        self.on_success(res, result)
 
     @staticmethod
     def validate(req):
@@ -442,3 +491,30 @@ class WaitForTransactionReceipt(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return request_json
+
+    @staticmethod
+    def inspect_tx_failure(tx_hash: str) -> str:
+        tx = web3.eth.getTransaction(tx_hash)
+
+        # build a new transaction to replay:
+        replay_tx = {
+            'to': tx['to'],
+            'from': tx['from'],
+            'value': tx['value'],
+            'data': tx['input'],
+        }
+
+        # replay the transaction locally:
+        try:
+            web3.eth.call(replay_tx, tx.blockNumber - 1)
+        except ContractLogicError as e:
+            if len(e.args) == 0:
+                return str(e)
+            if len(e.args[0].split("execution reverted: ")) == 2:
+                msg = e.args[0].split("execution reverted: ")[1]
+            else:
+                msg = e.args[0]
+            return msg
+        except Exception as e:
+            raise e
+        raise Exception("Inspecting transaction revert is failed.")
