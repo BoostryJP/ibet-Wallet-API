@@ -1094,6 +1094,7 @@ class TestProcessor:
                 idx_position_bond_block_number = IDXPositionBondBlockNumber()
                 idx_position_bond_block_number.id = 1
                 idx_position_bond_block_number.token_address = token["address"]
+                idx_position_bond_block_number.exchange_address = escrow_contract.address
                 # Setting stored index to 9,999,999
                 idx_position_bond_block_number.latest_block_number = latest_block_number
                 session.merge(idx_position_bond_block_number)
@@ -1122,6 +1123,120 @@ class TestProcessor:
                 processor.sync_new_logs()
                 # Then processor call "__sync_all" method 20 times.
                 assert __sync_all_mock.call_count == 20
+
+    # <Normal_18>
+    # Multiple Token
+    # Multi event logs
+    # - Transfer/Exchange/Lock
+    # Skip exchange events which has already been synced
+    def test_normal_18(self, processor, shared_contract, session):
+        token_list_contract = shared_contract["TokenList"]
+        exchange_contract = shared_contract["IbetStraightBondExchange"]
+        agent = eth_account['agent']
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
+
+        token1 = self.issue_token_bond(
+            self.issuer, exchange_contract["address"], personal_info_contract["address"], token_list_contract)
+        token2 = self.issue_token_bond(
+            self.issuer, exchange_contract["address"], personal_info_contract["address"], token_list_contract)
+
+        # Token1 Listing
+        self.listing_token(token1["address"], session)
+
+        # Token1 Operation
+        bond_transfer_to_exchange(
+            self.issuer, exchange_contract, token1, 10000)
+        make_buy(self.trader, exchange_contract, token1, 111, 1000)
+        take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 55)
+        cancel_agreement(agent, exchange_contract, get_latest_orderid(exchange_contract), get_latest_agreementid(exchange_contract, get_latest_orderid(exchange_contract)))
+        make_buy(self.trader, exchange_contract, token1, 111, 1000)
+        take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
+
+        token_contract = Contract.get_contract(
+            "IbetStraightBond", token1["address"])
+        tx_hash = token_contract.functions.authorizeLockAddress(
+            self.trader["account_address"],
+            True
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Lock
+        tx_hash = token_contract.functions.lock(self.trader["account_address"], 100).transact(
+            {'from': self.issuer['account_address'], 'gas': 4000000}
+        )
+        web3.eth.waitForTransactionReceipt(tx_hash)
+
+        # Token2 Operation
+        bond_transfer_to_exchange(
+            self.issuer, exchange_contract, token2, 10000)
+        make_buy(self.trader, exchange_contract, token2, 111, 1000)
+        take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 55)
+        cancel_agreement(agent, exchange_contract, get_latest_orderid(exchange_contract), get_latest_agreementid(exchange_contract, get_latest_orderid(exchange_contract)))
+        make_buy(self.trader, exchange_contract, token2, 111, 1000)
+        take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
+
+        # Run target process
+        block_number1 = web3.eth.blockNumber
+        processor.sync_new_logs()
+
+        # Assertion
+        _position_list = session.query(
+            IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 1
+        _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token1["address"]).first()
+        _position: IDXPosition = _position_list[0]
+        assert _position.id == 1
+        assert _position.token_address == token1["address"]
+        assert _position.account_address == self.issuer["account_address"]
+        assert _position.balance == 1000000 - 10000 + 55 - 100
+        assert _position.pending_transfer == 0
+        assert _position.exchange_balance == 10000 - 55 - 66
+        assert _position.exchange_commitment == 66
+        assert _idx_position_bond_block_number.latest_block_number == block_number1
+
+        # Token2 Listing
+        self.listing_token(token2["address"], session)
+
+        # Run target process
+        block_number2 = web3.eth.blockNumber
+        processor.sync_new_logs()
+
+        session.rollback()
+        _position_list = session.query(
+            IDXPosition).order_by(IDXPosition.created).all()
+        assert len(_position_list) == 2
+
+        _idx_position_bond_block_number1 = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token1["address"]).first()
+        _idx_position_bond_block_number2 = session.query(IDXPositionBondBlockNumber).\
+            filter(IDXPositionBondBlockNumber.token_address == token2["address"]).first()
+
+        _position1: IDXPosition = _position_list[0]
+        assert _position1.id == 1
+        assert _position1.token_address == token1["address"]
+        assert _position1.account_address == self.issuer["account_address"]
+        assert _position1.balance == 1000000 - 10000 + 55 - 100
+        assert _position1.pending_transfer == 0
+        assert _position1.exchange_balance == 10000 - 55 - 66
+        assert _position1.exchange_commitment == 66
+        assert _idx_position_bond_block_number1.latest_block_number == block_number2
+
+        _position2: IDXPosition = _position_list[1]
+        assert _position2.id == 2
+        assert _position2.token_address == token2["address"]
+        assert _position2.account_address == self.issuer["account_address"]
+        assert _position2.balance == 1000000 - 10000 + 55
+        assert _position2.pending_transfer == 0
+        assert _position2.exchange_balance == 10000 - 55 - 66
+        assert _position2.exchange_commitment == 66
+        assert _idx_position_bond_block_number2.latest_block_number == block_number2
 
     ###########################################################################
     # Error Case

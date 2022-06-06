@@ -64,12 +64,15 @@ class IDXPositionBondBlockNumber(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
+    # target exchange address
+    exchange_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
         'token_address': str,
+        'exchange_address': str,
         'latest_block_number': int,
     }
 
@@ -84,12 +87,15 @@ class IDXPositionShareBlockNumber(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
+    # target exchange address
+    exchange_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
         'token_address': str,
+        'exchange_address': str,
         'latest_block_number': int,
     }
 
@@ -104,12 +110,15 @@ class IDXPositionCouponBlockNumber(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
+    # target exchange address
+    exchange_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
         'token_address': str,
+        'exchange_address': str,
         'latest_block_number': int,
     }
 
@@ -124,12 +133,15 @@ class IDXPositionMembershipBlockNumber(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     # target token address
     token_address = Column(String(42), primary_key=True)
+    # target exchange address
+    exchange_address = Column(String(42), primary_key=True)
     # latest blockNumber
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
         'id': int,
         'token_address': str,
+        'exchange_address': str,
         'latest_block_number': int,
     }
 

@@ -30,6 +30,7 @@ table = Table(
     "idx_position_share_block_number", meta,
     Column("id", BigInteger, primary_key=True, autoincrement=True),
     Column("token_address", String(42), primary_key=True),
+    Column("exchange_address", String(42), primary_key=True),
     Column("latest_block_number", BigInteger),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
