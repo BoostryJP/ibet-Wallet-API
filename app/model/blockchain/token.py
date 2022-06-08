@@ -108,6 +108,15 @@ class BondToken(TokenBase):
                         token_contract, "transferApprovalRequired", (), False
                     )
                     bondtoken.is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
+                    # 企業情報が存在しない場合は直近の情報を取得する
+                    if bondtoken.company_name is None or bondtoken.company_name == "":
+                        company = CompanyList.get_find(to_checksum_address(bondtoken.owner_address))
+                        bondtoken.company_name = company.corporate_name
+                        bondtoken.rsa_publickey = company.rsa_publickey
+                        BondToken.cache[token_address] = {
+                            "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                            "token": bondtoken
+                        }
                     return bondtoken
 
         # キャッシュ未利用の場合
@@ -296,6 +305,15 @@ class ShareToken(TokenBase):
                         token_contract, "transferApprovalRequired", (), False
                     )
                     sharetoken.is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
+                    # 企業情報が存在しない場合は直近の情報を取得する
+                    if sharetoken.company_name is None or sharetoken.company_name == "":
+                        company = CompanyList.get_find(to_checksum_address(sharetoken.owner_address))
+                        sharetoken.company_name = company.corporate_name
+                        sharetoken.rsa_publickey = company.rsa_publickey
+                        BondToken.cache[token_address] = {
+                            "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                            "token": sharetoken
+                        }
                     return sharetoken
 
         # キャッシュ未利用の場合
