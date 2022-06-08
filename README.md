@@ -246,6 +246,13 @@ $ pytest tests/
 
 ibet-Wallet-API is licensed under the Apache License, Version 2.0.
 
+## EoL policy
+Each major version is supported for one year after release. 
+For example, v22.1 is supported until v23.1 is released. 
+
+It fixes critical problems, including critical security problems, 
+in supported releases as needed by issuing minor revisions 
+(for example, v22.1.1, v22.1.2, and so on).
 
 ## Contact information
 
