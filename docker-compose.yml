@@ -28,6 +28,8 @@ services:
       - 'byzantium'
       - -g
       - '0'
+      - --chain.chainId
+      - '2017'
   ibet-wallet-api-postgres:
     build:
       context: ./
