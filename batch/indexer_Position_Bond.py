@@ -279,9 +279,11 @@ class Processor:
         :return: None
         """
         for target in self.token_list:
-            target.cursor = block_number
+            if block_number > target.start_block_number:
+                target.cursor = block_number
         for exchange in self.exchange_list:
-            exchange.cursor = block_number
+            if block_number > exchange.start_block_number:
+                exchange.cursor = block_number
 
     def __sync_transfer(self, db_session: Session, block_to: int):
         """Sync Transfer Events
@@ -303,25 +305,23 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from", "to"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
-                        if web3.eth.getCode(_account).hex() == "0x":
-                            _balance, _pending_transfer, _exchange_balance, _exchange_commitment = \
-                                self.__get_account_balance_all(token, _account)
-                            self.__sink_on_position(
-                                db_session=db_session,
-                                token_address=to_checksum_address(token.address),
-                                account_address=_account,
-                                balance=_balance,
-                                pending_transfer=_pending_transfer,
-                                exchange_balance=_exchange_balance,
-                                exchange_commitment=_exchange_commitment
-                            )
+                for _account in accounts_filtered:
+                    if web3.eth.getCode(_account).hex() == "0x":
+                        _balance, _pending_transfer, _exchange_balance, _exchange_commitment = \
+                            self.__get_account_balance_all(token, _account)
+                        self.__sink_on_position(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            account_address=_account,
+                            balance=_balance,
+                            pending_transfer=_pending_transfer,
+                            exchange_balance=_exchange_balance,
+                            exchange_commitment=_exchange_commitment
+                        )
             except Exception as e:
                 raise e
 
@@ -345,13 +345,11 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["accountAddress"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    account = args.get("accountAddress", ZERO_ADDRESS)
+                for account in accounts_filtered:
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
                     self.__sink_on_position(
                         db_session=db_session,
@@ -383,13 +381,11 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["recipientAddress"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    account = args.get("recipientAddress", ZERO_ADDRESS)
+                for account in accounts_filtered:
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
                     self.__sink_on_position(
                         db_session=db_session,
@@ -421,13 +417,11 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["targetAddress"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    account = args.get("targetAddress", ZERO_ADDRESS)
+                for account in accounts_filtered:
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
                     self.__sink_on_position(
                         db_session=db_session,
@@ -459,13 +453,11 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["targetAddress"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    account = args.get("targetAddress", ZERO_ADDRESS)
+                for account in accounts_filtered:
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
                     self.__sink_on_position(
                         db_session=db_session,
@@ -497,13 +489,11 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    account = args.get("from", ZERO_ADDRESS)
+                for account in accounts_filtered:
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
                     self.__sink_on_position(
                         db_session=db_session,
@@ -535,13 +525,11 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    account = args.get("from", ZERO_ADDRESS)
+                for account in accounts_filtered:
                     balance, pending_transfer = self.__get_account_balance_token(token, account)
                     self.__sink_on_position(
                         db_session=db_session,
@@ -573,21 +561,19 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
-                events_filtered = self.remove_duplicate_event_by_token_account_desc(
+                accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["from", "to"]
                 )
-                for event in events_filtered:
-                    args = event["args"]
-                    for _account in [args.get("from", ZERO_ADDRESS), args.get("to", ZERO_ADDRESS)]:
-                        _balance, _pending_transfer = self.__get_account_balance_token(token, _account)
-                        self.__sink_on_position(
-                            db_session=db_session,
-                            token_address=to_checksum_address(token.address),
-                            account_address=_account,
-                            balance=_balance,
-                            pending_transfer=_pending_transfer
-                        )
+                for _account in accounts_filtered:
+                    _balance, _pending_transfer = self.__get_account_balance_token(token, _account)
+                    self.__sink_on_position(
+                        db_session=db_session,
+                        token_address=to_checksum_address(token.address),
+                        account_address=_account,
+                        balance=_balance,
+                        pending_transfer=_pending_transfer
+                    )
             except Exception as e:
                 raise e
 
@@ -890,7 +876,8 @@ class Processor:
         for target_token in target_token_list:
             _idx_position_block_number = db_session.query(IDXPositionBondBlockNumber). \
                 filter(IDXPositionBondBlockNumber.token_address == target_token.token_contract.address).\
-                filter(IDXPositionBondBlockNumber.exchange_address == target_token.exchange_address).first()
+                filter(IDXPositionBondBlockNumber.exchange_address == target_token.exchange_address).\
+                populate_existing().first()
             if _idx_position_block_number is None:
                 _idx_position_block_number = IDXPositionBondBlockNumber()
             _idx_position_block_number.latest_block_number = block_number
@@ -1027,15 +1014,15 @@ class Processor:
 
     @staticmethod
     def remove_duplicate_event_by_token_account_desc(events: List,
-                                                     account_keys: List[str]) -> List:
-        """Remove duplicate event from event list.
+                                                     account_keys: List[str]) -> List[str]:
+        """Remove duplicate account from event list.
         Events that have same account key will be removed.
 
         :param events: event list
         :param account_keys: keys in which event contains account address
-        :return: events: event list filtered
+        :return: account_list: account_list list filtered
         """
-        event_token_account_list = []
+        event_account_list = []
 
         # reversed events loop for removing duplicates from the front
         for event in reversed(events):
@@ -1043,14 +1030,13 @@ class Processor:
             for arg_key in account_keys:
                 account_address = args.get(arg_key, ZERO_ADDRESS)
                 if account_address != ZERO_ADDRESS:
-                    event_token_account_list.append([event, account_address])
+                    event_account_list.append(account_address)
         seen = set()
         remove_duplicate_list = []
-        for record in event_token_account_list:
-            record_tuple = tuple(record)
-            if record_tuple[1] not in seen:
-                remove_duplicate_list.append(record[0])
-                seen.add(record_tuple[1])
+        for record in event_account_list:
+            if record not in seen:
+                remove_duplicate_list.append(record)
+                seen.add(record)
 
         # return events in original order
         return list(reversed(remove_duplicate_list))
