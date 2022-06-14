@@ -44,7 +44,8 @@ from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
-    IDXTransfer, IDXTransferBlockNumber
+    IDXTransfer,
+    IDXTransferBlockNumber
 )
 from app.utils.web3_utils import Web3Wrapper
 import log
