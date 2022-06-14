@@ -27,7 +27,7 @@ tags:
   - name: Token
     description: Attribute information of the listed tokens
   - name: IbetExchange
-    description: Trade related features on IbetExchage
+    description: Trade related features on IbetExchange
   - name: Position
     description: Token balance held by the user
   - name: Statistics
