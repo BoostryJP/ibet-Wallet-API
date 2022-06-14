@@ -80,3 +80,24 @@ class IDXTransfer(Base):
         "value": int,
     }
     FIELDS.update(Base.FIELDS)
+
+
+class IDXTransferBlockNumber(Base):
+    """Synchronized blockNumber of IDXTransfer"""
+    __tablename__ = "idx_transfer_block_number"
+
+    # sequence id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # target token address
+    token_address = Column(String(42), primary_key=True)
+    # latest blockNumber
+    latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'token_address': str,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
+

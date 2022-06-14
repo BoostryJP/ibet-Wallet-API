@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional
+from typing import Optional, List
 import os
 import sys
 import time
@@ -42,7 +42,8 @@ from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
-    IDXTransferApproval
+    IDXTransferApproval,
+    IDXTransferApprovalBlockNumber
 )
 from app.utils.web3_utils import Web3Wrapper
 import log
@@ -72,10 +73,91 @@ ibetSecurityTokenEscrow
 
 class Processor:
     """Processor for indexing Token transfer approval events"""
-    latest_block = 0
+    class TargetTokenList:
+        class TargetToken:
+            """
+            Attributes:
+                token_contract: contract object
+                exchange_address: address of associated exchange
+                start_block_number(int): block number that the processor first reads
+                cursor(int): pointer where next process should be start
+            """
+            def __init__(self, token_contract, exchange_address: str, block_number: int):
+                self.token_contract = token_contract
+                self.exchange_address = exchange_address
+                self.start_block_number = block_number
+                self.cursor = block_number
+
+        target_token_list: List[TargetToken]
+
+        def __init__(self):
+            self.target_token_list = []
+
+        def append(self, token_contract, exchange_address: str, block_number: int):
+            is_duplicate = False
+            for i, t in enumerate(self.target_token_list):
+                if t.token_contract.address == token_contract.address:
+                    is_duplicate = True
+                    if self.target_token_list[i].start_block_number > block_number:
+                        self.target_token_list[i].start_block_number = block_number
+                        self.target_token_list[i].cursor = block_number
+            if not is_duplicate:
+                target_token = self.TargetToken(token_contract, exchange_address, block_number)
+                self.target_token_list.append(target_token)
+
+        def get_cursor(self, token_address: str) -> int:
+            for t in self.target_token_list:
+                if t.token_contract.address == token_address:
+                    return t.cursor
+            return 0
+
+        def __iter__(self):
+            return iter(self.target_token_list)
+
+        def __len__(self):
+            return len(self.target_token_list)
+
+    class TargetExchangeList:
+        class TargetExchange:
+            """
+            Attributes:
+                exchange_contract: contract object
+                exchange_address: contract address of exchange or escrow
+                start_block_number(int): block number that the processor first reads
+                cursor(int): pointer where next process should be start
+            """
+            def __init__(self, exchange_contract, exchange_address: str, block_number: int):
+                self.exchange_contract = exchange_contract
+                self.exchange_address = exchange_address
+                self.start_block_number = block_number
+                self.cursor = block_number
+
+        target_exchange_list: List[TargetExchange]
+
+        def __init__(self):
+            self.target_exchange_list = []
+
+        def append(self, exchange_contract, exchange_address: str, block_number: int):
+            is_duplicate = False
+            for i, e in enumerate(self.target_exchange_list):
+                if e.exchange_address == exchange_address:
+                    is_duplicate = True
+                    if self.target_exchange_list[i].start_block_number > block_number:
+                        self.target_exchange_list[i].start_block_number = block_number
+                        self.target_exchange_list[i].cursor = block_number
+            if not is_duplicate:
+                target_exchange = self.TargetExchange(exchange_contract, exchange_address, block_number)
+                self.target_exchange_list.append(target_exchange)
+
+        def __iter__(self):
+            return iter(self.target_exchange_list)
+
+    token_list: TargetTokenList
+    exchange_list: TargetExchangeList
 
     def __init__(self):
-        self.token_list = []
+        self.token_list = self.TargetTokenList()
+        self.exchange_list = self.TargetExchangeList()
 
     @staticmethod
     def get_block_timestamp(event) -> int:
@@ -83,8 +165,9 @@ class Processor:
         return block_timestamp
 
     def __get_contract_list(self, db_session: Session):
-        self.token_list = []
-        self.exchange_list = []
+        self.token_list = self.TargetTokenList()
+        self.exchange_list = self.TargetExchangeList()
+
         list_contract = Contract.get_contract(
             contract_name="TokenList",
             address=TOKEN_LIST_CONTRACT_ADDRESS
@@ -105,23 +188,26 @@ class Processor:
                     contract_name="IbetSecurityTokenInterface",
                     address=listed_token.token_address
                 )
-                self.token_list.append(token_contract)
                 tradable_exchange_address = Contract.call_function(
                     contract=token_contract,
                     function_name="tradableExchange",
                     args=(),
                     default_returns=ZERO_ADDRESS
                 )
+                synced_block_number = self.__get_idx_transfer_approval_block_number(
+                    db_session=db_session,
+                    token_address=listed_token.token_address,
+                    exchange_address=tradable_exchange_address
+                )
+                block_from = synced_block_number + 1
+                self.token_list.append(token_contract, tradable_exchange_address, block_from)
                 if tradable_exchange_address != ZERO_ADDRESS:
-                    _exchange_list_tmp.append(tradable_exchange_address)
-
-        # Remove duplicate exchanges from a list
-        for _exchange_address in list(set(_exchange_list_tmp)):
-            exchange_contract = Contract.get_contract(
-                contract_name="IbetSecurityTokenEscrow",
-                address=_exchange_address
-            )
-            self.exchange_list.append(exchange_contract)
+                    if tradable_exchange_address not in [e.exchange_address for e in self.exchange_list]:
+                        exchange_contract = Contract.get_contract(
+                            contract_name="IbetSecurityTokenEscrow",
+                            address=tradable_exchange_address
+                        )
+                        self.exchange_list.append(exchange_contract, tradable_exchange_address, block_from)
 
     @staticmethod
     def __get_db_session():
@@ -129,85 +215,112 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
-        latest_block_at_start = self.latest_block
-        self.latest_block = web3.eth.blockNumber
         try:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            _to_block = 999999
-            _from_block = 0
-            if self.latest_block > 999999:
-                while _to_block < self.latest_block:
+            latest_block = web3.eth.blockNumber
+            _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
+            _to_block = 999999 + _from_block
+            if latest_block > _to_block:
+                while _to_block < latest_block:
                     self.__sync_all(
                         db_session=local_session,
-                        block_from=_from_block,
                         block_to=_to_block
                     )
                     _to_block += 1000000
-                    _from_block += 1000000
                 self.__sync_all(
                     db_session=local_session,
-                    block_from=_from_block,
-                    block_to=self.latest_block
+                    block_to=latest_block
                 )
             else:
                 self.__sync_all(
                     db_session=local_session,
-                    block_from=_from_block,
-                    block_to=self.latest_block
+                    block_to=latest_block
                 )
+            self.__set_idx_transfer_approval_block_number(local_session, self.token_list, latest_block)
             local_session.commit()
         except Exception as e:
             LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
-            self.latest_block = latest_block_at_start
             raise e
         finally:
             local_session.close()
+            self.token_list = self.TargetTokenList()
+            self.exchange_list = self.TargetExchangeList()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
-        latest_block_at_start = self.latest_block
         try:
             self.__get_contract_list(local_session)
-            blockTo = web3.eth.blockNumber
-            if blockTo == self.latest_block:
-                return
-            self.__sync_all(
-                db_session=local_session,
-                block_from=self.latest_block + 1,
-                block_to=blockTo
-            )
-            self.latest_block = blockTo
+            # Synchronize 1,000,000 blocks each
+            latest_block = web3.eth.blockNumber
+            _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
+            _to_block = 999999 + _from_block
+            if latest_block > _to_block:
+                while _to_block < latest_block:
+                    self.__sync_all(
+                        db_session=local_session,
+                        block_to=_to_block
+                    )
+                    _to_block += 1000000
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
+                )
+            else:
+                self.__sync_all(
+                    db_session=local_session,
+                    block_to=latest_block
+                )
+            self.__set_idx_transfer_approval_block_number(local_session, self.token_list, latest_block)
             local_session.commit()
         except Exception as e:
             LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
-            self.latest_block = latest_block_at_start
             raise e
         finally:
             local_session.close()
+            self.token_list = self.TargetTokenList()
+            self.exchange_list = self.TargetExchangeList()
 
-    def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
-        self.__sync_token_apply_for_transfer(db_session, block_from, block_to)
-        self.__sync_token_cancel_transfer(db_session, block_from, block_to)
-        self.__sync_token_approve_transfer(db_session, block_from, block_to)
-        self.__sync_exchange_apply_for_transfer(db_session, block_from, block_to)
-        self.__sync_exchange_cancel_transfer(db_session, block_from, block_to)
-        self.__sync_exchange_escrow_finished(db_session, block_from, block_to)
-        self.__sync_exchange_approve_transfer(db_session, block_from, block_to)
+    def __sync_all(self, db_session: Session, block_to: int):
+        LOG.info("syncing to={}".format(block_to))
+        self.__sync_token_apply_for_transfer(db_session, block_to)
+        self.__sync_token_cancel_transfer(db_session, block_to)
+        self.__sync_token_approve_transfer(db_session, block_to)
+        self.__sync_exchange_apply_for_transfer(db_session, block_to)
+        self.__sync_exchange_cancel_transfer(db_session, block_to)
+        self.__sync_exchange_escrow_finished(db_session, block_to)
+        self.__sync_exchange_approve_transfer(db_session, block_to)
 
-    def __sync_token_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
+        self.__update_cursor(block_to + 1)
+
+    def __update_cursor(self, block_number):
+        """Memorize the block number where next processing should start from
+
+        :param block_number: block number to be set
+        :return: None
+        """
+        for target in self.token_list:
+            if block_number > target.start_block_number:
+                target.cursor = block_number
+        for exchange in self.exchange_list:
+            if block_number > exchange.start_block_number:
+                exchange.cursor = block_number
+
+    def __sync_token_apply_for_transfer(self, db_session: Session, block_to: int):
         """Sync ApplyForTransfer events of tokens
 
         :param db_session: ORM session
-        :param block_from: From Block
         :param block_to: To Block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.ApplyForTransfer.getLogs(
                     fromBlock=block_from,
@@ -238,15 +351,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_token_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_token_cancel_transfer(self, db_session: Session, block_to: int):
         """Sync CancelTransfer events of tokens
 
         :param db_session: ORM session
-        :param block_from: From Block
         :param block_to: To Block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.CancelTransfer.getLogs(
                     fromBlock=block_from,
@@ -269,15 +385,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_token_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_token_approve_transfer(self, db_session: Session, block_to: int):
         """Sync ApproveTransfer events of tokens
 
         :param db_session: ORM session
-        :param block_from: From Block
         :param block_to: To Block
         :return: None
         """
-        for token in self.token_list:
+        for target in self.token_list:
+            token = target.token_contract
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
             try:
                 events = token.events.ApproveTransfer.getLogs(
                     fromBlock=block_from,
@@ -303,15 +422,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_apply_for_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_exchange_apply_for_transfer(self, db_session: Session, block_to: int):
         """Sync ApplyForTransfer events of exchanges
 
         :param db_session: ORM session
-        :param block_from: From Block
         :param block_to: To Block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for target in self.exchange_list:
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
+            exchange = target.exchange_contract
             try:
                 events = exchange.events.ApplyForTransfer.getLogs(
                     fromBlock=block_from,
@@ -320,7 +442,14 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
+                # Filter events by listed token
+                events_filtered = []
+                token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
+                    args = event["args"]
+                    if args.get("token", ZERO_ADDRESS) in token_address_list:
+                        events_filtered.append(event)
+                for event in events_filtered:
                     args = event["args"]
                     value = args.get("value", 0)
                     if value > sys.maxsize:  # suppress overflow
@@ -342,15 +471,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_cancel_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_exchange_cancel_transfer(self, db_session: Session, block_to: int):
         """Sync CancelTransfer events of exchanges
 
         :param db_session: ORM session
-        :param block_from: From Block
         :param block_to: To Block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for target in self.exchange_list:
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
+            exchange = target.exchange_contract
             try:
                 events = exchange.events.CancelTransfer.getLogs(
                     fromBlock=block_from,
@@ -359,7 +491,14 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
+                # Filter events by listed token
+                events_filtered = []
+                token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
+                    args = event["args"]
+                    if args.get("token", ZERO_ADDRESS) in token_address_list:
+                        events_filtered.append(event)
+                for event in events_filtered:
                     args = event["args"]
                     self.__sink_on_transfer_approval(
                         db_session=db_session,
@@ -373,15 +512,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_escrow_finished(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_exchange_escrow_finished(self, db_session: Session, block_to: int):
         """Sync EscrowFinished events of exchanges
 
         :param db_session: ORM session
-        :param block_from: From Block
         :param block_to: To Block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for target in self.exchange_list:
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
+            exchange = target.exchange_contract
             try:
                 events = exchange.events.EscrowFinished.getLogs(
                     fromBlock=block_from,
@@ -391,7 +533,14 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
+                # Filter events by listed token
+                events_filtered = []
+                token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
+                    args = event["args"]
+                    if args.get("token", ZERO_ADDRESS) in token_address_list:
+                        events_filtered.append(event)
+                for event in events_filtered:
                     args = event["args"]
                     self.__sink_on_transfer_approval(
                         db_session=db_session,
@@ -405,15 +554,18 @@ class Processor:
             except Exception as e:
                 raise e
 
-    def __sync_exchange_approve_transfer(self, db_session: Session, block_from: int, block_to: int):
+    def __sync_exchange_approve_transfer(self, db_session: Session, block_to: int):
         """Sync ApproveTransfer events of exchanges
 
         :param db_session: ORM session
-        :param block_from: From Block
         :param block_to: To Block
         :return: None
         """
-        for exchange in self.exchange_list:
+        for target in self.exchange_list:
+            block_from = target.cursor
+            if block_from > block_to:
+                continue
+            exchange = target.exchange_contract
             try:
                 events = exchange.events.ApproveTransfer.getLogs(
                     fromBlock=block_from,
@@ -422,7 +574,14 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
+                # Filter events by listed token
+                events_filtered = []
+                token_address_list = [t.token_contract.address for t in self.token_list]
                 for event in events:
+                    args = event["args"]
+                    if args.get("token", ZERO_ADDRESS) in token_address_list:
+                        events_filtered.append(event)
+                for event in events_filtered:
                     args = event["args"]
                     block_timestamp = self.get_block_timestamp(event=event)
                     self.__sink_on_transfer_approval(
@@ -436,6 +595,42 @@ class Processor:
                     )
             except Exception as e:
                 raise e
+
+    @staticmethod
+    def __get_oldest_cursor(target_token_list: TargetTokenList, block_to: int) -> int:
+        """Get the oldest block number for given target token list"""
+        oldest_block_number = block_to
+        if len(target_token_list) == 0:
+            return 0
+        for target_token in target_token_list:
+            if target_token.cursor < oldest_block_number:
+                oldest_block_number = target_token.cursor
+        return oldest_block_number
+
+    @staticmethod
+    def __get_idx_transfer_approval_block_number(db_session: Session, token_address: str, exchange_address: str):
+        """Get position index for Bond """
+        _idx_transfer_approval_block_number = db_session.query(IDXTransferApprovalBlockNumber).\
+            filter(IDXTransferApprovalBlockNumber.token_address == token_address).\
+            filter(IDXTransferApprovalBlockNumber.exchange_address == exchange_address).first()
+        if _idx_transfer_approval_block_number is None:
+            return -1
+        else:
+            return _idx_transfer_approval_block_number.latest_block_number
+
+    @staticmethod
+    def __set_idx_transfer_approval_block_number(db_session: Session, target_token_list: TargetTokenList, block_number: int):
+        """Set position index for Bond """
+        for target_token in target_token_list:
+            _idx_transfer_approval_block_number = db_session.query(IDXTransferApprovalBlockNumber). \
+                filter(IDXTransferApprovalBlockNumber.token_address == target_token.token_contract.address).\
+                filter(IDXTransferApprovalBlockNumber.exchange_address == target_token.exchange_address).first()
+            if _idx_transfer_approval_block_number is None:
+                _idx_transfer_approval_block_number = IDXTransferApprovalBlockNumber()
+            _idx_transfer_approval_block_number.latest_block_number = block_number
+            _idx_transfer_approval_block_number.token_address = target_token.token_contract.address
+            _idx_transfer_approval_block_number.exchange_address = target_token.exchange_address
+            db_session.merge(_idx_transfer_approval_block_number)
 
     @staticmethod
     def __sink_on_transfer_approval(db_session: Session,
