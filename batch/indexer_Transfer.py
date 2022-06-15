@@ -250,7 +250,7 @@ class Processor:
         for target in self.token_list:
             token = target.token_contract
             skip_timestamp = target.skip_timestamp
-            if to_timestamp <= skip_timestamp:
+            if skip_timestamp is not None and to_timestamp <= skip_timestamp.replace(tzinfo=UTC):
                 continue
             try:
                 events = token.events.Transfer.getLogs(
