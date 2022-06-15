@@ -162,6 +162,7 @@ class Processor:
             # Synchronize 1,000,000 blocks each
             _to_block = 999999
             _from_block = 0
+            LOG.info("syncing to={}".format(latest_block))
             if latest_block > 999999:
                 while _to_block < latest_block:
                     self.__sync_all(
@@ -200,6 +201,7 @@ class Processor:
             # Synchronize 1,000,000 blocks each
             _to_block = 999999
             _from_block = 0
+            LOG.info("syncing to={}".format(latest_block))
             if latest_block > 999999:
                 while _to_block < latest_block:
                     self.__sync_all(
@@ -232,7 +234,6 @@ class Processor:
                    db_session: Session,
                    block_from: int,
                    block_to: int):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
         self.__sync_transfer(db_session, block_from, block_to)
 
         self.__update_skip_timestamp(db_session)
