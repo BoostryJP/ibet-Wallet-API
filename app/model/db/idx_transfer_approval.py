@@ -134,4 +134,3 @@ class IDXTransferApprovalBlockNumber(Base):
     }
 
     FIELDS.update(Base.FIELDS)
-

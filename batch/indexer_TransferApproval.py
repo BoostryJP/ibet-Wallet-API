@@ -298,7 +298,6 @@ class Processor:
 
     def __update_cursor(self, block_number):
         """Memorize the block number where next processing should start from
-
         :param block_number: block number to be set
         :return: None
         """
@@ -311,7 +310,6 @@ class Processor:
 
     def __sync_token_apply_for_transfer(self, db_session: Session, block_to: int):
         """Sync ApplyForTransfer events of tokens
-
         :param db_session: ORM session
         :param block_to: To Block
         :return: None
@@ -353,7 +351,6 @@ class Processor:
 
     def __sync_token_cancel_transfer(self, db_session: Session, block_to: int):
         """Sync CancelTransfer events of tokens
-
         :param db_session: ORM session
         :param block_to: To Block
         :return: None
@@ -387,7 +384,6 @@ class Processor:
 
     def __sync_token_approve_transfer(self, db_session: Session, block_to: int):
         """Sync ApproveTransfer events of tokens
-
         :param db_session: ORM session
         :param block_to: To Block
         :return: None
@@ -424,7 +420,6 @@ class Processor:
 
     def __sync_exchange_apply_for_transfer(self, db_session: Session, block_to: int):
         """Sync ApplyForTransfer events of exchanges
-
         :param db_session: ORM session
         :param block_to: To Block
         :return: None
@@ -473,7 +468,6 @@ class Processor:
 
     def __sync_exchange_cancel_transfer(self, db_session: Session, block_to: int):
         """Sync CancelTransfer events of exchanges
-
         :param db_session: ORM session
         :param block_to: To Block
         :return: None
@@ -514,7 +508,6 @@ class Processor:
 
     def __sync_exchange_escrow_finished(self, db_session: Session, block_to: int):
         """Sync EscrowFinished events of exchanges
-
         :param db_session: ORM session
         :param block_to: To Block
         :return: None
@@ -556,7 +549,6 @@ class Processor:
 
     def __sync_exchange_approve_transfer(self, db_session: Session, block_to: int):
         """Sync ApproveTransfer events of exchanges
-
         :param db_session: ORM session
         :param block_to: To Block
         :return: None
@@ -645,7 +637,6 @@ class Processor:
                                     optional_data_approver: Optional[str] = None,
                                     block_timestamp: Optional[int] = None):
         """Update Transfer Approval data in DB
-
         :param db_session: ORM session
         :param event_type: event type [ApplyFor, Cancel, Approve, Finish]
         :param token_address: token address

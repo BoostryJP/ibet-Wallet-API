@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 import time
-from typing import Optional
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -33,7 +32,7 @@ from app import config
 from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
-    IDXTransfer, IDXTransferBlockNumber
+    IDXTransfer
 )
 from batch import indexer_Transfer
 from batch.indexer_Transfer import main, LOG
@@ -479,11 +478,8 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-
         # Latest_block is incremented in "initial_sync" process.
-        assert idx_transfer_block_number.latest_block_number == block_number_current
+        assert processor.latest_block == block_number_current
 
         # Transfer
         share_transfer_to_exchange(
@@ -500,12 +496,8 @@ class TestProcessor:
         session.rollback()
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
-
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-
         # Latest_block is incremented in "initial_sync" process.
-        assert idx_transfer_block_number.latest_block_number == block_number_current
+        assert processor.latest_block == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     @mock.patch("web3.eth.Eth.getBlock", MagicMock(side_effect=ServiceUnavailable()))
@@ -524,21 +516,20 @@ class TestProcessor:
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
+        block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
-
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-        assert idx_transfer_block_number is None
+        assert processor.latest_block == block_number_bf
 
         # Transfer
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
+        block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
@@ -548,10 +539,7 @@ class TestProcessor:
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-        assert idx_transfer_block_number is None
+        assert processor.latest_block == block_number_bf
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
     def test_error_2_1(self, processor, shared_contract, session):
@@ -569,6 +557,7 @@ class TestProcessor:
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
+        block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
         with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
                 pytest.raises(ServiceUnavailable):
@@ -576,14 +565,13 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-        assert idx_transfer_block_number is None
+        assert processor.latest_block == block_number_bf
 
         # Transfer
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
+        block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
         with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
                 pytest.raises(ServiceUnavailable):
@@ -594,9 +582,7 @@ class TestProcessor:
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-        assert idx_transfer_block_number is None
+        assert processor.latest_block == block_number_bf
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
     def test_error_2_2(self, processor, shared_contract, session):
@@ -614,6 +600,7 @@ class TestProcessor:
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
+        block_number_bf = processor.latest_block
         # Expect that initial_sync() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
                 pytest.raises(SQLAlchemyError):
@@ -622,14 +609,13 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-        assert idx_transfer_block_number is None
+        assert processor.latest_block == block_number_bf
 
         # Transfer
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
+        block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises SQLAlchemyError.
         with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
                 pytest.raises(SQLAlchemyError):
@@ -640,9 +626,7 @@ class TestProcessor:
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
         # Latest_block is NOT incremented in "sync_new_logs" process.
-        idx_transfer_block_number: Optional[IDXTransferBlockNumber] = session.query(IDXTransferBlockNumber).\
-            filter(IDXTransferBlockNumber.token_address == share_token["address"]).first()
-        assert idx_transfer_block_number is None
+        assert processor.latest_block == block_number_bf
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, shared_contract, session, caplog):
