@@ -34,6 +34,7 @@ COMPANY_LIST_SLEEP_INTERVAL = int(os.environ.get("COMPANY_LIST_SLEEP_INTERVAL"))
     if os.environ.get("COMPANY_LIST_SLEEP_INTERVAL") else 3600
 
 # 環境設定読み込み
+UNIT_TEST_MODE = True if os.environ.get("UNIT_TEST_MODE") == "1" else False
 if APP_ENV != "live":
     INI_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"../conf/{APP_ENV}.ini")
 else:
@@ -84,7 +85,7 @@ if 'pytest' in sys.modules:  # 単体テスト実行時
 else:
     DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
-DB_AUTOCOMMIT = True
+DB_AUTOCOMMIT = False
 
 # ログ設定
 LOG_LEVEL = CONFIG['logging']['level']
