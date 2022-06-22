@@ -44,7 +44,7 @@ thread_local = threading.local()
 class Web3Wrapper:
 
     def __init__(self):
-        if "pytest" not in sys.modules:
+        if not config.UNIT_TEST_MODE:
             FailOverHTTPProvider.set_fail_over_mode(True)
 
     @property
