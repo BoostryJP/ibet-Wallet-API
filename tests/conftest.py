@@ -55,7 +55,6 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 @pytest.fixture(scope='session')
 def client():
-    config.DB_AUTOCOMMIT = False
     FailOverHTTPProvider.is_default = None
 
     init_session()

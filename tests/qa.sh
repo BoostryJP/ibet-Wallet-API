@@ -23,8 +23,6 @@ cd /app/ibet-Wallet-API
 
 sleep 10
 
-UNIT_TEST_MODE=1
-
 # test
 pytest -v --cov=app/api/ --cov-report=xml --cov-branch
 

@@ -80,12 +80,11 @@ WEB3_REQUEST_WAIT_TIME = int(os.environ.get("WEB3_REQUEST_WAIT_TIME")) \
     if os.environ.get("WEB3_REQUEST_WAIT_TIME") else BLOCK_SYNC_STATUS_SLEEP_INTERVAL  # Same batch interval
 
 # データベース設定
-if 'pytest' in sys.modules:  # 単体テスト実行時
+if UNIT_TEST_MODE:  # 単体テスト実行時
     DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache_test'
 else:
     DATABASE_URL = os.environ.get("DATABASE_URL") or 'postgresql://ethuser:ethpass@localhost:5432/ethcache'
 DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
-DB_AUTOCOMMIT = False
 
 # ログ設定
 LOG_LEVEL = CONFIG['logging']['level']
