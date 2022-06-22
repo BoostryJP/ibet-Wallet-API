@@ -36,7 +36,7 @@ def get_engine(uri):
         'max_overflow': 30,
         'echo': config.DB_ECHO,
         'execution_options': {
-            'autocommit': config.DB_AUTOCOMMIT
+            'autocommit': False
         }
     }
     return create_engine(uri, **options)

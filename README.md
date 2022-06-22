@@ -232,6 +232,7 @@ $ pip install -r tests/requirements.txt
 
 You can run the tests with:
 ```bash
+$ export UNIT_TEST_MODE=1
 $ pytest tests/
 ```
 

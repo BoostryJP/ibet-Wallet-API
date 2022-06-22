@@ -45,16 +45,19 @@ class DatabaseSessionManager(object):
         """
         session = req.context.get('session')
         if session is not None:
-            if config.DB_AUTOCOMMIT:
-                try:
-                    session.commit()
-                except SQLAlchemyError as ex:
+            try:
+                if not req_succeeded:
                     session.rollback()
-                    raise DatabaseError(ERR_DATABASE_ROLLBACK, ex.args, ex.params)
+                else:
+                    session.commit()
+            except SQLAlchemyError as ex:
+                session.rollback()
+                raise DatabaseError(ERR_DATABASE_ROLLBACK, ex.args, ex.params)
 
-            if self._scoped:
-                # remove any database-loaded state from all current objects
-                # so that the next access of any attribute, or any query execution will retrieve new state
-                session.remove()
-            else:
-                session.close()
+            if not config.UNIT_TEST_MODE:
+                if self._scoped:
+                    # remove any database-loaded state from all current objects
+                    # so that the next access of any attribute, or any query execution will retrieve new state
+                    session.remove()
+                else:
+                    session.close()
