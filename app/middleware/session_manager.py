@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
-import falcon
 import sqlalchemy.orm.scoping as scoping
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -52,7 +50,7 @@ class DatabaseSessionManager(object):
                     session.commit()
             except SQLAlchemyError as ex:
                 session.rollback()
-                raise DatabaseError(ERR_DATABASE_ROLLBACK, ex.args, ex.params)
+                raise DatabaseError(ERR_DATABASE_ROLLBACK, ex.args)
 
             if not config.UNIT_TEST_MODE:
                 if self._scoped:
