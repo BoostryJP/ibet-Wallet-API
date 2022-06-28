@@ -185,7 +185,6 @@ class Processor:
                 )
             local_session.commit()
         except Exception as e:
-            LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
             raise e
         finally:
@@ -224,7 +223,6 @@ class Processor:
                 )
             local_session.commit()
         except Exception as e:
-            LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
             raise e
         finally:
@@ -345,7 +343,7 @@ def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
-            LOG.exception(ex)
+            LOG.exception("An exception occurred during event synchronization")
 
         time.sleep(5)
 
