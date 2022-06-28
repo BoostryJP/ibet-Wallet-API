@@ -1298,7 +1298,7 @@ class TestProcessor:
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
     @mock.patch("web3.eth.Eth.getCode", MagicMock(side_effect=ServiceUnavailable()))
-    def test_error_1_2(self, processor, shared_contract, session):
+    def test_error_1_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1343,9 +1343,10 @@ class TestProcessor:
         # Any latest_block is not saved in "sync_new_logs" process.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
         assert len(_idx_position_bond_block_number) == 0
+        assert 0 == caplog.record_tuples.count((LOG.name, logging.ERROR, "An exception occurred during event synchronization"))
 
     # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_1(self, processor, shared_contract, session):
+    def test_error_2_1(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1391,9 +1392,10 @@ class TestProcessor:
         # Any latest_block is not saved in "sync_new_logs" process when ServiceUnavailable occurs.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
         assert len(_idx_position_bond_block_number) == 0
+        assert 0 == caplog.record_tuples.count((LOG.name, logging.ERROR, "An exception occurred during event synchronization"))
 
     # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
-    def test_error_2_2(self, processor, shared_contract, session):
+    def test_error_2_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1441,6 +1443,7 @@ class TestProcessor:
         # Any latest_block is not saved in "sync_new_logs" process when SQLAlchemyError occurs.
         _idx_position_bond_block_number = session.query(IDXPositionBondBlockNumber).all()
         assert len(_idx_position_bond_block_number) == 0
+        assert 0 == caplog.record_tuples.count((LOG.name, logging.ERROR, "An exception occurred during event synchronization"))
 
     # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
     def test_error_3(self, main_func, shared_contract, session, caplog):

@@ -168,7 +168,6 @@ class Processor:
             self.__update_status(local_session, TokenHolderBatchStatus.DONE)
             local_session.commit()
         except Exception as e:
-            LOG.exception("An exception occurred during event synchronization")
             local_session.rollback()
             self.__update_status(local_session, TokenHolderBatchStatus.FAILED)
             local_session.commit()
