@@ -103,14 +103,14 @@ class Processor:
     @staticmethod
     def __gen_block_timestamp(event):
         return datetime.fromtimestamp(
-            web3.eth.getBlock(event["blockNumber"])["timestamp"],
+            web3.eth.get_block(event["blockNumber"])["timestamp"],
             UTC
         )
 
     @staticmethod
     def __gen_block_timestamp_from_block_number(block_number: int):
         return datetime.fromtimestamp(
-            web3.eth.getBlock(block_number)["timestamp"],
+            web3.eth.get_block(block_number)["timestamp"],
             UTC
         )
 
@@ -156,7 +156,7 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
-        latest_block = web3.eth.blockNumber
+        latest_block = web3.eth.block_number
         try:
             self.__get_token_list(local_session)
             # Synchronize 1,000,000 blocks each
@@ -194,7 +194,7 @@ class Processor:
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
-        latest_block = web3.eth.blockNumber
+        latest_block = web3.eth.block_number
         try:
             self.__get_token_list(local_session)
             # Synchronize 1,000,000 blocks each

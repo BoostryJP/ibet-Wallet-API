@@ -64,7 +64,7 @@ class E2EMessagingEvents(BaseResource):
             )
             for event in events:
                 block_number = event["blockNumber"]
-                block_timestamp = web3.eth.getBlock(block_number)["timestamp"]
+                block_timestamp = web3.eth.get_block(block_number)["timestamp"]
                 tmp_list.append({
                     "event": event["event"],
                     "args": dict(event["args"]),
@@ -173,7 +173,7 @@ class IbetEscrowEvents(BaseResource):
             )
             for event in events:
                 block_number = event["blockNumber"]
-                block_timestamp = web3.eth.getBlock(block_number)["timestamp"]
+                block_timestamp = web3.eth.get_block(block_number)["timestamp"]
                 tmp_list.append({
                     "event": event["event"],
                     "args": dict(event["args"]),
@@ -304,7 +304,7 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
             )
             for event in events:
                 block_number = event["blockNumber"]
-                block_timestamp = web3.eth.getBlock(block_number)["timestamp"]
+                block_timestamp = web3.eth.get_block(block_number)["timestamp"]
                 tmp_list.append({
                     "event": event["event"],
                     "args": dict(event["args"]),

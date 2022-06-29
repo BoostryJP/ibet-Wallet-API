@@ -61,7 +61,7 @@ class TestEthTransactionCount:
         resp = client.simulate_get(apiurl)
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        nonce = web3.eth.getTransactionCount(eth_address)
+        nonce = web3.eth.get_transaction_count(eth_address)
 
         assumed_body = {'chainid': '2017', 'gasprice': 0, 'nonce': nonce}
 
@@ -80,7 +80,7 @@ class TestEthTransactionCount:
         resp = client.simulate_get(apiurl, query_string=query_string)
 
         web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
-        nonce = web3.eth.getTransactionCount(eth_address)
+        nonce = web3.eth.get_transaction_count(eth_address)
 
         assumed_body = {'chainid': '2017', 'gasprice': 0, 'nonce': nonce}
 

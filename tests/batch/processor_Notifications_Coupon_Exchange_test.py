@@ -62,7 +62,7 @@ def watcher_factory(session, shared_contract):
 
         cls = getattr(test_module, cls_name)
         watcher = cls()
-        watcher.from_block = web3.eth.blockNumber
+        watcher.from_block = web3.eth.block_number
         return watcher, coupon_exchange["address"]
 
     return _watcher
@@ -113,7 +113,7 @@ class TestWatchCouponNewOrder:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.NEW_ORDER.value
@@ -154,7 +154,7 @@ class TestWatchCouponNewOrder:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -263,7 +263,7 @@ class TestWatchCouponCancelOrder:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
         assert _notification.notification_type == NotificationType.CANCEL_ORDER.value
@@ -308,7 +308,7 @@ class TestWatchCouponCancelOrder:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -440,7 +440,7 @@ class TestWatchCouponForceCancelOrder:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
         assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
@@ -514,7 +514,7 @@ class TestWatchCouponForceCancelOrder:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
@@ -646,7 +646,7 @@ class TestWatchCouponBuyAgreement:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_AGREEMENT.value
@@ -691,7 +691,7 @@ class TestWatchCouponBuyAgreement:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -807,7 +807,7 @@ class TestWatchCouponSellAgreement:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_AGREEMENT.value
@@ -852,7 +852,7 @@ class TestWatchCouponSellAgreement:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -971,7 +971,7 @@ class TestWatchCouponBuySettlementOK:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_OK.value
@@ -1020,7 +1020,7 @@ class TestWatchCouponBuySettlementOK:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -1142,7 +1142,7 @@ class TestWatchCouponSellSettlementOK:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_OK.value
@@ -1191,7 +1191,7 @@ class TestWatchCouponSellSettlementOK:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -1313,7 +1313,7 @@ class TestWatchCouponBuySettlementNG:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_NG.value
@@ -1362,7 +1362,7 @@ class TestWatchCouponBuySettlementNG:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -1484,7 +1484,7 @@ class TestWatchCouponSellSettlementNG:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_NG.value
@@ -1533,7 +1533,7 @@ class TestWatchCouponSellSettlementNG:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]

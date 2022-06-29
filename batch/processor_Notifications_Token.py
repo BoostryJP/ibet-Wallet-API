@@ -63,7 +63,7 @@ web3 = Web3Wrapper()
 db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 # 起動時のblockNumberを取得
-NOW_BLOCKNUMBER = web3.eth.blockNumber
+NOW_BLOCKNUMBER = web3.eth.block_number
 
 # コントラクトの生成
 list_contract = Contract.get_contract(
@@ -92,7 +92,7 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
+        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"], JST)
 
     @staticmethod
     def _get_token_all_list(db_session: Session):
@@ -121,7 +121,7 @@ class Watcher:
             self.filter_params["fromBlock"] = self.from_block
 
             # 最新のブロックナンバーを取得
-            _latest_block = web3.eth.blockNumber
+            _latest_block = web3.eth.block_number
             if self.from_block > _latest_block:
                 LOG.info(f"[{self.__class__.__name__}]: skip processing")
                 return
@@ -190,7 +190,7 @@ class WatchTransfer(Watcher):
         company_list = CompanyList.get()
         for entry in log_entries:
             # If the contract address is the source of the transfer, skip the process
-            if web3.eth.getCode(entry["args"]["from"]).hex() != "0x":
+            if web3.eth.get_code(entry["args"]["from"]).hex() != "0x":
                 continue
 
             token_owner_address = Contract.call_function(

@@ -208,7 +208,7 @@ class TokenHoldersCollection(BaseResource):
             raise InvalidParameterError("Invalid contract address")
 
         # ブロックナンバーのチェック
-        if block_number > self.web3.eth.blockNumber or block_number < 1:
+        if block_number > self.web3.eth.block_number or block_number < 1:
             raise InvalidParameterError("Block number must be current or past one.")
 
         # 取扱トークンチェック

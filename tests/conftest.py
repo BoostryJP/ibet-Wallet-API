@@ -69,7 +69,7 @@ def payment_gateway_contract():
     deployer = eth_account['deployer']
     agent = eth_account['agent']
 
-    web3.eth.defaultAccount = deployer['account_address']
+    web3.eth.default_account = deployer['account_address']
 
     contract_address, abi = Contract.deploy_contract(
         'PaymentGateway', [], deployer['account_address'])
@@ -78,7 +78,7 @@ def payment_gateway_contract():
     tx_hash = contract.functions.addAgent(agent['account_address']).transact(
         {'from': deployer['account_address'], 'gas': 4000000}
     )
-    web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.wait_for_transaction_receipt(tx_hash)
 
     return {'address': contract_address, 'abi': abi}
 
@@ -86,7 +86,7 @@ def payment_gateway_contract():
 @pytest.fixture(scope='session')
 def personalinfo_contract():
     deployer = eth_account['deployer']
-    web3.eth.defaultAccount = deployer['account_address']
+    web3.eth.default_account = deployer['account_address']
 
     contract_address, abi = Contract.deploy_contract(
         'PersonalInfo', [], deployer['account_address'])
@@ -98,7 +98,7 @@ def personalinfo_contract():
 def tokenlist_contract():
     deployer = eth_account['deployer']
 
-    web3.eth.defaultAccount = deployer['account_address']
+    web3.eth.default_account = deployer['account_address']
 
     contract_address, abi = Contract.deploy_contract(
         'TokenList', [], deployer['account_address'])
@@ -109,7 +109,7 @@ def tokenlist_contract():
 @pytest.fixture(scope="session")
 def e2e_messaging_contract():
     deployer = eth_account["deployer"]
-    web3.eth.defaultAccount = deployer["account_address"]
+    web3.eth.default_account = deployer["account_address"]
     contract_address, abi = Contract.deploy_contract(
         contract_name="E2EMessaging",
         args=[],
@@ -126,7 +126,7 @@ def e2e_messaging_contract():
 def ibet_escrow_contract():
     deployer = eth_account["deployer"]["account_address"]
 
-    web3.eth.defaultAccount = deployer
+    web3.eth.default_account = deployer
 
     storage_address, _ = Contract.deploy_contract(
         contract_name="EscrowStorage",
@@ -286,7 +286,7 @@ def mocked_company_list(request):
 def ibet_exchange_contract(payment_gateway_address):
     deployer = eth_account['deployer']
 
-    web3.eth.defaultAccount = deployer['account_address']
+    web3.eth.default_account = deployer['account_address']
 
     storage_address, _ = Contract.deploy_contract(
         'ExchangeStorage', [], deployer['account_address'])

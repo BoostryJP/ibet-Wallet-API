@@ -23,7 +23,7 @@
 
 ## Supported contract version
 
-* ibet-SmartContract: version 22.3.0
+* ibet-SmartContract: version 22.6
 
 ## Setup
 

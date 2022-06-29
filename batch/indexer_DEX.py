@@ -102,7 +102,7 @@ class Processor:
     def initial_sync(self):
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
-        self.latest_block = web3.eth.blockNumber
+        self.latest_block = web3.eth.block_number
         try:
             # Synchronize 1,000,000 blocks each
             _to_block = 999999
@@ -140,7 +140,7 @@ class Processor:
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
         try:
-            blockTo = web3.eth.blockNumber
+            blockTo = web3.eth.block_number
             if blockTo == self.latest_block:
                 return
             self.__sync_all(
@@ -186,7 +186,7 @@ class Processor:
                             first()
                         transaction_hash = event["transactionHash"].hex()
                         order_timestamp = datetime.fromtimestamp(
-                            web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                            web3.eth.get_block(event["blockNumber"])["timestamp"],
                             JST
                         )
                         if available_token is not None:
@@ -277,7 +277,7 @@ class Processor:
                             counterpart_address = args["buyAddress"]
                         transaction_hash = event["transactionHash"].hex()
                         agreement_timestamp = datetime.fromtimestamp(
-                            web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                            web3.eth.get_block(event["blockNumber"])["timestamp"],
                             JST
                         )
                         self.__sink_on_agree(
@@ -308,7 +308,7 @@ class Processor:
                 for event in events:
                     args = event["args"]
                     settlement_timestamp = datetime.fromtimestamp(
-                        web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                        web3.eth.get_block(event["blockNumber"])["timestamp"],
                         JST
                     )
                     self.__sink_on_settlement_ok(

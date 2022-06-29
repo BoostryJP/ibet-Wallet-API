@@ -63,11 +63,11 @@ class GetTransactionCount(BaseResource):
         # 入力値チェック
         request_json = self.validate(req)
 
-        nonce = web3.eth.getTransactionCount(
+        nonce = web3.eth.get_transaction_count(
             to_checksum_address(eth_address),
             block_identifier=request_json["block_identifier"]
         )
-        gasprice = web3.eth.gasPrice
+        gasprice = web3.eth.gas_price
         chainid = config.WEB3_CHAINID
 
         eth_info = {'nonce': nonce, 'gasprice': gasprice, 'chainid': chainid}
@@ -183,7 +183,7 @@ class SendRawTransaction(BaseResource):
 
             # Send raw transaction
             try:
-                tx_hash = web3.eth.sendRawTransaction(raw_tx_hex)
+                tx_hash = web3.eth.send_raw_transaction(raw_tx_hex)
             except Exception as err:
                 result.append({
                     "id": i + 1,
@@ -194,7 +194,7 @@ class SendRawTransaction(BaseResource):
 
             # Handling a transaction execution result
             try:
-                tx = web3.eth.waitForTransactionReceipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
+                tx = web3.eth.wait_for_transaction_receipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
                 if tx["status"] == 0:
                     # inspect reason of transaction fail
                     err_msg = self.inspect_tx_failure(tx_hash.hex())
@@ -247,7 +247,7 @@ class SendRawTransaction(BaseResource):
 
     @staticmethod
     def inspect_tx_failure(tx_hash: str) -> str:
-        tx = web3.eth.getTransaction(tx_hash)
+        tx = web3.eth.get_transaction(tx_hash)
 
         # build a new transaction to replay:
         replay_tx = {
@@ -387,7 +387,7 @@ class SendRawTransactionNoWait(BaseResource):
 
             # Send raw transaction
             try:
-                transaction_hash = web3.eth.sendRawTransaction(raw_tx_hex)
+                transaction_hash = web3.eth.send_raw_transaction(raw_tx_hex)
             except Exception as err:
                 result.append({
                     "id": i + 1,
@@ -448,7 +448,7 @@ class WaitForTransactionReceipt(BaseResource):
         result = {}
         # transaction receipt の監視
         try:
-            tx = web3.eth.waitForTransactionReceipt(
+            tx = web3.eth.wait_for_transaction_receipt(
                 transaction_hash=transaction_hash,
                 timeout=timeout
             )
@@ -494,7 +494,7 @@ class WaitForTransactionReceipt(BaseResource):
 
     @staticmethod
     def inspect_tx_failure(tx_hash: str) -> str:
-        tx = web3.eth.getTransaction(tx_hash)
+        tx = web3.eth.get_transaction(tx_hash)
 
         # build a new transaction to replay:
         replay_tx = {

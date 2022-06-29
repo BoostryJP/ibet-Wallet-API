@@ -45,7 +45,7 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 def tokenlist_contract():
     issuer = eth_account['issuer']
-    web3.eth.defaultAccount = issuer['account_address']
+    web3.eth.default_account = issuer['account_address']
     contract_address, abi = Contract.deploy_contract(
         'TokenList', [], issuer['account_address'])
 
@@ -113,7 +113,7 @@ class TestEthWaitForTransactionReceipt:
             "from": to_checksum_address(user1["account_address"]),
             "gas": 6000000
         })
-        tx_hash = web3.eth.sendTransaction(tx)
+        tx_hash = web3.eth.send_transaction(tx)
         request_params = {
             "transaction_hash": tx_hash.hex()
         }
@@ -172,7 +172,7 @@ class TestEthWaitForTransactionReceipt:
             "from": to_checksum_address(user1["account_address"]),
             "gas": 6000000
         })
-        tx_hash = web3.eth.sendTransaction(tx)
+        tx_hash = web3.eth.send_transaction(tx)
         request_params = {
             "transaction_hash": tx_hash.hex()
         }

@@ -328,7 +328,7 @@ class TestProcessor:
         # user1: 6000 trader: 44000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -430,7 +430,7 @@ class TestProcessor:
         # user1: 13000 trader: 17000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -520,7 +520,7 @@ class TestProcessor:
         # user1: 17000 trader: 13000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -615,7 +615,7 @@ class TestProcessor:
         # user1: 10000 trader: 40000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -717,7 +717,7 @@ class TestProcessor:
         # user1: 13000 trader: 17000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -808,7 +808,7 @@ class TestProcessor:
         # user1: 17000 trader: 13000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -890,7 +890,7 @@ class TestProcessor:
         # user1: 10000 trader: 20000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -978,7 +978,7 @@ class TestProcessor:
         # user1: 11000 trader: 9000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -1064,7 +1064,7 @@ class TestProcessor:
         # user1: 7000 trader: 4000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -1145,7 +1145,7 @@ class TestProcessor:
         # user1: 10000 trader: 20000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -1237,7 +1237,7 @@ class TestProcessor:
         # user1: 11000 trader: 9000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -1319,7 +1319,7 @@ class TestProcessor:
         # user1: 7000 trader: 13000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
         session.commit()
 
@@ -1384,7 +1384,7 @@ class TestProcessor:
         bond_authorize_lock_address(self.issuer, token, self.trader["account_address"], True)
 
         # Insert collection record with above token and current block number
-        target_token_holders_list1 = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list1 = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list1)
         session.commit()
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1426,7 +1426,7 @@ class TestProcessor:
         # user1: 10000 trader: 20000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list2 = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list2 = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list2)
         session.commit()
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1475,7 +1475,7 @@ class TestProcessor:
         # user1: 6000 trader: 44000
 
         # Insert collection record with above token and current block number
-        target_token_holders_list3 = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list3 = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list3)
         session.commit()
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
@@ -1523,12 +1523,12 @@ class TestProcessor:
         register_personalinfo(self.user1, personal_info_contract)
         register_personalinfo(self.trader, personal_info_contract)
 
-        target_token_holders_list1 = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list1 = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list1)
         session.commit()
         transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
-        target_token_holders_list2 = self.token_holders_list(token, web3.eth.blockNumber)
+        target_token_holders_list2 = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list2)
         session.commit()
 
@@ -1609,7 +1609,7 @@ class TestProcessor:
         transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
 
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, block_number)
         session.add(target_token_holders_list)
@@ -1645,14 +1645,14 @@ class TestProcessor:
         transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
 
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, block_number)
         session.add(target_token_holders_list)
         session.commit()
 
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]), \
-                mock.patch("web3.eth.Eth.getCode", side_effect=ServiceUnavailable()), \
+                mock.patch("web3.eth.Eth.get_code", side_effect=ServiceUnavailable()), \
                 pytest.raises(ServiceUnavailable):
             processor.collect()
 
@@ -1664,14 +1664,14 @@ class TestProcessor:
         transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 20000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 10000)
 
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, block_number)
         session.add(target_token_holders_list)
         session.commit()
 
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]), \
-                mock.patch("web3.eth.Eth.getCode", side_effect=ServiceUnavailable()), \
+                mock.patch("web3.eth.Eth.get_code", side_effect=ServiceUnavailable()), \
                 pytest.raises(ServiceUnavailable):
             processor.collect()
 

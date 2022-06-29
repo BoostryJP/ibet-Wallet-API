@@ -150,7 +150,7 @@ class Processor:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
             # if some blocks have already synced, sync starting from next block
-            latest_block = web3.eth.blockNumber
+            latest_block = web3.eth.block_number
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -186,7 +186,7 @@ class Processor:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
             # if some blocks have already synced, sync starting from next block
-            latest_block = web3.eth.blockNumber
+            latest_block = web3.eth.block_number
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -308,7 +308,7 @@ class Processor:
                     account_keys=["from", "to"]
                 )
                 for _account in accounts_filtered:
-                    if web3.eth.getCode(_account).hex() == "0x":
+                    if web3.eth.get_code(_account).hex() == "0x":
                         _balance, _pending_transfer, _exchange_balance, _exchange_commitment = \
                             self.__get_account_balance_all(token, _account)
                         self.__sink_on_position(

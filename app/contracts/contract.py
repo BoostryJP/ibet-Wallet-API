@@ -81,7 +81,7 @@ class Contract:
             'from': deployer,
             'gas': 6000000
         })
-        tx = web3.eth.waitForTransactionReceipt(tx_hash)
+        tx = web3.eth.wait_for_transaction_receipt(tx_hash)
 
         contract_address = ''
         if tx is not None:

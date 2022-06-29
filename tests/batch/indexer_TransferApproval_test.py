@@ -1119,7 +1119,7 @@ class TestProcessor:
             "from": self.account1["account_address"]
         })
 
-        block_number_current = web3.eth.blockNumber
+        block_number_current = web3.eth.block_number
 
         # Run initial sync
         processor.initial_sync()
@@ -1142,7 +1142,7 @@ class TestProcessor:
         ).transact({
             "from": self.account1["account_address"]
         })
-        block_number_current = web3.eth.blockNumber
+        block_number_current = web3.eth.block_number
 
         # Run target process
         processor.sync_new_logs()
@@ -1162,7 +1162,6 @@ class TestProcessor:
         assert idx_transfer_approval_block_number.latest_block_number == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch("web3.eth.Eth.getBlock", MagicMock(side_effect=ServiceUnavailable()))
     def test_error_1_2(self, processor, shared_contract, session):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -1214,7 +1213,8 @@ class TestProcessor:
         })
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
+        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
         _transfer_approval_list = session.query(IDXTransferApproval). \
@@ -1235,7 +1235,8 @@ class TestProcessor:
         })
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
+        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
+            pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
         # Assertion
@@ -1300,7 +1301,7 @@ class TestProcessor:
         })
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
@@ -1322,7 +1323,7 @@ class TestProcessor:
         })
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
@@ -1435,7 +1436,7 @@ class TestProcessor:
         # Run mainloop once and fail with web3 utils error
         with mock.patch("batch.indexer_TransferApproval.time", time_mock),\
             mock.patch("batch.indexer_TransferApproval.Processor.initial_sync", return_value=True), \
-            mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(TypeError):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             main_func()

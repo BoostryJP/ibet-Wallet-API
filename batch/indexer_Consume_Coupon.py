@@ -71,7 +71,7 @@ class Processor:
     def initial_sync(self):
         local_session = self.__get_db_session()
         latest_block_at_start = self.latest_block
-        self.latest_block = web3.eth.blockNumber
+        self.latest_block = web3.eth.block_number
         try:
             self.__get_token_list(local_session)
 
@@ -114,7 +114,7 @@ class Processor:
         try:
             self.__get_token_list(local_session)
 
-            blockTo = web3.eth.blockNumber
+            blockTo = web3.eth.block_number
             if blockTo == self.latest_block:
                 return
 
@@ -171,7 +171,7 @@ class Processor:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
                     block_timestamp = datetime.fromtimestamp(
-                        web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                        web3.eth.get_block(event["blockNumber"])["timestamp"],
                         JST
                     )
                     amount = args.get("value", 0)

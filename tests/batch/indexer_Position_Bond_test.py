@@ -166,7 +166,7 @@ class TestProcessor:
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -216,7 +216,7 @@ class TestProcessor:
             self.issuer, {"address": self.trader["account_address"]}, token, 3000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -275,7 +275,7 @@ class TestProcessor:
             self.issuer, {"address": self.trader2["account_address"]}, token2, 3000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -355,16 +355,16 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Lock
         tx_hash = token_contract.functions.lock(self.trader["account_address"], 3000).transact(
             {'from': self.issuer['account_address'], 'gas': 4000000}
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -405,23 +405,23 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Lock
         tx_hash = token_contract.functions.lock(self.trader["account_address"], 3000).transact(
             {'from': self.issuer['account_address'], 'gas': 4000000}
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Unlock
         tx_hash = token_contract.functions.unlock(
             self.issuer["account_address"], self.trader2["account_address"], 100).transact(
             {'from': self.trader['account_address'], 'gas': 4000000}
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -467,10 +467,10 @@ class TestProcessor:
             self.issuer["account_address"], config.ZERO_ADDRESS, 50000).transact(
             {'from': self.issuer['account_address'], 'gas': 4000000}
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -512,10 +512,10 @@ class TestProcessor:
             self.issuer["account_address"], config.ZERO_ADDRESS, 50000).transact(
             {'from': self.issuer['account_address'], 'gas': 4000000}
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -578,7 +578,7 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
         tx_hash = token_contract.functions.applyForTransfer(
@@ -589,10 +589,10 @@ class TestProcessor:
             'from': self.trader['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -664,7 +664,7 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
         tx_hash = token_contract.functions.applyForTransfer(
@@ -675,7 +675,7 @@ class TestProcessor:
             'from': self.trader['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Approve
         tx_hash = token_contract.functions.approveTransfer(
@@ -685,10 +685,10 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -770,7 +770,7 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Apply For Transfer
         tx_hash = token_contract.functions.applyForTransfer(
@@ -781,7 +781,7 @@ class TestProcessor:
             'from': self.trader['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Cancel
         tx_hash = token_contract.functions.cancelTransfer(
@@ -791,10 +791,10 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -850,7 +850,7 @@ class TestProcessor:
                                      token, self.trader["account_address"], self.issuer["account_address"], 300)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -905,7 +905,7 @@ class TestProcessor:
         make_sell(self.issuer, exchange_contract, token, 333, 1000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -955,7 +955,7 @@ class TestProcessor:
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -986,7 +986,7 @@ class TestProcessor:
 
         # Not Event
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -1028,7 +1028,7 @@ class TestProcessor:
         # Listing
         self.listing_token(token["address"], session)
 
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -1089,7 +1089,7 @@ class TestProcessor:
 
         # Setting current block number to 19,999,999
         self.listing_token(token["address"], session)
-        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+        with mock.patch("web3.eth.Eth.block_number", current_block_number):
             with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
                 idx_position_bond_block_number = IDXPositionBondBlockNumber()
                 idx_position_bond_block_number.id = 1
@@ -1104,7 +1104,7 @@ class TestProcessor:
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
-        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+        with mock.patch("web3.eth.Eth.block_number", current_block_number):
             with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
@@ -1116,7 +1116,7 @@ class TestProcessor:
             self.issuer, escrow_contract.address, personal_info_contract["address"], token_list_contract)
         self.listing_token(new_token["address"], session)
 
-        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+        with mock.patch("web3.eth.Eth.block_number", current_block_number):
             with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
@@ -1164,13 +1164,13 @@ class TestProcessor:
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Lock
         tx_hash = token_contract.functions.lock(self.trader["account_address"], 100).transact(
             {'from': self.issuer['account_address'], 'gas': 4000000}
         )
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Token2 Operation
         bond_transfer_to_exchange(
@@ -1182,7 +1182,7 @@ class TestProcessor:
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
 
         # Run target process
-        block_number1 = web3.eth.blockNumber
+        block_number1 = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -1205,7 +1205,7 @@ class TestProcessor:
         self.listing_token(token2["address"], session)
 
         # Run target process
-        block_number2 = web3.eth.blockNumber
+        block_number2 = web3.eth.block_number
         processor.sync_new_logs()
 
         session.rollback()
@@ -1262,7 +1262,7 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        block_number_current = web3.eth.blockNumber
+        block_number_current = web3.eth.block_number
         # Run initial sync
         processor.initial_sync()
 
@@ -1278,7 +1278,7 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        block_number_current = web3.eth.blockNumber
+        block_number_current = web3.eth.block_number
         # Run target process
         processor.sync_new_logs()
 
@@ -1297,7 +1297,7 @@ class TestProcessor:
         assert _idx_position_bond_block_number.latest_block_number == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch("web3.eth.Eth.getCode", MagicMock(side_effect=ServiceUnavailable()))
+    @mock.patch("web3.eth.Eth.get_code", MagicMock(side_effect=ServiceUnavailable()))
     def test_error_1_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -1362,7 +1362,7 @@ class TestProcessor:
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Clear cache in DB session.
@@ -1380,7 +1380,7 @@ class TestProcessor:
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
@@ -1454,7 +1454,7 @@ class TestProcessor:
         # Run mainloop once and fail with web3 utils error
         with mock.patch("batch.indexer_Position_Bond.time", time_mock),\
             mock.patch("batch.indexer_Position_Bond.Processor.initial_sync", return_value=True), \
-            mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(TypeError):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             main_func()

@@ -143,7 +143,7 @@ class TestProcessor:
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 10000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -180,7 +180,7 @@ class TestProcessor:
         transfer_coupon_token(self.issuer, token, self.trader2["account_address"], 3000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -233,7 +233,7 @@ class TestProcessor:
         transfer_coupon_token(self.issuer, token2, self.trader2["account_address"], 3000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -310,7 +310,7 @@ class TestProcessor:
         consume_coupon_token(self.issuer, token, 3000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -359,7 +359,7 @@ class TestProcessor:
         make_sell(self.issuer, coupon_exchange, token, 333, 1000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -402,7 +402,7 @@ class TestProcessor:
                                      token, self.trader["account_address"], self.issuer["account_address"], 300)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -439,7 +439,7 @@ class TestProcessor:
 
         # Not Event
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -461,7 +461,7 @@ class TestProcessor:
         membership_transfer_to_exchange(self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Run target process
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -474,7 +474,7 @@ class TestProcessor:
         # Listing
         self.listing_token(token["address"], session)
 
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -526,7 +526,7 @@ class TestProcessor:
 
         # Setting current block number to 19,999,999
         self.listing_token(token["address"], session)
-        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+        with mock.patch("web3.eth.Eth.block_number", current_block_number):
             with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
                 idx_position_coupon_block_number = IDXPositionCouponBlockNumber()
                 idx_position_coupon_block_number.id = 1
@@ -541,7 +541,7 @@ class TestProcessor:
                 # Then processor call "__sync_all" method 10 times.
                 assert __sync_all_mock.call_count == 10
 
-        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+        with mock.patch("web3.eth.Eth.block_number", current_block_number):
             with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
@@ -553,7 +553,7 @@ class TestProcessor:
             self.issuer, escrow_contract.address, token_list_contract)
         self.listing_token(new_token["address"], session)
 
-        with mock.patch("web3.eth.Eth.blockNumber", current_block_number):
+        with mock.patch("web3.eth.Eth.block_number", current_block_number):
             with mock.patch.object(Processor, "_Processor__sync_all", return_value=mock_lib) as __sync_all_mock:
                 # Stored index is 19,999,999
                 __sync_all_mock.return_value = None
@@ -601,7 +601,7 @@ class TestProcessor:
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
 
         # Run target process
-        block_number1 = web3.eth.blockNumber
+        block_number1 = web3.eth.block_number
         processor.sync_new_logs()
 
         # Assertion
@@ -623,10 +623,10 @@ class TestProcessor:
         self.listing_token(token2["address"], session)
 
         # Run target process
-        block_number2 = web3.eth.blockNumber
+        block_number2 = web3.eth.block_number
 
-        eth_getCode_mock = MagicMock(wraps=web3.eth.getCode)
-        with mock.patch("web3.eth.Eth.getCode", eth_getCode_mock):
+        eth_getCode_mock = MagicMock(wraps=web3.eth.get_code)
+        with mock.patch("web3.eth.Eth.get_code", eth_getCode_mock):
             processor.sync_new_logs()
 
         session.rollback()
@@ -681,7 +681,7 @@ class TestProcessor:
         coupon_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        block_number_current = web3.eth.blockNumber
+        block_number_current = web3.eth.block_number
         # Run initial sync
         processor.initial_sync()
 
@@ -697,7 +697,7 @@ class TestProcessor:
         coupon_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
-        block_number_current = web3.eth.blockNumber
+        block_number_current = web3.eth.block_number
         # Run target process
         processor.sync_new_logs()
 
@@ -715,7 +715,7 @@ class TestProcessor:
         assert _idx_position_coupon_block_number.latest_block_number == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch("web3.eth.Eth.getCode", MagicMock(side_effect=ServiceUnavailable()))
+    @mock.patch("web3.eth.Eth.get_code", MagicMock(side_effect=ServiceUnavailable()))
     def test_error_1_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -772,7 +772,7 @@ class TestProcessor:
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Clear cache in DB session.
@@ -790,7 +790,7 @@ class TestProcessor:
         coupon_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, token, 10000)
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
@@ -860,7 +860,7 @@ class TestProcessor:
         # Run mainloop once and fail with web3 utils error
         with mock.patch("batch.indexer_Position_Coupon.time", time_mock),\
             mock.patch("batch.indexer_Position_Coupon.Processor.initial_sync", return_value=True), \
-            mock.patch("web3.eth.Eth.block_number", side_effect=ServiceUnavailable()), \
+            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
                 pytest.raises(TypeError):
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             main_func()

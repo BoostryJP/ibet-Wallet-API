@@ -161,7 +161,7 @@ class Processor:
 
     @staticmethod
     def get_block_timestamp(event) -> int:
-        block_timestamp = web3.eth.getBlock(event["blockNumber"])["timestamp"]
+        block_timestamp = web3.eth.get_block(event["blockNumber"])["timestamp"]
         return block_timestamp
 
     def __get_contract_list(self, db_session: Session):
@@ -218,7 +218,7 @@ class Processor:
         try:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            latest_block = web3.eth.blockNumber
+            latest_block = web3.eth.block_number
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:
@@ -253,7 +253,7 @@ class Processor:
         try:
             self.__get_contract_list(local_session)
             # Synchronize 1,000,000 blocks each
-            latest_block = web3.eth.blockNumber
+            latest_block = web3.eth.block_number
             _from_block = self.__get_oldest_cursor(self.token_list, latest_block)
             _to_block = 999999 + _from_block
             if latest_block > _to_block:

@@ -45,7 +45,7 @@ class TestEventsE2EMessaging:
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -83,8 +83,8 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -136,8 +136,8 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -189,8 +189,8 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -248,9 +248,9 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.blockNumber
-        block_timestamp_1 = web3.eth.getBlock(latest_block_number - 1)["timestamp"]
-        block_timestamp_2 = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        block_timestamp_1 = web3.eth.get_block(latest_block_number - 1)["timestamp"]
+        block_timestamp_2 = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -317,8 +317,8 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
         # request target API
         resp = client.simulate_get(
             self.apiurl,
@@ -373,8 +373,8 @@ class TestEventsE2EMessaging:
         ).transact({
             "from": user1
         })
-        latest_block_number = web3.eth.blockNumber
-        _latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        _latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
         # request target API
         resp = client.simulate_get(
             self.apiurl,
@@ -463,7 +463,7 @@ class TestEventsE2EMessaging:
     def test_error_3_1(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -489,7 +489,7 @@ class TestEventsE2EMessaging:
     def test_error_3_2(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -520,7 +520,7 @@ class TestEventsE2EMessaging:
     def test_error_3_3(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -551,7 +551,7 @@ class TestEventsE2EMessaging:
     def test_error_4(self, client, session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(

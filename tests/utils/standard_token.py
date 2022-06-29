@@ -38,7 +38,7 @@ class IbetStandardTokenUtils:
         :param args: deploy args
         :return: Contract
         """
-        web3.eth.defaultAccount = tx_from
+        web3.eth.default_account = tx_from
         arguments = [
             args["name"],
             args["symbol"],

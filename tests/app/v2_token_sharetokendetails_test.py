@@ -67,7 +67,7 @@ class TestV2TokenShareTokenDetails:
     @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
-        web3.eth.defaultAccount = deployer['account_address']
+        web3.eth.default_account = deployer['account_address']
         contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
 
         return {'address': contract_address, 'abi': abi}

@@ -42,7 +42,7 @@ class TestEventsIbetEscrow:
     def test_normal_1(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -86,8 +86,8 @@ class TestEventsIbetEscrow:
         ).transact({
             "from": issuer
         })
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -151,8 +151,8 @@ class TestEventsIbetEscrow:
             "from": issuer
         })  # Withdrawn
 
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -222,8 +222,8 @@ class TestEventsIbetEscrow:
             "from": issuer
         })  # EscrowCreated
 
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # request target API
@@ -306,8 +306,8 @@ class TestEventsIbetEscrow:
             "from": issuer
         })  # EscrowCanceled
 
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -388,8 +388,8 @@ class TestEventsIbetEscrow:
             "from": agent
         })  # EscrowFinished
 
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -451,8 +451,8 @@ class TestEventsIbetEscrow:
         ).transact({
             "from": issuer
         })
-        latest_block_number = web3.eth.blockNumber
-        latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -514,8 +514,8 @@ class TestEventsIbetEscrow:
         ).transact({
             "from": issuer
         })
-        latest_block_number = web3.eth.blockNumber
-        _latest_block_timestamp = web3.eth.getBlock(latest_block_number)["timestamp"]
+        latest_block_number = web3.eth.block_number
+        _latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
         resp = client.simulate_get(
@@ -606,7 +606,7 @@ class TestEventsIbetEscrow:
     def test_error_3_1(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -632,7 +632,7 @@ class TestEventsIbetEscrow:
     def test_error_3_2(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -661,7 +661,7 @@ class TestEventsIbetEscrow:
     def test_error_3_3(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(
@@ -690,7 +690,7 @@ class TestEventsIbetEscrow:
     def test_error_4(self, client, session, shared_contract):
         escrow_contract = shared_contract["IbetEscrow"]
         config.IBET_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
 
         # request target API
         resp = client.simulate_get(

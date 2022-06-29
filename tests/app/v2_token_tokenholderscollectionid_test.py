@@ -173,7 +173,7 @@ class TestV2TokenHoldersCollectionId:
         target_token_holders_list.token_address = token["address"]
         target_token_holders_list.list_id = str(uuid.uuid4())
         target_token_holders_list.batch_status = TokenHolderBatchStatus.PENDING.value
-        target_token_holders_list.block_number = web3.eth.blockNumber
+        target_token_holders_list.block_number = web3.eth.block_number
         session.merge(target_token_holders_list)
         session.commit()
 

@@ -145,7 +145,7 @@ class TestV2TokenHoldersCollection:
         # Transfer
         bond_transfer_to_exchange(self.issuer, {"address": escrow_contract.address}, token, 10000)
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 30000)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         list_id = str(uuid.uuid4())
 
         # Request target API
@@ -191,7 +191,7 @@ class TestV2TokenHoldersCollection:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
         for i, address in enumerate([token1["address"], token2["address"]]):
-            block_number = web3.eth.blockNumber
+            block_number = web3.eth.block_number
             list_id = str(uuid.uuid4())
             # Request target API
             apiurl = self.apiurl_base.format(contract_address=address)
@@ -219,7 +219,7 @@ class TestV2TokenHoldersCollection:
         self.listing_token(token["address"], session)
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list_contract["address"]
 
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         list_id1 = str(uuid.uuid4())
         list_id2 = str(uuid.uuid4())
 
@@ -245,7 +245,7 @@ class TestV2TokenHoldersCollection:
     # List id is empty.
     def test_error_1(self, client, session):
         apiurl = self.apiurl_base.format(contract_address="0xabcd")
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         request_params = {"block_number": block_number}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -259,7 +259,7 @@ class TestV2TokenHoldersCollection:
     # Invalid contract address
     def test_error_2(self, client, session):
         apiurl = self.apiurl_base.format(contract_address="0xabcd")
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         list_id = str(uuid.uuid4())
         request_params = {"block_number": block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
@@ -274,7 +274,7 @@ class TestV2TokenHoldersCollection:
     # "list_id" is not UUID.
     def test_error_3(self, client, session):
         apiurl = self.apiurl_base.format(contract_address=config.ZERO_ADDRESS)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         request_params = {"block_number": block_number, "list_id": "some_id"}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -288,7 +288,7 @@ class TestV2TokenHoldersCollection:
     # Block number is future one or negative.
     def test_error_4(self, client, session):
         apiurl = self.apiurl_base.format(contract_address=config.ZERO_ADDRESS)
-        block_number = web3.eth.blockNumber + 100
+        block_number = web3.eth.block_number + 100
         request_params = {"block_number": block_number, "list_id": str(uuid.uuid4())}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -331,7 +331,7 @@ class TestV2TokenHoldersCollection:
         self.listing_token(self.token_address, session)
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         request_params = {"block_number": block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
@@ -346,7 +346,7 @@ class TestV2TokenHoldersCollection:
     def test_error_6(self, client, session):
         list_id = str(uuid.uuid4())
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         request_params = {"block_number": block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
