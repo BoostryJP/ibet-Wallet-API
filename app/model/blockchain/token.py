@@ -131,7 +131,6 @@ class BondToken(TokenBase):
         face_value = Contract.call_function(token_contract, "faceValue", (), 0)
         interest_rate = Contract.call_function(token_contract, "interestRate", (), 0)
 
-        interest_payment_date_string = Contract.call_function(token_contract, "interestPaymentDate", (), "{}")
         interest_payment_date1 = ''
         interest_payment_date2 = ''
         interest_payment_date3 = ''
@@ -145,9 +144,13 @@ class BondToken(TokenBase):
         interest_payment_date11 = ''
         interest_payment_date12 = ''
         try:
-            interest_payment_date = json.loads(
-                interest_payment_date_string.replace("'", '"').replace('True', 'true').replace('False', 'false')
-            )
+            interest_payment_date_string = Contract.call_function(token_contract, "interestPaymentDate", (), "")
+            if interest_payment_date_string != "":
+                interest_payment_date = json.loads(
+                    interest_payment_date_string.replace("'", '"').replace('True', 'true').replace('False', 'false')
+                )
+            else:
+                interest_payment_date = {}
             if 'interestPaymentDate1' in interest_payment_date:
                 interest_payment_date1 = interest_payment_date.get('interestPaymentDate1', '')
             if 'interestPaymentDate2' in interest_payment_date:
