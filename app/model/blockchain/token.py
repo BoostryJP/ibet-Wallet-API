@@ -172,8 +172,8 @@ class BondToken(TokenBase):
                 interest_payment_date11 = interest_payment_date.get('interestPaymentDate11', '')
             if 'interestPaymentDate12' in interest_payment_date:
                 interest_payment_date12 = interest_payment_date.get('interestPaymentDate12', '')
-        except Exception as err:
-            LOG.warning("Failed to load interestPaymentDate: ", err)
+        except Exception:
+            LOG.warning("Failed to load interestPaymentDate")
 
         redemption_date = Contract.call_function(token_contract, "redemptionDate", (), "")
         redemption_value = Contract.call_function(token_contract, "redemptionValue", (), 0)
