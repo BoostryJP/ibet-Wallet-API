@@ -28,6 +28,7 @@ from datetime import (
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -61,6 +62,7 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 class Processor:
     """Processor for indexing IbetExchange events"""
+    latest_block = 0
 
     def __init__(self):
         self.exchange_list = []
@@ -92,7 +94,6 @@ class Processor:
                 IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(share_exchange_contract)
-        self.latest_block = web3.eth.blockNumber
 
     @staticmethod
     def __get_db_session():
@@ -100,6 +101,8 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
+        self.latest_block = web3.eth.block_number
         try:
             # Synchronize 1,000,000 blocks each
             _to_block = 999999
@@ -125,14 +128,19 @@ class Processor:
                     block_to=self.latest_block
                 )
             local_session.commit()
+        except Exception as e:
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
         LOG.info(f"<{process_name}> Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
         try:
-            blockTo = web3.eth.blockNumber
+            blockTo = web3.eth.block_number
             if blockTo == self.latest_block:
                 return
             self.__sync_all(
@@ -142,6 +150,10 @@ class Processor:
             )
             self.latest_block = blockTo
             local_session.commit()
+        except Exception as e:
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -161,6 +173,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     if args["price"] > sys.maxsize or args["amount"] > sys.maxsize:
@@ -171,7 +186,7 @@ class Processor:
                             first()
                         transaction_hash = event["transactionHash"].hex()
                         order_timestamp = datetime.fromtimestamp(
-                            web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                            web3.eth.get_block(event["blockNumber"])["timestamp"],
                             JST
                         )
                         if available_token is not None:
@@ -194,7 +209,7 @@ class Processor:
                                 order_timestamp=order_timestamp
                             )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_cancel_order(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -203,6 +218,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     self.__sink_on_cancel_order(
                         db_session=db_session,
@@ -210,7 +228,7 @@ class Processor:
                         order_id=event["args"]["orderId"]
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_force_cancel_order(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -219,6 +237,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     self.__sink_on_force_cancel_order(
                         db_session=db_session,
@@ -226,7 +247,7 @@ class Processor:
                         order_id=event["args"]["orderId"]
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_agree(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -235,6 +256,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     if args["amount"] > sys.maxsize:
@@ -253,7 +277,7 @@ class Processor:
                             counterpart_address = args["buyAddress"]
                         transaction_hash = event["transactionHash"].hex()
                         agreement_timestamp = datetime.fromtimestamp(
-                            web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                            web3.eth.get_block(event["blockNumber"])["timestamp"],
                             JST
                         )
                         self.__sink_on_agree(
@@ -269,7 +293,7 @@ class Processor:
                             agreement_timestamp=agreement_timestamp
                         )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_settlement_ok(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -278,10 +302,13 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     settlement_timestamp = datetime.fromtimestamp(
-                        web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                        web3.eth.get_block(event["blockNumber"])["timestamp"],
                         JST
                     )
                     self.__sink_on_settlement_ok(
@@ -292,7 +319,7 @@ class Processor:
                         settlement_timestamp=settlement_timestamp
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sync_settlement_ng(self, db_session: Session, block_from, block_to):
         for exchange_contract in self.exchange_list:
@@ -301,6 +328,9 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     self.__sink_on_settlement_ng(
@@ -310,7 +340,7 @@ class Processor:
                         agreement_id=args["agreementId"]
                     )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     def __sink_on_new_order(self,
                             db_session: Session,
@@ -454,7 +484,18 @@ class Processor:
 def main():
     LOG.info("Service started successfully")
     processor = Processor()
-    processor.initial_sync()
+
+    initial_synced_completed = False
+    while not initial_synced_completed:
+        try:
+            processor.initial_sync()
+            LOG.debug("Initial sync is processed successfully")
+            initial_synced_completed = True
+        except Exception:
+            LOG.exception("Initial sync failed")
+
+        time.sleep(1)
+
     while True:
         try:
             processor.sync_new_logs()
@@ -464,7 +505,7 @@ def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
-            LOG.exception(ex)
+            LOG.exception("An exception occurred during event synchronization")
 
         time.sleep(1)
 

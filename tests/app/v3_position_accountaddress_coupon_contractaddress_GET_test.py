@@ -98,7 +98,7 @@ class TestPositionAccountAddressCouponContractAddress:
         tx_hash = ExchangeContract.functions. \
             createOrder(token['address'], commitment, 10000, False, agent['account_address']). \
             transact({'from': account['account_address'], 'gas': 4000000})
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         return token
 

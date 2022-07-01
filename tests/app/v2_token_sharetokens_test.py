@@ -30,7 +30,7 @@ from app.contracts import Contract
 from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_share_token,
-    register_share_list
+    register_share_list, invalidate_share_token
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -69,7 +69,7 @@ class TestV2TokenShareTokens:
     @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
-        web3.eth.defaultAccount = deployer['account_address']
+        web3.eth.default_account = deployer['account_address']
         contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
 
         return {'address': contract_address, 'abi': abi}
@@ -93,18 +93,18 @@ class TestV2TokenShareTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenShareTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
         exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
-        attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
+        attribute = self.share_token_attribute(exchange_address, personal_info)
         share_token = issue_share_token(issuer, attribute)
         register_share_list(issuer, share_token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV2TokenShareTokens.list_token(session, share_token)
+        self.list_token(session, share_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -155,7 +155,7 @@ class TestV2TokenShareTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenShareTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
@@ -163,12 +163,12 @@ class TestV2TokenShareTokens:
         exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
+            attribute = self.share_token_attribute(exchange_address, personal_info)
             share_token = issue_share_token(issuer, attribute)
             register_share_list(issuer, share_token, token_list)
             share_list.append(share_token)
             # 取扱トークンデータ挿入
-            TestV2TokenShareTokens.list_token(session, share_token)
+            self.list_token(session, share_token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -248,7 +248,7 @@ class TestV2TokenShareTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenShareTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
@@ -256,12 +256,12 @@ class TestV2TokenShareTokens:
         exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
+            attribute = self.share_token_attribute(exchange_address, personal_info)
             share_token = issue_share_token(issuer, attribute)
             register_share_list(issuer, share_token, token_list)
             share_list.append(share_token)
             # 取扱トークンデータ挿入
-            TestV2TokenShareTokens.list_token(session, share_token)
+            self.list_token(session, share_token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -342,7 +342,7 @@ class TestV2TokenShareTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenShareTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
@@ -350,12 +350,12 @@ class TestV2TokenShareTokens:
         exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
+            attribute = self.share_token_attribute(exchange_address, personal_info)
             share_token = issue_share_token(issuer, attribute)
             register_share_list(issuer, share_token, token_list)
             share_list.append(share_token)
             # 取扱トークンデータ挿入
-            TestV2TokenShareTokens.list_token(session, share_token)
+            self.list_token(session, share_token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -406,7 +406,7 @@ class TestV2TokenShareTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenShareTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：株式新規発行
@@ -414,12 +414,12 @@ class TestV2TokenShareTokens:
         exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
         personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenShareTokens.share_token_attribute(exchange_address, personal_info)
+            attribute = self.share_token_attribute(exchange_address, personal_info)
             share_token = issue_share_token(issuer, attribute)
             register_share_list(issuer, share_token, token_list)
             share_list.append(share_token)
             # 取扱トークンデータ挿入
-            TestV2TokenShareTokens.list_token(session, share_token)
+            self.list_token(session, share_token)
 
         query_string = 'cursor=1&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -455,6 +455,74 @@ class TestV2TokenShareTokens:
             'tradable_exchange': exchange_address,
             'personal_info_address': personal_info,
         }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系6＞
+    # 発行済株式あり（5件）
+    # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
+    # -> 5件返却
+    def test_sharelist_normal_6(self, client, session, shared_contract):
+        config.SHARE_TOKEN_ENABLED = True
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：株式新規発行
+        exchange_address = to_checksum_address(shared_contract['IbetShareExchange']['address'])
+        personal_info = to_checksum_address(shared_contract['PersonalInfo']['address'])
+        attribute = self.share_token_attribute(exchange_address, personal_info)
+        assumed_body = []
+        for i in range(5):
+            share_token = issue_share_token(issuer, attribute)
+            register_share_list(issuer, share_token, token_list)
+            # 取扱トークンデータ挿入
+            self.list_token(session, share_token)
+            status = True
+            if i % 2 == 0:
+                invalidate_share_token(issuer, share_token)
+                status = False
+            assumed_body_element = {
+                'id': i,
+                'token_address': share_token['address'],
+                'token_template': 'IbetShare',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト株式',
+                'symbol': 'SHARE',
+                'total_supply': 1000000,
+                'issue_price': 10000,
+                'principal_value': 10000,
+                'dividend_information': {
+                    'dividends': 1.01,
+                    'dividend_record_date': '20200909',
+                    'dividend_payment_date': '20201001'
+                },
+                'cancellation_date': '20210101',
+                'is_offering': False,
+                'memo': 'メモ',
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'transferable': True,
+                'status': status,
+                'transfer_approval_required': False,
+                'is_canceled': False,
+                'tradable_exchange': exchange_address,
+                'personal_info_address': personal_info,
+            }
+            assumed_body = [assumed_body_element] + assumed_body
+
+        resp = client.simulate_get(self.apiurl, params={
+            'include_inactive_tokens': 'true'
+        })
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -602,6 +670,21 @@ class TestV2TokenShareTokens:
                     'must be of integer type'
                 ]
             }
+        }
+
+    # ＜エラー系3-4＞
+    # statusが非boolean
+    # -> 入力エラー
+    def test_sharelist_error_3_4(self, client, session):
+        config.SHARE_TOKEN_ENABLED = True
+        query_string = 'include_inactive_tokens=some_value'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'include_inactive_tokens': ['unallowed value some_value']}
         }
 
     # ＜エラー系4＞

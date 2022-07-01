@@ -22,6 +22,7 @@ if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
 fi
 
 PROC_LIST="${PROC_LIST} batch/indexer_Transfer.py"
+PROC_LIST="${PROC_LIST} batch/indexer_Token_Holders.py"
 
 if [ "${SHARE_TOKEN_ENABLED}" = 1 ]; then
   PROC_LIST="${PROC_LIST} batch/indexer_Position_Share.py"

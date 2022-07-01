@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import sys
 import threading
 from typing import Any
 import time
@@ -44,7 +43,7 @@ thread_local = threading.local()
 class Web3Wrapper:
 
     def __init__(self):
-        if "pytest" not in sys.modules:
+        if not config.UNIT_TEST_MODE:
             FailOverHTTPProvider.set_fail_over_mode(True)
 
     @property

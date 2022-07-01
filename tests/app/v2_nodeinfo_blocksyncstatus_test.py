@@ -56,7 +56,7 @@ class TestNodeInfoBlockSyncStatus:
             resp = client.simulate_get(self.apiurl)
 
         # assertion
-        latest_block_number = web3.eth.blockNumber
+        latest_block_number = web3.eth.block_number
         assert resp.status_code == 200
         assert resp.json["meta"] == {
             "code": 200,

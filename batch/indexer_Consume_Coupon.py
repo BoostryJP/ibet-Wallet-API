@@ -29,6 +29,7 @@ from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.exceptions import ABIEventFunctionNotFound
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -58,9 +59,9 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 class Processor:
     """Processor for indexing coupon consumption events"""
+    latest_block = 0
 
     def __init__(self):
-        self.latest_block = web3.eth.blockNumber
         self.token_list = []
 
     @staticmethod
@@ -69,6 +70,8 @@ class Processor:
 
     def initial_sync(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
+        self.latest_block = web3.eth.block_number
         try:
             self.__get_token_list(local_session)
 
@@ -84,20 +87,22 @@ class Processor:
                     )
                     _to_block += 1000000
                     _from_block += 1000000
-                    local_session.commit()
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=self.latest_block
                 )
-                local_session.commit()
             else:
                 self.__sync_all(
                     db_session=local_session,
                     block_from=_from_block,
                     block_to=self.latest_block
                 )
-                local_session.commit()
+            local_session.commit()
+        except Exception as e:
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -105,10 +110,11 @@ class Processor:
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
+        latest_block_at_start = self.latest_block
         try:
             self.__get_token_list(local_session)
 
-            blockTo = web3.eth.blockNumber
+            blockTo = web3.eth.block_number
             if blockTo == self.latest_block:
                 return
 
@@ -119,6 +125,10 @@ class Processor:
             )
             self.latest_block = blockTo
             local_session.commit()
+        except Exception as e:
+            local_session.rollback()
+            self.latest_block = latest_block_at_start
+            raise e
         finally:
             local_session.close()
 
@@ -154,11 +164,14 @@ class Processor:
                     fromBlock=block_from,
                     toBlock=block_to
                 )
+            except ABIEventFunctionNotFound:
+                events = []
+            try:
                 for event in events:
                     args = event["args"]
                     transaction_hash = event["transactionHash"].hex()
                     block_timestamp = datetime.fromtimestamp(
-                        web3.eth.getBlock(event["blockNumber"])["timestamp"],
+                        web3.eth.get_block(event["blockNumber"])["timestamp"],
                         JST
                     )
                     amount = args.get("value", 0)
@@ -176,7 +189,7 @@ class Processor:
                                 block_timestamp=block_timestamp
                             )
             except Exception as e:
-                LOG.exception(e)
+                raise e
 
     @staticmethod
     def __sink_on_consume_coupon(db_session: Session,
@@ -204,7 +217,18 @@ class Processor:
 def main():
     LOG.info("Service started successfully")
     processor = Processor()
-    processor.initial_sync()
+
+    initial_synced_completed = False
+    while not initial_synced_completed:
+        try:
+            processor.initial_sync()
+            LOG.debug("Initial sync is processed successfully")
+            initial_synced_completed = True
+        except Exception:
+            LOG.exception("Initial sync failed")
+
+        time.sleep(10)
+
     while True:
         try:
             processor.sync_new_logs()
@@ -214,7 +238,7 @@ def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:
-            LOG.exception(ex)
+            LOG.exception("An exception occurred during event synchronization")
 
         time.sleep(10)
 

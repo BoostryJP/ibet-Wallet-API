@@ -108,6 +108,15 @@ class BondToken(TokenBase):
                         token_contract, "transferApprovalRequired", (), False
                     )
                     bondtoken.is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
+                    # 企業情報が存在しない場合は直近の情報を取得する
+                    if bondtoken.company_name is None or bondtoken.company_name == "":
+                        company = CompanyList.get_find(to_checksum_address(bondtoken.owner_address))
+                        bondtoken.company_name = company.corporate_name
+                        bondtoken.rsa_publickey = company.rsa_publickey
+                        BondToken.cache[token_address] = {
+                            "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                            "token": bondtoken
+                        }
                     return bondtoken
 
         # キャッシュ未利用の場合
@@ -122,7 +131,6 @@ class BondToken(TokenBase):
         face_value = Contract.call_function(token_contract, "faceValue", (), 0)
         interest_rate = Contract.call_function(token_contract, "interestRate", (), 0)
 
-        interest_payment_date_string = Contract.call_function(token_contract, "interestPaymentDate", (), "{}")
         interest_payment_date1 = ''
         interest_payment_date2 = ''
         interest_payment_date3 = ''
@@ -136,9 +144,13 @@ class BondToken(TokenBase):
         interest_payment_date11 = ''
         interest_payment_date12 = ''
         try:
-            interest_payment_date = json.loads(
-                interest_payment_date_string.replace("'", '"').replace('True', 'true').replace('False', 'false')
-            )
+            interest_payment_date_string = Contract.call_function(token_contract, "interestPaymentDate", (), "")
+            if interest_payment_date_string != "":
+                interest_payment_date = json.loads(
+                    interest_payment_date_string.replace("'", '"').replace('True', 'true').replace('False', 'false')
+                )
+            else:
+                interest_payment_date = {}
             if 'interestPaymentDate1' in interest_payment_date:
                 interest_payment_date1 = interest_payment_date.get('interestPaymentDate1', '')
             if 'interestPaymentDate2' in interest_payment_date:
@@ -163,8 +175,8 @@ class BondToken(TokenBase):
                 interest_payment_date11 = interest_payment_date.get('interestPaymentDate11', '')
             if 'interestPaymentDate12' in interest_payment_date:
                 interest_payment_date12 = interest_payment_date.get('interestPaymentDate12', '')
-        except Exception as err:
-            LOG.warning("Failed to load interestPaymentDate: ", err)
+        except Exception:
+            LOG.warning("Failed to load interestPaymentDate")
 
         redemption_date = Contract.call_function(token_contract, "redemptionDate", (), "")
         redemption_value = Contract.call_function(token_contract, "redemptionValue", (), 0)
@@ -296,6 +308,15 @@ class ShareToken(TokenBase):
                         token_contract, "transferApprovalRequired", (), False
                     )
                     sharetoken.is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
+                    # 企業情報が存在しない場合は直近の情報を取得する
+                    if sharetoken.company_name is None or sharetoken.company_name == "":
+                        company = CompanyList.get_find(to_checksum_address(sharetoken.owner_address))
+                        sharetoken.company_name = company.corporate_name
+                        sharetoken.rsa_publickey = company.rsa_publickey
+                        BondToken.cache[token_address] = {
+                            "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
+                            "token": sharetoken
+                        }
                     return sharetoken
 
         # キャッシュ未利用の場合

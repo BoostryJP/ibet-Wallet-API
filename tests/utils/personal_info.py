@@ -31,7 +31,7 @@ class PersonalInfoUtils:
 
     @staticmethod
     def register(tx_from:str, personal_info_address:str, link_address:str):
-        web3.eth.defaultAccount = tx_from
+        web3.eth.default_account = tx_from
         PersonalInfoContract = Contract.get_contract(
             contract_name="PersonalInfo",
             address=personal_info_address

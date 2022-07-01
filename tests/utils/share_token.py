@@ -34,7 +34,7 @@ class IbetShareUtils:
 
     @staticmethod
     def issue(tx_from: str, args: Dict):
-        web3.eth.defaultAccount = tx_from
+        web3.eth.default_account = tx_from
 
         # issue
         arguments = [
@@ -96,7 +96,7 @@ class IbetShareUtils:
             contract_name="TokenList",
             address=token_list_contract_address
         )
-        web3.eth.defaultAccount = tx_from
+        web3.eth.default_account = tx_from
         TokenListContract.functions. \
             register(token_address, "IbetShare"). \
             transact({"from": tx_from, "gas": gas_limit})
@@ -123,7 +123,7 @@ class IbetShareUtils:
     def transfer_to_exchange(tx_from: str,
                              exchange_address: str, token_address: str,
                              amount: int):
-        web3.eth.defaultAccount = tx_from
+        web3.eth.default_account = tx_from
         TokenContract = Contract.get_contract(
             contract_name="IbetShare",
             address=token_address
@@ -135,7 +135,7 @@ class IbetShareUtils:
     def make_sell_order(tx_from: str,
                         exchange_address: str, token_address: str,
                         amount: int, price: int):
-        web3.eth.defaultAccount = tx_from
+        web3.eth.default_account = tx_from
         agent_address = eth_account["agent"]["account_address"]
         ExchangeContract = Contract.get_contract(
             contract_name="IbetExchange",

@@ -19,12 +19,17 @@ services:
       - 3306:3306
     command:
       mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  ganache-cli:
-    image: "trufflesuite/ganache-cli:latest"
+  ganache:
+    image: "trufflesuite/ganache:latest"
     ports:
       - "8545:8545"
     command:
-      - -g 0
+      - -k
+      - 'byzantium'
+      - -g
+      - '0'
+      - --chain.chainId
+      - '2017'
   ibet-wallet-api-postgres:
     build:
       context: ./
@@ -33,12 +38,13 @@ services:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
       - TEST_DATABASE_URL=postgresql://apluser:apluserpass@postgres/apldb
+      - UNIT_TEST_MODE=1
     links:
       - postgres:postgres
-      - ganache-cli:quorum
+      - ganache:quorum
     depends_on:
       - postgres
-      - ganache-cli
+      - ganache
   ibet-wallet-api-mysql:
     build:
       context: ./
@@ -47,9 +53,10 @@ services:
       - WEB3_HTTP_PROVIDER=http://quorum:8545
       - RSA_PASSWORD=password
       - TEST_DATABASE_URL=mysql+pymysql://apluser:apluserpass@mysql:3306/apldb
+      - UNIT_TEST_MODE=1
     links:
       - mysql:mysql
-      - ganache-cli:quorum
+      - ganache:quorum
     depends_on:
       - mysql
-      - ganache-cli
+      - ganache

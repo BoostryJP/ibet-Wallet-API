@@ -120,11 +120,10 @@ class DatabaseError(AppError):
     """
     500 ERROR: データベースエラー
     """
-    def __init__(self, error, args=None, params=None):
+    def __init__(self, error, args=None):
         super().__init__(error)
         obj = OrderedDict()
         obj['details'] = ', '.join(args)
-        obj['params'] = str(params)
         self.error['description'] = obj
 
 

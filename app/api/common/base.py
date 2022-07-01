@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 
 import falcon
 import json
+from falcon import Request, Response
 
 try:
     from collections import OrderedDict
@@ -65,19 +66,19 @@ class BaseResource(object):
         obj['data'] = data
         res.text = self.to_json(obj)
 
-    def on_get(self, req, res, *args, **kwargs):
+    def on_get(self, req: Request, res: Response, *args, **kwargs):
         if req.path == '/':
             res.status = falcon.HTTP_200
             res.text = self.to_json(self.HELLO_WORLD)
         else:
             raise NotSupportedError(method='GET', url=req.path)
 
-    def on_post(self, req, res, *args, **kwargs):
+    def on_post(self, req: Request, res: Response, *args, **kwargs):
         raise NotSupportedError(method='POST', url=req.path)
 
-    def on_put(self, req, res, *args, **kwargs):
+    def on_put(self, req: Request, res: Response, *args, **kwargs):
         raise NotSupportedError(method='PUT', url=req.path)
 
-    def on_delete(self, req, res, *args, **kwargs):
+    def on_delete(self, req: Request, res: Response, *args, **kwargs):
         raise NotSupportedError(method='DELETE', url=req.path)
 

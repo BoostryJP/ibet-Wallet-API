@@ -66,7 +66,7 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 token_factory = TokenFactory(web3)
 
 # 起動時のblockNumberを取得
-NOW_BLOCKNUMBER = web3.eth.blockNumber
+NOW_BLOCKNUMBER = web3.eth.block_number
 
 # コントラクトの生成
 cp_exchange_contract = Contract.get_contract(
@@ -100,7 +100,7 @@ class Watcher:
 
     @staticmethod
     def _gen_block_timestamp(entry):
-        return datetime.fromtimestamp(web3.eth.getBlock(entry["blockNumber"])["timestamp"], JST)
+        return datetime.fromtimestamp(web3.eth.get_block(entry["blockNumber"])["timestamp"], JST)
 
     def watch(self, db_session: Session, entries):
         pass
@@ -114,7 +114,7 @@ class Watcher:
             self.filter_params["fromBlock"] = self.from_block
 
             # 最新のブロックナンバーを取得
-            _latest_block = web3.eth.blockNumber
+            _latest_block = web3.eth.block_number
             if self.from_block > _latest_block:
                 LOG.info(f"[{self.__class__.__name__}]: skip processing")
                 return

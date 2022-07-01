@@ -54,7 +54,7 @@ def watcher_factory(session, shared_contract):
 
         cls = getattr(test_module, cls_name)
         watcher = cls()
-        watcher.from_block = web3.eth.blockNumber
+        watcher.from_block = web3.eth.block_number
         return watcher
 
     return _watcher
@@ -115,8 +115,8 @@ class TestWatchTransfer:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
-        block = web3.eth.getBlock(block_number)
+        block_number = web3.eth.block_number
+        block = web3.eth.get_block(block_number)
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
@@ -153,7 +153,7 @@ class TestWatchTransfer:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
         _notification = _notification_list[0]
@@ -239,7 +239,7 @@ class TestWatchTransfer:
         watcher.loop()
 
         # Assertion
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         _notification_list = session.query(Notification).\
             order_by(Notification.created).\
             all()

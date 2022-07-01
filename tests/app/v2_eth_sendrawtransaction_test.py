@@ -23,10 +23,11 @@ from unittest import mock
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.middleware import geth_poa_middleware
-from web3.exceptions import TimeExhausted
+from web3.exceptions import TimeExhausted, ContractLogicError
 from eth_utils import to_checksum_address
 
 from app import config
+from app.api.v2 import eth
 from app.contracts import Contract
 from app.model.db import (
     Listing,
@@ -55,7 +56,7 @@ def insert_node_data(session, is_synced, endpoint_uri=config.WEB3_HTTP_PROVIDER,
 
 def tokenlist_contract():
     issuer = eth_account['issuer']
-    web3.eth.defaultAccount = issuer['account_address']
+    web3.eth.default_account = issuer['account_address']
     contract_address, abi = Contract.deploy_contract(
         'TokenList', [], issuer['account_address'])
 
@@ -129,15 +130,15 @@ class TestEthSendRawTransaction:
                     "from": to_checksum_address(issuer["account_address"]),
                     "gas": 6000000
                 })
-            tx_hash = web3.eth.sendTransaction(pre_tx)
-            web3.eth.waitForTransactionReceipt(tx_hash)
+            tx_hash = web3.eth.send_transaction(pre_tx)
+            web3.eth.wait_for_transaction_receipt(tx_hash)
 
             tx = token_contract_1.functions.consume(10).buildTransaction({
                 "from": to_checksum_address(local_account_1.address),
                 "gas": 6000000
             })
-            tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-            signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+            tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+            signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
             request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
             headers = {'Content-Type': 'application/json'}
@@ -209,15 +210,15 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         token_contract_2 = web3.eth.contract(
             address=to_checksum_address(coupontoken_2["address"]),
@@ -232,15 +233,15 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         tx = token_contract_2.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_2.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_2.address))
-        signed_tx_2 = web3.eth.account.signTransaction(tx, local_account_2.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_2.address))
+        signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex(), signed_tx_2.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -299,15 +300,15 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -315,7 +316,7 @@ class TestEthSendRawTransaction:
 
         # タイムアウト
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
+        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
                 "web3.geth.GethTxPool.inspect", MagicMock(side_effect=[AttributeDict({
                     "pending": AttributeDict({
                         to_checksum_address(local_account_1.address): AttributeDict({
@@ -523,15 +524,15 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -585,8 +586,8 @@ class TestEthSendRawTransaction:
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000
         })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         local_account_1 = web3.eth.account.create()
 
@@ -594,8 +595,8 @@ class TestEthSendRawTransaction:
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -648,8 +649,8 @@ class TestEthSendRawTransaction:
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -665,9 +666,9 @@ class TestEthSendRawTransaction:
             "status": 0
         }]
 
-    # <Error_10>
-    # Transaction failed
-    def test_error_10(self, client, session):
+    # <Error_10_1>
+    # Transaction failed and revert inspection success
+    def test_error_10_1(self, client, session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -704,22 +705,248 @@ class TestEthSendRawTransaction:
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
+        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert 130401',...})
+        #         geth: ContractLogicError("execution reverted: 130401")
+        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
+        eth_call_mock = MagicMock()
+        successor = iter([True, True, True, True])
 
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
-            "id": 1,
-            "status": 0
-        }]
+        def side_effect(*arg, **kwargs):
+            global web3
+            try:
+                if next(successor):
+                    return web3.eth.call(*arg, **kwargs)
+            except Exception as e:
+                raise ContractLogicError("execution reverted: 130401")
+
+        eth_call_mock.side_effect = side_effect
+        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0,
+                "error_code": 130401,
+                "error_msg": "Message sender balance is insufficient.",
+            }]
+
+    # <Error_10_2>
+    # Transaction failed and revert inspection success(no error code)
+    def test_error_10_2(self, client, session):
+
+        # トークンリスト登録
+        tokenlist = tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+        issuer = eth_account['issuer']
+        coupontoken_1 = issue_coupon_token(issuer, {
+            "name": "name_test1",
+            "symbol": "symbol_test1",
+            "totalSupply": 1000000,
+            "tradableExchange": config.ZERO_ADDRESS,
+            "details": "details_test1",
+            "returnDetails": "returnDetails_test1",
+            "memo": "memo_test1",
+            "expirationDate": "20211201",
+            "transferable": True,
+            "contactInformation": "contactInformation_test1",
+            "privacyPolicy": "privacyPolicy_test1"
+        })
+        coupon_register_list(issuer, coupontoken_1, tokenlist)
+
+        # Listing,実行可能コントラクト登録
+        listing_token(session, coupontoken_1)
+        executable_contract_token(session, coupontoken_1)
+
+        token_contract_1 = web3.eth.contract(
+            address=to_checksum_address(coupontoken_1["address"]),
+            abi=coupontoken_1["abi"],
+        )
+
+        local_account_1 = web3.eth.account.create()
+
+        # NOTE: 残高なしの状態でクーポン消費
+        tx = token_contract_1.functions.consume(10).buildTransaction({
+            "from": to_checksum_address(local_account_1.address),
+            "gas": 6000000
+        })
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+
+        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
+        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert Direct...',...})
+        #         geth: ContractLogicError("execution reverted: Direct transfer is...")
+        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
+        eth_call_mock = MagicMock()
+        successor = iter([True, True, True, True])
+
+        def side_effect(*arg, **kwargs):
+            global web3
+            try:
+                if next(successor):
+                    return web3.eth.call(*arg, **kwargs)
+            except Exception as e:
+                raise ContractLogicError("execution reverted: Message sender balance is insufficient.")
+
+        eth_call_mock.side_effect = side_effect
+        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0,
+                "error_code": 0,
+                "error_msg": "Message sender balance is insufficient.",
+            }]
+
+    # <Error_10_3>
+    # Transaction failed and revert inspection success(no revert message)
+    def test_error_10_3(self, client, session):
+
+        # トークンリスト登録
+        tokenlist = tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+        issuer = eth_account['issuer']
+        coupontoken_1 = issue_coupon_token(issuer, {
+            "name": "name_test1",
+            "symbol": "symbol_test1",
+            "totalSupply": 1000000,
+            "tradableExchange": config.ZERO_ADDRESS,
+            "details": "details_test1",
+            "returnDetails": "returnDetails_test1",
+            "memo": "memo_test1",
+            "expirationDate": "20211201",
+            "transferable": True,
+            "contactInformation": "contactInformation_test1",
+            "privacyPolicy": "privacyPolicy_test1"
+        })
+        coupon_register_list(issuer, coupontoken_1, tokenlist)
+
+        # Listing,実行可能コントラクト登録
+        listing_token(session, coupontoken_1)
+        executable_contract_token(session, coupontoken_1)
+
+        token_contract_1 = web3.eth.contract(
+            address=to_checksum_address(coupontoken_1["address"]),
+            abi=coupontoken_1["abi"],
+        )
+
+        local_account_1 = web3.eth.account.create()
+
+        # NOTE: 残高なしの状態でクーポン消費
+        tx = token_contract_1.functions.consume(10).buildTransaction({
+            "from": to_checksum_address(local_account_1.address),
+            "gas": 6000000
+        })
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+
+        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
+        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert',...})
+        #         geth: ContractLogicError("execution reverted")
+        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
+        eth_call_mock = MagicMock()
+        successor = iter([True, True, True, True])
+
+        def side_effect(*arg, **kwargs):
+            global web3
+            try:
+                if next(successor):
+                    return web3.eth.call(*arg, **kwargs)
+            except Exception as e:
+                raise ContractLogicError("execution reverted")
+
+        eth_call_mock.side_effect = side_effect
+        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0,
+                "error_code": 0,
+                "error_msg": "execution reverted",
+            }]
+
+    # <Error_10_4>
+    # Transaction failed and revert inspection failed
+    def test_error_10_4(self, client, session):
+
+        # トークンリスト登録
+        tokenlist = tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
+        issuer = eth_account['issuer']
+        coupontoken_1 = issue_coupon_token(issuer, {
+            "name": "name_test1",
+            "symbol": "symbol_test1",
+            "totalSupply": 1000000,
+            "tradableExchange": config.ZERO_ADDRESS,
+            "details": "details_test1",
+            "returnDetails": "returnDetails_test1",
+            "memo": "memo_test1",
+            "expirationDate": "20211201",
+            "transferable": True,
+            "contactInformation": "contactInformation_test1",
+            "privacyPolicy": "privacyPolicy_test1"
+        })
+        coupon_register_list(issuer, coupontoken_1, tokenlist)
+
+        # Listing,実行可能コントラクト登録
+        listing_token(session, coupontoken_1)
+        executable_contract_token(session, coupontoken_1)
+
+        token_contract_1 = web3.eth.contract(
+            address=to_checksum_address(coupontoken_1["address"]),
+            abi=coupontoken_1["abi"],
+        )
+
+        local_account_1 = web3.eth.account.create()
+
+        # NOTE: 残高なしの状態でクーポン消費
+        tx = token_contract_1.functions.consume(10).buildTransaction({
+            "from": to_checksum_address(local_account_1.address),
+            "gas": 6000000
+        })
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+
+        request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+
+        with mock.patch.object(eth.web3.eth, "getTransaction", ConnectionError):
+            resp = client.simulate_post(
+                self.apiurl, headers=headers, body=request_body)
+
+            assert resp.status_code == 200
+            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json['data'] == [{
+                "id": 1,
+                "status": 0
+            }]
 
     # <Error_11>
     # waitForTransactionReceipt error
@@ -761,22 +988,22 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
         # waitForTransactionReceiptエラー
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=Exception())):
+        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=Exception())):
             resp = client.simulate_post(
                 self.apiurl, headers=headers, body=request_body)
 
@@ -827,15 +1054,15 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         # waitForTransactionReceiptエラー
         mock.patch.object(web3.eth, "waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted()))
@@ -847,7 +1074,7 @@ class TestEthSendRawTransaction:
 
         # タイムアウト
         # recoverTransactionエラー
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
+        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
                 "eth_account.Account.recoverTransaction", MagicMock(side_effect=Exception())):
             resp = client.simulate_post(
                 self.apiurl, headers=headers, body=request_body)
@@ -899,15 +1126,15 @@ class TestEthSendRawTransaction:
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000
             })
-        tx_hash = web3.eth.sendTransaction(pre_tx)
-        web3.eth.waitForTransactionReceipt(tx_hash)
+        tx_hash = web3.eth.send_transaction(pre_tx)
+        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000
         })
-        tx["nonce"] = web3.eth.getTransactionCount(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.signTransaction(tx, local_account_1.privateKey)
+        tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -916,7 +1143,7 @@ class TestEthSendRawTransaction:
         # タイムアウト
         # queuedに滞留
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
-        with mock.patch("web3.eth.Eth.waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
+        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
                 "web3.geth.GethTxPool.inspect", MagicMock(side_effect=[AttributeDict({
                     "pending": AttributeDict({}),
                     "queued": AttributeDict({

@@ -1,7 +1,7 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-22.3-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-22.6-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
@@ -19,11 +19,11 @@
   - [MySQL](https://www.mysql.com/) - Version 5.7
 - [GoQuorum](https://github.com/ConsenSys/quorum)
   - We support the official GoQuorum node of [ibet-Network](https://github.com/BoostryJP/ibet-Network).
-  - We use [ganache-cli](https://github.com/trufflesuite/ganache-cli) for local development and unit testing, and we use the latest version.
+  - We use [ganache](https://github.com/trufflesuite/ganache) (a.k.a. ganache-cli) for local development and unit testing, and we use the latest version.
 
 ## Supported contract version
 
-* ibet-SmartContract: version 21.12.0
+* ibet-SmartContract: version 22.6
 
 ## Setup
 
@@ -232,6 +232,7 @@ $ pip install -r tests/requirements.txt
 
 You can run the tests with:
 ```bash
+$ export UNIT_TEST_MODE=1
 $ pytest tests/
 ```
 
@@ -246,6 +247,13 @@ $ pytest tests/
 
 ibet-Wallet-API is licensed under the Apache License, Version 2.0.
 
+## EoL policy
+Each major version is supported for one year after release. 
+For example, v22.1 is supported until v23.1 is released. 
+
+It fixes critical problems, including critical security problems, 
+in supported releases as needed by issuing minor revisions 
+(for example, v22.1.1, v22.1.2, and so on).
 
 ## Contact information
 

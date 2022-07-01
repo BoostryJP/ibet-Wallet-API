@@ -65,6 +65,8 @@ class IDXTransferApproval(Base):
     approval_blocktimestamp = Column(DateTime)
     # Cancellation Status
     cancelled = Column(Boolean)
+    # Escrow Finished Status
+    escrow_finished = Column(Boolean)
     # Approve Status
     transfer_approved = Column(Boolean)
 
@@ -88,6 +90,7 @@ class IDXTransferApproval(Base):
             "approval_datetime": self.format_datetime(self.approval_datetime),
             "approval_blocktimestamp": self.format_datetime(self.approval_blocktimestamp),
             "cancelled": self.cancelled,
+            "escrow_finished": self.escrow_finished,
             "transfer_approved": self.transfer_approved
         }
 
@@ -104,6 +107,30 @@ class IDXTransferApproval(Base):
         "approval_datetime": alchemy.datetime_to_timestamp,
         "approval_blocktimestamp": alchemy.datetime_to_timestamp,
         "cancelled": bool,
+        "escrow_finished": bool,
         "transfer_approved": bool
     }
+    FIELDS.update(Base.FIELDS)
+
+
+class IDXTransferApprovalBlockNumber(Base):
+    """Synchronized blockNumber of IDXTransferApproval"""
+    __tablename__ = "idx_transfer_approval_block_number"
+
+    # sequence id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # target token address
+    token_address = Column(String(42), primary_key=True)
+    # target exchange address
+    exchange_address = Column(String(42), primary_key=True)
+    # latest blockNumber
+    latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'id': int,
+        'token_address': str,
+        'exchange_address': str,
+        'latest_block_number': int,
+    }
+
     FIELDS.update(Base.FIELDS)

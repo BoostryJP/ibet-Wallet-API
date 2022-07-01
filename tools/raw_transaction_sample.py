@@ -28,7 +28,7 @@ transaction = {
 
 # 秘密鍵
 key = '0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318'
-signed = web3.eth.account.signTransaction(transaction, key)
+signed = web3.eth.account.sign_transaction(transaction, key)
 print(signed)
 
 raw_transaction = decode(signed.rawTransaction)

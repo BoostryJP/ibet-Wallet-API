@@ -140,7 +140,7 @@ def main():
         except SQLAlchemyError as sa_err:
             LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
         except Exception as ex:  # Unexpected errors
-            LOG.exception(ex)
+            LOG.exception("An exception occurred during event synchronization")
 
         elapsed_time = time.time() - start_time
         time.sleep(max(COMPANY_LIST_SLEEP_INTERVAL - elapsed_time, 0))

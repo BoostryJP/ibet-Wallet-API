@@ -66,7 +66,7 @@ class TestV2TokenMembershipTokens:
     @staticmethod
     def tokenlist_contract():
         deployer = eth_account['deployer']
-        web3.eth.defaultAccount = deployer['account_address']
+        web3.eth.default_account = deployer['account_address']
         contract_address, abi = Contract.deploy_contract('TokenList', [], deployer['account_address'])
         return {'address': contract_address, 'abi': abi}
 
@@ -89,19 +89,19 @@ class TestV2TokenMembershipTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         exchange_address = \
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
-        attribute = TestV2TokenMembershipTokens.token_attribute(exchange_address)
+        attribute = self.token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
 
         # 取扱トークンデータ挿入
-        TestV2TokenMembershipTokens.list_token(session, token)
+        self.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -151,7 +151,7 @@ class TestV2TokenMembershipTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
@@ -160,13 +160,13 @@ class TestV2TokenMembershipTokens:
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenMembershipTokens. \
+            attribute = self. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenMembershipTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = ''
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -243,7 +243,7 @@ class TestV2TokenMembershipTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
@@ -252,13 +252,13 @@ class TestV2TokenMembershipTokens:
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenMembershipTokens. \
+            attribute = self. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenMembershipTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = 'cursor=2&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -335,7 +335,7 @@ class TestV2TokenMembershipTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
@@ -344,13 +344,13 @@ class TestV2TokenMembershipTokens:
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenMembershipTokens. \
+            attribute = self. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenMembershipTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = 'cursor=1&limit=1'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -398,7 +398,7 @@ class TestV2TokenMembershipTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
@@ -407,13 +407,13 @@ class TestV2TokenMembershipTokens:
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
         for i in range(0, 2):
-            attribute = TestV2TokenMembershipTokens. \
+            attribute = self. \
                 token_attribute(exchange_address)
             token = membership_issue(issuer, attribute)
             membership_register_list(issuer, token, token_list)
             issued_list.append(token)
             # 取扱トークンデータ挿入
-            TestV2TokenMembershipTokens.list_token(session, token)
+            self.list_token(session, token)
 
         query_string = 'cursor=1&limit=2'
         resp = client.simulate_get(self.apiurl, query_string=query_string)
@@ -461,19 +461,19 @@ class TestV2TokenMembershipTokens:
         issuer = eth_account['issuer']
 
         # TokenListコントラクト
-        token_list = TestV2TokenMembershipTokens.tokenlist_contract()
+        token_list = self.tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
 
         # データ準備：会員権新規発行
         exchange_address = \
             to_checksum_address(
                 shared_contract['IbetMembershipExchange']['address'])
-        attribute = TestV2TokenMembershipTokens. \
+        attribute = self. \
             token_attribute(exchange_address)
         token = membership_issue(issuer, attribute)
         membership_register_list(issuer, token, token_list)
         # 取扱トークンデータ挿入
-        TestV2TokenMembershipTokens.list_token(session, token)
+        self.list_token(session, token)
 
         # Tokenの無効化
         membership_invalidate(issuer, token)
@@ -482,6 +482,72 @@ class TestV2TokenMembershipTokens:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+    # ＜正常系7＞
+    # 発行済会員権あり（5件）
+    # cursor=設定なし、 limit=設定なし、include_inactive_tokens=True
+    # -> 5件返却
+    def test_membershiplist_normal_7(self, client, session, shared_contract):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        # テスト用アカウント
+        issuer = eth_account['issuer']
+
+        # TokenListコントラクト
+        token_list = self.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+
+        # データ準備：会員権新規発行
+        exchange_address = \
+            to_checksum_address(
+                shared_contract['IbetMembershipExchange']['address'])
+        attribute = self.token_attribute(exchange_address)
+        assumed_body = []
+        for i in range(5):
+            token = membership_issue(issuer, attribute)
+            membership_register_list(issuer, token, token_list)
+            # 取扱トークンデータ挿入
+            self.list_token(session, token)
+            status = True
+            if i % 2 == 0:
+                membership_invalidate(issuer, token)
+                status = False
+            assumed_body_element = {
+                'id': i,
+                'token_address': token['address'],
+                'token_template': 'IbetMembership',
+                'owner_address': issuer['account_address'],
+                'company_name': '',
+                'rsa_publickey': '',
+                'name': 'テスト会員権',
+                'symbol': 'MEMBERSHIP',
+                'total_supply': 1000000,
+                'details': '詳細',
+                'return_details': 'リターン詳細',
+                'expiration_date': '20191231',
+                'memo': 'メモ',
+                'transferable': True,
+                'status': status,
+                'initial_offering_status': False,
+                'image_url': [
+                    {'id': 1, 'url': ''},
+                    {'id': 2, 'url': ''},
+                    {'id': 3, 'url': ''}
+                ],
+                'max_holding_quantity': 1,
+                'max_sell_amount': 1000,
+                'contact_information': '問い合わせ先',
+                'privacy_policy': 'プライバシーポリシー',
+                'tradable_exchange': exchange_address,
+            }
+            assumed_body = [assumed_body_element] + assumed_body
+
+        resp = client.simulate_get(self.apiurl, params={
+            'include_inactive_tokens': 'true'
+        })
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -629,6 +695,21 @@ class TestV2TokenMembershipTokens:
                     'must be of integer type'
                 ]
             }
+        }
+
+    # ＜エラー系3-4＞
+    # statusが非boolean
+    # -> 入力エラー
+    def test_membershiplist_error_3_4(self, client, session):
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        query_string = 'include_inactive_tokens=some_value'
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 400
+        assert resp.json['meta'] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': {'include_inactive_tokens': ['unallowed value some_value']}
         }
 
     # ＜エラー系4＞

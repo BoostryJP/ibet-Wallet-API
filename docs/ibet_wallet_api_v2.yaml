@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   description: "ibet Wallet API"
-  version: "22.3.0"
+  version: "22.6.0"
   title: "ibet Wallet API"
   termsOfService: ""
   contact:
@@ -27,7 +27,7 @@ tags:
   - name: Token
     description: Attribute information of the listed tokens
   - name: IbetExchange
-    description: Trade related features on IbetExchage
+    description: Trade related features on IbetExchange
   - name: Position
     description: Token balance held by the user
   - name: Statistics
@@ -433,6 +433,17 @@ paths:
                       type: integer
                       example: 1
                       description: execution failure:0, execution success:1, execution success(pending transaction):2
+                    error_code:
+                      type: integer
+                      example: 240202
+                      description: error code thrown from contract
+                    error_msg:
+                      type: string
+                      example: Message sender is not token owner.
+                      description: error message
+                  required:
+                  - id
+                  - status
         400:
           description: Invalid Parameter Error or Suspended Token
           schema:
@@ -544,6 +555,23 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 1
+                    description: transaction revert:0, transaction success:1
+                  error_code:
+                    type: integer
+                    example: 240202
+                    description: error code thrown from contract
+                  error_msg:
+                    type: string
+                    example: Message sender is not token owner.
+                    description: error message
+                required:
+                  - status
         400:
           description: Invalid Parameter Error
           schema:
@@ -868,6 +896,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: include_inactive_tokens
+          in: query
+          description: Whether to include inactive tokens.
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
@@ -1165,6 +1198,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: include_inactive_tokens
+          in: query
+          description: Whether to include inactive tokens.
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
@@ -1416,6 +1454,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: include_inactive_tokens
+          in: query
+          description: Whether to include inactive tokens.
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
@@ -1655,6 +1698,11 @@ paths:
           description: "limit: number of items to fetch"
           required: false
           type: integer
+        - name: include_inactive_tokens
+          in: query
+          description: Whether to include inactive tokens.
+          required: false
+          type: boolean
       responses:
         200:
           description: Successful Operation
@@ -1959,6 +2007,146 @@ paths:
                       type: integer
                     exchange_commitment:
                       type: integer
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Token/{contract_address}/Holders/Collection:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    post:
+      tags:
+        - "Token"
+      summary: "Execute Batch Getting Token Holders At Specific BlockNumber"
+      operationId: "TokenHolderListAtSpecificBlockNumber"
+      parameters:
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              list_id:
+                description: |
+                  Unique id to be assigned to each token holder list.
+                  This must be Version4 UUID.
+                example: "cfd83622-34dc-4efe-a68b-2cc275d3d824"
+                type: string
+              block_number:
+                description: block number
+                type: integer
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  list_id:
+                    description: |
+                      Unique id to be assigned to each token holder list.
+                      This must be Version4 UUID.
+                      eg.
+                      ```
+                      cfd83622-34dc-4efe-a68b-2cc275d3d824
+                      ```
+                      If existing combinations of block_number and contract_address is given, 
+                      existing list_id will be returned.
+                    type: string
+                  status:
+                    description: status code of batch job
+                    type: string
+                    enum: [pending, done, failed]
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
+  /Token/{contract_address}/Holders/Collections/{list_id}:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+      - type: string
+        name: list_id
+        in: path
+        required: true
+        description:  |
+          Unique id to be assigned to each token holder list.
+          This must be Version4 UUID.
+          eg.
+          ```
+          cfd83622-34dc-4efe-a68b-2cc275d3d824
+          ```
+    get:
+      tags:
+        - "Token"
+      summary: "Token Holder At Specific BlockNumber"
+      operationId: "TokenHolderList"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    description: Result set
+                    type: object
+                    properties:
+                      status:
+                        description: Status code of token holders list batch job
+                        type: string
+                        enum: [pending, done, failed]
+                      holders:
+                        description: | 
+                          Token holder list.
+                          This list is excluding token owner address.
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            account_address:
+                              description: Account address of token holder.
+                              type: string
+                            hold_balance:
+                              description: |
+                                Amount of balance.
+                                This includes balance/pending_transfer/exchange_balance/exchange_commitment.
+                              type: integer
         400:
           description: Invalid Parameter Error
           schema:

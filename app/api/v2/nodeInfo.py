@@ -97,7 +97,7 @@ class BlockSyncStatus(BaseResource):
         latest_block_number = None
         if node is not None:
             is_synced = True
-            latest_block_number = web3.eth.blockNumber
+            latest_block_number = web3.eth.block_number
 
         self.on_success(res, {
             "is_synced": is_synced,

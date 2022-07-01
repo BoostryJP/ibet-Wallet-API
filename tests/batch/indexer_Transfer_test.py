@@ -16,19 +16,26 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import logging
+import time
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from unittest import mock
 from unittest.mock import MagicMock
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.exceptions import ABIEventFunctionNotFound
 
 from app import config
+from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
     IDXTransfer
 )
 from batch import indexer_Transfer
+from batch.indexer_Transfer import main, LOG
 from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_bond_token,
@@ -54,6 +61,17 @@ web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 def test_module(shared_contract):
     indexer_Transfer.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
     return indexer_Transfer
+
+
+@pytest.fixture(scope="function")
+def main_func(test_module):
+    LOG = logging.getLogger("Processor")
+    default_log_level = LOG.level
+    LOG.setLevel(logging.DEBUG)
+    LOG.propagate = True
+    yield main
+    LOG.propagate = False
+    LOG.setLevel(default_log_level)
 
 
 @pytest.fixture(scope="function")
@@ -206,7 +224,7 @@ class TestProcessor:
         # Transfer
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
 
         # Run target process
         processor.sync_new_logs()
@@ -214,7 +232,7 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 1
-        block = web3.eth.getBlock(block_number)
+        block = web3.eth.get_block(block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
         assert _transfer.transaction_hash == block["transactions"][0].hex()
@@ -245,10 +263,10 @@ class TestProcessor:
         # Transfer
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader2["account_address"]}, share_token, 200000)
-        block_number2 = web3.eth.blockNumber
+        block_number2 = web3.eth.block_number
 
         # Run target process
         processor.sync_new_logs()
@@ -256,7 +274,7 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 2
-        block = web3.eth.getBlock(block_number)
+        block = web3.eth.get_block(block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
         assert _transfer.transaction_hash == block["transactions"][0].hex()
@@ -266,7 +284,7 @@ class TestProcessor:
         assert _transfer.value == 100000
         assert _transfer.created is not None
         assert _transfer.modified is not None
-        block = web3.eth.getBlock(block_number2)
+        block = web3.eth.get_block(block_number2)
         _transfer = _transfer_list[1]
         assert _transfer.id == 2
         assert _transfer.transaction_hash == block["transactions"][0].hex()
@@ -299,13 +317,13 @@ class TestProcessor:
         # Transfer
         bond_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, bond_token, 100000)
-        bond_block_number = web3.eth.blockNumber
+        bond_block_number = web3.eth.block_number
         membership_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, membership_token, 200000)
-        membership_block_number = web3.eth.blockNumber
+        membership_block_number = web3.eth.block_number
         transfer_coupon_token(
             self.issuer, coupon_token, self.trader["account_address"], 300000)
-        coupon_block_number = web3.eth.blockNumber
+        coupon_block_number = web3.eth.block_number
 
         # Run target process
         processor.sync_new_logs()
@@ -313,7 +331,7 @@ class TestProcessor:
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 3
-        block = web3.eth.getBlock(bond_block_number)
+        block = web3.eth.get_block(bond_block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
         assert _transfer.transaction_hash == block["transactions"][0].hex()
@@ -323,7 +341,7 @@ class TestProcessor:
         assert _transfer.value == 100000
         assert _transfer.created is not None
         assert _transfer.modified is not None
-        block = web3.eth.getBlock(membership_block_number)
+        block = web3.eth.get_block(membership_block_number)
         _transfer = _transfer_list[1]
         assert _transfer.id == 2
         assert _transfer.transaction_hash == block["transactions"][0].hex()
@@ -333,7 +351,7 @@ class TestProcessor:
         assert _transfer.value == 200000
         assert _transfer.created is not None
         assert _transfer.modified is not None
-        block = web3.eth.getBlock(coupon_block_number)
+        block = web3.eth.get_block(coupon_block_number)
         _transfer = _transfer_list[2]
         assert _transfer.id == 3
         assert _transfer.transaction_hash == block["transactions"][0].hex()
@@ -380,13 +398,13 @@ class TestProcessor:
 
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
 
         processor.sync_new_logs()
 
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 1
-        block = web3.eth.getBlock(block_number)
+        block = web3.eth.get_block(block_number)
         _transfer = _transfer_list[0]
         assert _transfer.id == 1
         assert _transfer.transaction_hash == block["transactions"][0].hex()
@@ -401,6 +419,7 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
+        session.rollback()
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 1  # prepare same
 
@@ -419,7 +438,7 @@ class TestProcessor:
         # Transfer
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
-        block_number = web3.eth.blockNumber
+        block_number = web3.eth.block_number
 
         # Run target process
         processor.sync_new_logs()
@@ -431,11 +450,52 @@ class TestProcessor:
     ###########################################################################
     # Error Case
     ###########################################################################
+    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
+    # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
+    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
 
-    # <Error_1>
-    # Error occur
-    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=Exception()))
-    def test_error_1(self, processor, shared_contract, session):
+    # <Error_1_1>: ABIEventFunctionNotFound occurs in __sync_xx method.
+    @mock.patch("web3.contract.ContractEvent.getLogs", MagicMock(side_effect=ABIEventFunctionNotFound()))
+    def test_error_1_1(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+        self.listing_token(share_token["address"], session)
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+
+        # Run initial sync
+        processor.initial_sync()
+
+        # Assertion
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Run target process
+        processor.sync_new_logs()
+
+        # Assertion
+        session.rollback()
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+    # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
+    @mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable()))
+    def test_error_1_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
@@ -449,11 +509,118 @@ class TestProcessor:
         # Transfer
         share_transfer_to_exchange(
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
-        block_number = web3.eth.blockNumber
 
-        # Run target process
-        processor.sync_new_logs()
+        # Expect that initial_sync() raises ServiceUnavailable.
+        with pytest.raises(ServiceUnavailable):
+            processor.initial_sync()
+        # Assertion
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+
+        # Expect that sync_new_logs() raises ServiceUnavailable.
+        with pytest.raises(ServiceUnavailable):
+            processor.sync_new_logs()
+
+        # Assertion
+        session.rollback()
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+    # <Error_2_1>: ServiceUnavailable occurs in "initial_sync" / "sync_new_logs".
+    def test_error_2_1(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+        self.listing_token(share_token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+
+        # Expect that initial_sync() raises ServiceUnavailable.
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(ServiceUnavailable):
+            processor.initial_sync()
+        # Assertion
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+
+        # Expect that sync_new_logs() raises ServiceUnavailable.
+        with mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(ServiceUnavailable):
+            processor.sync_new_logs()
+
+        # Assertion
+        session.rollback()
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+    # <Error_2_2>: SQLAlchemyError occurs in "initial_sync" / "sync_new_logs".
+    def test_error_2_2(self, processor, shared_contract, session):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer, config.ZERO_ADDRESS, personal_info_contract_address, token_list_contract)
+        self.listing_token(share_token["address"], session)
+
+        PersonalInfoUtils.register(
+            self.trader["account_address"], personal_info_contract_address, self.issuer["account_address"])
+
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+
+        # Expect that initial_sync() raises SQLAlchemyError.
+        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
+                pytest.raises(SQLAlchemyError):
+            processor.initial_sync()
 
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
         assert len(_transfer_list) == 0
+
+        # Transfer
+        share_transfer_to_exchange(
+            self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
+
+        # Expect that sync_new_logs() raises SQLAlchemyError.
+        with mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()), \
+                pytest.raises(SQLAlchemyError):
+            processor.sync_new_logs()
+
+        # Assertion
+        session.rollback()
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 0
+
+    # <Error_3>: ServiceUnavailable occurs and is handled in mainloop.
+    def test_error_3(self, main_func, shared_contract, session, caplog):
+        # Mocking time.sleep to break mainloop
+        time_mock = MagicMock(wraps=time)
+        time_mock.sleep.side_effect = [True, TypeError()]
+
+        # Run mainloop once and fail with web3 utils error
+        with mock.patch("batch.indexer_Transfer.time", time_mock),\
+            mock.patch("batch.indexer_Transfer.Processor.initial_sync", return_value=True), \
+            mock.patch("web3.providers.rpc.HTTPProvider.make_request", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(TypeError):
+            # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
+            main_func()
+
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.DEBUG, "Initial sync is processed successfully"))
+        assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
+        caplog.clear()
