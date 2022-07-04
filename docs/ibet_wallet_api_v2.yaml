@@ -120,6 +120,13 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+        409:
+          description: Data Conflict Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/409DataConflictError"
   /Admin/Tokens/Type:
     get:
       tags:
@@ -5170,6 +5177,21 @@ definitions:
         type: string
         description: Error Reason
         example: Not Supported
+      description:
+        type: string
+        description: Error Reason
+        example: ""
+  409DataConflictError:
+    type: object
+    properties:
+      code:
+        type: integer
+        description: Error Code
+        example: 40
+      message:
+        type: string
+        description: Error Reason
+        example: Data Conflict
       description:
         type: string
         description: Error Reason

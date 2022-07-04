@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import uuid
-from typing import List
+from typing import List, Optional
 from cerberus import Validator
 from sqlalchemy import (
     or_,
@@ -46,7 +46,8 @@ from app.model.db import (
     IDXTransferApproval,
     TokenHoldersList,
     TokenHolderBatchStatus,
-    TokenHolder
+    TokenHolder,
+    IDXTokenListItem
 )
 from app.model.blockchain import (
     BondToken,
@@ -541,15 +542,12 @@ class StraightBondTokens(BaseResource):
         # Validation
         request_json = StraightBondTokens.validate(req)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-
         # 取扱トークンリストを取得
+        # トークンテンプレートによるフィルタリングを行うためJOIN
         available_tokens = session.query(Listing).\
+            join(IDXTokenListItem, IDXTokenListItem.token_address == Listing.token_address).\
             filter(Listing.is_public == True).\
+            filter(IDXTokenListItem.token_template == "IbetStraightBond").\
             order_by(Listing.id).\
             all()
         list_length = len(available_tokens)
@@ -574,23 +572,15 @@ class StraightBondTokens(BaseResource):
             if count >= limit:
                 break
 
-            # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = Contract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(token_address,),
-                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-            )
-            token_detail = StraightBondTokenDetails.get_token_detail(
+            token_detail_obj = StraightBondTokenDetails.get_token_detail(
                 session=session,
-                token_id=i,
                 token_address=token_address,
-                token_template=token[1],
                 include_inactive_tokens=include_inactive_tokens,
             )
-
-            if token_detail is not None:
+            if token_detail_obj is not None:
+                token_detail = token_detail_obj.__dict__
+                token_detail['id'] = i
                 token_list.append(token_detail)
                 count += 1
 
@@ -764,64 +754,39 @@ class StraightBondTokenDetails(BaseResource):
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-
-        # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = Contract.call_function(
-            contract=list_contract,
-            function_name="getTokenByAddress",
-            args=(token_address,),
-            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
-            token_template=token[1],
             include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        self.on_success(res, token_detail)
+        self.on_success(res, token_detail.__dict__)
 
     @staticmethod
     def get_token_detail(session,
                          token_address: str,
-                         token_template: str,
-                         token_id: int = None,
                          include_inactive_tokens: bool = False):
         """
         トークン詳細の取得
 
         :param session: DB Session
         :param token_address: トークンアドレス
-        :param token_template: トークンテンプレート
-        :param token_id: シーケンスID（任意）
         :param include_inactive_tokens: statusが無効のトークンを含めるかどうか
-        :return: BondToken(dict)
+        :return: BondToken
         """
 
-        if token_template == 'IbetStraightBond':
-            try:
-                # トークンコントラクトへの接続
-                token_contract = Contract.get_contract(token_template, token_address)
-                if not include_inactive_tokens and \
-                        not Contract.call_function(token_contract, "status", (), True):
-                    return None
-                bondtoken = BondToken.get(session=session, token_address=token_address)
-                bondtoken = bondtoken.__dict__
-                if token_id is not None:
-                    bondtoken['id'] = token_id
-                return bondtoken
-            except Exception as e:
-                LOG.error(e)
+        try:
+            bondtoken = BondToken.get(session=session, token_address=token_address)
+            if not include_inactive_tokens and not bondtoken.status:
                 return None
+            return bondtoken
+        except Exception as e:
+            LOG.error(e)
+            return None
 
 
 class ShareTokens(BaseResource):
@@ -844,15 +809,12 @@ class ShareTokens(BaseResource):
         # Validation
         request_json = ShareTokens.validate(req)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-
         # 取扱トークンリストを取得
+        # トークンテンプレートによるフィルタリングを行うためJOIN
         available_tokens = session.query(Listing).\
+            join(IDXTokenListItem, IDXTokenListItem.token_address == Listing.token_address).\
             filter(Listing.is_public == True).\
+            filter(IDXTokenListItem.token_template == "IbetShare").\
             order_by(Listing.id).\
             all()
         list_length = len(available_tokens)
@@ -880,21 +842,15 @@ class ShareTokens(BaseResource):
 
             # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = Contract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(token_address,),
-                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-            )
 
-            token_detail = ShareTokenDetails.get_token_detail(
+            token_detail_obj = ShareTokenDetails.get_token_detail(
                 session=session,
                 token_address=token_address,
-                token_template=token[1],
                 include_inactive_tokens=include_inactive_tokens,
             )
-            if token_detail is not None:
-                token_detail["id"] = i
+            if token_detail_obj is not None:
+                token_detail = token_detail_obj.__dict__
+                token_detail['id'] = i
                 token_list.append(token_detail)
                 count += 1
 
@@ -1069,60 +1025,39 @@ class ShareTokenDetails(BaseResource):
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract('TokenList', config.TOKEN_LIST_CONTRACT_ADDRESS)
-
-        # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = Contract.call_function(
-            contract=list_contract,
-            function_name="getTokenByAddress",
-            args=(token_address,),
-            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
-            token_template=token[1],
             include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        self.on_success(res, token_detail)
+        self.on_success(res, token_detail.__dict__)
 
     @staticmethod
     def get_token_detail(session,
                          token_address: str,
-                         token_template: str,
-                         token_id: int = None,
                          include_inactive_tokens: bool = False):
         """
         トークン詳細の取得
 
         :param session: DB Session
         :param token_address: トークンアドレス
-        :param token_template: トークンテンプレート
-        :param token_id: シーケンスID（任意）
         :param include_inactive_tokens: statusが無効のトークンを含めるかどうか
-        :return: ShareToken(dict)
+        :return: ShareToken
         """
 
-        if token_template == "IbetShare":
-            try:
-                # Token-Contractへの接続
-                token_contract = Contract.get_contract(token_template, token_address)
-                if not include_inactive_tokens and not Contract.call_function(token_contract, "status", (), True):
-                    return None
-                sharetoken = ShareToken.get(session=session, token_address=token_address)
-                sharetoken = sharetoken.__dict__
-                if token_id is not None:
-                    sharetoken['id'] = token_id
-                return sharetoken
-            except Exception as e:
-                LOG.error(e)
+        try:
+            sharetoken = ShareToken.get(session=session, token_address=token_address)
+            if not include_inactive_tokens and not sharetoken.status:
                 return None
+            return sharetoken
+        except Exception as e:
+            LOG.error(e)
+            return None
 
 
 class MembershipTokens(BaseResource):
@@ -1145,15 +1080,12 @@ class MembershipTokens(BaseResource):
         # Validation
         request_json = MembershipTokens.validate(req)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-
         # 取扱トークンリストを取得
+        # トークンテンプレートによるフィルタリングを行うためJOIN
         available_tokens = session.query(Listing).\
+            join(IDXTokenListItem, IDXTokenListItem.token_address == Listing.token_address).\
             filter(Listing.is_public == True).\
+            filter(IDXTokenListItem.token_template == "IbetMembership").\
             order_by(Listing.id).\
             all()
         list_length = len(available_tokens)
@@ -1179,23 +1111,16 @@ class MembershipTokens(BaseResource):
             if count >= limit:
                 break
 
-            # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = Contract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(token_address,),
-                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-            )
 
-            token_detail = MembershipTokenDetails.get_token_detail(
+            token_detail_obj = MembershipTokenDetails.get_token_detail(
                 session=session,
-                token_id=i,
-                token_address=token[0],
-                token_template=token[1],
+                token_address=token_address,
                 include_inactive_tokens=include_inactive_tokens,
             )
-            if token_detail is not None:
+            if token_detail_obj is not None:
+                token_detail = token_detail_obj.__dict__
+                token_detail['id'] = i
                 token_list.append(token_detail)
                 count += 1
 
@@ -1369,63 +1294,39 @@ class MembershipTokenDetails(BaseResource):
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-
-        # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = Contract.call_function(
-            contract=list_contract,
-            function_name="getTokenByAddress",
-            args=(token_address,),
-            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
-            token_template=token[1],
             include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        self.on_success(res, token_detail)
+        self.on_success(res, token_detail.__dict__)
 
     @staticmethod
     def get_token_detail(session,
                          token_address: str,
-                         token_template: str,
-                         token_id: int = None,
                          include_inactive_tokens: bool = False):
         """
         トークン詳細の取得
 
         :param session: DB Session
         :param token_address: トークンアドレス
-        :param token_template: トークンテンプレート
-        :param token_id: シーケンスID（任意）
         :param include_inactive_tokens: statusが無効のトークンを含めるかどうか
-        :return: MembershipToken(dict)
+        :return: MembershipToken
         """
 
-        if token_template == 'IbetMembership':
-            try:
-                # Token-Contractへの接続
-                token_contract = Contract.get_contract(token_template, token_address)
-                if not include_inactive_tokens and not Contract.call_function(token_contract, "status", (), True):
-                    return None
-                membershiptoken = MembershipToken.get(session=session, token_address=token_address)
-                membershiptoken = membershiptoken.__dict__
-                if token_id is not None:
-                    membershiptoken['id'] = token_id
-                return membershiptoken
-            except Exception as e:
-                LOG.error(e)
+        try:
+            membershiptoken = MembershipToken.get(session=session, token_address=token_address)
+            if not include_inactive_tokens and not membershiptoken.status:
                 return None
+            return membershiptoken
+        except Exception as e:
+            LOG.error(e)
+            return None
 
 
 class CouponTokens(BaseResource):
@@ -1448,15 +1349,12 @@ class CouponTokens(BaseResource):
         # Validation
         request_json = CouponTokens.validate(req)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-
         # 取扱トークンリストを取得
+        # トークンテンプレートによるフィルタリングを行うためJOIN
         available_tokens = session.query(Listing).\
+            join(IDXTokenListItem, IDXTokenListItem.token_address == Listing.token_address).\
             filter(Listing.is_public == True).\
+            filter(IDXTokenListItem.token_template == "IbetCoupon").\
             order_by(Listing.id).\
             all()
         list_length = len(available_tokens)
@@ -1485,21 +1383,15 @@ class CouponTokens(BaseResource):
 
             # TokenList-Contractからトークンの情報を取得する
             token_address = to_checksum_address(available_tokens[i].token_address)
-            token = Contract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(token_address,),
-                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-            )
 
-            token_detail = CouponTokenDetails.get_token_detail(
+            token_detail_obj = CouponTokenDetails.get_token_detail(
                 session=session,
-                token_id=i,
                 token_address=token_address,
-                token_template=token[1],
                 include_inactive_tokens=include_inactive_tokens,
             )
-            if token_detail is not None:
+            if token_detail_obj is not None:
+                token_detail = token_detail_obj.__dict__
+                token_detail['id'] = i
                 token_list.append(token_detail)
                 count += 1
 
@@ -1672,60 +1564,37 @@ class CouponTokenDetails(BaseResource):
         if listed_token is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # TokenList-Contractへの接続
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-
         # TokenList-Contractからトークンの情報を取得する
         token_address = to_checksum_address(contract_address)
-        token = Contract.call_function(
-            contract=list_contract,
-            function_name="getTokenByAddress",
-            args=(token_address,),
-            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-        )
 
         token_detail = self.get_token_detail(
             session=session,
             token_address=token_address,
-            token_template=token[1],
             include_inactive_tokens=True
         )
         if token_detail is None:
             raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        self.on_success(res, token_detail)
+        self.on_success(res, token_detail.__dict__)
 
     @staticmethod
     def get_token_detail(session,
                          token_address: str,
-                         token_template: str,
-                         token_id: int = None,
-                         include_inactive_tokens: bool = False):
+                         include_inactive_tokens: bool = False) -> Optional[CouponToken]:
         """
         トークン詳細の取得
 
         :param session: DB Session
         :param token_address: トークンアドレス
-        :param token_template: トークンテンプレート
-        :param token_id: シーケンスID（任意）
         :param include_inactive_tokens: statusが無効のトークンを含めるかどうか
-        :return: CouponToken(dict)
+        :return: CouponToken
         """
 
-        if token_template == 'IbetCoupon':
-            try:
-                # Token-Contractへの接続
-                token_contract = Contract.get_contract(token_template, token_address)
-                if not include_inactive_tokens and not Contract.call_function(token_contract, "status", (), True):
-                    return None
-                coupontoken = CouponToken.get(session=session, token_address=token_address)
-                coupontoken = coupontoken.__dict__
-                if token_id is not None:
-                    coupontoken['id'] = token_id
-                return coupontoken
-            except Exception as e:
-                LOG.error(e)
+        try:
+            coupontoken = CouponToken.get(session=session, token_address=token_address)
+            if not include_inactive_tokens and not coupontoken.status:
                 return None
+            return coupontoken
+        except Exception as e:
+            LOG.error(e)
+            return None

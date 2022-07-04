@@ -16,20 +16,92 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from __future__ import annotations
 
 import json
-from decimal import Decimal
 from datetime import datetime, timedelta
-
+from decimal import Decimal
 from eth_utils import to_checksum_address
+import functools
+from typing import Union, Type, Optional, Callable
+from sqlalchemy.orm import Session
 
-from app import config
 from app import log
+from app.config import (
+    ZERO_ADDRESS,
+    TOKEN_CACHE,
+    TOKEN_CACHE_TTL,
+    TOKEN_SHORT_TERM_CACHE_TTL,
+
+)
 from app.contracts import Contract
-from app.model.db import Listing
+from app.model.db import (
+    Listing,
+    IDXBondToken as BondTokenModel,
+    IDXShareToken as ShareTokenModel,
+    IDXMembershipToken as MembershipTokenModel,
+    IDXCouponToken as CouponTokenModel,
+)
+from app.model.db.idx_token import TokenModelClassTypes, TokenModelInstanceTypes
 from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
+
+TokenClassTypes = Union[
+    Type['BondToken'],
+    Type['ShareToken'],
+    Type['MembershipToken'],
+    Type['CouponToken']]
+
+TokenInstanceTypes = Union[
+    'BondToken',
+    'ShareToken',
+    'MembershipToken',
+    'CouponToken'
+]
+
+
+def token_db_cache(TargetModel: TokenModelClassTypes):
+    """
+    Cache decorator for Token Details
+    @param TargetModel: DB model for cache
+    """
+
+    def decorator(func: Callable[[TokenClassTypes, Session, str], Optional[TokenInstanceTypes]]):
+        """
+        @param func: Function for decoration
+        """
+        @functools.wraps(func)
+        def wrapper(cls: TokenClassTypes, session: Session, token_address: str) -> Optional[TokenInstanceTypes]:
+            """
+            @param cls: Class of return instance
+            @param session: ORM session
+            @param token_address: Address of token which will be cached
+            @return Token detail instance
+            """
+            if not TOKEN_CACHE:
+                # If token cache is not enabled, use raw data from chain
+                return func(cls, session, token_address)
+
+            # Get data from cache
+            cached_token: Optional[TokenModelInstanceTypes] = session.query(TargetModel). \
+                filter(TargetModel.token_address == token_address). \
+                first()
+            if cached_token and cached_token.created + timedelta(seconds=TOKEN_CACHE_TTL) >= datetime.utcnow():
+                # If cached data exists and doesn't expire, use cached data
+                cached_data = cls.from_model(cached_token)
+                if cached_token.short_term_cache_created + timedelta(seconds=TOKEN_SHORT_TERM_CACHE_TTL) < datetime.utcnow():
+                    # If short term cache expires, fetch raw data from chain
+                    cached_data.fetch_expiry_short()
+                    session.merge(cached_data.to_model())
+                return cached_data
+
+            # Get data from chain
+            return func(cls, session, token_address)
+
+        return wrapper
+
+    return decorator
 
 
 class TokenBase:
@@ -47,6 +119,13 @@ class TokenBase:
     status: bool
     max_holding_quantity: int
     max_sell_amount: int
+
+    @staticmethod
+    def from_model(token: TokenBase):
+        raise NotImplementedError("Subclasses should implement this")
+
+    def to_model(self):
+        raise NotImplementedError("Subclasses should implement this")
 
 
 class BondToken(TokenBase):
@@ -76,11 +155,65 @@ class BondToken(TokenBase):
     memo: str
     is_redeemed: bool
 
-    # トークン情報のキャッシュ
-    cache = {}
+    @staticmethod
+    def from_model(token_model: BondTokenModel) -> BondToken:
+        token_obj = BondToken()
+        for key, value in token_model.json().items():
+            if key != "interest_payment_date":
+                setattr(token_obj, key, value)
+
+        interest_payment_date_list = token_model.interest_payment_date
+        for i, d in enumerate(interest_payment_date_list):
+            setattr(token_obj, f"interest_payment_date{str(i+1)}", d)
+
+        return token_obj
+
+    def to_model(self) -> BondTokenModel:
+        token_model = BondTokenModel()
+        for key, value in self.__dict__.items():
+            if hasattr(token_model, key):
+                setattr(token_model, key, value)
+
+        interest_payment_date_list = []
+        for i in range(1, 13):
+            if getattr(self, f"interest_payment_date{str(i)}", None):
+                interest_payment_date_list.append(getattr(self, f"interest_payment_date{str(i)}"))
+        token_model.interest_payment_date = interest_payment_date_list
+        token_model.short_term_cache_created = datetime.utcnow()
+        return token_model
+
+    def fetch_expiry_short(self) -> None:
+        """
+        債権トークン リアルタイム属性情報取得
+
+        :return: None
+        """
+        token_contract = Contract.get_contract('IbetStraightBond', self.token_address)
+
+        # Fetch
+        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        status = Contract.call_function(token_contract, "status", (), True)
+
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
+        transfer_approval_required = Contract.call_function(token_contract, "transferApprovalRequired", (), False)
+        is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
+
+        # Update
+        self.company_name = company_name
+        self.rsa_publickey = rsa_publickey
+        self.total_supply = total_supply
+        self.status = status
+        self.transferable = transferable
+        self.is_offering = is_offering
+        self.transfer_approval_required = transfer_approval_required
+        self.is_redeemed = is_redeemed
 
     @staticmethod
-    def get(session, token_address: str):
+    def fetch(session: Session, token_address: str) -> BondToken:
         """
         債券トークン属性情報取得
 
@@ -92,39 +225,8 @@ class BondToken(TokenBase):
         # IbetStraightBond コントラクトへの接続
         token_contract = Contract.get_contract('IbetStraightBond', token_address)
 
-        # キャッシュを利用する場合
-        if config.TOKEN_CACHE:
-            if token_address in BondToken.cache:
-                token_cache = BondToken.cache[token_address]
-                if token_cache.get("expiration_datetime") > datetime.utcnow():
-                    # キャッシュ情報を取得
-                    bondtoken = token_cache["token"]
-                    # キャッシュ情報以外の情報を取得
-                    bondtoken.total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-                    bondtoken.is_offering = Contract.call_function(token_contract, "isOffering", (), False)
-                    bondtoken.status = Contract.call_function(token_contract, "status", (), True)
-                    bondtoken.transferable = Contract.call_function(token_contract, "transferable", (), False)
-                    bondtoken.transfer_approval_required = Contract.call_function(
-                        token_contract, "transferApprovalRequired", (), False
-                    )
-                    bondtoken.is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
-                    # 企業情報が存在しない場合は直近の情報を取得する
-                    if bondtoken.company_name is None or bondtoken.company_name == "":
-                        company = CompanyList.get_find(to_checksum_address(bondtoken.owner_address))
-                        bondtoken.company_name = company.corporate_name
-                        bondtoken.rsa_publickey = company.rsa_publickey
-                        BondToken.cache[token_address] = {
-                            "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
-                            "token": bondtoken
-                        }
-                    return bondtoken
-
-        # キャッシュ未利用の場合
-        # または、キャッシュに情報が存在しない場合
-        # または、キャッシュの有効期限が切れている場合
-
         # Contractから情報を取得する
-        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
         name = Contract.call_function(token_contract, "name", (), "")
         symbol = Contract.call_function(token_contract, "symbol", (), "")
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -188,10 +290,10 @@ class BondToken(TokenBase):
         is_offering = Contract.call_function(token_contract, "isOffering", (), False)
         contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
         privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), ZERO_ADDRESS)
         status = Contract.call_function(token_contract, "status", (), True)
         memo = Contract.call_function(token_contract, "memo", (), "")
-        personal_info_address = Contract.call_function(token_contract, "personalInfoAddress", (), config.ZERO_ADDRESS)
+        personal_info_address = Contract.call_function(token_contract, "personalInfoAddress", (), ZERO_ADDRESS)
         transfer_approval_required = Contract.call_function(token_contract, "transferApprovalRequired", (), False)
         is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
 
@@ -246,13 +348,12 @@ class BondToken(TokenBase):
         bondtoken.memo = memo
         bondtoken.is_redeemed = is_redeemed
 
-        if config.TOKEN_CACHE:
-            BondToken.cache[token_address] = {
-                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
-                "token": bondtoken
-            }
-
         return bondtoken
+
+    @classmethod
+    @token_db_cache(BondTokenModel)
+    def get(cls, session: Session, token_address: str) -> BondToken:
+        return cls.fetch(session, token_address)
 
 
 class ShareToken(TokenBase):
@@ -267,11 +368,63 @@ class ShareToken(TokenBase):
     is_canceled: bool
     dividend_information: object
 
-    # トークン情報のキャッシュ
-    cache = {}
+    @staticmethod
+    def from_model(token_model: ShareTokenModel) -> ShareToken:
+        token_obj = ShareToken()
+        for key, value in token_model.json().items():
+            setattr(token_obj, key, value)
+        return token_obj
+
+    def to_model(self) -> 'ShareTokenModel':
+        token_model = ShareTokenModel()
+        for key, value in self.__dict__.items():
+            if hasattr(token_model, key):
+                setattr(token_model, key, value)
+        token_model.short_term_cache_created = datetime.utcnow()
+        return token_model
+
+    def fetch_expiry_short(self) -> None:
+        """
+        株式トークン リアルタイム属性情報取得
+
+        :return: ShareToken
+        """
+        token_contract = Contract.get_contract("IbetShare", self.token_address)
+
+        # Fetch
+        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        status = Contract.call_function(token_contract, "status", (), True)
+
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        is_offering = Contract.call_function(token_contract, "isOffering", (), False)
+        transfer_approval_required = Contract.call_function(token_contract, "transferApprovalRequired", (), False)
+        principal_value = Contract.call_function(token_contract, "principalValue", (), 0)
+        is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
+        dividend_information = Contract.call_function(
+            token_contract, "dividendInformation", (), (0, "", "")
+        )
+
+        # Update
+        self.company_name = company_name
+        self.rsa_publickey = rsa_publickey
+        self.total_supply = total_supply
+        self.status = status
+        self.transferable = transferable
+        self.is_offering = is_offering
+        self.transfer_approval_required = transfer_approval_required
+        self.principal_value = principal_value
+        self.is_canceled = is_canceled
+        self.dividend_information = {
+            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
+            'dividend_record_date': dividend_information[1],
+            'dividend_payment_date': dividend_information[2],
+        }
 
     @staticmethod
-    def get(session, token_address: str):
+    def fetch(session: Session, token_address: str) -> ShareToken:
         """
         株式トークン属性情報取得
 
@@ -282,48 +435,7 @@ class ShareToken(TokenBase):
 
         # IbetShare コントラクトへの接続
         token_contract = Contract.get_contract("IbetShare", token_address)
-
-        # キャッシュを利用する場合
-        if config.TOKEN_CACHE:
-            if token_address in ShareToken.cache:
-                token_cache = ShareToken.cache[token_address]
-                if token_cache.get("expiration_datetime") > datetime.utcnow():
-                    # キャッシュ情報を取得
-                    sharetoken = token_cache["token"]
-                    # キャッシュ情報以外の情報を取得
-                    sharetoken.total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
-                    sharetoken.principal_value = Contract.call_function(token_contract, "principalValue", (), 0)
-                    dividend_information = Contract.call_function(
-                        token_contract, "dividendInformation", (), (0, "", "")
-                    )
-                    sharetoken.dividend_information = {
-                        'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
-                        'dividend_record_date': dividend_information[1],
-                        'dividend_payment_date': dividend_information[2],
-                    }
-                    sharetoken.is_offering = Contract.call_function(token_contract, "isOffering", (), False)
-                    sharetoken.status = Contract.call_function(token_contract, "status", (), True)
-                    sharetoken.transferable = Contract.call_function(token_contract, "transferable", (), False)
-                    sharetoken.transfer_approval_required = Contract.call_function(
-                        token_contract, "transferApprovalRequired", (), False
-                    )
-                    sharetoken.is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
-                    # 企業情報が存在しない場合は直近の情報を取得する
-                    if sharetoken.company_name is None or sharetoken.company_name == "":
-                        company = CompanyList.get_find(to_checksum_address(sharetoken.owner_address))
-                        sharetoken.company_name = company.corporate_name
-                        sharetoken.rsa_publickey = company.rsa_publickey
-                        BondToken.cache[token_address] = {
-                            "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
-                            "token": sharetoken
-                        }
-                    return sharetoken
-
-        # キャッシュ未利用の場合
-        # または、キャッシュに情報が存在しない場合
-        # または、キャッシュの有効期限が切れている場合
-
-        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
         name = Contract.call_function(token_contract, "name", (), "")
         symbol = Contract.call_function(token_contract, "symbol", (), "")
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -340,8 +452,8 @@ class ShareToken(TokenBase):
         is_offering = Contract.call_function(token_contract, "isOffering", (), False)
         contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
         privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
-        personal_info_address = Contract.call_function(token_contract, "personalInfoAddress", (), config.ZERO_ADDRESS)
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), ZERO_ADDRESS)
+        personal_info_address = Contract.call_function(token_contract, "personalInfoAddress", (), ZERO_ADDRESS)
         is_canceled = Contract.call_function(token_contract, "isCanceled", (), False)
 
         # 企業リストから、企業名とRSA鍵を取得する
@@ -384,13 +496,12 @@ class ShareToken(TokenBase):
         sharetoken.tradable_exchange = tradable_exchange
         sharetoken.personal_info_address = personal_info_address
 
-        if config.TOKEN_CACHE:
-            ShareToken.cache[token_address] = {
-                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
-                "token": sharetoken
-            }
-
         return sharetoken
+
+    @classmethod
+    @token_db_cache(ShareTokenModel)
+    def get(cls, session: Session, token_address: str) -> ShareToken:
+        return cls.fetch(session, token_address)
 
 
 class MembershipToken(TokenBase):
@@ -402,11 +513,51 @@ class MembershipToken(TokenBase):
     initial_offering_status: bool
     image_url: object
 
-    # トークン情報のキャッシュ
-    cache = {}
+    @staticmethod
+    def from_model(token_model: MembershipTokenModel) -> MembershipToken:
+        token_obj = MembershipToken()
+        for key, value in token_model.json().items():
+            setattr(token_obj, key, value)
+        return token_obj
+
+    def to_model(self) -> 'MembershipTokenModel':
+        token_model = MembershipTokenModel()
+        for key, value in self.__dict__.items():
+            if hasattr(token_model, key):
+                setattr(token_model, key, value)
+        token_model.short_term_cache_created = datetime.utcnow()
+        return token_model
+
+    def fetch_expiry_short(self) -> None:
+        """
+        会員権トークン リアルタイム属性情報取得
+
+        :return: None
+        """
+        token_contract = Contract.get_contract('IbetMembership', self.token_address)
+
+        # Fetch
+        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        status = Contract.call_function(token_contract, "status", (), True)
+
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        initial_offering_status = Contract.call_function(
+            token_contract, "initialOfferingStatus", (), False
+        )
+
+        # Update
+        self.company_name = company_name
+        self.rsa_publickey = rsa_publickey
+        self.total_supply = total_supply
+        self.status = status
+        self.transferable = transferable
+        self.initial_offering_status = initial_offering_status
 
     @staticmethod
-    def get(session, token_address: str):
+    def fetch(session: Session, token_address: str) -> MembershipToken:
         """
         会員権トークン属性情報取得
 
@@ -418,30 +569,8 @@ class MembershipToken(TokenBase):
         # Token-Contractへの接続
         token_contract = Contract.get_contract('IbetMembership', token_address)
 
-        # キャッシュを利用する場合
-        if config.TOKEN_CACHE:
-            if token_address in MembershipToken.cache:
-                token_cache = MembershipToken.cache[token_address]
-                if token_cache.get("expiration_datetime") > datetime.utcnow():
-                    # キャッシュ情報を取得
-                    membershiptoken = token_cache["token"]
-                    # キャッシュ情報以外の情報を取得
-                    transferable = Contract.call_function(token_contract, "transferable", (), False)
-                    status = Contract.call_function(token_contract, "status", (), True)
-                    initial_offering_status = Contract.call_function(
-                        token_contract, "initialOfferingStatus", (), False
-                    )
-                    membershiptoken.transferable = transferable
-                    membershiptoken.status = status
-                    membershiptoken.initial_offering_status = initial_offering_status
-                    return membershiptoken
-
-        # キャッシュ未利用の場合
-        # または、キャッシュに情報が存在しない場合
-        # または、キャッシュの有効期限が切れている場合
-
         # Token-Contractから情報を取得する
-        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
         name = Contract.call_function(token_contract, "name", (), "")
         symbol = Contract.call_function(token_contract, "symbol", (), "")
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -459,7 +588,7 @@ class MembershipToken(TokenBase):
         image_url_3 = Contract.call_function(token_contract, "image_urls", (2,), "")
         contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
         privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), ZERO_ADDRESS)
 
         # 企業リストから、企業名を取得する
         company = CompanyList.get_find(to_checksum_address(owner_address))
@@ -498,13 +627,12 @@ class MembershipToken(TokenBase):
         membershiptoken.privacy_policy = privacy_policy
         membershiptoken.tradable_exchange = tradable_exchange
 
-        if config.TOKEN_CACHE:
-            MembershipToken.cache[token_address] = {
-                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
-                "token": membershiptoken
-            }
-
         return membershiptoken
+
+    @classmethod
+    @token_db_cache(MembershipTokenModel)
+    def get(cls, session: Session, token_address: str) -> MembershipToken:
+        return cls.fetch(session, token_address)
 
 
 class CouponToken(TokenBase):
@@ -516,11 +644,51 @@ class CouponToken(TokenBase):
     initial_offering_status: bool
     image_url: object
 
-    # トークン情報のキャッシュ
-    cache = {}
+    @staticmethod
+    def from_model(token_model: CouponTokenModel) -> CouponToken:
+        token_obj = CouponToken()
+        for key, value in token_model.json().items():
+            setattr(token_obj, key, value)
+        return token_obj
+
+    def to_model(self) -> 'CouponTokenModel':
+        token_model = CouponTokenModel()
+        for key, value in self.__dict__.items():
+            if hasattr(token_model, key):
+                setattr(token_model, key, value)
+        token_model.short_term_cache_created = datetime.utcnow()
+        return token_model
+
+    def fetch_expiry_short(self) -> None:
+        """
+        クーポントークン リアルタイム属性情報取得
+
+        :return: None
+        """
+        token_contract = Contract.get_contract('IbetCoupon', self.token_address)
+
+        # Fetch
+        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        company_name = company.corporate_name
+        rsa_publickey = company.rsa_publickey
+        total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
+        status = Contract.call_function(token_contract, "status", (), True)
+
+        transferable = Contract.call_function(token_contract, "transferable", (), False)
+        initial_offering_status = Contract.call_function(
+            token_contract, "initialOfferingStatus", (), False
+        )
+
+        # Update
+        self.company_name = company_name
+        self.rsa_publickey = rsa_publickey
+        self.total_supply = total_supply
+        self.status = status
+        self.transferable = transferable
+        self.initial_offering_status = initial_offering_status
 
     @staticmethod
-    def get(session, token_address: str):
+    def fetch(session: Session, token_address: str) -> CouponToken:
         """
         クーポントークン属性情報取得
 
@@ -532,30 +700,8 @@ class CouponToken(TokenBase):
         # Token-Contractへの接続
         token_contract = Contract.get_contract('IbetCoupon', token_address)
 
-        # キャッシュを利用する場合
-        if config.TOKEN_CACHE:
-            if token_address in CouponToken.cache:
-                token_cache = CouponToken.cache[token_address]
-                if token_cache.get("expiration_datetime") > datetime.utcnow():
-                    # キャッシュ情報を取得
-                    coupontoken = token_cache["token"]
-                    # キャッシュ情報以外の情報を取得
-                    transferable = Contract.call_function(token_contract, "transferable", (), False)
-                    status = Contract.call_function(token_contract, "status", (), True)
-                    initial_offering_status = Contract.call_function(
-                        token_contract, "initialOfferingStatus", (), False
-                    )
-                    coupontoken.transferable = transferable
-                    coupontoken.status = status
-                    coupontoken.initial_offering_status = initial_offering_status
-                    return coupontoken
-
-        # キャッシュ未利用の場合
-        # または、キャッシュに情報が存在しない場合
-        # または、キャッシュの有効期限が切れている場合
-
         # Token-Contractから情報を取得する
-        owner_address = Contract.call_function(token_contract, "owner", (), config.ZERO_ADDRESS)
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
         name = Contract.call_function(token_contract, "name", (), "")
         symbol = Contract.call_function(token_contract, "symbol", (), "")
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -573,7 +719,7 @@ class CouponToken(TokenBase):
         image_url_3 = Contract.call_function(token_contract, "image_urls", (2,), "")
         contact_information = Contract.call_function(token_contract, "contactInformation", (), "")
         privacy_policy = Contract.call_function(token_contract, "privacyPolicy", (), "")
-        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), config.ZERO_ADDRESS)
+        tradable_exchange = Contract.call_function(token_contract, "tradableExchange", (), ZERO_ADDRESS)
 
         # 企業リストから、企業名を取得する
         company = CompanyList.get_find(to_checksum_address(owner_address))
@@ -612,10 +758,9 @@ class CouponToken(TokenBase):
         coupontoken.privacy_policy = privacy_policy
         coupontoken.tradable_exchange = tradable_exchange
 
-        if config.TOKEN_CACHE:
-            CouponToken.cache[token_address] = {
-                "expiration_datetime": datetime.utcnow() + timedelta(seconds=config.TOKEN_CACHE_TTL),
-                "token": coupontoken
-            }
-
         return coupontoken
+
+    @classmethod
+    @token_db_cache(CouponTokenModel)
+    def get(cls, session: Session, token_address: str) -> CouponToken:
+        return cls.fetch(session, token_address)

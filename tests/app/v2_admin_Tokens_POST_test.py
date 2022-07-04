@@ -339,10 +339,10 @@ class TestAdminTokensPOST:
         request_body = json.dumps(request_params)
         resp = client.simulate_post(self.apiurl, headers=headers, body=request_body)
 
-        assert resp.status_code == 400
+        assert resp.status_code == 409
         assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
+            'code': 40,
+            'message': 'Data Conflict',
             'description': 'contract_address already exist'
         }
 
@@ -378,10 +378,10 @@ class TestAdminTokensPOST:
         resp = client.simulate_post(
             self.apiurl, headers=headers, body=request_body)
 
-        assert resp.status_code == 400
+        assert resp.status_code == 409
         assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
+            'code': 40,
+            'message': 'Data Conflict',
             'description': 'contract_address already exist'
         }
 
