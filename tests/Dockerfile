@@ -47,8 +47,8 @@ RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~apl/.bash_profile \
 
 # install python
 RUN . ~/.bash_profile \
- && pyenv install 3.8.7 \
- && pyenv global 3.8.7 \
+ && pyenv install 3.10.4 \
+ && pyenv global 3.10.4 \
  && pip install --upgrade pip
 
 # install python packages 1
