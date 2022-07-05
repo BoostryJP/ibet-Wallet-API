@@ -13,7 +13,7 @@
 
 ## Dependencies
 - [python3](https://www.python.org/)
-  - Version 3.8 or greater
+  - Version 3.10 or greater
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - Version 13
   - [MySQL](https://www.mysql.com/) - Version 5.7

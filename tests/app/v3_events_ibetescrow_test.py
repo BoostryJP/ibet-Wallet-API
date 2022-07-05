@@ -563,11 +563,11 @@ class TestEventsIbetEscrow:
             'message': 'Invalid Parameter',
             'description': {
                 'from_block': [
-                    "field 'from_block' cannot be coerced: int() argument must be a string, a bytes-like object or a number, not 'NoneType'",
+                    "field 'from_block' cannot be coerced: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
                     'null value not allowed'
                 ],
                 'to_block': [
-                    "field 'to_block' cannot be coerced: int() argument must be a string, a bytes-like object or a number, not 'NoneType'",
+                    "field 'to_block' cannot be coerced: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
                     'null value not allowed'
                 ]
             }
