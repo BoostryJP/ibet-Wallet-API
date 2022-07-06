@@ -268,8 +268,8 @@ class TestProcessor:
             _coupon_token_expected_list.append({"token_address": token["address"]})
 
         session.commit()
-        time.sleep(1)
         current = datetime.utcnow()
+        time.sleep(1)
 
         # Run target process
         processor.SEC_PER_RECORD = 0
