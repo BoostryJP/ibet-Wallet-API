@@ -40,9 +40,7 @@ class Notifications(BaseResource):
     Endpoint: /Notifications/
     """
 
-    def on_get(self, req, res):
-        LOG.info('v3.notification.Notifications(GET)')
-
+    def on_get(self, req, res, **kwargs):
         session = req.context["session"]
 
         # Validate Request Data
@@ -202,9 +200,7 @@ class NotificationsId(BaseResource):
     Endpoint: /Notifications/{id}
     """
 
-    def on_delete(self, req, res, id=None):
-        LOG.info('v3.notification.NotificationsId(DELETE)')
-
+    def on_delete(self, req, res, id=None, **kwargs):
         session = req.context["session"]
 
         # Get Notification

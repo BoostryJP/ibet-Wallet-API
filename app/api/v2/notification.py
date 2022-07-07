@@ -39,9 +39,7 @@ class Notifications(BaseResource):
     Endpoint: /Notifications/
     """
 
-    def on_get(self, req, res):
-        LOG.info('v2.notification.Notifications(GET)')
-
+    def on_get(self, req, res, **kwargs):
         session = req.context["session"]
 
         # 入力値チェック
@@ -84,9 +82,7 @@ class Notifications(BaseResource):
 
         self.on_success(res, {"notifications": notification_list})
 
-    def on_post(self, req, res):
-        LOG.info('v2.notification.Notifications(POST)')
-
+    def on_post(self, req, res, **kwargs):
         session = req.context["session"]
 
         # 入力値チェック
@@ -225,9 +221,7 @@ class NotificationsRead(BaseResource):
     Endpoint: /Notifications/Read/
     """
 
-    def on_post(self, req, res):
-        LOG.info('v2.notification.NotificationsRead')
-
+    def on_post(self, req, res, **kwargs):
         session = req.context["session"]
 
         # 入力値チェック
@@ -279,9 +273,7 @@ class NotificationCount(BaseResource):
     Endpoint: /NotificationCount/
     """
 
-    def on_get(self, req, res):
-        LOG.info("v2.notification.NotificationCount")
-
+    def on_get(self, req, res, **kwargs):
         session = req.context["session"]
 
         # 入力値チェック

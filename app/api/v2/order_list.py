@@ -447,7 +447,6 @@ class OrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res, token_address: str = None, **kwargs):
-        LOG.info("v2.order_list.OrderList")
         session = req.context["session"]
 
         # path validation
@@ -548,7 +547,6 @@ class StraightBondOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.order_list.StraightBondOrderList")
         session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -645,7 +643,6 @@ class MembershipOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.order_list.MembershipOrderList")
         session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -743,7 +740,6 @@ class CouponOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.order_list.CouponOrderList")
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -841,7 +837,6 @@ class ShareOrderList(BaseOrderList, BaseResource):
     """
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.order_list.ShareOrderList")
         session = req.context["session"]
 
         if config.SHARE_TOKEN_ENABLED is False or config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:

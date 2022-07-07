@@ -50,8 +50,6 @@ class CompanyInfo(BaseResource):
     """
 
     def on_get(self, req, res, eth_address=None, **kwargs):
-        LOG.info('v2.company.CompanyInfo')
-
         if not Web3.isAddress(eth_address):
             description = 'invalid eth_address'
             raise InvalidParameterError(description=description)
@@ -72,8 +70,6 @@ class CompanyInfoList(BaseResource):
     """
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.company.CompanyInfoList')
-
         session = req.context["session"]
 
         # Validation
@@ -152,7 +148,6 @@ class CompanyTokenList(BaseResource):
     """
 
     def on_get(self, req, res, eth_address=None, **kwargs):
-        LOG.info('v2.company.CompanyTokenList')
         session = req.context['session']
 
         # Validation

@@ -16,14 +16,14 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-
 import falcon
 
 from app import log
 from app.middleware import (
     JSONTranslator,
     DatabaseSessionManager,
-    CORSMiddleware
+    CORSMiddleware,
+    ResponseLoggerMiddleware
 )
 from app.database import (
     db_session,
@@ -190,7 +190,12 @@ class App(falcon.App):
 
 
 init_session()
-middleware = [JSONTranslator(), DatabaseSessionManager(db_session), CORSMiddleware()]
+middleware = [
+    JSONTranslator(),
+    DatabaseSessionManager(db_session),
+    CORSMiddleware(),
+    ResponseLoggerMiddleware()
+]
 application = App(middleware=middleware)
 application.req_options.strip_url_path_trailing_slash = True
 

@@ -39,8 +39,6 @@ class EncryptionKey(BaseResource):
 
     def on_get(self, req, res, account_address=None, **kwargs):
         """Retrieve message encryption key"""
-        LOG.info("v3.e2e_message.EncryptionKey")
-
         # Validation
         try:
             account_address = to_checksum_address(account_address)

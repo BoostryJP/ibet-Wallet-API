@@ -69,8 +69,6 @@ class TokenStatus(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info('v2.token.TokenStatus')
-
         # 入力アドレスフォーマットチェック
         try:
             contract_address = to_checksum_address(contract_address)
@@ -132,8 +130,6 @@ class TokenHolders(BaseResource):
     """
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info('v2.token.TokenHolders')
-
         session = req.context["session"]
 
         # Validation
@@ -190,8 +186,6 @@ class TokenHoldersCollection(BaseResource):
 
     def on_post(self, req: Request, res: Response, *args, **kwargs):
         """Token holders collection"""
-        LOG.info("v2.token.TokenHoldersCollection(POST)")
-
         session: Session = req.context["session"]
 
         # body部の入力値チェック
@@ -292,8 +286,6 @@ class TokenHoldersCollectionId(BaseResource):
 
     def on_get(self, req: Request, res: Response, *args, **kwargs):
         """Token holders collection Id"""
-        LOG.info("v2.token.TokenHoldersCollectionId(GET)")
-
         contract_address = kwargs.get("contract_address", "")
         list_id = kwargs.get("list_id", "")
 
@@ -332,9 +324,9 @@ class TokenHoldersCollectionId(BaseResource):
             first()
 
         if not _same_list_id_record:
-            raise DataNotExistsError("list_id: %s"%list_id)
+            raise DataNotExistsError("list_id: %s" % list_id)
         if _same_list_id_record.token_address != contract_address:
-            description = "list_id: %s is not collection for contract_address: %s"%(list_id, contract_address)
+            description = "list_id: %s is not collection for contract_address: %s" % (list_id, contract_address)
             raise InvalidParameterError(description=description)
 
         _token_holders: List[TokenHolder] = session.query(TokenHolder). \
@@ -355,8 +347,6 @@ class TransferHistory(BaseResource):
     """
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info('v2.token.TransferHistory')
-
         session = req.context["session"]
 
         # 入力値チェック
@@ -442,7 +432,6 @@ class TransferApprovalHistory(BaseResource):
     """
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info("v2.token.TransferApprovalHistory")
         db_session = req.context["session"]
 
         # Validation
@@ -532,8 +521,6 @@ class StraightBondTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.StraightBondTokens')
-
         session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False:
@@ -634,8 +621,6 @@ class StraightBondTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.StraightBondAddresses')
-
         session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False:
@@ -729,8 +714,6 @@ class StraightBondTokenDetails(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, contract_address=None, *args, **kwargs):
-        LOG.info('v2.token.StraightBondTokenDetails')
-
         if config.BOND_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 
@@ -799,8 +782,6 @@ class ShareTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.ShareTokens')
-
         session = req.context["session"]
 
         if config.SHARE_TOKEN_ENABLED is False:
@@ -904,8 +885,6 @@ class ShareTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.ShareTokenAddresses')
-
         session = req.context["session"]
 
         if config.SHARE_TOKEN_ENABLED is False:
@@ -1000,8 +979,6 @@ class ShareTokenDetails(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info('v2.token.ShareTokenDetails')
-
         if config.SHARE_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 
@@ -1070,8 +1047,6 @@ class MembershipTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.MembershipTokens')
-
         session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
@@ -1174,8 +1149,6 @@ class MembershipTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.MembershipTokenAddresses')
-
         session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
@@ -1269,8 +1242,6 @@ class MembershipTokenDetails(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info('v2.token.MembershipTokenDetails')
-
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 
@@ -1339,8 +1310,6 @@ class CouponTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.CouponTokens')
-
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False:
@@ -1443,8 +1412,6 @@ class CouponTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
-        LOG.info('v2.token.CouponTokenAddresses')
-
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False:
@@ -1539,8 +1506,6 @@ class CouponTokenDetails(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info('v2.token.CouponTokenDetails')
-
         if config.COUPON_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 
