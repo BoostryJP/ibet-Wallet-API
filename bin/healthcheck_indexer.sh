@@ -49,6 +49,11 @@ if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -o \
   PROC_LIST="${PROC_LIST} batch/indexer_DEX.py"
 fi
 
+if [ "$TOKEN_CACHE" -ne 0 ]; then
+  PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail.py"
+  PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail_ShortTerm.py"
+fi
+
 for i in ${PROC_LIST}; do
   # shellcheck disable=SC2009
   ps -ef | grep -v grep | grep "$i"

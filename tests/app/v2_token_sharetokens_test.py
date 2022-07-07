@@ -23,7 +23,7 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model.db import Listing
+from app.model.db import Listing, IDXTokenListItem
 from app import config
 from app.contracts import Contract
 
@@ -82,6 +82,11 @@ class TestV2TokenShareTokens:
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
+        token_list_item = IDXTokenListItem()
+        token_list_item.token_address = token["address"]
+        token_list_item.token_template = "IbetShare"
+        token_list_item.owner_address = ""
+        session.add(token_list_item)
 
     # ＜正常系1＞
     # 発行済株式あり（1件）
@@ -141,6 +146,12 @@ class TestV2TokenShareTokens:
             'personal_info_address': personal_info,
         }]
 
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Test Cache
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
@@ -234,6 +245,12 @@ class TestV2TokenShareTokens:
             'personal_info_address': personal_info,
         }]
 
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Test Cache
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
@@ -332,6 +349,12 @@ class TestV2TokenShareTokens:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+        # Test Cache
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜正常系4＞
     # 発行済株式あり（2件）
     # cursor=1、 limit=1
@@ -392,6 +415,12 @@ class TestV2TokenShareTokens:
             'personal_info_address': personal_info,
         }]
 
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Test Cache
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
@@ -520,6 +549,15 @@ class TestV2TokenShareTokens:
             }
             assumed_body = [assumed_body_element] + assumed_body
 
+        resp = client.simulate_get(self.apiurl, params={
+            'include_inactive_tokens': 'true'
+        })
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Test Cache
         resp = client.simulate_get(self.apiurl, params={
             'include_inactive_tokens': 'true'
         })

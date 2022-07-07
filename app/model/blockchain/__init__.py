@@ -20,5 +20,7 @@ from .token import (
     BondToken,
     ShareToken,
     MembershipToken,
-    CouponToken
+    CouponToken,
+    TokenClassTypes,
+    TokenInstanceTypes
 )

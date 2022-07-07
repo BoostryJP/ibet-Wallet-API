@@ -23,7 +23,7 @@ from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model.db import Listing
+from app.model.db import Listing, IDXTokenListItem
 from app import config
 from app.contracts import Contract
 
@@ -78,6 +78,11 @@ class TestV2TokenMembershipTokens:
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
+        token_list_item = IDXTokenListItem()
+        token_list_item.token_address = token["address"]
+        token_list_item.token_template = "IbetMembership"
+        token_list_item.owner_address = ""
+        session.add(token_list_item)
 
     # ＜正常系1＞
     # 発行済会員権あり（1件）
@@ -136,6 +141,13 @@ class TestV2TokenMembershipTokens:
                 'tradable_exchange': exchange_address,
             }
         ]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Cache Test
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -233,6 +245,13 @@ class TestV2TokenMembershipTokens:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+        # Cache Test
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜正常系3＞
     # 発行済会員権あり（2件）
     # cursor=2、 limit=2
@@ -325,6 +344,13 @@ class TestV2TokenMembershipTokens:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+        # Cache Test
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜正常系4＞
     # 発行済会員権あり（2件）
     # cursor=1、 limit=1
@@ -383,6 +409,13 @@ class TestV2TokenMembershipTokens:
             'privacy_policy': 'プライバシーポリシー',
             'tradable_exchange': exchange_address,
         }]
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Cache Test
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -451,6 +484,13 @@ class TestV2TokenMembershipTokens:
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json['data'] == assumed_body
 
+        # Cache Test
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
     # ＜正常系6＞
     # 会員権発行（1件）　→　無効化
     # cursor=設定なし、 limit=設定なし
@@ -482,6 +522,13 @@ class TestV2TokenMembershipTokens:
         resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Cache Test
+        resp = client.simulate_get(self.apiurl, query_string=query_string)
 
         assert resp.status_code == 200
         assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
@@ -545,6 +592,15 @@ class TestV2TokenMembershipTokens:
             }
             assumed_body = [assumed_body_element] + assumed_body
 
+        resp = client.simulate_get(self.apiurl, params={
+            'include_inactive_tokens': 'true'
+        })
+
+        assert resp.status_code == 200
+        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json['data'] == assumed_body
+
+        # Cache Test
         resp = client.simulate_get(self.apiurl, params={
             'include_inactive_tokens': 'true'
         })

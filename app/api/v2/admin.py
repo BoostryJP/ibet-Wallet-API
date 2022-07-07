@@ -25,7 +25,8 @@ from app import log
 from app import config
 from app.api.common import BaseResource
 from app.contracts import Contract
-from app.errors import InvalidParameterError, DataNotExistsError, AppError
+from app.errors import InvalidParameterError, DataNotExistsError, AppError, DataConflictError
+from app.model.blockchain import CouponToken, MembershipToken, BondToken, ShareToken
 from app.model.db import (
     Listing,
     ExecutableContract
@@ -81,13 +82,13 @@ class Tokens(BaseResource):
             filter(Listing.token_address == contract_address). \
             first()
         if _listing is not None:
-            raise InvalidParameterError("contract_address already exist")
+            raise DataConflictError("contract_address already exist")
 
         _executable_contract = session.query(ExecutableContract). \
             filter(ExecutableContract.contract_address == contract_address). \
             first()
         if _executable_contract is not None:
-            raise InvalidParameterError("contract_address already exist")
+            raise DataConflictError("contract_address already exist")
 
         # token情報をTokenListコントラクトから取得
         list_contract = Contract.get_contract(
@@ -124,6 +125,20 @@ class Tokens(BaseResource):
         executable_contract.contract_address = contract_address
         session.add(executable_contract)
 
+        token_type = token[1]
+        # Fetch token detail data to store cache
+        if token_type == "IbetCoupon":
+            token_obj = CouponToken.get(session, contract_address)
+            session.add(token_obj.to_model())
+        elif token_type == "IbetMembership":
+            token_obj = MembershipToken.get(session, contract_address)
+            session.add(token_obj.to_model())
+        elif token_type == "IbetStraightBond":
+            token_obj = BondToken.get(session, contract_address)
+            session.add(token_obj.to_model())
+        elif token_type == "IbetShare":
+            token_obj = ShareToken.get(session, contract_address)
+            session.add(token_obj.to_model())
         session.commit()
 
         self.on_success(res)

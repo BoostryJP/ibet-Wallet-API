@@ -110,9 +110,33 @@ IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = os.environ.get('IBET_SECURITY_TOKE
 E2E_MESSAGING_CONTRACT_ADDRESS = os.environ.get('E2E_MESSAGING_CONTRACT_ADDRESS')
 CONTRACT_REGISTRY_ADDRESS = os.environ.get('CONTRACT_REGISTRY_ADDRESS')
 
-# トークン情報のキャッシュ
+# トークン情報キャッシュの設定
 TOKEN_CACHE = False if os.environ.get("TOKEN_CACHE") == "0" else True
+
+# トークン情報キャッシュの有効期限 (秒)
 TOKEN_CACHE_TTL = int(os.environ.get("TOKEN_CACHE_TTL")) if os.environ.get("TOKEN_CACHE_TTL") else 43200
+# トークン情報キャッシュの更新間隔 (秒)
+# NOTE: デフォルト値はTTLの80%
+TOKEN_CACHE_REFRESH_INTERVAL = int(os.environ.get("TOKEN_CACHE_REFRESH_INTERVAL"))\
+    if os.environ.get("TOKEN_CACHE_REFRESH_INTERVAL") else 34560
+
+# トークン情報短時間キャッシュの有効期限 (秒)
+TOKEN_SHORT_TERM_CACHE_TTL = int(os.environ.get("TOKEN_SHORT_TERM_CACHE_TTL"))\
+    if os.environ.get("TOKEN_SHORT_TERM_CACHE_TTL") else 40
+# トークン情報短時間キャッシュの更新間隔 (秒)
+# NOTE: デフォルト値はTTLの80%
+TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL = int(os.environ.get("TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL"))\
+    if os.environ.get("TOKEN_SHORT_TERM_CACHE_REFRESH_INTERVAL") else 32
+
+# トークン情報キャッシュの取得間隔 (秒)
+# NOTE: トークン情報1件あたりに割り当てる間隔
+TOKEN_FETCH_INTERVAL = int(os.environ.get("TOKEN_FETCH_INTERVAL")) \
+    if os.environ.get("TOKEN_FETCH_INTERVAL") else 3
+# トークン情報短時間キャッシュの取得間隔 (ミリ秒)
+# NOTE: トークン情報1件あたりに割り当てる間隔
+TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC = int(os.environ.get("TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC")) \
+    if os.environ.get("TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC") else 100
+
 
 # テスト用設定：Locust
 BASIC_AUTH_USER = os.environ.get('BASIC_AUTH_USER')
