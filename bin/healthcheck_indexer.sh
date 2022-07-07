@@ -49,7 +49,7 @@ if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -o \
   PROC_LIST="${PROC_LIST} batch/indexer_DEX.py"
 fi
 
-if [ "$TOKEN_CACHE" -ne 0 ]; then
+if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
   PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail.py"
   PROC_LIST="${PROC_LIST} batch/indexer_Token_Detail_ShortTerm.py"
 fi
