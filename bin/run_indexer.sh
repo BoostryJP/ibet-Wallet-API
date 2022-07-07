@@ -67,7 +67,7 @@ if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -o \
   python batch/indexer_DEX.py &
 fi
 
-if [ "$TOKEN_CACHE" -ne 0 ]; then
+if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
   python batch/indexer_Token_Detail.py &
   python batch/indexer_Token_Detail_ShortTerm.py &
 fi
