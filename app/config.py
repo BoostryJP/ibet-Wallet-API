@@ -88,6 +88,8 @@ DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 
 # ログ設定
 LOG_LEVEL = CONFIG['logging']['level']
+AUTH_LOGFILE = os.environ.get('AUTH_LOGFILE') or '/dev/stdout'
+ACCESS_LOGFILE = os.environ.get('ACCESS_LOGFILE') or '/dev/stdout'
 
 # 取扱トークン種別
 BOND_TOKEN_ENABLED = False if os.environ.get('BOND_TOKEN_ENABLED') == '0' else True

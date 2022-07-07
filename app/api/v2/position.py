@@ -48,8 +48,7 @@ class ShareMyTokens(BaseResource):
     """保有一覧参照（Share）"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.warning(DeprecationWarning("Deprecated API: v2.position.ShareMyTokens"))
-        LOG.info("v2.position.ShareMyTokens")
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Position/Share"))
 
         session = req.context["session"]
 
@@ -176,8 +175,7 @@ class StraightBondMyTokens(BaseResource):
     """保有一覧参照（StraightBond）"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.warning(DeprecationWarning("Deprecated API: v2.position.StraightBondMyTokens"))
-        LOG.info("v2.position.StraightBondMyTokens")
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Position/StraightBond"))
 
         session = req.context["session"]
 
@@ -305,8 +303,7 @@ class MembershipMyTokens(BaseResource):
     """保有一覧参照（Membership）"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.warning(DeprecationWarning("Deprecated API: v2.position.MembershipMyTokens"))
-        LOG.info("v2.position.MembershipMyTokens")
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Position/Membership"))
 
         session = req.context["session"]
 
@@ -424,8 +421,7 @@ class CouponMyTokens(BaseResource):
     """保有一覧参照（Coupon）"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.warning(DeprecationWarning("Deprecated API: v2.position.CouponMyTokens"))
-        LOG.info("v2.position.CouponMyTokens")
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Position/Coupon"))
 
         session = req.context["session"]
 
@@ -561,8 +557,8 @@ class CouponConsumptions(BaseResource):
     """Coupon消費履歴参照"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.warning(DeprecationWarning("Deprecated API: v2.position.CouponConsumptions"))
-        LOG.info("v2.position.CouponConsumptions")
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Position/Coupon/Consumptions"))
+
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False:

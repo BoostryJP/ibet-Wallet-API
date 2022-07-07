@@ -35,10 +35,8 @@ web3 = Web3Wrapper()
 class E2EMessagingEvents(BaseResource):
     """E2EMessaging Event Logs"""
 
-    def on_get(self, req, res, account_address=None):
+    def on_get(self, req, res, account_address=None, **kwargs):
         """List all event logs"""
-        LOG.info("v3.events.E2EMassagingEvents")
-
         # Validate Request Data
         request_json = self.validate(req)
 
@@ -132,10 +130,8 @@ class E2EMessagingEvents(BaseResource):
 class IbetEscrowEvents(BaseResource):
     """IbetEscrow Event Logs"""
 
-    def on_get(self, req, res, account_address=None):
+    def on_get(self, req, res, account_address=None, **kwargs):
         """List all event logs"""
-        LOG.info("v3.events.IbetEscrowEvents")
-
         # Validate Request Data
         request_json = self.validate(req)
 
@@ -256,8 +252,6 @@ class IbetSecurityTokenEscrowEvents(BaseResource):
 
     def on_get(self, req, res, account_address=None, **kwargs):
         """List all event logs"""
-        LOG.info("v3.events.IbetSecurityTokenEscrowEvents")
-
         # Validate Request Data
         request_json = self.validate(req)
 

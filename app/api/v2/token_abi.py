@@ -34,9 +34,7 @@ class StraightBondABI(BaseResource):
     Endpoint: /v2/ABI/StraightBond
     """
 
-    def on_get(self, req, res):
-        LOG.info('v2.token_abi.StraightBondABI')
-
+    def on_get(self, req, res, **kwargs):
         if config.BOND_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 
@@ -53,9 +51,7 @@ class ShareABI(BaseResource):
     Endpoint: /v2/ABI/Share
     """
 
-    def on_get(self, req, res):
-        LOG.info('v2.token_abi.ShareABI')
-
+    def on_get(self, req, res, **kwargs):
         if config.SHARE_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 
@@ -72,9 +68,7 @@ class MembershipABI(BaseResource):
     Endpoint: /v2/ABI/Membership
     """
 
-    def on_get(self, req, res):
-        LOG.info('v2.token_abi.MembershipABI')
-
+    def on_get(self, req, res, **kwargs):
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 
@@ -91,9 +85,7 @@ class CouponABI(BaseResource):
     Endpoint: /v2/ABI/Coupon
     """
 
-    def on_get(self, req, res):
-        LOG.info('v2.token_abi.CouponABI')
-
+    def on_get(self, req, res, **kwargs):
         if config.COUPON_TOKEN_ENABLED is False:
             raise NotSupportedError(method='GET', url=req.path)
 

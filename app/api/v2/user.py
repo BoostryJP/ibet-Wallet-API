@@ -37,8 +37,6 @@ class PaymentAccount(BaseResource):
     Endpoint: /User/PaymentAccount
     """
     def on_get(self, req, res, **kwargs):
-        LOG.info("v2.user.PaymentAccount")
-
         request_json = PaymentAccount.validate(req)
 
         pg_contract = Contract.get_contract(
@@ -102,8 +100,6 @@ class PersonalInfo(BaseResource):
     Endpoint: /User/PersonalInfo
     """
     def on_get(self, req, res, **kwargs):
-        LOG.info("v2.user.PersonalInfo")
-
         # Validation
         request_json = PersonalInfo.validate(req)
 

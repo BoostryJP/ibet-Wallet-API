@@ -42,8 +42,6 @@ class Token(BaseResource):
     """トークン別統計値取得"""
 
     def on_get(self, req, res, contract_address=None, **kwargs):
-        LOG.info('v2.statistics.Token')
-
         session = req.context["session"]
 
         # Validation

@@ -45,8 +45,6 @@ class GetAgreement(BaseResource):
     """約定情報参照"""
 
     def on_get(self, req, res, **kwargs):
-        LOG.info("v2.market_information.GetAgreement")
-
         if config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None and \
                 config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None and \
                 config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None and \
@@ -161,7 +159,6 @@ class StraightBondOrderBook(BaseResource):
     """[普通社債]板情報取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.StraightBondOrderBook")
         session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -377,8 +374,6 @@ class StraightBondLastPrice(BaseResource):
     """[普通社債]現在値取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.StraightBondLastPrice")
-
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
             raise NotSupportedError(method="POST", url=req.path)
 
@@ -438,8 +433,6 @@ class StraightBondTick(BaseResource):
     """[普通社債]歩み値取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.StraightBondTick")
-
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
             raise NotSupportedError(method="POST", url=req.path)
 
@@ -514,7 +507,6 @@ class MembershipOrderBook(BaseResource):
     """[会員権]板情報取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.MembershipOrderBook")
         session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -737,8 +729,6 @@ class MembershipLastPrice(BaseResource):
     """[会員権]現在値取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.MembershipLastPrice")
-
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
             raise NotSupportedError(method="POST", url=req.path)
 
@@ -799,8 +789,6 @@ class MembershipTick(BaseResource):
     """[会員権]歩み値取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.MembershipTick")
-
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
             raise NotSupportedError(method="POST", url=req.path)
 
@@ -876,7 +864,6 @@ class CouponOrderBook(BaseResource):
     """[クーポン]板情報取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.CouponOrderBook")
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -1099,8 +1086,6 @@ class CouponLastPrice(BaseResource):
     """[クーポン]現在値取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.CouponLastPrice")
-
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
             raise NotSupportedError(method="POST", url=req.path)
 
@@ -1160,8 +1145,6 @@ class CouponTick(BaseResource):
     """[クーポン]歩み値取得"""
 
     def on_post(self, req, res, **kwargs):
-        LOG.info("v2.market_information.CouponTick")
-
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
             raise NotSupportedError(method="POST", url=req.path)
 

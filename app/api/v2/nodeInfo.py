@@ -38,9 +38,7 @@ class NodeInfo(BaseResource):
     Endpoint: /NodeInfo
     """
 
-    def on_get(self, req, res):
-        LOG.info('v2.nodeInfo.GetNodeInfo')
-
+    def on_get(self, req, res, **kwargs):
         payment_gateway_json = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
         personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
         ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
@@ -81,9 +79,7 @@ class BlockSyncStatus(BaseResource):
     Endpoint: /NodeInfo/BlockSyncStatus
     """
 
-    def on_get(self, req, res):
-        LOG.info('v2.nodeInfo.GetBlockSyncStatus')
-
+    def on_get(self, req, res, **kwargs):
         session = req.context["session"]
 
         # Get block sync status

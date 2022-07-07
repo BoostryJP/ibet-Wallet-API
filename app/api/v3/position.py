@@ -529,7 +529,6 @@ class PositionShare(BasePositionShare):
     """
 
     def on_get(self, req, res, account_address=None, **kwargs):
-        LOG.info('v3.position.PositionShare(GET)')
         super().on_get_list(req, res, account_address)
 
 
@@ -542,7 +541,6 @@ class PositionStraightBond(BasePositionStraightBond):
     """
 
     def on_get(self, req, res, account_address=None, **kwargs):
-        LOG.info('v3.position.PositionStraightBond(GET)')
         super().on_get_list(req, res, account_address)
 
 
@@ -555,7 +553,6 @@ class PositionMembership(BasePositionMembership):
     """
 
     def on_get(self, req, res, account_address=None, **kwargs):
-        LOG.info('v3.position.PositionMembership(GET)')
         super().on_get_list(req, res, account_address)
 
 
@@ -568,7 +565,6 @@ class PositionCoupon(BasePositionCoupon):
     """
 
     def on_get(self, req, res, account_address=None, **kwargs):
-        LOG.info('v3.position.PositionCoupon(GET)')
         super().on_get_list(req, res, account_address)
 
 
@@ -581,7 +577,6 @@ class PositionShareContractAddress(BasePositionShare):
     """
 
     def on_get(self, req, res, account_address=None, contract_address=None):
-        LOG.info('v3.position.PositionShareContractAddress(GET)')
         super().on_get_from_contract_address(req, res, account_address, contract_address)
 
 
@@ -594,7 +589,6 @@ class PositionStraightBondContractAddress(BasePositionStraightBond):
     """
 
     def on_get(self, req, res, account_address=None, contract_address=None):
-        LOG.info('v3.position.PositionStraightBondContractAddress(StraightBond)')
         super().on_get_from_contract_address(req, res, account_address, contract_address)
 
 
@@ -607,7 +601,6 @@ class PositionMembershipContractAddress(BasePositionMembership):
     """
 
     def on_get(self, req, res, account_address=None, contract_address=None):
-        LOG.info('v3.position.PositionMembershipContractAddress(GET)')
         super().on_get_from_contract_address(req, res, account_address, contract_address)
 
 
@@ -620,5 +613,4 @@ class PositionCouponContractAddress(BasePositionCoupon):
     """
 
     def on_get(self, req, res, account_address=None, contract_address=None):
-        LOG.info('v3.position.PositionCouponContractAddress(GET)')
         super().on_get_from_contract_address(req, res, account_address, contract_address)
