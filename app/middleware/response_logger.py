@@ -26,11 +26,11 @@ logging.basicConfig(level=config.LOG_LEVEL)
 ACCESS_LOG = logging.getLogger("ibet_wallet_access")
 ACCESS_LOG.propagate = False
 
-LOG_FORMAT = "[%(asctime)s] [%(process)d] [%(levelname)s] {} %(message)s"
-TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S %z"
-
 stream_handler_access = logging.StreamHandler(open(config.ACCESS_LOGFILE, "a"))
-formatter_access = logging.Formatter(LOG_FORMAT.format("[ACCESS-LOG]"), TIMESTAMP_FORMAT)
+formatter_access = logging.Formatter(
+    config.INFO_LOG_FORMAT.format("[ACCESS-LOG]"),
+    config.LOG_TIMESTAMP_FORMAT
+)
 stream_handler_access.setFormatter(formatter_access)
 ACCESS_LOG.addHandler(stream_handler_access)
 

@@ -88,6 +88,11 @@ DB_ECHO = True if CONFIG['database']['echo'] == 'yes' else False
 
 # ログ設定
 LOG_LEVEL = CONFIG['logging']['level']
+INFO_LOG_FORMAT = '[%(asctime)s] [%(process)d] [%(levelname)s] {} %(message)s'
+DEBUG_LOG_FORMAT = '[%(asctime)s] [%(process)d] [%(levelname)s] {} %(message)s [in %(pathname)s:%(lineno)d]'
+LOG_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S %z"
+
+APP_LOGFILE = os.environ.get('APP_LOGFILE') or '/dev/stdout'
 AUTH_LOGFILE = os.environ.get('AUTH_LOGFILE') or '/dev/stdout'
 ACCESS_LOGFILE = os.environ.get('ACCESS_LOGFILE') or '/dev/stdout'
 
