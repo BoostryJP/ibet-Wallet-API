@@ -178,6 +178,7 @@ class StraightBondTokens(BaseResource):
         validator = Validator({
             "address_list": {
                 "type": "list",
+                "schema": {"type": "string"},
                 "required": False,
                 "nullable": False,
             },
@@ -639,6 +640,7 @@ class ShareTokens(BaseResource):
         validator = Validator({
             "address_list": {
                 "type": "list",
+                "schema": {"type": "string"},
                 "required": False,
                 "nullable": False,
             },
@@ -1088,6 +1090,7 @@ class MembershipTokens(BaseResource):
         validator = Validator({
             "address_list": {
                 "type": "list",
+                "schema": {"type": "string"},
                 "required": False,
                 "nullable": False,
             },
@@ -1487,6 +1490,7 @@ class CouponTokens(BaseResource):
         validator = Validator({
             "address_list": {
                 "type": "list",
+                "schema": {"type": "string"},
                 "required": False,
                 "nullable": False,
             },

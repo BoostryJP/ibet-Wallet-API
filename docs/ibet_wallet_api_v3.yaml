@@ -1475,7 +1475,7 @@ paths:
       tags:
         - "Token"
       summary: "Token detail list of Share tokens"
-      operationId: "ShareTokens"
+      operationId: "StraightBondTokens"
       parameters:
         - name: offset
           in: query
@@ -1579,6 +1579,20 @@ paths:
                     type: array
                     items:
                       $ref: "#/definitions/StraightBondTokenDetailResponse"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/StraightBond/Addresses:
     get:
       tags:
@@ -1618,7 +1632,7 @@ paths:
           type: string
         - name: tradable_exchange
           in: query
-          description: tradable exchange
+          description: tradable exchange address
           required: false
           type: string
         - name: status
@@ -1628,7 +1642,7 @@ paths:
           type: boolean
         - name: personal_info_address
           in: query
-          description: personal info address
+          description: personal information address
           required: false
           type: string
         - name: transferable
@@ -1804,12 +1818,26 @@ paths:
                     type: array
                     items:
                       $ref: "#/definitions/ShareTokenDetailResponse"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Share/Addresses:
     get:
       tags:
         - "Token"
       summary: "List of StraightBond token address"
-      operationId: "StraightBondTokenAddresses"
+      operationId: "ShareTokenAddresses"
       parameters:
         - name: offset
           in: query
@@ -2014,6 +2042,20 @@ paths:
                     type: array
                     items:
                       $ref: "#/definitions/MembershipTokenDetailResponse"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Membership/Addresses:
     get:
       tags:
@@ -2209,6 +2251,20 @@ paths:
                     type: array
                     items:
                       $ref: "#/definitions/CouponTokenDetailResponse"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
   /Token/Coupon/Addresses:
     get:
       tags:
@@ -2540,7 +2596,7 @@ definitions:
             type: number
           dividend_record_date:
             type: string
-          divicend_payment_date:
+          dividend_payment_date:
             type: string
   MembershipTokenDetailResponse:
     type: object
