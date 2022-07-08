@@ -49,7 +49,8 @@ from app.api.v3 import (
     notification as v3_notification,
     position as v3_position,
     e2e_message,
-    events
+    events,
+    token as v3_token
 )
 
 from app.errors import AppError
@@ -182,6 +183,16 @@ class App(falcon.App):
         self.add_route('/v3/Events/IbetEscrow', events.IbetEscrowEvents())
         self.add_route('/v3/Events/IbetSecurityTokenEscrow', events.IbetSecurityTokenEscrowEvents())
 
+        # Token
+        self.add_route('/v3/Token/StraightBond', v3_token.StraightBondTokens())
+        self.add_route('/v3/Token/StraightBond/Address', v3_token.StraightBondTokenAddresses())
+        self.add_route('/v3/Token/Share', v3_token.ShareTokens())
+        self.add_route('/v3/Token/Share/Address', v3_token.ShareTokenAddresses())
+        self.add_route('/v3/Token/Membership', v3_token.MembershipTokens())
+        self.add_route('/v3/Token/Membership/Address', v3_token.MembershipTokenAddresses())
+        self.add_route('/v3/Token/Coupon', v3_token.CouponTokens())
+        self.add_route('/v3/Token/Coupon/Address', v3_token.CouponTokenAddresses())
+        
         """
         Error Handler
         """
