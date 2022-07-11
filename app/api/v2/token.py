@@ -521,6 +521,7 @@ class StraightBondTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/StraightBond"))
         session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False:
@@ -621,6 +622,7 @@ class StraightBondTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/StraightBond/Address"))
         session = req.context["session"]
 
         if config.BOND_TOKEN_ENABLED is False:
@@ -782,6 +784,7 @@ class ShareTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/Share"))
         session = req.context["session"]
 
         if config.SHARE_TOKEN_ENABLED is False:
@@ -885,6 +888,7 @@ class ShareTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/Share/Address"))
         session = req.context["session"]
 
         if config.SHARE_TOKEN_ENABLED is False:
@@ -1047,6 +1051,7 @@ class MembershipTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/Membership"))
         session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
@@ -1149,6 +1154,7 @@ class MembershipTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/Membership/Address"))
         session = req.context["session"]
 
         if config.MEMBERSHIP_TOKEN_ENABLED is False:
@@ -1310,6 +1316,7 @@ class CouponTokens(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/Coupon"))
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False:
@@ -1412,6 +1419,7 @@ class CouponTokenAddresses(BaseResource):
         self.web3 = Web3Wrapper()
 
     def on_get(self, req, res, **kwargs):
+        LOG.warning(DeprecationWarning("Deprecated API: /v2/Token/Coupon/Address"))
         session = req.context["session"]
 
         if config.COUPON_TOKEN_ENABLED is False:
