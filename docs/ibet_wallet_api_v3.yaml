@@ -1578,7 +1578,7 @@ paths:
                   tokens:
                     type: array
                     items:
-                      $ref: "#/definitions/StraightBondTokenDetailResponse"
+                      $ref: "#/definitions/StraightBondToken"
         400:
           description: Invalid Parameter Error
           schema:
@@ -1817,7 +1817,7 @@ paths:
                   tokens:
                     type: array
                     items:
-                      $ref: "#/definitions/ShareTokenDetailResponse"
+                      $ref: "#/definitions/ShareToken"
         400:
           description: Invalid Parameter Error
           schema:
@@ -2041,7 +2041,7 @@ paths:
                   tokens:
                     type: array
                     items:
-                      $ref: "#/definitions/MembershipTokenDetailResponse"
+                      $ref: "#/definitions/MembershipToken"
         400:
           description: Invalid Parameter Error
           schema:
@@ -2250,7 +2250,7 @@ paths:
                   tokens:
                     type: array
                     items:
-                      $ref: "#/definitions/CouponTokenDetailResponse"
+                      $ref: "#/definitions/CouponToken"
         400:
           description: Invalid Parameter Error
           schema:
@@ -2451,7 +2451,7 @@ definitions:
         type: string
         description: "Error Reason"
         example: "Block synchronization is down"
-  StraightBondTokenDetailResponse:
+  StraightBondToken:
     type: object
     properties:
       token_address:
@@ -2536,7 +2536,47 @@ definitions:
         type: string
       is_redeemed:
         type: boolean
-  ShareTokenDetailResponse:
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - personal_info_address
+      - transferable
+      - is_offering
+      - transfer_approval_required
+      - face_value
+      - interest_rate
+      - interest_payment_date1
+      - interest_payment_date2
+      - interest_payment_date3
+      - interest_payment_date4
+      - interest_payment_date5
+      - interest_payment_date6
+      - interest_payment_date7
+      - interest_payment_date8
+      - interest_payment_date9
+      - interest_payment_date10
+      - interest_payment_date11
+      - interest_payment_date12
+      - redemption_date
+      - redemption_value
+      - return_date
+      - return_amount
+      - purpose
+      - memo
+      - is_redeemed
+  ShareToken:
     type: object
     properties:
       token_address:
@@ -2598,7 +2638,28 @@ definitions:
             type: string
           dividend_payment_date:
             type: string
-  MembershipTokenDetailResponse:
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - personal_info_address
+      - transferable
+      - is_offering
+      - transfer_approval_required
+      - issue_price
+      - cancellation_date
+  MembershipToken:
     type: object
     properties:
       token_address:
@@ -2654,7 +2715,28 @@ definitions:
               type: integer
             url:
               type: string
-  CouponTokenDetailResponse:
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - details
+      - expiration_date
+      - memo
+      - transferable
+      - initial_offering_status
+      - image_url
+  CouponToken:
     type: object
     properties:
       token_address:
@@ -2710,3 +2792,24 @@ definitions:
               type: integer
             url:
               type: string
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - details
+      - expiration_date
+      - memo
+      - transferable
+      - initial_offering_status
+      - image_url

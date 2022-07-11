@@ -60,6 +60,7 @@ TokenInstanceTypes = Union[
     'CouponToken'
 ]
 
+
 def token_db_cache(TargetModel: TokenModelClassTypes):
     """
     Cache decorator for Token Details
