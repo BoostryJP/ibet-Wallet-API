@@ -888,6 +888,7 @@ paths:
                 $ref: "#/definitions/404NotSupportedError"
   /Token/StraightBond:
     get:
+      deprecated: true
       tags:
         - "Token"
       summary: "List of StraightBond tokens"
@@ -1190,6 +1191,7 @@ paths:
                 $ref: "#/definitions/404NotFoundError"
   /Token/Share:
     get:
+      deprecated: true
       tags:
         - "Token"
       summary: "List of Share tokens"
@@ -1446,6 +1448,7 @@ paths:
                 $ref: "#/definitions/404NotFoundError"
   /Token/Membership:
     get:
+      deprecated: true
       tags:
         - "Token"
       summary: "List of Membership tokens"
@@ -1690,6 +1693,7 @@ paths:
                 $ref: "#/definitions/404NotFoundError"
   /Token/Coupon:
     get:
+      deprecated: true
       tags:
         - "Token"
       summary: "List of Coupon tokens"

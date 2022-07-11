@@ -509,7 +509,7 @@ class MembershipToken(TokenBase):
     return_details: str
     expiration_date: str
     memo: str
-    transferable: str
+    transferable: bool
     initial_offering_status: bool
     image_url: object
 

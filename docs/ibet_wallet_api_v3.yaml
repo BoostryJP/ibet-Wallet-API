@@ -1470,6 +1470,902 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/400InvalidParameterError"
+  /Token/StraightBond:
+    get:
+      tags:
+        - "Token"
+      summary: "Token detail list of StraightBond tokens"
+      operationId: "StraightBondTokens"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: address_list
+          in: query
+          description: list of token address (**this affects total number**)
+          required: false
+          type: array
+          items:
+            type: string
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange address
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: personal_info_address
+          in: query
+          description: personal information address
+          required: false
+          type: string
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: is_offering
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: transfer_approval_required
+          in: query
+          description: transfer approval required status
+          required: false
+          type: boolean
+        - name: is_redeemed
+          in: query
+          description: redeem status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "personal_info_address", "transferable", "is_offering", "transfer_approval_required", "is_redeemed"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  tokens:
+                    type: array
+                    items:
+                      $ref: "#/definitions/StraightBondToken"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Token/StraightBond/Addresses:
+    get:
+      tags:
+        - "Token"
+      summary: "List of StraightBond token address"
+      operationId: "StraightBondTokenAddresses"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange address
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: personal_info_address
+          in: query
+          description: personal information address
+          required: false
+          type: string
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: is_offering
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: transfer_approval_required
+          in: query
+          description: transfer approval required status
+          required: false
+          type: boolean
+        - name: is_redeemed
+          in: query
+          description: redeem status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "personal_info_address", "transferable", "is_offering", "transfer_approval_required", "is_redeemed"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  address_list:
+                    type: array
+                    items:
+                      type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Token/Share:
+    get:
+      tags:
+        - "Token"
+      summary: "Token detail list of Share tokens"
+      operationId: "ShareTokens"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: address_list
+          in: query
+          description: list of token address (**this affects total number**)
+          required: false
+          type: array
+          items:
+            type: string
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: personal_info_address
+          in: query
+          description: personal info address
+          required: false
+          type: string
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: is_offering
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: transfer_approval_required
+          in: query
+          description: transfer approval required status
+          required: false
+          type: boolean
+        - name: is_canceled
+          in: query
+          description: cancellation status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "personal_info_address", "transferable", "is_offering", "transfer_approval_required", "is_canceled"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  tokens:
+                    type: array
+                    items:
+                      $ref: "#/definitions/ShareToken"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Token/Share/Addresses:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Share token address"
+      operationId: "ShareTokenAddresses"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: personal_info_address
+          in: query
+          description: personal info address
+          required: false
+          type: string
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: is_offering
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: transfer_approval_required
+          in: query
+          description: transfer approval required status
+          required: false
+          type: boolean
+        - name: is_canceled
+          in: query
+          description: cancellation status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "personal_info_address", "transferable", "is_offering", "transfer_approval_required", "is_canceled"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  address_list:
+                    type: array
+                    items:
+                      type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Token/Membership:
+    get:
+      tags:
+        - "Token"
+      summary: "Token detail list of Membership tokens"
+      operationId: "MembershipTokens"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: address_list
+          in: query
+          description: list of token address (**this affects total number**)
+          required: false
+          type: array
+          items:
+            type: string
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: initial_offering_status
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "transferable", "initial_offering_status"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  tokens:
+                    type: array
+                    items:
+                      $ref: "#/definitions/MembershipToken"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Token/Membership/Addresses:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Membership token address"
+      operationId: "MembershipTokenAddresses"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: initial_offering_status
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "transferable", "initial_offering_status"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  address_list:
+                    type: array
+                    items:
+                      type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Token/Coupon:
+    get:
+      tags:
+        - "Token"
+      summary: "Token detail list of Coupon tokens"
+      operationId: "CouponTokens"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: address_list
+          in: query
+          description: list of token address (**this affects total number**)
+          required: false
+          type: array
+          items:
+            type: string
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: initial_offering_status
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "transferable", "initial_offering_status"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: "Successful Operation"
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  tokens:
+                    type: array
+                    items:
+                      $ref: "#/definitions/CouponToken"
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
+  /Token/Coupon/Addresses:
+    get:
+      tags:
+        - "Token"
+      summary: "List of Coupon token address"
+      operationId: "CouponTokenAddresses"
+      parameters:
+        - name: offset
+          in: query
+          description: start position
+          required: false
+          type: integer
+        - name: limit
+          in: query
+          description: number of get
+          required: false
+          type: integer
+        - name: owner_address
+          in: query
+          description: issuer address
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: token name
+          required: false
+          type: string
+        - name: symbol
+          in: query
+          description: token symbol
+          required: false
+          type: string
+        - name: company_name
+          in: query
+          description: company name
+          required: false
+          type: string
+        - name: tradable_exchange
+          in: query
+          description: tradable exchange
+          required: false
+          type: string
+        - name: status
+          in: query
+          description: token status
+          required: false
+          type: boolean
+        - name: transferable
+          in: query
+          description: transferable status
+          required: false
+          type: boolean
+        - name: initial_offering_status
+          in: query
+          description: offering status
+          required: false
+          type: boolean
+        - name: sort_item
+          in: query
+          description: "sort item"
+          required: false
+          type: string
+          enum: ["token_address", "owner_address", "name", "symbol", "company_name", "tradable_exchange", "status", "transferable", "initial_offering_status"]
+        - name: sort_order
+          in: query
+          description: "sort order (0:ASC, 1:DESC)"
+          required: false
+          type: integer
+          minimum: 0
+          maximum: 1
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  result_set:
+                    $ref: "#/definitions/ResultSet"
+                  address_list:
+                    type: array
+                    items:
+                      type: string
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Supported Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotSupportedError"
 definitions:
   ResultSet:
     type: object
@@ -1555,3 +2451,365 @@ definitions:
         type: string
         description: "Error Reason"
         example: "Block synchronization is down"
+  StraightBondToken:
+    type: object
+    properties:
+      token_address:
+        type: string
+      token_template:
+        type: string
+        example: IbetStraightBond
+      owner_address:
+        type: string
+        description: issuer address
+      company_name:
+        type: string
+      rsa_publickey:
+        type: string
+      name:
+        type: string
+        description: token name
+      symbol:
+        type: string
+        description: token symbol
+      total_supply:
+        type: integer
+      tradable_exchange:
+        type: string
+      contact_information:
+        type: string
+      privacy_policy:
+        type: string
+      status:
+        type: boolean
+      max_holding_quantity:
+        type: integer
+      max_sell_amount:
+        type: integer
+      personal_info_address:
+        type: string
+      transferable:
+        type: boolean
+      is_offering:
+        type: boolean
+      transfer_approval_required:
+        type: boolean
+      face_value:
+        type: integer
+      interest_rate:
+        type: number
+      interest_payment_date1:
+        type: string
+      interest_payment_date2:
+        type: string
+      interest_payment_date3:
+        type: string
+      interest_payment_date4:
+        type: string
+      interest_payment_date5:
+        type: string
+      interest_payment_date6:
+        type: string
+      interest_payment_date7:
+        type: string
+      interest_payment_date8:
+        type: string
+      interest_payment_date9:
+        type: string
+      interest_payment_date10:
+        type: string
+      interest_payment_date11:
+        type: string
+      interest_payment_date12:
+        type: string
+      redemption_date:
+        type: string
+      redemption_value:
+        type: integer
+      return_date:
+        type: string
+      return_amount:
+        type: string
+      purpose:
+        type: string
+      memo:
+        type: string
+      is_redeemed:
+        type: boolean
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - personal_info_address
+      - transferable
+      - is_offering
+      - transfer_approval_required
+      - face_value
+      - interest_rate
+      - interest_payment_date1
+      - interest_payment_date2
+      - interest_payment_date3
+      - interest_payment_date4
+      - interest_payment_date5
+      - interest_payment_date6
+      - interest_payment_date7
+      - interest_payment_date8
+      - interest_payment_date9
+      - interest_payment_date10
+      - interest_payment_date11
+      - interest_payment_date12
+      - redemption_date
+      - redemption_value
+      - return_date
+      - return_amount
+      - purpose
+      - memo
+      - is_redeemed
+  ShareToken:
+    type: object
+    properties:
+      token_address:
+        type: string
+      token_template:
+        type: string
+        example: IbetShare
+      owner_address:
+        type: string
+        description: issuer address
+      company_name:
+        type: string
+      rsa_publickey:
+        type: string
+      name:
+        type: string
+        description: token name
+      symbol:
+        type: string
+        description: token symbol
+      total_supply:
+        type: integer
+      tradable_exchange:
+        type: string
+      contact_information:
+        type: string
+      privacy_policy:
+        type: string
+      status:
+        type: boolean
+      max_holding_quantity:
+        type: integer
+      max_sell_amount:
+        type: integer
+      personal_info_address:
+        type: string
+      transferable:
+        type: boolean
+      is_offering:
+        type: boolean
+      transfer_approval_required:
+        type: boolean
+      issue_price:
+        type: integer
+      cancellation_date:
+        type: string
+      memo:
+        type: string
+      principal_value:
+        type: integer
+      is_canceled:
+        type: boolean
+      dividend_information:
+        type: object
+        properties:
+          dividends:
+            type: number
+          dividend_record_date:
+            type: string
+          dividend_payment_date:
+            type: string
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - personal_info_address
+      - transferable
+      - is_offering
+      - transfer_approval_required
+      - issue_price
+      - cancellation_date
+  MembershipToken:
+    type: object
+    properties:
+      token_address:
+        type: string
+      token_template:
+        type: string
+        example: IbetMembership
+      owner_address:
+        type: string
+        description: issuer address
+      company_name:
+        type: string
+      rsa_publickey:
+        type: string
+      name:
+        type: string
+        description: token name
+      symbol:
+        type: string
+        description: token symbol
+      total_supply:
+        type: integer
+      tradable_exchange:
+        type: string
+      contact_information:
+        type: string
+      privacy_policy:
+        type: string
+      status:
+        type: boolean
+      max_holding_quantity:
+        type: integer
+      max_sell_amount:
+        type: integer
+      details:
+        type: string
+      return_details:
+        type: string
+      expiration_date:
+        type: string
+      memo:
+        type: string
+      transferable:
+        type: boolean
+      initial_offering_status:
+        type: boolean
+      image_url:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: integer
+            url:
+              type: string
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - details
+      - expiration_date
+      - memo
+      - transferable
+      - initial_offering_status
+      - image_url
+  CouponToken:
+    type: object
+    properties:
+      token_address:
+        type: string
+      token_template:
+        type: string
+        example: IbetCoupon
+      owner_address:
+        type: string
+        description: issuer address
+      company_name:
+        type: string
+      rsa_publickey:
+        type: string
+      name:
+        type: string
+        description: token name
+      symbol:
+        type: string
+        description: token symbol
+      total_supply:
+        type: integer
+      tradable_exchange:
+        type: string
+      contact_information:
+        type: string
+      privacy_policy:
+        type: string
+      status:
+        type: boolean
+      max_holding_quantity:
+        type: integer
+      max_sell_amount:
+        type: integer
+      details:
+        type: string
+      return_details:
+        type: string
+      expiration_date:
+        type: string
+      memo:
+        type: string
+      transferable:
+        type: boolean
+      initial_offering_status:
+        type: boolean
+      image_url:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: integer
+            url:
+              type: string
+    required:
+      - token_address
+      - token_template
+      - owner_address
+      - company_name
+      - rsa_publickey
+      - name
+      - symbol
+      - total_supply
+      - tradable_exchange
+      - contact_information
+      - privacy_policy
+      - status
+      - max_holding_quantity
+      - max_sell_amount
+      - details
+      - expiration_date
+      - memo
+      - transferable
+      - initial_offering_status
+      - image_url
