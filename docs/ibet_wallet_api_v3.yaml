@@ -1474,7 +1474,7 @@ paths:
     get:
       tags:
         - "Token"
-      summary: "Token detail list of Share tokens"
+      summary: "Token detail list of StraightBond tokens"
       operationId: "StraightBondTokens"
       parameters:
         - name: offset
@@ -1489,7 +1489,7 @@ paths:
           type: integer
         - name: address_list
           in: query
-          description: list of token address
+          description: list of token address (**this affects total number**)
           required: false
           type: array
           items:
@@ -1728,7 +1728,7 @@ paths:
           type: integer
         - name: address_list
           in: query
-          description: list of token address
+          description: list of token address (**this affects total number**)
           required: false
           type: array
           items:
@@ -1836,7 +1836,7 @@ paths:
     get:
       tags:
         - "Token"
-      summary: "List of StraightBond token address"
+      summary: "List of Share token address"
       operationId: "ShareTokenAddresses"
       parameters:
         - name: offset
@@ -1967,7 +1967,7 @@ paths:
           type: integer
         - name: address_list
           in: query
-          description: list of token address
+          description: list of token address (**this affects total number**)
           required: false
           type: array
           items:
@@ -2176,7 +2176,7 @@ paths:
           type: integer
         - name: address_list
           in: query
-          description: list of token address
+          description: list of token address (**this affects total number**)
           required: false
           type: array
           items:
