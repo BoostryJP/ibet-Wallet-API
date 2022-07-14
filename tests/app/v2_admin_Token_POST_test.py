@@ -85,7 +85,6 @@ class TestAdminTokenPOST:
         assert listing.max_sell_amount == request_params["max_sell_amount"]
         assert listing.owner_address == request_params["owner_address"]
 
-
     ###########################################################################
     # Error
     ###########################################################################
