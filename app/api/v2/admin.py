@@ -25,11 +25,25 @@ from app import log
 from app import config
 from app.api.common import BaseResource
 from app.contracts import Contract
-from app.errors import InvalidParameterError, DataNotExistsError, AppError, DataConflictError
-from app.model.blockchain import CouponToken, MembershipToken, BondToken, ShareToken
+from app.errors import (
+    InvalidParameterError,
+    DataNotExistsError,
+    AppError,
+    DataConflictError
+)
+from app.model.blockchain import (
+    CouponToken,
+    MembershipToken,
+    BondToken,
+    ShareToken
+)
 from app.model.db import (
     Listing,
-    ExecutableContract
+    ExecutableContract,
+    IDXBondToken,
+    IDXShareToken,
+    IDXMembershipToken,
+    IDXCouponToken
 )
 
 LOG = log.get_logger()
@@ -272,7 +286,7 @@ class Token(BaseResource):
             else token.max_holding_quantity
         max_sell_amount = request_json["max_sell_amount"] if "max_sell_amount" in request_json \
             else token.max_sell_amount
-        owner_address = request_json["owner_address"] if "max_sell_amount" in request_json \
+        owner_address = request_json["owner_address"] if "owner_address" in request_json \
             else token.owner_address
 
         token.is_public = is_public
@@ -333,6 +347,10 @@ class Token(BaseResource):
         try:
             session.query(Listing).filter(Listing.token_address == contract_address).delete()
             session.query(ExecutableContract).filter(ExecutableContract.contract_address == contract_address).delete()
+            session.query(IDXBondToken).filter(IDXBondToken.token_address == contract_address).delete()
+            session.query(IDXShareToken).filter(IDXShareToken.token_address == contract_address).delete()
+            session.query(IDXMembershipToken).filter(IDXMembershipToken.token_address == contract_address).delete()
+            session.query(IDXCouponToken).filter(IDXCouponToken.token_address == contract_address).delete()
         except Exception as err:
             LOG.exception(f"Failed to delete the data: {err}")
             raise AppError()
