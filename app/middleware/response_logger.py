@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import logging
+from datetime import datetime
 
 import falcon
 
@@ -38,7 +39,11 @@ ACCESS_LOG.addHandler(stream_handler_access)
 class ResponseLoggerMiddleware(object):
     """Response Logger Middleware"""
 
+    def process_request(self, req, res):
+        req.context["request_start_time"] = datetime.utcnow()
+
     def process_response(self, req: falcon.Request, res: falcon.Response, resource, req_succeeded):
         if req.relative_uri != "/":
-            log_msg = f"{req.method} {req.relative_uri} {res.status}"
+            response_time = (datetime.utcnow() - req.context["request_start_time"]).total_seconds()
+            log_msg = f"{req.method} {req.relative_uri} {res.status} ({response_time}sec)"
             ACCESS_LOG.info(log_msg)
