@@ -53,7 +53,7 @@ class TokenHolder(Base):
     __tablename__ = "token_holder"
 
     # Related to TokenHoldersList primary key
-    holder_list_id = Column(BigInteger, primary_key=True)
+    holder_list = Column(BigInteger, primary_key=True)
 
     # Account Address
     account_address = Column(String(42), primary_key=True)

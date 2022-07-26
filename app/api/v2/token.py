@@ -330,7 +330,7 @@ class TokenHoldersCollectionId(BaseResource):
             raise InvalidParameterError(description=description)
 
         _token_holders: List[TokenHolder] = session.query(TokenHolder). \
-            filter(TokenHolder.holder_list_id == _same_list_id_record.id). \
+            filter(TokenHolder.holder_list == _same_list_id_record.id). \
             order_by(asc(TokenHolder.account_address)).\
             all()
         token_holders = [_token_holder.json() for _token_holder in _token_holders]

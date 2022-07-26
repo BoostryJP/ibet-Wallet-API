@@ -142,7 +142,7 @@ class Processor:
         )
         if _checkpoint:
             _holders: List[TokenHolder] = (
-                local_session.query(TokenHolder).filter(TokenHolder.holder_list_id == _checkpoint.id).all()
+                local_session.query(TokenHolder).filter(TokenHolder.holder_list == _checkpoint.id).all()
             )
             for holder in _holders:
                 self.balance_book.store(account_address=holder.account_address, amount=holder.hold_balance)
@@ -383,7 +383,7 @@ class Processor:
                 continue
             token_holder: TokenHolder = (
                 db_session.query(TokenHolder)
-                .filter(TokenHolder.holder_list_id == holder_list_id)
+                .filter(TokenHolder.holder_list == holder_list_id)
                 .filter(TokenHolder.account_address == account_address)
                 .first()
             )
@@ -393,7 +393,7 @@ class Processor:
                 db_session.merge(token_holder)
             elif page.hold_balance is not None and page.hold_balance > 0:
                 LOG.debug(f"Collection record created : token_address={token_address}, account_address={account_address}")
-                page.holder_list_id = holder_list_id
+                page.holder_list = holder_list_id
                 db_session.add(page)
 
 
