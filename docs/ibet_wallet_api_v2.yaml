@@ -2100,7 +2100,7 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/404NotFoundError"
-  /Token/{contract_address}/Holders/Collections/{list_id}:
+  /Token/{contract_address}/Holders/Collection/{list_id}:
     parameters:
       - type: string
         name: contract_address
@@ -2134,30 +2134,26 @@ paths:
               data:
                 type: object
                 properties:
-                  result_set:
-                    description: Result set
-                    type: object
-                    properties:
-                      status:
-                        description: Status code of token holders list batch job
-                        type: string
-                        enum: [pending, done, failed]
-                      holders:
-                        description: | 
-                          Token holder list.
-                          This list is excluding token owner address.
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            account_address:
-                              description: Account address of token holder.
-                              type: string
-                            hold_balance:
-                              description: |
-                                Amount of balance.
-                                This includes balance/pending_transfer/exchange_balance/exchange_commitment.
-                              type: integer
+                  status:
+                    description: Status code of token holders list batch job
+                    type: string
+                    enum: [pending, done, failed]
+                  holders:
+                    description: | 
+                      Token holder list.
+                      This list is excluding token owner address.
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        account_address:
+                          description: Account address of token holder.
+                          type: string
+                        hold_balance:
+                          description: |
+                            Amount of balance.
+                            This includes balance/pending_transfer/exchange_balance/exchange_commitment.
+                          type: integer
         400:
           description: Invalid Parameter Error
           schema:
