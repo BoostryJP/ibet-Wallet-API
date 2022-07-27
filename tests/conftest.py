@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 import os
 import sys
+from typing import TypedDict
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -27,10 +28,13 @@ sys.path.append(path)
 import json
 import pytest
 from falcon import testing
+from sqlalchemy.orm import Session
 from web3 import Web3
+from web3.eth import Contract as Web3Contract
 from web3.middleware import geth_poa_middleware
 from web3.types import (
     RPCEndpoint,
+    ChecksumAddress
 )
 
 from app.main import App
@@ -53,8 +57,31 @@ web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
+class DeployedContract(TypedDict):
+    address: str
+    abi: dict
+
+
+class SharedContract(TypedDict):
+    PaymentGateway: DeployedContract
+    PersonalInfo: DeployedContract
+    IbetShareExchange: DeployedContract
+    IbetStraightBondExchange: DeployedContract
+    IbetMembershipExchange: DeployedContract
+    IbetCouponExchange: DeployedContract
+    TokenList: DeployedContract
+    E2EMessaging: Web3Contract
+    IbetEscrow: Web3Contract
+    IbetSecurityTokenEscrow: Web3Contract
+
+
+class TestAccount(TypedDict):
+    account_address: ChecksumAddress
+    password: str
+
+
 @pytest.fixture(scope='session')
-def client():
+def client() -> testing.TestClient:
     FailOverHTTPProvider.is_default = None
 
     init_session()
@@ -65,7 +92,7 @@ def client():
 
 
 @pytest.fixture(scope='session')
-def payment_gateway_contract():
+def payment_gateway_contract() -> DeployedContract:
     deployer = eth_account['deployer']
     agent = eth_account['agent']
 
@@ -84,7 +111,7 @@ def payment_gateway_contract():
 
 
 @pytest.fixture(scope='session')
-def personalinfo_contract():
+def personalinfo_contract() -> DeployedContract:
     deployer = eth_account['deployer']
     web3.eth.default_account = deployer['account_address']
 
@@ -95,7 +122,7 @@ def personalinfo_contract():
 
 
 @pytest.fixture(scope='session')
-def tokenlist_contract():
+def tokenlist_contract() -> DeployedContract:
     deployer = eth_account['deployer']
 
     web3.eth.default_account = deployer['account_address']
@@ -107,7 +134,7 @@ def tokenlist_contract():
 
 
 @pytest.fixture(scope="session")
-def e2e_messaging_contract():
+def e2e_messaging_contract() -> Web3Contract:
     deployer = eth_account["deployer"]
     web3.eth.default_account = deployer["account_address"]
     contract_address, abi = Contract.deploy_contract(
@@ -115,7 +142,7 @@ def e2e_messaging_contract():
         args=[],
         deployer=deployer["account_address"]
     )
-    _e2e_messaging_contract = Contract.get_contract(
+    _e2e_messaging_contract: Web3Contract = Contract.get_contract(
         contract_name="E2EMessaging",
         address=contract_address
     )
@@ -123,7 +150,7 @@ def e2e_messaging_contract():
 
 
 @pytest.fixture(scope="session")
-def ibet_escrow_contract():
+def ibet_escrow_contract() -> Web3Contract:
     deployer = eth_account["deployer"]["account_address"]
 
     web3.eth.default_account = deployer
@@ -150,7 +177,7 @@ def ibet_escrow_contract():
         "from": deployer
     })
 
-    _ibet_escrow_contract = Contract.get_contract(
+    _ibet_escrow_contract: Web3Contract = Contract.get_contract(
         contract_name="IbetEscrow",
         address=contract_address
     )
@@ -158,7 +185,7 @@ def ibet_escrow_contract():
 
 
 @pytest.fixture(scope="session")
-def ibet_st_escrow_contract():
+def ibet_st_escrow_contract() -> Web3Contract:
     deployer = eth_account["deployer"]["account_address"]
 
     storage_address, _ = Contract.deploy_contract(
@@ -182,7 +209,7 @@ def ibet_st_escrow_contract():
         "from": deployer
     })
 
-    _ibet_st_escrow_contract = Contract.get_contract(
+    _ibet_st_escrow_contract: Web3Contract = Contract.get_contract(
         contract_name="IbetSecurityTokenEscrow",
         address=contract_address
     )
@@ -195,20 +222,19 @@ def shared_contract(payment_gateway_contract,
                     tokenlist_contract,
                     e2e_messaging_contract,
                     ibet_escrow_contract,
-                    ibet_st_escrow_contract):
-    contracts = {
-        'PaymentGateway': payment_gateway_contract,
-        'PersonalInfo': personalinfo_contract,
-        'IbetShareExchange': ibet_exchange_contract(payment_gateway_contract['address']),
-        'IbetStraightBondExchange': ibet_exchange_contract(payment_gateway_contract['address']),
-        'IbetMembershipExchange': ibet_exchange_contract(payment_gateway_contract['address']),
-        'IbetCouponExchange': ibet_exchange_contract(payment_gateway_contract['address']),
-        'TokenList': tokenlist_contract,
-        'E2EMessaging': e2e_messaging_contract,
-        'IbetEscrow': ibet_escrow_contract,
-        'IbetSecurityTokenEscrow': ibet_st_escrow_contract
+                    ibet_st_escrow_contract) -> SharedContract:
+    return {
+        "PaymentGateway": payment_gateway_contract,
+        "PersonalInfo": personalinfo_contract,
+        "IbetShareExchange": ibet_exchange_contract(payment_gateway_contract["address"]),
+        "IbetStraightBondExchange": ibet_exchange_contract(payment_gateway_contract["address"]),
+        "IbetMembershipExchange": ibet_exchange_contract(payment_gateway_contract["address"]),
+        "IbetCouponExchange": ibet_exchange_contract(payment_gateway_contract["address"]),
+        "TokenList": tokenlist_contract,
+        "E2EMessaging": e2e_messaging_contract,
+        "IbetEscrow": ibet_escrow_contract,
+        "IbetSecurityTokenEscrow": ibet_st_escrow_contract
     }
-    return contracts
 
 
 # テーブルの自動作成・自動削除
@@ -243,7 +269,7 @@ def block_number(request):
 
 # セッションの作成・自動ロールバック
 @pytest.fixture(scope='function')
-def session(request, db):
+def session(request, db) -> Session:
     session = db_session()
 
     def teardown():
@@ -283,7 +309,7 @@ def mocked_company_list(request):
     return mocked_company_list
 
 
-def ibet_exchange_contract(payment_gateway_address):
+def ibet_exchange_contract(payment_gateway_address) -> DeployedContract:
     deployer = eth_account['deployer']
 
     web3.eth.default_account = deployer['account_address']

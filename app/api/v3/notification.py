@@ -140,7 +140,10 @@ class Notifications(BaseResource):
                     "SellAgreement",
                     "SellSettlementOK",
                     "SellSettlementNG",
-                    "Transfer"
+                    "Transfer",
+                    "ApplyForTransfer",
+                    "ApproveTransfer",
+                    "CancelTransfer"
                 ],
             },
             "priority": {

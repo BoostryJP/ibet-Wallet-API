@@ -1059,7 +1059,10 @@ paths:
             "SellAgreement",
             "SellSettlementOK",
             "SellSettlementNG",
-            "Transfer"
+            "Transfer",
+            "ApplyForTransfer",
+            "ApproveTransfer",
+            "CancelTransfer"
           ]
         - name: priority
           in: query
@@ -1123,7 +1126,10 @@ paths:
                             SellAgreement,
                             SellSettlementOK,
                             SellSettlementNG,
-                            Transfer
+                            Transfer,
+                            ApplyForTransfer,
+                            ApproveTransfer,
+                            CancelTransfer
                           ]
                         id:
                           type: string
@@ -1158,7 +1164,7 @@ paths:
                               type: string
                             token_type:
                               type: string
-                              enum: [IbetStraightBond,IbetMembership,IbetCoupon]
+                              enum: [IbetStraightBond, IbetShare, IbetMembership, IbetCoupon]
                         account_address:
                           type: string
                         sort_id:

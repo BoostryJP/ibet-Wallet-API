@@ -224,10 +224,154 @@ class WatchTransfer(Watcher):
             db_session.merge(notification)
 
 
+# イベント：トークン移転申請
+class WatchApplyForTransfer(Watcher):
+    """Watch Token ApplyForTransfer Event
+
+    - Process for registering a notification when application for transfer is submitted
+    - Register a notification only if the account address (private key address) is the source of the transfer.
+    """
+    def __init__(self):
+        super().__init__("ApplyForTransfer", {})
+
+    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+        company_list = CompanyList.get()
+        for entry in log_entries:
+            if not token_list.is_registered(entry["address"]):
+                continue
+
+            token_owner_address = Contract.call_function(
+                contract=token_contract,
+                function_name="owner",
+                args=(),
+                default_returns=""
+            )
+            token_name = Contract.call_function(
+                contract=token_contract,
+                function_name="name",
+                args=(),
+                default_returns=""
+            )
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": entry["address"],
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": token_type
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = NotificationType.APPLY_FOR_TRANSFER.value
+            notification.priority = 0
+            notification.address = entry["args"]["to"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+
+# イベント：トークン移転承諾
+class WatchApproveTransfer(Watcher):
+    """Watch Token ApproveTransfer Event
+
+    - Process for registering a notification when application for transfer is approved
+    - Register a notification only if the account address (private key address) is the source of the transfer.
+    """
+    def __init__(self):
+        super().__init__("ApproveTransfer", {})
+
+    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+        company_list = CompanyList.get()
+        for entry in log_entries:
+            if not token_list.is_registered(entry["address"]):
+                continue
+
+            token_owner_address = Contract.call_function(
+                contract=token_contract,
+                function_name="owner",
+                args=(),
+                default_returns=""
+            )
+            token_name = Contract.call_function(
+                contract=token_contract,
+                function_name="name",
+                args=(),
+                default_returns=""
+            )
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": entry["address"],
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": token_type
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = NotificationType.APPROVE_TRANSFER.value
+            notification.priority = 0
+            notification.address = entry["args"]["from"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+
+# イベント：トークン移転申請取消
+class WatchCancelTransfer(Watcher):
+    """Watch Token CancelTransfer Event
+
+    - Process for registering a notification when application for transfer is canceled
+    - Register a notification only if the account address (private key address) is the source of the transfer.
+    """
+    def __init__(self):
+        super().__init__("CancelTransfer", {})
+
+    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+        company_list = CompanyList.get()
+        for entry in log_entries:
+            if not token_list.is_registered(entry["address"]):
+                continue
+
+            token_owner_address = Contract.call_function(
+                contract=token_contract,
+                function_name="owner",
+                args=(),
+                default_returns=""
+            )
+            token_name = Contract.call_function(
+                contract=token_contract,
+                function_name="name",
+                args=(),
+                default_returns=""
+            )
+            company = company_list.find(token_owner_address)
+            metadata = {
+                "company_name": company.corporate_name,
+                "token_address": entry["address"],
+                "token_name": token_name,
+                "exchange_address": "",
+                "token_type": token_type
+            }
+            notification = Notification()
+            notification.notification_id = self._gen_notification_id(entry)
+            notification.notification_type = NotificationType.CANCEL_TRANSFER.value
+            notification.priority = 0
+            notification.address = entry["args"]["from"]
+            notification.block_timestamp = self._gen_block_timestamp(entry)
+            notification.args = dict(entry["args"])
+            notification.metainfo = metadata
+            db_session.merge(notification)
+
+
 # メイン処理
 def main():
     watchers = [
         WatchTransfer(),
+        WatchApplyForTransfer(),
+        WatchApproveTransfer(),
+        WatchCancelTransfer()
     ]
 
     e = ThreadPoolExecutor(max_workers=WORKER_COUNT)

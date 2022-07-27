@@ -151,3 +151,6 @@ BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
 
 # トークン関連通知
 TOKEN_NOTIFICATION_ENABLED = False if os.environ.get('TOKEN_NOTIFICATION_ENABLED') == '0' else True
+
+# Exchange関連通知
+EXCHANGE_NOTIFICATION_ENABLED = False if os.environ.get("EXCHANGE_NOTIFICATION_ENABLED") == "0" else True

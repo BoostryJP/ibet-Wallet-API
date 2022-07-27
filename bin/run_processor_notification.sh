@@ -20,33 +20,36 @@
 # shellcheck disable=SC1090
 source ~/.bash_profile
 
+# shellcheck disable=SC2164
 cd /app/ibet-Wallet-API
 
 if [ "$TOKEN_NOTIFICATION_ENABLED" = 1 ]; then
   python batch/processor_Notifications_Token.py &
 fi
 
-if [ "$BOND_TOKEN_ENABLED" = 1 ]; then
-  if [ ! -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    python batch/processor_Notifications_Bond_Exchange.py &
+if [ -z "$EXCHANGE_NOTIFICATION_ENABLED" ] || [ "$EXCHANGE_NOTIFICATION_ENABLED" -ne 0 ]; then
+  if [ "$BOND_TOKEN_ENABLED" = 1 ]; then
+    if [ ! -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" ]; then
+      python batch/processor_Notifications_Bond_Exchange.py &
+    fi
   fi
-fi
 
-if [ "$SHARE_TOKEN_ENABLED" = 1 ]; then
-  if [ ! -z "${IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    python batch/processor_Notifications_Share_Exchange.py &
+  if [ "$SHARE_TOKEN_ENABLED" = 1 ]; then
+    if [ ! -z "${IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS}" ]; then
+      python batch/processor_Notifications_Share_Exchange.py &
+    fi
   fi
-fi
 
-if [ "$MEMBERSHIP_TOKEN_ENABLED" = 1 ]; then
-  if [ ! -z "${IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    python batch/processor_Notifications_Membership_Exchange.py &
+  if [ "$MEMBERSHIP_TOKEN_ENABLED" = 1 ]; then
+    if [ ! -z "${IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
+      python batch/processor_Notifications_Membership_Exchange.py &
+    fi
   fi
-fi
 
-if [ "$COUPON_TOKEN_ENABLED" = 1 ]; then
-  if [ ! -z "${IBET_CP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-    python batch/processor_Notifications_Coupon_Exchange.py &
+  if [ "$COUPON_TOKEN_ENABLED" = 1 ]; then
+    if [ ! -z "${IBET_CP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
+      python batch/processor_Notifications_Coupon_Exchange.py &
+    fi
   fi
 fi
 

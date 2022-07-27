@@ -29,6 +29,9 @@ elif [ "${RUN_MODE}" == "indexer" ]; then
   ./bin/healthcheck_indexer.sh
 elif [ "${RUN_MODE}" == "processor_notification" ]; then
   ./bin/healthcheck_processor_notification.sh
+elif [ "${RUN_MODE}" == "batch" ]; then
+  ./bin/healthcheck_indexer.sh || exit 1
+  ./bin/healthcheck_processor_notification.sh
 else
   echo "RUN_MODE is invalid value." >&2
   exit 1
