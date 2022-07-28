@@ -1795,5 +1795,3 @@ class CouponTokenAddresses(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return validator.document
-
-
