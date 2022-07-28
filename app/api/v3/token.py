@@ -23,6 +23,7 @@ from sqlalchemy import (
     desc,
 )
 from typing import Optional
+from web3 import Web3
 
 from app import log
 from app.api.common import BaseResource
@@ -67,7 +68,14 @@ class StraightBondTokens(BaseResource):
         # Validation
         request_json = StraightBondTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
+        target_address_list = []
+        for address in request_json["address_list"]:
+            try:
+                target_address_list.append(to_checksum_address(address))
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
+
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
@@ -529,7 +537,14 @@ class ShareTokens(BaseResource):
         # Validation
         request_json = ShareTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
+        target_address_list = []
+        for address in request_json["address_list"]:
+            try:
+                target_address_list.append(to_checksum_address(address))
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
+
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
@@ -991,7 +1006,14 @@ class MembershipTokens(BaseResource):
         # Validation
         request_json = MembershipTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
+        target_address_list = []
+        for address in request_json["address_list"]:
+            try:
+                target_address_list.append(to_checksum_address(address))
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
+
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
@@ -1391,7 +1413,14 @@ class CouponTokens(BaseResource):
         # Validation
         request_json = CouponTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
+        target_address_list = []
+        for address in request_json["address_list"]:
+            try:
+                target_address_list.append(to_checksum_address(address))
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
+
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
