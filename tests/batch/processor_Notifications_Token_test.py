@@ -44,8 +44,10 @@ from tests.contract_modules import (
     register_share_list,
     share_set_transfer_approval_required,
     share_apply_for_transfer,
-    share_transfer_to_exchange,
-    register_personalinfo, transfer_token, transfer_share_token, share_approve_transfer, share_cancel_transfer
+    register_personalinfo,
+    transfer_share_token,
+    share_approve_transfer,
+    share_cancel_transfer
 )
 
 if TYPE_CHECKING:

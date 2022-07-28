@@ -27,7 +27,7 @@ if [ "$TOKEN_NOTIFICATION_ENABLED" = 1 ]; then
   python batch/processor_Notifications_Token.py &
 fi
 
-if [ -z "$EXCHANGE_NOTIFICATION_ENABLED" ] || [ "$EXCHANGE_NOTIFICATION_ENABLED" -ne 0 ]; then
+if [ "$EXCHANGE_NOTIFICATION_ENABLED" = 1 ]; then
   if [ "$BOND_TOKEN_ENABLED" = 1 ]; then
     if [ ! -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" ]; then
       python batch/processor_Notifications_Bond_Exchange.py &
