@@ -828,12 +828,12 @@ class TestV3TokenCouponTokens:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        invalid_key_value = {
+        invalid_key_value_1 = {
             "transferable": "invalid_param",
             "status": "invalid_param",
             "initial_offering_status": "invalid_param",
         }
-        for key, value in invalid_key_value.items():
+        for key, value in invalid_key_value_1.items():
             resp: _ResultBase = client.simulate_get(self.apiurl, params={
                 key: value
             })
@@ -842,12 +842,12 @@ class TestV3TokenCouponTokens:
             assert resp.json["title"] == "Invalid parameter"
             assert resp.json["description"] == f'The "{key}" parameter is invalid. The value of the parameter must be "true" or "false".'
 
-        invalid_key_value = {
+        invalid_key_value_2 = {
             "offset": "invalid_param",
             "limit": "invalid_param"
         }
-        for key, value in invalid_key_value.items():
-            resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        for key, value in invalid_key_value_2.items():
+            resp = client.simulate_get(self.apiurl, params={
                 key: value
             })
 
@@ -862,3 +862,20 @@ class TestV3TokenCouponTokens:
                     ]
                 }
             }
+
+        invalid_key_value_list = [
+            {"address_list": ["invalid_address2", "invalid_address1"]},
+            {"address_list": ["invalid_address1", "0x000000000000000000000000000000"]}
+        ]
+        for invalid_key_value in  invalid_key_value_list:
+            for key in invalid_key_value.keys():
+                resp = client.simulate_get(self.apiurl, params={
+                    key: invalid_key_value[key]
+                })
+
+                assert resp.status_code == 400
+                assert resp.json["meta"] == {
+                    "code": 88,
+                    "message": "Invalid Parameter",
+                    "description": f"invalid token_address: {invalid_key_value[key][0]}"
+                }

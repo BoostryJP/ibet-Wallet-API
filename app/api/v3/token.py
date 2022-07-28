@@ -67,7 +67,6 @@ class StraightBondTokens(BaseResource):
         # Validation
         request_json = StraightBondTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
@@ -90,8 +89,8 @@ class StraightBondTokens(BaseResource):
         query = session.query(IDXBondToken).\
             join(Listing, Listing.token_address == IDXBondToken.token_address).\
             filter(Listing.is_public == True)
-        if len(target_address_list) > 0:
-            query = query.filter(IDXBondToken.token_address.in_(target_address_list))
+        if len(request_json["address_list"]) > 0:
+            query = query.filter(IDXBondToken.token_address.in_(request_json["address_list"]))
         total = query.count()
 
         # Search Filter
@@ -280,6 +279,13 @@ class StraightBondTokens(BaseResource):
                 "nullable": True,
             },
         })
+
+        for address in request_json["address_list"]:
+            try:
+                to_checksum_address(address)
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
@@ -529,7 +535,6 @@ class ShareTokens(BaseResource):
         # Validation
         request_json = ShareTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
@@ -552,8 +557,8 @@ class ShareTokens(BaseResource):
         query = session.query(IDXShareToken).\
             join(Listing, Listing.token_address == IDXShareToken.token_address).\
             filter(Listing.is_public == True)
-        if len(target_address_list) > 0:
-            query = query.filter(IDXShareToken.token_address.in_(target_address_list))
+        if len(request_json["address_list"]) > 0:
+            query = query.filter(IDXShareToken.token_address.in_(request_json["address_list"]))
         total = query.count()
 
         # Search Filter
@@ -745,6 +750,13 @@ class ShareTokens(BaseResource):
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
+
+        for address in request_json["address_list"]:
+            try:
+                to_checksum_address(address)
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
 
         return validator.document
 
@@ -991,7 +1003,6 @@ class MembershipTokens(BaseResource):
         # Validation
         request_json = MembershipTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
@@ -1011,8 +1022,8 @@ class MembershipTokens(BaseResource):
         query = session.query(IDXMembershipToken).\
             join(Listing, Listing.token_address == IDXMembershipToken.token_address).\
             filter(Listing.is_public == True)
-        if len(target_address_list) > 0:
-            query = query.filter(IDXMembershipToken.token_address.in_(target_address_list))
+        if len(request_json["address_list"]) > 0:
+            query = query.filter(IDXMembershipToken.token_address.in_(request_json["address_list"]))
         total = query.count()
 
         # Search Filter
@@ -1176,6 +1187,13 @@ class MembershipTokens(BaseResource):
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
+
+        for address in request_json["address_list"]:
+            try:
+                to_checksum_address(address)
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
 
         return validator.document
 
@@ -1391,7 +1409,6 @@ class CouponTokens(BaseResource):
         # Validation
         request_json = CouponTokens.validate(req)
 
-        target_address_list = [to_checksum_address(address) for address in request_json["address_list"]]
         owner_address: Optional[str] = request_json.get("owner_address", None)
         name: Optional[str] = request_json.get("name", None)
         symbol: Optional[str] = request_json.get("symbol", None)
@@ -1411,8 +1428,8 @@ class CouponTokens(BaseResource):
         query = session.query(IDXCouponToken).\
             join(Listing, Listing.token_address == IDXCouponToken.token_address).\
             filter(Listing.is_public == True)
-        if len(target_address_list) > 0:
-            query = query.filter(IDXCouponToken.token_address.in_(target_address_list))
+        if len(request_json["address_list"]) > 0:
+            query = query.filter(IDXCouponToken.token_address.in_(request_json["address_list"]))
         total = query.count()
 
         # Search Filter
@@ -1576,6 +1593,13 @@ class CouponTokens(BaseResource):
 
         if not validator.validate(request_json):
             raise InvalidParameterError(validator.errors)
+
+        for address in request_json["address_list"]:
+            try:
+                to_checksum_address(address)
+            except ValueError:
+                description = f"invalid token_address: {address}"
+                raise InvalidParameterError(description=description)
 
         return validator.document
 
@@ -1771,5 +1795,3 @@ class CouponTokenAddresses(BaseResource):
             raise InvalidParameterError(validator.errors)
 
         return validator.document
-
-
