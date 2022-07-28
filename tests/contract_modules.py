@@ -26,6 +26,7 @@ from eth_utils import to_checksum_address
 from app import config
 from app.contracts import Contract
 from tests.account_config import eth_account
+from tests.conftest import TestAccount, DeployedContract
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -171,6 +172,17 @@ def bond_transfer_to_exchange(invoker, bond_exchange, bond_token, amount):
         'IbetStraightBond', bond_token['address'])
 
     tx_hash = TokenContract.functions.transfer(bond_exchange['address'], amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.wait_for_transaction_receipt(tx_hash)
+
+
+# 債券トークンの移転
+def transfer_bond_token(invoker: TestAccount, to: TestAccount, token: DeployedContract, amount: int):
+    web3.eth.default_account = invoker['account_address']
+    TokenContract = Contract. \
+        get_contract('IbetStraightBond', token['address'])
+    tx_hash = TokenContract.functions. \
+        transfer(to["account_address"], amount). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.wait_for_transaction_receipt(tx_hash)
 
@@ -395,6 +407,17 @@ def share_transfer_to_exchange(invoker, exchange, token, amount):
         get_contract('IbetShare', token['address'])
     tx_hash = TokenContract.functions. \
         transfer(exchange['address'], amount). \
+        transact({'from': invoker['account_address'], 'gas': 4000000})
+    web3.eth.wait_for_transaction_receipt(tx_hash)
+
+
+# 株式トークンの移転
+def transfer_share_token(invoker: TestAccount, to: TestAccount, token: DeployedContract, amount: int):
+    web3.eth.default_account = invoker['account_address']
+    TokenContract = Contract. \
+        get_contract('IbetShare', token['address'])
+    tx_hash = TokenContract.functions. \
+        transfer(to["account_address"], amount). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.wait_for_transaction_receipt(tx_hash)
 

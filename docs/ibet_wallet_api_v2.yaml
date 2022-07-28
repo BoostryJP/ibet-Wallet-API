@@ -4868,6 +4868,9 @@ paths:
                               SellSettlementOK,
                               SellSettlementNG,
                               Transfer,
+                              ApplyForTransfer,
+                              ApproveTransfer,
+                              CancelTransfer
                             ]
                         id:
                           type: string
@@ -4902,7 +4905,7 @@ paths:
                             token_type:
                               type: string
                               enum:
-                                [IbetStraightBond, IbetMembership, IbetCoupon]
+                                [IbetStraightBond, IbetShare, IbetMembership, IbetCoupon]
                         account_address:
                           type: string
                         sort_id:
@@ -4969,6 +4972,9 @@ paths:
                         SellSettlementOK,
                         SellSettlementNG,
                         Transfer,
+                        ApplyForTransfer,
+                        ApproveTransfer,
+                        CancelTransfer
                       ]
                   id:
                     type: string
