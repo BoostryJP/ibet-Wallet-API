@@ -23,7 +23,6 @@ from sqlalchemy import (
     desc,
 )
 from typing import Optional
-from web3 import Web3
 
 from app import log
 from app.api.common import BaseResource
