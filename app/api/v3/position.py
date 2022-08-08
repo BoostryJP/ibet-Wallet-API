@@ -112,7 +112,7 @@ class BasePosition(BaseResource):
         include_token_details = True if request_json["include_token_details"] == "true" else False
         query = session.query(Listing.token_address, IDXPosition, self.idx_token_model).\
             join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address).\
-            outerjoin(IDXPosition, Listing.token_address == IDXPosition.token_address).\
+            join(IDXPosition, Listing.token_address == IDXPosition.token_address).\
             filter(IDXPosition.account_address == account_address).filter(
                 or_(
                     IDXPosition.balance != 0,
@@ -540,7 +540,7 @@ class BasePositionMembership(BasePosition):
         include_token_details = True if request_json["include_token_details"] == "true" else False
         query = session.query(Listing.token_address, IDXPosition, self.idx_token_model).\
             join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address).\
-            outerjoin(IDXPosition, Listing.token_address == IDXPosition.token_address).\
+            join(IDXPosition, Listing.token_address == IDXPosition.token_address).\
             filter(IDXPosition.account_address == account_address).filter(
                 or_(
                     IDXPosition.balance != 0,
