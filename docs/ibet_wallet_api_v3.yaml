@@ -41,6 +41,12 @@ paths:
           description: "include token details"
           required: false
           type: boolean
+        - name: enable_index
+          in: query
+          description: "enable using indexed position data"
+          required: false
+          type: boolean
+          default: false
         - name: offset
           in: query
           description: "start position"
@@ -288,6 +294,12 @@ paths:
           description: "include token details"
           required: false
           type: boolean
+        - name: enable_index
+          in: query
+          description: "enable using indexed position data"
+          required: false
+          type: boolean
+          default: false
         - name: offset
           in: query
           description: "start position"
@@ -583,6 +595,12 @@ paths:
           description: "include token details"
           required: false
           type: boolean
+        - name: enable_index
+          in: query
+          description: "enable using indexed position data"
+          required: false
+          type: boolean
+          default: false
         - name: offset
           in: query
           description: "start position"
@@ -814,6 +832,12 @@ paths:
           description: "include token details"
           required: false
           type: boolean
+        - name: enable_index
+          in: query
+          description: "enable using indexed position data"
+          required: false
+          type: boolean
+          default: false
         - name: offset
           in: query
           description: "start position"

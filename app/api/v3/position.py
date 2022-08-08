@@ -16,8 +16,15 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from decimal import Decimal
 from cerberus import Validator
 from eth_utils import to_checksum_address
+from sqlalchemy import (
+    or_,
+    and_
+)
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import sum as sum_
 from typing import (
     Union,
     Type
@@ -35,7 +42,15 @@ from app.errors import (
 )
 from app.model.db import (
     Listing,
-    IDXTransfer
+    IDXTransfer,
+    IDXPosition,
+    IDXTokenModel,
+    IDXConsumeCoupon,
+    IDXTokenInstance,
+    IDXShareToken,
+    IDXBondToken,
+    IDXCouponToken,
+    IDXMembershipToken
 )
 from app.model.blockchain import (
     ShareToken,
@@ -52,6 +67,7 @@ class BasePosition(BaseResource):
     token_enabled: bool
     token_type: str
     token_model: Union[Type[ShareToken], Type[BondToken], Type[MembershipToken], Type[CouponToken]]
+    idx_token_model: IDXTokenModel
     exchange_contract_name: str
 
     def on_get_list(self, req, res, account_address=None):
@@ -68,12 +84,80 @@ class BasePosition(BaseResource):
         except:
             raise InvalidParameterError(description="invalid account_address")
         request_json = BasePosition.validate(req)
-        offset = request_json["offset"]
-        limit = request_json["limit"]
-        include_token_details = True if request_json["include_token_details"] == "true" else False
+        enable_index = True if request_json["enable_index"] == "true" else False
 
         session = req.context["session"]
 
+        if enable_index:
+            # If enable_index flag is set true, get position data from DB.
+            data = self.on_get_list_from_index(
+                request_json=request_json,
+                session=session,
+                account_address=account_address
+            )
+            self.on_success(res, data)
+            return
+
+        # If enable_index flag is not set or set false, get position data from contract.
+        data = self.on_get_list_from_contract(
+            request_json=request_json,
+            session=session,
+            account_address=account_address
+        )
+        self.on_success(res, data)
+
+    def on_get_list_from_index(self, request_json: dict, session: Session, account_address: str):
+        offset = request_json["offset"]
+        limit = request_json["limit"]
+        include_token_details = True if request_json["include_token_details"] == "true" else False
+        query = session.query(Listing.token_address, IDXPosition, self.idx_token_model). \
+            join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
+            join(IDXPosition, Listing.token_address == IDXPosition.token_address). \
+            filter(IDXPosition.account_address == account_address). \
+            filter(or_(
+                IDXPosition.balance != 0,
+                IDXPosition.pending_transfer != 0,
+                IDXPosition.exchange_balance != 0,
+                IDXPosition.exchange_commitment != 0
+            )). \
+            order_by(Listing.id)
+
+        total = query.count()
+        count = total
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.offset(offset)
+
+        _token_position_list: list[tuple[str, IDXPosition, IDXTokenInstance]] = query.all()
+
+        position_list = []
+        for item in _token_position_list:
+            position = {
+                "balance": item[1].balance if item[1] and item[1].balance else 0,
+                "pending_transfer": item[1].pending_transfer if item[1] and item[1].pending_transfer else 0,
+                "exchange_balance": item[1].exchange_balance if item[1] and item[1].exchange_balance else 0,
+                "exchange_commitment": item[1].exchange_commitment if item[1] and item[1].exchange_commitment else 0
+            }
+            if include_token_details:
+                position["token"] = self.token_model.from_model(item[2]).__dict__
+            else:
+                position["token_address"] = item[2].token_address
+            position_list.append(position)
+        return {
+            "result_set": {
+                "count": count,
+                "offset": offset,
+                "limit": limit,
+                "total": total
+            },
+            "positions": position_list
+        }
+
+    def on_get_list_from_contract(self, request_json: dict, session: Session, account_address: str):
+        offset = request_json["offset"]
+        limit = request_json["limit"]
+        include_token_details = True if request_json["include_token_details"] == "true" else False
         # Get TokenList Contract
         _list_contract = Contract.get_contract(
             contract_name="TokenList",
@@ -118,7 +202,7 @@ class BasePosition(BaseResource):
                 count += 1
                 limit_count += 1
 
-        data = {
+        return {
             "result_set": {
                 "count": count,
                 "offset": offset,
@@ -127,7 +211,6 @@ class BasePosition(BaseResource):
             },
             "positions": position_list
         }
-        self.on_success(res, data)
 
     def on_get_from_contract_address(self, req, res, account_address=None, contract_address=None):
 
@@ -260,12 +343,19 @@ class BasePosition(BaseResource):
     def validate(req):
         request_json = {
             "include_token_details": req.get_param("include_token_details"),
+            "enable_index": req.get_param("enable_index"),
             "offset": req.get_param("offset"),
             "limit": req.get_param("limit"),
         }
 
         validator = Validator({
             "include_token_details": {
+                "type": "string",
+                "required": False,
+                "nullable": True,
+                "allowed": ["true", "false"],
+            },
+            "enable_index": {
                 "type": "string",
                 "required": False,
                 "nullable": True,
@@ -299,6 +389,7 @@ class BasePositionShare(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetShare"
         self.token_model = ShareToken
+        self.idx_token_model = IDXShareToken
 
     def _get_position(self, account_address, token_address, session, is_detail=False):
 
@@ -370,6 +461,7 @@ class BasePositionStraightBond(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetStraightBond"
         self.token_model = BondToken
+        self.idx_token_model = IDXBondToken
 
     def _get_position(self, account_address, token_address, session, is_detail=False):
 
@@ -440,6 +532,53 @@ class BasePositionMembership(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetMembership"
         self.token_model = MembershipToken
+        self.idx_token_model = IDXMembershipToken
+
+    def on_get_list_from_index(self, request_json: dict, session: Session, account_address: str):
+        offset = request_json["offset"]
+        limit = request_json["limit"]
+        include_token_details = True if request_json["include_token_details"] == "true" else False
+        query = session.query(Listing.token_address, IDXPosition, self.idx_token_model). \
+            join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
+            join(IDXPosition, Listing.token_address == IDXPosition.token_address). \
+            filter(IDXPosition.account_address == account_address). \
+            filter(or_(
+                IDXPosition.balance != 0,
+                IDXPosition.exchange_balance != 0,
+                IDXPosition.exchange_commitment != 0
+            )). \
+            order_by(Listing.id)
+
+        total = query.count()
+        count = total
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.offset(offset)
+
+        _token_position_list: list[tuple[str, IDXPosition, IDXTokenInstance]] = query.all()
+
+        position_list = []
+        for item in _token_position_list:
+            position = {
+                "balance": item[1].balance if item[1] and item[1].balance else 0,
+                "exchange_balance": item[1].exchange_balance if item[1] and item[1].exchange_balance else 0,
+                "exchange_commitment": item[1].exchange_commitment if item[1] and item[1].exchange_commitment else 0,
+            }
+            if include_token_details:
+                position["token"] = self.token_model.from_model(item[2]).__dict__
+            else:
+                position["token_address"] = item[2].token_address
+            position_list.append(position)
+        return {
+            "result_set": {
+                "count": count,
+                "offset": offset,
+                "limit": limit,
+                "total": total
+            },
+            "positions": position_list
+        }
 
 
 class BasePositionCoupon(BasePosition):
@@ -448,6 +587,96 @@ class BasePositionCoupon(BasePosition):
         self.token_enabled = config.SHARE_TOKEN_ENABLED
         self.token_type = "IbetCoupon"
         self.token_model = CouponToken
+        self.idx_token_model = IDXCouponToken
+
+    def on_get_list_from_index(self, request_json: dict, session: Session, account_address: str):
+        offset = request_json["offset"]
+        limit = request_json["limit"]
+        include_token_details = True if request_json["include_token_details"] == "true" else False
+
+        # NOTE: Sub Query for sum of used amount
+        sub_tx_used = (
+            session.query(
+                sum_(IDXConsumeCoupon.amount).label("used"),
+                IDXConsumeCoupon.token_address,
+                IDXConsumeCoupon.account_address
+            ).
+            filter(IDXConsumeCoupon.account_address == account_address).
+            group_by(
+                IDXConsumeCoupon.token_address,
+                IDXConsumeCoupon.account_address
+            ).
+            subquery("sub_tx_used")
+        )
+        query = (
+            session.query(Listing.token_address, IDXPosition, self.idx_token_model, sub_tx_used.c.used).
+            join(
+                self.idx_token_model,
+                Listing.token_address == self.idx_token_model.token_address
+            ).
+            outerjoin(IDXPosition, and_(
+                Listing.token_address == IDXPosition.token_address,
+                IDXPosition.account_address == account_address
+            )).
+            outerjoin(sub_tx_used, and_(
+                Listing.token_address == sub_tx_used.c.token_address,
+                sub_tx_used.c.account_address == account_address
+            )).
+            filter(
+                or_(
+                    IDXPosition.balance != 0,
+                    IDXPosition.exchange_balance != 0,
+                    IDXPosition.exchange_commitment != 0,
+                    sub_tx_used.c.used != 0,
+                    session.query(IDXTransfer).filter(
+                        and_(
+                            IDXTransfer.token_address == Listing.token_address,
+                            IDXTransfer.to_address == account_address
+                        )
+                    ).exists()
+                )
+            ).order_by(Listing.id)
+        )
+
+        total = query.count()
+        count = total
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.offset(offset)
+
+        _token_position_list: list[tuple[str, IDXPosition, IDXTokenInstance, Decimal | None]] = query.all()
+
+        position_list = []
+        for item in _token_position_list:
+            if item[1] is None:
+                position = {
+                    "balance": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                    "used": int(item[3]) if item[3] else 0
+                }
+            else:
+                position = {
+                    "balance": item[1].balance or 0,
+                    "exchange_balance": item[1].exchange_balance or 0,
+                    "exchange_commitment": item[1].exchange_commitment or 0,
+                    "used": int(item[3]) if item[3] else 0
+                }
+            if include_token_details:
+                position["token"] = self.token_model.from_model(item[2]).__dict__
+            else:
+                position["token_address"] = item[2].token_address
+            position_list.append(position)
+        return {
+            "result_set": {
+                "count": count,
+                "offset": offset,
+                "limit": limit,
+                "total": total
+            },
+            "positions": position_list
+        }
 
     def _get_position(self, account_address, token_address, session, is_detail=False):
 
