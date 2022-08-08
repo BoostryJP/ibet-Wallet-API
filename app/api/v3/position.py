@@ -21,8 +21,7 @@ from cerberus import Validator
 from eth_utils import to_checksum_address
 from sqlalchemy import (
     or_,
-    and_,
-    exists
+    and_
 )
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import sum as sum_
