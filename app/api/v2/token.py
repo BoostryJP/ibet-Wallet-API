@@ -175,6 +175,49 @@ class TokenHolders(BaseResource):
         self.on_success(res, resp_body)
 
 
+class TokenHoldersCount(BaseResource):
+    """
+    Endpoint: /v2/Token/{contract_address}/Holders/Count
+    """
+
+    def on_get(self, req, res, contract_address=None, **kwargs):
+        session = req.context["session"]
+
+        # Validation
+        try:
+            contract_address = to_checksum_address(contract_address)
+            if not Web3.isAddress(contract_address):
+                description = 'invalid contract_address'
+                raise InvalidParameterError(description=description)
+        except:
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+
+        # Check if the token exists in the list
+        listed_token = session.query(Listing).\
+            filter(Listing.token_address == contract_address).\
+            first()
+        if listed_token is None:
+            raise DataNotExistsError('contract_address: %s' % contract_address)
+
+        # Get token holders
+        # add order_by id to bridge the difference between postgres and mysql
+        _count = session.query(IDXPosition). \
+            filter(IDXPosition.token_address == contract_address). \
+            filter(or_(
+                IDXPosition.balance > 0,
+                IDXPosition.pending_transfer > 0,
+                IDXPosition.exchange_balance > 0,
+                IDXPosition.exchange_commitment > 0)). \
+            order_by(desc(IDXPosition.id)).count()
+
+        resp_body = {
+            "count": _count
+        }
+
+        self.on_success(res, resp_body)
+
+
 class TokenHoldersCollection(BaseResource):
     """
     Endpoint: /v2/Token/{contract_address}/Holders/Collection

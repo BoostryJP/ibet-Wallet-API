@@ -2032,6 +2032,47 @@ paths:
             properties:
               meta:
                 $ref: "#/definitions/404NotFoundError"
+  /Token/{contract_address}/Holders/Count:
+    parameters:
+      - type: string
+        name: contract_address
+        in: path
+        required: true
+        description: token address
+    get:
+      tags:
+        - "Token"
+      summary: "Token holders count"
+      operationId: "TokenHoldersCount"
+      responses:
+        200:
+          description: Successful Operation
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/200Success"
+              data:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                required:
+                  - count
+        400:
+          description: Invalid Parameter Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/400InvalidParameterError"
+        404:
+          description: Not Found Error
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: "#/definitions/404NotFoundError"
   /Token/{contract_address}/Holders/Collection:
     parameters:
       - type: string
