@@ -47,7 +47,7 @@ from app.model.db import (
     IDXShareToken as ShareTokenModel,
     IDXMembershipToken as MembershipTokenModel,
     IDXCouponToken as CouponTokenModel,
-    TokenModelInstanceTypes
+    IDXTokenInstance
 )
 from app.model.blockchain import (
     CouponToken,
@@ -70,7 +70,7 @@ class Processor:
     class TargetTokenType:
         template: str
         token_class: Type[TokenClassTypes]
-        token_model: Type[TokenModelInstanceTypes]
+        token_model: Type[IDXTokenInstance]
 
     target_token_types: List[TargetTokenType]
     SEC_PER_RECORD: float = TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC/1000

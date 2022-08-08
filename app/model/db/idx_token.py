@@ -338,13 +338,13 @@ class IDXCouponToken(TokenBase):
         }
 
 
-TokenModelClassTypes = Union[
+IDXTokenModel = Union[
     Type[IDXShareToken],
     Type[IDXBondToken],
     Type[IDXMembershipToken],
     Type[IDXCouponToken]
 ]
-TokenModelInstanceTypes = Union[
+IDXTokenInstance = Union[
     IDXBondToken,
     IDXShareToken,
     IDXMembershipToken,

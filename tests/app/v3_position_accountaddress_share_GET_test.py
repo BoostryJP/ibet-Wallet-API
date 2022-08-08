@@ -16,10 +16,15 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from sqlalchemy.orm import Session
 from unittest import mock
 
 from app import config
-from app.model.db import Listing
+from app.model.db import (
+    Listing,
+    IDXPosition,
+    IDXShareToken
+)
 from tests.account_config import eth_account
 from tests.utils import (
     PersonalInfoUtils,
@@ -177,6 +182,69 @@ class TestPositionAccountAddressShare:
         )
 
         return token
+
+    @staticmethod
+    def create_idx_position(session: Session,
+                            token_address: str,
+                            account_address: str,
+                            balance: int | None = None,
+                            pending_transfer: int | None = None,
+                            exchange_balance: int | None = None,
+                            exchange_commitment: int | None = None):
+        if not balance and not exchange_balance and not exchange_commitment and not pending_transfer:
+            return
+        idx_position = IDXPosition()
+        idx_position.token_address = token_address
+        idx_position.account_address = account_address
+        if balance:
+            idx_position.balance = balance
+        if pending_transfer:
+            idx_position.pending_transfer = pending_transfer
+        if exchange_balance:
+            idx_position.exchange_balance = exchange_balance
+        if exchange_commitment:
+            idx_position.exchange_commitment = exchange_commitment
+        session.merge(idx_position)
+        session.commit()
+        pass
+
+    @staticmethod
+    def create_idx_token(session: Session,
+                         token_address: str,
+                         personal_info_address: str,
+                         exchange_address: str | None):
+        # Issue token
+        idx_token = IDXShareToken()
+        idx_token.token_address = token_address
+        idx_token.owner_address = TestPositionAccountAddressShare.issuer["account_address"]
+        idx_token.company_name = ""
+        idx_token.rsa_publickey = ""
+        idx_token.name = "テスト株式"
+        idx_token.symbol = "SHARE"
+        idx_token.token_template ="IbetShare"
+        idx_token.total_supply = 1000000
+        idx_token.issue_price = 1000
+        idx_token.principal_value = 1000
+        idx_token.dividend_information = {
+            'dividends': 1.01,
+            'dividend_record_date': '20200401',
+            'dividend_payment_date': '20200502'
+        }
+        idx_token.cancellation_date = "20200603"
+        idx_token.memo = "メモ"
+        idx_token.transferable = True
+        idx_token.is_offering = False
+        idx_token.status = True
+        idx_token.transfer_approval_required = False
+        idx_token.is_canceled = False
+        idx_token.contact_information = "問い合わせ先"
+        idx_token.privacy_policy = "プライバシーポリシー"
+        idx_token.tradable_exchange = exchange_address
+        idx_token.personal_info_address = personal_info_address
+        idx_token.max_holding_quantity = 1
+        idx_token.max_sell_amount = 1000
+        session.add(idx_token)
+        session.commit()
 
     @staticmethod
     def list_token(token_address, session):
@@ -541,6 +609,465 @@ class TestPositionAccountAddressShare:
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
                     "include_token_details": "true",
+                }
+            )
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "result_set": {
+                "count": 1,
+                "offset": None,
+                "limit": None,
+                "total": 1,
+            },
+            "positions": [
+                {
+                    "token": {
+                        'token_address': token_1.address,
+                        'token_template': 'IbetShare',
+                        'owner_address': self.issuer["account_address"],
+                        'company_name': '',
+                        'rsa_publickey': '',
+                        'name': 'テスト株式',
+                        'symbol': 'SHARE',
+                        'total_supply': 1000000,
+                        'issue_price': 1000,
+                        'principal_value': 1000,
+                        'dividend_information': {
+                            'dividends': 1.01,
+                            'dividend_record_date': '20200401',
+                            'dividend_payment_date': '20200502'
+                        },
+                        'cancellation_date': '20200603',
+                        'memo': 'メモ',
+                        'transferable': True,
+                        'is_offering': False,
+                        'status': True,
+                        'transfer_approval_required': False,
+                        'is_canceled': False,
+                        'contact_information': '問い合わせ先',
+                        'privacy_policy': 'プライバシーポリシー',
+                        'tradable_exchange': config.ZERO_ADDRESS,
+                        'personal_info_address': personal_info_contract["address"],
+                        'max_holding_quantity': 1,
+                        'max_sell_amount': 1000
+                    },
+                    "balance": 1000000,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                },
+            ]
+        }
+
+    # <Normal_4>
+    # List all positions
+    # Indexed: <Normal_1>
+    def test_normal_4(self, client, session, shared_contract):
+        exchange_contract = shared_contract["IbetShareExchange"]
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Prepare data
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract)
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_1 = self.create_balance_data(
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.list_token(token_1.address, session)  # not target
+        self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_2 = self.create_balance_data(
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_2.address, self.account_1["account_address"], balance=1000000)
+        self.list_token(token_2.address, session)  # not target
+        self.create_idx_token(session, token_2.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_3 = self.create_pending_transfer_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.create_idx_position(session, token_3.address, self.account_1["account_address"], balance=999900, pending_transfer=100)
+        self.list_token(token_3.address, session)  # not target
+        self.create_idx_token(session, token_3.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_4 = self.create_pending_transfer_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.create_idx_position(session, token_4.address, self.account_1["account_address"], pending_transfer=1000000)
+        self.list_token(token_4.address, session)
+        self.create_idx_token(session, token_4.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_5 = self.create_commitment_data(
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.create_idx_position(session, token_5.address, self.account_1["account_address"], balance=999900, exchange_commitment=100)
+        self.list_token(token_5.address, session)
+        self.create_idx_token(session, token_5.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_6 = self.create_commitment_data(
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.create_idx_position(session, token_6.address, self.account_1["account_address"], exchange_commitment=1000000)
+        self.list_token(token_6.address, session)
+        self.create_idx_token(session, token_6.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            # Request target API
+            resp = client.simulate_get(
+                self.apiurl.format(account_address=self.account_1["account_address"]),
+                params={
+                    "enable_index": "true"
+                }
+            )
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "result_set": {
+                "count": 6,
+                "offset": None,
+                "limit": None,
+                "total": 6,
+            },
+            "positions": [
+                {
+                    "token_address": token_1.address,
+                    "balance": 1000000,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                },
+                {
+                    "token_address": token_2.address,
+                    "balance": 1000000,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                },
+                {
+                    "token_address": token_3.address,
+                    "balance": 999900,
+                    "pending_transfer": 100,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                },
+                {
+                    "token_address": token_4.address,
+                    "balance": 0,
+                    "pending_transfer": 1000000,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                },
+                {
+                    "token_address": token_5.address,
+                    "balance": 999900,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 100,
+                },
+                {
+                    "token_address": token_6.address,
+                    "balance": 0,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 1000000,
+                },
+            ]
+        }
+
+    # <Normal_5>
+    # Pagination
+    # Indexed: <Normal_2>
+    def test_normal_5(self, client, session, shared_contract):
+        exchange_contract = shared_contract["IbetShareExchange"]
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Prepare data
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_1 = self.create_balance_data(
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.list_token(token_1.address, session)  # not target
+        self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_2 = self.create_balance_data(
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_2.address, self.account_1["account_address"], balance=1000000)
+        self.list_token(token_2.address, session)  # not target
+        self.create_idx_token(session, token_2.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_3 = self.create_pending_transfer_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.create_idx_position(session, token_3.address, self.account_1["account_address"], balance=999900, pending_transfer=100)
+        self.list_token(token_3.address, session)  # not target
+        self.create_idx_token(session, token_3.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_4 = self.create_pending_transfer_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.create_idx_position(session, token_4.address, self.account_1["account_address"], pending_transfer=1000000)
+        self.list_token(token_4.address, session)
+        self.create_idx_token(session, token_4.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_5 = self.create_commitment_data(
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            100
+        )
+        self.create_idx_position(session, token_5.address, self.account_1["account_address"], balance=999900, exchange_commitment=100)
+        self.list_token(token_5.address, session)
+        self.create_idx_token(session, token_5.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_6 = self.create_commitment_data(
+            self.account_1,
+            exchange_contract,
+            personal_info_contract,
+            token_list_contract,
+            1000000
+        )
+        self.create_idx_position(session, token_6.address, self.account_1["account_address"], exchange_commitment=1000000)
+        self.list_token(token_6.address, session)
+        self.create_idx_token(session, token_6.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        token_non = self.create_non_balance_data(
+            self.account_1,
+            self.account_2,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_non.address, self.account_2["account_address"], balance=1000000)
+        self.list_token(token_non.address, session)  # not target
+        self.create_idx_token(session, token_non.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            # Request target API
+            resp = client.simulate_get(
+                self.apiurl.format(account_address=self.account_1["account_address"]),
+                params={
+                    "include_token_details": "false",
+                    "enable_index": "true",
+                    "offset": 1,
+                    "limit": 2,
+                }
+            )
+
+        # Assertion
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "result_set": {
+                "count": 6,
+                "offset": 1,
+                "limit": 2,
+                "total": 6,
+            },
+            "positions": [
+                {
+                    "token_address": token_2.address,
+                    "balance": 1000000,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                },
+                {
+                    "token_address": token_3.address,
+                    "balance": 999900,
+                    "pending_transfer": 100,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                },
+            ]
+        }
+
+    # <Normal_6>
+    # token details
+    # Indexed: <Normal_3>
+    def test_normal_6(self, client, session, shared_contract):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Prepare data
+        token_1 = self.create_balance_data(
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000)
+        self.list_token(token_1.address, session)
+        self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            # Request target API
+            resp = client.simulate_get(
+                self.apiurl.format(account_address=self.account_1["account_address"]),
+                params={
+                    "include_token_details": "true",
+                    "enable_index": "true"
                 }
             )
 

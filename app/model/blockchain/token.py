@@ -42,7 +42,7 @@ from app.model.db import (
     IDXMembershipToken as MembershipTokenModel,
     IDXCouponToken as CouponTokenModel,
 )
-from app.model.db.idx_token import TokenModelClassTypes, TokenModelInstanceTypes
+from app.model.db.idx_token import IDXTokenModel, IDXTokenInstance
 from app.utils.company_list import CompanyList
 
 LOG = log.get_logger()
@@ -61,7 +61,7 @@ TokenInstanceTypes = Union[
 ]
 
 
-def token_db_cache(TargetModel: TokenModelClassTypes):
+def token_db_cache(TargetModel: IDXTokenModel):
     """
     Cache decorator for Token Details
     @param TargetModel: DB model for cache
@@ -84,7 +84,7 @@ def token_db_cache(TargetModel: TokenModelClassTypes):
                 return func(cls, session, token_address)
 
             # Get data from cache
-            cached_token: Optional[TokenModelInstanceTypes] = session.query(TargetModel). \
+            cached_token: Optional[IDXTokenInstance] = session.query(TargetModel). \
                 filter(TargetModel.token_address == token_address). \
                 first()
             if cached_token and cached_token.created + timedelta(seconds=TOKEN_CACHE_TTL) >= datetime.utcnow():

@@ -48,8 +48,8 @@ from .idx_token import (
     IDXShareToken,
     IDXMembershipToken,
     IDXCouponToken,
-    TokenModelClassTypes,
-    TokenModelInstanceTypes
+    IDXTokenModel,
+    IDXTokenInstance
 )
 from .idx_token_list import (
     IDXTokenListItem,
