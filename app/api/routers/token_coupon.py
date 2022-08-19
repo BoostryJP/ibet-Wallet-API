@@ -33,18 +33,10 @@ from app.errors import (
     NotSupportedError, DataNotExistsError
 )
 from app import config
-from app.model.blockchain import (
-    BondToken,
-    ShareToken,
-    CouponToken,
-    MembershipToken
-)
+from app.model.blockchain import CouponToken
 from app.utils.web3_utils import Web3Wrapper
 from app.model.db import (
     Listing,
-    IDXBondToken,
-    IDXShareToken,
-    IDXMembershipToken,
     IDXCouponToken
 )
 
