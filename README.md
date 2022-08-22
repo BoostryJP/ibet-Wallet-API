@@ -5,6 +5,8 @@
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
 
+English | <a href='./README_JA.md'>日本語</a>
+
 <img width="33%" align="right" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png"/>
 
 ## Features
@@ -103,12 +105,6 @@ The main environment variables are as follows.
         <td>False</td>
         <td nowrap>Test database URL</td>
         <td>postgresql://ethuser:ethpass@localhost:5432/ethcache_test</td>
-    </tr>
-    <tr>
-        <td>DATABASE_SCHEMA</td>
-        <td>False</td>
-        <td nowrap>Database schema</td>
-        <td></td>
     </tr>
     <tr>
         <td>WEB3_HTTP_PROVIDER</td>
