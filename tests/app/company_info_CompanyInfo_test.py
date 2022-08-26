@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from unittest import mock
 
 from app.model.db import Company
@@ -28,11 +30,11 @@ class TestCompanyInfoCompanyInfo:
     apiurl_base = '/Companies/'
 
     # 正常系1-1： 発行会社リストに指定したアドレスの情報が存在(ローカルJSON)
-    def test_normal_1_1(self, client, mocked_company_list, session):
+    def test_normal_1_1(self, client: TestClient, mocked_company_list, session: Session):
         eth_address = eth_account['issuer']['account_address']
         apiurl = self.apiurl_base + eth_address
 
-        resp = client.simulate_get(apiurl)
+        resp = client.get(apiurl)
         assumed_body = {
             "address": eth_account['issuer']['account_address'],
             "corporate_name": "株式会社DEMO",
@@ -41,13 +43,13 @@ class TestCompanyInfoCompanyInfo:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # 正常系1-2： 発行会社リストに指定したアドレスの情報が存在(DB)
     @mock.patch("app.config.APP_ENV", "dev")
     @mock.patch("app.config.COMPANY_LIST_LOCAL_MODE", False)
-    def test_normal_1_2(self, client, session):
+    def test_normal_1_2(self, client: TestClient, session: Session):
         _company = Company()
         _company.address = eth_account['issuer']['account_address']
         _company.corporate_name = "株式会社DEMO"
@@ -65,7 +67,7 @@ class TestCompanyInfoCompanyInfo:
         eth_address = eth_account['issuer']['account_address']
         apiurl = self.apiurl_base + eth_address
 
-        resp = client.simulate_get(apiurl)
+        resp = client.get(apiurl)
         assumed_body = {
             "address": eth_account['issuer']['account_address'],
             "corporate_name": "株式会社DEMO",
@@ -74,32 +76,32 @@ class TestCompanyInfoCompanyInfo:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # エラー系1-1： 発行会社リストに指定したアドレスの情報が存在しない
-    def test_error_1_1(self, client, mocked_company_list, session):
+    def test_error_1_1(self, client: TestClient, mocked_company_list, session: Session):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf1'
         apiurl = self.apiurl_base + eth_address
 
-        resp = client.simulate_get(apiurl)
+        resp = client.get(apiurl)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             "code": 30,
             "message": "Data Not Exists",
             "description": "eth_address: " + eth_address
         }
 
     # エラー系2-1： 無効なアドレス
-    def test_error_2_1(self, client, mocked_company_list, session):
+    def test_error_2_1(self, client: TestClient, mocked_company_list, session: Session):
         eth_address = '0x865de50bb0f21c3f318b736c04d2b6ff7dea3bf'  # アドレスが短い
         apiurl = self.apiurl_base + eth_address
 
-        resp = client.simulate_get(apiurl)
+        resp = client.get(apiurl)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             "code": 88,
             "message": "Invalid Parameter",
             "description": "invalid eth_address"

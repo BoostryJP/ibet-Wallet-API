@@ -18,6 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 import sys
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from eth_utils import to_checksum_address
 from app.model.db import (
@@ -46,7 +48,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
-    def test_orderbook_normal_1_1_1(self, client, session):
+    def test_orderbook_normal_1_1_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -77,7 +79,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -89,8 +91,8 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系1-1-2＞
     # 未約定＆未キャンセルの売り注文が1件存在
@@ -100,7 +102,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) アカウントアドレスの指定なし
     #
     # -> リスト1件が返却
-    def test_orderbook_normal_1_1_2(self, client, session):
+    def test_orderbook_normal_1_1_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -130,7 +132,7 @@ class TestDEXMarketStraightBondOrderBook:
             "order_type": "buy"
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -142,8 +144,8 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系1-2＞
     # 未約定＆未キャンセルの売り注文が1件存在
@@ -153,7 +155,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_1_2(self, client, session):
+    def test_orderbook_normal_1_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -184,12 +186,12 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系1-3＞
     # 未約定＆未キャンセルの売り注文が1件存在
@@ -199,7 +201,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_1_3(self, client, session):
+    def test_orderbook_normal_1_3(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -230,12 +232,12 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系1-4＞
     # 未約定＆未キャンセルの売り注文が1件存在
@@ -245,7 +247,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 売り注文と同一のアカウントアドレス　※
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_1_4(self, client, session):
+    def test_orderbook_normal_1_4(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -276,17 +278,17 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": account_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系1-5＞
     # 未約定＆未キャンセルの売り注文が1件存在
     # 限界値
-    def test_orderbook_normal_1_5(self, client, session):
+    def test_orderbook_normal_1_5(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -318,7 +320,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -330,8 +332,8 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系1-6＞
     # 未約定＆未キャンセルの売り注文が1件存在（ただし、他のExchangeのデータ）
@@ -341,7 +343,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_1_6(self, client, session):
+    def test_orderbook_normal_1_6(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -372,12 +374,12 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2-1-1＞
     # 未約定＆未キャンセルの買い注文が1件存在
@@ -387,7 +389,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
-    def test_orderbook_normal_2_1_1(self, client, session):
+    def test_orderbook_normal_2_1_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -418,7 +420,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -430,8 +432,8 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2-1-2＞
     # 未約定＆未キャンセルの買い注文が1件存在
@@ -441,7 +443,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) アカウントアドレスの指定なし
     #
     # -> リスト1件が返却
-    def test_orderbook_normal_2_1_2(self, client, session):
+    def test_orderbook_normal_2_1_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -471,7 +473,7 @@ class TestDEXMarketStraightBondOrderBook:
             "order_type": "sell"
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -483,8 +485,8 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2-2＞
     # 未約定＆未キャンセルの買い注文が1件存在
@@ -494,7 +496,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_2_2(self, client, session):
+    def test_orderbook_normal_2_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -525,12 +527,12 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2-3＞
     # 未約定＆未キャンセルの買い注文が1件存在
@@ -540,7 +542,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_2_3(self, client, session):
+    def test_orderbook_normal_2_3(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -571,12 +573,12 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2-4＞
     # 未約定＆未キャンセルの買い注文が1件存在
@@ -586,7 +588,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 買い注文と同一のアカウントアドレス　※
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_2_4(self, client, session):
+    def test_orderbook_normal_2_4(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -617,17 +619,17 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": account_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2-5＞
     # 未約定＆未キャンセルの買い注文が1件存在
     # 限界値
-    def test_orderbook_normal_2_5(self, client, session):
+    def test_orderbook_normal_2_5(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -659,7 +661,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -671,8 +673,8 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2-6＞
     # 未約定＆未キャンセルの買い注文が1件存在（ただし、他のExchangeのデータ）
@@ -682,7 +684,7 @@ class TestDEXMarketStraightBondOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_orderbook_normal_2_6(self, client, session):
+    def test_orderbook_normal_2_6(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -713,17 +715,17 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系3-1＞
     # 未約定＆未キャンセルの売り注文が複数件存在
     # -> リストのソート順が価格の昇順
-    def test_orderbook_normal_3_1(self, client, session):
+    def test_orderbook_normal_3_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -769,7 +771,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             'order_id': 2,
@@ -785,13 +787,13 @@ class TestDEXMarketStraightBondOrderBook:
         }]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系3-2＞
     # 未約定＆未キャンセルの買い注文が複数件存在
     # -> リストのソート順が価格の降順
-    def test_orderbook_normal_3_2(self, client, session):
+    def test_orderbook_normal_3_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -836,7 +838,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": agent_address,
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             'order_id': 2,
@@ -852,13 +854,13 @@ class TestDEXMarketStraightBondOrderBook:
         }]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系4-1＞
     # 約定済み（※部分約定,約定否認含む）の売り注文が複数存在:アカウントアドレス指定
     #  -> 未約定のOrderBookリストが返却される
-    def test_orderbook_normal_4_1(self, client, session):
+    def test_orderbook_normal_4_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -986,7 +988,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": account_addresses[0],
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             "order_id": 2,
@@ -1002,13 +1004,13 @@ class TestDEXMarketStraightBondOrderBook:
         }]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系4-2＞
     # 約定済み（※部分約定,約定否認含む）の買い注文が複数存在:アカウントアドレス指定
     #  -> 未約定のOrderBookリストが返却される
-    def test_orderbook_normal_4_2(self, client, session):
+    def test_orderbook_normal_4_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1136,7 +1138,7 @@ class TestDEXMarketStraightBondOrderBook:
             "account_address": account_addresses[0],
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
 
         assumed_body = [
             {
@@ -1155,13 +1157,13 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系4-3＞
     # 約定済み（※部分約定,約定否認含む）の売り注文が複数存在:アカウントアドレス指定なし
     #  -> 未約定のOrderBookリストが返却される
-    def test_orderbook_normal_4_3(self, client, session):
+    def test_orderbook_normal_4_3(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1288,7 +1290,7 @@ class TestDEXMarketStraightBondOrderBook:
             "order_type": "buy",
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             "order_id": 0,
@@ -1310,13 +1312,13 @@ class TestDEXMarketStraightBondOrderBook:
         }]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系4-4＞
     # 約定済み（※部分約定,約定否認含む）の買い注文が複数存在:アカウントアドレス指定なし
     #  -> 未約定のOrderBookリストが返却される
-    def test_orderbook_normal_4_4(self, client, session):
+    def test_orderbook_normal_4_4(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1443,7 +1445,7 @@ class TestDEXMarketStraightBondOrderBook:
             "order_type": "sell",
         }
 
-        resp = client.simulate_post(self.apiurl, json=request_body)
+        resp = client.post(self.apiurl, json=request_body)
 
         assumed_body = [
             {
@@ -1468,11 +1470,11 @@ class TestDEXMarketStraightBondOrderBook:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）
-    def test_orderbook_error_1(self, client, session):
+    def test_orderbook_error_1(self, client: TestClient, session: Session):
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         config.BOND_TOKEN_ENABLED = True
@@ -1480,21 +1482,29 @@ class TestDEXMarketStraightBondOrderBook:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'token_address': ['required field'],
-                'order_type': ['required field'],
-            }
+        assert resp.status_code == 422
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'token_address'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                },
+                {
+                    'loc': ['body', 'order_type'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # エラー系2：入力値エラー（headersなし）
-    def test_orderbook_error_2(self, client, session):
+    def test_orderbook_error_2(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1511,17 +1521,17 @@ class TestDEXMarketStraightBondOrderBook:
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter'
         }
 
     # エラー系3-1：入力値エラー（token_addressがアドレスフォーマットではない）
-    def test_orderbook_error_3_1(self, client, session):
+    def test_orderbook_error_3_1(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレスが短い
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1538,17 +1548,24 @@ class TestDEXMarketStraightBondOrderBook:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.status_code == 422
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'token_address'],
+                    'msg': 'token_address is not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # エラー系3-2：入力値エラー（token_addressがstring以外）
-    def test_orderbook_error_3_2(self, client, session):
+    def test_orderbook_error_3_2(self, client: TestClient, session: Session):
         token_address = 123456789123456789123456789123456789
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1565,20 +1582,24 @@ class TestDEXMarketStraightBondOrderBook:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'token_address': ['must be of string type']
-            }
+        assert resp.status_code == 422
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'token_address'],
+                    'msg': 'token_address is not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # エラー系4-1：入力値エラー（account_addressがアドレスフォーマットではない）
-    def test_orderbook_error_4_1(self, client, session):
+    def test_orderbook_error_4_1(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1595,17 +1616,24 @@ class TestDEXMarketStraightBondOrderBook:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.status_code == 422
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address'],
+                    'msg': 'account_address is not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # エラー系4-2：入力値エラー（account_addressがstring以外）
-    def test_orderbook_error_4_2(self, client, session):
+    def test_orderbook_error_4_2(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1622,20 +1650,24 @@ class TestDEXMarketStraightBondOrderBook:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'account_address': ['must be of string type']
-            }
+        assert resp.status_code == 422
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address'],
+                    'msg': 'account_address is not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # エラー系5：入力値エラー（order_typeがbuy/sell以外）
-    def test_orderbook_error_5(self, client, session):
+    def test_orderbook_error_5(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
@@ -1652,59 +1684,75 @@ class TestDEXMarketStraightBondOrderBook:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'order_type': ['unallowed value buyyyyy']
-            }
+        assert resp.status_code == 422
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'ctx': {'enum_values': ['buy', 'sell']},
+                    'loc': ['body', 'order_type'],
+                    'msg': 'value is not a valid enumeration member; permitted: '
+                           "'buy', 'sell'",
+                    'type': 'type_error.enum'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # エラー系6：HTTPメソッドが不正
-    def test_orderbook_error_6(self, client, session):
+    def test_orderbook_error_6(self, client: TestClient, session: Session):
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange_address
 
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: GET, url: /DEX/Market/OrderBook/StraightBond'
+        assert resp.status_code == 405
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': 'method: GET, url: /DEX/Market/OrderBook/StraightBond',
+            'message': 'Method Not Allowed'
         }
 
     # エラー系7：取扱トークン対象外
-    def test_orderbook_error_7(self, client, session):
+    def test_orderbook_error_7(self, client: TestClient, session: Session):
         exchange_address = \
             to_checksum_address("0x6f427cf02d749267300252658490b3c3ac579eac")
         config.BOND_TOKEN_ENABLED = False
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        request_body = {
+            "token_address": token_address,
+            "order_type": "sell",
+        }
 
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, json=request_body)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: POST, url: /DEX/Market/OrderBook/StraightBond'
         }
 
     # エラー系8：exchangeアドレス未設定
-    def test_orderbook_error_8(self, client, session):
+    def test_orderbook_error_8(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        request_body = {
+            "token_address": token_address,
+            "order_type": "sell",
+        }
 
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, json=request_body)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: POST, url: /DEX/Market/OrderBook/StraightBond'

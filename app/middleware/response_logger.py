@@ -18,8 +18,10 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 from datetime import datetime
-
-import falcon
+from fastapi import (
+    Request,
+    Response
+)
 
 from app import config
 
@@ -39,11 +41,20 @@ ACCESS_LOG.addHandler(stream_handler_access)
 class ResponseLoggerMiddleware(object):
     """Response Logger Middleware"""
 
-    def process_request(self, req, res):
-        req.context["request_start_time"] = datetime.utcnow()
+    def __init__(self):
+        pass
 
-    def process_response(self, req: falcon.Request, res: falcon.Response, resource, req_succeeded):
-        if req.relative_uri != "/":
-            response_time = (datetime.utcnow() - req.context["request_start_time"]).total_seconds()
-            log_msg = f"{req.method} {req.relative_uri} {res.status} ({response_time}sec)"
+    async def __call__(self, req: Request, call_next):
+        # Before process request
+        request_start_time = datetime.utcnow()
+
+        # Process request
+        res: Response = await call_next(req)
+
+        # After process request
+        if req.url.path != "/":
+            response_time = (datetime.utcnow() - request_start_time).total_seconds()
+            log_msg = f"{req.method} {req.url} {res.status_code} ({response_time}sec)"
             ACCESS_LOG.info(log_msg)
+
+        return res

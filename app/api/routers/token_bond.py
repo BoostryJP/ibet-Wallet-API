@@ -16,25 +16,35 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from cerberus import Validator
 from eth_utils import to_checksum_address
-from falcon import Request
-from sqlalchemy import (
-    desc,
+from fastapi import (
+    APIRouter,
+    Depends,
+    Request,
+    Query
 )
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
 from typing import Optional
-
 from web3 import Web3
 
 from app import log
-from app.api.common import BaseResource
+from app.database import db_session
 from app.errors import (
     InvalidParameterError,
-    NotSupportedError, DataNotExistsError
+    NotSupportedError,
+    DataNotExistsError
 )
 from app import config
 from app.model.blockchain import BondToken
-from app.utils.web3_utils import Web3Wrapper
+from app.model.schema import (
+    GenericSuccessResponse,
+    StraightBondTokensQuery,
+    StraightBondTokensResponse,
+    SuccessResponse,
+    StraightBondTokenAddressesResponse,
+    StraightBondToken as StraightBondTokenSchema
+)
 from app.model.db import (
     Listing,
     IDXBondToken
@@ -42,538 +52,271 @@ from app.model.db import (
 
 LOG = log.get_logger()
 
+router = APIRouter(
+    prefix="/Token/StraightBond",
+    tags=["Token"]
+)
 
-class StraightBondTokens(BaseResource):
+
+@router.get(
+    "/",
+    summary="Token detail list of StraightBond tokens",
+    operation_id="StraightBondTokens",
+    response_model=GenericSuccessResponse[StraightBondTokensResponse]
+)
+def list_all_straight_bond_tokens(
+    req: Request,
+    address_list: list[str] = Query(default=[], description="list of token address (**this affects total number**)"),
+    request_query: StraightBondTokensQuery = Depends(),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Token/StraightBond
     """
+    if config.BOND_TOKEN_ENABLED is False:
+        raise NotSupportedError(method='GET', url=req.url.path)
 
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3Wrapper()
+    for address in address_list:
+        if address is not None:
+            if not Web3.isAddress(address):
+                raise InvalidParameterError(f"invalid token_address: {address}")
 
-    def on_get(self, req, res, **kwargs):
-        session = req.context["session"]
+    owner_address: Optional[str] = request_query.owner_address
+    name: Optional[str] = request_query.name
+    symbol: Optional[str] = request_query.symbol
+    company_name: Optional[str] = request_query.company_name
+    tradable_exchange: Optional[str] = request_query.tradable_exchange
+    status: Optional[bool] = request_query.status
+    personal_info_address: Optional[str] = request_query.personal_info_address
+    transferable: Optional[bool] = request_query.transferable
+    is_offering: Optional[bool] = request_query.is_offering
+    transfer_approval_required: Optional[bool] = request_query.transfer_approval_required
+    is_redeemed: Optional[bool] = request_query.is_redeemed
 
-        if config.BOND_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='GET', url=req.path)
+    sort_item = request_query.sort_item
+    sort_order = request_query.sort_order  # default: asc
+    offset = request_query.offset
+    limit = request_query.limit
 
-        # Validation
-        request_json = StraightBondTokens.validate(req)
+    # 取扱トークンリストを取得
+    # 公開属性によるフィルタリングを行うためJOIN
+    query = session.query(IDXBondToken).\
+        join(Listing, Listing.token_address == IDXBondToken.token_address).\
+        filter(Listing.is_public == True)
+    if len(address_list):
+        query = query.filter(IDXBondToken.token_address.in_(address_list))
+    total = query.count()
 
-        owner_address: Optional[str] = request_json.get("owner_address", None)
-        name: Optional[str] = request_json.get("name", None)
-        symbol: Optional[str] = request_json.get("symbol", None)
-        company_name: Optional[str] = request_json.get("company_name", None)
-        tradable_exchange: Optional[str] = request_json.get("tradable_exchange", None)
-        status: Optional[bool] = request_json.get("status", None)
-        personal_info_address: Optional[str] = request_json.get("personal_info_address")
-        transferable: Optional[bool] = request_json.get("transferable", None)
-        is_offering: Optional[bool] = request_json.get("is_offering", None)
-        transfer_approval_required: Optional[bool] = request_json.get("transfer_approval_required", None)
-        is_redeemed: Optional[bool] = request_json.get("is_redeemed", None)
+    # Search Filter
+    if owner_address is not None:
+        query = query.filter(IDXBondToken.owner_address == owner_address)
+    if name is not None:
+        query = query.filter(IDXBondToken.name.contains(name))
+    if symbol is not None:
+        query = query.filter(IDXBondToken.symbol.contains(symbol))
+    if company_name is not None:
+        query = query.filter(IDXBondToken.company_name.contains(company_name))
+    if tradable_exchange is not None:
+        query = query.filter(IDXBondToken.tradable_exchange == tradable_exchange)
+    if status is not None:
+        query = query.filter(IDXBondToken.status == status)
+    if personal_info_address is not None:
+        query = query.filter(IDXBondToken.personal_info_address == personal_info_address)
+    if transferable is not None:
+        query = query.filter(IDXBondToken.transferable == transferable)
+    if is_offering is not None:
+        query = query.filter(IDXBondToken.is_offering == is_offering)
+    if transfer_approval_required is not None:
+        query = query.filter(IDXBondToken.transfer_approval_required == transfer_approval_required)
+    if is_redeemed is not None:
+        query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
+    count = query.count()
 
-        sort_item = "created" if request_json["sort_item"] is None else request_json["sort_item"]
-        sort_order = 0 if request_json["sort_order"] is None else request_json["sort_order"]  # default: asc
-        offset = request_json["offset"]
-        limit = request_json["limit"]
+    sort_attr = getattr(IDXBondToken, sort_item, None)
 
-        # 取扱トークンリストを取得
-        # 公開属性によるフィルタリングを行うためJOIN
-        query = session.query(IDXBondToken).\
-            join(Listing, Listing.token_address == IDXBondToken.token_address).\
-            filter(Listing.is_public == True)
-        if len(request_json["address_list"]) > 0:
-            query = query.filter(IDXBondToken.token_address.in_(request_json["address_list"]))
-        total = query.count()
+    if sort_order == 0:  # ASC
+        query = query.order_by(sort_attr)
+    else:  # DESC
+        query = query.order_by(desc(sort_attr))
+    if sort_item != "created":
+        # NOTE: Set secondary sort for consistent results
+        query = query.order_by(IDXBondToken.created)
 
-        # Search Filter
-        if owner_address is not None:
-            query = query.filter(IDXBondToken.owner_address == owner_address)
-        if name is not None:
-            query = query.filter(IDXBondToken.name.contains(name))
-        if symbol is not None:
-            query = query.filter(IDXBondToken.symbol.contains(symbol))
-        if company_name is not None:
-            query = query.filter(IDXBondToken.company_name.contains(company_name))
-        if tradable_exchange is not None:
-            query = query.filter(IDXBondToken.tradable_exchange == tradable_exchange)
-        if status is not None:
-            query = query.filter(IDXBondToken.status == status)
-        if personal_info_address is not None:
-            query = query.filter(IDXBondToken.personal_info_address == personal_info_address)
-        if transferable is not None:
-            query = query.filter(IDXBondToken.transferable == transferable)
-        if is_offering is not None:
-            query = query.filter(IDXBondToken.is_offering == is_offering)
-        if transfer_approval_required is not None:
-            query = query.filter(IDXBondToken.transfer_approval_required == transfer_approval_required)
-        if is_redeemed is not None:
-            query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
-        count = query.count()
+    # Pagination
+    if limit is not None:
+        query = query.limit(limit)
+    if offset is not None:
+        query = query.offset(offset)
 
-        sort_attr = getattr(IDXBondToken, sort_item, None)
+    _token_list: list[IDXBondToken] = query.all()
+    tokens = []
 
-        if sort_order == 0:  # ASC
-            query = query.order_by(sort_attr)
-        else:  # DESC
-            query = query.order_by(desc(sort_attr))
-        if sort_item != "created":
-            # NOTE: Set secondary sort for consistent results
-            query = query.order_by(IDXBondToken.created)
+    for _token in _token_list:
+        tokens.append(BondToken.from_model(_token).__dict__)
 
-        # Pagination
-        if limit is not None:
-            query = query.limit(limit)
-        if offset is not None:
-            query = query.offset(offset)
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": offset,
+            "limit": limit,
+            "total": total
+        },
+        "tokens": tokens
+    }
 
-        _token_list: list[IDXBondToken] = query.all()
-        tokens = []
-
-        for _token in _token_list:
-            tokens.append(BondToken.from_model(_token).__dict__)
-
-        data = {
-            "result_set": {
-                "count": count,
-                "offset": offset,
-                "limit": limit,
-                "total": total
-            },
-            "tokens": tokens
-        }
-
-        self.on_success(res, data)
-
-    @staticmethod
-    def validate(req: Request):
-        request_json = {
-            "address_list": req.get_param_as_list("address_list", default=[]),
-            "owner_address": req.get_param("owner_address"),
-            "name": req.get_param("name"),
-            "symbol": req.get_param("symbol"),
-            "company_name": req.get_param("company_name"),
-            "tradable_exchange": req.get_param("tradable_exchange"),
-            "status": req.get_param_as_bool("status"),
-            "personal_info_address": req.get_param("personal_info_address"),
-            "transferable": req.get_param_as_bool("transferable"),
-            "is_offering": req.get_param_as_bool("is_offering"),
-            "transfer_approval_required": req.get_param_as_bool("transfer_approval_required"),
-            "is_redeemed": req.get_param_as_bool("is_redeemed"),
-
-            "sort_item": req.get_param("sort_item"),
-            "sort_order": req.get_param("sort_order"),
-            "offset": req.get_param("offset"),
-            "limit": req.get_param("limit"),
-        }
-
-        validator = Validator({
-            "address_list": {
-                "type": "list",
-                "schema": {"type": "string"},
-                "required": False,
-                "nullable": False,
-            },
-            "owner_address": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "name": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "symbol": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "company_name": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "tradable_exchange": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "status": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "personal_info_address": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "transferable": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "is_offering": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "transfer_approval_required": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "is_redeemed": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "sort_item": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": [
-                    "token_address",
-                    "owner_address",
-                    "name",
-                    "symbol",
-                    "company_name",
-                    "tradable_exchange",
-                    "status",
-                    "personal_info_address",
-                    "transferable",
-                    "is_offering",
-                    "transfer_approval_required",
-                    "is_redeemed"
-                ]
-            },
-            # NOTE: 0:asc, 1:desc
-            "sort_order": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "max": 1,
-                "required": False,
-                "nullable": True,
-            },
-            "offset": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-            "limit": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-        })
-
-        for address in request_json["address_list"]:
-            try:
-                to_checksum_address(address)
-            except ValueError:
-                description = f"invalid token_address: {address}"
-                raise InvalidParameterError(description=description)
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
+    return {
+        **SuccessResponse().dict(),
+        "data": data
+    }
 
 
-class StraightBondTokenAddresses(BaseResource):
+@router.get(
+    "/Addresses",
+    summary="List of StraightBond token address",
+    operation_id="StraightBondTokenAddresses",
+    response_model=GenericSuccessResponse[StraightBondTokenAddressesResponse]
+)
+def list_all_straight_bond_token_addresses(
+    req: Request,
+    request_query: StraightBondTokensQuery = Depends(),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Token/StraightBond/Addresses
     """
+    if config.BOND_TOKEN_ENABLED is False:
+        raise NotSupportedError(method='GET', url=req.url.path)
 
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3Wrapper()
+    owner_address: Optional[str] = request_query.owner_address
+    name: Optional[str] = request_query.name
+    symbol: Optional[str] = request_query.symbol
+    company_name: Optional[str] = request_query.company_name
+    tradable_exchange: Optional[str] = request_query.tradable_exchange
+    status: Optional[bool] = request_query.status
+    personal_info_address: Optional[str] = request_query.personal_info_address
+    transferable: Optional[bool] = request_query.transferable
+    is_offering: Optional[bool] = request_query.is_offering
+    transfer_approval_required: Optional[bool] = request_query.transfer_approval_required
+    is_redeemed: Optional[bool] = request_query.is_redeemed
 
-    def on_get(self, req, res, **kwargs):
-        session = req.context["session"]
+    sort_item = request_query.sort_item
+    sort_order = request_query.sort_order  # default: asc
+    offset = request_query.offset
+    limit = request_query.limit
 
-        if config.BOND_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='GET', url=req.path)
+    # 取扱トークンリストを取得
+    # 公開属性によるフィルタリングを行うためJOIN
+    query = session.query(IDXBondToken).\
+        join(Listing, Listing.token_address == IDXBondToken.token_address).\
+        filter(Listing.is_public == True)
+    total = query.count()
 
-        # Validation
-        request_json = StraightBondTokens.validate(req)
+    # Search Filter
+    if owner_address is not None:
+        query = query.filter(IDXBondToken.owner_address == owner_address)
+    if name is not None:
+        query = query.filter(IDXBondToken.name.contains(name))
+    if symbol is not None:
+        query = query.filter(IDXBondToken.symbol.contains(symbol))
+    if company_name is not None:
+        query = query.filter(IDXBondToken.company_name.contains(company_name))
+    if tradable_exchange is not None:
+        query = query.filter(IDXBondToken.tradable_exchange == tradable_exchange)
+    if status is not None:
+        query = query.filter(IDXBondToken.status == status)
+    if personal_info_address is not None:
+        query = query.filter(IDXBondToken.personal_info_address == personal_info_address)
+    if transferable is not None:
+        query = query.filter(IDXBondToken.transferable == transferable)
+    if is_offering is not None:
+        query = query.filter(IDXBondToken.is_offering == is_offering)
+    if transfer_approval_required is not None:
+        query = query.filter(IDXBondToken.transfer_approval_required == transfer_approval_required)
+    if is_redeemed is not None:
+        query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
+    count = query.count()
 
-        owner_address: Optional[str] = request_json.get("owner_address", None)
-        name: Optional[str] = request_json.get("name", None)
-        symbol: Optional[str] = request_json.get("symbol", None)
-        company_name: Optional[str] = request_json.get("company_name", None)
-        tradable_exchange: Optional[str] = request_json.get("tradable_exchange", None)
-        status: Optional[bool] = request_json.get("status", None)
-        personal_info_address: Optional[str] = request_json.get("personal_info_address")
-        transferable: Optional[bool] = request_json.get("transferable", None)
-        is_offering: Optional[bool] = request_json.get("is_offering", None)
-        transfer_approval_required: Optional[bool] = request_json.get("transfer_approval_required", None)
-        is_redeemed: Optional[bool] = request_json.get("is_redeemed", None)
+    sort_attr = getattr(IDXBondToken, sort_item, None)
 
-        sort_item = "created" if request_json["sort_item"] is None else request_json["sort_item"]
-        sort_order = 0 if request_json["sort_order"] is None else request_json["sort_order"]  # default: asc
-        offset = request_json["offset"]
-        limit = request_json["limit"]
+    if sort_order == 0:  # ASC
+        query = query.order_by(sort_attr)
+    else:  # DESC
+        query = query.order_by(desc(sort_attr))
+    if sort_item != "created":
+        # NOTE: Set secondary sort for consistent results
+        query = query.order_by(IDXBondToken.created)
 
-        # 取扱トークンリストを取得
-        # 公開属性によるフィルタリングを行うためJOIN
-        query = session.query(IDXBondToken).\
-            join(Listing, Listing.token_address == IDXBondToken.token_address).\
-            filter(Listing.is_public == True)
-        total = query.count()
+    # Pagination
+    if limit is not None:
+        query = query.limit(limit)
+    if offset is not None:
+        query = query.offset(offset)
 
-        # Search Filter
-        if owner_address is not None:
-            query = query.filter(IDXBondToken.owner_address == owner_address)
-        if name is not None:
-            query = query.filter(IDXBondToken.name.contains(name))
-        if symbol is not None:
-            query = query.filter(IDXBondToken.symbol.contains(symbol))
-        if company_name is not None:
-            query = query.filter(IDXBondToken.company_name.contains(company_name))
-        if tradable_exchange is not None:
-            query = query.filter(IDXBondToken.tradable_exchange == tradable_exchange)
-        if status is not None:
-            query = query.filter(IDXBondToken.status == status)
-        if personal_info_address is not None:
-            query = query.filter(IDXBondToken.personal_info_address == personal_info_address)
-        if transferable is not None:
-            query = query.filter(IDXBondToken.transferable == transferable)
-        if is_offering is not None:
-            query = query.filter(IDXBondToken.is_offering == is_offering)
-        if transfer_approval_required is not None:
-            query = query.filter(IDXBondToken.transfer_approval_required == transfer_approval_required)
-        if is_redeemed is not None:
-            query = query.filter(IDXBondToken.is_redeemed == is_redeemed)
-        count = query.count()
+    _token_list: list[IDXBondToken] = query.all()
 
-        sort_attr = getattr(IDXBondToken, sort_item, None)
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": offset,
+            "limit": limit,
+            "total": total
+        },
+        "address_list": [_token.token_address for _token in _token_list]
+    }
 
-        if sort_order == 0:  # ASC
-            query = query.order_by(sort_attr)
-        else:  # DESC
-            query = query.order_by(desc(sort_attr))
-        if sort_item != "created":
-            # NOTE: Set secondary sort for consistent results
-            query = query.order_by(IDXBondToken.created)
-
-        # Pagination
-        if limit is not None:
-            query = query.limit(limit)
-        if offset is not None:
-            query = query.offset(offset)
-
-        _token_list: list[IDXBondToken] = query.all()
-
-        data = {
-            "result_set": {
-                "count": count,
-                "offset": offset,
-                "limit": limit,
-                "total": total
-            },
-            "address_list": [_token.token_address for _token in _token_list]
-        }
-
-        self.on_success(res, data)
-
-    @staticmethod
-    def validate(req: Request):
-        request_json = {
-            "owner_address": req.get_param("owner_address"),
-            "name": req.get_param("name"),
-            "symbol": req.get_param("symbol"),
-            "company_name": req.get_param("company_name"),
-            "tradable_exchange": req.get_param("tradable_exchange"),
-            "status": req.get_param_as_bool("status"),
-            "personal_info_address": req.get_param("personal_info_address"),
-            "transferable": req.get_param_as_bool("transferable"),
-            "is_offering": req.get_param_as_bool("is_offering"),
-            "transfer_approval_required": req.get_param_as_bool("transfer_approval_required"),
-            "is_redeemed": req.get_param_as_bool("is_redeemed"),
-
-            "sort_item": req.get_param("sort_item"),
-            "sort_order": req.get_param("sort_order"),
-            "offset": req.get_param("offset"),
-            "limit": req.get_param("limit"),
-        }
-
-        validator = Validator({
-            "owner_address": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "name": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "symbol": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "company_name": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "tradable_exchange": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "status": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "personal_info_address": {
-                "type": "string",
-                "required": False,
-                "nullable": True
-            },
-            "transferable": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "is_offering": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "transfer_approval_required": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "is_redeemed": {
-                "type": "boolean",
-                "required": False,
-                "nullable": True
-            },
-            "sort_item": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": [
-                    "token_address",
-                    "owner_address",
-                    "name",
-                    "symbol",
-                    "company_name",
-                    "tradable_exchange",
-                    "status",
-                    "personal_info_address",
-                    "transferable",
-                    "is_offering",
-                    "transfer_approval_required",
-                    "is_redeemed"
-                ]
-            },
-            # NOTE: 0:asc, 1:desc
-            "sort_order": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "max": 1,
-                "required": False,
-                "nullable": True,
-            },
-            "offset": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-            "limit": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
+    return {
+        **SuccessResponse().dict(),
+        "data": data
+    }
 
 
-class StraightBondTokenDetails(BaseResource):
+@router.get(
+    "/{token_address}",
+    summary="StraightBond token details",
+    operation_id="StraightBondTokenDetails",
+    response_model=GenericSuccessResponse[StraightBondTokenSchema]
+)
+def retrieve_straight_bond_token(
+    req: Request,
+    token_address: str,
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Token/StraightBond/{contract_address}
     """
+    if config.BOND_TOKEN_ENABLED is False:
+        raise NotSupportedError(method='GET', url=req.url.path)
 
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3Wrapper()
-
-    def on_get(self, req, res, contract_address=None, *args, **kwargs):
-        if config.BOND_TOKEN_ENABLED is False:
-            raise NotSupportedError(method='GET', url=req.path)
-
-        # 入力アドレスフォーマットチェック
-        try:
-            contract_address = to_checksum_address(contract_address)
-            if not Web3.isAddress(contract_address):
-                description = 'invalid contract_address'
-                raise InvalidParameterError(description=description)
-        except:
+    # 入力アドレスフォーマットチェック
+    try:
+        contract_address = to_checksum_address(token_address)
+        if not Web3.isAddress(contract_address):
             description = 'invalid contract_address'
             raise InvalidParameterError(description=description)
+    except:
+        description = 'invalid contract_address'
+        raise InvalidParameterError(description=description)
 
-        session = req.context["session"]
+    # 取扱トークンチェック
+    # NOTE:非公開トークンも取扱対象とする
+    listed_token = session.query(Listing).\
+        filter(Listing.token_address == contract_address).\
+        first()
+    if listed_token is None:
+        raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        # 取扱トークンチェック
-        # NOTE:非公開トークンも取扱対象とする
-        listed_token = session.query(Listing).\
-            filter(Listing.token_address == contract_address).\
-            first()
-        if listed_token is None:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
+    token_address = to_checksum_address(contract_address)
+    try:
+        token_detail = BondToken.get(session=session, token_address=token_address)
 
-        token_address = to_checksum_address(contract_address)
+    except Exception as e:
+        LOG.error(e)
+        raise DataNotExistsError('contract_address: %s' % contract_address) from None
 
-        token_detail = self.get_token_detail(
-            session=session,
-            token_address=token_address,
-            include_inactive_tokens=True
-        )
-        if token_detail is None:
-            raise DataNotExistsError('contract_address: %s' % contract_address)
+    if token_detail is None:
+        raise DataNotExistsError('contract_address: %s' % contract_address)
 
-        self.on_success(res, token_detail.__dict__)
-
-    @staticmethod
-    def get_token_detail(session,
-                         token_address: str,
-                         include_inactive_tokens: bool = False):
-        """
-        トークン詳細の取得
-
-        :param session: DB Session
-        :param token_address: トークンアドレス
-        :param include_inactive_tokens: statusが無効のトークンを含めるかどうか
-        :return: BondToken
-        """
-
-        try:
-            bondtoken = BondToken.get(session=session, token_address=token_address)
-            if not include_inactive_tokens and not bondtoken.status:
-                return None
-            return bondtoken
-        except Exception as e:
-            LOG.error(e)
-            return None
+    return {
+        **SuccessResponse().dict(),
+        "data": token_detail.__dict__
+    }

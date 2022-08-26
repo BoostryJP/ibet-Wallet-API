@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from app.model.db import (
     IDXOrder as Order,
     IDXAgreement as Agreement,
@@ -187,7 +189,7 @@ class TestDEXOrderList:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client, session, shared_contract):
+    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -224,10 +226,10 @@ class TestDEXOrderList:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -241,15 +243,15 @@ class TestDEXOrderList:
             "order_timestamp": "2019/06/17 00:00:00"
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["order"] == assumed_body
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client, session, shared_contract):
+    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -287,10 +289,10 @@ class TestDEXOrderList:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -304,15 +306,15 @@ class TestDEXOrderList:
             "order_timestamp": "2019/06/17 00:00:00"
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["order"] == assumed_body
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -364,10 +366,10 @@ class TestDEXOrderList:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -384,15 +386,15 @@ class TestDEXOrderList:
             }
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["settlement_list"]) >= 1
-        for order in resp.json["data"]["settlement_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["settlement_list"]) >= 1
+        for order in resp.json()["data"]["settlement_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["agreement"] == assumed_body["agreement"]
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client, session, shared_contract):
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -445,10 +447,10 @@ class TestDEXOrderList:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -466,16 +468,16 @@ class TestDEXOrderList:
             "settlement_timestamp": "2019/06/18 00:00:00"
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["agreement"] == assumed_body["agreement"]
                 assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client, session, shared_contract):
+    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -529,10 +531,10 @@ class TestDEXOrderList:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -550,9 +552,9 @@ class TestDEXOrderList:
             "settlement_timestamp": "2019/06/18 00:00:00"
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["agreement"] == assumed_body["agreement"]
                 assert order["settlement_timestamp"] == assumed_body["settlement_timestamp"]
@@ -564,28 +566,34 @@ class TestDEXOrderList:
     # Error_1
     # invalid token address
     # -> 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         # request target API
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + "invalid_token_address",
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": "invalid token_address"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_2
     # No headers
     # -> 400
-    def test_error_2(self, client, session, shared_contract):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract):
         # set environment variables
         bond_exchange, _, _, personal_info, _, token_list = \
             self.set_env(shared_contract)
@@ -600,23 +608,30 @@ class TestDEXOrderList:
         # request target API
         headers = {}
         request_body = json.dumps({})
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_1
     # Validation error: no request-body
     # -> 400
-    def test_error_3_1(self, client, session, shared_contract):
+    def test_error_3_1(self, client: TestClient, session: Session, shared_contract):
         # set environment variables
         bond_exchange, _, _, personal_info, _, token_list = \
             self.set_env(shared_contract)
@@ -631,26 +646,30 @@ class TestDEXOrderList:
         # request target API
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": ["required field"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_2
     # Validation error: invalid type (account_address)
     # -> 400
-    def test_error_3_2(self, client, session, shared_contract):
+    def test_error_3_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -670,18 +689,24 @@ class TestDEXOrderList:
             "account_address_list": [account["account_address"][:-1]]
         }
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.base_url + bond_token["address"],
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": "invalid account address"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
 
@@ -865,7 +890,7 @@ class TestDEXOrderListBond:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client, session, shared_contract):
+    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -900,10 +925,10 @@ class TestDEXOrderListBond:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -961,16 +986,16 @@ class TestDEXOrderListBond:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client, session, shared_contract):
+    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -1008,10 +1033,10 @@ class TestDEXOrderListBond:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -1071,16 +1096,16 @@ class TestDEXOrderListBond:
         # NOTE: 他のテストで注文を出している可能性があるので、listは１件ではない場合がある。
         # API内部でエラー発生すると、正常応答でlistが0件になる場合もある。
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1115,10 +1140,10 @@ class TestDEXOrderListBond:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -1177,16 +1202,16 @@ class TestDEXOrderListBond:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["settlement_list"]) >= 1
-        for order in resp.json["data"]["settlement_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["settlement_list"]) >= 1
+        for order in resp.json()["data"]["settlement_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client, session, shared_contract):
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1221,10 +1246,10 @@ class TestDEXOrderListBond:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -1284,9 +1309,9 @@ class TestDEXOrderListBond:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -1294,7 +1319,7 @@ class TestDEXOrderListBond:
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client, session, shared_contract):
+    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1331,10 +1356,10 @@ class TestDEXOrderListBond:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -1394,9 +1419,9 @@ class TestDEXOrderListBond:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == bond_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -1409,31 +1434,35 @@ class TestDEXOrderListBond:
     # Error_1
     # Validation error: no request-body
     # -> 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": ["required field"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_2
     # No headers
     # -> 400
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -1441,15 +1470,15 @@ class TestDEXOrderListBond:
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter"
         }
@@ -1457,7 +1486,7 @@ class TestDEXOrderListBond:
     # Error_3_1
     # Validation error: invalid account_address format
     # -> 400
-    def test_error_3_1(self, client, session):
+    def test_error_3_1(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
 
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
@@ -1465,23 +1494,30 @@ class TestDEXOrderListBond:
             "account_address_list": [account_address]
         }
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers={"Content-Type": "application/json"},
-            body=json.dumps(request_params)
+            data=json.dumps(request_params)
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_2
     # Validation error: account_address must be string
     # -> 400
-    def test_error_3_2(self, client, session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -1489,24 +1525,26 @@ class TestDEXOrderListBond:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'account_address_list': [
-                    {'0': ['must be of string type']}
-                ]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_3
     # Validation error: include_canceled_items must be boolean
     # -> 400
-    def test_error_3_3(self, client, session):
+    def test_error_3_3(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -1517,45 +1555,53 @@ class TestDEXOrderListBond:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "include_canceled_items": ["must be of boolean type"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'include_canceled_items'],
+                    'msg': 'value could not be parsed to a boolean',
+                    'type': 'type_error.bool'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_4
     # Not supported HTTP method
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
         # assertion
-        assert resp.status_code == 404
-        assert resp.json["meta"] == {
-            "code": 10,
-            "message": "Not Supported",
+        assert resp.status_code == 405
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "message": "Method Not Allowed",
             "description": "method: GET, url: /DEX/OrderList/StraightBond"
         }
 
     # Error_5
     # Bond token is not enabled
-    def test_error_5(self, client, session):
+    def test_error_5(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
+
         config.BOND_TOKEN_ENABLED = False
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         # assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/StraightBond"
@@ -1563,14 +1609,18 @@ class TestDEXOrderListBond:
 
     # Error_6
     # Exchange address is not set
-    def test_error_6(self, client, session):
+    def test_error_6(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
+
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         # assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/StraightBond"
@@ -1729,7 +1779,7 @@ class TestDEXOrderListMembership:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client, session, shared_contract):
+    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -1759,10 +1809,10 @@ class TestDEXOrderListMembership:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -1806,16 +1856,16 @@ class TestDEXOrderListMembership:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client, session, shared_contract):
+    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -1848,10 +1898,10 @@ class TestDEXOrderListMembership:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -1895,16 +1945,16 @@ class TestDEXOrderListMembership:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -1935,10 +1985,10 @@ class TestDEXOrderListMembership:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -1988,16 +2038,16 @@ class TestDEXOrderListMembership:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["settlement_list"]) >= 1
-        for order in resp.json["data"]["settlement_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["settlement_list"]) >= 1
+        for order in resp.json()["data"]["settlement_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client, session, shared_contract):
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -2029,10 +2079,10 @@ class TestDEXOrderListMembership:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -2078,9 +2128,9 @@ class TestDEXOrderListMembership:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -2088,7 +2138,7 @@ class TestDEXOrderListMembership:
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client, session, shared_contract):
+    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -2123,10 +2173,10 @@ class TestDEXOrderListMembership:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -2172,9 +2222,9 @@ class TestDEXOrderListMembership:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -2187,31 +2237,35 @@ class TestDEXOrderListMembership:
     # Error_1
     # Validation error: no request-body
     # -> 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": ["required field"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_2
     # No headers
     # -> 400
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -2219,15 +2273,15 @@ class TestDEXOrderListMembership:
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter"
         }
@@ -2235,7 +2289,7 @@ class TestDEXOrderListMembership:
     # Error_3_1
     # Validation error: invalid account_address format
     # -> 400
-    def test_error_3_1(self, client, session):
+    def test_error_3_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
@@ -2243,22 +2297,29 @@ class TestDEXOrderListMembership:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_2
     # Validation error: account_address must be string
     # -> 400
-    def test_error_3_2(self, client, session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -2266,27 +2327,29 @@ class TestDEXOrderListMembership:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'account_address_list': [
-                    {'0': ['must be of string type']}
-                ]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_3
     # Validation error: include_canceled_items must be boolean
     # -> 400
-    def test_error_3_3(self, client, session):
+    def test_error_3_3(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -2297,42 +2360,49 @@ class TestDEXOrderListMembership:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "include_canceled_items": ["must be of boolean type"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'include_canceled_items'],
+                    'msg': 'value could not be parsed to a boolean',
+                    'type': 'type_error.bool'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_4
     # Not supported HTTP method
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
-        assert resp.status_code == 404
-        assert resp.json["meta"] == {
-            "code": 10,
-            "message": "Not Supported",
+        assert resp.status_code == 405
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "message": "Method Not Allowed",
             "description": "method: GET, url: /DEX/OrderList/Membership"
         }
 
     # Error_5
     # Membership token is not enabled
-    def test_error_5(self, client, session):
+    def test_error_5(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
         config.MEMBERSHIP_TOKEN_ENABLED = False
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/Membership"
@@ -2340,13 +2410,16 @@ class TestDEXOrderListMembership:
 
     # Error_6
     # Exchange address is not set
-    def test_error_6(self, client, session):
+    def test_error_6(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/Membership"
@@ -2507,7 +2580,7 @@ class TestDEXOrderListCoupon:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client, session, shared_contract):
+    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -2539,10 +2612,10 @@ class TestDEXOrderListCoupon:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -2586,16 +2659,16 @@ class TestDEXOrderListCoupon:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client, session, shared_contract):
+    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -2630,10 +2703,10 @@ class TestDEXOrderListCoupon:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -2677,16 +2750,16 @@ class TestDEXOrderListCoupon:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -2716,10 +2789,10 @@ class TestDEXOrderListCoupon:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -2764,16 +2837,16 @@ class TestDEXOrderListCoupon:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["settlement_list"]) >= 1
-        for order in resp.json["data"]["settlement_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["settlement_list"]) >= 1
+        for order in resp.json()["data"]["settlement_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client, session, shared_contract):
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -2806,10 +2879,10 @@ class TestDEXOrderListCoupon:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -2855,9 +2928,9 @@ class TestDEXOrderListCoupon:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -2865,7 +2938,7 @@ class TestDEXOrderListCoupon:
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client, session, shared_contract):
+    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -2901,10 +2974,10 @@ class TestDEXOrderListCoupon:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -2950,9 +3023,9 @@ class TestDEXOrderListCoupon:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -2965,31 +3038,35 @@ class TestDEXOrderListCoupon:
     # Error_1
     # Validation error: no request-body
     # -> 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": ["required field"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_2
     # No headers
     # -> 400
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -2997,15 +3074,15 @@ class TestDEXOrderListCoupon:
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter"
         }
@@ -3013,7 +3090,7 @@ class TestDEXOrderListCoupon:
     # Error_3_1
     # Validation error: invalid account_address format
     # -> 400
-    def test_error_3_1(self, client, session):
+    def test_error_3_1(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
@@ -3021,23 +3098,30 @@ class TestDEXOrderListCoupon:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_2
     # Validation error: account_address must be string
     # -> 400
-    def test_error_3_2(self, client, session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -3045,28 +3129,30 @@ class TestDEXOrderListCoupon:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'account_address_list': [
-                    {'0': ['must be of string type']}
-                ]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_3
     # Validation error: include_canceled_items must be boolean
     # -> 400
-    def test_error_3_3(self, client, session):
+    def test_error_3_3(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -3077,44 +3163,52 @@ class TestDEXOrderListCoupon:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "include_canceled_items": ["must be of boolean type"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'include_canceled_items'],
+                    'msg': 'value could not be parsed to a boolean',
+                    'type': 'type_error.bool'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_4
     # Not supported HTTP method
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
         # assertion
-        assert resp.status_code == 404
-        assert resp.json["meta"] == {
-            "code": 10,
-            "message": "Not Supported",
+        assert resp.status_code == 405
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "message": "Method Not Allowed",
             "description": "method: GET, url: /DEX/OrderList/Coupon"
         }
 
     # Error_5
     # Coupon token is not enabled
-    def test_error_5(self, client, session):
+    def test_error_5(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
+
         config.COUPON_TOKEN_ENABLED = False
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         # assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/Coupon"
@@ -3122,13 +3216,17 @@ class TestDEXOrderListCoupon:
 
     # Error_6
     # Exchange address is not set
-    def test_error_6(self, client, session):
+    def test_error_6(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
+
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/Coupon"
@@ -3305,7 +3403,7 @@ class TestDEXOrderListShare:
 
     # Normal_1_1
     # order_list
-    def test_normal_1_1(self, client, session, shared_contract):
+    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -3340,10 +3438,10 @@ class TestDEXOrderListShare:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -3390,16 +3488,16 @@ class TestDEXOrderListShare:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == share_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_1_2
     # order_list(canceled)
-    def test_normal_1_2(self, client, session, shared_contract):
+    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["issuer"]
 
         # set environment variables
@@ -3437,10 +3535,10 @@ class TestDEXOrderListShare:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -3487,16 +3585,16 @@ class TestDEXOrderListShare:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["order_list"]) >= 1
-        for order in resp.json["data"]["order_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["order_list"]) >= 1
+        for order in resp.json()["data"]["order_list"]:
             if order["token"]["token_address"] == share_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["order"] == assumed_body["order"]
 
     # Normal_2
     # settlement_list
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -3529,10 +3627,10 @@ class TestDEXOrderListShare:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -3580,16 +3678,16 @@ class TestDEXOrderListShare:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["settlement_list"]) >= 1
-        for order in resp.json["data"]["settlement_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["settlement_list"]) >= 1
+        for order in resp.json()["data"]["settlement_list"]:
             if order["token"]["token_address"] == share_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
 
     # Normal_3_1
     # complete_list
-    def test_normal_3_1(self, client, session, shared_contract):
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -3623,10 +3721,10 @@ class TestDEXOrderListShare:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -3675,9 +3773,9 @@ class TestDEXOrderListShare:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == share_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -3685,7 +3783,7 @@ class TestDEXOrderListShare:
 
     # Normal_3_2
     # complete_list(canceled)
-    def test_normal_3_2(self, client, session, shared_contract):
+    def test_normal_3_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -3722,10 +3820,10 @@ class TestDEXOrderListShare:
         }
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
@@ -3774,9 +3872,9 @@ class TestDEXOrderListShare:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert len(resp.json["data"]["complete_list"]) >= 1
-        for order in resp.json["data"]["complete_list"]:
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert len(resp.json()["data"]["complete_list"]) >= 1
+        for order in resp.json()["data"]["complete_list"]:
             if order["token"]["token_address"] == share_token["address"]:
                 assert order["token"] == assumed_body["token"]
                 assert order["agreement"] == assumed_body["agreement"]
@@ -3789,31 +3887,35 @@ class TestDEXOrderListShare:
     # Error_1
     # Validation error: no request-body
     # -> 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address_list": ["required field"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_2
     # No headers
     # -> 400
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
@@ -3821,15 +3923,15 @@ class TestDEXOrderListShare:
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter"
         }
@@ -3837,7 +3939,7 @@ class TestDEXOrderListShare:
     # Error_3_1
     # Validation error: invalid account_address format
     # -> 400
-    def test_error_3_1(self, client, session):
+    def test_error_3_1(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
@@ -3845,23 +3947,30 @@ class TestDEXOrderListShare:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_2
     # Validation error: account_address must be string
     # -> 400
-    def test_error_3_2(self, client, session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
         account_address = 123456789123456789123456789123456789
         request_params = {"account_address_list": [account_address]}
@@ -3869,28 +3978,30 @@ class TestDEXOrderListShare:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'account_address_list': [
-                    {'0': ['must be of string type']}
-                ]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'account_address_list'],
+                    'msg': 'account_address_list has not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_3
     # Validation error: include_canceled_items must be boolean
     # -> 400
-    def test_error_3_3(self, client, session):
+    def test_error_3_3(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -3901,45 +4012,53 @@ class TestDEXOrderListShare:
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "include_canceled_items": ["must be of boolean type"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body', 'include_canceled_items'],
+                    'msg': 'value could not be parsed to a boolean',
+                    'type': 'type_error.bool'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_4
     # Not supported HTTP method
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
         # assertion
-        assert resp.status_code == 404
-        assert resp.json["meta"] == {
-            "code": 10,
-            "message": "Not Supported",
+        assert resp.status_code == 405
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "message": "Method Not Allowed",
             "description": "method: GET, url: /DEX/OrderList/Share"
         }
 
     # Error_5
     # Share token is not enabled
-    def test_error_5(self, client, session):
+    def test_error_5(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
+
         config.SHARE_TOKEN_ENABLED = False
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         # assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/Share"
@@ -3947,14 +4066,18 @@ class TestDEXOrderListShare:
 
     # Error_6
     # Exchange address is not set
-    def test_error_6(self, client, session):
+    def test_error_6(self, client: TestClient, session: Session):
+        account = eth_account["trader"]
+        request_params = {"account_address_list": [account["account_address"]]}
+        request_body = json.dumps(request_params)
+
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         # assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": "method: POST, url: /DEX/OrderList/Share"

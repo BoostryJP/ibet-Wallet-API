@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
@@ -98,7 +100,7 @@ class TestTokenStraightBondTokenDetails:
     ###########################################################################
 
     # Normal_1
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         config.BOND_TOKEN_ENABLED = True
         issuer = eth_account['issuer']
 
@@ -119,7 +121,7 @@ class TestTokenStraightBondTokenDetails:
         # Request target API
         apiurl = self.apiurl_base + bond_token['address']
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
@@ -164,11 +166,11 @@ class TestTokenStraightBondTokenDetails:
             'transfer_approval_required': False
         }
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_2
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         config.BOND_TOKEN_ENABLED = True
         issuer = eth_account['issuer']
 
@@ -192,7 +194,7 @@ class TestTokenStraightBondTokenDetails:
         # Request target API
         apiurl = self.apiurl_base + bond_token['address']
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
@@ -237,8 +239,8 @@ class TestTokenStraightBondTokenDetails:
             'transfer_approval_required': False
         }
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     ###########################################################################
     # Error
@@ -247,17 +249,17 @@ class TestTokenStraightBondTokenDetails:
     # Error_1
     # Invalid Parameter: invalid contract_address
     # -> 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '0xabcd'
 
         # Request target API
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
             'description': 'invalid contract_address'
@@ -284,11 +286,11 @@ class TestTokenStraightBondTokenDetails:
         # Request target API
         apiurl = self.apiurl_base + token['address']
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + token['address']
@@ -297,15 +299,15 @@ class TestTokenStraightBondTokenDetails:
     # Error_3
     # Not Supported
     # -> 404
-    def test_error_3(self, client, session):
+    def test_error_3(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = False
 
         # Request target API
-        resp = client.simulate_get(self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765")
+        resp = client.get(self.apiurl_base + "0xe6A75581C7299c75392a63BCF18a3618B30ff765")
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /Token/StraightBond/0xe6A75581C7299c75392a63BCF18a3618B30ff765'

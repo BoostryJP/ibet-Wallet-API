@@ -16,6 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
 from app import config
 
 
@@ -28,12 +31,12 @@ class TestAdminTokenType:
     ###########################################################################
 
     # <Normal_1>
-    def test_normal_1(self, client, session):
-        resp = client.simulate_get(self.apiurl)
+    def test_normal_1(self, client: TestClient, session: Session):
+        resp = client.get(self.apiurl)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json["data"] == {
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {
             "IbetStraightBond": config.BOND_TOKEN_ENABLED,
             "IbetShare": config.SHARE_TOKEN_ENABLED,
             "IbetMembership": config.MEMBERSHIP_TOKEN_ENABLED,

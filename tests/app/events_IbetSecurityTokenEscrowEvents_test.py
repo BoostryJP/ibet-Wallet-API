@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -39,13 +41,13 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_1
     # No event
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
         latest_block_number = web3.eth.block_number
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number + 1,
@@ -55,15 +57,15 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == []
+        assert resp.json()["data"] == []
 
     # Normal_2
     # event = Deposited
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
@@ -97,7 +99,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -107,11 +109,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "Deposited",
                 "args": {
@@ -127,7 +129,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_3
     # event = Withdrawn
-    def test_normal_3(self, client, session, shared_contract):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
@@ -169,7 +171,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -179,11 +181,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "Withdrawn",
                 "args": {
@@ -199,7 +201,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_4_1
     # event = EscrowCreated & ApplyForTransfer
-    def test_normal_4_1(self, client, session, shared_contract):
+    def test_normal_4_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -250,7 +252,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -260,11 +262,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "ApplyForTransfer",
                 "args": {
@@ -300,7 +302,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_4_2
     # event = EscrowCreated (filter)
-    def test_normal_4_2(self, client, session, shared_contract):
+    def test_normal_4_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -351,7 +353,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -362,11 +364,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "EscrowCreated",
                 "args": {
@@ -387,7 +389,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_4_3
     # event = ApplyForTransfer (filter)
-    def test_normal_4_3(self, client, session, shared_contract):
+    def test_normal_4_3(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -438,7 +440,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_escrow_id = escrow_contract.functions.latestEscrowId().call()
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -449,11 +451,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "ApplyForTransfer",
                 "args": {
@@ -473,7 +475,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_5_1
     # event = EscrowCanceled & CancelTransfer
-    def test_normal_5_1(self, client, session, shared_contract):
+    def test_normal_5_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -531,7 +533,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -541,11 +543,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "CancelTransfer",
                 "args": {
@@ -578,7 +580,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_5_2
     # event = EscrowCanceled (filter)
-    def test_normal_5_2(self, client, session, shared_contract):
+    def test_normal_5_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -636,7 +638,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -647,11 +649,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "EscrowCanceled",
                 "args": {
@@ -671,7 +673,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_5_3
     # event = CancelTransfer (filter)
-    def test_normal_5_3(self, client, session, shared_contract):
+    def test_normal_5_3(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -729,7 +731,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -740,11 +742,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "CancelTransfer",
                 "args": {
@@ -762,7 +764,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_6_1
     # event = EscrowFinished
-    def test_normal_6_1(self, client, session, shared_contract):
+    def test_normal_6_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -820,7 +822,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -830,11 +832,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "EscrowFinished",
                 "args": {
@@ -855,7 +857,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_6_2
     # event = EscrowFinished (filter)
-    def test_normal_6_2(self, client, session, shared_contract):
+    def test_normal_6_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -913,7 +915,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -924,11 +926,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "EscrowFinished",
                 "args": {
@@ -949,7 +951,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_7_1
     # event = ApproveTransfer
-    def test_normal_7_1(self, client, session, shared_contract):
+    def test_normal_7_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -1015,7 +1017,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -1025,11 +1027,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "ApproveTransfer",
                 "args": {
@@ -1046,7 +1048,7 @@ class TestEventsIbetSecurityTokenEscrow:
 
     # Normal_7_2
     # event = ApproveTransfer (filter)
-    def test_normal_7_2(self, client, session, shared_contract):
+    def test_normal_7_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         user1 = eth_account["user1"]["account_address"]
         agent = eth_account["agent"]["account_address"]
@@ -1112,7 +1114,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -1123,11 +1125,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "ApproveTransfer",
                 "args": {
@@ -1146,7 +1148,7 @@ class TestEventsIbetSecurityTokenEscrow:
     # event = Deposited
     # query with filter argument {"token": token_contract.address, "account": issuer}
     # results 1 record.
-    def test_normal_8_1(self, client, session, shared_contract):
+    def test_normal_8_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
@@ -1180,7 +1182,7 @@ class TestEventsIbetSecurityTokenEscrow:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -1195,11 +1197,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "Deposited",
                 "args": {
@@ -1217,7 +1219,7 @@ class TestEventsIbetSecurityTokenEscrow:
     # event = Deposited
     # query with filter argument {"token": "0x00..0", "account": "0x00..0"}
     # results no record.
-    def test_normal_8_2(self, client, session, shared_contract):
+    def test_normal_8_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account["issuer"]["account_address"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
@@ -1251,7 +1253,7 @@ class TestEventsIbetSecurityTokenEscrow:
         _latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -1266,11 +1268,11 @@ class TestEventsIbetSecurityTokenEscrow:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == []
+        assert resp.json()["data"] == []
 
     ###########################################################################
     # Error
@@ -1279,42 +1281,44 @@ class TestEventsIbetSecurityTokenEscrow:
     # Error_1
     # InvalidParameterError
     # null value not allowed
-    def test_error_1(self, client, session, shared_contract):
+    def test_error_1(self, client: TestClient, session: Session, shared_contract):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={}
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'from_block': [
-                    "field 'from_block' cannot be coerced: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
-                    'null value not allowed'
-                ],
-                'to_block': [
-                    "field 'to_block' cannot be coerced: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
-                    'null value not allowed'
-                ]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["query", "from_block"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                },
+                {
+                    "loc": ["query", "to_block"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # Error_2
     # InvalidParameterError
     # from_block, to_block: min value
-    def test_error_2(self, client, session, shared_contract):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": 0,
@@ -1323,26 +1327,36 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "from_block": ["min value is 1"],
-                "to_block": ["min value is 1"]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "from_block"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                },
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "to_block"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # Error_3_1
     # InvalidParameterError
     # event: unallowed value
-    def test_error_3_1(self, client, session, shared_contract):
+    def test_error_3_1(self, client: TestClient, session: Session, shared_contract):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
         latest_block_number = web3.eth.block_number
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -1352,81 +1366,46 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {"event": ["unallowed value some_event"]}
-        }
-
-    # Error_3_2
-    # InvalidParameterError
-    # event: unallowed value in filter argument
-    def test_error_3_2(self, client, session, shared_contract):
-        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
-        latest_block_number = web3.eth.block_number
-
-        # request target API
-        resp = client.simulate_get(
-            self.apiurl,
-            params={
-                "from_block": latest_block_number,
-                "to_block": latest_block_number,
-                "argument_filters": json.dumps({
-                    "escrowId": "0"
-                }),
-                "event": "EscrowCreated"
-            }
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {"argument_filters": [{"escrowId": ["must be of integer type"]}]}
-        }
-
-    # Error_3_3
-    # InvalidParameterError
-    # event: unknown field in filter argument
-    def test_error_3_3(self, client, session, shared_contract):
-        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
-        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
-        latest_block_number = web3.eth.block_number
-
-        # request target API
-        resp = client.simulate_get(
-            self.apiurl,
-            params={
-                "from_block": latest_block_number,
-                "to_block": latest_block_number,
-                "argument_filters": json.dumps({
-                    "some key": "some field"
-                }),
-                "event": "EscrowCreated"
-            }
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {"argument_filters": [{"some key": ["unknown field"]}]}
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "ctx": {
+                        "enum_values": [
+                            "Deposited",
+                            "Withdrawn",
+                            "EscrowCreated",
+                            "EscrowCanceled",
+                            "EscrowFinished",
+                            "ApplyForTransfer",
+                            "CancelTransfer",
+                            "ApproveTransfer",
+                            "FinishTransfer"
+                        ]
+                    },
+                    "loc": ["query", "event"],
+                    "msg": "value is not a valid enumeration member; permitted: "
+                           "'Deposited', 'Withdrawn', 'EscrowCreated', "
+                           "'EscrowCanceled', 'EscrowFinished', "
+                           "'ApplyForTransfer', 'CancelTransfer', "
+                           "'ApproveTransfer', 'FinishTransfer'",
+                    "type": "type_error.enum"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # Error_4
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
-    def test_error_4(self, client, session, shared_contract):
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
         config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
         latest_block_number = web3.eth.block_number
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -1435,9 +1414,16 @@ class TestEventsIbetSecurityTokenEscrow:
         )
 
         # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": "to_block must be greater than or equal to the from_block"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["query", "__root__"],
+                    "msg": "to_block must be greater than or equal to the from_block",
+                    "type": "value_error"
+                }
+            ],
+            "message": "Request Validation Error"
         }
+

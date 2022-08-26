@@ -16,5 +16,31 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from .base import BaseResource
+from config import (
+    DATABASE_URL,
+    DB_ECHO
+)
+
+options = {
+    "pool_recycle": 3600,
+    "pool_size": 10,
+    "pool_timeout": 30,
+    "pool_pre_ping": True,
+    "max_overflow": 30,
+    "echo": DB_ECHO
+}
+engine = create_engine(DATABASE_URL, **options)
+SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
+
+
+def db_session():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+

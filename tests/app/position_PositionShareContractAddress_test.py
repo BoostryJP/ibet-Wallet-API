@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from unittest import mock
 
 from app import config
@@ -200,7 +202,7 @@ class TestPositionShareContractAddress:
 
     # <Normal_1>
     # balance: 1000000
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -316,7 +318,7 @@ class TestPositionShareContractAddress:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
                     contract_address=token_2.address
@@ -324,7 +326,7 @@ class TestPositionShareContractAddress:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "token": {
                 'token_address': token_2.address,
                 'token_template': 'IbetShare',
@@ -362,7 +364,7 @@ class TestPositionShareContractAddress:
 
     # <Normal_2>
     # balance: 999900, pending_transfer: 100
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -478,7 +480,7 @@ class TestPositionShareContractAddress:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
                     contract_address=token_3.address
@@ -486,7 +488,7 @@ class TestPositionShareContractAddress:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "token": {
                 'token_address': token_3.address,
                 'token_template': 'IbetShare',
@@ -524,7 +526,7 @@ class TestPositionShareContractAddress:
 
     # <Normal_3>
     # balance: 0, pending_transfer: 1000000
-    def test_normal_3(self, client, session, shared_contract):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -639,7 +641,7 @@ class TestPositionShareContractAddress:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
                     contract_address=token_4.address
@@ -647,7 +649,7 @@ class TestPositionShareContractAddress:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "token": {
                 'token_address': token_4.address,
                 'token_template': 'IbetShare',
@@ -685,7 +687,7 @@ class TestPositionShareContractAddress:
 
     # <Normal_4>
     # balance: 999900, exchange_balance: 100
-    def test_normal_4(self, client, session, shared_contract):
+    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -800,7 +802,7 @@ class TestPositionShareContractAddress:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
                     contract_address=token_5.address
@@ -808,7 +810,7 @@ class TestPositionShareContractAddress:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "token": {
                 'token_address': token_5.address,
                 'token_template': 'IbetShare',
@@ -846,7 +848,7 @@ class TestPositionShareContractAddress:
 
     # <Normal_5>
     # balance: 0, exchange_balance: 1000000
-    def test_normal_5(self, client, session, shared_contract):
+    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetShareExchange"]
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -962,7 +964,7 @@ class TestPositionShareContractAddress:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
                     contract_address=token_6.address
@@ -970,7 +972,7 @@ class TestPositionShareContractAddress:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "token": {
                 'token_address': token_6.address,
                 'token_template': 'IbetShare',
@@ -1012,28 +1014,20 @@ class TestPositionShareContractAddress:
 
     # <Error_1>
     # NotSupportedError
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
 
         account_address = self.account_1["account_address"]
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
-        router_obj = client.app._router_search("/Position/{account_address}/Share/{contract_address}")[0]
-        origin_data = router_obj.token_enabled
-        try:
-            router_obj.token_enabled = False
-            resp = client.simulate_get(
-                self.apiurl.format(
-                    account_address=account_address,
-                    contract_address=contract_address
-                ),
+        with mock.patch("app.config.SHARE_TOKEN_ENABLED", False):
+            resp = client.get(
+                self.apiurl.format(account_address=account_address, contract_address=contract_address)
             )
-        finally:
-            router_obj.token_enabled = origin_data
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": f"method: GET, url: /Position/{account_address}/Share/{contract_address}"
@@ -1041,12 +1035,12 @@ class TestPositionShareContractAddress:
 
     # <Error_2>
     # ParameterError: invalid account_address
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
 
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(
                 account_address="invalid",
                 contract_address=contract_address
@@ -1055,7 +1049,7 @@ class TestPositionShareContractAddress:
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
             "description": "invalid account_address"
@@ -1063,10 +1057,10 @@ class TestPositionShareContractAddress:
 
     # <Error_3>
     # ParameterError: invalid contract_address
-    def test_error_3(self, client, session):
+    def test_error_3(self, client: TestClient, session: Session):
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(
                 account_address=self.account_1["account_address"],
                 contract_address="invalid"
@@ -1075,7 +1069,7 @@ class TestPositionShareContractAddress:
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
             "description": "invalid contract_address"
@@ -1083,12 +1077,12 @@ class TestPositionShareContractAddress:
 
     # <Error_4>
     # DataNotExistsError: not listing
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
 
         contract_address = "0x1234567890abCdFe1234567890ABCdFE12345678"
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(
                 account_address=self.account_1["account_address"],
                 contract_address=contract_address
@@ -1097,7 +1091,7 @@ class TestPositionShareContractAddress:
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
             "description": f"contract_address: {contract_address}"
@@ -1105,7 +1099,7 @@ class TestPositionShareContractAddress:
 
     # <Error_5>
     # DataNotExistsError: not position
-    def test_error_5(self, client, session, shared_contract):
+    def test_error_5(self, client: TestClient, session: Session, shared_contract):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
 
@@ -1119,7 +1113,7 @@ class TestPositionShareContractAddress:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(
                     account_address=self.account_1["account_address"],
                     contract_address=contract_address
@@ -1127,7 +1121,7 @@ class TestPositionShareContractAddress:
             )
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
             "description": f"contract_address: {contract_address}"

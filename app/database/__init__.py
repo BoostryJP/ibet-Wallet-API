@@ -34,17 +34,18 @@ def get_engine(uri):
         'pool_timeout': 30,
         'pool_pre_ping': True,
         'max_overflow': 30,
-        'echo': config.DB_ECHO,
-        'execution_options': {
-            'autocommit': False
-        }
+        'echo': config.DB_ECHO
     }
     return create_engine(uri, **options)
 
 
-db_session = scoped_session(sessionmaker())
 engine = get_engine(config.DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
 
-def init_session():
-    db_session.configure(bind=engine)
+def db_session():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

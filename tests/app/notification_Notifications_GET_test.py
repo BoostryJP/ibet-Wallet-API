@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.model.db import Notification
 
@@ -124,12 +126,12 @@ class TestNotificationsGet:
 
     # <Normal_1>
     # List all notifications
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl
         )
 
@@ -236,16 +238,16 @@ class TestNotificationsGet:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "offset": 1,
@@ -301,16 +303,16 @@ class TestNotificationsGet:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_3>
     # Pagination(over offset)
-    def test_normal_3(self, client, session):
+    def test_normal_3(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "offset": 5,
@@ -329,16 +331,16 @@ class TestNotificationsGet:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_4>
     # Search Filter
-    def test_normal_4(self, client, session):
+    def test_normal_4(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "address": self.address,
@@ -378,16 +380,16 @@ class TestNotificationsGet:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_5>
     # Search Filter(not hit)
-    def test_normal_5(self, client, session):
+    def test_normal_5(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "address": self.address_2,
@@ -408,16 +410,16 @@ class TestNotificationsGet:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_6>
     # Sort
-    def test_normal_6(self, client, session):
+    def test_normal_6(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "sort_item": "priority",
@@ -528,7 +530,7 @@ class TestNotificationsGet:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     ###########################################################################
     # Error
@@ -536,9 +538,9 @@ class TestNotificationsGet:
 
     # <Error_1>
     # Invalid Parameter
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "notification_type": "hoge",
@@ -551,25 +553,89 @@ class TestNotificationsGet:
         )
 
         # Assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "notification_type": ["unallowed value hoge"],
-                "priority": ["min value is 0"],
-                "sort_item": ["unallowed value fuga"],
-                "sort_order": ["min value is 0"],
-                "offset": ["min value is 0"],
-                "limit": ["min value is 0"],
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "offset"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                },
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "limit"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                },
+                {
+                    "ctx": {
+                        "enum_values": [
+                            "NewOrder",
+                            "NewOrderCounterpart",
+                            "CancelOrder",
+                            "CancelOrderCounterpart",
+                            "ForceCancelOrder",
+                            "BuyAgreement",
+                            "BuySettlementOK",
+                            "BuySettlementNG",
+                            "SellAgreement",
+                            "SellSettlementOK",
+                            "SellSettlementNG",
+                            "Transfer",
+                            "ApplyForTransfer",
+                            "ApproveTransfer",
+                            "CancelTransfer"
+                        ]
+                    },
+                    "loc": ["query", "notification_type"],
+                    "msg": "value is not a valid enumeration member; permitted: "
+                           "'NewOrder', 'NewOrderCounterpart', 'CancelOrder', "
+                           "'CancelOrderCounterpart', 'ForceCancelOrder', "
+                           "'BuyAgreement', 'BuySettlementOK', "
+                           "'BuySettlementNG', 'SellAgreement', "
+                           "'SellSettlementOK', 'SellSettlementNG', 'Transfer', "
+                           "'ApplyForTransfer', 'ApproveTransfer', "
+                           "'CancelTransfer'",
+                    "type": "type_error.enum"
+                },
+                {
+                    "ctx": {"limit_value": 0},
+                    "loc": ["query", "priority"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge"
+                },
+                {
+                    "ctx": {
+                        "enum_values": [
+                            "notification_type",
+                            "priority",
+                            "block_timestamp",
+                            "created"
+                        ]
+                    },
+                    "loc": ["query", "sort_item"],
+                    "msg": "value is not a valid enumeration member; permitted: "
+                           "'notification_type', 'priority', 'block_timestamp', "
+                           "'created'",
+                    "type": "type_error.enum"
+                },
+                {
+                    "ctx": {"enum_values": [0, 1]},
+                    "loc": ["query", "sort_order"],
+                    "msg": "value is not a valid enumeration member; permitted: 0, 1",
+                    "type": "type_error.enum"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # <Error_2>
     # Invalid Parameter
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "address": self.address,
@@ -579,21 +645,31 @@ class TestNotificationsGet:
         )
 
         # Assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "priority": ["max value is 2"],
-                "sort_order": ["max value is 1"],
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "ctx": {"limit_value": 2},
+                    "loc": ["query", "priority"],
+                    "msg": "ensure this value is less than or equal to 2",
+                    "type": "value_error.number.not_le"
+                },
+                {
+                    "ctx": {"enum_values": [0, 1]},
+                    "loc": ["query", "sort_order"],
+                    "msg": "value is not a valid enumeration member; permitted: 0, 1",
+                    "type": "type_error.enum"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # <Error_3>
     # Invalid Parameter (invalid address)
-    def test_error_3(self, client, session):
+    def test_error_3(self, client: TestClient, session: Session):
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "address": "0x11"
@@ -601,8 +677,15 @@ class TestNotificationsGet:
         )
 
         # Assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["query", "address"],
+                    "msg": "address is not a valid address",
+                    "type": "value_error"
+                }
+            ],
+            "message": "Request Validation Error"
         }

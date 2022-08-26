@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 import json
 
 from app import config
@@ -27,8 +29,8 @@ class TestNodeInfoNodeInfo:
 
     # ＜正常系1＞
     # 通常参照
-    def test_nodeinfo_normal_1(self, client, session):
-        resp = client.simulate_get(self.apiurl)
+    def test_nodeinfo_normal_1(self, client: TestClient, session: Session):
+        resp = client.get(self.apiurl)
 
         payment_gateway = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
         personal_info = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
@@ -89,22 +91,22 @@ class TestNodeInfoNodeInfo:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜エラー系1＞
     # HTTPメソッド不正
     # -> 404エラー
-    def test_nodeinfo_error_1(self, client, session):
+    def test_nodeinfo_error_1(self, client: TestClient, session: Session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, json=json.loads(request_body))
 
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: POST, url: /NodeInfo'
+        assert resp.status_code == 405
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": "method: POST, url: /NodeInfo/",
+            "message": "Method Not Allowed"
         }

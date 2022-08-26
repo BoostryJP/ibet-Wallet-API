@@ -19,7 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 import pytest
 
 from eth_utils import to_checksum_address
-from falcon.testing.client import _ResultBase
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -120,7 +121,7 @@ class TestTokenStraightBondTokenAddresses:
 
     # <Normal_1>
     # List all tokens
-    def test_normal_1(self, client, session, shared_contract, processor: Processor):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -146,7 +147,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.process()
 
         query_string = ""
-        resp: _ResultBase = client.simulate_get(self.apiurl, query_string=query_string)
+        resp: _ResultBase = client.get(self.apiurl, params=query_string)
         tokens = [bond_token["address"]]
 
         assumed_body = {
@@ -160,12 +161,12 @@ class TestTokenStraightBondTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client, session, shared_contract, processor: Processor):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -223,7 +224,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp: _ResultBase = client.get(self.apiurl, params={
             "offset": 1,
             "limit": 2,
         })
@@ -240,12 +241,12 @@ class TestTokenStraightBondTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_3>
     # Pagination(over offset)
-    def test_normal_3(self, client, session, shared_contract, processor: Processor):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -303,7 +304,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp: _ResultBase = client.get(self.apiurl, params={
             "offset": 7
         })
         tokens = []
@@ -319,12 +320,12 @@ class TestTokenStraightBondTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_4>
     # Search Filter
-    def test_normal_4(self, client, session, shared_contract, processor: Processor):
+    def test_normal_4(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -382,7 +383,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp: _ResultBase = client.get(self.apiurl, params={
             "name": "テスト債券",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -408,12 +409,12 @@ class TestTokenStraightBondTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_5>
     # Search Filter(not hit)
-    def test_normal_5(self, client, session, shared_contract, processor: Processor):
+    def test_normal_5(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -486,7 +487,7 @@ class TestTokenStraightBondTokenAddresses:
         }
 
         for key, value in not_matched_key_value.items():
-            resp: _ResultBase = client.simulate_get(self.apiurl, params={
+            resp: _ResultBase = client.get(self.apiurl, params={
                 key: value
             })
 
@@ -501,12 +502,12 @@ class TestTokenStraightBondTokenAddresses:
             }
 
             assert resp.status_code == 200
-            assert resp.json["meta"] == {"code": 200, "message": "OK"}
-            assert resp.json["data"] == assumed_body
+            assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+            assert resp.json()["data"] == assumed_body
 
     # <Normal_6>
     # Sort
-    def test_normal_6(self, client, session, shared_contract, processor: Processor):
+    def test_normal_6(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -564,7 +565,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp: _ResultBase = client.get(self.apiurl, params={
             "name": "テスト債券",
             "is_redeemed": False,
             "sort_item": "name",
@@ -583,12 +584,12 @@ class TestTokenStraightBondTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Error_1>
     # NotSupportedError
-    def test_error_1(self, client, session, shared_contract, processor: Processor):
+    def test_error_1(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = False
         # テスト用アカウント
         issuer = eth_account["issuer"]
@@ -613,10 +614,10 @@ class TestTokenStraightBondTokenAddresses:
         processor.process()
 
         query_string = ""
-        resp: _ResultBase = client.simulate_get(self.apiurl, query_string=query_string)
+        resp: _ResultBase = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "description": "method: GET, url: /Token/StraightBond/Addresses",
             "message": "Not Supported"
@@ -624,7 +625,7 @@ class TestTokenStraightBondTokenAddresses:
 
     # <Error_2>
     # InvalidParameterError
-    def test_error_2(self, client, session, shared_contract, processor: Processor):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.BOND_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -657,25 +658,25 @@ class TestTokenStraightBondTokenAddresses:
             "transfer_approval_required": "invalid_param",
         }
         for key, value in invalid_key_value.items():
-            resp: _ResultBase = client.simulate_get(self.apiurl, params={
+            resp: _ResultBase = client.get(self.apiurl, params={
                 key: value
             })
 
             assert resp.status_code == 400
-            assert resp.json["title"] == "Invalid parameter"
-            assert resp.json["description"] == f'The "{key}" parameter is invalid. The value of the parameter must be "true" or "false".'
+            assert resp.json()["title"] == "Invalid parameter"
+            assert resp.json()["description"] == f'The "{key}" parameter is invalid. The value of the parameter must be "true" or "false".'
 
         invalid_key_value = {
             "offset": "invalid_param",
             "limit": "invalid_param"
         }
         for key, value in invalid_key_value.items():
-            resp: _ResultBase = client.simulate_get(self.apiurl, params={
+            resp: _ResultBase = client.get(self.apiurl, params={
                 key: value
             })
 
             assert resp.status_code == 400
-            assert resp.json["meta"] == {
+            assert resp.json()["meta"] == {
                 "code": 88,
                 "message": "Invalid Parameter",
                 "description": {

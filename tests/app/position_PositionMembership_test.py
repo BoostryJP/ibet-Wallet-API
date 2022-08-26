@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from unittest import mock
 
@@ -193,7 +194,7 @@ class TestPositionMembership:
 
     # <Normal_1>
     # List all positions
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetMembershipExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -229,12 +230,12 @@ class TestPositionMembership:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "result_set": {
                 "count": 4,
                 "offset": None,
@@ -271,7 +272,7 @@ class TestPositionMembership:
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetMembershipExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -307,7 +308,7 @@ class TestPositionMembership:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
                     "include_token_details": "false",
@@ -318,7 +319,7 @@ class TestPositionMembership:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "result_set": {
                 "count": 4,
                 "offset": 1,
@@ -343,7 +344,7 @@ class TestPositionMembership:
 
     # <Normal_3>
     # token details
-    def test_normal_3(self, client, session, shared_contract):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -353,7 +354,7 @@ class TestPositionMembership:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
                     "include_token_details": "true",
@@ -361,7 +362,7 @@ class TestPositionMembership:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "result_set": {
                 "count": 1,
                 "offset": None,
@@ -405,7 +406,7 @@ class TestPositionMembership:
     # <Normal_4>
     # List all positions
     # Indexed: <Normal_1>
-    def test_normal_4(self, client, session, shared_contract):
+    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetMembershipExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -470,7 +471,7 @@ class TestPositionMembership:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
                     "enable_index": "true"
@@ -478,7 +479,7 @@ class TestPositionMembership:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "result_set": {
                 "count": 4,
                 "offset": None,
@@ -516,7 +517,7 @@ class TestPositionMembership:
     # <Normal_5>
     # Pagination
     # Indexed: <Normal_2>
-    def test_normal_5(self, client, session, shared_contract):
+    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
         exchange_contract = shared_contract["IbetMembershipExchange"]
         token_list_contract = shared_contract["TokenList"]
 
@@ -581,7 +582,7 @@ class TestPositionMembership:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
                     "include_token_details": "false",
@@ -593,7 +594,7 @@ class TestPositionMembership:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "result_set": {
                 "count": 4,
                 "offset": 1,
@@ -618,7 +619,7 @@ class TestPositionMembership:
 
     # <Normal_6>
     # token details
-    def test_normal_6(self, client, session, shared_contract):
+    def test_normal_6(self, client: TestClient, session: Session, shared_contract):
         token_list_contract = shared_contract["TokenList"]
 
         # Prepare data
@@ -630,7 +631,7 @@ class TestPositionMembership:
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
-            resp = client.simulate_get(
+            resp = client.get(
                 self.apiurl.format(account_address=self.account_1["account_address"]),
                 params={
                     "include_token_details": "true",
@@ -639,7 +640,7 @@ class TestPositionMembership:
             )
 
         assert resp.status_code == 200
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "result_set": {
                 "count": 1,
                 "offset": None,
@@ -686,24 +687,19 @@ class TestPositionMembership:
 
     # <Error_1>
     # NotSupportedError
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
 
         account_address = self.account_1["account_address"]
 
         # Request target API
-        router_obj = client.app._router_search("/Position/{account_address}/Membership")[0]
-        origin_data = router_obj.token_enabled
-        try:
-            router_obj.token_enabled = False
-            resp = client.simulate_get(
+        with mock.patch("app.config.MEMBERSHIP_TOKEN_ENABLED", False):
+            resp = client.get(
                 self.apiurl.format(account_address=account_address),
             )
-        finally:
-            router_obj.token_enabled = origin_data
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
             "description": f"method: GET, url: /Position/{account_address}/Membership"
@@ -711,16 +707,16 @@ class TestPositionMembership:
 
     # <Error_2>
     # ParameterError: invalid account_address
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(account_address="invalid"),
         )
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
             "description": "invalid account_address"
@@ -728,10 +724,10 @@ class TestPositionMembership:
 
     # <Error_3>
     # ParameterError: offset/limit(minus value)
-    def test_error_3(self, client, session):
+    def test_error_3(self, client: TestClient, session: Session):
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(account_address=self.account_1["account_address"]),
             params={
                 "offset": -1,
@@ -740,22 +736,32 @@ class TestPositionMembership:
         )
 
         # Assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "offset": ["min value is 0"],
-                "limit": ["min value is 0"],
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "offset"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                },
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "limit"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # <Error_4>
     # ParameterError: offset/limit(not int), include_token_details(not bool)
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
 
         # Request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(account_address=self.account_1["account_address"]),
             params={
                 "include_token_details": "test",
@@ -765,21 +771,25 @@ class TestPositionMembership:
         )
 
         # Assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'include_token_details': [
-                    'unallowed value test'
-                ],
-                'limit': [
-                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'test'",
-                    'must be of integer type'
-                ],
-                'offset': [
-                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: 'test'",
-                    'must be of integer type'
-                ]
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["query", "offset"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer"
+                },
+                {
+                    "loc": ["query", "limit"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer"
+                },
+                {
+                    "loc": ["query", "include_token_details"],
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool"
+                }
+            ],
+            "message": "Request Validation Error"
         }

@@ -17,54 +17,72 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from eth_utils import to_checksum_address
+from fastapi import (
+    APIRouter,
+    Path
+)
 from web3 import Web3
 
 from app import (
     log,
     config
 )
-from app.api.common import BaseResource
 from app.contracts import Contract
 from app.errors import (
     InvalidParameterError,
     DataNotExistsError
 )
+from app.model.schema import (
+    GenericSuccessResponse,
+    E2EMessageEncryptionKey, SuccessResponse
+)
 
 LOG = log.get_logger()
 
+router = APIRouter(
+    prefix="/E2EMessage",
+    tags=["E2EMessage"]
+)
 
-class EncryptionKey(BaseResource):
+@router.get(
+    "/EncryptionKey/{account_address}",
+    summary="Retrieve message encryption key",
+    operation_id="EncryptionKey",
+    response_model=GenericSuccessResponse[E2EMessageEncryptionKey]
+)
+def retrieve_encryption_key(
+    account_address: str = Path(description="Account address (message receiver)")
+):
     """
     Endpoint: /E2EMessage/EncryptionKey/{account_address}
     """
-
-    def on_get(self, req, res, account_address=None, **kwargs):
-        """Retrieve message encryption key"""
-        # Validation
-        try:
-            account_address = to_checksum_address(account_address)
-            if not Web3.isAddress(account_address):
-                raise InvalidParameterError(description="invalid account_address")
-        except:
+    # Validation
+    try:
+        account_address = to_checksum_address(account_address)
+        if not Web3.isAddress(account_address):
             raise InvalidParameterError(description="invalid account_address")
+    except:
+        raise InvalidParameterError(description="invalid account_address")
 
-        # Get public key
-        messaging_contract = Contract.get_contract(
-            contract_name="E2EMessaging",
-            address=config.E2E_MESSAGING_CONTRACT_ADDRESS
-        )
-        key, key_type = Contract.call_function(
-            contract=messaging_contract,
-            function_name="getPublicKey",
-            args=(account_address, ),
-            default_returns=("", "")
-        )
-        if key == "":  # not registered
-            raise DataNotExistsError(f"account_address: {account_address}")
-        else:
-            encryption_key = {
-                "key": key,
-                "key_type": key_type
-            }
-
-        self.on_success(res, encryption_key)
+    # Get public key
+    messaging_contract = Contract.get_contract(
+        contract_name="E2EMessaging",
+        address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)
+    )
+    key, key_type = Contract.call_function(
+        contract=messaging_contract,
+        function_name="getPublicKey",
+        args=(account_address, ),
+        default_returns=("", "")
+    )
+    if key == "":  # not registered
+        raise DataNotExistsError(f"account_address: {account_address}")
+    else:
+        encryption_key = {
+            "key": key,
+            "key_type": key_type
+        }
+    return {
+        **SuccessResponse().dict(),
+        "data": encryption_key
+    }

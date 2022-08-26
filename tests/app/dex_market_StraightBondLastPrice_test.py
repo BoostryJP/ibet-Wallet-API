@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from tests.account_config import eth_account
 from app import config
@@ -94,7 +96,7 @@ class TestDEXMarketStraightBondLastPrice:
 
     # 正常系1：存在しない取引コントラクトアドレスを指定
     #  -> 現在値：0円
-    def test_lastprice_normal_1(self, client, session):
+    def test_lastprice_normal_1(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
@@ -104,8 +106,8 @@ class TestDEXMarketStraightBondLastPrice:
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assumed_body = [{
             'token_address':
@@ -115,12 +117,12 @@ class TestDEXMarketStraightBondLastPrice:
         }]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # 正常系2：約定が発生していないトークンアドレスを指定した場合
     #  -> 現在値：0円
-    def test_lastprice_normal_2(self, client, session):
+    def test_lastprice_normal_2(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
@@ -130,8 +132,8 @@ class TestDEXMarketStraightBondLastPrice:
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assumed_body = [{
             'token_address':
@@ -141,12 +143,12 @@ class TestDEXMarketStraightBondLastPrice:
         }]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # 正常系3：1000円で約定
     #  -> 現在値1000円が返却される
-    def test_lastprice_normal_3(self, client, session, shared_contract):
+    def test_lastprice_normal_3(self, client: TestClient, session: Session, shared_contract):
         bond_exchange = shared_contract['IbetStraightBondExchange']
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
@@ -163,8 +165,8 @@ class TestDEXMarketStraightBondLastPrice:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assumed_body = [{
             'token_address': token_address,
@@ -172,31 +174,35 @@ class TestDEXMarketStraightBondLastPrice:
         }]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # エラー系1：入力値エラー（request-bodyなし）
-    def test_lastprice_error_1(self, client, session):
+    def test_lastprice_error_1(self, client: TestClient, session: Session):
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps({})
 
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'address_list': ['required field']
-            }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["body", "address_list"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # エラー系2：入力値エラー（headersなし）
-    def test_lastprice_error_2(self, client, session):
+    def test_lastprice_error_2(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
@@ -206,17 +212,17 @@ class TestDEXMarketStraightBondLastPrice:
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter'
         }
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
-    def test_lastprice_error_3(self, client, session):
+    def test_lastprice_error_3(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
         request_params = {"address_list": [token_address]}
 
@@ -226,52 +232,68 @@ class TestDEXMarketStraightBondLastPrice:
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
-        }
+        assert resp.status_code == 422
+        assert resp.json()["meta"] =={
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["body", "address_list"],
+                    "msg": "address_list has not a valid address",
+                    "type": "value_error"
+                }
+            ],
+            "message": "Request Validation Error"
+        } 
+        
 
     # エラー系4：HTTPメソッドが不正
-    def test_lastprice_error_4(self, client, session):
+    def test_lastprice_error_4(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: GET, url: /DEX/Market/LastPrice/StraightBond'
+        assert resp.status_code == 405
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "message": "Method Not Allowed",
+            "description": "method: GET, url: /DEX/Market/LastPrice/StraightBond"
         }
 
     # エラー系5：取扱トークン対象外
-    def test_lastprice_error_5(self, client, session):
+    def test_lastprice_error_5(self, client: TestClient, session: Session):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        request_params = {"address_list": [token_address]}
+        request_body = json.dumps(request_params)
+
         config.BOND_TOKEN_ENABLED = False
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: POST, url: /DEX/Market/LastPrice/StraightBond'
         }
 
     # エラー系6：exchangeアドレス未設定
-    def test_lastprice_error_6(self, client, session):
+    def test_lastprice_error_6(self, client: TestClient, session: Session):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        request_params = {"address_list": [token_address]}
+        request_body = json.dumps(request_params)
+
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
 
-        resp = client.simulate_post(self.apiurl)
+        resp = client.post(self.apiurl, data=request_body)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: POST, url: /DEX/Market/LastPrice/StraightBond'

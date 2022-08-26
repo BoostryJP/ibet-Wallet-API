@@ -17,85 +17,115 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from fastapi import (
+    APIRouter,
+    Depends
+)
+from sqlalchemy.orm import Session
 
 from app import (
     config,
     log
 )
-from app.api.common import BaseResource
+from app.database import db_session
 from app.model.db import Node
+from app.model.schema import (
+    GenericSuccessResponse,
+    NodeInfo,
+    SuccessResponse,
+    BlockSyncStatus
+)
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
 web3 = Web3Wrapper()
 
 
+router = APIRouter(
+    prefix="/NodeInfo",
+    tags=["NodeInfo"]
+)
+
+
 # ------------------------------
 # ノード情報
 # ------------------------------
-class NodeInfo(BaseResource):
+@router.get(
+    "/",
+    summary="Blockchain node information",
+    operation_id="NodeInfo",
+    response_model=GenericSuccessResponse[NodeInfo]
+)
+def get_node_info():
     """
     Endpoint: /NodeInfo
     """
+    payment_gateway_json = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
+    personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
+    ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
+    ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
+    ibet_security_token_escrow_json = json.load(open("app/contracts/json/IbetSecurityTokenEscrow.json", "r"))
+    e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
 
-    def on_get(self, req, res, **kwargs):
-        payment_gateway_json = json.load(open("app/contracts/json/PaymentGateway.json", "r"))
-        personal_info_json = json.load(open("app/contracts/json/PersonalInfo.json", "r"))
-        ibet_exchange_json = json.load(open("app/contracts/json/IbetExchange.json", "r"))
-        ibet_escrow_json = json.load(open("app/contracts/json/IbetEscrow.json", "r"))
-        ibet_security_token_escrow_json = json.load(open("app/contracts/json/IbetSecurityTokenEscrow.json", "r"))
-        e2e_messaging_json = json.load(open("app/contracts/json/E2EMessaging.json", "r"))
-
-        nodeInfo = {
-            'payment_gateway_address': config.PAYMENT_GATEWAY_CONTRACT_ADDRESS,
-            'payment_gateway_abi': payment_gateway_json['abi'],
-            'personal_info_address': config.PERSONAL_INFO_CONTRACT_ADDRESS,
-            'personal_info_abi': personal_info_json['abi'],
-            'ibet_straightbond_exchange_address': config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_straightbond_exchange_abi': ibet_exchange_json['abi'],
-            'ibet_membership_exchange_address': config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_membership_exchange_abi': ibet_exchange_json['abi'],
-            'ibet_coupon_exchange_address': config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_coupon_exchange_abi': ibet_exchange_json['abi'],
-            'ibet_share_exchange_address': config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-            'ibet_share_exchange_abi': ibet_exchange_json['abi'],
-            'ibet_escrow_address': config.IBET_ESCROW_CONTRACT_ADDRESS,
-            'ibet_escrow_abi': ibet_escrow_json['abi'],
-            'ibet_security_token_escrow_address': config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,
-            'ibet_security_token_escrow_abi': ibet_security_token_escrow_json['abi'],
-            'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
-            'e2e_messaging_abi': e2e_messaging_json['abi'],
-            'agent_address': config.AGENT_ADDRESS,
-        }
-
-        self.on_success(res, nodeInfo)
+    nodeInfo = {
+        'payment_gateway_address': config.PAYMENT_GATEWAY_CONTRACT_ADDRESS,
+        'payment_gateway_abi': payment_gateway_json['abi'],
+        'personal_info_address': config.PERSONAL_INFO_CONTRACT_ADDRESS,
+        'personal_info_abi': personal_info_json['abi'],
+        'ibet_straightbond_exchange_address': config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
+        'ibet_straightbond_exchange_abi': ibet_exchange_json['abi'],
+        'ibet_membership_exchange_address': config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+        'ibet_membership_exchange_abi': ibet_exchange_json['abi'],
+        'ibet_coupon_exchange_address': config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+        'ibet_coupon_exchange_abi': ibet_exchange_json['abi'],
+        'ibet_share_exchange_address': config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
+        'ibet_share_exchange_abi': ibet_exchange_json['abi'],
+        'ibet_escrow_address': config.IBET_ESCROW_CONTRACT_ADDRESS,
+        'ibet_escrow_abi': ibet_escrow_json['abi'],
+        'ibet_security_token_escrow_address': config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,
+        'ibet_security_token_escrow_abi': ibet_security_token_escrow_json['abi'],
+        'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
+        'e2e_messaging_abi': e2e_messaging_json['abi'],
+        'agent_address': config.AGENT_ADDRESS,
+    }
+    return {
+        **SuccessResponse().dict(),
+        "data": nodeInfo
+    }
 
 
 # ------------------------------
 # ブロック同期情報
 # ------------------------------
-class BlockSyncStatus(BaseResource):
+@router.get(
+    "/BlockSyncStatus",
+    summary="Block synchronization status of the connected blockchain node",
+    operation_id="NodeInfoBlockSyncStatus",
+    response_model=GenericSuccessResponse[BlockSyncStatus]
+)
+def get_block_sync_status(
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /NodeInfo/BlockSyncStatus
     """
+    # Get block sync status
+    node: Node = session.query(Node). \
+        filter(Node.is_synced == True). \
+        order_by(Node.priority). \
+        first()
 
-    def on_get(self, req, res, **kwargs):
-        session = req.context["session"]
+    # Get latest block number
+    is_synced = False
+    latest_block_number = None
+    if node is not None:
+        is_synced = True
+        latest_block_number = web3.eth.block_number
 
-        # Get block sync status
-        node = session.query(Node). \
-            filter(Node.is_synced == True). \
-            order_by(Node.priority). \
-            first()
-
-        # Get latest block number
-        is_synced = False
-        latest_block_number = None
-        if node is not None:
-            is_synced = True
-            latest_block_number = web3.eth.block_number
-
-        self.on_success(res, {
+    return {
+        **SuccessResponse().dict(),
+        "data": {
             "is_synced": is_synced,
             "latest_block_number": latest_block_number
-        })
+        }
+    }

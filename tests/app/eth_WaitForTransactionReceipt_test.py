@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from unittest import mock
 from unittest.mock import MagicMock
 from web3 import Web3
@@ -70,7 +72,7 @@ def executable_contract_token(session, contract):
 class TestEthWaitForTransactionReceipt:
 
     # テスト対象API
-    apiurl = '/Eth/WaitForTransactionReceipt/'
+    apiurl = '/Eth/WaitForTransactionReceipt'
 
     ###########################################################################
     # Normal
@@ -78,7 +80,7 @@ class TestEthWaitForTransactionReceipt:
 
     # <Normal_1>
     # Wait receipt for successful transaction
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         # トークンリスト登録
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
@@ -121,23 +123,23 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             'code': 200,
             'message': "OK"
         }
-        assert resp.json["data"] == {
+        assert resp.json()["data"] == {
             "status": 1
         }
 
     # <Normal_2>
     # Wait receipt for reverted transaction
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
         # トークンリスト登録
         tokenlist = tokenlist_contract()
         config.TOKEN_LIST_CONTRACT_ADDRESS = tokenlist['address']
@@ -197,17 +199,17 @@ class TestEthWaitForTransactionReceipt:
 
         eth_call_mock.side_effect = side_effect
         with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
-            resp = client.simulate_post(
+            resp = client.post(
                 self.apiurl,
                 headers=headers,
-                body=request_body
+                data=request_body
             )
             assert resp.status_code == 200
-            assert resp.json["meta"] == {
+            assert resp.json()["meta"] == {
                 'code': 200,
                 'message': "OK"
             }
-            assert resp.json["data"] == {
+            assert resp.json()["data"] == {
                 "status": 0, 
                 "error_code": 130401, 
                 "error_msg": "Message sender balance is insufficient."
@@ -220,7 +222,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_1
     # timeout設定なし（デフォルト採用）
     # -> 404エラー（Data not exists）
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
         }
@@ -228,14 +230,14 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 30,
             'message': 'Data Not Exists'
         }
@@ -243,7 +245,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_2
     # timeout設定あり
     # -> 404エラー（Data not exists）
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": 1
@@ -252,14 +254,14 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 30,
             'message': 'Data Not Exists'
         }
@@ -267,31 +269,31 @@ class TestEthWaitForTransactionReceipt:
     # Error_3
     # HTTPメソッド不正
     # -> 404エラー（Not Supported）
-    def test_error_3(self, client, session):
-        resp = client.simulate_get(self.apiurl)
+    def test_error_3(self, client: TestClient, session: Session):
+        resp = client.get(self.apiurl)
 
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
+        assert resp.status_code == 405
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'message': 'Method Not Allowed',
             'description': 'method: GET, url: /Eth/WaitForTransactionReceipt'
         }
 
     # Error_4
     # headersなし
     # -> 400エラー（InvalidParameterError）
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
         }
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.status_code == 404
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter'
         }
@@ -299,7 +301,7 @@ class TestEthWaitForTransactionReceipt:
     # Error_5_1
     # 入力エラー（timeout最小値）
     # -> 400エラー
-    def test_error_5_1(self, client, session):
+    def test_error_5_1(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": 0
@@ -308,23 +310,30 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'timeout': ['min value is 1']}
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["body", "timeout"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # Error_5_2
     # 入力エラー（timeout最大値）
     # -> 400エラー
-    def test_error_5_2(self, client, session):
+    def test_error_5_2(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": 31
@@ -333,23 +342,30 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'timeout': ['max value is 30']}
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "ctx": {"limit_value": 30},
+                    "loc": ["body", "timeout"],
+                    "msg": "ensure this value is less than or equal to 30",
+                    "type": "value_error.number.not_le"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # Error_6_1
     # 入力型エラー（transaction_hash）
     # -> 400エラー
-    def test_error_6_1(self, client, session):
+    def test_error_6_1(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": 1234,
             "timeout": 1
@@ -358,23 +374,29 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'transaction_hash': ['must be of string type']}
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["body", "transaction_hash"],
+                    "msg": "str type expected",
+                    "type": "type_error.str"
+                }
+            ],
+            "message": "Request Validation Error"
         }
 
     # Error_6_2
     # 入力型エラー（timeout）
     # -> 400エラー
-    def test_error_6_2(self, client, session):
+    def test_error_6_2(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455",
             "timeout": "aaaa"
@@ -383,15 +405,21 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
-        assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'timeout': ['must be of integer type']}
+        assert resp.status_code == 422
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "description": [
+                {
+                    "loc": ["body", "timeout"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer"
+                }
+            ],
+            "message": "Request Validation Error"
         }
