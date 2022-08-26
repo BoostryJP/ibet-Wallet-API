@@ -60,10 +60,10 @@ $ pip install -r requirements.txt
 
 <table style="border-collapse: collapse" id="env-table">
     <tr bgcolor="#000000">
-        <th style="width: 25%">Variable Name</th>
-        <th style="width: 10%">Required</th>
-        <th style="width: 30%">Details</th>
-        <th>Example</th>
+        <th style="width: 25%">環境変数名</th>
+        <th style="width: 10%">必須</th>
+        <th style="width: 30%">詳細</th>
+        <th>設定例</th>
     </tr>
     <tr>
         <td>APP_ENV</td>
