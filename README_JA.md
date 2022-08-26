@@ -234,6 +234,8 @@ $ pytest tests/
 
 ## ブランチ作成方針
 
+このリポジトリは以下の図で示されるフローでバージョン管理が行われています。
+
 <p align='center'>
   <img alt="ibet_oss_branching_model" src="https://user-images.githubusercontent.com/963333/153906146-51104713-c93c-4c5d-8b0a-5cf59651ffff.png"/>
 </p>

@@ -234,6 +234,8 @@ $ pytest tests/
 
 ## Branching model
 
+This repository is version controlled using the following flow.
+
 <p align='center'>
   <img alt="ibet_oss_branching_model" src="https://user-images.githubusercontent.com/963333/153906146-51104713-c93c-4c5d-8b0a-5cf59651ffff.png"/>
 </p>
