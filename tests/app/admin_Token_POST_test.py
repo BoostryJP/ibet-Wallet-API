@@ -104,7 +104,7 @@ class TestAdminTokenPOST:
         request_body = json.dumps(request_params)
         apiurl = self.apiurl_base + str(self.default_token["token_address"])
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json() == {
             'meta': {
                 'code': 1,
@@ -134,7 +134,7 @@ class TestAdminTokenPOST:
         apiurl = self.apiurl_base + str(self.default_token["token_address"])
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json() == {
             "meta": {
                 "code": 1,
@@ -164,7 +164,7 @@ class TestAdminTokenPOST:
         apiurl = self.apiurl_base + str(self.default_token["token_address"])
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json() == {
             "meta": {
                 "code": 1,
@@ -194,7 +194,7 @@ class TestAdminTokenPOST:
         apiurl = self.apiurl_base + str(self.default_token["token_address"])
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json() == {
             "meta": {
                 "code": 1,

@@ -658,31 +658,41 @@ class TestTokenStraightBondTokenAddresses:
             "transfer_approval_required": "invalid_param",
         }
         for key, value in invalid_key_value.items():
-            resp: _ResultBase = client.get(self.apiurl, params={
+            resp = client.get(self.apiurl, params={
                 key: value
             })
 
             assert resp.status_code == 400
-            assert resp.json()["title"] == "Invalid parameter"
-            assert resp.json()["description"] == f'The "{key}" parameter is invalid. The value of the parameter must be "true" or "false".'
+            assert resp.json()["meta"] == {
+                'code': 1,
+                'description': [
+                    {
+                        'loc': ['query', key],
+                        'msg': 'value could not be parsed to a boolean',
+                        'type': 'type_error.bool'
+                    }
+                ],
+                'message': 'Request Validation Error'
+            }
 
         invalid_key_value = {
             "offset": "invalid_param",
             "limit": "invalid_param"
         }
         for key, value in invalid_key_value.items():
-            resp: _ResultBase = client.get(self.apiurl, params={
+            resp = client.get(self.apiurl, params={
                 key: value
             })
 
             assert resp.status_code == 400
             assert resp.json()["meta"] == {
-                "code": 88,
-                "message": "Invalid Parameter",
-                "description": {
-                    f"{key}": [
-                        f"field '{key}' cannot be coerced: invalid literal for int() with base 10: '{value}'",
-                        "must be of integer type"
-                    ]
-                }
+                'code': 1,
+                'description': [
+                    {
+                        'loc': ['query', key],
+                        'msg': 'value is not a valid integer',
+                        'type': 'type_error.integer'
+                    }
+                ],
+                'message': 'Request Validation Error'
             }

@@ -1175,20 +1175,20 @@ class TestPositionShare:
         )
 
         # Assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
                 {
-                    "ctx": {"limit_value": 1},
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "offset"],
-                    "msg": "ensure this value is greater than or equal to 1",
+                    "msg": "ensure this value is greater than or equal to 0",
                     "type": "value_error.number.not_ge"
                 },
                 {
-                    "ctx": {"limit_value": 1},
+                    "ctx": {"limit_value": 0},
                     "loc": ["query", "limit"],
-                    "msg": "ensure this value is greater than or equal to 1",
+                    "msg": "ensure this value is greater than or equal to 0",
                     "type": "value_error.number.not_ge"
                 }
             ],
@@ -1210,7 +1210,7 @@ class TestPositionShare:
         )
 
         # Assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [

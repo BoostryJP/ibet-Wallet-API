@@ -839,7 +839,7 @@ class TestTokenMembershipTokens:
                 key: value
             })
 
-            assert resp.status_code == 422
+            assert resp.status_code == 400
             assert resp.json()["meta"] == {
                 "code": 1,
                 "description": [
@@ -861,7 +861,7 @@ class TestTokenMembershipTokens:
                 key: value
             })
 
-            assert resp.status_code == 422
+            assert resp.status_code == 400
             assert resp.json()["meta"] == {
                 "code": 1,
                 "description": [

@@ -364,7 +364,7 @@ class TestDEXMarketGetAgreement:
         query_string = ""
         resp = client.get(self.apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
             "code": 1,
             "description": [
@@ -395,7 +395,7 @@ class TestDEXMarketGetAgreement:
         query_string = f'order_id=2&agreement_id=102&exchange_address={exchange_address}'
         resp = client.get(self.apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -416,7 +416,7 @@ class TestDEXMarketGetAgreement:
         query_string = f'order_id=aa&agreement_id=bb&exchange_address={exchange_address}'
         resp = client.get(self.apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [

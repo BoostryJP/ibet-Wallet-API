@@ -651,8 +651,17 @@ class TestTokenShareTokenAddresses:
             })
 
             assert resp.status_code == 400
-            assert resp.json()["title"] == "Invalid parameter"
-            assert resp.json()["description"] == f'The "{key}" parameter is invalid. The value of the parameter must be "true" or "false".'
+            assert resp.json()["meta"] == {
+                'code': 1,
+                'description': [
+                    {
+                        'loc': ['query', key],
+                        'msg': 'value could not be parsed to a boolean',
+                        'type': 'type_error.bool'
+                    }
+                ],
+                'message': 'Request Validation Error'
+            }
 
         invalid_key_value = {
             "offset": "invalid_param",
@@ -665,12 +674,13 @@ class TestTokenShareTokenAddresses:
 
             assert resp.status_code == 400
             assert resp.json()["meta"] == {
-                "code": 88,
-                "message": "Invalid Parameter",
-                "description": {
-                    f"{key}": [
-                        f"field '{key}' cannot be coerced: invalid literal for int() with base 10: '{value}'",
-                        "must be of integer type"
-                    ]
-                }
+                'code': 1,
+                'description': [
+                    {
+                        'loc': ['query', key],
+                        'msg': 'value is not a valid integer',
+                        'type': 'type_error.integer'
+                    }
+                ],
+                'message': 'Request Validation Error'
             }

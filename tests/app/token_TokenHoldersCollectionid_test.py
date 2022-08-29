@@ -225,7 +225,7 @@ class TestTokenTokenHoldersCollectionId:
         query_string = ""
         resp = client.get(apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [

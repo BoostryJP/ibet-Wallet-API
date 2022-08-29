@@ -175,7 +175,7 @@ class TestDEXMarketStraightBondTick:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -188,12 +188,12 @@ class TestDEXMarketStraightBondTick:
             "message": "Request Validation Error"
         }
 
-    # エラー系2：入力値エラー（headersなし）
+    # エラー系2：入力値エラー（headers Content-Type不正）
     def test_tick_error_2(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         request_params = {"address_list": [token_address]}
 
-        headers = {}
+        headers: dict = {"Content-Type": "invalid type"}
         request_body = json.dumps(request_params)
 
         config.BOND_TOKEN_ENABLED = True
@@ -204,8 +204,15 @@ class TestDEXMarketStraightBondTick:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body'],
+                    'msg': 'value is not a valid dict',
+                    'type': 'type_error.dict'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
@@ -222,7 +229,7 @@ class TestDEXMarketStraightBondTick:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [

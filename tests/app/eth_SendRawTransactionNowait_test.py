@@ -280,7 +280,7 @@ class TestEthSendRawTransactionNoWait:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -307,7 +307,7 @@ class TestEthSendRawTransactionNoWait:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -333,7 +333,7 @@ class TestEthSendRawTransactionNoWait:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
             "code": 1,
             "description": [
@@ -359,7 +359,7 @@ class TestEthSendRawTransactionNoWait:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -385,7 +385,7 @@ class TestEthSendRawTransactionNoWait:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [

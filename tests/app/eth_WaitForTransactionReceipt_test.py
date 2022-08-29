@@ -20,14 +20,11 @@ import json
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from unittest import mock
-from unittest.mock import MagicMock
 from web3 import Web3
-from web3.exceptions import ContractLogicError
 from web3.middleware import geth_poa_middleware
 from eth_utils import to_checksum_address
 
 from app import config
-from app.api.routers import eth
 from app.contracts import Contract
 
 from app.model.db import (
@@ -182,23 +179,7 @@ class TestEthWaitForTransactionReceipt:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
-        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert 130401',...})
-        #         geth: ContractLogicError("execution reverted: 130401")
-        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
-        eth_call_mock = MagicMock()
-        successor = iter([True, True, True, True])
-
-        def side_effect(*arg, **kwargs):
-            global web3
-            try:
-                if next(successor):
-                    return web3.eth.call(*arg, **kwargs)
-            except Exception as e:
-                raise ContractLogicError("execution reverted: 130401")
-
-        eth_call_mock.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+        with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="130401"):
             resp = client.post(
                 self.apiurl,
                 headers=headers,
@@ -280,22 +261,29 @@ class TestEthWaitForTransactionReceipt:
         }
 
     # Error_4
-    # headersなし
+    # 入力値エラー（headers Content-Type不正）
     # -> 400エラー（InvalidParameterError）
     def test_error_4(self, client: TestClient, session: Session):
         request_params = {
             "transaction_hash": "0x01f4d994daef015cf4b3dbd750873c6de419de41a2063bd107812f06e0c2b455"
         }
-        headers = {}
+        headers: dict = {"Content-Type": "invalid type"}
         request_body = json.dumps(request_params)
 
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 404
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body'],
+                    'msg': 'value is not a valid dict',
+                    'type': 'type_error.dict'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_5_1
@@ -316,7 +304,7 @@ class TestEthWaitForTransactionReceipt:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -348,7 +336,7 @@ class TestEthWaitForTransactionReceipt:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -380,7 +368,7 @@ class TestEthWaitForTransactionReceipt:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -411,7 +399,7 @@ class TestEthWaitForTransactionReceipt:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [

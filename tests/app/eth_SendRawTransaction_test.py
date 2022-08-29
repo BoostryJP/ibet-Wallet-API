@@ -25,7 +25,7 @@ from unittest import mock
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.middleware import geth_poa_middleware
-from web3.exceptions import TimeExhausted, ContractLogicError
+from web3.exceptions import TimeExhausted
 from eth_utils import to_checksum_address
 
 from app import config
@@ -366,7 +366,7 @@ class TestEthSendRawTransaction:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -393,7 +393,7 @@ class TestEthSendRawTransaction:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -419,7 +419,7 @@ class TestEthSendRawTransaction:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -445,7 +445,7 @@ class TestEthSendRawTransaction:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -472,7 +472,7 @@ class TestEthSendRawTransaction:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -733,23 +733,7 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
-        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert 130401',...})
-        #         geth: ContractLogicError("execution reverted: 130401")
-        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
-        eth_call_mock = MagicMock()
-        successor = iter([True, True, True, True])
-
-        def side_effect(*arg, **kwargs):
-            global web3
-            try:
-                if next(successor):
-                    return web3.eth.call(*arg, **kwargs)
-            except Exception as e:
-                raise ContractLogicError("execution reverted: 130401")
-
-        eth_call_mock.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+        with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="130401"):
             resp = client.post(
                 self.apiurl, headers=headers, data=request_body)
 
@@ -808,23 +792,7 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
-        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert Direct...',...})
-        #         geth: ContractLogicError("execution reverted: Direct transfer is...")
-        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
-        eth_call_mock = MagicMock()
-        successor = iter([True, True, True, True])
-
-        def side_effect(*arg, **kwargs):
-            global web3
-            try:
-                if next(successor):
-                    return web3.eth.call(*arg, **kwargs)
-            except Exception as e:
-                raise ContractLogicError("execution reverted: Message sender balance is insufficient.")
-
-        eth_call_mock.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+        with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="Message sender balance is insufficient."):
             resp = client.post(
                 self.apiurl, headers=headers, data=request_body)
 
@@ -883,23 +851,7 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
-        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert',...})
-        #         geth: ContractLogicError("execution reverted")
-        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
-        eth_call_mock = MagicMock()
-        successor = iter([True, True, True, True])
-
-        def side_effect(*arg, **kwargs):
-            global web3
-            try:
-                if next(successor):
-                    return web3.eth.call(*arg, **kwargs)
-            except Exception as e:
-                raise ContractLogicError("execution reverted")
-
-        eth_call_mock.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
+        with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="execution reverted"):
             resp = client.post(
                 self.apiurl, headers=headers, data=request_body)
 

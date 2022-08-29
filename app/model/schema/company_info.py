@@ -16,16 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from optparse import Option
 from typing import Optional
-from pydantic import (
-    BaseModel,
-    Field,
-    validator
-)
-from web3 import Web3
-
-from app.model.schema.base import SuccessResponse
+from pydantic import BaseModel
 
 ############################
 # COMMON
@@ -56,8 +48,8 @@ class CompanyToken(BaseModel):
     name: str
     symbol: str
     total_supply: int
-    contract_information: str
+    contact_information: str
     privacy_policy: str
     status: bool
-    max_holding_quantity: int
-    max_sell_amount: int
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]

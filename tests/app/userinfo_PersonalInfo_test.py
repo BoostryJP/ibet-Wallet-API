@@ -151,7 +151,7 @@ class TestUserInfoPersonalInfo:
         resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -180,7 +180,7 @@ class TestUserInfoPersonalInfo:
         resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -204,7 +204,7 @@ class TestUserInfoPersonalInfo:
         resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [

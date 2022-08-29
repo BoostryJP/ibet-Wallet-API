@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 from eth_utils import to_checksum_address
 from fastapi import (
     APIRouter,
@@ -47,10 +47,14 @@ from app.model.schema import (
     GenericSuccessResponse,
     SuccessResponse,
     CompanyInfo,
-    CompanyToken
+    ShareToken as ShareTokenSchema,
+    StraightBondToken as StraightBondTokenSchema,
+    MembershipToken as MembershipTokenSchema,
+    CouponToken as CouponTokenSchema
 )
 
 from app.utils.company_list import CompanyList
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -64,10 +68,11 @@ router = APIRouter(
 # 発行会社一覧参照
 # ------------------------------
 @router.get(
-    "/",
+    "",
     summary="Issuer Information List",
     operation_id="Companies",
-    response_model=GenericSuccessResponse[CompanyInfo]
+    response_model=GenericSuccessResponse[list[CompanyInfo]],
+    responses=get_routers_responses()
 )
 def list_all_companies(
     include_private_listing: Optional[bool] = Query(default=False, description="include private listing token issuers"),
@@ -110,7 +115,7 @@ def list_all_companies(
     filtered_company_list = filter(has_listing_owner_function, company_list)
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": list(filtered_company_list)
     }
 
@@ -122,7 +127,8 @@ def list_all_companies(
     "/{eth_address}",
     summary="Issuer Information",
     operation_id="Company",
-    response_model=GenericSuccessResponse[list[CompanyInfo]]
+    response_model=GenericSuccessResponse[CompanyInfo],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def retrieve_company(
     eth_address: str = Path(..., description="address")
@@ -139,7 +145,7 @@ def retrieve_company(
         raise DataNotExistsError("eth_address: %s" % eth_address)
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": company.json()
     }
 
@@ -151,7 +157,8 @@ def retrieve_company(
     "/{eth_address}/Tokens",
     summary="List of tokens issued by issuer",
     operation_id="",
-    response_model=GenericSuccessResponse[list[CompanyToken]]
+    response_model=GenericSuccessResponse[list[Union[StraightBondTokenSchema, ShareTokenSchema, MembershipTokenSchema, CouponTokenSchema]]],
+    responses=get_routers_responses()
 )
 def retrieve_company_tokens(
     eth_address: str = Path(..., description="address"),
@@ -207,7 +214,7 @@ def retrieve_company_tokens(
                 continue
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": token_list
     }
 

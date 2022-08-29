@@ -379,16 +379,17 @@ class TestTokenTransferHistory:
         query_string = "offset=string"
         resp = client.get(apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'offset': [
-                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: 'string'",
-                    'must be of integer type'
-                ]
-            }
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['query', 'offset'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_2
@@ -399,11 +400,18 @@ class TestTokenTransferHistory:
         query_string = "offset=-1"
         resp = client.get(apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'offset': ['min value is 0']}
+            'code': 1,
+            'description': [
+                {
+                    'ctx': {'limit_value': 0},
+                    'loc': ['query', 'offset'],
+                    'msg': 'ensure this value is greater than or equal to 0',
+                    'type': 'value_error.number.not_ge'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_3
@@ -414,16 +422,17 @@ class TestTokenTransferHistory:
         query_string = "offset=1.5"
         resp = client.get(apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'offset': [
-                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: '1.5'",
-                    'must be of integer type'
-                ]
-            }
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['query', 'offset'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_4_1
@@ -434,16 +443,17 @@ class TestTokenTransferHistory:
         query_string = "limit=string"
         resp = client.get(apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'limit': [
-                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'string'",
-                    'must be of integer type'
-                ]
-            }
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['query', 'limit'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_4_2
@@ -454,11 +464,18 @@ class TestTokenTransferHistory:
         query_string = "limit=-1"
         resp = client.get(apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'limit': ['min value is 0']}
+            'code': 1,
+            'description': [
+                {
+                    'ctx': {'limit_value': 0},
+                    'loc': ['query', 'limit'],
+                    'msg': 'ensure this value is greater than or equal to 0',
+                    'type': 'value_error.number.not_ge'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_4_3
@@ -469,14 +486,15 @@ class TestTokenTransferHistory:
         query_string = "limit=1.5"
         resp = client.get(apiurl, params=query_string)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'limit': [
-                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: '1.5'",
-                    'must be of integer type'
-                ]
-            }
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['query', 'limit'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Request Validation Error'
         }

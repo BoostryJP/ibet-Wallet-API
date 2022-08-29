@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.model.db import Notification
+from app.model.db import Notification, NotificationType
 
 JST = timezone(timedelta(hours=+9), "JST")
 
@@ -38,7 +38,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000021034300000000000000"
-        n.notification_type = "SampleNotification1"
+        n.notification_type = NotificationType.NEW_ORDER
         n.priority = 1
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         n.is_read = True
@@ -56,7 +56,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000021034000000000000000"
-        n.notification_type = "SampleNotification2"
+        n.notification_type = NotificationType.APPROVE_TRANSFER
         n.priority = 1
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         n.is_read = False
@@ -72,7 +72,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000011034000000000000000"
-        n.notification_type = "SampleNotification3"
+        n.notification_type = NotificationType.APPLY_FOR_TRANSFER
         n.priority = 2
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         n.is_read = False
@@ -88,7 +88,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000011032000000000000000"
-        n.notification_type = "SampleNotification4"
+        n.notification_type = NotificationType.BUY_AGREEMENT
         n.priority = 1
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395B00"
         n.is_read = True
@@ -103,7 +103,7 @@ class TestNotificationsIdPOST:
         session.add(n)
 
         n = Notification()
-        n.notification_id = "0x00000001034000000000000000"
+        n.notification_id = NotificationType.BUY_SETTLEMENT_NG
         n.notification_type = "SampleNotification5"
         n.priority = 0
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
@@ -145,7 +145,7 @@ class TestNotificationsIdPOST:
             first()
 
         assumed_body = {
-            "notification_type": "SampleNotification1",
+            "notification_type": NotificationType.NEW_ORDER,
             "id": "0x00000021034300000000000000",
             "priority": 1,
             "block_timestamp": "2017/06/10 10:00:00",
@@ -189,7 +189,7 @@ class TestNotificationsIdPOST:
             first()
 
         assumed_body = {
-            "notification_type": "SampleNotification3",
+            "notification_type": NotificationType.APPLY_FOR_TRANSFER,
             "id": "0x00000011034000000000000000",
             "priority": 2,
             "block_timestamp": "2017/04/10 10:00:00",

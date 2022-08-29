@@ -144,7 +144,7 @@ class TestNotificationCount:
 
         resp = client.get(self.apiurl, params={})
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
@@ -164,7 +164,7 @@ class TestNotificationCount:
 
         resp = client.get(self.apiurl, params={"address": "0x123"})
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 1,
             "description": [
