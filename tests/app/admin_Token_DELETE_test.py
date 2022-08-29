@@ -100,7 +100,7 @@ class TestAdminTokenDELETE:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {"meta": {"code": 200, "message": "OK"}}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -137,7 +137,7 @@ class TestAdminTokenDELETE:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {"meta": {"code": 200, "message": "OK"}}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -174,7 +174,7 @@ class TestAdminTokenDELETE:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {"meta": {"code": 200, "message": "OK"}}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -211,7 +211,7 @@ class TestAdminTokenDELETE:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {"meta": {"code": 200, "message": "OK"}}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -249,7 +249,7 @@ class TestAdminTokenDELETE:
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json() == {"meta": {"code": 200, "message": "OK"}}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \

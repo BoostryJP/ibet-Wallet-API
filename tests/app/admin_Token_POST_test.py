@@ -75,7 +75,7 @@ class TestAdminTokenPOST:
         resp = client.post(apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 200
-        assert resp.json() == {"meta": {"code": 200, "message": "OK"}}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing: Listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
