@@ -25,7 +25,7 @@ from app import config
 
 class TestNodeInfoNodeInfo:
     # テスト対象API
-    apiurl = '/NodeInfo/'
+    apiurl = '/NodeInfo'
 
     # ＜正常系1＞
     # 通常参照
@@ -107,6 +107,6 @@ class TestNodeInfoNodeInfo:
         assert resp.status_code == 405
         assert resp.json()["meta"] == {
             "code": 1,
-            "description": "method: POST, url: /NodeInfo/",
+            "description": "method: POST, url: /NodeInfo",
             "message": "Method Not Allowed"
         }

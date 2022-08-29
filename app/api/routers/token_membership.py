@@ -49,6 +49,7 @@ from app.model.db import (
     Listing,
     IDXMembershipToken
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -59,10 +60,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/",
+    "",
     summary="Token detail list of Membership tokens",
     operation_id="MembershipTokens",
-    response_model=GenericSuccessResponse[MembershipTokensResponse]
+    response_model=GenericSuccessResponse[MembershipTokensResponse],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_membership_tokens(
     req: Request,
@@ -157,7 +159,7 @@ def list_all_membership_tokens(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -166,7 +168,8 @@ def list_all_membership_tokens(
     "/Addresses",
     summary="List of Membership token address",
     operation_id="MembershipTokenAddresses",
-    response_model=GenericSuccessResponse[MembershipTokenAddressesResponse]
+    response_model=GenericSuccessResponse[MembershipTokenAddressesResponse],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_token_addresses(
     req: Request,
@@ -248,7 +251,7 @@ def list_all_membership_token_addresses(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -257,7 +260,8 @@ def list_all_membership_token_addresses(
     "/{token_address}",
     summary="Membership token details",
     operation_id="MembershipTokenDetails",
-    response_model=GenericSuccessResponse[MembershipTokenSchema]
+    response_model=GenericSuccessResponse[MembershipTokenSchema],
+    responses=get_routers_responses(NotSupportedError, DataNotExistsError)
 )
 def retrieve_membership_token(
     req: Request,
@@ -297,7 +301,7 @@ def retrieve_membership_token(
         raise DataNotExistsError('contract_address: %s' % contract_address) from None
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": token_detail.__dict__
     }
 

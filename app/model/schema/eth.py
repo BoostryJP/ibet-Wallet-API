@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
@@ -61,7 +61,7 @@ class WaitForTransactionReceiptRequest(BaseModel):
 class TransactionCount(BaseModel):
     nonce: int = Field(..., example=34)
     gasprice: int = Field(..., example=0)
-    chanid: str = Field(..., example="2017")
+    chainid: str = Field(..., example="2017")
 
 
 class SendRawTransactionResult(BaseModel):
@@ -75,7 +75,7 @@ class SendRawTransactionResult(BaseModel):
 class SendRawTransactionNoWaitResult(BaseModel):
     id: int = Field(..., example=1, description="transaction send order")
     status: int = Field(..., example=1, description="execution failure:0, execution success:1")
-    transaction_hash: str = Field(..., description="transaction hash")
+    transaction_hash: Optional[str] = Field(description="transaction hash")
 
 
 class WaitForTransactionReceiptResult(BaseModel):

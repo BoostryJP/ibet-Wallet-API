@@ -111,7 +111,8 @@ from .notification import (
     UpdateNotificationRequest,
     Notification,
     NotificationsResponse,
-    NotificationsCountResponse
+    NotificationsCountResponse,
+    NotificationUpdateResponse
 )
 from .e2e_message import (
     E2EMessageEncryptionKey
@@ -137,5 +138,6 @@ from .dex_market import (
 )
 from .dex_order_list import (
     OrderListRequest,
-    OrderListResponse
+    OrderListResponse,
+    TokenAddress
 )

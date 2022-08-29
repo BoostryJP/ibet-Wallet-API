@@ -133,4 +133,5 @@ class Event(BaseModel):
     args: object = Field(description="event args")
     transaction_hash: str = Field(description="transaction hash")
     block_number: int = Field(description="the block number where this log was in")
+    block_timestamp: int = Field(description="timestamp where this log was in")
     log_index: int = Field(description="integer of the log index position in the block")

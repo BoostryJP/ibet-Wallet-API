@@ -17,125 +17,84 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from collections import OrderedDict
-from pydantic import (
-    BaseModel,
-    Field
-)
-
-
-class ErrorInfo(BaseModel):
-    status_code: int
-    error_code: int
-    message: str | None = Field(default=None)
-    description: str | dict| None = Field(default=None)
-
-
-ERR_UNKNOWN = ErrorInfo(status_code=500, error_code=500, message="Unknown Error")
-
-ERR_INVALID_PARAMETER = ErrorInfo(status_code=400, error_code=88, message="Invalid Parameter")
-
-ERR_DATABASE_ROLLBACK = ErrorInfo(status_code=500, error_code=77, message="Database Rollback Error")
-
-ERR_NOT_SUPPORTED = ErrorInfo(status_code=404, error_code=10, message="Not Supported")
-
-ERR_SUSPENDED_TOKEN = ErrorInfo(status_code=400, error_code=20, message="Suspended Token")
-
-ERR_DATA_NOT_EXISTS = ErrorInfo(status_code=404, error_code=30, message="Data Not Exists")
-
-ERR_DATA_CONFLICT = ErrorInfo(status_code=409, error_code=40, message="Data Conflict")
-
-ERR_SERVICE_UNAVAILABLE = ErrorInfo(status_code=503, error_code=503, message="Service Unavailable")
-
 
 class AppError(Exception):
-    error: ErrorInfo
+    status_code = 500
+    error_type = "AppError"
 
-    def __init__(self, error: ErrorInfo | None = None, message: str | None = None):
-        if error is None:
-            error = ErrorInfo(status_code=500, error_code=500, message="Unknown Error")
-        self.error = error
-        if message is not None:
-            self.error.message = message
+    error_code = 0
+    message: str = ""
+    description: str | dict | None = None
 
-    @property
-    def code(self):
-        return self.error.error_code
-
-    @property
-    def message(self):
-        return self.error.message
-
-    @property
-    def status(self):
-        return self.error.status_code
-
-    @property
-    def description(self):
-        return self.error.description
+    def __init__(
+        self,
+        description: str | None = None
+    ):
+        self.description = description
 
 
 class InvalidParameterError(AppError):
     """
     400 ERROR: 無効なパラメータ
     """
-    def __init__(self, description=None):
-        super().__init__(ERR_INVALID_PARAMETER)
-        self.error.description = description
-
-
-class DatabaseError(AppError):
-    """
-    500 ERROR: データベースエラー
-    """
-    def __init__(self, error, args=None):
-        super().__init__(error)
-        obj = OrderedDict()
-        obj['details'] = ', '.join(args)
-        self.error.message = obj
+    status_code = 400
+    error_type = "InvalidParameterError"
+    error_code = 88
+    message = "Invalid Parameter"
 
 
 class NotSupportedError(AppError):
     """
     404 ERROR: サポートしていないHTTPメソッド
     """
+    status_code = 404
+    error_type = "NotSupportedError"
+    error_code = 10
+    message = "Not Supported"
+
     def __init__(self, method: str | None = None, url: str | None = None):
-        super().__init__(ERR_NOT_SUPPORTED)
+        description = None
         if method and url:
-            self.error.description = 'method: %s, url: %s' % (method, url)
+            description = 'method: %s, url: %s' % (method, url)
+        super().__init__(description=description)
 
 
 class DataNotExistsError(AppError):
     """
     404 ERROR: データが存在しない
     """
-    def __init__(self, description: str | None = None):
-        super().__init__(ERR_DATA_NOT_EXISTS)
-        self.error.description = description
+    status_code = 404
+    error_type = "DataNotExistsError"
+    error_code = 30
+    message = "Data Not Exists"
 
 
 class SuspendedTokenError(AppError):
     """
     400 ERROR: 取扱停止中のトークン
     """
-    def __init__(self, description: str | None = None):
-        super().__init__(ERR_SUSPENDED_TOKEN)
-        self.error.description = description
+    status_code = 400
+    error_type = "SuspendedTokenError"
+    error_code = 20
+    message = "Suspended Token"
 
 
 class DataConflictError(AppError):
     """
     409 ERROR: データが重複
     """
-    def __init__(self, description=None):
-        super().__init__(ERR_DATA_CONFLICT)
-        self.error.description = description
+    status_code = 409
+    error_type = "DataConflictError"
+    error_code = 40
+    message = "Data Conflict"
 
 
 class ServiceUnavailable(AppError):
     """
     503 ERROR: サービス利用不可
     """
-    def __init__(self, description=None):
-        super().__init__(ERR_SERVICE_UNAVAILABLE)
-        self.error.description = description
+    status_code = 503
+    error_type = "ServiceUnavailable"
+    error_code = 503
+    message = "Service Unavailable"
+

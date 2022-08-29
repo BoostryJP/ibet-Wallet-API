@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 from pydantic import (
     BaseModel,
@@ -63,10 +64,10 @@ class TokenStatus(BaseModel):
 class TokenHolder(BaseModel):
     token_address: str
     account_address: str
-    amount: int
-    pending_transfer: int
-    exchange_balance: int
-    exchange_commitment: int
+    amount: Optional[int] = Field(default=0)
+    pending_transfer: Optional[int] = Field(default=0)
+    exchange_balance: Optional[int] = Field(default=0)
+    exchange_commitment: Optional[int] = Field(default=0)
 
 
 class TokenHoldersCount(BaseModel):
@@ -103,7 +104,7 @@ class TransferHistory(BaseModel):
     token_address: str = Field(description="Token address")
     from_address: str = Field(description="Account address of transfer source")
     to_address: str = Field(description="Account address of transfer destination")
-    value: str = Field(description="Transfer quantity")
+    value: int = Field(description="Transfer quantity")
     created: str = Field(description="block_timestamp when Transfer log was emitted (JST)")
 
 
@@ -114,16 +115,17 @@ class TransferHistoriesResponse(BaseModel):
 
 class TransferApprovalHistory(BaseModel):
     token_address: str = Field(description="Token address")
-    application_id: str = Field(description="Application id")
+    exchange_address: Optional[str] = Field(description="Exchange address")
+    application_id: int = Field(description="Application id")
     from_address: str = Field(description="Account address of transfer source")
     to_address: str = Field(description="Account address of transfer destination")
-    value: str = Field(description="Transfer quantity")
+    value: int = Field(description="Transfer quantity")
     application_datetime: str = Field(description="application datetime (JST)")
     application_blocktimestamp: str = Field(description="application blocktimestamp (JST)")
     approval_datetime: str = Field(description="approval datetime (JST)")
     approval_blocktimestamp: str = Field(description="approval blocktimestamp (JST)")
-    canceled: str
-    transfer_approved: str = Field(description="transfer approval status")
+    cancelled: Optional[bool] = Field(description="Cancellation status")
+    transfer_approved: bool = Field(description="transfer approval status")
 
 
 class TransferApprovalHistoriesResponse(BaseModel):

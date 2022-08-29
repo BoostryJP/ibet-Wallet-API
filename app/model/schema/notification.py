@@ -58,7 +58,7 @@ class NotificationsQuery(ResultSetQuery):
         default=NotificationsSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=0, description="sort order")
+    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
 
     @validator("address")
     def address_is_valid_address(cls, v):
@@ -115,9 +115,9 @@ class Notification(BaseModel):
     is_read: bool
     is_flagged: bool
     is_deleted: bool
-    deleted_at: str = Field(description="datetime of deletion")
+    deleted_at: Optional[str] = Field(description="datetime of deletion")
     args: object
-    metainfo: NotificationMetainfo
+    metainfo: NotificationMetainfo | dict
     account_address: str
     sort_id: int
     created: str = Field(description="datetime of create")
@@ -130,3 +130,17 @@ class NotificationsResponse(BaseModel):
 
 class NotificationsCountResponse(BaseModel):
     unread_counts: int
+
+
+class NotificationUpdateResponse(BaseModel):
+    notification_type: NotificationType = Field(example=NotificationType.NEW_ORDER)
+    id: str = Field(example="0x00000373ca8600000000000000")
+    priority: int
+    block_timestamp: str = Field(description="block timestamp")
+    is_read: bool
+    is_flagged: bool
+    is_deleted: bool
+    deleted_at: Optional[str] = Field(description="datetime of deletion")
+    args: object
+    metainfo: NotificationMetainfo | dict
+    account_address: str

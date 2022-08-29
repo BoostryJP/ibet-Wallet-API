@@ -72,7 +72,7 @@ class StraightBondTokensQuery(ResultSetQuery):
         default=StraightBondTokensSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order")
+    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
     address_list: list[StrictStr] = Field(default=[], description="list of token address (**this affects total number**)")
 
 
@@ -93,26 +93,26 @@ class StraightBondToken(BaseModel):
     contact_information: str
     privacy_policy: str
     status: bool
-    max_holding_quantity: int
-    max_sell_amount: int
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
     personal_info_address: str
     transferable: bool
-    if_offering: bool
+    is_offering: bool
     transfer_approval_required: bool
     face_value: int
     interest_rate: float
-    interest_payment_date1: str
-    interest_payment_date2: str
-    interest_payment_date3: str
-    interest_payment_date4: str
-    interest_payment_date5: str
-    interest_payment_date6: str
-    interest_payment_date7: str
-    interest_payment_date8: str
-    interest_payment_date9: str
-    interest_payment_date10: str
-    interest_payment_date11: str
-    interest_payment_date12: str
+    interest_payment_date1: Optional[str]
+    interest_payment_date2: Optional[str]
+    interest_payment_date3: Optional[str]
+    interest_payment_date4: Optional[str]
+    interest_payment_date5: Optional[str]
+    interest_payment_date6: Optional[str]
+    interest_payment_date7: Optional[str]
+    interest_payment_date8: Optional[str]
+    interest_payment_date9: Optional[str]
+    interest_payment_date10: Optional[str]
+    interest_payment_date11: Optional[str]
+    interest_payment_date12: Optional[str]
     redemption_date: str
     redemption_value: int
     return_date: str

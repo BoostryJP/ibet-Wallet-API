@@ -66,7 +66,7 @@ class MembershipTokensQuery(ResultSetQuery):
         default=MembershipTokensSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order")
+    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
 
 
 ############################
@@ -91,8 +91,8 @@ class MembershipToken(BaseModel):
     contact_information: str
     privacy_policy: str
     status: bool
-    max_holding_quantity: int
-    max_sell_amount: int
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
     details: str
     return_details: str
     expiration_date: str

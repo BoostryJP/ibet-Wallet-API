@@ -80,6 +80,7 @@ from app.model.schema import (
     StraightBondToken as StraightBondTokenSchema,
     ShareToken as ShareTokenSchema,
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -796,7 +797,8 @@ class GetPosition:
     "/{account_address}/Share",
     summary="Share Token Position",
     operation_id="GetShareTokenPosition",
-    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[ShareTokenSchema]]
+    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[ShareTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def list_all_share_positions(
     positions: Union[
@@ -808,7 +810,7 @@ def list_all_share_positions(
     Endpoint: /Position/{account_address}/Share
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": positions
     }
 
@@ -820,7 +822,8 @@ def list_all_share_positions(
     "/{account_address}/StraightBond",
     summary="StraightBond Token Position",
     operation_id="GetStraightBondTokenPosition",
-    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[StraightBondTokenSchema]]
+    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[StraightBondTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def list_all_straight_bond_positions(
     positions: Union[
@@ -832,7 +835,7 @@ def list_all_straight_bond_positions(
     Endpoint: /Position/{account_address}/StraightBond
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": positions
     }
 
@@ -844,7 +847,8 @@ def list_all_straight_bond_positions(
     "/{account_address}/Membership",
     summary="Membership Token Position",
     operation_id="GetMembershipTokenPosition",
-    response_model=GenericSuccessResponse[MembershipPositionsResponse]
+    response_model=GenericSuccessResponse[MembershipPositionsResponse],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def list_all_membership_positions(
     positions: Union[
@@ -856,7 +860,7 @@ def list_all_membership_positions(
     Endpoint: /Position/{account_address}/Membership
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": positions
     }
 
@@ -868,7 +872,8 @@ def list_all_membership_positions(
     "/{account_address}/Coupon",
     summary="Coupon Token Position",
     operation_id="GetCouponTokenPosition",
-    response_model=GenericSuccessResponse[CouponPositionsResponse]
+    response_model=GenericSuccessResponse[CouponPositionsResponse],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def list_all_coupon_positions(
     positions: Union[
@@ -880,7 +885,7 @@ def list_all_coupon_positions(
     Endpoint: /Position/{account_address}/Coupon
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": positions
     }
 
@@ -892,7 +897,8 @@ def list_all_coupon_positions(
     "/{account_address}/Share/{token_address}",
     summary="Share Token Position By Token Address",
     operation_id="GetShareTokenPositionByAddress",
-    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[ShareTokenSchema]]
+    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[ShareTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def retrieve_share_position_by_token_address(
     position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare))
@@ -901,7 +907,7 @@ def retrieve_share_position_by_token_address(
     Endpoint: /Position/{account_address}/Share/{contract_address}
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": position
     }
 
@@ -913,7 +919,8 @@ def retrieve_share_position_by_token_address(
     "/{account_address}/StraightBond/{token_address}",
     summary="StraightBond Token Position By Token Address",
     operation_id="GetStraightBondTokenPositionByAddress",
-    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[StraightBondTokenSchema]]
+    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[StraightBondTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def retrieve_straight_bond_position_by_token_address(
     position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionStraightBond))
@@ -922,7 +929,7 @@ def retrieve_straight_bond_position_by_token_address(
     Endpoint: /Position/{account_address}/StraightBond/{contract_address}
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": position
     }
 
@@ -934,7 +941,8 @@ def retrieve_straight_bond_position_by_token_address(
     "/{account_address}/Membership/{token_address}",
     summary="Membership Token Position By Token Address",
     operation_id="GetMembershipTokenPositionByAddress",
-    response_model=GenericSuccessResponse[MembershipPositionWithDetail]
+    response_model=GenericSuccessResponse[MembershipPositionWithDetail],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def retrieve_membership_position_by_token_address(
     position: MembershipPositionWithDetail = Depends(GetPosition(BasePositionMembership))
@@ -943,7 +951,7 @@ def retrieve_membership_position_by_token_address(
     Endpoint: /Position/{account_address}/Membership/{contract_address}
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": position
     }
 
@@ -955,7 +963,8 @@ def retrieve_membership_position_by_token_address(
     "/{account_address}/Coupon/{token_address}",
     summary="Coupon Token Position By Token Address",
     operation_id="GetCouponTokenPositionByAddress",
-    response_model=GenericSuccessResponse[CouponPositionWithDetail]
+    response_model=GenericSuccessResponse[CouponPositionWithDetail],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def retrieve_coupon_position_by_token_address(
     position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon))
@@ -964,6 +973,6 @@ def retrieve_coupon_position_by_token_address(
     Endpoint: /Position/{account_address}/Coupon/{contract_address}
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": position
     }

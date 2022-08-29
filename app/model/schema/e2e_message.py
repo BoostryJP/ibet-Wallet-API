@@ -39,8 +39,3 @@ from app.model.schema.token import TokenType
 class E2EMessageEncryptionKey(BaseModel):
     key: str = Field(description="Message encryption key")
     key_type: str = Field(description="key type", example="RSA4096")
-    company_name: str
-    token_address: str
-    token_name: str
-    exchange_address: str
-    token_type: TokenType

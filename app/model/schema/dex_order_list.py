@@ -22,6 +22,7 @@ from pydantic import (
     Field,
     validator
 )
+from pydantic.generics import GenericModel
 from web3 import Web3
 from app.model.schema import (
     StraightBondToken,
@@ -58,8 +59,13 @@ class OrderListRequest(BaseModel):
 # RESPONSE
 ############################
 
+class TokenAddress(BaseModel):
+    token_address: str
+
+
 class Order(BaseModel):
     order_id: int
+    counterpart_address: str
     amount: int
     price: int
     is_buy: bool
@@ -67,18 +73,20 @@ class Order(BaseModel):
     order_timestamp: str
 
 
-TokenModel = TypeVar("TokenModel", StraightBondToken, ShareToken, MembershipToken, CouponToken)
+TokenModel = TypeVar("TokenModel", StraightBondToken, ShareToken, MembershipToken, CouponToken, TokenAddress)
 
 
-class OrderSet(BaseModel, Generic[TokenModel]):
+class OrderSet(GenericModel, Generic[TokenModel]):
     token: TokenModel
     order: Order
     sort_id: int
 
 
 class Agreement(BaseModel):
+    # id: int
     exchange_address: str = Field(description="exchange address")
     order_id: int
+    agreement_id: int
     amount: int
     price: int
     is_buy: bool
@@ -86,7 +94,7 @@ class Agreement(BaseModel):
     agreement_timestamp: str
 
 
-class AgreementSet(BaseModel, Generic[TokenModel]):
+class AgreementSet(GenericModel, Generic[TokenModel]):
     token: TokenModel
     agreement: Agreement
     sort_id: int
@@ -97,6 +105,6 @@ class CompleteAgreementSet(AgreementSet, Generic[TokenModel]):
 
 
 class OrderListResponse(BaseModel, Generic[TokenModel]):
-    order_list: list[OrderSet]
+    order_list: list[OrderSet[TokenModel]]
     settlement_list: list[AgreementSet[TokenModel]]
     complete_list: list[CompleteAgreementSet[TokenModel]]

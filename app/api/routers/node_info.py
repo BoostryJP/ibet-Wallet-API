@@ -51,7 +51,7 @@ router = APIRouter(
 # ノード情報
 # ------------------------------
 @router.get(
-    "/",
+    "",
     summary="Blockchain node information",
     operation_id="NodeInfo",
     response_model=GenericSuccessResponse[NodeInfo]
@@ -89,7 +89,7 @@ def get_node_info():
         'agent_address': config.AGENT_ADDRESS,
     }
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": nodeInfo
     }
 
@@ -123,7 +123,7 @@ def get_block_sync_status(
         latest_block_number = web3.eth.block_number
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": {
             "is_synced": is_synced,
             "latest_block_number": latest_block_number

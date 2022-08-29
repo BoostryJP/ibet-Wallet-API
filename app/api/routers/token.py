@@ -53,6 +53,7 @@ from app.model.schema import (
     TransferApprovalHistoriesResponse
 )
 from app.model.schema.base import ResultSetQuery
+from app.utils.docs_utils import get_routers_responses
 from app.utils.web3_utils import Web3Wrapper
 from app.model.db import (
     Listing,
@@ -77,7 +78,8 @@ router = APIRouter(
     "/{token_address}/Status",
     summary="Token Status",
     operation_id="TokenStatus",
-    response_model=GenericSuccessResponse[TokenStatus]
+    response_model=GenericSuccessResponse[TokenStatus],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_status(
     token_address: str = Path(description="token address"),
@@ -142,7 +144,7 @@ def get_token_status(
         'transferable': transferable
     }
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": response_json
     }
 
@@ -151,7 +153,8 @@ def get_token_status(
     "/{token_address}/Holders",
     summary="Token holders",
     operation_id="TokenHolders",
-    response_model=GenericSuccessResponse[list[TokenHolderSchema]]
+    response_model=GenericSuccessResponse[list[TokenHolderSchema]],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_holders(
     token_address: str = Path(description="token address"),
@@ -200,7 +203,7 @@ def get_token_holders(
         })
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": resp_body
     }
 
@@ -209,7 +212,8 @@ def get_token_holders(
     "/{token_address}/Holders/Count",
     summary="Token holders count",
     operation_id="TokenHoldersCount",
-    response_model=GenericSuccessResponse[TokenHoldersCount]
+    response_model=GenericSuccessResponse[TokenHoldersCount],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_holders_count(
     token_address: str = Path(description="token address"),
@@ -251,7 +255,7 @@ def get_token_holders_count(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": resp_body
     }
 
@@ -259,10 +263,11 @@ def get_token_holders_count(
 @router.post(
     "/{token_address}/Holders/Collection",
     summary="Execute Batch Getting Token Holders At Specific BlockNumber",
-    operation_id="TokenHoldersCount",
-    response_model=GenericSuccessResponse[CreateTokenHoldersCollectionResponse]
+    operation_id="TokenHoldersCollection",
+    response_model=GenericSuccessResponse[CreateTokenHoldersCollectionResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
-def create_token_holder_collection(
+def create_token_holders_collection(
     data: CreateTokenHoldersCollectionRequest,
     token_address: str = Path(description="token address"),
     session: Session = Depends(db_session)
@@ -313,7 +318,7 @@ def create_token_holder_collection(
         # 同じブロックナンバー・トークンアドレスのコレクションが、PENDINGかDONEで既に存在する場合、
         # そのlist_idとstatusを返却する。
         return {
-            **SuccessResponse().dict(),
+            **SuccessResponse.use().dict(),
             "data": {
                 "list_id": _same_combi_record.list_id,
                 "status": _same_combi_record.batch_status,
@@ -329,7 +334,7 @@ def create_token_holder_collection(
         session.commit()
 
         return {
-            **SuccessResponse().dict(),
+            **SuccessResponse.use().dict(),
             "data": {
                 "list_id": token_holder_list.list_id,
                 "status": token_holder_list.batch_status,
@@ -341,7 +346,8 @@ def create_token_holder_collection(
     "/{token_address}/Holders/Collection/{list_id}",
     summary="Token Holder At Specific BlockNumber",
     operation_id="TokenHoldersList",
-    response_model=GenericSuccessResponse[TokenHoldersCollection]
+    response_model=GenericSuccessResponse[TokenHoldersCollection],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_holders_collection(
     token_address: str = Path(description="token address"),
@@ -401,7 +407,7 @@ def get_token_holders_collection(
     token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": {
             "status": _same_list_id_record.batch_status,
             "holders": token_holders
@@ -413,7 +419,8 @@ def get_token_holders_collection(
     "/{token_address}/TransferHistory",
     summary="Token Transfer History",
     operation_id="TransferHistory",
-    response_model=GenericSuccessResponse[TransferHistoriesResponse]
+    response_model=GenericSuccessResponse[TransferHistoriesResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def list_all_transfer_histories(
     request_query: ResultSetQuery = Depends(),
@@ -468,7 +475,7 @@ def list_all_transfer_histories(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -477,7 +484,8 @@ def list_all_transfer_histories(
     "/{token_address}/TransferApprovalHistory",
     summary="Token Transfer Approval History",
     operation_id="TransferApprovalHistory",
-    response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse]
+    response_model=GenericSuccessResponse[TransferApprovalHistoriesResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def list_all_transfer_approval_histories(
     request_query: ResultSetQuery = Depends(),
@@ -532,7 +540,7 @@ def list_all_transfer_approval_histories(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 

@@ -53,6 +53,7 @@ from app.model.schema import (
 )
 from app.contracts import Contract
 from app.utils.contract_error_code import error_code_msg
+from app.utils.docs_utils import get_routers_responses
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -71,7 +72,9 @@ router = APIRouter(
     "/TransactionCount/{eth_address}",
     summary="Transaction count for the specified eth_address",
     operation_id="TransactionCount",
-    response_model=GenericSuccessResponse[TransactionCount]
+    response_model=GenericSuccessResponse[TransactionCount],
+    response_model_exclude_unset=True,
+    responses=get_routers_responses(InvalidParameterError)
 )
 def get_transaction_count(
     eth_address: str,
@@ -95,7 +98,7 @@ def get_transaction_count(
     eth_info = {"nonce": nonce, "gasprice": gasprice, "chainid": chainid}
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": eth_info
     }
 
@@ -107,7 +110,9 @@ def get_transaction_count(
     "/SendRawTransaction",
     summary="Send signed transaction",
     operation_id="SendRawTransaction",
-    response_model=GenericSuccessResponse[SendRawTransactionResult]
+    response_model=GenericSuccessResponse[list[SendRawTransactionResult]],
+    response_model_exclude_unset=True,
+    responses=get_routers_responses(SuspendedTokenError)
 )
 def send_raw_transaction(
     data: SendRawTransactionRequest,
@@ -252,7 +257,7 @@ def send_raw_transaction(
         })
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": result
     }
 
@@ -264,7 +269,9 @@ def send_raw_transaction(
     "/SendRawTransactionNoWait",
     summary="Send signed transaction",
     operation_id="SendRawTransactionNoWait",
-    response_model=GenericSuccessResponse[SendRawTransactionNoWaitResult]
+    response_model=GenericSuccessResponse[list[SendRawTransactionNoWaitResult]],
+    response_model_exclude_unset=True,
+    responses=get_routers_responses(SuspendedTokenError)
 )
 def send_raw_transaction_no_wait(
     data: SendRawTransactionRequest,
@@ -366,7 +373,7 @@ def send_raw_transaction_no_wait(
         })
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": result
     }
 
@@ -378,7 +385,9 @@ def send_raw_transaction_no_wait(
     "/WaitForTransactionReceipt",
     summary="Wait for Transaction Receipt",
     operation_id="WaitForTransactionReceipt",
-    response_model=GenericSuccessResponse[WaitForTransactionReceiptResult]
+    response_model=GenericSuccessResponse[WaitForTransactionReceiptResult],
+    response_model_exclude_unset=True,
+    responses=get_routers_responses(DataNotExistsError)
 )
 def wait_for_transaction_receipt(
     data: WaitForTransactionReceiptRequest
@@ -412,7 +421,7 @@ def wait_for_transaction_receipt(
         raise DataNotExistsError
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": result
     }
 

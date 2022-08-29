@@ -34,8 +34,10 @@ from app.model.schema import (
     SuccessResponse,
     IbetEscrowEventsQuery,
     IbetSecurityTokenEscrowEventsQuery,
-    E2EMessagingEventArguments, EscrowEventArguments
+    E2EMessagingEventArguments,
+    EscrowEventArguments
 )
+from app.utils.docs_utils import get_routers_responses
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -54,7 +56,8 @@ router = APIRouter(
     "/E2EMessaging",
     summary="List all E2EMessaging event logs",
     operation_id="E2EMessagingEvents",
-    response_model=GenericSuccessResponse[list[EventSchema]]
+    response_model=GenericSuccessResponse[list[EventSchema]],
+    responses=get_routers_responses(InvalidParameterError)
 )
 def list_all_e2e_messaging_event_logs(
     request_query: E2EMessagingEventsQuery = Depends()
@@ -107,7 +110,7 @@ def list_all_e2e_messaging_event_logs(
         key=lambda x: (x["block_number"], x["log_index"])
     )
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": resp_json
     }
 
@@ -117,7 +120,8 @@ def list_all_e2e_messaging_event_logs(
     "/IbetEscrow",
     summary="List all IbetEscrow event logs",
     operation_id="IbetEscrowEvents",
-    response_model=GenericSuccessResponse[list[EventSchema]]
+    response_model=GenericSuccessResponse[list[EventSchema]],
+    responses=get_routers_responses(InvalidParameterError)
 )
 def list_all_ibet_escrow_event_logs(
     request_query: IbetEscrowEventsQuery = Depends()
@@ -181,7 +185,7 @@ def list_all_ibet_escrow_event_logs(
         key=lambda x: (x["block_number"], x["log_index"])
     )
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": resp_json
     }
 
@@ -191,7 +195,8 @@ def list_all_ibet_escrow_event_logs(
     "/IbetSecurityTokenEscrow",
     summary="List all IbetSecurityTokenEscrow event logs",
     operation_id="IbetSecurityTokenEscrowEvents",
-    response_model=GenericSuccessResponse[list[EventSchema]]
+    response_model=GenericSuccessResponse[list[EventSchema]],
+    responses=get_routers_responses(InvalidParameterError)
 )
 def list_all_ibet_security_token_escrow_event_logs(
     request_query: IbetSecurityTokenEscrowEventsQuery = Depends()
@@ -264,6 +269,6 @@ def list_all_ibet_security_token_escrow_event_logs(
         key=lambda x: (x["block_number"], x["log_index"])
     )
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": resp_json
     }

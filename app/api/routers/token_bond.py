@@ -49,6 +49,7 @@ from app.model.db import (
     Listing,
     IDXBondToken
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -59,10 +60,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/",
+    "",
     summary="Token detail list of StraightBond tokens",
     operation_id="StraightBondTokens",
-    response_model=GenericSuccessResponse[StraightBondTokensResponse]
+    response_model=GenericSuccessResponse[StraightBondTokensResponse],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_straight_bond_tokens(
     req: Request,
@@ -165,7 +167,7 @@ def list_all_straight_bond_tokens(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -174,7 +176,8 @@ def list_all_straight_bond_tokens(
     "/Addresses",
     summary="List of StraightBond token address",
     operation_id="StraightBondTokenAddresses",
-    response_model=GenericSuccessResponse[StraightBondTokenAddressesResponse]
+    response_model=GenericSuccessResponse[StraightBondTokenAddressesResponse],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_token_addresses(
     req: Request,
@@ -265,7 +268,7 @@ def list_all_straight_bond_token_addresses(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -274,7 +277,8 @@ def list_all_straight_bond_token_addresses(
     "/{token_address}",
     summary="StraightBond token details",
     operation_id="StraightBondTokenDetails",
-    response_model=GenericSuccessResponse[StraightBondTokenSchema]
+    response_model=GenericSuccessResponse[StraightBondTokenSchema],
+    responses=get_routers_responses(NotSupportedError, DataNotExistsError, InvalidParameterError)
 )
 def retrieve_straight_bond_token(
     req: Request,
@@ -317,6 +321,6 @@ def retrieve_straight_bond_token(
         raise DataNotExistsError('contract_address: %s' % contract_address)
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": token_detail.__dict__
     }

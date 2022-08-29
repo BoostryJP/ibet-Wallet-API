@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from enum import Enum
 from typing import Optional, TypeVar, Generic, Union
 from pydantic import (
     BaseModel,
@@ -26,8 +25,7 @@ from app.model.schema import CouponToken, MembershipToken
 
 from app.model.schema.base import (
     ResultSetQuery,
-    ResultSet,
-    SortOrder
+    ResultSet
 )
 
 ############################
@@ -48,6 +46,10 @@ class PositionQuery(ResultSetQuery):
 # RESPONSE
 ############################
 
+class TokenAddress(BaseModel):
+    token_address: str
+
+
 class SecurityTokenPosition(BaseModel):
     balance: int
     pending_transfer: int
@@ -59,7 +61,7 @@ T = TypeVar("T")
 
 
 class SecurityTokenPositionWithDetail(SecurityTokenPosition, Generic[T]):
-    token: T = Field(description="set when include_token_details=false or null")
+    token: T | TokenAddress = Field(description="set when include_token_details=false or null")
 
 
 class SecurityTokenPositionWithAddress(SecurityTokenPosition):

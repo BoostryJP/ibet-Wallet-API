@@ -49,6 +49,7 @@ from app.model.db import (
     Listing,
     IDXCouponToken
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -59,10 +60,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/",
+    "",
     summary="Token detail list of Coupon tokens",
     operation_id="CouponTokens",
-    response_model=GenericSuccessResponse[CouponTokensResponse]
+    response_model=GenericSuccessResponse[CouponTokensResponse],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_coupon_tokens(
     req: Request,
@@ -156,7 +158,7 @@ def list_all_coupon_tokens(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -165,7 +167,8 @@ def list_all_coupon_tokens(
     "/Addresses",
     summary="List of Coupon token address",
     operation_id="CouponTokenAddresses",
-    response_model=GenericSuccessResponse[CouponTokenAddressesResponse]
+    response_model=GenericSuccessResponse[CouponTokenAddressesResponse],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_token_addresses(
     req: Request,
@@ -247,7 +250,7 @@ def list_all_coupon_token_addresses(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -256,7 +259,8 @@ def list_all_coupon_token_addresses(
     "/{token_address}",
     summary="Coupon token details",
     operation_id="CouponTokenDetails",
-    response_model=GenericSuccessResponse[CouponTokenSchema]
+    response_model=GenericSuccessResponse[CouponTokenSchema],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError, DataNotExistsError)
 )
 def retrieve_coupon_token(
     req: Request,
@@ -297,6 +301,6 @@ def retrieve_coupon_token(
         raise DataNotExistsError('contract_address: %s' % contract_address) from None
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": token_detail.__dict__
     }

@@ -91,10 +91,10 @@ def list_all_admin_tokens(
         res_body.append(item)
 
     # idの降順にソート
-    res_body.sort(key=lambda x: x["id"], reverse=True)
+    res_body.sort(key=lambda x: x["id"], reverse=True)  # type: ignore
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": res_body
     }
 
@@ -104,7 +104,7 @@ def list_all_admin_tokens(
     summary="List a Token",
     operation_id="TokensPOST",
     response_model=SuccessResponse,
-    responses=get_routers_responses(DataConflictError, InvalidParameterError)
+    responses=get_routers_responses(DataConflictError, InvalidParameterError),
 )
 def register_admin_token(
     data: RegisterAdminTokensRequest,
@@ -180,7 +180,7 @@ def register_admin_token(
         session.add(token_obj.to_model())
     session.commit()
 
-    return SuccessResponse()
+    return SuccessResponse.use()
 
 
 # ------------------------------
@@ -206,7 +206,7 @@ def admin_token_type():
         "IbetCoupon": config.COUPON_TOKEN_ENABLED
     }
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": res_body
     }
 
@@ -237,7 +237,7 @@ def retrieve_listed_token(
 
     if token is not None:
         return {
-            **SuccessResponse().dict(),
+            **SuccessResponse.use().dict(),
             "data": token.json()
         }
     else:
@@ -278,7 +278,7 @@ def update_token(
     token.owner_address = owner_address
     session.merge(token)
     session.commit()
-    return SuccessResponse()
+    return SuccessResponse.use()
 
 
 @router.delete(
@@ -306,7 +306,7 @@ def delete_token(
     except Exception as err:
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()
-    return SuccessResponse()
+    return SuccessResponse.use()
 
 
 def available_token_template():

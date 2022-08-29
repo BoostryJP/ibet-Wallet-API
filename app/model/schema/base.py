@@ -24,6 +24,7 @@ from pydantic import (
     Field,
     ValidationError
 )
+from pydantic.generics import GenericModel
 from pydantic.error_wrappers import ErrorWrapper
 
 
@@ -49,8 +50,8 @@ class QueryModel(BaseModel):
 
 
 class ResultSetQuery(QueryModel):
-    offset: Optional[int] = Field(description="start position", ge=1)
-    limit: Optional[int] = Field(description="number of set", ge=1)
+    offset: Optional[int] = Field(description="start position", ge=0)
+    limit: Optional[int] = Field(description="number of set", ge=0)
 
 
 ############################
@@ -60,26 +61,28 @@ class ResultSetQuery(QueryModel):
 class ResultSet(BaseModel):
     """result set for pagination"""
     count: Optional[int]
-    offset: Optional[int] = Field(description="start position")
-    limit: Optional[int] = Field(description="number of set")
+    offset: Optional[int] = Field(..., description="start position")
+    limit: Optional[int] = Field(..., description="number of set")
     total: Optional[int]
 
 
 class Success200MetaModel(BaseModel):
-    code: int = Field(default=200)
-    message: str = Field(default="OK")
+    code: int = Field(..., example=200)
+    message: str = Field(..., example="OK")
 
 
-T = TypeVar("T")
+Data = TypeVar("Data")
 
 
 class SuccessResponse(BaseModel):
-    meta: Success200MetaModel = Field(default=Success200MetaModel())
+    meta: Success200MetaModel = Field(..., example=Success200MetaModel(code=200, message="OK"))
+    data: dict = {}
+
+    @staticmethod
+    def use():
+        return SuccessResponse(meta=Success200MetaModel(code=200, message="OK"))
 
 
-class GenericSuccessResponse(BaseModel, Generic[T]):
-    meta: Success200MetaModel = Field(default=Success200MetaModel())
-    data: Optional[T] = Field(default=None)
-
-
-
+class GenericSuccessResponse(GenericModel, Generic[Data]):
+    meta: Success200MetaModel = Field(..., example=Success200MetaModel(code=200, message="OK"))
+    data: Data

@@ -16,7 +16,5 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from .session_manager import DatabaseSessionManager
-from .translator import JSONTranslator
-from .cors import CORSMiddleware
 from .response_logger import ResponseLoggerMiddleware
+from .strip_trailing_slash import StripTrailingSlashMiddleware

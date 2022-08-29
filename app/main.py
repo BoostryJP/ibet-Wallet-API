@@ -26,6 +26,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 from app import log
 from app.config import BRAND_NAME
@@ -58,13 +59,17 @@ from app.errors import (
     ServiceUnavailable
 )
 from app.middleware import (
-    ResponseLoggerMiddleware
+    ResponseLoggerMiddleware,
+    StripTrailingSlashMiddleware
 )
 from app.utils.docs_utils import custom_openapi
 
 LOG = log.get_logger()
 
 tags_metadata = [
+    {
+        "name": "Root"
+    },
     {
         "name": "Admin",
         "description": "System administration"
@@ -82,7 +87,11 @@ tags_metadata = [
         "description": "Company information"
     },
     {
-        "name": "User information",
+        "name": "User",
+        "description": "User information"
+    },
+    {
+        "name": "Eth",
         "description": "Blockchain Transactions"
     },
     {
@@ -113,7 +122,10 @@ tags_metadata = [
 
 app = FastAPI(
     title="ibet Wallet API",
+    terms_of_service="",
     version="22.9.0",
+    contact={"email": "dev@boostry.co.jp"},
+    license_info={"name": "Apache 2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0.html"},
     openapi_tags=tags_metadata
 )
 
@@ -124,8 +136,8 @@ app.openapi = custom_openapi(app)  # type: ignore
 # ROUTER
 ###############################################################
 
-@app.get("/")
-async def root():
+@app.get("/", tags=["Root"])
+def root():
     return {"server": BRAND_NAME}
 
 
@@ -153,14 +165,18 @@ app.include_router(routers_dex_order_list.router)
 ###############################################################
 
 response_logger = ResponseLoggerMiddleware()
+strip_trailing_slash = StripTrailingSlashMiddleware()
+app.add_middleware(BaseHTTPMiddleware, dispatch=strip_trailing_slash)
 app.add_middleware(BaseHTTPMiddleware, dispatch=response_logger)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
 
 ###############################################################
 # EXCEPTION
 ###############################################################
 
 # 500:InternalServerError
-@app.exception_handler(500)
+@app.exception_handler(Exception)
 async def internal_server_error_handler(request: Request, exc: Exception):
     meta = {
         "code": 1,
@@ -176,24 +192,24 @@ async def internal_server_error_handler(request: Request, exc: Exception):
 @app.exception_handler(InvalidParameterError)
 async def invalid_parameter_error_handler(request: Request, exc: InvalidParameterError):
     meta = {
-        "code": exc.code,
+        "code": exc.error_code,
         "message": exc.message
     }
     if getattr(exc, "description"):
         meta["description"] = exc.description
 
     return JSONResponse(
-        status_code=exc.status,
+        status_code=exc.status_code,
         content=jsonable_encoder({"meta": meta}),
     )
 
 
-# 400:SendTransactionError
+# 400:SuspendedTokenError
 @app.exception_handler(SuspendedTokenError)
 async def send_transaction_error_handler(request: Request, exc: SuspendedTokenError):
     meta = {
-        "code": 20,
-        "message": "Suspended Token",
+        "code": exc.error_code,
+        "message": exc.message,
         "description": exc.description
     }
     return JSONResponse(
@@ -206,8 +222,8 @@ async def send_transaction_error_handler(request: Request, exc: SuspendedTokenEr
 @app.exception_handler(NotSupportedError)
 async def not_supported_error_handler(request: Request, exc: NotSupportedError):
     meta = {
-        "code": 10,
-        "message": "Not Supported",
+        "code": exc.error_code,
+        "message": exc.message,
         "description": exc.description
     }
     return JSONResponse(
@@ -220,14 +236,14 @@ async def not_supported_error_handler(request: Request, exc: NotSupportedError):
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
     meta = {
-        "code": exc.code,
+        "code": exc.error_code,
         "message": exc.message
     }
     if getattr(exc, "description"):
         meta["description"] = exc.description
 
     return JSONResponse(
-        status_code=exc.status,
+        status_code=exc.status_code,
         content=jsonable_encoder({"meta": meta}),
     )
 
@@ -237,7 +253,7 @@ async def app_error_handler(request: Request, exc: AppError):
 async def not_found_error_handler(request: Request, exc: StarletteHTTPException):
     meta = {
         "code": 1,
-        "title": "NotFound"
+        "message": "NotFound"
     }
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -260,15 +276,33 @@ async def method_not_allowed_error_handler(request: Request, exc: StarletteHTTPE
 
 
 # 409:DataConflict
-@app.exception_handler(409)
+@app.exception_handler(DataConflictError)
 async def data_conflict_error_handler(request: Request, exc: DataConflictError):
     meta = {
-        "code": 40,
-        "title": "DataConflict"
+        "code": exc.error_code,
+        "message": exc.message
     }
+    if getattr(exc, "description"):
+        meta["description"] = exc.description
+
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
-        content=jsonable_encoder({"meta": meta, "detail": exc.args[0]}),
+        content=jsonable_encoder({"meta": meta}),
+    )
+
+
+# 404:DataNotExistsError
+@app.exception_handler(DataNotExistsError)
+async def data_not_exists_error_handler(request: Request, exc: DataNotExistsError):
+    meta = {
+        "code": exc.error_code,
+        "message": exc.message
+    }
+    if getattr(exc, "description"):
+        meta["description"] = exc.description
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content=jsonable_encoder({"meta": meta}),
     )
 
 
@@ -281,7 +315,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         "description": exc.errors()
     }
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"meta": meta}),
     )
 

@@ -54,6 +54,7 @@ from app.model.schema import (
     TicksResponse,
     AgreementDetail
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -68,7 +69,8 @@ router = APIRouter(
     "/Agreement",
     summary="Agreement Details",
     operation_id="GetAgreement",
-    response_model=GenericSuccessResponse[AgreementDetail]
+    response_model=GenericSuccessResponse[AgreementDetail],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def retrieve_agreement(
     req: Request,
@@ -139,7 +141,7 @@ def retrieve_agreement(
         "expiry": expiry  # 有効期限（unixtime）
     }
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": res_data
     }
 
@@ -149,7 +151,8 @@ def retrieve_agreement(
     "/OrderBook/StraightBond",
     summary="StraightBond Token Order Book",
     operation_id="StraightBondOrderBook",
-    response_model=GenericSuccessResponse[list[OrderBookItem]]
+    response_model=GenericSuccessResponse[list[OrderBookItem]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_order_book(
     req: Request,
@@ -325,7 +328,7 @@ def list_all_straight_bond_order_book(
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": list(order_list)
     }
 
@@ -335,7 +338,8 @@ def list_all_straight_bond_order_book(
     "/LastPrice/StraightBond",
     summary="StraightBond Token Last Price (Bulk Get)",
     operation_id="StraightBondLastPrice",
-    response_model=GenericSuccessResponse[list[LastPrice]]
+    response_model=GenericSuccessResponse[list[LastPrice]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_last_price(
     req: Request,
@@ -364,7 +368,7 @@ def list_all_straight_bond_last_price(
         })
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": price_list
     }
 
@@ -374,7 +378,8 @@ def list_all_straight_bond_last_price(
     "/Tick/StraightBond",
     summary="StraightBond Token Tick (Bulk Get)",
     operation_id="StraightBondTick",
-    response_model=GenericSuccessResponse[list[TicksResponse]]
+    response_model=GenericSuccessResponse[list[TicksResponse]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_tick(
     req: Request,
@@ -417,7 +422,7 @@ def list_all_straight_bond_tick(
             tick_list = []
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": tick_list
     }
 
@@ -427,7 +432,8 @@ def list_all_straight_bond_tick(
     "/OrderBook/Membership",
     summary="Membership Token Order Book",
     operation_id="MembershipOrderBook",
-    response_model=GenericSuccessResponse[list[OrderBookItem]]
+    response_model=GenericSuccessResponse[list[OrderBookItem]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_order_book(
     req: Request,
@@ -610,7 +616,7 @@ def list_all_membership_order_book(
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": order_list
     }
 
@@ -620,7 +626,8 @@ def list_all_membership_order_book(
     "/LastPrice/Membership",
     summary="Membership Token Last Price (Bulk Get)",
     operation_id="MembershipLastPrice",
-    response_model=GenericSuccessResponse[list[LastPrice]]
+    response_model=GenericSuccessResponse[list[LastPrice]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_last_price(
     req: Request,
@@ -650,7 +657,7 @@ def list_all_membership_last_price(
         })
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": price_list
     }
 
@@ -660,7 +667,8 @@ def list_all_membership_last_price(
     "/Tick/Membership",
     summary="Membership Token Tick (Bulk Get)",
     operation_id="MembershipTick",
-    response_model=GenericSuccessResponse[list[TicksResponse]]
+    response_model=GenericSuccessResponse[list[TicksResponse]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_tick(
     req: Request,
@@ -704,7 +712,7 @@ def list_all_membership_tick(
             tick_list = []
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": tick_list
     }
 
@@ -714,7 +722,8 @@ def list_all_membership_tick(
     "/OrderBook/Coupon",
     summary="Coupon Token Order Book",
     operation_id="CouponOrderBook",
-    response_model=GenericSuccessResponse[list[OrderBookItem]]
+    response_model=GenericSuccessResponse[list[OrderBookItem]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_order_book(
     req: Request,
@@ -897,7 +906,7 @@ def list_all_coupon_order_book(
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": order_list
     }
 
@@ -907,7 +916,8 @@ def list_all_coupon_order_book(
     "/LastPrice/Coupon",
     summary="Coupon Token Last Price (Bulk Get)",
     operation_id="CouponLastPrice",
-    response_model=GenericSuccessResponse[list[LastPrice]]
+    response_model=GenericSuccessResponse[list[LastPrice]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_last_price(
     req: Request,
@@ -936,7 +946,7 @@ def list_all_coupon_last_price(
         })
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": price_list
     }
 
@@ -946,7 +956,8 @@ def list_all_coupon_last_price(
     "/Tick/Coupon",
     summary="Coupon Token Tick (Bulk Get)",
     operation_id="CouponTick",
-    response_model=GenericSuccessResponse[list[TicksResponse]]
+    response_model=GenericSuccessResponse[list[TicksResponse]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_tick(
     req: Request,
@@ -990,6 +1001,6 @@ def list_all_coupon_tick(
             tick_list = []
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": tick_list
     }

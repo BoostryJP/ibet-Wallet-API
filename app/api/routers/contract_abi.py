@@ -30,6 +30,7 @@ from app.model.schema import (
     SuccessResponse,
     ABI
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -46,7 +47,8 @@ router = APIRouter(
     "/StraightBond",
     summary="StraightBond ABI",
     operation_id="StraightBondABI",
-    response_model=GenericSuccessResponse[ABI]
+    response_model=GenericSuccessResponse[ABI],
+    responses=get_routers_responses(NotSupportedError)
 )
 def get_straight_bond_abi(req: Request):
     """
@@ -58,7 +60,7 @@ def get_straight_bond_abi(req: Request):
     ibet_straightbond_json = json.load(open("app/contracts/json/IbetStraightBond.json", "r"))
     abi = ibet_straightbond_json['abi']
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": abi
     }
 
@@ -70,7 +72,8 @@ def get_straight_bond_abi(req: Request):
     "/Share",
     summary="Share ABI",
     operation_id="ShareABI",
-    response_model=GenericSuccessResponse[ABI]
+    response_model=GenericSuccessResponse[ABI],
+    responses=get_routers_responses(NotSupportedError)
 )
 def get_share_abi(req: Request):
     """
@@ -82,7 +85,7 @@ def get_share_abi(req: Request):
     ibet_share_json = json.load(open("app/contracts/json/IbetShare.json", "r"))
     abi = ibet_share_json['abi']
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": abi
     }
 
@@ -94,7 +97,8 @@ def get_share_abi(req: Request):
     "/Membership",
     summary="Membership ABI",
     operation_id="MembershipABI",
-    response_model=GenericSuccessResponse[ABI]
+    response_model=GenericSuccessResponse[ABI],
+    responses=get_routers_responses(NotSupportedError)
 )
 def get_membership_abi(req: Request):
     """
@@ -106,7 +110,7 @@ def get_membership_abi(req: Request):
     ibet_membership_json = json.load(open("app/contracts/json/IbetMembership.json", "r"))
     abi = ibet_membership_json['abi']
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": abi
     }
 
@@ -118,7 +122,8 @@ def get_membership_abi(req: Request):
     "/Coupon",
     summary="Coupon ABI",
     operation_id="CouponABI",
-    response_model=GenericSuccessResponse[ABI]
+    response_model=GenericSuccessResponse[ABI],
+    responses=get_routers_responses(NotSupportedError)
 )
 def get_coupon_abi(req: Request):
     """
@@ -130,6 +135,6 @@ def get_coupon_abi(req: Request):
     ibet_coupon_json = json.load(open("app/contracts/json/IbetCoupon.json", "r"))
     abi = ibet_coupon_json['abi']
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": abi
     }

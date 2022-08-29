@@ -16,12 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from optparse import Option
 from typing import Optional
 from pydantic import (
     BaseModel,
-    Field,
-    validator
+    Field
 )
 from web3 import Web3
 
@@ -42,25 +40,25 @@ from app.model.schema.base import SuccessResponse
 ############################
 
 class NodeInfo(BaseModel):
-    payment_gateway_address: str
-    payment_gateway_abi: object
-    personal_info_address: str
-    personal_info_abi: object
-    ibet_straightbond_exchange_address: str
-    ibet_straightbond_exchange_abi: object
-    ibet_membership_exchange_address: str
-    ibet_membership_exchange_abi: object
-    ibet_coupon_exchange_address: str
-    ibet_coupon_exchange_abi: object
-    ibet_share_exchange_address: str
-    ibet_share_exchange_abi: object
-    ibet_escrow_address: str
-    ibet_escrow_abi: object
-    ibet_security_token_escrow_address: str
-    ibet_security_token_escrow_abi: object
-    e2e_messaging_address: str
-    e2e_messaging_abi: object
-    agent_address: str
+    payment_gateway_address: Optional[str]
+    payment_gateway_abi: Optional[object]
+    personal_info_address: Optional[str]
+    personal_info_abi: Optional[object]
+    ibet_straightbond_exchange_address: Optional[str]
+    ibet_straightbond_exchange_abi: Optional[object]
+    ibet_membership_exchange_address: Optional[str]
+    ibet_membership_exchange_abi: Optional[object]
+    ibet_coupon_exchange_address: Optional[str]
+    ibet_coupon_exchange_abi: Optional[object]
+    ibet_share_exchange_address: Optional[str]
+    ibet_share_exchange_abi: Optional[object]
+    ibet_escrow_address: Optional[str]
+    ibet_escrow_abi: Optional[object]
+    ibet_security_token_escrow_address: Optional[str]
+    ibet_security_token_escrow_abi: Optional[object]
+    e2e_messaging_address: Optional[str]
+    e2e_messaging_abi: Optional[object]
+    agent_address: Optional[str]
 
 
 class BlockSyncStatus(BaseModel):

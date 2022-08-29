@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from unittest import mock
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.model.db import (
@@ -577,7 +578,7 @@ class TestDEXOrderList:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -615,7 +616,7 @@ class TestDEXOrderList:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -653,7 +654,7 @@ class TestDEXOrderList:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -696,7 +697,7 @@ class TestDEXOrderList:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -1446,7 +1447,7 @@ class TestDEXOrderListBond:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -1460,14 +1461,14 @@ class TestDEXOrderListBond:
         }
 
     # Error_2
-    # No headers
+    # Invalid headers(Content-Type)
     # -> 400
     def test_error_2(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
 
-        headers = {}
+        headers: dict = {"Content-Type": "invalid type"}
         request_body = json.dumps(request_params)
 
         resp = client.post(
@@ -1478,9 +1479,16 @@ class TestDEXOrderListBond:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body'],
+                    'msg': 'value is not a valid dict',
+                    'type': 'type_error.dict'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_1
@@ -1501,7 +1509,7 @@ class TestDEXOrderListBond:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -1528,7 +1536,7 @@ class TestDEXOrderListBond:
         resp = client.post(
             self.apiurl, headers=headers, data=request_body)
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -1562,7 +1570,7 @@ class TestDEXOrderListBond:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -2249,7 +2257,7 @@ class TestDEXOrderListMembership:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -2263,14 +2271,14 @@ class TestDEXOrderListMembership:
         }
 
     # Error_2
-    # No headers
+    # 入力値エラー（headers Content-Type不正）
     # -> 400
     def test_error_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
 
-        headers = {}
+        headers: dict = {"Content-Type": "invalid type"}
         request_body = json.dumps(request_params)
 
         resp = client.post(
@@ -2281,9 +2289,16 @@ class TestDEXOrderListMembership:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body'],
+                    'msg': 'value is not a valid dict',
+                    'type': 'type_error.dict'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_1
@@ -2303,7 +2318,7 @@ class TestDEXOrderListMembership:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -2333,7 +2348,7 @@ class TestDEXOrderListMembership:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -2366,7 +2381,7 @@ class TestDEXOrderListMembership:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -3050,7 +3065,7 @@ class TestDEXOrderListCoupon:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -3064,14 +3079,14 @@ class TestDEXOrderListCoupon:
         }
 
     # Error_2
-    # No headers
+    # 入力値エラー（headers Content-Type不正）
     # -> 400
     def test_error_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
 
-        headers = {}
+        headers: dict = {"Content-Type": "invalid type"}
         request_body = json.dumps(request_params)
 
         resp = client.post(
@@ -3082,9 +3097,16 @@ class TestDEXOrderListCoupon:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body'],
+                    'msg': 'value is not a valid dict',
+                    'type': 'type_error.dict'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_1
@@ -3105,7 +3127,7 @@ class TestDEXOrderListCoupon:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -3136,7 +3158,7 @@ class TestDEXOrderListCoupon:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -3169,7 +3191,7 @@ class TestDEXOrderListCoupon:
             data=request_body
         )
 
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -3899,7 +3921,7 @@ class TestDEXOrderListShare:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -3913,14 +3935,14 @@ class TestDEXOrderListShare:
         }
 
     # Error_2
-    # No headers
+    # 入力値エラー（headers Content-Type不正）
     # -> 400
     def test_error_2(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
 
-        headers = {}
+        headers: dict = {"Content-Type": "invalid type"}
         request_body = json.dumps(request_params)
 
         resp = client.post(
@@ -3931,9 +3953,16 @@ class TestDEXOrderListShare:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter"
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'description': [
+                {
+                    'loc': ['body'],
+                    'msg': 'value is not a valid dict',
+                    'type': 'type_error.dict'
+                }
+            ],
+            'message': 'Request Validation Error'
         }
 
     # Error_3_1
@@ -3954,7 +3983,7 @@ class TestDEXOrderListShare:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -3985,7 +4014,7 @@ class TestDEXOrderListShare:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [
@@ -4019,7 +4048,7 @@ class TestDEXOrderListShare:
         )
 
         # assertion
-        assert resp.status_code == 422
+        assert resp.status_code == 400
         assert resp.json()["meta"] == {
             'code': 1,
             'description': [

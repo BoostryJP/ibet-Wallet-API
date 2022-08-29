@@ -22,6 +22,7 @@ from fastapi import (
     Request,
     Response
 )
+from starlette.middleware.base import RequestResponseEndpoint
 
 from app import config
 
@@ -44,7 +45,7 @@ class ResponseLoggerMiddleware(object):
     def __init__(self):
         pass
 
-    async def __call__(self, req: Request, call_next):
+    async def __call__(self, req: Request, call_next: RequestResponseEndpoint):
         # Before process request
         request_start_time = datetime.utcnow()
 
@@ -54,7 +55,10 @@ class ResponseLoggerMiddleware(object):
         # After process request
         if req.url.path != "/":
             response_time = (datetime.utcnow() - request_start_time).total_seconds()
-            log_msg = f"{req.method} {req.url} {res.status_code} ({response_time}sec)"
+            if req.url.query:
+                log_msg = f"{req.method} {req.url.path}?{req.url.query} {res.status_code} ({response_time}sec)"
+            else:
+                log_msg = f"{req.method} {req.url.path} {res.status_code} ({response_time}sec)"
             ACCESS_LOG.info(log_msg)
 
         return res

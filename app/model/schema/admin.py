@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
@@ -65,11 +66,11 @@ class UpdateAdminTokenRequest(BaseModel):
 
 
 class AdminToken(BaseModel):
-    id: str = Field(...)
+    id: int = Field(...)
     token_address: str = Field(...)
     is_public: bool = Field(...)
-    max_holding_quantity: int = Field(...)
-    max_sell_amount: int = Field(...)
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
     owner_address: str = Field(...)
     created: str = Field(..., description="Create Datetime (JST)")
 

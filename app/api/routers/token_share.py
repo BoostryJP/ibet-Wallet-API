@@ -49,6 +49,7 @@ from app.model.db import (
     Listing,
     IDXShareToken
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -59,10 +60,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/",
+    "",
     summary="Token detail list of Share tokens",
     operation_id="ShareTokens",
-    response_model=GenericSuccessResponse[ShareTokensResponse]
+    response_model=GenericSuccessResponse[ShareTokensResponse],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_share_tokens(
     req: Request,
@@ -165,7 +167,7 @@ def list_all_share_tokens(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -174,7 +176,8 @@ def list_all_share_tokens(
     "/Addresses",
     summary="List of Share token address",
     operation_id="ShareTokenAddresses",
-    response_model=GenericSuccessResponse[ShareTokenAddressesResponse]
+    response_model=GenericSuccessResponse[ShareTokenAddressesResponse],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_share_token_addresses(
     req: Request,
@@ -265,7 +268,7 @@ def list_all_share_token_addresses(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -274,7 +277,8 @@ def list_all_share_token_addresses(
     "/{token_address}",
     summary="Share token details",
     operation_id="ShareTokenDetails",
-    response_model=GenericSuccessResponse[ShareTokenSchema]
+    response_model=GenericSuccessResponse[ShareTokenSchema],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def retrieve_share_token(
     req: Request,
@@ -314,6 +318,6 @@ def retrieve_share_token(
         raise DataNotExistsError('contract_address: %s' % contract_address) from None
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": token_detail.__dict__
     }

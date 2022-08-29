@@ -71,7 +71,7 @@ class ShareTokensQuery(ResultSetQuery):
         default=ShareTokensSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order")
+    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
 
 
 ############################
@@ -97,11 +97,11 @@ class ShareToken(BaseModel):
     contact_information: str
     privacy_policy: str
     status: bool
-    max_holding_quantity: int
-    max_sell_amount: int
+    max_holding_quantity: Optional[int]
+    max_sell_amount: Optional[int]
     personal_info_address: str
     transferable: bool
-    if_offering: bool
+    is_offering: bool
     transfer_approval_required: bool
     issue_price: int
     cancellation_date: str

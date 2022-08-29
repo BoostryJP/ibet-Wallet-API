@@ -41,8 +41,9 @@ from app.model.schema import (
     NotificationsCountResponse,
     NotificationsCountQuery,
     UpdateNotificationRequest,
-    Notification as NotificationSchema
+    NotificationUpdateResponse
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -54,10 +55,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/",
+    "",
     summary="Notification List",
     operation_id="GetNotifications",
-    response_model=GenericSuccessResponse[NotificationsResponse]
+    response_model=GenericSuccessResponse[NotificationsResponse],
+    responses=get_routers_responses()
 )
 def list_all_notifications(
     request_query: NotificationsQuery = Depends(),
@@ -125,7 +127,7 @@ def list_all_notifications(
     }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": data
     }
 
@@ -134,7 +136,8 @@ def list_all_notifications(
     "/Read",
     summary="Mark all notifications as read",
     operation_id="NotificationsRead",
-    response_model=SuccessResponse
+    response_model=SuccessResponse,
+    responses=get_routers_responses()
 )
 def read_all_notifications(
     data: NotificationReadRequest,
@@ -151,14 +154,15 @@ def read_all_notifications(
         update({'is_read': data.is_read})
     session.commit()
 
-    return SuccessResponse().dict()
+    return SuccessResponse.use()
 
 
 @router.get(
     "/Count",
     summary="Get the number of unread notifications",
     operation_id="NotificationsCount",
-    response_model=GenericSuccessResponse[NotificationsCountResponse]
+    response_model=GenericSuccessResponse[NotificationsCountResponse],
+    responses=get_routers_responses()
 )
 def count_notifications(
     request_query: NotificationsCountQuery = Depends(),
@@ -178,7 +182,7 @@ def count_notifications(
         count()
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": {
             "unread_counts": count,
         }
@@ -189,7 +193,8 @@ def count_notifications(
     "/{notification_id}",
     summary="Update Notification",
     operation_id="PostNotifications",
-    response_model=GenericSuccessResponse[NotificationSchema]
+    response_model=GenericSuccessResponse[NotificationUpdateResponse],
+    responses=get_routers_responses(DataNotExistsError)
 )
 def update_notification(
     data: UpdateNotificationRequest,
@@ -220,7 +225,7 @@ def update_notification(
     session.commit()
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": notification.json()
     }
 
@@ -229,7 +234,8 @@ def update_notification(
     "/{notification_id}",
     summary="Delete Notification",
     operation_id="DeleteNotification",
-    response_model=SuccessResponse
+    response_model=SuccessResponse,
+    responses=get_routers_responses(DataNotExistsError)
 )
 def delete_notification(
     notification_id: str = Path(description="Notification id"),
@@ -246,4 +252,4 @@ def delete_notification(
     session.delete(_notification)
     session.commit()
 
-    return SuccessResponse().dict()
+    return SuccessResponse.use()

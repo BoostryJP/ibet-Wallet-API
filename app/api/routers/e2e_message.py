@@ -34,8 +34,10 @@ from app.errors import (
 )
 from app.model.schema import (
     GenericSuccessResponse,
-    E2EMessageEncryptionKey, SuccessResponse
+    E2EMessageEncryptionKey,
+    SuccessResponse
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -44,11 +46,13 @@ router = APIRouter(
     tags=["E2EMessage"]
 )
 
+
 @router.get(
     "/EncryptionKey/{account_address}",
     summary="Retrieve message encryption key",
     operation_id="EncryptionKey",
-    response_model=GenericSuccessResponse[E2EMessageEncryptionKey]
+    response_model=GenericSuccessResponse[E2EMessageEncryptionKey],
+    responses=get_routers_responses(InvalidParameterError, DataNotExistsError)
 )
 def retrieve_encryption_key(
     account_address: str = Path(description="Account address (message receiver)")
@@ -83,6 +87,6 @@ def retrieve_encryption_key(
             "key_type": key_type
         }
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": encryption_key
     }

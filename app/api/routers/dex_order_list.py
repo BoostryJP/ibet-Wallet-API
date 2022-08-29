@@ -50,8 +50,14 @@ from app.model.schema import (
     OrderListRequest,
     GenericSuccessResponse,
     OrderListResponse,
-    SuccessResponse
+    SuccessResponse,
+    TokenAddress,
+    ShareToken as ShareTokenSchema,
+    StraightBondToken as StraightBondTokenSchema,
+    MembershipToken as MembershipTokenSchema,
+    CouponToken as CouponTokenSchema
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -523,16 +529,17 @@ class StraightBondOrderList(BaseOrderList):
     "/StraightBond",
     summary="Straight Bond Order History (Bulk Get)",
     operation_id="StraightBondOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse]
+    response_model=GenericSuccessResponse[OrderListResponse[StraightBondTokenSchema]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_order_history(
-    order_list_res: OrderListResponse = Depends(StraightBondOrderList())
+    order_list_res: OrderListResponse[StraightBondTokenSchema] = Depends(StraightBondOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/StraightBond
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": order_list_res
     }
 
@@ -606,16 +613,17 @@ class MembershipOrderList(BaseOrderList):
     "/Membership",
     summary="Membership Order History (Bulk Get)",
     operation_id="MembershipOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse]
+    response_model=GenericSuccessResponse[OrderListResponse[MembershipTokenSchema]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_order_history(
-    order_list_res: OrderListResponse = Depends(MembershipOrderList())
+    order_list_res: OrderListResponse[MembershipTokenSchema] = Depends(MembershipOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/Membership
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": order_list_res
     }
 
@@ -689,16 +697,17 @@ class CouponOrderList(BaseOrderList):
     "/Coupon",
     summary="Coupon Order History (Bulk Get)",
     operation_id="CouponOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse]
+    response_model=GenericSuccessResponse[OrderListResponse[CouponTokenSchema]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_order_history(
-    order_list_res: OrderListResponse = Depends(CouponOrderList())
+    order_list_res: OrderListResponse[CouponTokenSchema] = Depends(CouponOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/Coupon
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": order_list_res
     }
 
@@ -772,16 +781,17 @@ class ShareOrderList(BaseOrderList):
     "/Share",
     summary="Share Order History (Bulk Get)",
     operation_id="ShareOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse]
+    response_model=GenericSuccessResponse[OrderListResponse[ShareTokenSchema]],
+    responses=get_routers_responses(NotSupportedError)
 )
 def list_all_share_order_history(
-    order_list_res: OrderListResponse = Depends(ShareOrderList())
+    order_list_res: OrderListResponse[ShareTokenSchema] = Depends(ShareOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/Share
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": order_list_res
     }
 
@@ -859,15 +869,16 @@ class OrderList(BaseOrderList):
     "/{token_address}",
     summary="Order History filtered by token (Bulk Get)",
     operation_id="IbetExchange",
-    response_model=GenericSuccessResponse[OrderListResponse]
+    response_model=GenericSuccessResponse[OrderListResponse[TokenAddress]],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_order_history_by_token_address(
-    order_list_res: OrderListResponse = Depends(OrderList())
+    order_list_res: OrderListResponse[TokenAddress] = Depends(OrderList())
 ):
     """
     Endpoint: /DEX/OrderList/{token_address}
     """
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": order_list_res
     }

@@ -33,6 +33,7 @@ from app.model.schema import (
     PersonalInfoRegistrationStatus,
     PersonalInfoQuery
 )
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
@@ -49,7 +50,8 @@ router = APIRouter(
     "/PaymentAccount",
     summary="Registration status to PaymentGateway Contract",
     operation_id="PaymentAccount",
-    response_model=GenericSuccessResponse[PaymentAccountRegistrationStatus]
+    response_model=GenericSuccessResponse[PaymentAccountRegistrationStatus],
+    responses=get_routers_responses()
 )
 def get_payment_account_registration_status(
     query: PaymentAccountQuery = Depends()
@@ -85,7 +87,7 @@ def get_payment_account_registration_status(
         }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": response_json
     }
 
@@ -97,7 +99,8 @@ def get_payment_account_registration_status(
     "/PersonalInfo",
     summary="Registration status to PersonalInfo Contract",
     operation_id="PersonalInfo",
-    response_model=GenericSuccessResponse[PersonalInfoRegistrationStatus]
+    response_model=GenericSuccessResponse[PersonalInfoRegistrationStatus],
+    responses=get_routers_responses()
 )
 def get_personal_info_registration_status(
     query: PersonalInfoQuery = Depends()
@@ -138,6 +141,6 @@ def get_personal_info_registration_status(
         }
 
     return {
-        **SuccessResponse().dict(),
+        **SuccessResponse.use().dict(),
         "data": response_json
     }
