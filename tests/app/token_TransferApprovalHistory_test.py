@@ -549,7 +549,7 @@ class TestTokenTransferApprovalHistory:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['query', 'offset'],
@@ -557,7 +557,7 @@ class TestTokenTransferApprovalHistory:
                     'type': 'type_error.integer'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_2
@@ -570,7 +570,7 @@ class TestTokenTransferApprovalHistory:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,'description': [
+            'code': 88,'description': [
                 {
                     'ctx': {'limit_value': 0},
                     'loc': ['query', 'offset'],
@@ -578,7 +578,7 @@ class TestTokenTransferApprovalHistory:
                     'type': 'value_error.number.not_ge'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_3
@@ -591,7 +591,7 @@ class TestTokenTransferApprovalHistory:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['query', 'offset'],
@@ -599,7 +599,7 @@ class TestTokenTransferApprovalHistory:
                     'type': 'type_error.integer'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_4_1
@@ -612,7 +612,7 @@ class TestTokenTransferApprovalHistory:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['query', 'limit'],
@@ -620,7 +620,7 @@ class TestTokenTransferApprovalHistory:
                     'type': 'type_error.integer'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_4_2
@@ -633,7 +633,7 @@ class TestTokenTransferApprovalHistory:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'ctx': {'limit_value': 0},
@@ -642,7 +642,7 @@ class TestTokenTransferApprovalHistory:
                     'type': 'value_error.number.not_ge'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_4_3
@@ -655,7 +655,7 @@ class TestTokenTransferApprovalHistory:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['query', 'limit'],
@@ -663,5 +663,5 @@ class TestTokenTransferApprovalHistory:
                     'type': 'type_error.integer'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }

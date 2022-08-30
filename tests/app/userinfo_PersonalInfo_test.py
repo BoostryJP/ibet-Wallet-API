@@ -153,7 +153,7 @@ class TestUserInfoPersonalInfo:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "account_address"],
@@ -166,7 +166,7 @@ class TestUserInfoPersonalInfo:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_2_2
@@ -182,7 +182,7 @@ class TestUserInfoPersonalInfo:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "account_address"],
@@ -190,7 +190,7 @@ class TestUserInfoPersonalInfo:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_2_3
@@ -206,7 +206,7 @@ class TestUserInfoPersonalInfo:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "owner_address"],
@@ -214,5 +214,5 @@ class TestUserInfoPersonalInfo:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }

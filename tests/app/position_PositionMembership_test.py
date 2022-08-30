@@ -738,7 +738,7 @@ class TestPositionMembership:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {"limit_value": 0},
@@ -753,7 +753,7 @@ class TestPositionMembership:
                     "type": "value_error.number.not_ge"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_4>
@@ -773,7 +773,7 @@ class TestPositionMembership:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "offset"],
@@ -791,5 +791,5 @@ class TestPositionMembership:
                     "type": "type_error.bool"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }

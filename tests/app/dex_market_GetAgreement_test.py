@@ -366,7 +366,7 @@ class TestDEXMarketGetAgreement:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "order_id"],
@@ -384,7 +384,7 @@ class TestDEXMarketGetAgreement:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_2
@@ -397,7 +397,7 @@ class TestDEXMarketGetAgreement:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "exchange_address"],
@@ -405,7 +405,7 @@ class TestDEXMarketGetAgreement:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_3
@@ -418,7 +418,7 @@ class TestDEXMarketGetAgreement:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "order_id"],
@@ -431,7 +431,7 @@ class TestDEXMarketGetAgreement:
                     "type": "type_error.integer"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_4

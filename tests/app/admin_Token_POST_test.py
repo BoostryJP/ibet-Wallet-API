@@ -107,7 +107,7 @@ class TestAdminTokenPOST:
         assert resp.status_code == 400
         assert resp.json() == {
             'meta': {
-                'code': 1,
+                'code': 88,
                 'description': [
                     {
                         'loc': ['body'],
@@ -115,7 +115,7 @@ class TestAdminTokenPOST:
                         'type': 'type_error.dict'
                     }
                 ],
-                'message': 'Request Validation Error'
+                'message': 'Invalid Parameter'
             }
         }
 
@@ -137,7 +137,7 @@ class TestAdminTokenPOST:
         assert resp.status_code == 400
         assert resp.json() == {
             "meta": {
-                "code": 1,
+                "code": 88,
                 "description": [
                     {
                         "loc": ["body", "owner_address"],
@@ -145,7 +145,7 @@ class TestAdminTokenPOST:
                         "type": "value_error"
                     }
                 ],
-                "message": "Request Validation Error"
+                "message": "Invalid Parameter"
             }
         }
 
@@ -167,7 +167,7 @@ class TestAdminTokenPOST:
         assert resp.status_code == 400
         assert resp.json() == {
             "meta": {
-                "code": 1,
+                "code": 88,
                 "description": [
                     {
                         "loc": ["body", "owner_address"],
@@ -175,7 +175,7 @@ class TestAdminTokenPOST:
                         "type": "value_error"
                     }
                 ],
-                "message": "Request Validation Error"
+                "message": "Invalid Parameter"
             }
         }
 
@@ -197,7 +197,7 @@ class TestAdminTokenPOST:
         assert resp.status_code == 400
         assert resp.json() == {
             "meta": {
-                "code": 1,
+                "code": 88,
                 "description": [
                     {
                         "ctx": {"limit_value": 0},
@@ -212,7 +212,7 @@ class TestAdminTokenPOST:
                         "type": "value_error.number.not_ge"
                     }
                 ],
-                "message": "Request Validation Error"
+                "message": "Invalid Parameter"
             }
         }
 

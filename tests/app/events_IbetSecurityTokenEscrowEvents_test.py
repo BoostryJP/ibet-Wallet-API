@@ -1294,7 +1294,7 @@ class TestEventsIbetSecurityTokenEscrow:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "from_block"],
@@ -1307,7 +1307,7 @@ class TestEventsIbetSecurityTokenEscrow:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_2
@@ -1329,7 +1329,7 @@ class TestEventsIbetSecurityTokenEscrow:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {"limit_value": 1},
@@ -1344,7 +1344,7 @@ class TestEventsIbetSecurityTokenEscrow:
                     "type": "value_error.number.not_ge"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_3_1
@@ -1368,7 +1368,7 @@ class TestEventsIbetSecurityTokenEscrow:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {
@@ -1393,7 +1393,7 @@ class TestEventsIbetSecurityTokenEscrow:
                     "type": "type_error.enum"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_4
@@ -1416,7 +1416,7 @@ class TestEventsIbetSecurityTokenEscrow:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "__root__"],
@@ -1424,6 +1424,6 @@ class TestEventsIbetSecurityTokenEscrow:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 

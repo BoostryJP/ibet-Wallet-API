@@ -229,7 +229,7 @@ class TestAdminTokensPOST:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "contract_address"],
@@ -242,7 +242,7 @@ class TestAdminTokensPOST:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜Error_3_1＞
@@ -261,7 +261,7 @@ class TestAdminTokensPOST:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "contract_address"],
@@ -269,7 +269,7 @@ class TestAdminTokensPOST:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜Error_3_2＞
@@ -288,7 +288,7 @@ class TestAdminTokensPOST:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "contract_address"],
@@ -296,7 +296,7 @@ class TestAdminTokensPOST:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜Error_3_3＞
@@ -315,7 +315,7 @@ class TestAdminTokensPOST:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            "code": 88,
             'description': [
                 {
                     'ctx': {'limit_value': 0},
@@ -330,7 +330,7 @@ class TestAdminTokensPOST:
                     'type': 'value_error.number.not_ge'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # <Error_4>

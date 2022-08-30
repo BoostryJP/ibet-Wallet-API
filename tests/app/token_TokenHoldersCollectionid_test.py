@@ -227,7 +227,7 @@ class TestTokenTokenHoldersCollectionId:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["path", "list_id"],
@@ -235,7 +235,7 @@ class TestTokenTokenHoldersCollectionId:
                     "type": "type_error.uuid"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_3

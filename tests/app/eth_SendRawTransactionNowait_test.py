@@ -282,7 +282,7 @@ class TestEthSendRawTransactionNoWait:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "raw_tx_hex_list"],
@@ -290,7 +290,7 @@ class TestEthSendRawTransactionNoWait:
                     "type": "type_error.list"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_3_1>
@@ -309,7 +309,7 @@ class TestEthSendRawTransactionNoWait:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {"limit_value": 1},
@@ -318,7 +318,7 @@ class TestEthSendRawTransactionNoWait:
                     "type": "value_error.list.min_items"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_3_2>
@@ -335,7 +335,7 @@ class TestEthSendRawTransactionNoWait:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "raw_tx_hex_list"],
@@ -343,7 +343,7 @@ class TestEthSendRawTransactionNoWait:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_4>
@@ -361,7 +361,7 @@ class TestEthSendRawTransactionNoWait:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "raw_tx_hex_list"],
@@ -369,7 +369,7 @@ class TestEthSendRawTransactionNoWait:
                     "type": "type_error.list"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_5>
@@ -387,7 +387,7 @@ class TestEthSendRawTransactionNoWait:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "raw_tx_hex_list", 0],
@@ -395,7 +395,7 @@ class TestEthSendRawTransactionNoWait:
                     "type": "type_error.str"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_6>

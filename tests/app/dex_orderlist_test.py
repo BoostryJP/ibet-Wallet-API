@@ -580,7 +580,7 @@ class TestDEXOrderList:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -588,7 +588,7 @@ class TestDEXOrderList:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_2
@@ -618,7 +618,7 @@ class TestDEXOrderList:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -626,7 +626,7 @@ class TestDEXOrderList:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_1
@@ -656,7 +656,7 @@ class TestDEXOrderList:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -664,7 +664,7 @@ class TestDEXOrderList:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_2
@@ -699,7 +699,7 @@ class TestDEXOrderList:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -707,7 +707,7 @@ class TestDEXOrderList:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
 
@@ -1449,7 +1449,7 @@ class TestDEXOrderListBond:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -1457,7 +1457,7 @@ class TestDEXOrderListBond:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_2
@@ -1480,7 +1480,7 @@ class TestDEXOrderListBond:
         # assertion
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -1488,7 +1488,7 @@ class TestDEXOrderListBond:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_1
@@ -1511,7 +1511,7 @@ class TestDEXOrderListBond:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -1519,7 +1519,7 @@ class TestDEXOrderListBond:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_2
@@ -1538,7 +1538,7 @@ class TestDEXOrderListBond:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -1546,7 +1546,7 @@ class TestDEXOrderListBond:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_3
@@ -1572,7 +1572,7 @@ class TestDEXOrderListBond:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'include_canceled_items'],
@@ -1580,7 +1580,7 @@ class TestDEXOrderListBond:
                     'type': 'type_error.bool'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_4
@@ -2259,7 +2259,7 @@ class TestDEXOrderListMembership:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -2267,7 +2267,7 @@ class TestDEXOrderListMembership:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_2
@@ -2290,7 +2290,7 @@ class TestDEXOrderListMembership:
         # assertion
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -2298,7 +2298,7 @@ class TestDEXOrderListMembership:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_1
@@ -2320,7 +2320,7 @@ class TestDEXOrderListMembership:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -2328,7 +2328,7 @@ class TestDEXOrderListMembership:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_2
@@ -2350,7 +2350,7 @@ class TestDEXOrderListMembership:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -2358,7 +2358,7 @@ class TestDEXOrderListMembership:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_3
@@ -2383,7 +2383,7 @@ class TestDEXOrderListMembership:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'include_canceled_items'],
@@ -2391,7 +2391,7 @@ class TestDEXOrderListMembership:
                     'type': 'type_error.bool'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_4
@@ -3067,7 +3067,7 @@ class TestDEXOrderListCoupon:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -3075,7 +3075,7 @@ class TestDEXOrderListCoupon:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_2
@@ -3098,7 +3098,7 @@ class TestDEXOrderListCoupon:
         # assertion
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -3106,7 +3106,7 @@ class TestDEXOrderListCoupon:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_1
@@ -3129,7 +3129,7 @@ class TestDEXOrderListCoupon:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -3137,7 +3137,7 @@ class TestDEXOrderListCoupon:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_2
@@ -3160,7 +3160,7 @@ class TestDEXOrderListCoupon:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -3168,7 +3168,7 @@ class TestDEXOrderListCoupon:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_3
@@ -3193,7 +3193,7 @@ class TestDEXOrderListCoupon:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'include_canceled_items'],
@@ -3201,7 +3201,7 @@ class TestDEXOrderListCoupon:
                     'type': 'type_error.bool'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_4
@@ -3923,7 +3923,7 @@ class TestDEXOrderListShare:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -3931,7 +3931,7 @@ class TestDEXOrderListShare:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_2
@@ -3954,7 +3954,7 @@ class TestDEXOrderListShare:
         # assertion
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -3962,7 +3962,7 @@ class TestDEXOrderListShare:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_1
@@ -3985,7 +3985,7 @@ class TestDEXOrderListShare:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -3993,7 +3993,7 @@ class TestDEXOrderListShare:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_2
@@ -4016,7 +4016,7 @@ class TestDEXOrderListShare:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address_list'],
@@ -4024,7 +4024,7 @@ class TestDEXOrderListShare:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_3
@@ -4050,7 +4050,7 @@ class TestDEXOrderListShare:
         # assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'include_canceled_items'],
@@ -4058,7 +4058,7 @@ class TestDEXOrderListShare:
                     'type': 'type_error.bool'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_4

@@ -163,7 +163,7 @@ class TestDEXMarketMembershipLastPrice:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "address_list"],
@@ -171,7 +171,7 @@ class TestDEXMarketMembershipLastPrice:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # エラー系2：入力値エラー（headers Content-Type不正）
@@ -191,7 +191,7 @@ class TestDEXMarketMembershipLastPrice:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -199,7 +199,7 @@ class TestDEXMarketMembershipLastPrice:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
@@ -219,7 +219,7 @@ class TestDEXMarketMembershipLastPrice:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "address_list"],
@@ -227,7 +227,7 @@ class TestDEXMarketMembershipLastPrice:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # エラー系4：HTTPメソッドが不正

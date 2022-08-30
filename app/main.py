@@ -306,12 +306,12 @@ async def data_not_exists_error_handler(request: Request, exc: DataNotExistsErro
     )
 
 
-# 422:RequestValidationError
+# 400:RequestValidationError
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     meta = {
-        "code": 1,
-        "message": "Request Validation Error",
+        "code": 88,
+        "message": "Invalid Parameter",
         "description": exc.errors()
     }
     return JSONResponse(

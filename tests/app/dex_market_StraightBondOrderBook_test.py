@@ -1487,7 +1487,7 @@ class TestDEXMarketStraightBondOrderBook:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'token_address'],
@@ -1500,7 +1500,7 @@ class TestDEXMarketStraightBondOrderBook:
                     'type': 'value_error.missing'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系2：入力値エラー（headers Content-Type不正）
@@ -1526,7 +1526,7 @@ class TestDEXMarketStraightBondOrderBook:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -1534,7 +1534,7 @@ class TestDEXMarketStraightBondOrderBook:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系3-1：入力値エラー（token_addressがアドレスフォーマットではない）
@@ -1560,7 +1560,7 @@ class TestDEXMarketStraightBondOrderBook:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'token_address'],
@@ -1568,7 +1568,7 @@ class TestDEXMarketStraightBondOrderBook:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系3-2：入力値エラー（token_addressがstring以外）
@@ -1594,7 +1594,7 @@ class TestDEXMarketStraightBondOrderBook:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'token_address'],
@@ -1602,7 +1602,7 @@ class TestDEXMarketStraightBondOrderBook:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系4-1：入力値エラー（account_addressがアドレスフォーマットではない）
@@ -1628,7 +1628,7 @@ class TestDEXMarketStraightBondOrderBook:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address'],
@@ -1636,7 +1636,7 @@ class TestDEXMarketStraightBondOrderBook:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系4-2：入力値エラー（account_addressがstring以外）
@@ -1662,7 +1662,7 @@ class TestDEXMarketStraightBondOrderBook:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body', 'account_address'],
@@ -1670,7 +1670,7 @@ class TestDEXMarketStraightBondOrderBook:
                     'type': 'value_error'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系5：入力値エラー（order_typeがbuy/sell以外）
@@ -1696,7 +1696,7 @@ class TestDEXMarketStraightBondOrderBook:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'ctx': {'enum_values': ['buy', 'sell']},
@@ -1706,7 +1706,7 @@ class TestDEXMarketStraightBondOrderBook:
                     'type': 'type_error.enum'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系6：HTTPメソッドが不正

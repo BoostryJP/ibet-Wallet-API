@@ -669,7 +669,7 @@ class TestCompanyInfoCompanyTokenList:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['query', 'include_private_listing'],
@@ -677,5 +677,5 @@ class TestCompanyInfoCompanyTokenList:
                     'type': 'type_error.bool'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }

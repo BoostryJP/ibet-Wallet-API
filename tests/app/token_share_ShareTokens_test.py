@@ -878,7 +878,7 @@ class TestTokenShareTokens:
 
             assert resp.status_code == 400
             assert resp.json()["meta"] == {
-                "code": 1,
+                "code": 88,
                 "description": [
                     {
                         "loc": ["query", key],
@@ -886,7 +886,7 @@ class TestTokenShareTokens:
                         "type": "type_error.bool"
                     }
                 ],
-                "message": "Request Validation Error"
+                "message": "Invalid Parameter"
             }
 
         invalid_key_value_2 = {
@@ -900,7 +900,7 @@ class TestTokenShareTokens:
 
             assert resp.status_code == 400
             assert resp.json()["meta"] == {
-                "code": 1,
+                "code": 88,
                 "description": [
                     {
                         "loc": ["query", key],
@@ -908,7 +908,7 @@ class TestTokenShareTokens:
                         "type": "type_error.integer"
                     }
                 ],
-                "message": "Request Validation Error"
+                "message": "Invalid Parameter"
             }
 
         invalid_key_value_list = [

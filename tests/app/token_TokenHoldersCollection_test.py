@@ -256,7 +256,7 @@ class TestTokenTokenHoldersCollection:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "list_id"],
@@ -264,7 +264,7 @@ class TestTokenTokenHoldersCollection:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_2
@@ -295,7 +295,7 @@ class TestTokenTokenHoldersCollection:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "list_id"],
@@ -303,7 +303,7 @@ class TestTokenTokenHoldersCollection:
                     "type": "type_error.uuid"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_4

@@ -275,7 +275,7 @@ class TestEthWaitForTransactionReceipt:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -283,7 +283,7 @@ class TestEthWaitForTransactionReceipt:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # Error_5_1
@@ -306,7 +306,7 @@ class TestEthWaitForTransactionReceipt:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {"limit_value": 1},
@@ -315,7 +315,7 @@ class TestEthWaitForTransactionReceipt:
                     "type": "value_error.number.not_ge"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_5_2
@@ -338,7 +338,7 @@ class TestEthWaitForTransactionReceipt:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {"limit_value": 30},
@@ -347,7 +347,7 @@ class TestEthWaitForTransactionReceipt:
                     "type": "value_error.number.not_le"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_6_1
@@ -370,7 +370,7 @@ class TestEthWaitForTransactionReceipt:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "transaction_hash"],
@@ -378,7 +378,7 @@ class TestEthWaitForTransactionReceipt:
                     "type": "type_error.str"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # Error_6_2
@@ -401,7 +401,7 @@ class TestEthWaitForTransactionReceipt:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "timeout"],
@@ -409,5 +409,5 @@ class TestEthWaitForTransactionReceipt:
                     "type": "type_error.integer"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }

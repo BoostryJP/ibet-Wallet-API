@@ -60,8 +60,8 @@ class RequestValidationErrorDict(BaseModel):
 
 
 class RequestValidationErrorInfo(ErrorInfo):
-    code: int = Field(..., example=1)
-    message: str = Field(..., example="Request Validation Error")
+    code: int = Field(..., example=88)
+    message: str = Field(..., example="Invalid Parameter")
     description: list[RequestValidationErrorDict]
 
 

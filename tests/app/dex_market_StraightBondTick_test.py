@@ -177,7 +177,7 @@ class TestDEXMarketStraightBondTick:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "address_list"],
@@ -185,7 +185,7 @@ class TestDEXMarketStraightBondTick:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # エラー系2：入力値エラー（headers Content-Type不正）
@@ -204,7 +204,7 @@ class TestDEXMarketStraightBondTick:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 1,
+            'code': 88,
             'description': [
                 {
                     'loc': ['body'],
@@ -212,7 +212,7 @@ class TestDEXMarketStraightBondTick:
                     'type': 'type_error.dict'
                 }
             ],
-            'message': 'Request Validation Error'
+            'message': 'Invalid Parameter'
         }
 
     # エラー系3：入力値エラー（token_addressがアドレスフォーマットではない）
@@ -231,7 +231,7 @@ class TestDEXMarketStraightBondTick:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "address_list"],
@@ -239,7 +239,7 @@ class TestDEXMarketStraightBondTick:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # エラー系4：HTTPメソッドが不正

@@ -206,7 +206,7 @@ class TestNotificationsRead:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "address"],
@@ -219,7 +219,7 @@ class TestNotificationsRead:
                     "type": "type_error.bool"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系2＞
@@ -237,7 +237,7 @@ class TestNotificationsRead:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "address"],
@@ -250,7 +250,7 @@ class TestNotificationsRead:
                     "type": "type_error.none.not_allowed"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系3＞
@@ -268,7 +268,7 @@ class TestNotificationsRead:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["body", "address"],
@@ -276,5 +276,5 @@ class TestNotificationsRead:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }

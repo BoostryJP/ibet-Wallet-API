@@ -146,7 +146,7 @@ class TestNotificationCount:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "address"],
@@ -154,7 +154,7 @@ class TestNotificationCount:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系2＞
@@ -166,7 +166,7 @@ class TestNotificationCount:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "address"],
@@ -174,5 +174,5 @@ class TestNotificationCount:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }

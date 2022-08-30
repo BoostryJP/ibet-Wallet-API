@@ -555,7 +555,7 @@ class TestNotificationsGet:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {"limit_value": 0},
@@ -628,7 +628,7 @@ class TestNotificationsGet:
                     "type": "type_error.enum"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_2>
@@ -647,7 +647,7 @@ class TestNotificationsGet:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {"limit_value": 2},
@@ -662,7 +662,7 @@ class TestNotificationsGet:
                     "type": "type_error.enum"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # <Error_3>
@@ -679,7 +679,7 @@ class TestNotificationsGet:
         # Assertion
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "address"],
@@ -687,5 +687,5 @@ class TestNotificationsGet:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }

@@ -116,7 +116,7 @@ class TestUserInfoPaymentAccount:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "account_address"],
@@ -124,7 +124,7 @@ class TestUserInfoPaymentAccount:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系2-2＞
@@ -142,7 +142,7 @@ class TestUserInfoPaymentAccount:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "account_address"],
@@ -150,7 +150,7 @@ class TestUserInfoPaymentAccount:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系3-1＞
@@ -166,7 +166,7 @@ class TestUserInfoPaymentAccount:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "agent_address"],
@@ -174,7 +174,7 @@ class TestUserInfoPaymentAccount:
                     "type": "value_error.missing"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系3-2＞
@@ -191,7 +191,7 @@ class TestUserInfoPaymentAccount:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "loc": ["query", "agent_address"],
@@ -199,5 +199,5 @@ class TestUserInfoPaymentAccount:
                     "type": "value_error"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }

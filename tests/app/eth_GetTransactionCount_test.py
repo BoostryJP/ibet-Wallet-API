@@ -143,7 +143,7 @@ class TestEthGetTransactionCount:
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
-            "code": 1,
+            "code": 88,
             "description": [
                 {
                     "ctx": {
@@ -154,5 +154,5 @@ class TestEthGetTransactionCount:
                     "type": "type_error.enum"
                 }
             ],
-            "message": "Request Validation Error"
+            "message": "Invalid Parameter"
         }
