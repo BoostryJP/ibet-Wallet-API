@@ -161,6 +161,7 @@ class TestTokenTokenHoldersCollection:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {"list_id": list_id, "status": TokenHolderBatchStatus.PENDING.value}
+        session.commit()
 
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             processor.collect()

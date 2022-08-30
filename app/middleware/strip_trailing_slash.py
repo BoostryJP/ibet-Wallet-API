@@ -28,6 +28,8 @@ class StripTrailingSlashMiddleware(object):
     Strip Trailing Slash Middleware
 
     * Used for split trailing slash in URL string.
+    *   e.g. If you requests URL like "/Admin/Tokens/",
+    *        this middleware replaces it to "/Admin/Tokens" for avoiding redirect(307).
     """
 
     def __init__(self):
