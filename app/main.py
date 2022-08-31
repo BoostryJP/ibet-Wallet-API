@@ -24,6 +24,7 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
@@ -164,11 +165,12 @@ app.include_router(routers_dex_order_list.router)
 # MIDDLEWARE
 ###############################################################
 
-response_logger = ResponseLoggerMiddleware()
 strip_trailing_slash = StripTrailingSlashMiddleware()
+response_logger = ResponseLoggerMiddleware()
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(BaseHTTPMiddleware, dispatch=strip_trailing_slash)
 app.add_middleware(BaseHTTPMiddleware, dispatch=response_logger)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 
 ###############################################################
@@ -182,10 +184,37 @@ async def internal_server_error_handler(request: Request, exc: Exception):
         "code": 1,
         "title": "InternalServerError"
     }
+    LOG.error(exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=jsonable_encoder({"meta": meta}),
     )
+
+
+# 429:TooManyRequests
+@app.exception_handler(OperationalError)
+async def internal_server_error_handler(request: Request, exc: OperationalError):
+    meta = {
+        "code": 1,
+        "title": "TooManyRequestsError"
+    }
+    if exc.orig.args == ("FATAL:  sorry, too many clients already\n", ):
+        # NOTE: If postgres is used and has run out of connections, exception above would be thrown.
+
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content=jsonable_encoder({"meta": meta}),
+        )
+    elif exc.orig.args[0] == 1040:
+        # NOTE: If MySQL is used and has run out of connections, exception below would be thrown.
+        #       sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1040, 'Too many connections')
+        #       sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1040, 'ny connections')
+
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content=jsonable_encoder({"meta": meta}),
+        )
+    raise exc from None
 
 
 # 400:InvalidParameterError

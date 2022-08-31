@@ -21,9 +21,14 @@ from fastapi import (
     Response
 )
 from starlette.middleware.base import RequestResponseEndpoint
+from app import log
+from .base import SuppressNoResponseReturnedMiddleware
 
 
-class StripTrailingSlashMiddleware(object):
+LOG = log.get_logger()
+
+
+class StripTrailingSlashMiddleware(SuppressNoResponseReturnedMiddleware):
     """
     Strip Trailing Slash Middleware
 
@@ -35,13 +40,16 @@ class StripTrailingSlashMiddleware(object):
     def __init__(self):
         pass
 
-    async def __call__(self, req: Request, call_next: RequestResponseEndpoint):
+    async def __call__(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
         # Before process request
         if req.url.path != "/" and req.url.path[-1] == "/":
-            req._url = req.url.replace(path=req.url.path[:-1])
+            replace_path = req.url.path[:-1]
+            req._url = req.url.replace(path=replace_path)
+            req.scope["path"] = replace_path
+            req.scope["raw_path"] = replace_path.encode()
 
         # Process request
-        res: Response = await call_next(req)
+        res: Response = await self.handle(req, call_next)
 
         # After process request
 

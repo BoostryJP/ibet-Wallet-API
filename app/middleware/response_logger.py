@@ -24,7 +24,11 @@ from fastapi import (
 )
 from starlette.middleware.base import RequestResponseEndpoint
 
-from app import config
+from app import config, log
+from .base import SuppressNoResponseReturnedMiddleware
+
+LOG = log.get_logger()
+
 
 logging.basicConfig(level=config.LOG_LEVEL)
 ACCESS_LOG = logging.getLogger("ibet_wallet_access")
@@ -39,18 +43,18 @@ stream_handler_access.setFormatter(formatter_access)
 ACCESS_LOG.addHandler(stream_handler_access)
 
 
-class ResponseLoggerMiddleware(object):
+class ResponseLoggerMiddleware(SuppressNoResponseReturnedMiddleware):
     """Response Logger Middleware"""
 
     def __init__(self):
         pass
 
-    async def __call__(self, req: Request, call_next: RequestResponseEndpoint):
+    async def __call__(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
         # Before process request
         request_start_time = datetime.utcnow()
 
         # Process request
-        res: Response = await call_next(req)
+        res: Response = await self.handle(req, call_next)
 
         # After process request
         if req.url.path != "/":

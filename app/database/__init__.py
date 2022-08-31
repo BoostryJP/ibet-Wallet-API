@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
 
 from app import log
 from app import config
