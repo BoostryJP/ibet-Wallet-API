@@ -26,7 +26,7 @@ jobs:
         id: get_tag_name
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
-      - name: Build and Push (ibet-prime)
+      - name: Build and Push (ibet-wallet)
         uses: docker/build-push-action@v2
         with:
           context: .
