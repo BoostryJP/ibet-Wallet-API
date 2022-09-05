@@ -122,10 +122,10 @@ class TransferApprovalHistory(BaseModel):
     value: int = Field(description="Transfer quantity")
     application_datetime: str = Field(description="application datetime (JST)")
     application_blocktimestamp: str = Field(description="application blocktimestamp (JST)")
-    approval_datetime: str = Field(description="approval datetime (JST)")
-    approval_blocktimestamp: str = Field(description="approval blocktimestamp (JST)")
+    approval_datetime: Optional[str] = Field(description="approval datetime (JST)")
+    approval_blocktimestamp: Optional[str] = Field(description="approval blocktimestamp (JST)")
     cancelled: Optional[bool] = Field(description="Cancellation status")
-    transfer_approved: bool = Field(description="transfer approval status")
+    transfer_approved: Optional[bool] = Field(description="transfer approval status")
 
 
 class TransferApprovalHistoriesResponse(BaseModel):
