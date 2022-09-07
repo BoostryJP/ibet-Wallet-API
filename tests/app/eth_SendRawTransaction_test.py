@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+import logging
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from unittest.mock import MagicMock
@@ -29,6 +31,7 @@ from web3.exceptions import TimeExhausted
 from eth_utils import to_checksum_address
 
 from app import config
+from app import log
 from app.api.routers import eth
 from app.contracts import Contract
 from app.model.db import (
@@ -78,6 +81,17 @@ def executable_contract_token(session, contract):
     executable_contract = ExecutableContract()
     executable_contract.contract_address = contract['address']
     session.add(executable_contract)
+
+
+@pytest.fixture(scope="function")
+def caplog(caplog: pytest.LogCaptureFixture):
+    LOG = log.get_logger()
+    default_log_level = LOG.level
+    LOG.setLevel(logging.DEBUG)
+    LOG.propagate = True
+    yield caplog
+    LOG.propagate = False
+    LOG.setLevel(default_log_level)
 
 
 class TestEthSendRawTransaction:
@@ -748,7 +762,7 @@ class TestEthSendRawTransaction:
 
     # <Error_10_2>
     # Transaction failed and revert inspection success(no error code)
-    def test_error_10_2(self, client: TestClient, session: Session):
+    def test_error_10_2(self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -804,10 +818,15 @@ class TestEthSendRawTransaction:
                 "error_code": 0,
                 "error_msg": "Message sender balance is insufficient.",
             }]
+            assert caplog.record_tuples.count((
+                log.LOG.name,
+                logging.WARN,
+                "Contract revert detected: code: 0 message: Message sender balance is insufficient."
+            )) == 1
 
     # <Error_10_3>
     # Transaction failed and revert inspection success(no revert message)
-    def test_error_10_3(self, client: TestClient, session: Session):
+    def test_error_10_3(self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -863,6 +882,11 @@ class TestEthSendRawTransaction:
                 "error_code": 0,
                 "error_msg": "execution reverted",
             }]
+            assert caplog.record_tuples.count((
+                log.LOG.name,
+                logging.WARN,
+                "Contract revert detected: code: 0 message: execution reverted"
+            )) == 1
 
     # <Error_10_4>
     # Transaction failed and revert inspection failed
