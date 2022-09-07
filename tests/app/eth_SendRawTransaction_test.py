@@ -757,7 +757,7 @@ class TestEthSendRawTransaction:
 
     # <Error_10_2>
     # Transaction failed and revert inspection success(no error code)
-    def test_error_10_2(self, client, session):
+    def test_error_10_2(self, client, session, caplog):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -829,6 +829,11 @@ class TestEthSendRawTransaction:
                 "error_code": 0,
                 "error_msg": "Message sender balance is insufficient.",
             }]
+            assert caplog.record_tuples.count((
+                log.LOG.name,
+                logging.WARN,
+                "Contract revert detected: code: 0 message: Message sender balance is insufficient."
+            )) == 1
 
     # <Error_10_3>
     # Transaction failed and revert inspection success(no revert message)
