@@ -60,10 +60,10 @@ $ pip install -r requirements.txt
 
 <table style="border-collapse: collapse" id="env-table">
     <tr bgcolor="#000000">
-        <th style="width: 25%">Variable Name</th>
-        <th style="width: 10%">Required</th>
-        <th style="width: 30%">Details</th>
-        <th>Example</th>
+        <th style="width: 25%">環境変数名</th>
+        <th style="width: 10%">必須</th>
+        <th style="width: 30%">詳細</th>
+        <th>設定例</th>
     </tr>
     <tr>
         <td>APP_ENV</td>
@@ -233,6 +233,8 @@ $ pytest tests/
 ```
 
 ## ブランチ作成方針
+
+このリポジトリは以下の図で示されるフローでバージョン管理が行われています。
 
 <p align='center'>
   <img alt="ibet_oss_branching_model" src="https://user-images.githubusercontent.com/963333/153906146-51104713-c93c-4c5d-8b0a-5cf59651ffff.png"/>
