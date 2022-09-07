@@ -201,7 +201,7 @@ class SendRawTransaction(BaseResource):
                         "error_code": code,
                         "error_msg": message
                     })
-                    LOG.error(f"Contract logic error: code: {str(code)} message: {message}")
+                    LOG.warning(f"Contract revert detected: code: {str(code)} message: {message}")
                     continue
             except TimeExhausted as err:
                 status = 2  # execution success (pending transaction)
