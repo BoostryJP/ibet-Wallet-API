@@ -70,7 +70,7 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def main_func(test_module):
-    LOG = logging.getLogger("Processor")
+    LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
     LOG.propagate = True

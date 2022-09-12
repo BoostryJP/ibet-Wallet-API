@@ -18,4 +18,4 @@ SPDX-License-Identifier: Apache-2.0
 """
 
 from .common import BaseResource
-from .v2 import *
+from .routers import *

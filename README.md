@@ -1,9 +1,11 @@
 # ibet Wallet API
 
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-22.6-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-22.9-blue.svg?cacheSeconds=2592000" />
   <img alt="License: Apache--2.0" src="https://img.shields.io/badge/License-Apache--2.0-yellow.svg" />
 </p>
+
+English | <a href='./README_JA.md'>日本語</a>
 
 <img width="33%" align="right" src="https://user-images.githubusercontent.com/963333/71627030-97cd7480-2c33-11ea-9d3a-f77f424d954d.png"/>
 
@@ -13,7 +15,7 @@
 
 ## Dependencies
 - [python3](https://www.python.org/)
-  - Version 3.8 or greater
+  - Version 3.10 or greater
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - Version 13
   - [MySQL](https://www.mysql.com/) - Version 5.7
@@ -103,12 +105,6 @@ The main environment variables are as follows.
         <td>False</td>
         <td nowrap>Test database URL</td>
         <td>postgresql://ethuser:ethpass@localhost:5432/ethcache_test</td>
-    </tr>
-    <tr>
-        <td>DATABASE_SCHEMA</td>
-        <td>False</td>
-        <td nowrap>Database schema</td>
-        <td></td>
     </tr>
     <tr>
         <td>WEB3_HTTP_PROVIDER</td>
@@ -237,6 +233,8 @@ $ pytest tests/
 ```
 
 ## Branching model
+
+This repository is version controlled using the following flow.
 
 <p align='center'>
   <img alt="ibet_oss_branching_model" src="https://user-images.githubusercontent.com/963333/153906146-51104713-c93c-4c5d-8b0a-5cf59651ffff.png"/>

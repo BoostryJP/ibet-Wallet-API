@@ -100,7 +100,7 @@ def test_module(shared_contract):
 
 @pytest.fixture(scope="function")
 def processor(test_module, session):
-    LOG = logging.getLogger("Processor")
+    LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
     LOG.propagate = True
@@ -341,13 +341,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -355,7 +355,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 6000
         assert trader_record.hold_balance == 44000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_2>
     # StraightBond
@@ -443,13 +443,13 @@ class TestProcessor:
             processor.collect()
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -457,7 +457,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 13000
         assert trader_record.hold_balance == 17000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_3>
     # StraightBond
@@ -534,13 +534,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -548,7 +548,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 17000
         assert trader_record.hold_balance == 13000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_4>
     # Share
@@ -628,13 +628,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -642,7 +642,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 10000
         assert trader_record.hold_balance == 40000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_5>
     # Share
@@ -731,13 +731,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -745,7 +745,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 13000
         assert trader_record.hold_balance == 17000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_6>
     # Share
@@ -822,13 +822,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -836,7 +836,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 17000
         assert trader_record.hold_balance == 13000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_7>
     # Coupon
@@ -903,13 +903,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -917,7 +917,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 10000
         assert trader_record.hold_balance == 20000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_8>
     # Coupon
@@ -991,13 +991,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1005,7 +1005,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 11000
         assert trader_record.hold_balance == 9000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_9>
     # Coupon
@@ -1077,13 +1077,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1091,7 +1091,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 7000
         assert trader_record.hold_balance == 4000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_10>
     # Membership
@@ -1158,19 +1158,19 @@ class TestProcessor:
 
         issuer_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.issuer["account_address"])
             .first()
         )
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1178,7 +1178,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 10000
         assert trader_record.hold_balance == 20000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_11>
     # Membership
@@ -1250,13 +1250,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1264,7 +1264,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 11000
         assert trader_record.hold_balance == 9000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_12>
     # Membership
@@ -1332,13 +1332,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1346,7 +1346,7 @@ class TestProcessor:
         assert user1_record.hold_balance == 7000
         assert trader_record.hold_balance == 13000
 
-        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id))) == 2
+        assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
     # <Normal_13>
     # StraightBond
@@ -1392,13 +1392,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list1.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list1.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list1.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1434,13 +1434,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list2.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list2.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list2.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list2.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1483,13 +1483,13 @@ class TestProcessor:
 
         user1_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list3.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list3.id)
             .filter(TokenHolder.account_address == self.user1["account_address"])
             .first()
         )
         trader_record: TokenHolder = (
             session.query(TokenHolder)
-            .filter(TokenHolder.holder_list_id == target_token_holders_list3.id)
+            .filter(TokenHolder.holder_list == target_token_holders_list3.id)
             .filter(TokenHolder.account_address == self.trader["account_address"])
             .first()
         )
@@ -1618,7 +1618,7 @@ class TestProcessor:
         with mock.patch("batch.indexer_Token_Holders.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             processor.collect()
         _records: List[TokenHolder] = (
-            session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
+            session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id).all()
         )
         assert len(_records) == 0
 
@@ -1657,7 +1657,7 @@ class TestProcessor:
             processor.collect()
 
         _records: List[TokenHolder] = (
-            session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
+            session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id).all()
         )
         assert len(_records) == 0
 
@@ -1677,6 +1677,6 @@ class TestProcessor:
 
         session.rollback()
         _records: List[TokenHolder] = (
-            session.query(TokenHolder).filter(TokenHolder.holder_list_id == target_token_holders_list.id).all()
+            session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id).all()
         )
         assert len(_records) == 0

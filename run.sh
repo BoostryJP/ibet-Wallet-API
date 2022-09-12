@@ -29,6 +29,10 @@ elif [ "${RUN_MODE}" == "indexer" ]; then
   ./bin/run_indexer.sh
 elif [ "${RUN_MODE}" == "processor_notification" ]; then
   ./bin/run_processor_notification.sh
+elif [ "${RUN_MODE}" == "batch" ]; then
+  ./bin/run_indexer.sh &
+  ./bin/run_processor_notification.sh &
+  tail -f /dev/null
 else
   echo "RUN_MODE is invalid value." >&2
   exit 1

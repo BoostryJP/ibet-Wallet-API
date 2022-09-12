@@ -109,7 +109,7 @@ def processor_factory(session, shared_contract):
 
 @pytest.fixture(scope="function")
 def main_func(processor_factory):
-    LOG = logging.getLogger("Processor")
+    LOG = logging.getLogger("ibet_wallet_batch")
     default_log_level = LOG.level
     LOG.setLevel(logging.DEBUG)
     LOG.propagate = True

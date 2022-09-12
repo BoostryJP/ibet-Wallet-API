@@ -40,6 +40,7 @@ fi
 
 python batch/indexer_Transfer.py &
 python batch/indexer_Token_Holders.py &
+python batch/indexer_Token_List.py &
 
 if [ $SHARE_TOKEN_ENABLED = 1 ]; then
   python batch/indexer_Position_Share.py &
@@ -64,6 +65,11 @@ if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -o \
   -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" -o \
   -n "$IBET_CP_EXCHANGE_CONTRACT_ADDRESS" ]; then
   python batch/indexer_DEX.py &
+fi
+
+if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
+  python batch/indexer_Token_Detail.py &
+  python batch/indexer_Token_Detail_ShortTerm.py &
 fi
 
 tail -f /dev/null

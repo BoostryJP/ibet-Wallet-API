@@ -66,6 +66,12 @@ ERR_DATA_NOT_EXISTS = {
     'title': 'Data Not Exists'
 }
 
+ERR_DATA_CONFLICT = {
+    "status": falcon.HTTP_409,
+    "code": 40,
+    "title": "Data Conflict"
+}
+
 ERR_SERVICE_UNAVAILABLE = {
     'status': falcon.HTTP_503,
     'code': 503,
@@ -153,6 +159,15 @@ class SuspendedTokenError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_SUSPENDED_TOKEN)
         self.error['description'] = description
+
+
+class DataConflictError(AppError):
+    """
+    409 ERROR: データが重複
+    """
+    def __init__(self, description=None):
+        super().__init__(ERR_DATA_CONFLICT)
+        self.error["description"] = description
 
 
 class ServiceUnavailable(AppError):
