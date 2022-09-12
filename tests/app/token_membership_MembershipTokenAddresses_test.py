@@ -19,8 +19,8 @@ SPDX-License-Identifier: Apache-2.0
 import pytest
 
 from eth_utils import to_checksum_address
-from falcon.testing.client import _ResultBase
-
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -104,7 +104,7 @@ class TestTokenMembershipTokenAddresses:
 
     # <Normal_1>
     # List all tokens
-    def test_normal_1(self, client, session, shared_contract, processor: Processor):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -129,7 +129,7 @@ class TestTokenMembershipTokenAddresses:
         processor.process()
 
         query_string = ""
-        resp: _ResultBase = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
         tokens = [membership["address"]]
 
         assumed_body = {
@@ -143,12 +143,12 @@ class TestTokenMembershipTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_2>
     # Pagination
-    def test_normal_2(self, client, session, shared_contract, processor: Processor):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -205,7 +205,7 @@ class TestTokenMembershipTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "offset": 1,
             "limit": 2,
         })
@@ -222,12 +222,12 @@ class TestTokenMembershipTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_3>
     # Pagination(over offset)
-    def test_normal_3(self, client, session, shared_contract, processor: Processor):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -284,7 +284,7 @@ class TestTokenMembershipTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "offset": 7
         })
         tokens = []
@@ -300,12 +300,12 @@ class TestTokenMembershipTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_4>
     # Search Filter
-    def test_normal_4(self, client, session, shared_contract, processor: Processor):
+    def test_normal_4(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -362,7 +362,7 @@ class TestTokenMembershipTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "name": "テスト会員権",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -385,12 +385,12 @@ class TestTokenMembershipTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Normal_5>
     # Search Filter(not hit)
-    def test_normal_5(self, client, session, shared_contract, processor: Processor):
+    def test_normal_5(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -459,7 +459,7 @@ class TestTokenMembershipTokenAddresses:
         }
 
         for key, value in not_matched_key_value.items():
-            resp: _ResultBase = client.simulate_get(self.apiurl, params={
+            resp = client.get(self.apiurl, params={
                 key: value
             })
 
@@ -474,12 +474,12 @@ class TestTokenMembershipTokenAddresses:
             }
 
             assert resp.status_code == 200
-            assert resp.json["meta"] == {"code": 200, "message": "OK"}
-            assert resp.json["data"] == assumed_body
+            assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+            assert resp.json()["data"] == assumed_body
 
     # <Normal_6>
     # Sort
-    def test_normal_6(self, client, session, shared_contract, processor: Processor):
+    def test_normal_6(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -536,7 +536,7 @@ class TestTokenMembershipTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.simulate_get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "name": "テスト会員権",
             "initial_offering_status": False,
             "sort_item": "name",
@@ -555,12 +555,12 @@ class TestTokenMembershipTokenAddresses:
         }
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # <Error_1>
     # NotSupportedError
-    def test_error_1(self, client, session, shared_contract, processor: Processor):
+    def test_error_1(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = False
         # テスト用アカウント
         issuer = eth_account["issuer"]
@@ -584,10 +584,10 @@ class TestTokenMembershipTokenAddresses:
         processor.process()
 
         query_string = ""
-        resp: _ResultBase = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 10,
             "description": "method: GET, url: /Token/Membership/Addresses",
             "message": "Not Supported"
@@ -595,7 +595,7 @@ class TestTokenMembershipTokenAddresses:
 
     # <Error_2>
     # InvalidParameterError
-    def test_error_2(self, client, session, shared_contract, processor: Processor):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         config.MEMBERSHIP_TOKEN_ENABLED = True
 
         # テスト用アカウント
@@ -625,31 +625,41 @@ class TestTokenMembershipTokenAddresses:
             "initial_offering_status": "invalid_param",
         }
         for key, value in invalid_key_value.items():
-            resp: _ResultBase = client.simulate_get(self.apiurl, params={
+            resp = client.get(self.apiurl, params={
                 key: value
             })
 
             assert resp.status_code == 400
-            assert resp.json["title"] == "Invalid parameter"
-            assert resp.json["description"] == f'The "{key}" parameter is invalid. The value of the parameter must be "true" or "false".'
+            assert resp.json()["meta"] == {
+                'code': 88,
+                'description': [
+                    {
+                        'loc': ['query', key],
+                        'msg': 'value could not be parsed to a boolean',
+                        'type': 'type_error.bool'
+                    }
+                ],
+                'message': 'Invalid Parameter'
+            }
 
         invalid_key_value = {
             "offset": "invalid_param",
             "limit": "invalid_param"
         }
         for key, value in invalid_key_value.items():
-            resp: _ResultBase = client.simulate_get(self.apiurl, params={
+            resp = client.get(self.apiurl, params={
                 key: value
             })
 
             assert resp.status_code == 400
-            assert resp.json["meta"] == {
-                "code": 88,
-                "message": "Invalid Parameter",
-                "description": {
-                    f"{key}": [
-                        f"field '{key}' cannot be coerced: invalid literal for int() with base 10: '{value}'",
-                        "must be of integer type"
-                    ]
-                }
+            assert resp.json()["meta"] == {
+                'code': 88,
+                'description': [
+                    {
+                        'loc': ['query', key],
+                        'msg': 'value is not a valid integer',
+                        'type': 'type_error.integer'
+                    }
+                ],
+                'message': 'Invalid Parameter'
             }

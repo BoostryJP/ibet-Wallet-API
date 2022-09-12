@@ -16,15 +16,18 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi import (
+    APIRouter,
+    Depends,
+    Path
+)
 
-from cerberus import Validator
-
-from web3 import Web3
+from sqlalchemy.orm import Session
 
 from app import log
 from app import config
-from app.api.common import BaseResource
 from app.contracts import Contract
+from app.database import db_session
 from app.errors import (
     InvalidParameterError,
     DataNotExistsError,
@@ -45,314 +48,280 @@ from app.model.db import (
     IDXMembershipToken,
     IDXCouponToken
 )
+from app.model.schema import (
+    SuccessResponse,
+    RegisterAdminTokensRequest,
+    UpdateAdminTokenRequest,
+    GenericSuccessResponse,
+    AdminToken,
+    AdminTokensType
+)
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
+router = APIRouter(
+    prefix="/Admin",
+    tags=["Admin"]
+)
 
 # ------------------------------
 # [管理]取扱トークン登録/一覧取得
 # ------------------------------
-class Tokens(BaseResource):
+
+
+@router.get(
+    "/Tokens",
+    summary="List All Listed Tokens",
+    operation_id="TokensGET",
+    response_model=GenericSuccessResponse[list[AdminToken]]
+)
+def list_all_admin_tokens(
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Admin/Tokens
       - GET: 取扱トークン一覧取得
+    """
+    res_body = []
+
+    listed_tokens = session.query(Listing).all()
+    for token in listed_tokens:
+        item = token.json()
+        res_body.append(item)
+
+    # idの降順にソート
+    res_body.sort(key=lambda x: x["id"], reverse=True)  # type: ignore
+
+    return {
+        **SuccessResponse.use().dict(),
+        "data": res_body
+    }
+
+
+@router.post(
+    "/Tokens",
+    summary="List a Token",
+    operation_id="TokensPOST",
+    response_model=SuccessResponse,
+    responses=get_routers_responses(DataConflictError, InvalidParameterError),
+)
+def register_admin_token(
+    data: RegisterAdminTokensRequest,
+    session: Session = Depends(db_session)
+):
+    """
+    Endpoint: /Admin/Tokens
       - POST: 取扱トークン登録
     """
+    contract_address = data.contract_address
 
-    ########################################
-    # GET
-    ########################################
-    def on_get(self, req, res, **kwargs):
-        session = req.context["session"]
+    # 既存レコードの存在チェック
+    _listing = session.query(Listing). \
+        filter(Listing.token_address == contract_address). \
+        first()
+    if _listing is not None:
+        raise DataConflictError(description="contract_address already exist")
 
-        res_body = []
+    _executable_contract = session.query(ExecutableContract). \
+        filter(ExecutableContract.contract_address == contract_address). \
+        first()
+    if _executable_contract is not None:
+        raise DataConflictError(description="contract_address already exist")
 
-        listed_tokens = session.query(Listing).all()
-        for token in listed_tokens:
-            item = token.json()
-            res_body.append(item)
+    # token情報をTokenListコントラクトから取得
+    list_contract = Contract.get_contract(
+        contract_name='TokenList',
+        address=config.TOKEN_LIST_CONTRACT_ADDRESS or ""
+    )
+    token = Contract.call_function(
+        contract=list_contract,
+        function_name="getTokenByAddress",
+        args=(contract_address,),
+        default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
+    )
 
-        # idの降順にソート
-        res_body.sort(key=lambda x: x["id"], reverse=True)
+    # contract_addressの有効性チェック
+    if token[1] is None or token[1] not in available_token_template():
+        raise InvalidParameterError(description="contract_address is invalid token address")
 
-        self.on_success(res, res_body)
+    owner_address = token[2]
 
-    ########################################
-    # POST
-    ########################################
-    def on_post(self, req, res, **kwargs):
-        session = req.context["session"]
+    # 新規レコードの登録
+    is_public = data.is_public
+    max_holding_quantity = data.max_holding_quantity
+    max_sell_amount = data.max_sell_amount
 
-        # 入力値チェック
-        request_json = self.validate(req)
-        contract_address = request_json["contract_address"]
+    listing = Listing()
+    listing.token_address = contract_address
+    listing.is_public = is_public
+    listing.max_holding_quantity = max_holding_quantity
+    listing.max_sell_amount = max_sell_amount
+    listing.owner_address = owner_address
+    session.add(listing)
 
-        # 既存レコードの存在チェック
-        _listing = session.query(Listing). \
-            filter(Listing.token_address == contract_address). \
-            first()
-        if _listing is not None:
-            raise DataConflictError("contract_address already exist")
+    executable_contract = ExecutableContract()
+    executable_contract.contract_address = contract_address
+    session.add(executable_contract)
 
-        _executable_contract = session.query(ExecutableContract). \
-            filter(ExecutableContract.contract_address == contract_address). \
-            first()
-        if _executable_contract is not None:
-            raise DataConflictError("contract_address already exist")
+    token_type = token[1]
+    # Fetch token detail data to store cache
+    if token_type == "IbetCoupon":
+        token_obj = CouponToken.get(session, contract_address)
+        session.add(token_obj.to_model())
+    elif token_type == "IbetMembership":
+        token_obj = MembershipToken.get(session, contract_address)
+        session.add(token_obj.to_model())
+    elif token_type == "IbetStraightBond":
+        token_obj = BondToken.get(session, contract_address)
+        session.add(token_obj.to_model())
+    elif token_type == "IbetShare":
+        token_obj = ShareToken.get(session, contract_address)
+        session.add(token_obj.to_model())
+    session.commit()
 
-        # token情報をTokenListコントラクトから取得
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
-        )
-        token = Contract.call_function(
-            contract=list_contract,
-            function_name="getTokenByAddress",
-            args=(contract_address,),
-            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-        )
-
-        # contract_addressの有効性チェック
-        if token[1] is None or token[1] not in self.available_token_template():
-            raise InvalidParameterError("contract_address is invalid token address")
-
-        owner_address = token[2]
-        
-        # 新規レコードの登録
-        is_public = request_json["is_public"]
-        max_holding_quantity = request_json["max_holding_quantity"] if "max_holding_quantity" in request_json else None
-        max_sell_amount = request_json["max_sell_amount"] if "max_sell_amount" in request_json else None
-
-        listing = Listing()
-        listing.token_address = contract_address
-        listing.is_public = is_public
-        listing.max_holding_quantity = max_holding_quantity
-        listing.max_sell_amount = max_sell_amount
-        listing.owner_address = owner_address
-        session.add(listing)
-
-        executable_contract = ExecutableContract()
-        executable_contract.contract_address = contract_address
-        session.add(executable_contract)
-
-        token_type = token[1]
-        # Fetch token detail data to store cache
-        if token_type == "IbetCoupon":
-            token_obj = CouponToken.get(session, contract_address)
-            session.add(token_obj.to_model())
-        elif token_type == "IbetMembership":
-            token_obj = MembershipToken.get(session, contract_address)
-            session.add(token_obj.to_model())
-        elif token_type == "IbetStraightBond":
-            token_obj = BondToken.get(session, contract_address)
-            session.add(token_obj.to_model())
-        elif token_type == "IbetShare":
-            token_obj = ShareToken.get(session, contract_address)
-            session.add(token_obj.to_model())
-        session.commit()
-
-        self.on_success(res)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context['data']
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "contract_address": {
-                "type": "string",
-                "required": True,
-                "nullable": False
-            },
-            "is_public": {
-                "type": "boolean",
-                "required": True,
-                "nullable": False
-            },
-            "max_holding_quantity": {
-                "type": "integer",
-                "required": False,
-                "min": 0
-            },
-            "max_sell_amount": {
-                "type": "integer",
-                "required": False,
-                "min": 0
-            },
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        # contract_addressのフォーマットチェック
-        try:
-            if not Web3.isAddress(request_json["contract_address"]):
-                raise InvalidParameterError("Invalid contract address")
-        except Exception as err:
-            LOG.warning(f"invalid contract address: {err}")
-            raise InvalidParameterError("Invalid contract address")
-
-        return request_json
-
-    @staticmethod
-    def available_token_template():
-        """
-        利用可能なtoken_templateをlistで返却
-
-        :return: 利用可能なtoken_templateリスト
-        """
-        available_token_template_list = []
-        if config.BOND_TOKEN_ENABLED:
-            available_token_template_list.append("IbetStraightBond")
-        if config.SHARE_TOKEN_ENABLED:
-            available_token_template_list.append("IbetShare")
-        if config.MEMBERSHIP_TOKEN_ENABLED:
-            available_token_template_list.append("IbetMembership")
-        if config.COUPON_TOKEN_ENABLED:
-            available_token_template_list.append("IbetCoupon")
-        return available_token_template_list
+    return SuccessResponse.use()
 
 
 # ------------------------------
 # [管理]取扱トークン種別
 # ------------------------------
-class TokenType(BaseResource):
+
+@router.get(
+    "/Tokens/Type",
+    summary="Available status by token type",
+    operation_id="TokenType",
+    response_model=GenericSuccessResponse[AdminTokensType],
+    response_model_exclude_unset=True
+)
+def admin_token_type():
     """
     Endpoint: /Admin/Tokens/Type
       - GET: 取扱トークン種別
     """
-
-    ########################################
-    # GET
-    ########################################
-    def on_get(self, req, res, **kwargs):
-        res_body = {
-            "IbetStraightBond": config.BOND_TOKEN_ENABLED,
-            "IbetShare": config.SHARE_TOKEN_ENABLED,
-            "IbetMembership": config.MEMBERSHIP_TOKEN_ENABLED,
-            "IbetCoupon": config.COUPON_TOKEN_ENABLED
-        }
-
-        self.on_success(res, res_body)
+    res_body = {
+        "IbetStraightBond": config.BOND_TOKEN_ENABLED,
+        "IbetShare": config.SHARE_TOKEN_ENABLED,
+        "IbetMembership": config.MEMBERSHIP_TOKEN_ENABLED,
+        "IbetCoupon": config.COUPON_TOKEN_ENABLED
+    }
+    return {
+        **SuccessResponse.use().dict(),
+        "data": res_body
+    }
 
 
 # ------------------------------
 # [管理]取扱トークン情報取得/更新
 # ------------------------------
-class Token(BaseResource):
+
+@router.get(
+    "/Tokens/{token_address}",
+    summary="Retrieve a Listed Token",
+    operation_id="TokenGET",
+    response_model=GenericSuccessResponse[AdminToken],
+    response_model_exclude_unset=True,
+    responses=get_routers_responses(DataNotExistsError)
+)
+def retrieve_listed_token(
+    token_address: str = Path(description="Token Address"),
+    session: Session = Depends(db_session)
+):
+    """
+    Endpoint: /Admin/Tokens/{token_address}
+      - GET: 取扱トークン情報取得（個別）
+    """
+    token = session.query(Listing).\
+        filter(Listing.token_address == token_address).\
+        first()
+
+    if token is not None:
+        return {
+            **SuccessResponse.use().dict(),
+            "data": token.json()
+        }
+    else:
+        raise DataNotExistsError()
+
+
+@router.post(
+    "/Tokens/{token_address}",
+    summary="Update a Listed Token",
+    operation_id="TokenPOST",
+    response_model=SuccessResponse,
+    responses=get_routers_responses(InvalidParameterError, DataNotExistsError)
+)
+def update_token(
+    data: UpdateAdminTokenRequest,
+    token_address: str = Path(description="Token Address"),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Admin/Tokens/{contract_address}
-      - GET: 取扱トークン情報取得（個別）
       - POST: 取扱トークン情報更新（個別）
+    """
+    # 更新対象レコードを取得
+    # 更新対象のレコードが存在しない場合は404エラーを返す
+    token = session.query(Listing).filter(Listing.token_address == token_address).first()
+    if token is None:
+        raise DataNotExistsError()
+
+    # レコードの更新
+    is_public = data.is_public if data.is_public is not None else token.is_public
+    max_holding_quantity = data.max_holding_quantity if data.max_holding_quantity is not None else token.max_holding_quantity
+    max_sell_amount = data.max_sell_amount if data.max_sell_amount is not None else token.max_sell_amount
+    owner_address = data.owner_address if data.owner_address is not None else token.owner_address
+
+    token.is_public = is_public
+    token.max_holding_quantity = max_holding_quantity
+    token.max_sell_amount = max_sell_amount
+    token.owner_address = owner_address
+    session.merge(token)
+    session.commit()
+    return SuccessResponse.use()
+
+
+@router.delete(
+    "/Tokens/{token_address}",
+    summary="Delete a Listed Token",
+    operation_id="TokenDELETE",
+    response_model=SuccessResponse,
+    responses=get_routers_responses(AppError)
+)
+def delete_token(
+    token_address: str = Path(description="Token Address"),
+    session: Session = Depends(db_session)
+):
+    """
+    Endpoint: /Admin/Tokens/{contract_address}
       - DELETE: 取扱トークン情報削除（個別）
     """
+    try:
+        session.query(Listing).filter(Listing.token_address == token_address).delete()
+        session.query(ExecutableContract).filter(ExecutableContract.contract_address == token_address).delete()
+        session.query(IDXBondToken).filter(IDXBondToken.token_address == token_address).delete()
+        session.query(IDXShareToken).filter(IDXShareToken.token_address == token_address).delete()
+        session.query(IDXMembershipToken).filter(IDXMembershipToken.token_address == token_address).delete()
+        session.query(IDXCouponToken).filter(IDXCouponToken.token_address == token_address).delete()
+    except Exception as err:
+        LOG.exception(f"Failed to delete the data: {err}")
+        raise AppError()
+    return SuccessResponse.use()
 
-    ########################################
-    # GET
-    ########################################
-    def on_get(self, req, res, contract_address=None, **kwargs):
-        session = req.context["session"]
-        token = session.query(Listing).\
-            filter(Listing.token_address == contract_address).\
-            first()
 
-        if token is not None:
-            res_body = token.json()
-        else:
-            raise DataNotExistsError()
+def available_token_template():
+    """
+    利用可能なtoken_templateをlistで返却
 
-        self.on_success(res, res_body)
-
-    ########################################
-    # POST
-    ########################################
-    def on_post(self, req, res, contract_address=None, **kwargs):
-        session = req.context["session"]
-
-        # 入力値チェック
-        request_json = self.validate(req)
-
-        # 更新対象レコードを取得
-        # 更新対象のレコードが存在しない場合は404エラーを返す
-        token = session.query(Listing).filter(Listing.token_address == contract_address).first()
-        if token is None:
-            raise DataNotExistsError()
-
-        # レコードの更新
-        is_public = request_json["is_public"] if "is_public" in request_json \
-            else token.is_public
-        max_holding_quantity = request_json["max_holding_quantity"] if "max_holding_quantity" in request_json \
-            else token.max_holding_quantity
-        max_sell_amount = request_json["max_sell_amount"] if "max_sell_amount" in request_json \
-            else token.max_sell_amount
-        owner_address = request_json["owner_address"] if "owner_address" in request_json \
-            else token.owner_address
-
-        token.is_public = is_public
-        token.max_holding_quantity = max_holding_quantity
-        token.max_sell_amount = max_sell_amount
-        token.owner_address = owner_address
-        session.merge(token)
-        session.commit()
-
-        self.on_success(res)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context['data']
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "is_public": {
-                "type": "boolean",
-                "required": False,
-            },
-            "max_holding_quantity": {
-                "type": "integer",
-                "required": False,
-                "min": 0
-            },
-            "max_sell_amount": {
-                "type": "integer",
-                "required": False,
-                "min": 0
-            },
-            "owner_address": {
-                "type": "string",
-                "required": False
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        # owner_addressのフォーマットチェック
-        if "owner_address" in request_json:
-            try:
-                if not Web3.isAddress(request_json["owner_address"]):
-                    raise InvalidParameterError("Invalid owner address")
-            except Exception as err:
-                LOG.warning(f"invalid owner address: {err}")
-                raise InvalidParameterError("Invalid owner address")
-
-        return request_json
-
-    ########################################
-    # DELETE
-    ########################################
-    def on_delete(self, req, res, contract_address=None, **kwargs):
-        session = req.context["session"]
-        try:
-            session.query(Listing).filter(Listing.token_address == contract_address).delete()
-            session.query(ExecutableContract).filter(ExecutableContract.contract_address == contract_address).delete()
-            session.query(IDXBondToken).filter(IDXBondToken.token_address == contract_address).delete()
-            session.query(IDXShareToken).filter(IDXShareToken.token_address == contract_address).delete()
-            session.query(IDXMembershipToken).filter(IDXMembershipToken.token_address == contract_address).delete()
-            session.query(IDXCouponToken).filter(IDXCouponToken.token_address == contract_address).delete()
-        except Exception as err:
-            LOG.exception(f"Failed to delete the data: {err}")
-            raise AppError()
-
-        self.on_success(res)
+    :return: 利用可能なtoken_templateリスト
+    """
+    available_token_template_list = []
+    if config.BOND_TOKEN_ENABLED:
+        available_token_template_list.append("IbetStraightBond")
+    if config.SHARE_TOKEN_ENABLED:
+        available_token_template_list.append("IbetShare")
+    if config.MEMBERSHIP_TOKEN_ENABLED:
+        available_token_template_list.append("IbetMembership")
+    if config.COUPON_TOKEN_ENABLED:
+        available_token_template_list.append("IbetCoupon")
+    return available_token_template_list

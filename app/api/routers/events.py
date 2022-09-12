@@ -16,364 +16,259 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from cerberus import Validator
+from fastapi import (
+    APIRouter,
+    Depends
+)
 
 from app import (
     log,
     config
 )
-from app.api.common import BaseResource
 from app.contracts import Contract
-from app.utils.web3_utils import Web3Wrapper
 from app.errors import InvalidParameterError
+from app.model.schema import (
+    GenericSuccessResponse,
+    Event as EventSchema,
+    E2EMessagingEventsQuery,
+    SuccessResponse,
+    IbetEscrowEventsQuery,
+    IbetSecurityTokenEscrowEventsQuery,
+    E2EMessagingEventArguments,
+    EscrowEventArguments
+)
+from app.utils.docs_utils import get_routers_responses
+from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
 web3 = Web3Wrapper()
 
 
+router = APIRouter(
+    prefix="/Events",
+    tags=["Events"]
+)
+
+
 # /Events/E2EMessaging
-class E2EMessagingEvents(BaseResource):
-    """E2EMessaging Event Logs"""
 
-    def on_get(self, req, res, account_address=None, **kwargs):
-        """List all event logs"""
-        # Validate Request Data
-        request_json = self.validate(req)
+@router.get(
+    "/E2EMessaging",
+    summary="List all E2EMessaging event logs",
+    operation_id="E2EMessagingEvents",
+    response_model=GenericSuccessResponse[list[EventSchema]],
+    responses=get_routers_responses(InvalidParameterError)
+)
+def list_all_e2e_messaging_event_logs(
+    request_query: E2EMessagingEventsQuery = Depends()
+):
+    """List all E2EMessaging event logs"""
+    # Validate
+    argument_filters_dict = {}
+    if request_query.argument_filters:
+        try:
+            argument_filters_dict = E2EMessagingEventArguments.\
+                parse_raw(request_query.argument_filters).dict(exclude_none=True)
+        except Exception:
+            raise InvalidParameterError("invalid argument_filters")
 
-        # Get event logs
-        contract = Contract.get_contract(
-            contract_name="E2EMessaging",
-            address=config.E2E_MESSAGING_CONTRACT_ADDRESS
+    # Get event logs
+    contract = Contract.get_contract(
+        contract_name="E2EMessaging",
+        address=str(config.E2E_MESSAGING_CONTRACT_ADDRESS)
+    )
+    if request_query.event == "Message":
+        attr_list = ["Message"]
+    elif request_query.event == "PublicKeyUpdated":
+        attr_list = ["PublicKeyUpdated"]
+    else:  # All events
+        attr_list = ["PublicKeyUpdated", "Message"]
+
+    tmp_list = []
+    for attr in attr_list:
+        contract_event = getattr(contract.events, attr)
+        events = contract_event.getLogs(
+            fromBlock=request_query.from_block,
+            toBlock=request_query.to_block,
+            argument_filters=argument_filters_dict
         )
-        if request_json["event"] == "Message":
-            attr_list = ["Message"]
-        elif request_json["event"] == "PublicKeyUpdated":
-            attr_list = ["PublicKeyUpdated"]
-        else:  # All events
-            attr_list = ["PublicKeyUpdated", "Message"]
+        for event in events:
+            block_number = event["blockNumber"]
+            block_timestamp = web3.eth.get_block(block_number)["timestamp"]
+            tmp_list.append({
+                "event": event["event"],
+                "args": dict(event["args"]),
+                "transaction_hash": event["transactionHash"].hex(),
+                "block_number": block_number,
+                "block_timestamp": block_timestamp,
+                "log_index": event["logIndex"]
+            })
 
-        tmp_list = []
-        for attr in attr_list:
-            contract_event = getattr(contract.events, attr)
-            events = contract_event.getLogs(
-                fromBlock=request_json["from_block"],
-                toBlock=request_json["to_block"],
-                argument_filters=request_json["argument_filters"]
-            )
-            for event in events:
-                block_number = event["blockNumber"]
-                block_timestamp = web3.eth.get_block(block_number)["timestamp"]
-                tmp_list.append({
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"]
-                })
-
-        # Sort: block_number > log_index
-        resp_json = sorted(
-            tmp_list,
-            key=lambda x: (x["block_number"], x["log_index"])
-        )
-
-        self.on_success(res, resp_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = {
-            "from_block": req.get_param("from_block"),
-            "to_block": req.get_param("to_block"),
-            "event": req.get_param("event"),
-            "argument_filters": req.get_param_as_json("argument_filters")
-        }
-        validator = Validator({
-            "from_block": {
-                "type": "integer",
-                "coerce": int,
-                "min": 1,
-                "required": True
-            },
-            "to_block": {
-                "type": "integer",
-                "coerce": int,
-                "min": 1,
-                "required": True
-            },
-            "event": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": ["Message", "PublicKeyUpdated"]
-            },
-            "argument_filters": {
-                "required": False,
-                "nullable": True,
-                "schema": {
-                    "sender": {"type": "string"},
-                    "receiver": {"type": "string"},
-                    "who": {"type": "string"}
-                }
-            }
-        })
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        if int(request_json["from_block"]) > int(request_json["to_block"]):
-            raise InvalidParameterError("to_block must be greater than or equal to the from_block")
-
-        return validator.document
+    # Sort: block_number > log_index
+    resp_json = sorted(
+        tmp_list,
+        key=lambda x: (x["block_number"], x["log_index"])
+    )
+    return {
+        **SuccessResponse.use().dict(),
+        "data": resp_json
+    }
 
 
 # /Events/IbetEscrow
-class IbetEscrowEvents(BaseResource):
-    """IbetEscrow Event Logs"""
+@router.get(
+    "/IbetEscrow",
+    summary="List all IbetEscrow event logs",
+    operation_id="IbetEscrowEvents",
+    response_model=GenericSuccessResponse[list[EventSchema]],
+    responses=get_routers_responses(InvalidParameterError)
+)
+def list_all_ibet_escrow_event_logs(
+    request_query: IbetEscrowEventsQuery = Depends()
+):
+    """List all IbetEscrow event logs"""
+    # Validate
+    argument_filters_dict = {}
+    if request_query.argument_filters:
+        try:
+            argument_filters_dict = EscrowEventArguments.\
+                parse_raw(request_query.argument_filters).dict(exclude_none=True)
+        except:
+            raise InvalidParameterError("invalid argument_filters")
 
-    def on_get(self, req, res, account_address=None, **kwargs):
-        """List all event logs"""
-        # Validate Request Data
-        request_json = self.validate(req)
+    contract = Contract.get_contract(
+        contract_name="IbetEscrow",
+        address=str(config.IBET_ESCROW_CONTRACT_ADDRESS)
+    )
+    if request_query.event == "Deposited":
+        attr_list = ["Deposited"]
+    elif request_query.event == "Withdrawn":
+        attr_list = ["Withdrawn"]
+    elif request_query.event == "EscrowCreated":
+        attr_list = ["EscrowCreated"]
+    elif request_query.event == "EscrowCanceled":
+        attr_list = ["EscrowCanceled"]
+    elif request_query.event == "EscrowFinished":
+        attr_list = ["EscrowFinished"]
+    else:  # All events
+        attr_list = [
+            "Deposited",
+            "Withdrawn",
+            "EscrowCreated",
+            "EscrowCanceled",
+            "EscrowFinished"
+        ]
 
-        # Get event logs
-        contract = Contract.get_contract(
-            contract_name="IbetEscrow",
-            address=config.IBET_ESCROW_CONTRACT_ADDRESS
+    tmp_list = []
+    for attr in attr_list:
+        contract_event = getattr(contract.events, attr)
+        events = contract_event.getLogs(
+            fromBlock=request_query.from_block,
+            toBlock=request_query.to_block,
+            argument_filters=argument_filters_dict
         )
-        if request_json["event"] == "Deposited":
-            attr_list = ["Deposited"]
-        elif request_json["event"] == "Withdrawn":
-            attr_list = ["Withdrawn"]
-        elif request_json["event"] == "EscrowCreated":
-            attr_list = ["EscrowCreated"]
-        elif request_json["event"] == "EscrowCanceled":
-            attr_list = ["EscrowCanceled"]
-        elif request_json["event"] == "EscrowFinished":
-            attr_list = ["EscrowFinished"]
-        else:  # All events
-            attr_list = [
-                "Deposited",
-                "Withdrawn",
-                "EscrowCreated",
-                "EscrowCanceled",
-                "EscrowFinished"
-            ]
+        for event in events:
+            block_number = event["blockNumber"]
+            block_timestamp = web3.eth.get_block(block_number)["timestamp"]
+            tmp_list.append({
+                "event": event["event"],
+                "args": dict(event["args"]),
+                "transaction_hash": event["transactionHash"].hex(),
+                "block_number": block_number,
+                "block_timestamp": block_timestamp,
+                "log_index": event["logIndex"]
+            })
 
-        tmp_list = []
-        for attr in attr_list:
-            contract_event = getattr(contract.events, attr)
-            events = contract_event.getLogs(
-                fromBlock=request_json["from_block"],
-                toBlock=request_json["to_block"],
-                argument_filters=request_json["argument_filters"]
-            )
-            for event in events:
-                block_number = event["blockNumber"]
-                block_timestamp = web3.eth.get_block(block_number)["timestamp"]
-                tmp_list.append({
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"]
-                })
-
-        # Sort: block_number > log_index
-        resp_json = sorted(
-            tmp_list,
-            key=lambda x: (x["block_number"], x["log_index"])
-        )
-
-        self.on_success(res, resp_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = {
-            "from_block": req.get_param("from_block"),
-            "to_block": req.get_param("to_block"),
-            "event": req.get_param("event"),
-            "argument_filters": req.get_param_as_json("argument_filters")
-        }
-
-        validator = Validator({
-            "from_block": {
-                "type": "integer",
-                "coerce": int,
-                "min": 1,
-                "required": True
-            },
-            "to_block": {
-                "type": "integer",
-                "coerce": int,
-                "min": 1,
-                "required": True
-            },
-            "event": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": [
-                    "Deposited",
-                    "Withdrawn",
-                    "EscrowCreated",
-                    "EscrowCanceled",
-                    "EscrowFinished"
-                ]
-            },
-            "argument_filters": {
-                "required": False,
-                "nullable": True,
-                "schema": {
-                    "token": {
-                        "type": "string"
-                    },
-                    "account": {
-                        "type": "string"
-                    },
-                    "escrowId": {
-                        "type": "integer"
-                    }
-                }
-            }
-        })
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        if int(request_json["from_block"]) > int(request_json["to_block"]):
-            raise InvalidParameterError("to_block must be greater than or equal to the from_block")
-
-        return validator.document
+    # Sort: block_number > log_index
+    resp_json = sorted(
+        tmp_list,
+        key=lambda x: (x["block_number"], x["log_index"])
+    )
+    return {
+        **SuccessResponse.use().dict(),
+        "data": resp_json
+    }
 
 
 # /Events/IbetSecurityTokenEscrow
-class IbetSecurityTokenEscrowEvents(BaseResource):
-    """IbetSecurityTokenEscrow Event Logs"""
+@router.get(
+    "/IbetSecurityTokenEscrow",
+    summary="List all IbetSecurityTokenEscrow event logs",
+    operation_id="IbetSecurityTokenEscrowEvents",
+    response_model=GenericSuccessResponse[list[EventSchema]],
+    responses=get_routers_responses(InvalidParameterError)
+)
+def list_all_ibet_security_token_escrow_event_logs(
+    request_query: IbetSecurityTokenEscrowEventsQuery = Depends()
+):
+    """List all IbetSecurityTokenEscrow event logs"""
+    # Validate
+    argument_filters_dict = {}
+    if request_query.argument_filters:
+        try:
+            argument_filters_dict = EscrowEventArguments.\
+                parse_raw(request_query.argument_filters).dict(exclude_none=True)
+        except:
+            raise InvalidParameterError("invalid argument_filters")
 
-    def on_get(self, req, res, account_address=None, **kwargs):
-        """List all event logs"""
-        # Validate Request Data
-        request_json = self.validate(req)
+    contract = Contract.get_contract(
+        contract_name="IbetSecurityTokenEscrow",
+        address=str(config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS)
+    )
+    if request_query.event == "Deposited":
+        attr_list = ["Deposited"]
+    elif request_query.event == "Withdrawn":
+        attr_list = ["Withdrawn"]
+    elif request_query.event == "EscrowCreated":
+        attr_list = ["EscrowCreated"]
+    elif request_query.event == "EscrowCanceled":
+        attr_list = ["EscrowCanceled"]
+    elif request_query.event == "EscrowFinished":
+        attr_list = ["EscrowFinished"]
+    elif request_query.event == "ApplyForTransfer":
+        attr_list = ["ApplyForTransfer"]
+    elif request_query.event == "CancelTransfer":
+        attr_list = ["CancelTransfer"]
+    elif request_query.event == "ApproveTransfer":
+        attr_list = ["ApproveTransfer"]
+    else:  # All events
+        attr_list = [
+            "Deposited",
+            "Withdrawn",
+            "EscrowCreated",
+            "EscrowCanceled",
+            "EscrowFinished",
+            "ApplyForTransfer",
+            "CancelTransfer",
+            "ApproveTransfer"
+        ]
 
-        # Get event logs
-        contract = Contract.get_contract(
-            contract_name="IbetSecurityTokenEscrow",
-            address=config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS
+    tmp_list = []
+    for attr in attr_list:
+        contract_event = getattr(contract.events, attr)
+        events = contract_event.getLogs(
+            fromBlock=request_query.from_block,
+            toBlock=request_query.to_block,
+            argument_filters=argument_filters_dict
         )
-        if request_json["event"] == "Deposited":
-            attr_list = ["Deposited"]
-        elif request_json["event"] == "Withdrawn":
-            attr_list = ["Withdrawn"]
-        elif request_json["event"] == "EscrowCreated":
-            attr_list = ["EscrowCreated"]
-        elif request_json["event"] == "EscrowCanceled":
-            attr_list = ["EscrowCanceled"]
-        elif request_json["event"] == "EscrowFinished":
-            attr_list = ["EscrowFinished"]
-        elif request_json["event"] == "ApplyForTransfer":
-            attr_list = ["ApplyForTransfer"]
-        elif request_json["event"] == "CancelTransfer":
-            attr_list = ["CancelTransfer"]
-        elif request_json["event"] == "ApproveTransfer":
-            attr_list = ["ApproveTransfer"]
-        else:  # All events
-            attr_list = [
-                "Deposited",
-                "Withdrawn",
-                "EscrowCreated",
-                "EscrowCanceled",
-                "EscrowFinished",
-                "ApplyForTransfer",
-                "CancelTransfer",
-                "ApproveTransfer"
-            ]
+        for event in events:
+            block_number = event["blockNumber"]
+            block_timestamp = web3.eth.get_block(block_number)["timestamp"]
+            tmp_list.append({
+                "event": event["event"],
+                "args": dict(event["args"]),
+                "transaction_hash": event["transactionHash"].hex(),
+                "block_number": block_number,
+                "block_timestamp": block_timestamp,
+                "log_index": event["logIndex"]
+            })
 
-        tmp_list = []
-        for attr in attr_list:
-            contract_event = getattr(contract.events, attr)
-            events = contract_event.getLogs(
-                fromBlock=request_json["from_block"],
-                toBlock=request_json["to_block"],
-                argument_filters=request_json["argument_filters"]
-            )
-            for event in events:
-                block_number = event["blockNumber"]
-                block_timestamp = web3.eth.get_block(block_number)["timestamp"]
-                tmp_list.append({
-                    "event": event["event"],
-                    "args": dict(event["args"]),
-                    "transaction_hash": event["transactionHash"].hex(),
-                    "block_number": block_number,
-                    "block_timestamp": block_timestamp,
-                    "log_index": event["logIndex"]
-                })
-
-        # Sort: block_number > log_index
-        resp_json = sorted(
-            tmp_list,
-            key=lambda x: (x["block_number"], x["log_index"])
-        )
-
-        self.on_success(res, resp_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = {
-            "from_block": req.get_param("from_block"),
-            "to_block": req.get_param("to_block"),
-            "event": req.get_param("event"),
-            "argument_filters": req.get_param_as_json("argument_filters")
-        }
-
-        validator = Validator({
-            "from_block": {
-                "type": "integer",
-                "coerce": int,
-                "min": 1,
-                "required": True
-            },
-            "to_block": {
-                "type": "integer",
-                "coerce": int,
-                "min": 1,
-                "required": True
-            },
-            "event": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": [
-                    "Deposited",
-                    "Withdrawn",
-                    "EscrowCreated",
-                    "EscrowCanceled",
-                    "EscrowFinished",
-                    "ApplyForTransfer",
-                    "CancelTransfer",
-                    "ApproveTransfer",
-                    "FinishTransfer"
-                ]
-            },
-            "argument_filters": {
-                "required": False,
-                "nullable": True,
-                "schema": {
-                    "token": {
-                        "type": "string"
-                    },
-                    "account": {
-                        "type": "string"
-                    },
-                    "escrowId": {
-                        "type": "integer"
-                    }
-                }
-            }
-        })
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        if int(request_json["from_block"]) > int(request_json["to_block"]):
-            raise InvalidParameterError("to_block must be greater than or equal to the from_block")
-
-        return validator.document
+    # Sort: block_number > log_index
+    resp_json = sorted(
+        tmp_list,
+        key=lambda x: (x["block_number"], x["log_index"])
+    )
+    return {
+        **SuccessResponse.use().dict(),
+        "data": resp_json
+    }

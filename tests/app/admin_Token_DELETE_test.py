@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from app.model.db import (
     Listing,
     ExecutableContract,
@@ -31,7 +33,7 @@ class TestAdminTokenDELETE:
     apiurl_base = '/Admin/Tokens/'
 
     @staticmethod
-    def insert_Listing(session, token):
+    def insert_Listing(session: Session, token):
         listing = Listing()
         listing.token_address = token["token_address"]
         listing.is_public = token["is_public"]
@@ -41,34 +43,34 @@ class TestAdminTokenDELETE:
         session.add(listing)
 
     @staticmethod
-    def insert_ExecutableContract(session, token):
+    def insert_ExecutableContract(session: Session, token):
         executable_contract = ExecutableContract()
         executable_contract.contract_address = token["token_address"]
         session.add(executable_contract)
 
     @staticmethod
-    def insert_IDXBondToken(session, token):
+    def insert_IDXBondToken(session: Session, token):
         idx_token = IDXBondToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetStraightBond"
         session.add(idx_token)
 
     @staticmethod
-    def insert_IDXShareToken(session, token):
+    def insert_IDXShareToken(session: Session, token):
         idx_token = IDXShareToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetShare"
         session.add(idx_token)
 
     @staticmethod
-    def insert_IDXMembershipToken(session, token):
+    def insert_IDXMembershipToken(session: Session, token):
         idx_token = IDXMembershipToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetMembership"
         session.add(idx_token)
 
     @staticmethod
-    def insert_IDXCouponToken(session, token):
+    def insert_IDXCouponToken(session: Session, token):
         idx_token = IDXCouponToken()
         idx_token.token_address = token["token_address"]
         idx_token.token_template = "IbetCoupon"
@@ -80,7 +82,7 @@ class TestAdminTokenDELETE:
 
     # Normal_1
     # Bond
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -93,12 +95,12 @@ class TestAdminTokenDELETE:
         self.insert_IDXBondToken(session, token)
 
         # Request target API
-        apiurl = self.apiurl_base + token["token_address"]
-        resp = client.simulate_delete(apiurl)
+        apiurl = self.apiurl_base + str(token["token_address"])
+        resp = client.delete(apiurl)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -117,7 +119,7 @@ class TestAdminTokenDELETE:
 
     # Normal_2
     # Share
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -130,12 +132,12 @@ class TestAdminTokenDELETE:
         self.insert_IDXShareToken(session, token)
 
         # Request target API
-        apiurl = self.apiurl_base + token["token_address"]
-        resp = client.simulate_delete(apiurl)
+        apiurl = self.apiurl_base + str(token["token_address"])
+        resp = client.delete(apiurl)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -154,7 +156,7 @@ class TestAdminTokenDELETE:
 
     # Normal_3
     # Membership
-    def test_normal_3(self, client, session):
+    def test_normal_3(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -167,12 +169,12 @@ class TestAdminTokenDELETE:
         self.insert_IDXMembershipToken(session, token)
 
         # Request target API
-        apiurl = self.apiurl_base + token["token_address"]
-        resp = client.simulate_delete(apiurl)
+        apiurl = self.apiurl_base + str(token["token_address"])
+        resp = client.delete(apiurl)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -191,7 +193,7 @@ class TestAdminTokenDELETE:
 
     # Normal_4
     # Coupon
-    def test_normal_4(self, client, session):
+    def test_normal_4(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -204,12 +206,12 @@ class TestAdminTokenDELETE:
         self.insert_IDXCouponToken(session, token)
 
         # Request target API
-        apiurl = self.apiurl_base + token["token_address"]
-        resp = client.simulate_delete(apiurl)
+        apiurl = self.apiurl_base + str(token["token_address"])
+        resp = client.delete(apiurl)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \
@@ -228,7 +230,7 @@ class TestAdminTokenDELETE:
 
     # Normal_5
     # Multiple token type(template)
-    def test_normal_5(self, client, session):
+    def test_normal_5(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -242,12 +244,12 @@ class TestAdminTokenDELETE:
         self.insert_IDXCouponToken(session, token)
 
         # Request target API
-        apiurl = self.apiurl_base + token["token_address"]
-        resp = client.simulate_delete(apiurl)
+        apiurl = self.apiurl_base + str(token["token_address"])
+        resp = client.delete(apiurl)
 
         # Assertion
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
         listing = session.query(Listing). \
             filter(Listing.token_address == token["token_address"]). \

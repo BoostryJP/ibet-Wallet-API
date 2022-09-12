@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app import config
 from tests.account_config import eth_account
@@ -35,7 +37,7 @@ class TestUserInfoPersonalInfo:
     # Normal_1_1
     # Registered
     # environment variable (default)
-    def test_normal_1_1(self, client, session, shared_contract):
+    def test_normal_1_1(self, client: TestClient, session: Session, shared_contract):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"]
 
@@ -48,7 +50,7 @@ class TestUserInfoPersonalInfo:
 
         # Request target API
         query_string = f"account_address={trader}&owner_address={issuer}"
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
@@ -57,13 +59,13 @@ class TestUserInfoPersonalInfo:
             "registered": True
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # Normal_1_2
     # Registered
     # query parameter
-    def test_normal_1_2(self, client, session, shared_contract):
+    def test_normal_1_2(self, client: TestClient, session: Session, shared_contract):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"]
 
@@ -78,7 +80,7 @@ class TestUserInfoPersonalInfo:
         query_string = f"account_address={trader}&" \
                        f"owner_address={issuer}&" \
                        f"personal_info_address{_personal_info_address}"
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
@@ -87,12 +89,12 @@ class TestUserInfoPersonalInfo:
             "registered": True
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     # Normal_2
     # Not registered
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         trader = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
         issuer = eth_account["issuer"]["account_address"]
 
@@ -102,7 +104,7 @@ class TestUserInfoPersonalInfo:
 
         # Request target API
         query_string = f"account_address={trader}&owner_address={issuer}"
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
         assumed_body = {
@@ -111,8 +113,8 @@ class TestUserInfoPersonalInfo:
             "registered": False
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
 
     ###########################################################################
     # Error
@@ -121,74 +123,96 @@ class TestUserInfoPersonalInfo:
     # Error_1
     # Unsupported HTTP method
     # 404: Not Supported
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
 
         # Request target API
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             headers=headers,
-            body=request_body
+            data=request_body
         )
 
         # Assertion
-        assert resp.status_code == 404
-        assert resp.json["meta"] == {
-            "code": 10,
-            "message": "Not Supported",
+        assert resp.status_code == 405
+        assert resp.json()["meta"] == {
+            "code": 1,
+            "message": "Method Not Allowed",
             "description": "method: POST, url: /User/PersonalInfo"
         }
 
     # Error_2_1
     # Invalid parameter: null value
     # 400
-    def test_error_2_1(self, client, session):
+    def test_error_2_1(self, client: TestClient, session: Session):
         # Request target API
         query_string = ""
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "account_address": ["null value not allowed"],
-                "owner_address": ["null value not allowed"]
-            }
+            "description": [
+                {
+                    "loc": ["query", "account_address"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                },
+                {
+                    "loc": ["query", "owner_address"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # Error_2_2
     # Invalid parameter: invalid account address
-    def test_error_2_2(self, client, session):
+    def test_error_2_2(self, client: TestClient, session: Session):
         trader = eth_account["issuer"]["account_address"][:-1]  # short address
         issuer = eth_account["issuer"]["account_address"]
 
         # Request target API
         query_string = f"account_address={trader}&owner_address={issuer}"
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "account_address"],
+                    "msg": "account_address is not a valid address",
+                    "type": "value_error"
+                }
+            ],
             "message": "Invalid Parameter"
         }
 
     # Error_2_3
     # Invalid parameter: invalid owner address
-    def test_error_2_3(self, client, session):
+    def test_error_2_3(self, client: TestClient, session: Session):
         trader = eth_account["trader"]["account_address"]
         issuer = eth_account["issuer"]["account_address"][:-1]  # short address
 
         # Request target API
         query_string = f"account_address={trader}&owner_address={issuer}"
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         # Assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "owner_address"],
+                    "msg": "owner_address is not a valid address",
+                    "type": "value_error"
+                }
+            ],
             "message": "Invalid Parameter"
         }

@@ -16,19 +16,26 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from cerberus import Validator
+from typing import Optional, Callable, Union
 from eth_utils import to_checksum_address
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+    Path
+)
+from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from web3 import Web3
 
 from app import log
-from app.api.common import BaseResource
 from app.errors import (
     InvalidParameterError,
     DataNotExistsError
 )
 from app import config
 from app.contracts import Contract
+from app.database import db_session
 from app.model.db import Listing
 from app.model.blockchain import (
     BondToken,
@@ -36,221 +43,223 @@ from app.model.blockchain import (
     CouponToken,
     ShareToken
 )
+from app.model.schema import (
+    GenericSuccessResponse,
+    SuccessResponse,
+    CompanyInfo,
+    ShareToken as ShareTokenSchema,
+    StraightBondToken as StraightBondTokenSchema,
+    MembershipToken as MembershipTokenSchema,
+    CouponToken as CouponTokenSchema
+)
+
 from app.utils.company_list import CompanyList
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
+
+router = APIRouter(
+    prefix="/Companies",
+    tags=["Companies"]
+)
 
 
 # ------------------------------
 # 発行会社一覧参照
 # ------------------------------
-class CompanyInfoList(BaseResource):
+@router.get(
+    "",
+    summary="Issuer Information List",
+    operation_id="Companies",
+    response_model=GenericSuccessResponse[list[CompanyInfo]],
+    responses=get_routers_responses()
+)
+def list_all_companies(
+    include_private_listing: Optional[bool] = Query(default=False, description="include private listing token issuers"),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Companies
     """
 
-    def on_get(self, req, res, **kwargs):
-        session = req.context["session"]
+    # Get company list
+    _company_list = CompanyList.get()
+    company_list = [company.json() for company in _company_list.all()]
 
-        # Validation
-        request_json = self.validate(req)
-        include_private_listing = True if request_json["include_private_listing"] == "true" else False
+    # Get the token listed
+    if include_private_listing:
+        available_tokens = session.query(Listing).all()
+    else:
+        available_tokens = session.query(Listing).filter(Listing.is_public == True).all()
 
-        # Get company list
-        _company_list = CompanyList.get()
-        company_list = [company.json() for company in _company_list.all()]
+    # Filter only issuers that issue the listed tokens
+    listing_owner_list = []
+    for token in available_tokens:
+        try:
+            token_address = to_checksum_address(token.token_address)
+            token_contract = Contract.get_contract(
+                contract_name="Ownable",
+                address=token_address
+            )
+            owner_address = Contract.call_function(
+                contract=token_contract,
+                function_name="owner",
+                args=(),
+                default_returns=config.ZERO_ADDRESS
+            )
+            listing_owner_list.append(owner_address)
+        except Exception as e:
+            LOG.warning(e)
 
-        # Get the token listed
-        if include_private_listing:
-            available_tokens = session.query(Listing).all()
-        else:
-            available_tokens = session.query(Listing).filter(Listing.is_public == True).all()
+    has_listing_owner_function = has_listing_owner_function_creator(listing_owner_list)
+    filtered_company_list = filter(has_listing_owner_function, company_list)
 
-        # Filter only issuers that issue the listed tokens
-        listing_owner_list = []
-        for token in available_tokens:
-            try:
-                token_address = to_checksum_address(token.token_address)
-                token_contract = Contract.get_contract(
-                    contract_name="Ownable",
-                    address=token_address
-                )
-                owner_address = Contract.call_function(
-                    contract=token_contract,
-                    function_name="owner",
-                    args=(),
-                    default_returns=config.ZERO_ADDRESS
-                )
-                listing_owner_list.append(owner_address)
-            except Exception as e:
-                LOG.warning(e)
-
-        has_listing_owner_function = self.has_listing_owner_function_creator(listing_owner_list)
-        filtered_company_list = filter(has_listing_owner_function, company_list)
-
-        self.on_success(res, list(filtered_company_list))
-
-    @staticmethod
-    def validate(req):
-        request_json = {
-            "include_private_listing": req.get_param("include_private_listing")
-        }
-
-        validator = Validator({
-            "include_private_listing": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": ["true", "false"],
-            }
-        })
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
-
-    @staticmethod
-    def has_listing_owner_function_creator(listing_owner_list):
-        def has_listing_owner_function(company_info):
-            for address in listing_owner_list:
-                if to_checksum_address(company_info['address']) == address:
-                    return True
-            return False
-        return has_listing_owner_function
+    return {
+        **SuccessResponse.use().dict(),
+        "data": list(filtered_company_list)
+    }
 
 
 # ------------------------------
 # 発行会社情報参照
 # ------------------------------
-class CompanyInfo(BaseResource):
+@router.get(
+    "/{eth_address}",
+    summary="Issuer Information",
+    operation_id="Company",
+    response_model=GenericSuccessResponse[CompanyInfo],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+)
+def retrieve_company(
+    eth_address: str = Path(..., description="address")
+):
     """
     Endpoint: /Companies/{eth_address}
     """
+    if not Web3.isAddress(eth_address):
+        description = "invalid eth_address"
+        raise InvalidParameterError(description=description)
 
-    def on_get(self, req, res, eth_address=None, **kwargs):
-        if not Web3.isAddress(eth_address):
-            description = 'invalid eth_address'
-            raise InvalidParameterError(description=description)
+    company = CompanyList.get_find(to_checksum_address(eth_address))
+    if company.address == "":
+        raise DataNotExistsError("eth_address: %s" % eth_address)
 
-        company = CompanyList.get_find(to_checksum_address(eth_address))
-        if company.address == "":
-            raise DataNotExistsError('eth_address: %s' % eth_address)
-
-        self.on_success(res, company.json())
+    return {
+        **SuccessResponse.use().dict(),
+        "data": company.json()
+    }
 
 
 # ------------------------------
 # 発行会社のトークン一覧
 # ------------------------------
-class CompanyTokenList(BaseResource):
+@router.get(
+    "/{eth_address}/Tokens",
+    summary="List of tokens issued by issuer",
+    operation_id="",
+    response_model=GenericSuccessResponse[list[Union[StraightBondTokenSchema, ShareTokenSchema, MembershipTokenSchema, CouponTokenSchema]]],
+    responses=get_routers_responses()
+)
+def retrieve_company_tokens(
+    eth_address: str = Path(..., description="address"),
+    include_private_listing: Optional[bool] = Query(default=False, description="include private listing token issuers"),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Companies/{eth_address}/Tokens
     """
+    # Validation
+    if not Web3.isAddress(eth_address):
+        description = "invalid eth_address"
+        raise InvalidParameterError(description=description)
 
-    def on_get(self, req, res, eth_address=None, **kwargs):
-        session = req.context['session']
+    # TokenList contract
+    list_contract = Contract.get_contract(
+        contract_name="TokenList",
+        address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
+    )
 
-        # Validation
-        if not Web3.isAddress(eth_address):
-            description = 'invalid eth_address'
-            raise InvalidParameterError(description=description)
+    # Get the token listed
+    if include_private_listing:
+        available_list = session.query(Listing). \
+            filter(Listing.owner_address == eth_address). \
+            order_by(desc(Listing.id)). \
+            all()
+    else:
+        available_list = session.query(Listing). \
+            filter(Listing.owner_address == eth_address). \
+            filter(Listing.is_public == True). \
+            order_by(desc(Listing.id)). \
+            all()
 
-        request_json = self.validate(req)
-        include_private_listing = True if request_json["include_private_listing"] == "true" else False
-
-        # TokenList contract
-        list_contract = Contract.get_contract(
-            contract_name='TokenList',
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+    # Get token attributes
+    token_list = []
+    for available_token in available_list:
+        token_address = to_checksum_address(available_token.token_address)
+        token_info = Contract.call_function(
+            contract=list_contract,
+            function_name="getTokenByAddress",
+            args=(token_address,),
+            default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
         )
+        # Only those items published in TokenList will be processed
+        if token_info[0] != config.ZERO_ADDRESS:
+            token_template = token_info[1]
+            # Filter only the token types used in the system
+            if available_token_template(token_template):
+                token_model = get_token_model(token_template)
+                token = token_model.get(session=session, token_address=token_address)
+                token_list.append(token.__dict__)
+            else:
+                continue
 
-        # Get the token listed
-        if include_private_listing:
-            available_list = session.query(Listing). \
-                filter(Listing.owner_address == eth_address). \
-                order_by(desc(Listing.id)). \
-                all()
-        else:
-            available_list = session.query(Listing). \
-                filter(Listing.owner_address == eth_address). \
-                filter(Listing.is_public == True). \
-                order_by(desc(Listing.id)). \
-                all()
+    return {
+        **SuccessResponse.use().dict(),
+        "data": token_list
+    }
 
-        # Get token attributes
-        token_list = []
-        for available_token in available_list:
-            token_address = to_checksum_address(available_token.token_address)
-            token_info = Contract.call_function(
-                contract=list_contract,
-                function_name="getTokenByAddress",
-                args=(token_address,),
-                default_returns=(config.ZERO_ADDRESS, "", config.ZERO_ADDRESS)
-            )
-            # Only those items published in TokenList will be processed
-            if token_info[0] != config.ZERO_ADDRESS:
-                token_template = token_info[1]
-                # Filter only the token types used in the system
-                if self.available_token_template(token_template):
-                    token_model = self.get_token_model(token_template)
-                    token = token_model.get(session=session, token_address=token_address)
-                    token_list.append(token.__dict__)
-                else:
-                    continue
 
-        self.on_success(res, token_list)
+def available_token_template(token_template: str) -> bool:
+    """Availability of token type
 
-    @staticmethod
-    def validate(req):
-        request_json = {
-            "include_private_listing": req.get_param("include_private_listing")
-        }
+    :param token_template: Token type
+    :return: available (True) or not available (False)
+    """
+    if token_template == "IbetShare":
+        return config.SHARE_TOKEN_ENABLED
+    elif token_template == "IbetStraightBond":
+        return config.BOND_TOKEN_ENABLED
+    elif token_template == "IbetMembership":
+        return config.MEMBERSHIP_TOKEN_ENABLED
+    elif token_template == "IbetCoupon":
+        return config.COUPON_TOKEN_ENABLED
+    else:
+        return False
 
-        validator = Validator({
-            "include_private_listing": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": ["true", "false"],
-            }
-        })
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
 
-        return validator.document
+def get_token_model(token_template: str):
+    """Get token model
 
-    @staticmethod
-    def available_token_template(token_template: str) -> bool:
-        """Availability of token type
+    :param token_template: Token type
+    :return: Token model
+    """
+    if token_template == "IbetShare":
+        return ShareToken
+    elif token_template == "IbetStraightBond":
+        return BondToken
+    elif token_template == "IbetMembership":
+        return MembershipToken
+    elif token_template == "IbetCoupon":
+        return CouponToken
+    else:
+        return False
 
-        :param token_template: Token type
-        :return: available (True) or not available (False)
-        """
-        if token_template == "IbetShare":
-            return config.SHARE_TOKEN_ENABLED
-        elif token_template == "IbetStraightBond":
-            return config.BOND_TOKEN_ENABLED
-        elif token_template == "IbetMembership":
-            return config.MEMBERSHIP_TOKEN_ENABLED
-        elif token_template == "IbetCoupon":
-            return config.COUPON_TOKEN_ENABLED
-        else:
-            return False
 
-    @staticmethod
-    def get_token_model(token_template: str):
-        """Get token model
+def has_listing_owner_function_creator(listing_owner_list: list[str]) -> Callable[[dict], bool]:
+    def has_listing_owner_function(company_info):
+        for address in listing_owner_list:
+            if to_checksum_address(company_info["address"]) == address:
+                return True
+        return False
+    return has_listing_owner_function
 
-        :param token_template: Token type
-        :return: Token model
-        """
-        if token_template == "IbetShare":
-            return ShareToken
-        elif token_template == "IbetStraightBond":
-            return BondToken
-        elif token_template == "IbetMembership":
-            return MembershipToken
-        elif token_template == "IbetCoupon":
-            return CouponToken
-        else:
-            return False

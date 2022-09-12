@@ -132,7 +132,7 @@ Index("notification_index_1", Notification.address, Notification.notification_id
 Index("notification_index_2", Notification.address, Notification.priority, Notification.notification_id)
 
 
-class NotificationType(Enum):
+class NotificationType(str, Enum):
     NEW_ORDER = "NewOrder"
     NEW_ORDER_COUNTERPART = "NewOrderCounterpart"
     CANCEL_ORDER = "CancelOrder"

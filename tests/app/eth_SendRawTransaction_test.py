@@ -18,14 +18,16 @@ SPDX-License-Identifier: Apache-2.0
 """
 import json
 import logging
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from unittest.mock import MagicMock
 from unittest import mock
-import pytest
 
 from web3 import Web3
 from web3.datastructures import AttributeDict
 from web3.middleware import geth_poa_middleware
-from web3.exceptions import TimeExhausted, ContractLogicError
+from web3.exceptions import TimeExhausted
 from eth_utils import to_checksum_address
 
 from app import config
@@ -94,7 +96,7 @@ def caplog(caplog: pytest.LogCaptureFixture):
 
 class TestEthSendRawTransaction:
     # Test API
-    apiurl = '/Eth/SendRawTransaction/'
+    apiurl = '/Eth/SendRawTransaction'
 
     ###########################################################################
     # Normal
@@ -103,7 +105,7 @@ class TestEthSendRawTransaction:
     # <Normal_1>
     # Input list exists (1 entry)
     # Web3 FailOver
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
             insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546")
             insert_node_data(session, is_synced=True, endpoint_uri=config.WEB3_HTTP_PROVIDER, priority=1)
@@ -158,19 +160,18 @@ class TestEthSendRawTransaction:
             headers = {'Content-Type': 'application/json'}
             request_body = json.dumps(request_params)
 
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(self.apiurl, headers=headers, data=request_body)
 
             assert resp.status_code == 200
-            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-            assert resp.json['data'] == [{
+            assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 1
             }]
 
     # <Normal_2>
     # Input list exists (multiple entries)
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -261,12 +262,12 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{
             "id": 1,
             "status": 1
         }, {
@@ -276,7 +277,7 @@ class TestEthSendRawTransaction:
 
     # <Normal_3>
     # pending transaction
-    def test_normal_3(self, client, session):
+    def test_normal_3(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -339,12 +340,12 @@ class TestEthSendRawTransaction:
                     }),
                     "queued": AttributeDict({})
                 })])):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{
             "id": 1,
             "status": 2
         }]
@@ -356,39 +357,46 @@ class TestEthSendRawTransaction:
     # <Error_1>
     # Unsupported HTTP method
     # -> 404 Not Supported
-    def test_error_1(self, client, session):
-        resp = client.simulate_get(self.apiurl)
+    def test_error_1(self, client: TestClient, session: Session):
+        resp = client.get(self.apiurl)
 
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
+        assert resp.status_code == 405
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'message': 'Method Not Allowed',
             'description': 'method: GET, url: /Eth/SendRawTransaction'
         }
 
     # <Error_2>
     # No headers
     # -> 400 InvalidParameterError
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "value is not a valid list",
+                    "type": "type_error.list"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_3_1>
     # Input list is empty
     # -> 400 InvalidParameterError
-    def test_error_3_1(self, client, session):
+    def test_error_3_1(self, client: TestClient, session: Session):
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         request_params = {"raw_tx_hex_list": []}
@@ -396,65 +404,78 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': ['empty values not allowed']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "ensure this value has at least 1 items",
+                    "type": "value_error.list.min_items"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_3_2>
     # No inputs
     # -> 400 InvalidParameterError
-    def test_error_3_2(self, client, session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         request_params = {}
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': ['required field']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_4>
     # Input values are incorrect (not a list type)
     # -> 400 InvalidParameterError
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': ['must be of list type']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "value is not a valid list",
+                    "type": "type_error.list"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_5>
     # Input values are incorrect (not a string type)
     # -> 400 InvalidParameterError
-    def test_error_5(self, client, session):
+    def test_error_5(self, client: TestClient, session: Session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
         raw_tx_1 = 1234
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
@@ -462,26 +483,26 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': [
-                    {
-                        '0': ['must be of string type']
-                    }
-                ]
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list", 0],
+                    "msg": "str type expected",
+                    "type": "type_error.str"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_6>
     # Input values are incorrect (invalid transaction）
     # -> 200, status = 0
-    def test_error_6(self, client, session):
+    def test_error_6(self, client: TestClient, session: Session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
 
         raw_tx_1 = "some_raw_tx_1"
@@ -490,16 +511,16 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{'id': 1, 'status': 0}]
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{'id': 1, 'status': 0}]
 
     # <Error_7>
     # block synchronization stop(Web3 FailOver Error)
-    def test_error_7(self, client, session):
+    def test_error_7(self, client: TestClient, session: Session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
 
         # トークンリスト登録
@@ -554,10 +575,10 @@ class TestEthSendRawTransaction:
         with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
             insert_node_data(session, is_synced=False)
             insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546", priority=1)
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
         assert resp.status_code == 503
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 503,
             'message': 'Service Unavailable',
             'description': 'Block synchronization is down',
@@ -565,7 +586,7 @@ class TestEthSendRawTransaction:
 
     # <Error_8>
     # Invalid token status
-    def test_error_8(self, client, session):
+    def test_error_8(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -616,11 +637,11 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 20,
             'message': 'Suspended Token',
             'description': 'Token is currently suspended',
@@ -628,7 +649,7 @@ class TestEthSendRawTransaction:
 
     # <Error_9>
     # Non executable contract
-    def test_error_9(self, client, session):
+    def test_error_9(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -670,19 +691,19 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{
             "id": 1,
             "status": 0
         }]
 
     # <Error_10_1>
     # Transaction failed and revert inspection success
-    def test_error_10_1(self, client, session):
+    def test_error_10_1(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -726,29 +747,13 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
-        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert 130401',...})
-        #         geth: ContractLogicError("execution reverted: 130401")
-        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
-        eth_call_mock = MagicMock()
-        successor = iter([True, True, True, True])
-
-        def side_effect(*arg, **kwargs):
-            global web3
-            try:
-                if next(successor):
-                    return web3.eth.call(*arg, **kwargs)
-            except Exception as e:
-                raise ContractLogicError("execution reverted: 130401")
-
-        eth_call_mock.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+        with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="130401"):
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
             assert resp.status_code == 200
-            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-            assert resp.json['data'] == [{
+            assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
                 "error_code": 130401,
@@ -757,7 +762,7 @@ class TestEthSendRawTransaction:
 
     # <Error_10_2>
     # Transaction failed and revert inspection success(no error code)
-    def test_error_10_2(self, client, session, caplog):
+    def test_error_10_2(self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -801,29 +806,13 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
-        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert Direct...',...})
-        #         geth: ContractLogicError("execution reverted: Direct transfer is...")
-        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
-        eth_call_mock = MagicMock()
-        successor = iter([True, True, True, True])
-
-        def side_effect(*arg, **kwargs):
-            global web3
-            try:
-                if next(successor):
-                    return web3.eth.call(*arg, **kwargs)
-            except Exception as e:
-                raise ContractLogicError("execution reverted: Message sender balance is insufficient.")
-
-        eth_call_mock.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+        with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="Message sender balance is insufficient."):
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
             assert resp.status_code == 200
-            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-            assert resp.json['data'] == [{
+            assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
                 "error_code": 0,
@@ -837,7 +826,7 @@ class TestEthSendRawTransaction:
 
     # <Error_10_3>
     # Transaction failed and revert inspection success(no revert message)
-    def test_error_10_3(self, client, session, caplog: pytest.LogCaptureFixture):
+    def test_error_10_3(self, client: TestClient, session: Session, caplog: pytest.LogCaptureFixture):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -881,29 +870,13 @@ class TestEthSendRawTransaction:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        # NOTE: Ganacheがrevertする際にweb3.pyからraiseされるExceptionはGethと異なる
-        #         ganache: ValueError({'message': 'VM Exception while processing transaction: revert',...})
-        #         geth: ContractLogicError("execution reverted")
-        #       Transactionリプレイが行われる5回目のcallのみ、GethのrevertによるExceptionを再現するようMock化
-        eth_call_mock = MagicMock()
-        successor = iter([True, True, True, True])
-
-        def side_effect(*arg, **kwargs):
-            global web3
-            try:
-                if next(successor):
-                    return web3.eth.call(*arg, **kwargs)
-            except Exception as e:
-                raise ContractLogicError("execution reverted")
-
-        eth_call_mock.side_effect = side_effect
-        with mock.patch.object(eth.web3.eth, "call", eth_call_mock):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+        with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="execution reverted"):
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
             assert resp.status_code == 200
-            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-            assert resp.json['data'] == [{
+            assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
                 "error_code": 0,
@@ -917,7 +890,7 @@ class TestEthSendRawTransaction:
 
     # <Error_10_4>
     # Transaction failed and revert inspection failed
-    def test_error_10_4(self, client, session, caplog: pytest.LogCaptureFixture):
+    def test_error_10_4(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -962,19 +935,19 @@ class TestEthSendRawTransaction:
         request_body = json.dumps(request_params)
 
         with mock.patch.object(eth.web3.eth, "getTransaction", ConnectionError):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
             assert resp.status_code == 200
-            assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-            assert resp.json['data'] == [{
+            assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+            assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0
             }]
 
     # <Error_11>
     # waitForTransactionReceipt error
-    def test_error_11(self, client, session):
+    def test_error_11(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -1028,19 +1001,19 @@ class TestEthSendRawTransaction:
 
         # waitForTransactionReceiptエラー
         with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=Exception())):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{
             "id": 1,
             "status": 0
         }]
 
     # <Error_12>
     # recoverTransaction error
-    def test_error_12(self, client, session):
+    def test_error_12(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -1100,19 +1073,19 @@ class TestEthSendRawTransaction:
         # recoverTransactionエラー
         with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
                 "eth_account.Account.recoverTransaction", MagicMock(side_effect=Exception())):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{
             "id": 1,
             "status": 0
         }]
 
     # <Error_13>
     # Transaction timeout, no transition to pending
-    def test_error_13(self, client, session):
+    def test_error_13(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -1176,12 +1149,12 @@ class TestEthSendRawTransaction:
                         })
                     })
                 })])):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{
             "id": 1,
             "status": 0
         }]

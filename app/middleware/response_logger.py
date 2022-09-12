@@ -18,10 +18,17 @@ SPDX-License-Identifier: Apache-2.0
 """
 import logging
 from datetime import datetime
+from fastapi import (
+    Request,
+    Response
+)
+from starlette.middleware.base import RequestResponseEndpoint
 
-import falcon
+from app import config, log
+from .base import SuppressNoResponseReturnedMiddleware
 
-from app import config
+LOG = log.get_logger()
+
 
 logging.basicConfig(level=config.LOG_LEVEL)
 ACCESS_LOG = logging.getLogger("ibet_wallet_access")
@@ -36,14 +43,26 @@ stream_handler_access.setFormatter(formatter_access)
 ACCESS_LOG.addHandler(stream_handler_access)
 
 
-class ResponseLoggerMiddleware(object):
+class ResponseLoggerMiddleware(SuppressNoResponseReturnedMiddleware):
     """Response Logger Middleware"""
 
-    def process_request(self, req, res):
-        req.context["request_start_time"] = datetime.utcnow()
+    def __init__(self):
+        pass
 
-    def process_response(self, req: falcon.Request, res: falcon.Response, resource, req_succeeded):
-        if req.relative_uri != "/":
-            response_time = (datetime.utcnow() - req.context["request_start_time"]).total_seconds()
-            log_msg = f"{req.method} {req.relative_uri} {res.status} ({response_time}sec)"
+    async def __call__(self, req: Request, call_next: RequestResponseEndpoint) -> Response:
+        # Before process request
+        request_start_time = datetime.utcnow()
+
+        # Process request
+        res: Response = await self.handle(req, call_next)
+
+        # After process request
+        if req.url.path != "/":
+            response_time = (datetime.utcnow() - request_start_time).total_seconds()
+            if req.url.query:
+                log_msg = f"{req.method} {req.url.path}?{req.url.query} {res.status_code} ({response_time}sec)"
+            else:
+                log_msg = f"{req.method} {req.url.path} {res.status_code} ({response_time}sec)"
             ACCESS_LOG.info(log_msg)
+
+        return res

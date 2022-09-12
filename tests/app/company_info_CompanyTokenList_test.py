@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -158,7 +160,7 @@ class TestCompanyInfoCompanyTokenList:
 
     # Normal_1
     # 債券トークン
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         # 環境変数設定変更
         config.BOND_TOKEN_ENABLED = True
         bond_exchange, _, _, _, personal_info, _, token_list = self._set_env(shared_contract)
@@ -171,7 +173,7 @@ class TestCompanyInfoCompanyTokenList:
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(url)
+        resp = client.get(url)
 
         assumed_body = [
             {
@@ -218,12 +220,12 @@ class TestCompanyInfoCompanyTokenList:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_2
     # 株式トークン
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         # 環境変数設定変更
         config.SHARE_TOKEN_ENABLED = True
         _, _, _, share_exchange, personal_info, _, token_list = self._set_env(shared_contract)
@@ -236,7 +238,7 @@ class TestCompanyInfoCompanyTokenList:
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(url)
+        resp = client.get(url)
 
         assumed_body = [
             {
@@ -272,12 +274,12 @@ class TestCompanyInfoCompanyTokenList:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_3
     # 会員権トークン
-    def test_normal_3(self, client, session, shared_contract):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
         # 環境変数設定変更
         config.MEMBERSHIP_TOKEN_ENABLED = True
         _, membership_exchange, _, _, _, _, token_list = self._set_env(shared_contract)
@@ -290,7 +292,7 @@ class TestCompanyInfoCompanyTokenList:
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(url)
+        resp = client.get(url)
 
         assumed_body = [
             {
@@ -323,12 +325,12 @@ class TestCompanyInfoCompanyTokenList:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_4
     # クーポントークン
-    def test_normal_4(self, client, session, shared_contract):
+    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
         # 環境変数設定変更
         config.COUPON_TOKEN_ENABLED = True
         _, _, coupon_exchange, _, _, _, token_list = self._set_env(shared_contract)
@@ -341,7 +343,7 @@ class TestCompanyInfoCompanyTokenList:
         self._insert_listing(session, token["address"], issuer["account_address"])
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(url)
+        resp = client.get(url)
 
         assumed_body = [
             {
@@ -374,12 +376,12 @@ class TestCompanyInfoCompanyTokenList:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_5
     # 複数種類のトークン
-    def test_normal_5(self, client, session, shared_contract):
+    def test_normal_5(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account['issuer']
 
         # 環境変数設定変更
@@ -400,7 +402,7 @@ class TestCompanyInfoCompanyTokenList:
         self._insert_listing(session, coupon_token["address"], issuer["account_address"])
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(url)
+        resp = client.get(url)
 
         assumed_body = [
             {
@@ -460,26 +462,26 @@ class TestCompanyInfoCompanyTokenList:
         ]
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_6
     # データ0件
-    def test_normal_6(self, client, session):
+    def test_normal_6(self, client: TestClient, session: Session):
         issuer = eth_account['issuer']
 
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(url)
+        resp = client.get(url)
 
-        assumed_body = []
+        assumed_body: list[str] = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_7_1
     # include_private_listing=true
-    def test_normal_7_1(self, client, session, shared_contract):
+    def test_normal_7_1(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account['issuer']
 
         # 環境変数設定変更
@@ -501,9 +503,9 @@ class TestCompanyInfoCompanyTokenList:
         # テスト対象API呼び出し
         query_string = f'include_private_listing=true'
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(
+        resp = client.get(
             url,
-            query_string=query_string
+            params=query_string
         )
 
         # 検証
@@ -564,12 +566,12 @@ class TestCompanyInfoCompanyTokenList:
             }
         ]
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # Normal_7_2
     # include_private_listing=false
-    def test_normal_7_2(self, client, session, shared_contract):
+    def test_normal_7_2(self, client: TestClient, session: Session, shared_contract):
         issuer = eth_account['issuer']
 
         # 環境変数設定変更
@@ -591,9 +593,9 @@ class TestCompanyInfoCompanyTokenList:
         # テスト対象API呼び出し
         query_string = f'include_private_listing=false'
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(
+        resp = client.get(
             url,
-            query_string=query_string
+            params=query_string
         )
 
         # 検証
@@ -627,8 +629,8 @@ class TestCompanyInfoCompanyTokenList:
             }
         ]
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     ###########################################################################
     # Error
@@ -637,15 +639,15 @@ class TestCompanyInfoCompanyTokenList:
     # Error_1
     # Invalid Parameter
     # {eth_address}: invalid eth_address
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         eth_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレス長が短い
 
         # テスト対象API呼び出し
         url = self.apiurl.replace("{eth_address}", eth_address)
-        resp = client.simulate_get(url)
+        resp = client.get(url)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': "Invalid Parameter",
             "description": "invalid eth_address"
@@ -654,20 +656,26 @@ class TestCompanyInfoCompanyTokenList:
     # Error_2
     # Invalid Parameter
     # include_private_listing: unallowed value
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         issuer = eth_account['issuer']
 
         # テスト対象API呼び出し
         query_string = f'include_private_listing=test'
         url = self.apiurl.replace("{eth_address}", issuer["account_address"])
-        resp = client.simulate_get(
+        resp = client.get(
             url,
-            query_string=query_string
+            params=query_string
         )
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'include_private_listing': ['unallowed value test']}
+            'description': [
+                {
+                    'loc': ['query', 'include_private_listing'],
+                    'msg': 'value could not be parsed to a boolean',
+                    'type': 'type_error.bool'
+                }
+            ],
+            'message': 'Invalid Parameter'
         }

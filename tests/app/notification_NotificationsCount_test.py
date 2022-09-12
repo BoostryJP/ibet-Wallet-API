@@ -16,10 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import datetime
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.model.db import Notification
-from datetime import datetime
-
 
 class TestNotificationCount:
     # テスト対象API
@@ -112,55 +113,66 @@ class TestNotificationCount:
 
     # ＜正常系1-1＞
     # 未読カウントを表示
-    def test_notificationcount_normal_1(self, client, session):
+    def test_notificationcount_normal_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_get(self.apiurl, params={"address": TestNotificationCount.address})
+        resp = client.get(self.apiurl, params={"address": TestNotificationCount.address})
 
         assumed_body = {
             "unread_counts": 2,
         }
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     # ＜正常系1-2＞
     # 未読カウントが0の場合
-    def test_notificationcount_normal_2(self, client, session):
-        resp = client.simulate_get(self.apiurl, params={"address": TestNotificationCount.address})
+    def test_notificationcount_normal_2(self, client: TestClient, session: Session):
+        resp = client.get(self.apiurl, params={"address": TestNotificationCount.address})
 
         assumed_body = {
             "unread_counts": 0,
         }
 
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     # ＜エラー系1＞
     #   入力値エラー：必須入力値
-    def test_notificationcount_error_1(self, client, session):
+    def test_notificationcount_error_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_get(self.apiurl, params={})
+        resp = client.get(self.apiurl, params={})
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'address': ['null value not allowed']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "address"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系2＞
     #   入力値エラー：アドレス形式誤り
-    def test_notificationcount_error_2(self, client, session):
+    def test_notificationcount_error_2(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_get(self.apiurl, params={"address": "0x123"})
+        resp = client.get(self.apiurl, params={"address": "0x123"})
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "address"],
+                    "msg": "address is not a valid address",
+                    "type": "value_error"
+                }
+            ],
+            "message": "Invalid Parameter"
         }

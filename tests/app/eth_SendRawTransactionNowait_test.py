@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from unittest.mock import patch
 
 from web3 import Web3
@@ -69,7 +71,7 @@ def executable_contract_token(session, contract):
 class TestEthSendRawTransactionNoWait:
 
     # Test API
-    apiurl = '/Eth/SendRawTransactionNoWait/'
+    apiurl = '/Eth/SendRawTransactionNoWait'
 
     ###########################################################################
     # Normal
@@ -77,7 +79,7 @@ class TestEthSendRawTransactionNoWait:
 
     # <Normal_1>
     # Input list exists (1 entry)
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -129,20 +131,20 @@ class TestEthSendRawTransactionNoWait:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert len(resp.json['data']) == 1
-        resp_data = resp.json['data'][0]
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json()['data']) == 1
+        resp_data = resp.json()['data'][0]
         assert resp_data["id"] == 1
         assert resp_data["status"] == 1
         assert resp_data["transaction_hash"] is not None
 
     # <Normal_2>
     # Input list exists (multiple entries)
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -233,17 +235,17 @@ class TestEthSendRawTransactionNoWait:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert len(resp.json['data']) == 2
-        resp_data = resp.json['data'][0]
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json()['data']) == 2
+        resp_data = resp.json()['data'][0]
         assert resp_data["id"] == 1
         assert resp_data["status"] == 1
         assert resp_data["transaction_hash"] is not None
-        resp_data = resp.json['data'][1]
+        resp_data = resp.json()['data'][1]
         assert resp_data["id"] == 2
         assert resp_data["status"] == 1
         assert resp_data["transaction_hash"] is not None
@@ -255,39 +257,46 @@ class TestEthSendRawTransactionNoWait:
     # <Error_1>
     # Unsupported HTTP method
     # -> 404 Not Supported
-    def test_error_1(self, client, session):
-        resp = client.simulate_get(self.apiurl)
+    def test_error_1(self, client: TestClient, session: Session):
+        resp = client.get(self.apiurl)
 
-        assert resp.status_code == 404
-        assert resp.json['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
+        assert resp.status_code == 405
+        assert resp.json()['meta'] == {
+            'code': 1,
+            'message': 'Method Not Allowed',
             'description': 'method: GET, url: /Eth/SendRawTransactionNoWait'
         }
 
     # <Error_2>
     # No headers
     # -> 400 InvalidParameterError
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "value is not a valid list",
+                    "type": "type_error.list"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_3_1>
     # Input list is empty
     # -> 400 InvalidParameterError
-    def test_error_3_1(self, client, session):
+    def test_error_3_1(self, client: TestClient, session: Session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
 
         request_params = {"raw_tx_hex_list": []}
@@ -295,91 +304,104 @@ class TestEthSendRawTransactionNoWait:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': ['empty values not allowed']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "ensure this value has at least 1 items",
+                    "type": "value_error.list.min_items"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_3_2>
     # No inputs
     # -> 400 InvalidParameterError
-    def test_error_3_2(self, client, session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         request_params = {}
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': ['required field']
-            }
+        assert resp.json()['meta'] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_4>
     # Input values are incorrect (not a list)
     # -> 400 InvalidParameterError
-    def test_error_4(self, client, session):
+    def test_error_4(self, client: TestClient, session: Session):
         raw_tx_1 = "some_raw_tx_1"
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': ['must be of list type']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list"],
+                    "msg": "value is not a valid list",
+                    "type": "type_error.list"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_5>
     # Input values are incorrect (not a string type)
     # -> 400 InvalidParameterError
-    def test_error_5(self, client, session):
+    def test_error_5(self, client: TestClient, session: Session):
         raw_tx_1 = 1234
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'raw_tx_hex_list': [
-                    {
-                        '0': ['must be of string type']
-                    }
-                ]
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "raw_tx_hex_list", 0],
+                    "msg": "str type expected",
+                    "type": "type_error.str"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # <Error_6>
     # Input values are incorrect (invalid transaction）
     # -> 200, status = 0
-    def test_error_6(self, client, session):
+    def test_error_6(self, client: TestClient, session: Session):
         config.TOKEN_LIST_CONTRACT_ADDRESS = config.ZERO_ADDRESS
 
         raw_tx_1 = "some_raw_tx_1"
@@ -388,16 +410,16 @@ class TestEthSendRawTransactionNoWait:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{'id': 1, 'status': 0}]
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{'id': 1, 'status': 0}]
 
     # <Error_7>
     # Invalid token status
-    def test_error_7(self, client, session):
+    def test_error_7(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -448,11 +470,11 @@ class TestEthSendRawTransactionNoWait:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 20,
             'message': 'Suspended Token',
             'description': 'Token is currently suspended',
@@ -460,7 +482,7 @@ class TestEthSendRawTransactionNoWait:
 
     # <Error_8>
     # Non executable contract
-    def test_error_8(self, client, session):
+    def test_error_8(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -502,19 +524,19 @@ class TestEthSendRawTransactionNoWait:
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        resp = client.simulate_post(
-            self.apiurl, headers=headers, body=request_body)
+        resp = client.post(
+            self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == [{
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == [{
             "id": 1,
             "status": 0
         }]
 
     # <Error_9>
     # Transaction failed
-    def test_error_9(self, client, session):
+    def test_error_9(self, client: TestClient, session: Session):
 
         # トークンリスト登録
         tokenlist = tokenlist_contract()
@@ -559,13 +581,13 @@ class TestEthSendRawTransactionNoWait:
         request_body = json.dumps(request_params)
 
         with patch("web3.eth.Eth.send_raw_transaction", side_effect=ConnectionError):
-            resp = client.simulate_post(
-                self.apiurl, headers=headers, body=request_body)
+            resp = client.post(
+                self.apiurl, headers=headers, data=request_body)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert len(resp.json['data']) == 1
-        resp_data = resp.json['data'][0]
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert len(resp.json()['data']) == 1
+        resp_data = resp.json()['data'][0]
         assert resp_data["id"] == 1
         assert resp_data["status"] == 0
         assert resp_data["transaction_hash"] is None

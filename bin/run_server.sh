@@ -25,7 +25,7 @@ function start () {
 
     #source .venv/bin/activate
     python batch/processor_Block_Sync_Status.py &
-    gunicorn -b 0.0.0.0:5000 app.main:application --timeout 30 --workers=$WORKER_COUNT --max-requests 500 --max-requests-jitter 200 --limit-request-line 0 -k gevent
+    gunicorn -b 0.0.0.0:5000 app.main:app --timeout 30 --workers=$WORKER_COUNT --max-requests 500 --max-requests-jitter 200 --limit-request-line 0 -k server.AppUvicornWorker
 }
 
 function stop () {

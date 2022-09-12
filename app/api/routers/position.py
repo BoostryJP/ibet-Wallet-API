@@ -17,8 +17,13 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from decimal import Decimal
-from cerberus import Validator
 from eth_utils import to_checksum_address
+from fastapi import (
+    APIRouter,
+    Depends,
+    Request,
+    Path
+)
 from sqlalchemy import (
     or_,
     and_
@@ -33,8 +38,8 @@ from web3 import Web3
 
 from app import config
 from app import log
-from app.api.common import BaseResource
 from app.contracts import Contract
+from app.database import db_session
 from app.errors import (
     InvalidParameterError,
     DataNotExistsError,
@@ -56,25 +61,60 @@ from app.model.blockchain import (
     ShareToken,
     BondToken,
     MembershipToken,
-    CouponToken
+    CouponToken,
+    TokenClassTypes as BlockChainTokenModel
 )
+from app.model.schema import (
+    PositionQuery,
+    GenericSuccessResponse,
+    SuccessResponse,
+    SecurityTokenPositionWithDetail,
+    GenericSecurityTokenPositionsResponse,
+    SecurityTokenPositionWithAddress,
+    MembershipPositionsResponse,
+    MembershipPositionWithDetail,
+    MembershipPositionWithAddress,
+    CouponPositionsResponse,
+    CouponPositionWithDetail,
+    CouponPositionWithAddress,
+    StraightBondToken as StraightBondTokenSchema,
+    ShareToken as ShareTokenSchema,
+)
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
 
-class BasePosition(BaseResource):
+router = APIRouter(
+    prefix="/Position",
+    tags=["Position"]
+)
+
+
+class BasePosition:
     # NOTE: Set Child class initializer.
     token_enabled: bool
     token_type: str
-    token_model: Union[Type[ShareToken], Type[BondToken], Type[MembershipToken], Type[CouponToken]]
+    token_model: BlockChainTokenModel
     idx_token_model: IDXTokenModel
-    exchange_contract_name: str
 
-    def on_get_list(self, req, res, account_address=None):
+    def __init__(
+        self,
+        token_enabled: bool,
+        token_type: str,
+        token_model: BlockChainTokenModel,
+        idx_token_model: IDXTokenModel
+    ) -> None:
+        self.token_enabled = token_enabled
+        self.token_type = token_type
+        self.token_model = token_model
+        self.idx_token_model = idx_token_model
+
+    def get_list(self, req: Request, request_query: PositionQuery, session: Session, account_address=None):
 
         # API Enabled Check
         if self.token_enabled is False:
-            raise NotSupportedError(method="GET", url=req.path)
+            raise NotSupportedError(method="GET", url=req.url.path)
 
         # Validation
         try:
@@ -83,33 +123,29 @@ class BasePosition(BaseResource):
                 raise InvalidParameterError(description="invalid account_address")
         except:
             raise InvalidParameterError(description="invalid account_address")
-        request_json = BasePosition.validate(req)
-        enable_index = True if request_json["enable_index"] == "true" else False
-
-        session = req.context["session"]
+        enable_index = request_query.enable_index
 
         if enable_index:
             # If enable_index flag is set true, get position data from DB.
-            data = self.on_get_list_from_index(
-                request_json=request_json,
+            data = self.get_list_from_index(
+                request_query=request_query,
                 session=session,
                 account_address=account_address
             )
-            self.on_success(res, data)
-            return
+            return data
 
         # If enable_index flag is not set or set false, get position data from contract.
-        data = self.on_get_list_from_contract(
-            request_json=request_json,
+        data = self.get_list_from_contract(
+            request_query=request_query,
             session=session,
             account_address=account_address
         )
-        self.on_success(res, data)
+        return data
 
-    def on_get_list_from_index(self, request_json: dict, session: Session, account_address: str):
-        offset = request_json["offset"]
-        limit = request_json["limit"]
-        include_token_details = True if request_json["include_token_details"] == "true" else False
+    def get_list_from_index(self, request_query: PositionQuery, session: Session, account_address: str):
+        offset = request_query.offset
+        limit = request_query.limit
+        include_token_details = request_query.include_token_details
         query = session.query(Listing.token_address, IDXPosition, self.idx_token_model). \
             join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
             join(IDXPosition, Listing.token_address == IDXPosition.token_address). \
@@ -154,14 +190,14 @@ class BasePosition(BaseResource):
             "positions": position_list
         }
 
-    def on_get_list_from_contract(self, request_json: dict, session: Session, account_address: str):
-        offset = request_json["offset"]
-        limit = request_json["limit"]
-        include_token_details = True if request_json["include_token_details"] == "true" else False
+    def get_list_from_contract(self, request_query: PositionQuery, session: Session, account_address: str):
+        offset = request_query.offset
+        limit = request_query.limit
+        include_token_details = request_query.include_token_details
         # Get TokenList Contract
         _list_contract = Contract.get_contract(
             contract_name="TokenList",
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+            address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
         )
 
         # Get Listing Tokens
@@ -212,11 +248,16 @@ class BasePosition(BaseResource):
             "positions": position_list
         }
 
-    def on_get_from_contract_address(self, req, res, account_address=None, contract_address=None):
-
+    def get_from_contract_address(
+        self,
+        req: Request,
+        session: Session,
+        account_address: str,
+        token_address: str
+    ):
         # API Enabled Check
         if self.token_enabled is False:
-            raise NotSupportedError(method="GET", url=req.path)
+            raise NotSupportedError(method="GET", url=req.url.path)
 
         # Validation
         try:
@@ -226,25 +267,23 @@ class BasePosition(BaseResource):
         except:
             raise InvalidParameterError(description="invalid account_address")
         try:
-            token_address = to_checksum_address(contract_address)
+            token_address = to_checksum_address(token_address)
             if not Web3.isAddress(token_address):
                 raise InvalidParameterError(description="invalid contract_address")
         except:
             raise InvalidParameterError(description="invalid contract_address")
-
-        session = req.context["session"]
 
         # Get Listing Token
         _token = session.query(Listing). \
             filter(Listing.token_address == token_address). \
             first()
         if _token is None:
-            raise DataNotExistsError(description="contract_address: %s" % contract_address)
+            raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         # Get TokenList Contract
         _list_contract = Contract.get_contract(
             contract_name="TokenList",
-            address=config.TOKEN_LIST_CONTRACT_ADDRESS
+            address=str(config.TOKEN_LIST_CONTRACT_ADDRESS)
         )
         token_info = Contract.call_function(
             contract=_list_contract,
@@ -254,16 +293,16 @@ class BasePosition(BaseResource):
         )
         token_template = token_info[1]
         if token_template != self.token_type:
-            raise DataNotExistsError(description="contract_address: %s" % contract_address)
+            raise DataNotExistsError(description="contract_address: %s" % token_address)
 
         # Get Position
         position = self._get_position(account_address, token_address, session, is_detail=True)
         if position is None:
-            raise DataNotExistsError(description="contract_address: %s" % contract_address)
+            raise DataNotExistsError(description="contract_address: %s" % token_address)
 
-        self.on_success(res, position)
+        return position
 
-    def _get_position(self, account_address, token_address, session, is_detail=False):
+    def _get_position(self, account_address: str, token_address: str, session: Session, is_detail=False):
 
         # Get Contract
         _token_contract, _exchange_contract = self._get_contract(token_address)
@@ -315,7 +354,7 @@ class BasePosition(BaseResource):
             LOG.error(e)
             return None
 
-    def _get_contract(self, token_address):
+    def _get_contract(self, token_address: str):
 
         # Get Token Contract
         _token_contract = Contract.get_contract(
@@ -339,59 +378,17 @@ class BasePosition(BaseResource):
 
         return _token_contract, _exchange_contract
 
-    @staticmethod
-    def validate(req):
-        request_json = {
-            "include_token_details": req.get_param("include_token_details"),
-            "enable_index": req.get_param("enable_index"),
-            "offset": req.get_param("offset"),
-            "limit": req.get_param("limit"),
-        }
-
-        validator = Validator({
-            "include_token_details": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": ["true", "false"],
-            },
-            "enable_index": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": ["true", "false"],
-            },
-            "offset": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-            'limit': {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
-
 
 class BasePositionShare(BasePosition):
-
     def __init__(self):
-        self.token_enabled = config.SHARE_TOKEN_ENABLED
-        self.token_type = "IbetShare"
-        self.token_model = ShareToken
-        self.idx_token_model = IDXShareToken
+        super().__init__(
+            config.SHARE_TOKEN_ENABLED,
+            "IbetShare",
+            ShareToken,
+            IDXShareToken
+        )
 
-    def _get_position(self, account_address, token_address, session, is_detail=False):
+    def _get_position(self, account_address: str, token_address: str, session: Session, is_detail=False):
 
         # Get Contract
         _token_contract, _exchange_contract = self._get_contract(token_address)
@@ -456,14 +453,15 @@ class BasePositionShare(BasePosition):
 
 
 class BasePositionStraightBond(BasePosition):
-
     def __init__(self):
-        self.token_enabled = config.SHARE_TOKEN_ENABLED
-        self.token_type = "IbetStraightBond"
-        self.token_model = BondToken
-        self.idx_token_model = IDXBondToken
+        super().__init__(
+            config.BOND_TOKEN_ENABLED,
+            "IbetStraightBond",
+            BondToken,
+            IDXBondToken
+        )
 
-    def _get_position(self, account_address, token_address, session, is_detail=False):
+    def _get_position(self, account_address: str, token_address: str, session: Session, is_detail=False):
 
         # Get Contract
         _token_contract, _exchange_contract = self._get_contract(token_address)
@@ -529,15 +527,17 @@ class BasePositionStraightBond(BasePosition):
 
 class BasePositionMembership(BasePosition):
     def __init__(self):
-        self.token_enabled = config.SHARE_TOKEN_ENABLED
-        self.token_type = "IbetMembership"
-        self.token_model = MembershipToken
-        self.idx_token_model = IDXMembershipToken
+        super().__init__(
+            config.MEMBERSHIP_TOKEN_ENABLED,
+            "IbetMembership",
+            MembershipToken,
+            IDXMembershipToken
+        )
 
-    def on_get_list_from_index(self, request_json: dict, session: Session, account_address: str):
-        offset = request_json["offset"]
-        limit = request_json["limit"]
-        include_token_details = True if request_json["include_token_details"] == "true" else False
+    def get_list_from_index(self, request_query: PositionQuery, session: Session, account_address: str):
+        offset = request_query.offset
+        limit = request_query.limit
+        include_token_details = request_query.include_token_details
         query = session.query(Listing.token_address, IDXPosition, self.idx_token_model). \
             join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
             join(IDXPosition, Listing.token_address == IDXPosition.token_address). \
@@ -584,15 +584,17 @@ class BasePositionMembership(BasePosition):
 class BasePositionCoupon(BasePosition):
 
     def __init__(self):
-        self.token_enabled = config.SHARE_TOKEN_ENABLED
-        self.token_type = "IbetCoupon"
-        self.token_model = CouponToken
-        self.idx_token_model = IDXCouponToken
+        super().__init__(
+            config.COUPON_TOKEN_ENABLED,
+            "IbetCoupon",
+            CouponToken,
+            IDXCouponToken
+        )
 
-    def on_get_list_from_index(self, request_json: dict, session: Session, account_address: str):
-        offset = request_json["offset"]
-        limit = request_json["limit"]
-        include_token_details = True if request_json["include_token_details"] == "true" else False
+    def get_list_from_index(self, request_query: PositionQuery, session: Session, account_address: str):
+        offset = request_query.offset
+        limit = request_query.limit
+        include_token_details = request_query.include_token_details
 
         # NOTE: Sub Query for sum of used amount
         sub_tx_used = (
@@ -749,97 +751,228 @@ class BasePositionCoupon(BasePosition):
             return None
 
 
+BasePositionType = Union[
+    Type[BasePositionStraightBond] |
+    Type[BasePositionShare] |
+    Type[BasePositionMembership] |
+    Type[BasePositionCoupon]
+]
+
+
+class GetPositionList:
+    base_position: BasePositionType
+
+    def __init__(self, base_position: BasePositionType):
+        self.base_position = base_position
+
+    def __call__(
+        self,
+        req: Request,
+        account_address: str = Path(),
+        request_query: PositionQuery = Depends(),
+        session: Session = Depends(db_session)
+    ):
+        return self.base_position().get_list(req, request_query, session, account_address)
+
+
+class GetPosition:
+    base_position: BasePositionType
+
+    def __init__(self, base_position: BasePositionType):
+        self.base_position = base_position
+    def __call__(
+        self,
+        req: Request,
+        account_address: str = Path(),
+        token_address: str = Path(),
+        session: Session = Depends(db_session)
+    ):
+        return self.base_position().get_from_contract_address(req, session, account_address, token_address)
+
+
 # ------------------------------
 # Position List(Share)
 # ------------------------------
-class PositionShare(BasePositionShare):
+@router.get(
+    "/{account_address}/Share",
+    summary="Share Token Position",
+    operation_id="GetShareTokenPosition",
+    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[ShareTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def list_all_share_positions(
+    positions: Union[
+        list[SecurityTokenPositionWithDetail],
+        list[SecurityTokenPositionWithAddress]
+    ] = Depends(GetPositionList(BasePositionShare))
+):
     """
     Endpoint: /Position/{account_address}/Share
     """
-
-    def on_get(self, req, res, account_address=None, **kwargs):
-        super().on_get_list(req, res, account_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": positions
+    }
 
 
 # ------------------------------
 # Position List(StraightBond)
 # ------------------------------
-class PositionStraightBond(BasePositionStraightBond):
+@router.get(
+    "/{account_address}/StraightBond",
+    summary="StraightBond Token Position",
+    operation_id="GetStraightBondTokenPosition",
+    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[StraightBondTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def list_all_straight_bond_positions(
+    positions: Union[
+        list[SecurityTokenPositionWithDetail],
+        list[SecurityTokenPositionWithAddress]
+    ] = Depends(GetPositionList(BasePositionStraightBond))
+):
     """
     Endpoint: /Position/{account_address}/StraightBond
     """
-
-    def on_get(self, req, res, account_address=None, **kwargs):
-        super().on_get_list(req, res, account_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": positions
+    }
 
 
 # ------------------------------
 # Position List(Membership)
 # ------------------------------
-class PositionMembership(BasePositionMembership):
+@router.get(
+    "/{account_address}/Membership",
+    summary="Membership Token Position",
+    operation_id="GetMembershipTokenPosition",
+    response_model=GenericSuccessResponse[MembershipPositionsResponse],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def list_all_membership_positions(
+    positions: Union[
+        list[MembershipPositionWithDetail],
+        list[MembershipPositionWithAddress]
+    ] = Depends(GetPositionList(BasePositionMembership))
+):
     """
     Endpoint: /Position/{account_address}/Membership
     """
-
-    def on_get(self, req, res, account_address=None, **kwargs):
-        super().on_get_list(req, res, account_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": positions
+    }
 
 
 # ------------------------------
 # Position List(Coupon)
 # ------------------------------
-class PositionCoupon(BasePositionCoupon):
+@router.get(
+    "/{account_address}/Coupon",
+    summary="Coupon Token Position",
+    operation_id="GetCouponTokenPosition",
+    response_model=GenericSuccessResponse[CouponPositionsResponse],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def list_all_coupon_positions(
+    positions: Union[
+        list[CouponPositionWithDetail],
+        list[CouponPositionWithAddress]
+    ] = Depends(GetPositionList(BasePositionCoupon))
+):
     """
     Endpoint: /Position/{account_address}/Coupon
     """
-
-    def on_get(self, req, res, account_address=None, **kwargs):
-        super().on_get_list(req, res, account_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": positions
+    }
 
 
 # ------------------------------
 # Get Position(Share)
 # ------------------------------
-class PositionShareContractAddress(BasePositionShare):
+@router.get(
+    "/{account_address}/Share/{token_address}",
+    summary="Share Token Position By Token Address",
+    operation_id="GetShareTokenPositionByAddress",
+    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[ShareTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def retrieve_share_position_by_token_address(
+    position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionShare))
+):
     """
     Endpoint: /Position/{account_address}/Share/{contract_address}
     """
-
-    def on_get(self, req, res, account_address=None, contract_address=None):
-        super().on_get_from_contract_address(req, res, account_address, contract_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": position
+    }
 
 
 # ------------------------------
 # Get Position(StraightBond)
 # ------------------------------
-class PositionStraightBondContractAddress(BasePositionStraightBond):
+@router.get(
+    "/{account_address}/StraightBond/{token_address}",
+    summary="StraightBond Token Position By Token Address",
+    operation_id="GetStraightBondTokenPositionByAddress",
+    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[StraightBondTokenSchema]],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def retrieve_straight_bond_position_by_token_address(
+    position: SecurityTokenPositionWithDetail = Depends(GetPosition(BasePositionStraightBond))
+):
     """
     Endpoint: /Position/{account_address}/StraightBond/{contract_address}
     """
-
-    def on_get(self, req, res, account_address=None, contract_address=None):
-        super().on_get_from_contract_address(req, res, account_address, contract_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": position
+    }
 
 
 # ------------------------------
 # Get Position(Membership)
 # ------------------------------
-class PositionMembershipContractAddress(BasePositionMembership):
+@router.get(
+    "/{account_address}/Membership/{token_address}",
+    summary="Membership Token Position By Token Address",
+    operation_id="GetMembershipTokenPositionByAddress",
+    response_model=GenericSuccessResponse[MembershipPositionWithDetail],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def retrieve_membership_position_by_token_address(
+    position: MembershipPositionWithDetail = Depends(GetPosition(BasePositionMembership))
+):
     """
     Endpoint: /Position/{account_address}/Membership/{contract_address}
     """
-
-    def on_get(self, req, res, account_address=None, contract_address=None):
-        super().on_get_from_contract_address(req, res, account_address, contract_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": position
+    }
 
 
 # ------------------------------
 # Get Position(Coupon)
 # ------------------------------
-class PositionCouponContractAddress(BasePositionCoupon):
+@router.get(
+    "/{account_address}/Coupon/{token_address}",
+    summary="Coupon Token Position By Token Address",
+    operation_id="GetCouponTokenPositionByAddress",
+    response_model=GenericSuccessResponse[CouponPositionWithDetail],
+    responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
+)
+def retrieve_coupon_position_by_token_address(
+    position: CouponPositionWithDetail = Depends(GetPosition(BasePositionCoupon))
+):
     """
     Endpoint: /Position/{account_address}/Coupon/{contract_address}
     """
-
-    def on_get(self, req, res, account_address=None, contract_address=None):
-        super().on_get_from_contract_address(req, res, account_address, contract_address)
+    return {
+        **SuccessResponse.use().dict(),
+        "data": position
+    }

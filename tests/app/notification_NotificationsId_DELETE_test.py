@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.model.db import Notification
 
@@ -123,14 +125,14 @@ class TestNotificationsIdDELETE:
     ###########################################################################
 
     # <Normal_1>
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         notification_id = "0x00000011032000000000000000"
 
         # Request target API
-        resp = client.simulate_delete(
+        resp = client.delete(
             self.apiurl.format(id=notification_id),
         )
 
@@ -147,20 +149,20 @@ class TestNotificationsIdDELETE:
 
     # <Error_1>
     # Not Fount
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
 
         notification_id = "xxxxx"
 
         # Request target API
-        resp = client.simulate_delete(
+        resp = client.delete(
             self.apiurl.format(id=notification_id),
         )
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
             "description": "id: xxxxx"

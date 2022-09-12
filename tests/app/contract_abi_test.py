@@ -16,6 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from sqlalchemy.orm import Session
+from fastapi.testclient import TestClient
+
 from app import config
 
 
@@ -25,71 +28,65 @@ class TestContractABI:
 
     # ＜正常系1＞
     #   普通債券ABI取得
-    def test_straightbondabi_normal(self, client, session, shared_contract):
+    def test_straightbondabi_normal(self, client: TestClient, session: Session, shared_contract):
         config.BOND_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '/StraightBond'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] is not None
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] is not None
 
     # ＜正常系2＞
     #   株式ABI取得
-    def test_shareabi_normal(self, client, session, shared_contract):
+    def test_shareabi_normal(self, client: TestClient, session: Session, shared_contract):
         config.SHARE_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '/Share'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] is not None
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] is not None
 
     # ＜正常系3＞
     #   会員権ABI取得
-    def test_membershipabi_normal(self, client, session, shared_contract):
+    def test_membershipabi_normal(self, client: TestClient, session: Session, shared_contract):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '/Membership'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] is not None
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] is not None
 
     # ＜正常系4＞
     #   クーポンABI取得
-    def test_couponabi_normal(self, client, session, shared_contract):
+    def test_couponabi_normal(self, client: TestClient, session: Session, shared_contract):
         config.COUPON_TOKEN_ENABLED = True
         apiurl = self.apiurl_base + '/Coupon'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] is not None
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] is not None
 
     # ＜異常系1＞
     #   存在しないABI
-    def test_error_1(self, client, session, shared_contract):
+    def test_error_1(self, client: TestClient, session: Session, shared_contract):
         apiurl = self.apiurl_base + '/Unknown'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 404
 
     # ＜異常系2＞
     #   普通債券ABI ENABLED=false
-    def test_error_2(self, client, session, shared_contract):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract):
         config.BOND_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + '/StraightBond'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /ABI/StraightBond'
@@ -97,14 +94,13 @@ class TestContractABI:
 
     # ＜異常系3＞
     #   株式ABI ENABLED=false
-    def test_error_3(self, client, session, shared_contract):
+    def test_error_3(self, client: TestClient, session: Session, shared_contract):
         config.SHARE_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + '/Share'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /ABI/Share'
@@ -112,14 +108,13 @@ class TestContractABI:
 
     # ＜異常系4＞
     #   会員権ABI ENABLED=false
-    def test_error_4(self, client, session, shared_contract):
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
         config.MEMBERSHIP_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + '/Membership'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /ABI/Membership'
@@ -127,14 +122,13 @@ class TestContractABI:
 
     # ＜異常系5＞
     #   クーポンABI ENABLED=false
-    def test_error_5(self, client, session, shared_contract):
+    def test_error_5(self, client: TestClient, session: Session, shared_contract):
         config.COUPON_TOKEN_ENABLED = False
         apiurl = self.apiurl_base + '/Coupon'
-        query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params={})
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /ABI/Coupon'

@@ -16,9 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import datetime, timedelta, timezone
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.model.db import Notification
-from datetime import datetime, timedelta, timezone
 
 JST = timezone(timedelta(hours=+9), "JST")
 
@@ -122,10 +124,10 @@ class TestNotificationsRead:
 
     # ＜正常系1＞
     #   全件既読化
-    def test_post_notification_read_normal_1(self, client, session):
+    def test_post_notification_read_normal_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             json={
                 "address": TestNotificationsRead.address_1,
@@ -155,10 +157,10 @@ class TestNotificationsRead:
 
     # ＜正常系2＞
     #   全件未読化
-    def test_post_notification_read_normal_2(self, client, session):
+    def test_post_notification_read_normal_2(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             json={
                 "address": TestNotificationsRead.address_1,
@@ -176,10 +178,10 @@ class TestNotificationsRead:
 
     # ＜正常系3＞
     #   存在しないアドレスの既読化
-    def test_post_notification_read_normal_3(self, client, session):
+    def test_post_notification_read_normal_3(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             json={
                 "address": TestNotificationsRead.address_3,
@@ -191,33 +193,41 @@ class TestNotificationsRead:
 
     # ＜エラー系1＞
     #   入力値エラー：型誤り
-    def test_post_notification_read_error_1(self, client, session):
+    def test_post_notification_read_error_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             json={
                 "address": 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf,
-                "is_read": "True",
+                "is_read": "invalid_value",
             }
         )
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'address': ['must be of string type'],
-                'is_read': ['must be of boolean type']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "address"],
+                    "msg": "address is not a valid address",
+                    "type": "value_error"
+                },
+                {
+                    "loc": ["body", "is_read"],
+                    "msg": "value could not be parsed to a boolean",
+                    "type": "type_error.bool"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系2＞
     #   入力値エラー：必須入力値
-    def test_post_notification_read_error_2(self, client, session):
+    def test_post_notification_read_error_2(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             json={
                 "address": "",
@@ -226,21 +236,29 @@ class TestNotificationsRead:
         )
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'address': ['empty values not allowed'],
-                'is_read': ['null value not allowed']
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "address"],
+                    "msg": "address is not a valid address",
+                    "type": "value_error"
+                },
+                {
+                    "loc": ["body", "is_read"],
+                    "msg": "none is not an allowed value",
+                    "type": "type_error.none.not_allowed"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # ＜エラー系3＞
     #   入力値エラー：アドレス形式誤り
-    def test_post_notification_read_error_3(self, client, session):
+    def test_post_notification_read_error_3(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl,
             json={
                 "address": "0x123",
@@ -249,7 +267,14 @@ class TestNotificationsRead:
         )
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["body", "address"],
+                    "msg": "address is not a valid address",
+                    "type": "value_error"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
