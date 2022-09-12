@@ -197,8 +197,14 @@ class TestTokenTokenHoldersCollectionId:
         sorted_holders = sorted(holders, key=lambda x: x['account_address'])
 
         assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": sorted_holders}
+        assert resp.json["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json["data"]["status"] == TokenHolderBatchStatus.DONE.value
+        assert len(resp.json["data"]["holders"]) == 2
+        resp_holders = resp.json["data"]["holders"]
+        for holder in sorted_holders:
+            for resp_holder in resp_holders:
+                if resp_holder["account_address"] == holder["account_address"]:
+                    assert resp_holder["hold_balance"] == holder["hold_balance"]
 
     ####################################################################
     # Error
