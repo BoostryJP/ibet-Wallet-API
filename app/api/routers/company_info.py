@@ -36,7 +36,7 @@ from app.errors import (
 from app import config
 from app.contracts import Contract
 from app.database import db_session
-from app.model.db import Listing
+from app.model.db import Listing, IDXBondToken, IDXShareToken, IDXMembershipToken, IDXCouponToken
 from app.model.blockchain import (
     BondToken,
     MembershipToken,
@@ -88,15 +88,41 @@ def list_all_companies(
 
     # Get the token listed
     if include_private_listing:
-        available_tokens = session.query(Listing).all()
+        available_tokens = session.query(
+            Listing,
+            IDXBondToken.owner_address,
+            IDXShareToken.owner_address,
+            IDXMembershipToken,
+            IDXCouponToken.owner_address
+        ).\
+            outerjoin(IDXBondToken, Listing.token_address == IDXBondToken.token_address).\
+            outerjoin(IDXShareToken, Listing.token_address == IDXShareToken.token_address).\
+            outerjoin(IDXMembershipToken, Listing.token_address == IDXMembershipToken.token_address).\
+            outerjoin(IDXCouponToken, Listing.token_address == IDXCouponToken.token_address).\
+            all()
     else:
-        available_tokens = session.query(Listing).filter(Listing.is_public == True).all()
+        available_tokens = session.query(
+            Listing,
+            IDXBondToken.owner_address,
+            IDXShareToken.owner_address,
+            IDXMembershipToken,
+            IDXCouponToken.owner_address
+        ).filter(Listing.is_public == True).\
+            outerjoin(IDXBondToken, Listing.token_address == IDXBondToken.token_address).\
+            outerjoin(IDXShareToken, Listing.token_address == IDXShareToken.token_address).\
+            outerjoin(IDXMembershipToken, Listing.token_address == IDXMembershipToken.token_address).\
+            outerjoin(IDXCouponToken, Listing.token_address == IDXCouponToken.token_address).\
+            all()
 
     # Filter only issuers that issue the listed tokens
     listing_owner_list = []
     for token in available_tokens:
         try:
-            token_address = to_checksum_address(token.token_address)
+            owner_address_is_cached = [t for t in token[1:4] if t is not None]
+            if owner_address_is_cached:
+                listing_owner_list.append(owner_address_is_cached[0])
+
+            token_address = to_checksum_address(token[0].token_address)
             token_contract = Contract.get_contract(
                 contract_name="Ownable",
                 address=token_address
