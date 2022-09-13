@@ -207,7 +207,11 @@ def send_raw_transaction(
 
         # Handling a transaction execution result
         try:
-            tx = web3.eth.wait_for_transaction_receipt(tx_hash, timeout=config.TRANSACTION_WAIT_TIMEOUT)
+            tx = web3.eth.wait_for_transaction_receipt(
+                tx_hash,
+                timeout=config.TRANSACTION_WAIT_TIMEOUT,
+                poll_latency=config.TRANSACTION_WAIT_POLL_LATENCY
+            )
             if tx["status"] == 0:
                 # inspect reason of transaction fail
                 err_msg = inspect_tx_failure(tx_hash.hex())
