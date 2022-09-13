@@ -50,8 +50,10 @@ WEB3_HTTP_PROVIDER = os.environ.get("WEB3_HTTP_PROVIDER") or 'http://localhost:8
 WEB3_HTTP_PROVIDER_STANDBY = [node.strip() for node in os.environ.get("WEB3_HTTP_PROVIDER_STANDBY").split(",")] \
     if os.environ.get("WEB3_HTTP_PROVIDER_STANDBY") else []
 WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
+# トランザクションレシート待機時間（秒）
 TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT")) \
     if os.environ.get("TRANSACTION_WAIT_TIMEOUT") else 5
+# トランザクションレシートポーリング間隔（秒）
 TRANSACTION_WAIT_POLL_LATENCY = int(os.environ.get("TRANSACTION_WAIT_POLL_LATENCY")) \
     if os.environ.get("TRANSACTION_WAIT_POLL_LATENCY") else 0.5
 
