@@ -1000,10 +1000,16 @@ class TestEthSendRawTransaction:
         request_body = json.dumps(request_params)
 
         # waitForTransactionReceiptエラー
-        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=Exception())):
+        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=Exception())) as m:
             resp = client.post(
                 self.apiurl, headers=headers, data=request_body)
 
+        # wait_for_transaction_receipt should be called with timeout/poll_latency value from config
+        m.assert_called_with(
+            signed_tx_1.hash,
+            timeout=config.TRANSACTION_WAIT_TIMEOUT,
+            poll_latency=config.TRANSACTION_WAIT_POLL_LATENCY
+        )
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
@@ -1140,7 +1146,7 @@ class TestEthSendRawTransaction:
         # タイムアウト
         # queuedに滞留
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
-        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
+        with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())) as m, mock.patch(
                 "web3.geth.GethTxPool.inspect", MagicMock(side_effect=[AttributeDict({
                     "pending": AttributeDict({}),
                     "queued": AttributeDict({
@@ -1151,6 +1157,13 @@ class TestEthSendRawTransaction:
                 })])):
             resp = client.post(
                 self.apiurl, headers=headers, data=request_body)
+
+        # wait_for_transaction_receipt should be called with timeout/poll_latency value from config
+        m.assert_called_with(
+            signed_tx_1.hash,
+            timeout=config.TRANSACTION_WAIT_TIMEOUT,
+            poll_latency=config.TRANSACTION_WAIT_POLL_LATENCY
+        )
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
