@@ -21,7 +21,7 @@ import logging
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
 from unittest import mock
 
 from web3 import Web3
@@ -166,7 +166,8 @@ class TestEthSendRawTransaction:
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
             assert resp.json()['data'] == [{
                 "id": 1,
-                "status": 1
+                "status": 1,
+                "transaction_hash": ANY
             }]
 
     # <Normal_2>
@@ -269,10 +270,12 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 1
+            "status": 1,
+            "transaction_hash": ANY
         }, {
             "id": 2,
-            "status": 1
+            "status": 1,
+            "transaction_hash": ANY
         }]
 
     # <Normal_3>
@@ -347,7 +350,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 2
+            "status": 2,
+            "transaction_hash": ANY
         }]
 
     ###########################################################################
@@ -516,7 +520,11 @@ class TestEthSendRawTransaction:
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == [{'id': 1, 'status': 0}]
+        assert resp.json()['data'] == [{
+            'id': 1,
+            'status': 0,
+            "transaction_hash": None
+        }]
 
     # <Error_7>
     # block synchronization stop(Web3 FailOver Error)
@@ -698,7 +706,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": None
         }]
 
     # <Error_10_1>
@@ -756,6 +765,7 @@ class TestEthSendRawTransaction:
             assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
+                "transaction_hash": ANY,
                 "error_code": 130401,
                 "error_msg": "Message sender balance is insufficient.",
             }]
@@ -815,6 +825,7 @@ class TestEthSendRawTransaction:
             assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
+                "transaction_hash": ANY,
                 "error_code": 0,
                 "error_msg": "Message sender balance is insufficient.",
             }]
@@ -879,6 +890,7 @@ class TestEthSendRawTransaction:
             assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
+                "transaction_hash": ANY,
                 "error_code": 0,
                 "error_msg": "execution reverted",
             }]
@@ -942,7 +954,8 @@ class TestEthSendRawTransaction:
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
             assert resp.json()['data'] == [{
                 "id": 1,
-                "status": 0
+                "status": 0,
+                "transaction_hash": ANY
             }]
 
     # <Error_11>
@@ -1014,7 +1027,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": ANY
         }]
 
     # <Error_12>
@@ -1086,7 +1100,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": ANY
         }]
 
     # <Error_13>
@@ -1169,5 +1184,6 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": ANY
         }]

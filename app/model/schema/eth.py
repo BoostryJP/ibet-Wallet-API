@@ -68,6 +68,7 @@ class SendRawTransactionResult(BaseModel):
     id: int = Field(..., example=1, description="transaction send order")
     status: int = Field(..., example=1, description="execution failure:0, execution success:1, execution success("
                                                     "pending transaction):2")
+    transaction_hash: Optional[str] = Field(description="transaction hash")
     error_code: Optional[int] = Field(example=240202, description="error code thrown from contract")
     error_msg: Optional[str] = Field(example="Message sender is not token owner.", description="error msg")
 
