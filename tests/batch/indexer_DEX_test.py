@@ -860,7 +860,6 @@ class TestProcessor:
         assert processor.latest_block == block_number_current
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable()))
     def test_error_1_2(self, processor_factory, shared_contract, session):
         processor, exchange_address = processor_factory(bond=True)
 
@@ -878,8 +877,10 @@ class TestProcessor:
 
         block_number_bf = processor.latest_block
         # Expect that initial_sync() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
+        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(ServiceUnavailable):
             processor.initial_sync()
+
         # Assertion
         _order_list = session.query(IDXOrder).order_by(IDXOrder.created).all()
         assert len(_order_list) == 0
@@ -893,7 +894,8 @@ class TestProcessor:
 
         block_number_bf = processor.latest_block
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
+        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
         # Assertion

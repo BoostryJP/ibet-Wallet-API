@@ -494,7 +494,6 @@ class TestProcessor:
         assert len(_transfer_list) == 0
 
     # <Error_1_2>: ServiceUnavailable occurs in __sync_xx method.
-    @mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable()))
     def test_error_1_2(self, processor, shared_contract, session):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -511,7 +510,8 @@ class TestProcessor:
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
         # Expect that initial_sync() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
+        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(ServiceUnavailable):
             processor.initial_sync()
         # Assertion
         _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
@@ -522,7 +522,8 @@ class TestProcessor:
             self.issuer, {"address": self.trader["account_address"]}, share_token, 100000)
 
         # Expect that sync_new_logs() raises ServiceUnavailable.
-        with pytest.raises(ServiceUnavailable):
+        with mock.patch("web3.eth.Eth.get_block", MagicMock(side_effect=ServiceUnavailable())), \
+                pytest.raises(ServiceUnavailable):
             processor.sync_new_logs()
 
         # Assertion

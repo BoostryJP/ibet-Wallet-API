@@ -110,7 +110,8 @@ class TestEthWaitForTransactionReceipt:
 
         tx = token_contract_1.functions.consume(10).buildTransaction({
             "from": to_checksum_address(user1["account_address"]),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx_hash = web3.eth.send_transaction(tx)
         request_params = {
@@ -169,7 +170,8 @@ class TestEthWaitForTransactionReceipt:
         # NOTE: 残高なしの状態でクーポン消費
         tx = token_contract_1.functions.consume(10000).buildTransaction({
             "from": to_checksum_address(user1["account_address"]),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx_hash = web3.eth.send_transaction(tx)
         request_params = {
