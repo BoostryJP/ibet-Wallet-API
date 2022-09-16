@@ -1,6 +1,6 @@
 coincurve==14.0.0
 eth-keyfile==0.5.1
-fastapi==0.80.0
+fastapi==0.85.0
 future==0.16.0
 gunicorn==20.1.0
 gevent==21.12.0
