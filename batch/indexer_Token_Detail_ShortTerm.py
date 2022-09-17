@@ -123,14 +123,13 @@ class Processor:
                 token = token_type.token_class.from_model(available_token)
                 token.fetch_expiry_short()
                 token_model = token.to_model()
-                token_model.created = datetime.utcnow()
                 local_session.merge(token_model)
+                local_session.commit()
 
                 # Keep request interval constant to avoid throwing many request to JSON-RPC
                 elapsed_time = time.time() - start_time
                 time.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
 
-            local_session.commit()
 
 
 def main():
