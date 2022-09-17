@@ -144,7 +144,7 @@ class TestEthSendRawTransaction:
             pre_tx = token_contract_1.functions.transfer(
                 to_checksum_address(local_account_1.address),
                 10
-            ).buildTransaction({
+            ).build_transaction({
                 "from": to_checksum_address(issuer["account_address"]),
                 "gas": 6000000,
                 "gasPrice": 0
@@ -152,7 +152,7 @@ class TestEthSendRawTransaction:
             tx_hash = web3.eth.send_transaction(pre_tx)
             web3.eth.wait_for_transaction_receipt(tx_hash)
 
-            tx = token_contract_1.functions.consume(10).buildTransaction({
+            tx = token_contract_1.functions.consume(10).build_transaction({
                 "from": to_checksum_address(local_account_1.address),
                 "gas": 6000000,
                 "gasPrice": 0
@@ -228,7 +228,7 @@ class TestEthSendRawTransaction:
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address),
             10
-        ).buildTransaction({
+        ).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -236,7 +236,7 @@ class TestEthSendRawTransaction:
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -255,7 +255,7 @@ class TestEthSendRawTransaction:
         pre_tx = token_contract_2.functions.transfer(
             to_checksum_address(local_account_2.address),
             10
-        ).buildTransaction({
+        ).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -263,7 +263,7 @@ class TestEthSendRawTransaction:
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_2.functions.consume(10).buildTransaction({
+        tx = token_contract_2.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_2.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -328,7 +328,7 @@ class TestEthSendRawTransaction:
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address),
             10
-        ).buildTransaction({
+        ).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -336,7 +336,7 @@ class TestEthSendRawTransaction:
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -581,7 +581,7 @@ class TestEthSendRawTransaction:
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address),
             10
-        ).buildTransaction({
+        ).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -589,7 +589,7 @@ class TestEthSendRawTransaction:
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -645,7 +645,7 @@ class TestEthSendRawTransaction:
         )
 
         # ステータス無効化
-        pre_tx = token_contract_1.functions.setStatus(False).buildTransaction({
+        pre_tx = token_contract_1.functions.setStatus(False).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -655,7 +655,7 @@ class TestEthSendRawTransaction:
 
         local_account_1 = web3.eth.account.create()
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -710,7 +710,7 @@ class TestEthSendRawTransaction:
 
         local_account_1 = web3.eth.account.create()
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -768,7 +768,7 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -829,7 +829,7 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -895,7 +895,7 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -961,7 +961,7 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -1023,7 +1023,7 @@ class TestEthSendRawTransaction:
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address),
             10
-        ).buildTransaction({
+        ).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -1031,7 +1031,7 @@ class TestEthSendRawTransaction:
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -1100,7 +1100,7 @@ class TestEthSendRawTransaction:
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address),
             10
-        ).buildTransaction({
+        ).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -1108,7 +1108,7 @@ class TestEthSendRawTransaction:
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
@@ -1177,7 +1177,7 @@ class TestEthSendRawTransaction:
         pre_tx = token_contract_1.functions.transfer(
             to_checksum_address(local_account_1.address),
             10
-        ).buildTransaction({
+        ).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
             "gas": 6000000,
             "gasPrice": 0
@@ -1185,7 +1185,7 @@ class TestEthSendRawTransaction:
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
             "gas": 6000000,
             "gasPrice": 0
