@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import logging
+from datetime import datetime
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -36,7 +37,7 @@ from app.model.db import (
     IDXTransferBlockNumber
 )
 from batch import indexer_Transfer
-from batch.indexer_Transfer import LOG
+from batch.indexer_Transfer import LOG, UTC
 from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_bond_token,
@@ -450,7 +451,7 @@ class TestProcessor:
 
     # <Normal_4_1>
     # No blocks have been generated since the last transaction occurred
-    # block_from < block_to <= skip_block
+    # block_to <= skip_block
     def test_normal_4_1(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -522,7 +523,7 @@ class TestProcessor:
         assert 1 == caplog.record_tuples.count((
             LOG.name,
             logging.DEBUG,
-            f"{share_token['address']}: block_from < block_to <= skip_block")
+            f"{share_token['address']}: block_to <= skip_block")
         )
         caplog.clear()
 
@@ -697,8 +698,72 @@ class TestProcessor:
         caplog.clear()
 
     # <Normal_4_4>
-    # No event logs
+    # Data that has already been synchronized,
+    # but there is no index_transfer_block_number due to ibet-Wallet-API version upgrade.
+    # block_to <= skip_block
     def test_normal_4_4(self, processor, shared_contract, session, caplog):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
+        self.listing_token(share_token["address"], session)
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
+
+        # emit "Transfer"
+        share_transfer_to_exchange(
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            share_token,
+            100000
+        )
+        block_number_1 = web3.eth.block_number
+        block = web3.eth.get_block(block_number_1)
+
+        idx_transfer = IDXTransfer()
+        idx_transfer.id = 1
+        idx_transfer.transaction_hash = block["transactions"][0].hex()
+        idx_transfer.from_address = self.issuer["account_address"]
+        idx_transfer.to_address = self.issuer["account_address"]
+        idx_transfer.value = 100000
+        idx_transfer.token_address = share_token["address"]
+        idx_transfer.created = datetime.fromtimestamp(block["timestamp"], UTC)
+        session.merge(idx_transfer)
+        session.commit()
+
+        # Execute batch processing
+        caplog.clear()
+        processor.sync_new_logs()
+
+        # Assertion
+        session.rollback()
+
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 1
+
+        idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
+            filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
+            first()
+        assert idx_block_number.latest_block_number == block_number_1
+
+        assert 1 == caplog.record_tuples.count((
+            LOG.name,
+            logging.DEBUG,
+            f"Skip Registry Transfer data in DB: blockNumber={block_number_1}")
+        )
+        caplog.clear()
+
+    # <Normal_4_5>
+    # No event logs
+    def test_normal_4_5(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
