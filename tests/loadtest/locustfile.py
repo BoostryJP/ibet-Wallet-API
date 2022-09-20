@@ -73,7 +73,7 @@ class LoadTestTaskSet(TaskSet):
 
         nonce, gas_price = LoadTestTaskSet.get_tx_info(self, eth_address)
 
-        txn = contract.functions.register(eth_address, '').buildTransaction({
+        txn = contract.functions.register(eth_address, '').build_transaction({
             'chainId': 2017,
             'gas': 4000000,
             'gasPrice': gas_price,

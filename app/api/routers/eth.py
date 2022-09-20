@@ -171,7 +171,11 @@ def send_raw_transaction(
             to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
             LOG.debug(raw_tx)
         except Exception as err:
-            result.append({"id": i + 1, "status": 0})
+            result.append({
+                "id": i + 1,
+                "status": 0,
+                "transaction_hash": None
+            })
             LOG.error(f"RLP decoding failed: {err}")
             continue
 
@@ -190,7 +194,11 @@ def send_raw_transaction(
                     to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS and \
                     to_contract_address != config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS and \
                     to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS:
-                result.append({"id": i + 1, "status": 0})
+                result.append({
+                    "id": i + 1,
+                    "status": 0,
+                    "transaction_hash": None
+                })
                 LOG.error("Not executable")
                 continue
 
@@ -201,6 +209,7 @@ def send_raw_transaction(
             result.append({
                 "id": i + 1,
                 "status": 0,
+                "transaction_hash": None
             })
             LOG.error(f"Send transaction failed: {err}")
             continue
@@ -219,6 +228,7 @@ def send_raw_transaction(
                 result.append({
                     "id": i + 1,
                     "status": 0,
+                    "transaction_hash": tx_hash.hex(),
                     "error_code": code,
                     "error_msg": message
                 })
@@ -232,7 +242,11 @@ def send_raw_transaction(
             try:
                 from_address = Account.recoverTransaction(raw_tx_hex)
             except Exception as err:
-                result.append({"id": i + 1, "status": 0})
+                result.append({
+                    "id": i + 1,
+                    "status": 0,
+                    "transaction_hash": tx_hash.hex()
+                })
                 LOG.error(f"get sender address from signed transaction failed: {err}")
                 continue
             nonce = int("0x0" if raw_tx[0].hex() == "" else raw_tx[0].hex(), 16)
@@ -244,6 +258,7 @@ def send_raw_transaction(
             result.append({
                 "id": i + 1,
                 "status": status,
+                "transaction_hash": tx_hash.hex()
             })
             LOG.warning(f"Transaction receipt timeout: {time_exhausted_err}")
             continue
@@ -251,6 +266,7 @@ def send_raw_transaction(
             result.append({
                 "id": i + 1,
                 "status": 0,
+                "transaction_hash": tx_hash.hex()
             })
             LOG.error(f"Transaction failed: {err}")
             continue
@@ -258,6 +274,7 @@ def send_raw_transaction(
         result.append({
             "id": i + 1,
             "status": tx["status"],
+            "transaction_hash": tx_hash.hex()
         })
 
     return {

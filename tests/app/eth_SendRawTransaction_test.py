@@ -21,7 +21,7 @@ import logging
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
 from unittest import mock
 
 from web3 import Web3
@@ -141,17 +141,21 @@ class TestEthSendRawTransaction:
             local_account_1 = web3.eth.account.create()
 
             # テスト用のトランザクション実行前の事前準備
-            pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-                {
-                    "from": to_checksum_address(issuer["account_address"]),
-                    "gas": 6000000
-                })
+            pre_tx = token_contract_1.functions.transfer(
+                to_checksum_address(local_account_1.address),
+                10
+            ).build_transaction({
+                "from": to_checksum_address(issuer["account_address"]),
+                "gas": 6000000,
+                "gasPrice": 0
+            })
             tx_hash = web3.eth.send_transaction(pre_tx)
             web3.eth.wait_for_transaction_receipt(tx_hash)
 
-            tx = token_contract_1.functions.consume(10).buildTransaction({
+            tx = token_contract_1.functions.consume(10).build_transaction({
                 "from": to_checksum_address(local_account_1.address),
-                "gas": 6000000
+                "gas": 6000000,
+                "gasPrice": 0
             })
             tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
             signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -166,7 +170,8 @@ class TestEthSendRawTransaction:
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
             assert resp.json()['data'] == [{
                 "id": 1,
-                "status": 1
+                "status": 1,
+                "transaction_hash": ANY
             }]
 
     # <Normal_2>
@@ -220,17 +225,21 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
+        pre_tx = token_contract_1.functions.transfer(
+            to_checksum_address(local_account_1.address),
+            10
+        ).build_transaction({
+            "from": to_checksum_address(issuer["account_address"]),
+            "gas": 6000000,
+            "gasPrice": 0
+        })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -243,17 +252,21 @@ class TestEthSendRawTransaction:
         local_account_2 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_2.functions.transfer(to_checksum_address(local_account_2.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
+        pre_tx = token_contract_2.functions.transfer(
+            to_checksum_address(local_account_2.address),
+            10
+        ).build_transaction({
+            "from": to_checksum_address(issuer["account_address"]),
+            "gas": 6000000,
+            "gasPrice": 0
+        })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_2.functions.consume(10).buildTransaction({
+        tx = token_contract_2.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_2.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_2.address))
         signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.privateKey)
@@ -269,10 +282,12 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 1
+            "status": 1,
+            "transaction_hash": ANY
         }, {
             "id": 2,
-            "status": 1
+            "status": 1,
+            "transaction_hash": ANY
         }]
 
     # <Normal_3>
@@ -310,17 +325,21 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
+        pre_tx = token_contract_1.functions.transfer(
+            to_checksum_address(local_account_1.address),
+            10
+        ).build_transaction({
+            "from": to_checksum_address(issuer["account_address"]),
+            "gas": 6000000,
+            "gasPrice": 0
+        })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -347,7 +366,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 2
+            "status": 2,
+            "transaction_hash": ANY
         }]
 
     ###########################################################################
@@ -516,7 +536,11 @@ class TestEthSendRawTransaction:
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data'] == [{'id': 1, 'status': 0}]
+        assert resp.json()['data'] == [{
+            'id': 1,
+            'status': 0,
+            "transaction_hash": None
+        }]
 
     # <Error_7>
     # block synchronization stop(Web3 FailOver Error)
@@ -554,17 +578,21 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
+        pre_tx = token_contract_1.functions.transfer(
+            to_checksum_address(local_account_1.address),
+            10
+        ).build_transaction({
+            "from": to_checksum_address(issuer["account_address"]),
+            "gas": 6000000,
+            "gasPrice": 0
+        })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -617,18 +645,20 @@ class TestEthSendRawTransaction:
         )
 
         # ステータス無効化
-        pre_tx = token_contract_1.functions.setStatus(False).buildTransaction({
+        pre_tx = token_contract_1.functions.setStatus(False).build_transaction({
             "from": to_checksum_address(issuer["account_address"]),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
         local_account_1 = web3.eth.account.create()
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -680,9 +710,10 @@ class TestEthSendRawTransaction:
 
         local_account_1 = web3.eth.account.create()
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -698,7 +729,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": None
         }]
 
     # <Error_10_1>
@@ -736,9 +768,10 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -756,6 +789,7 @@ class TestEthSendRawTransaction:
             assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
+                "transaction_hash": ANY,
                 "error_code": 130401,
                 "error_msg": "Message sender balance is insufficient.",
             }]
@@ -795,9 +829,10 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -815,6 +850,7 @@ class TestEthSendRawTransaction:
             assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
+                "transaction_hash": ANY,
                 "error_code": 0,
                 "error_msg": "Message sender balance is insufficient.",
             }]
@@ -859,9 +895,10 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -879,6 +916,7 @@ class TestEthSendRawTransaction:
             assert resp.json()['data'] == [{
                 "id": 1,
                 "status": 0,
+                "transaction_hash": ANY,
                 "error_code": 0,
                 "error_msg": "execution reverted",
             }]
@@ -923,9 +961,10 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # NOTE: 残高なしの状態でクーポン消費
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -942,7 +981,8 @@ class TestEthSendRawTransaction:
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
             assert resp.json()['data'] == [{
                 "id": 1,
-                "status": 0
+                "status": 0,
+                "transaction_hash": ANY
             }]
 
     # <Error_11>
@@ -980,17 +1020,21 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
+        pre_tx = token_contract_1.functions.transfer(
+            to_checksum_address(local_account_1.address),
+            10
+        ).build_transaction({
+            "from": to_checksum_address(issuer["account_address"]),
+            "gas": 6000000,
+            "gasPrice": 0
+        })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -1014,7 +1058,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": ANY
         }]
 
     # <Error_12>
@@ -1052,17 +1097,21 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
+        pre_tx = token_contract_1.functions.transfer(
+            to_checksum_address(local_account_1.address),
+            10
+        ).build_transaction({
+            "from": to_checksum_address(issuer["account_address"]),
+            "gas": 6000000,
+            "gasPrice": 0
+        })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -1086,7 +1135,8 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": ANY
         }]
 
     # <Error_13>
@@ -1124,17 +1174,21 @@ class TestEthSendRawTransaction:
         local_account_1 = web3.eth.account.create()
 
         # テスト用のトランザクション実行前の事前準備
-        pre_tx = token_contract_1.functions.transfer(to_checksum_address(local_account_1.address), 10).buildTransaction(
-            {
-                "from": to_checksum_address(issuer["account_address"]),
-                "gas": 6000000
-            })
+        pre_tx = token_contract_1.functions.transfer(
+            to_checksum_address(local_account_1.address),
+            10
+        ).build_transaction({
+            "from": to_checksum_address(issuer["account_address"]),
+            "gas": 6000000,
+            "gasPrice": 0
+        })
         tx_hash = web3.eth.send_transaction(pre_tx)
         web3.eth.wait_for_transaction_receipt(tx_hash)
 
-        tx = token_contract_1.functions.consume(10).buildTransaction({
+        tx = token_contract_1.functions.consume(10).build_transaction({
             "from": to_checksum_address(local_account_1.address),
-            "gas": 6000000
+            "gas": 6000000,
+            "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
         signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
@@ -1169,5 +1223,6 @@ class TestEthSendRawTransaction:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
             "id": 1,
-            "status": 0
+            "status": 0,
+            "transaction_hash": ANY
         }]
