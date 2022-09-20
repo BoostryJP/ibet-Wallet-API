@@ -24,7 +24,10 @@ from .notification import (
 )
 from .listing import Listing
 from .executable_contract import ExecutableContract
-from .idx_transfer import IDXTransfer
+from .idx_transfer import (
+    IDXTransfer,
+    IDXTransferBlockNumber
+)
 from .idx_transfer_approval import (
     IDXTransferApproval,
     IDXTransferApprovalBlockNumber
