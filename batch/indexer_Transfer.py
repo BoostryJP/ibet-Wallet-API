@@ -114,7 +114,7 @@ class Processor:
         )
 
     @staticmethod
-    def __get_latest_synchronized(db_session: Session, token_address: str) -> tuple[datetime, int] | tuple[None, None]:
+    def __get_latest_synchronized(db_session: Session, token_address: str) -> tuple[datetime, int | None] | tuple[None, None]:
         """Get latest synchronized data
 
         :param db_session: db session
