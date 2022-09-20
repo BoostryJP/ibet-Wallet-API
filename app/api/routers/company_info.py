@@ -98,7 +98,7 @@ def list_all_companies(
             Listing,
             IDXBondToken.owner_address,
             IDXShareToken.owner_address,
-            IDXMembershipToken,
+            IDXMembershipToken.owner_address,
             IDXCouponToken.owner_address
         ).\
             outerjoin(IDXBondToken, Listing.token_address == IDXBondToken.token_address).\
@@ -111,7 +111,7 @@ def list_all_companies(
             Listing,
             IDXBondToken.owner_address,
             IDXShareToken.owner_address,
-            IDXMembershipToken,
+            IDXMembershipToken.owner_address,
             IDXCouponToken.owner_address
         ).filter(Listing.is_public == True).\
             outerjoin(IDXBondToken, Listing.token_address == IDXBondToken.token_address).\
@@ -124,9 +124,10 @@ def list_all_companies(
     listing_owner_list = []
     for token in available_tokens:
         try:
-            owner_address_is_cached = [t for t in token[1:4] if t is not None]
+            owner_address_is_cached = [t for t in token[1:5] if t is not None]
             if owner_address_is_cached:
                 listing_owner_list.append(owner_address_is_cached[0])
+                continue
 
             token_address = to_checksum_address(token[0].token_address)
             token_contract = Contract.get_contract(

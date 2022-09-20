@@ -480,7 +480,7 @@ class TestCompanyInfoCompanyInfoList:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetMembershipExchange"]["address"]
+        exchange_address = shared_contract["IbetStraightBondExchange"]["address"]
 
         attribute_1 = self._bond_attribute(exchange_address, "0x0000000000000000000000000000000000000000")
         token_1 = issue_bond_token(issuerList[0], attribute_1)
@@ -496,10 +496,11 @@ class TestCompanyInfoCompanyInfoList:
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        resp = client.get(
-            self.apiurl,
-            params=query_string
-        )
+        with mock.patch("app.api.routers.company_info.Contract") as m:
+            resp = client.get(
+                self.apiurl,
+                params=query_string
+            )
 
         # 検証
         assumed_body = [
@@ -513,6 +514,9 @@ class TestCompanyInfoCompanyInfoList:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+        # コントラクトレイヤへの問い合わせは行われない
+        m.assert_not_called()
 
     # <Normal_4_2>
     # 株式トークン
@@ -544,7 +548,7 @@ class TestCompanyInfoCompanyInfoList:
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list["address"]
 
         # データ準備
-        exchange_address = shared_contract["IbetMembershipExchange"]["address"]
+        exchange_address = shared_contract["IbetShareExchange"]["address"]
 
         attribute_1 = self._share_attribute(exchange_address, "0x0000000000000000000000000000000000000000")
         token_1 = issue_share_token(issuerList[0], attribute_1)
@@ -560,10 +564,11 @@ class TestCompanyInfoCompanyInfoList:
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        resp = client.get(
-            self.apiurl,
-            params=query_string
-        )
+        with mock.patch("app.api.routers.company_info.Contract") as m:
+            resp = client.get(
+                self.apiurl,
+                params=query_string
+            )
 
         # 検証
         assumed_body = [
@@ -577,6 +582,9 @@ class TestCompanyInfoCompanyInfoList:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+        # コントラクトレイヤへの問い合わせは行われない
+        m.assert_not_called()
 
     # <Normal_4_3>
     # 会員権トークン
@@ -624,10 +632,11 @@ class TestCompanyInfoCompanyInfoList:
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        resp = client.get(
-            self.apiurl,
-            params=query_string
-        )
+        with mock.patch("app.api.routers.company_info.Contract") as m:
+            resp = client.get(
+                self.apiurl,
+                params=query_string
+            )
 
         # 検証
         assumed_body = [
@@ -641,6 +650,9 @@ class TestCompanyInfoCompanyInfoList:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+        # コントラクトレイヤへの問い合わせは行われない
+        m.assert_not_called()
 
     # <Normal_4_4>
     # クーポントークン
@@ -688,10 +700,11 @@ class TestCompanyInfoCompanyInfoList:
 
         # テスト対象API呼び出し
         query_string = f"include_private_listing=false"
-        resp = client.get(
-            self.apiurl,
-            params=query_string
-        )
+        with mock.patch("app.api.routers.company_info.Contract") as m:
+            resp = client.get(
+                self.apiurl,
+                params=query_string
+            )
 
         # 検証
         assumed_body = [
@@ -705,6 +718,9 @@ class TestCompanyInfoCompanyInfoList:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+        # コントラクトレイヤへの問い合わせは行われない
+        m.assert_not_called()
 
     ###########################################################################
     # Error
