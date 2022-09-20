@@ -36,7 +36,13 @@ from app.errors import (
 from app import config
 from app.contracts import Contract
 from app.database import db_session
-from app.model.db import Listing, IDXBondToken, IDXShareToken, IDXMembershipToken, IDXCouponToken
+from app.model.db import (
+    Listing,
+    IDXBondToken,
+    IDXShareToken,
+    IDXMembershipToken,
+    IDXCouponToken
+)
 from app.model.blockchain import (
     BondToken,
     MembershipToken,
