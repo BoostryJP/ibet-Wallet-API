@@ -129,9 +129,9 @@ class Processor:
             filter(IDXTransferBlockNumber.contract_address == token_address). \
             first()
         if latest_registered is not None and latest_registered_block_number is not None:
-            return latest_registered.created, latest_registered_block_number.latest_block_number
+            return latest_registered.created.replace(tzinfo=UTC), latest_registered_block_number.latest_block_number
         elif latest_registered is not None:
-            return latest_registered.created, None
+            return latest_registered.created.replace(tzinfo=UTC), None
         elif latest_registered_block_number is not None:
             return None, latest_registered_block_number.latest_block_number
         else:
@@ -252,8 +252,6 @@ class Processor:
         :param block_to: To block
         :return:
         """
-        to_timestamp = self.__gen_block_timestamp_from_block_number(block_to)
-
         for target in self.token_list:
             token = target.token_contract
             skip_timestamp = target.skip_timestamp
@@ -261,12 +259,7 @@ class Processor:
 
             # Get "Transfer" logs
             try:
-                if skip_timestamp is not None and to_timestamp <= skip_timestamp.replace(tzinfo=UTC):
-                    # Skip if the timestamp of block_to has already been synchronized
-                    # block_from < block_to <= skip_block
-                    LOG.debug(f"{token.address}: block_from < block_to <= skip_block")
-                    continue
-                elif skip_block is not None and block_to <= skip_block:
+                if skip_block is not None and block_to <= skip_block:
                     # Skip if the token has already been synchronized to block_to.
                     LOG.debug(f"{token.address}: block_to <= skip_block")
                     continue
@@ -297,7 +290,7 @@ class Processor:
                         pass
                     else:
                         event_created = self.__gen_block_timestamp(event=event)
-                        if skip_timestamp is not None and event_created <= skip_timestamp.replace(tzinfo=UTC):
+                        if skip_timestamp is not None and event_created <= skip_timestamp:
                             LOG.debug(f"Skip Registry Transfer data in DB: blockNumber={event['blockNumber']}")
                             continue
                         self.__insert_idx(
