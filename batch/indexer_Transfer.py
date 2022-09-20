@@ -114,7 +114,7 @@ class Processor:
         )
 
     @staticmethod
-    def __get_latest_synchronized(db_session: Session, token_address: str) -> tuple[datetime, int | None] | tuple[None, None]:
+    def __get_latest_synchronized(db_session: Session, token_address: str) -> tuple[datetime | None, int | None]:
         """Get latest synchronized data
 
         :param db_session: db session
@@ -132,6 +132,8 @@ class Processor:
             return latest_registered.created, latest_registered_block_number.latest_block_number
         elif latest_registered is not None:
             return latest_registered.created, None
+        elif latest_registered_block_number is not None:
+            return None, latest_registered_block_number.latest_block_number
         else:
             return None, None
 
@@ -264,11 +266,15 @@ class Processor:
                     # block_from < block_to <= skip_block
                     LOG.debug(f"{token.address}: block_from < block_to <= skip_block")
                     continue
-                elif skip_block is not None and block_from <= skip_block <= block_to:
-                    # block_from <= skip_block <= block_to
-                    LOG.debug(f"{token.address}: block_from <= skip_block <= block_to")
+                elif skip_block is not None and block_to <= skip_block:
+                    # Skip if the token has already been synchronized to block_to.
+                    LOG.debug(f"{token.address}: block_to <= skip_block")
+                    continue
+                elif skip_block is not None and block_from <= skip_block < block_to:
+                    # block_from <= skip_block < block_to
+                    LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
                     events = token.events.Transfer.getLogs(
-                        fromBlock=skip_block,
+                        fromBlock=skip_block+1,
                         toBlock=block_to
                     )
                 else:

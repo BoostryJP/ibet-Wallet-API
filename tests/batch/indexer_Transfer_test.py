@@ -528,7 +528,7 @@ class TestProcessor:
 
     # <Normal_4_2>
     # Data that has already been synchronized is not processed
-    # block_from <= skip_block <= block_to
+    # block_from <= skip_block < block_to
     def test_normal_4_2(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
@@ -604,13 +604,101 @@ class TestProcessor:
         assert 1 == caplog.record_tuples.count((
             LOG.name,
             logging.DEBUG,
-            f"{share_token['address']}: block_from <= skip_block <= block_to")
+            f"{share_token['address']}: block_from <= skip_block < block_to")
         )
         caplog.clear()
 
     # <Normal_4_3>
-    # No event logs
+    # Data that has already been synchronized
+    # block_to <= skip_block
     def test_normal_4_3(self, processor, shared_contract, session, caplog):
+        # Issue Token
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
+        share_token = self.issue_token_share(
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract_address,
+            token_list_contract
+        )
+        self.listing_token(share_token["address"], session)
+        PersonalInfoUtils.register(
+            self.trader["account_address"],
+            personal_info_contract_address,
+            self.issuer["account_address"]
+        )
+
+        # emit "Transfer"
+        share_transfer_to_exchange(
+            self.issuer,
+            {"address": self.trader["account_address"]},
+            share_token,
+            100000
+        )
+        block_number_1 = web3.eth.block_number
+        block_timestamp_1 = web3.eth.get_block(block_number_1)["timestamp"]
+
+        """
+        1st execution
+        """
+        # Execute batch processing
+        processor.sync_new_logs()
+
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 1
+
+        block = web3.eth.get_block(block_number_1)
+        _transfer = _transfer_list[0]
+        assert _transfer.id == 1
+        assert _transfer.transaction_hash == block["transactions"][0].hex()
+        assert _transfer.token_address == share_token["address"]
+        assert _transfer.from_address == self.issuer["account_address"]
+        assert _transfer.to_address == self.trader["account_address"]
+        assert _transfer.value == 100000
+        assert _transfer.created is not None
+        assert _transfer.modified is not None
+
+        idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
+            filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
+            first()
+        assert idx_block_number.latest_block_number == block_number_1
+
+        idx_block_number.latest_block_number += 999999
+
+        session.merge(idx_block_number)
+        session.commit()
+
+        """
+        2nd execution
+        """
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [block_timestamp_1 + 1])
+        block_number_2 = web3.eth.block_number
+
+        # Execute batch processing
+        caplog.clear()
+
+        processor.sync_new_logs()
+
+        # Assertion
+        session.rollback()
+        _transfer_list = session.query(IDXTransfer).order_by(IDXTransfer.created).all()
+        assert len(_transfer_list) == 1
+
+        idx_block_number: IDXTransferBlockNumber = session.query(IDXTransferBlockNumber). \
+            filter(IDXTransferBlockNumber.contract_address == share_token["address"]). \
+            first()
+        assert idx_block_number.latest_block_number == block_number_2
+
+        assert 1 == caplog.record_tuples.count((
+            LOG.name,
+            logging.DEBUG,
+            f"{share_token['address']}: block_to <= skip_block")
+        )
+        caplog.clear()
+
+    # <Normal_4_4>
+    # No event logs
+    def test_normal_4_4(self, processor, shared_contract, session, caplog):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract_address = shared_contract["PersonalInfo"]["address"]
