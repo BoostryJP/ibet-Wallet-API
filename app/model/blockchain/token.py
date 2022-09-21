@@ -411,6 +411,7 @@ class ShareToken(TokenBase):
         )
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
