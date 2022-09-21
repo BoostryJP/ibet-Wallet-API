@@ -191,7 +191,8 @@ class BondToken(TokenBase):
         token_contract = Contract.get_contract('IbetStraightBond', self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -203,6 +204,7 @@ class BondToken(TokenBase):
         is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
@@ -392,7 +394,8 @@ class ShareToken(TokenBase):
         token_contract = Contract.get_contract("IbetShare", self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -408,6 +411,7 @@ class ShareToken(TokenBase):
         )
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
@@ -537,7 +541,8 @@ class MembershipToken(TokenBase):
         token_contract = Contract.get_contract('IbetMembership', self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -549,6 +554,7 @@ class MembershipToken(TokenBase):
         )
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
@@ -668,7 +674,8 @@ class CouponToken(TokenBase):
         token_contract = Contract.get_contract('IbetCoupon', self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -680,6 +687,7 @@ class CouponToken(TokenBase):
         )
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply

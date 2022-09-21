@@ -307,6 +307,7 @@ class TestProcessor:
     #   - ChangeTransferApprovalRequired
     #   - ChangeOfferingStatus
     #   - ChangeToRedeemed
+    #   - ChangeOwner
     def test_normal_2(self, processor: Processor, shared_contract, session: Session, block_number: None):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -322,7 +323,7 @@ class TestProcessor:
                 "symbol": f"BOND{str(i+1)}",
                 "totalSupply": 1000000+1,
                 "tradableExchange": exchange_contract["address"],
-                "faceValue": int((i+1)*10000),
+                "faceValue": int(10000),
                 "interestRate": 602+1,
                 "interestPaymentDate1": "0101",
                 "interestPaymentDate2": "0201",
@@ -352,6 +353,8 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             self.listing_token(token["address"], "IbetStraightBond", session)
+            bond_token = BondToken.get(session, token["address"])
+            session.add(bond_token.to_model())
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
@@ -388,26 +391,39 @@ class TestProcessor:
                 "from": self.issuer["account_address"]
             })
 
+            token_contract = Contract.get_contract(
+                contract_name="Ownable",
+                address=token["address"]
+            )
+            token_contract.functions.transferOwnership(
+                self.agent["account_address"]
+            ).transact({
+                "from": self.issuer["account_address"]
+            })
+
             # Fetch data for cache
-            bond_token = BondToken.get(session, token["address"])
-            session.add(bond_token.to_model())
             _bond_token_expected_list.append({"token_address": token["address"]})
 
         session.commit()
         # Then
         processor.process()
 
+        session.rollback()
         # assertion
         for _expect_dict in _bond_token_expected_list:
             _bond_token: BondTokenModel = session.query(BondTokenModel).\
                 filter(BondTokenModel.token_address == _expect_dict["token_address"]).one()
-            assert _bond_token.redemption_value == 99999
+            # Short-Term Cache attributes is updated instantly.
             assert _bond_token.is_redeemed == True
             assert _bond_token.is_offering == False
             assert _bond_token.transfer_approval_required == True
-            assert _bond_token.redemption_value == 99999
-            assert _bond_token.face_value == 1
             assert _bond_token.status == False
+            assert _bond_token.owner_address == self.agent["account_address"]
+
+            # Not Short-Term Cache attributes is not updated.
+            assert _bond_token.redemption_value == 10001
+            assert _bond_token.face_value == 10000
+
 
     # <Normal_3>
     # Multiple listed tokens and multiple events
@@ -417,6 +433,7 @@ class TestProcessor:
     #   - ChangeOfferingStatus
     #   - ChangeDividendInformation
     #   - ChangeToCanceled
+    #   - ChangeOwner
     def test_normal_3(self, processor: Processor, shared_contract, session: Session, block_number: None):
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
@@ -448,6 +465,9 @@ class TestProcessor:
                 self.issuer, token_list_contract, args
             )
             self.listing_token(token["address"], "IbetStraightBond", session)
+            # Fetch data for cache
+            share_token = ShareToken.get(session, token["address"])
+            session.add(share_token.to_model())
 
             # Change attributes to occur events
             token_contract = Contract.get_contract(
@@ -480,19 +500,28 @@ class TestProcessor:
                 "from": self.issuer["account_address"]
             })
 
-            # Fetch data for cache
-            share_token = ShareToken.get(session, token["address"])
-            session.add(share_token.to_model())
+            token_contract = Contract.get_contract(
+                contract_name="Ownable",
+                address=token["address"]
+            )
+            token_contract.functions.transferOwnership(
+                self.agent["account_address"]
+            ).transact({
+                "from": self.issuer["account_address"]
+            })
+
             _share_token_expected_list.append({"token_address": token["address"]})
 
         session.commit()
         # Then
         processor.process()
 
+        session.rollback()
         # assertion
         for _expect_dict in _share_token_expected_list:
             _share_token: ShareTokenModel = session.query(ShareTokenModel).\
                 filter(ShareTokenModel.token_address == _expect_dict["token_address"]).one()
+            # Short-Term Cache attributes is updated instantly.
             assert _share_token.status == False
             assert _share_token.transfer_approval_required == True
             assert _share_token.is_offering == False
@@ -502,11 +531,13 @@ class TestProcessor:
                 'dividend_record_date': "20200401",
                 'dividend_payment_date': "20200401",
             }
+            assert _share_token.owner_address == self.agent["account_address"]
 
     # <Normal_4>
     # Multiple listed tokens and multiple events
     # - Membership/Coupon
     #   - ChangeStatus
+    #   - ChangeOwner
     def test_normal_4(self, processor: Processor, shared_contract, session: Session, block_number: None):
         token_list_contract = shared_contract["TokenList"]
         exchange_contract = shared_contract["IbetStraightBondExchange"]
@@ -543,6 +574,16 @@ class TestProcessor:
 
             token_contract.functions.setStatus(
                 False
+            ).transact({
+                "from": self.issuer["account_address"]
+            })
+
+            token_contract = Contract.get_contract(
+                contract_name="Ownable",
+                address=token["address"]
+            )
+            token_contract.functions.transferOwnership(
+                self.agent["account_address"]
             ).transact({
                 "from": self.issuer["account_address"]
             })
@@ -585,6 +626,16 @@ class TestProcessor:
                 "from": self.issuer["account_address"]
             })
 
+            token_contract = Contract.get_contract(
+                contract_name="Ownable",
+                address=token["address"]
+            )
+            token_contract.functions.transferOwnership(
+                self.agent["account_address"]
+            ).transact({
+                "from": self.issuer["account_address"]
+            })
+
             # Fetch data for cache
             _coupon_token_expected_list.append({"token_address": token["address"]})
 
@@ -598,12 +649,14 @@ class TestProcessor:
             _membership_token: MembershipTokenModel = session.query(MembershipTokenModel).\
                 filter(MembershipTokenModel.token_address == _expect_dict["token_address"]).one()
             assert _membership_token.status == False
+            assert _membership_token.owner_address == self.agent["account_address"]
 
         # assertion
         for _expect_dict in _coupon_token_expected_list:
             _coupon_token: CouponTokenModel = session.query(CouponTokenModel).\
                 filter(CouponTokenModel.token_address == _expect_dict["token_address"]).one()
             assert _coupon_token.status == False
+            assert _coupon_token.owner_address == self.agent["account_address"]
 
     ###########################################################################
     # Error Case
