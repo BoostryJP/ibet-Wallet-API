@@ -422,7 +422,7 @@ class ShareToken(TokenBase):
         self.principal_value = principal_value
         self.is_canceled = is_canceled
         self.dividend_information = {
-            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
+            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.0000000000001")),
             'dividend_record_date': dividend_information[1],
             'dividend_payment_date': dividend_information[2],
         }
@@ -480,7 +480,7 @@ class ShareToken(TokenBase):
         sharetoken.issue_price = issue_price
         sharetoken.principal_value = principal_value
         sharetoken.dividend_information = {
-            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
+            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.0000000000001")),
             'dividend_record_date': dividend_information[1],
             'dividend_payment_date': dividend_information[2],
         }

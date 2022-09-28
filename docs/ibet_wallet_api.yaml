@@ -4079,12 +4079,15 @@ components:
         dividends:
           title: Dividends
           type: number
+          example: 999.9999999999999
         dividend_record_date:
           title: Dividend Record Date
           type: string
+          example: '20200909'
         dividend_payment_date:
           title: Dividend Payment Date
           type: string
+          example: '20201001'
     E2EMessageEncryptionKey:
       title: E2EMessageEncryptionKey
       required:
