@@ -21,6 +21,7 @@ from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
+    condecimal
 )
 
 from app.model.schema.base import (
@@ -79,9 +80,9 @@ class ShareTokensQuery(ResultSetQuery):
 ############################
 
 class DividendInformation(BaseModel):
-    dividends: float
-    dividend_record_date: str
-    dividend_payment_date: str
+    dividends: condecimal(decimal_places=13) = Field(example=999.9999999999999)
+    dividend_record_date: str = Field(example="20200909")
+    dividend_payment_date: str = Field(example="20201001")
 
 
 class ShareToken(BaseModel):

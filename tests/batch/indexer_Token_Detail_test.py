@@ -220,7 +220,7 @@ class TestProcessor:
                 re.sub("([A-Z])", lambda x: "_" + x.group(1).lower(), k): v for k, v in args.items()
             }
             args["dividend_information"] = {
-                "dividends": float(Decimal(str(args["dividends"])) * Decimal("0.01")),
+                "dividends": float(Decimal(str(args["dividends"])) * Decimal("0.0000000000001")),
                 "dividend_record_date": args["dividend_record_date"],
                 "dividend_payment_date": args["dividend_payment_date"]
             }
