@@ -570,7 +570,8 @@ class TestTokenTransferApprovalHistory:
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
-            'code': 88,'description': [
+            'code': 88,
+            'description': [
                 {
                     'ctx': {'limit_value': 0},
                     'loc': ['query', 'offset'],

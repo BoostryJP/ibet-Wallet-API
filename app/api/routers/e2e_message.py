@@ -34,7 +34,7 @@ from app.errors import (
 )
 from app.model.schema import (
     GenericSuccessResponse,
-    E2EMessageEncryptionKey,
+    E2EMessageEncryptionKeyResponse,
     SuccessResponse
 )
 from app.utils.docs_utils import get_routers_responses
@@ -51,7 +51,7 @@ router = APIRouter(
     "/EncryptionKey/{account_address}",
     summary="Retrieve message encryption key",
     operation_id="EncryptionKey",
-    response_model=GenericSuccessResponse[E2EMessageEncryptionKey],
+    response_model=GenericSuccessResponse[E2EMessageEncryptionKeyResponse],
     responses=get_routers_responses(InvalidParameterError, DataNotExistsError)
 )
 def retrieve_encryption_key(

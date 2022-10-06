@@ -39,7 +39,7 @@ from app.model.schema.base import SuccessResponse
 # RESPONSE
 ############################
 
-class NodeInfo(BaseModel):
+class GetNodeInfoResponse(BaseModel):
     payment_gateway_address: Optional[str]
     payment_gateway_abi: Optional[object]
     personal_info_address: Optional[str]
@@ -61,7 +61,7 @@ class NodeInfo(BaseModel):
     agent_address: Optional[str]
 
 
-class BlockSyncStatus(BaseModel):
+class GetBlockSyncStatusResponse(BaseModel):
     is_synced: bool = Field(..., description="block sync status")
     latest_block_number: Optional[int] = Field(..., description="latest block number (returns null if is_synced is "
                                                                 "false)")

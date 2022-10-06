@@ -24,6 +24,7 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -124,7 +125,7 @@ tags_metadata = [
 app = FastAPI(
     title="ibet Wallet API",
     terms_of_service="",
-    version="22.9.0",
+    version="22.12.0",
     contact={"email": "dev@boostry.co.jp"},
     license_info={"name": "Apache 2.0", "url": "http://www.apache.org/licenses/LICENSE-2.0.html"},
     openapi_tags=tags_metadata
@@ -338,6 +339,21 @@ async def data_not_exists_error_handler(request: Request, exc: DataNotExistsErro
 # 400:RequestValidationError
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    meta = {
+        "code": 88,
+        "message": "Invalid Parameter",
+        "description": exc.errors()
+    }
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder({"meta": meta}),
+    )
+
+
+# 400:ValidationError
+# NOTE: for exceptions raised directly from Pydantic validation
+@app.exception_handler(ValidationError)
+async def query_validation_exception_handler(request: Request, exc: ValidationError):
     meta = {
         "code": 88,
         "message": "Invalid Parameter",

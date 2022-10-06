@@ -185,7 +185,7 @@ class TestUserInfoPersonalInfo:
             "code": 88,
             "description": [
                 {
-                    "loc": ["query", "account_address"],
+                    "loc": ["account_address"],
                     "msg": "account_address is not a valid address",
                     "type": "value_error"
                 }
@@ -209,7 +209,7 @@ class TestUserInfoPersonalInfo:
             "code": 88,
             "description": [
                 {
-                    "loc": ["query", "owner_address"],
+                    "loc": ["owner_address"],
                     "msg": "owner_address is not a valid address",
                     "type": "value_error"
                 }

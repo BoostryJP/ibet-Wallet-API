@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
 from fastapi import Query
+from pydantic.dataclasses import dataclass
 from typing import Optional
 from pydantic import (
     BaseModel,
@@ -25,8 +26,6 @@ from pydantic import (
     validator
 )
 from web3 import Web3
-
-from app.model.schema.base import QueryModel
 
 ############################
 # COMMON
@@ -37,9 +36,10 @@ from app.model.schema.base import QueryModel
 # REQUEST
 ############################
 
-class PaymentAccountQuery(QueryModel):
-    account_address: str = Field(..., description="Account Address")
-    agent_address: str = Field(..., description="Agent Address")
+@dataclass
+class RetrievePaymentAccountQuery:
+    account_address: str = Query(..., description="Account Address")
+    agent_address: str = Query(..., description="Agent Address")
 
     @validator("account_address")
     def account_address_is_valid_address(cls, v):
@@ -54,7 +54,8 @@ class PaymentAccountQuery(QueryModel):
         return v
 
 
-class PersonalInfoQuery(QueryModel):
+@dataclass
+class RetrievePersonalInfoQuery:
     personal_info_address: Optional[str] = Query(default=None, description="PersonalInfo contract address")
     account_address: str = Query(..., description="account address")
     owner_address: str = Query(..., description="owner(issuer) address")
@@ -91,13 +92,13 @@ class ApprovalStatus(int, Enum):
     BAN = 4
 
 
-class PaymentAccountRegistrationStatus(BaseModel):
+class RetrievePaymentAccountRegistrationStatusResponse(BaseModel):
     account_address: str
     agent_address: str
     approval_status: ApprovalStatus = Field(description="approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))")
 
 
-class PersonalInfoRegistrationStatus(BaseModel):
+class RetrievePersonalInfoRegistrationStatusResponse(BaseModel):
     account_address: str
     owner_address: str = Field(description="link address")
     registered: bool

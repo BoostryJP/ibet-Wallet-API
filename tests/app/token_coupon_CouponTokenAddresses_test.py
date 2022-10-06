@@ -586,7 +586,7 @@ class TestTokenCouponTokenAddresses:
         processor.process()
 
         query_string = ""
-        resp: _ResultBase = client.get(self.apiurl, params=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 404
         assert resp.json()["meta"] == {

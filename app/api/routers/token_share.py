@@ -39,11 +39,11 @@ from app import config
 from app.model.blockchain import ShareToken
 from app.model.schema import (
     GenericSuccessResponse,
-    ShareTokensQuery,
-    ShareTokensResponse,
+    ListAllShareTokensQuery,
+    ListAllShareTokensResponse,
     SuccessResponse,
-    ShareTokenAddressesResponse,
-    ShareToken as ShareTokenSchema
+    ListAllShareTokenAddressesResponse,
+    RetrieveShareTokenResponse
 )
 from app.model.db import (
     Listing,
@@ -63,13 +63,13 @@ router = APIRouter(
     "",
     summary="Token detail list of Share tokens",
     operation_id="ShareTokens",
-    response_model=GenericSuccessResponse[ShareTokensResponse],
+    response_model=GenericSuccessResponse[ListAllShareTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_share_tokens(
     req: Request,
     address_list: list[str] = Query(default=[], description="list of token address (**this affects total number**)"),
-    request_query: ShareTokensQuery = Depends(),
+    request_query: ListAllShareTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -176,12 +176,12 @@ def list_all_share_tokens(
     "/Addresses",
     summary="List of Share token address",
     operation_id="ShareTokenAddresses",
-    response_model=GenericSuccessResponse[ShareTokenAddressesResponse],
+    response_model=GenericSuccessResponse[ListAllShareTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_share_token_addresses(
     req: Request,
-    request_query: ShareTokensQuery = Depends(),
+    request_query: ListAllShareTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -277,7 +277,7 @@ def list_all_share_token_addresses(
     "/{token_address}",
     summary="Share token details",
     operation_id="ShareTokenDetails",
-    response_model=GenericSuccessResponse[ShareTokenSchema],
+    response_model=GenericSuccessResponse[RetrieveShareTokenResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def retrieve_share_token(

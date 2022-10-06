@@ -47,15 +47,15 @@ from app.model.blockchain import (
     ShareToken
 )
 from app.model.schema import (
-    OrderListRequest,
+    ListAllOrderListRequest,
     GenericSuccessResponse,
-    OrderListResponse,
+    ListAllOrderListResponse,
     SuccessResponse,
     TokenAddress,
-    ShareToken as ShareTokenSchema,
-    StraightBondToken as StraightBondTokenSchema,
-    MembershipToken as MembershipTokenSchema,
-    CouponToken as CouponTokenSchema
+    RetrieveShareTokenResponse,
+    RetrieveStraightBondTokenResponse,
+    RetrieveMembershipTokenResponse,
+    RetrieveCouponTokenResponse
 )
 from app.utils.docs_utils import get_routers_responses
 
@@ -468,7 +468,7 @@ class StraightBondOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: OrderListRequest,
+        data: ListAllOrderListRequest,
         session: Session = Depends(db_session)
     ):
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -529,11 +529,11 @@ class StraightBondOrderList(BaseOrderList):
     "/StraightBond",
     summary="Straight Bond Order History (Bulk Get)",
     operation_id="StraightBondOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse[StraightBondTokenSchema]],
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveStraightBondTokenResponse]],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_order_history(
-    order_list_res: OrderListResponse[StraightBondTokenSchema] = Depends(StraightBondOrderList())
+    order_list_res: ListAllOrderListResponse[RetrieveStraightBondTokenResponse] = Depends(StraightBondOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/StraightBond
@@ -551,7 +551,7 @@ class MembershipOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: OrderListRequest,
+        data: ListAllOrderListRequest,
         session: Session = Depends(db_session)
     ):
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -613,11 +613,11 @@ class MembershipOrderList(BaseOrderList):
     "/Membership",
     summary="Membership Order History (Bulk Get)",
     operation_id="MembershipOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse[MembershipTokenSchema]],
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveMembershipTokenResponse]],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_order_history(
-    order_list_res: OrderListResponse[MembershipTokenSchema] = Depends(MembershipOrderList())
+    order_list_res: ListAllOrderListResponse[RetrieveMembershipTokenResponse] = Depends(MembershipOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/Membership
@@ -635,7 +635,7 @@ class CouponOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: OrderListRequest,
+        data: ListAllOrderListRequest,
         session: Session = Depends(db_session)
     ):
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -697,11 +697,11 @@ class CouponOrderList(BaseOrderList):
     "/Coupon",
     summary="Coupon Order History (Bulk Get)",
     operation_id="CouponOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse[CouponTokenSchema]],
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveCouponTokenResponse]],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_order_history(
-    order_list_res: OrderListResponse[CouponTokenSchema] = Depends(CouponOrderList())
+    order_list_res: ListAllOrderListResponse[RetrieveCouponTokenResponse] = Depends(CouponOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/Coupon
@@ -719,7 +719,7 @@ class ShareOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: OrderListRequest,
+        data: ListAllOrderListRequest,
         session: Session = Depends(db_session)
     ):
         if config.SHARE_TOKEN_ENABLED is False or config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -781,11 +781,11 @@ class ShareOrderList(BaseOrderList):
     "/Share",
     summary="Share Order History (Bulk Get)",
     operation_id="ShareOrderList",
-    response_model=GenericSuccessResponse[OrderListResponse[ShareTokenSchema]],
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveShareTokenResponse]],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_share_order_history(
-    order_list_res: OrderListResponse[ShareTokenSchema] = Depends(ShareOrderList())
+    order_list_res: ListAllOrderListResponse[RetrieveShareTokenResponse] = Depends(ShareOrderList())
 ):
     """
     Endpoint: /DEX/OrderList/Share
@@ -803,7 +803,7 @@ class OrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: OrderListRequest,
+        data: ListAllOrderListRequest,
         token_address: str = Path(),
         session: Session = Depends(db_session)
     ):
@@ -869,11 +869,11 @@ class OrderList(BaseOrderList):
     "/{token_address}",
     summary="Order History filtered by token (Bulk Get)",
     operation_id="IbetExchange",
-    response_model=GenericSuccessResponse[OrderListResponse[TokenAddress]],
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[TokenAddress]],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_order_history_by_token_address(
-    order_list_res: OrderListResponse[TokenAddress] = Depends(OrderList())
+    order_list_res: ListAllOrderListResponse[TokenAddress] = Depends(OrderList())
 ):
     """
     Endpoint: /DEX/OrderList/{token_address}

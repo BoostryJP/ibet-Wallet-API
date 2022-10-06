@@ -28,10 +28,10 @@ from app.contracts import Contract
 from app.model.schema import (
     GenericSuccessResponse,
     SuccessResponse,
-    PaymentAccountQuery,
-    PaymentAccountRegistrationStatus,
-    PersonalInfoRegistrationStatus,
-    PersonalInfoQuery
+    RetrievePaymentAccountQuery,
+    RetrievePaymentAccountRegistrationStatusResponse,
+    RetrievePersonalInfoRegistrationStatusResponse,
+    RetrievePersonalInfoQuery
 )
 from app.utils.docs_utils import get_routers_responses
 
@@ -50,11 +50,11 @@ router = APIRouter(
     "/PaymentAccount",
     summary="Registration status to PaymentGateway Contract",
     operation_id="PaymentAccount",
-    response_model=GenericSuccessResponse[PaymentAccountRegistrationStatus],
+    response_model=GenericSuccessResponse[RetrievePaymentAccountRegistrationStatusResponse],
     responses=get_routers_responses()
 )
 def get_payment_account_registration_status(
-    query: PaymentAccountQuery = Depends()
+    query: RetrievePaymentAccountQuery = Depends()
 ):
     """
     Endpoint: /User/PaymentAccount
@@ -99,11 +99,11 @@ def get_payment_account_registration_status(
     "/PersonalInfo",
     summary="Registration status to PersonalInfo Contract",
     operation_id="PersonalInfo",
-    response_model=GenericSuccessResponse[PersonalInfoRegistrationStatus],
+    response_model=GenericSuccessResponse[RetrievePersonalInfoRegistrationStatusResponse],
     responses=get_routers_responses()
 )
 def get_personal_info_registration_status(
-    query: PersonalInfoQuery = Depends()
+    query: RetrievePersonalInfoQuery = Depends()
 ):
     """
     Endpoint: /User/PersonalInfo

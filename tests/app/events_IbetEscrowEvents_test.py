@@ -671,7 +671,7 @@ class TestEventsIbetEscrow:
             "code": 88,
             "description": [
                 {
-                    "loc": ["query", "__root__"],
+                    "loc": ["__root__"],
                     "msg": "to_block must be greater than or equal to the "
                            "from_block",
                     "type": "value_error"

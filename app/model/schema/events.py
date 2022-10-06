@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from pydantic import (
     BaseModel,
@@ -24,8 +25,7 @@ from pydantic import (
     root_validator,
     StrictStr
 )
-
-from app.model.schema.base import QueryModel
+from pydantic.dataclasses import dataclass
 
 ############################
 # COMMON
@@ -36,9 +36,10 @@ from app.model.schema.base import QueryModel
 # REQUEST
 ############################
 
-class EventsQuery(QueryModel):
-    from_block: int = Field(description="from block number", ge=1)
-    to_block: int = Field(description="to block number", ge=1)
+@dataclass
+class EventsQuery:
+    from_block: int = Query(description="from block number", ge=1)
+    to_block: int = Query(description="to block number", ge=1)
 
     @root_validator
     def validate_block_number(cls, values):
@@ -58,9 +59,11 @@ class E2EMessagingEventArguments(BaseModel):
     who: Optional[StrictStr]
 
 
+@dataclass
 class E2EMessagingEventsQuery(EventsQuery):
-    event: Optional[E2EMessagingEventType] = Field(description="events to get")
-    argument_filters: Optional[str] = Field(
+    event: Optional[E2EMessagingEventType] = Query(default=None, description="events to get")
+    argument_filters: Optional[str] = Query(
+        default=None,
         description="filter argument. serialize obj to a JSON formatted str required."
                     "eg."
                     "```"
@@ -83,9 +86,11 @@ class EscrowEventArguments(BaseModel):
     escrowId: Optional[int]
 
 
+@dataclass
 class IbetEscrowEventsQuery(EventsQuery):
-    event: Optional[IbetEscrowEventType] = Field(description="events to get")
-    argument_filters: Optional[str] = Field(
+    event: Optional[IbetEscrowEventType] = Query(default=None, description="events to get")
+    argument_filters: Optional[str] = Query(
+        default=None,
         description="filter argument. serialize obj to a JSON formatted str required."
                     "eg."
                     "```"
@@ -110,9 +115,11 @@ class IbetSecurityTokenEscrowEventType(str, Enum):
     FinishTransfer = "FinishTransfer"
 
 
+@dataclass
 class IbetSecurityTokenEscrowEventsQuery(EventsQuery):
-    event: Optional[IbetSecurityTokenEscrowEventType] = Field(description="events to get")
-    argument_filters: Optional[str] = Field(
+    event: Optional[IbetSecurityTokenEscrowEventType] = Query(default=None, description="events to get")
+    argument_filters: Optional[str] = Query(
+        default=None,
         description="filter argument. serialize obj to a JSON formatted str required."
                     "eg."
                     "```"
@@ -135,3 +142,7 @@ class Event(BaseModel):
     block_number: int = Field(description="the block number where this log was in")
     block_timestamp: int = Field(description="timestamp where this log was in")
     log_index: int = Field(description="integer of the log index position in the block")
+
+
+class ListAllEventsResponse(BaseModel):
+    __root__: list[Event]

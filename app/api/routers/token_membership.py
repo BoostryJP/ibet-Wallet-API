@@ -39,11 +39,11 @@ from app import config
 from app.model.blockchain import MembershipToken
 from app.model.schema import (
     GenericSuccessResponse,
-    MembershipTokensQuery,
-    MembershipTokensResponse,
+    ListAllMembershipTokensQuery,
+    ListAllMembershipTokensResponse,
     SuccessResponse,
-    MembershipTokenAddressesResponse,
-    MembershipToken as MembershipTokenSchema
+    ListAllMembershipTokenAddressesResponse,
+    RetrieveMembershipTokenResponse
 )
 from app.model.db import (
     Listing,
@@ -63,13 +63,13 @@ router = APIRouter(
     "",
     summary="Token detail list of Membership tokens",
     operation_id="MembershipTokens",
-    response_model=GenericSuccessResponse[MembershipTokensResponse],
+    response_model=GenericSuccessResponse[ListAllMembershipTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_membership_tokens(
     req: Request,
     address_list: list[str] = Query(default=[], description="list of token address (**this affects total number**)"),
-    request_query: MembershipTokensQuery = Depends(),
+    request_query: ListAllMembershipTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -168,12 +168,12 @@ def list_all_membership_tokens(
     "/Addresses",
     summary="List of Membership token address",
     operation_id="MembershipTokenAddresses",
-    response_model=GenericSuccessResponse[MembershipTokenAddressesResponse],
+    response_model=GenericSuccessResponse[ListAllMembershipTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_token_addresses(
     req: Request,
-    request_query: MembershipTokensQuery = Depends(),
+    request_query: ListAllMembershipTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -260,7 +260,7 @@ def list_all_membership_token_addresses(
     "/{token_address}",
     summary="Membership token details",
     operation_id="MembershipTokenDetails",
-    response_model=GenericSuccessResponse[MembershipTokenSchema],
+    response_model=GenericSuccessResponse[RetrieveMembershipTokenResponse],
     responses=get_routers_responses(NotSupportedError, DataNotExistsError)
 )
 def retrieve_membership_token(

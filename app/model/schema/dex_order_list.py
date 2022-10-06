@@ -16,7 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional, Generic, TypeVar
+from typing import (
+    Optional,
+    Generic,
+    TypeVar
+)
 from pydantic import (
     BaseModel,
     Field,
@@ -24,12 +28,10 @@ from pydantic import (
 )
 from pydantic.generics import GenericModel
 from web3 import Web3
-from app.model.schema import (
-    StraightBondToken,
-    ShareToken,
-    MembershipToken,
-    CouponToken
-)
+from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
+from app.model.schema.token_coupon import RetrieveCouponTokenResponse
+from app.model.schema.token_membership import RetrieveMembershipTokenResponse
+from app.model.schema.token_share import RetrieveShareTokenResponse
 
 ############################
 # COMMON
@@ -40,7 +42,7 @@ from app.model.schema import (
 # REQUEST
 ############################
 
-class OrderListRequest(BaseModel):
+class ListAllOrderListRequest(BaseModel):
     account_address_list: list[str] = Field(description="Account address list")
     include_canceled_items: Optional[bool] = Field(
         description="Whether to include canceled orders or canceled agreements."
@@ -73,7 +75,7 @@ class Order(BaseModel):
     order_timestamp: str
 
 
-TokenModel = TypeVar("TokenModel", StraightBondToken, ShareToken, MembershipToken, CouponToken, TokenAddress)
+TokenModel = TypeVar("TokenModel", RetrieveStraightBondTokenResponse, RetrieveShareTokenResponse, RetrieveMembershipTokenResponse, RetrieveCouponTokenResponse, TokenAddress)
 
 
 class OrderSet(GenericModel, Generic[TokenModel]):
@@ -104,7 +106,7 @@ class CompleteAgreementSet(AgreementSet, Generic[TokenModel]):
     settlement_timestamp: str = Field(description="settlement timestamp")
 
 
-class OrderListResponse(BaseModel, Generic[TokenModel]):
+class ListAllOrderListResponse(BaseModel, Generic[TokenModel]):
     order_list: list[OrderSet[TokenModel]]
     settlement_list: list[AgreementSet[TokenModel]]
     complete_list: list[CompleteAgreementSet[TokenModel]]

@@ -52,11 +52,9 @@ from app.model.blockchain import (
 from app.model.schema import (
     GenericSuccessResponse,
     SuccessResponse,
-    CompanyInfo,
-    ShareToken as ShareTokenSchema,
-    StraightBondToken as StraightBondTokenSchema,
-    MembershipToken as MembershipTokenSchema,
-    CouponToken as CouponTokenSchema
+    RetrieveCompanyInfoResponse,
+    ListAllCompanyInfoResponse,
+    ListAllCompanyTokensResponse
 )
 
 from app.utils.company_list import CompanyList
@@ -77,7 +75,7 @@ router = APIRouter(
     "",
     summary="Issuer Information List",
     operation_id="Companies",
-    response_model=GenericSuccessResponse[list[CompanyInfo]],
+    response_model=GenericSuccessResponse[ListAllCompanyInfoResponse],
     responses=get_routers_responses()
 )
 def list_all_companies(
@@ -160,7 +158,7 @@ def list_all_companies(
     "/{eth_address}",
     summary="Issuer Information",
     operation_id="Company",
-    response_model=GenericSuccessResponse[CompanyInfo],
+    response_model=GenericSuccessResponse[RetrieveCompanyInfoResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def retrieve_company(
@@ -190,7 +188,7 @@ def retrieve_company(
     "/{eth_address}/Tokens",
     summary="List of tokens issued by issuer",
     operation_id="",
-    response_model=GenericSuccessResponse[list[Union[StraightBondTokenSchema, ShareTokenSchema, MembershipTokenSchema, CouponTokenSchema]]],
+    response_model=GenericSuccessResponse[ListAllCompanyTokensResponse],
     responses=get_routers_responses()
 )
 def retrieve_company_tokens(

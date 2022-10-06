@@ -42,13 +42,13 @@ from app.model.db import (
 )
 from app.model.schema import (
     GenericSuccessResponse,
-    TransactionCountQuery,
-    TransactionCount,
+    GetTransactionCountQuery,
+    TransactionCountResponse,
     SuccessResponse,
     SendRawTransactionRequest,
-    SendRawTransactionResult,
-    SendRawTransactionNoWaitResult,
-    WaitForTransactionReceiptResult,
+    SendRawTransactionsResponse,
+    SendRawTransactionsNoWaitResponse,
+    WaitForTransactionReceiptResponse,
     WaitForTransactionReceiptRequest,
 )
 from app.contracts import Contract
@@ -72,13 +72,13 @@ router = APIRouter(
     "/TransactionCount/{eth_address}",
     summary="Transaction count for the specified eth_address",
     operation_id="TransactionCount",
-    response_model=GenericSuccessResponse[TransactionCount],
+    response_model=GenericSuccessResponse[TransactionCountResponse],
     response_model_exclude_unset=True,
     responses=get_routers_responses(InvalidParameterError)
 )
 def get_transaction_count(
     eth_address: str,
-    query: TransactionCountQuery = Depends()
+    query: GetTransactionCountQuery = Depends()
 ):
     """
     Endpoint: /Eth/TransactionCount/{eth_address}
@@ -110,7 +110,7 @@ def get_transaction_count(
     "/SendRawTransaction",
     summary="Send signed transaction",
     operation_id="SendRawTransaction",
-    response_model=GenericSuccessResponse[list[SendRawTransactionResult]],
+    response_model=GenericSuccessResponse[SendRawTransactionsResponse],
     response_model_exclude_unset=True,
     responses=get_routers_responses(SuspendedTokenError)
 )
@@ -290,7 +290,7 @@ def send_raw_transaction(
     "/SendRawTransactionNoWait",
     summary="Send signed transaction",
     operation_id="SendRawTransactionNoWait",
-    response_model=GenericSuccessResponse[list[SendRawTransactionNoWaitResult]],
+    response_model=GenericSuccessResponse[SendRawTransactionsNoWaitResponse],
     response_model_exclude_unset=True,
     responses=get_routers_responses(SuspendedTokenError)
 )
@@ -406,7 +406,7 @@ def send_raw_transaction_no_wait(
     "/WaitForTransactionReceipt",
     summary="Wait for Transaction Receipt",
     operation_id="WaitForTransactionReceipt",
-    response_model=GenericSuccessResponse[WaitForTransactionReceiptResult],
+    response_model=GenericSuccessResponse[WaitForTransactionReceiptResponse],
     response_model_exclude_unset=True,
     responses=get_routers_responses(DataNotExistsError)
 )

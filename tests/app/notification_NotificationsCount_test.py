@@ -169,7 +169,7 @@ class TestNotificationCount:
             "code": 88,
             "description": [
                 {
-                    "loc": ["query", "address"],
+                    "loc": ["address"],
                     "msg": "address is not a valid address",
                     "type": "value_error"
                 }

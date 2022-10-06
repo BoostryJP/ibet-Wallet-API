@@ -17,15 +17,18 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import IntEnum
-from fastapi.exceptions import RequestValidationError
-from typing import TypeVar, Generic, Optional
+from fastapi import Query
+from typing import (
+    TypeVar,
+    Generic,
+    Optional
+)
 from pydantic import (
     BaseModel,
-    Field,
-    ValidationError
+    Field
 )
+from pydantic.dataclasses import dataclass
 from pydantic.generics import GenericModel
-from pydantic.error_wrappers import ErrorWrapper
 
 
 ############################
@@ -37,21 +40,10 @@ class SortOrder(IntEnum):
     DESC = 1
 
 
-class QueryModel(BaseModel):
-    def __init__(self, **kwargs):
-        try:
-            super().__init__(**kwargs)
-        except ValidationError as e:
-            errors: list[ErrorWrapper] = []
-            for error in e.raw_errors:
-                raw_error = ErrorWrapper(exc=error.exc, loc=("query",) + error.loc_tuple())
-                errors.append(raw_error)
-            raise RequestValidationError(errors=errors) from None
-
-
-class ResultSetQuery(QueryModel):
-    offset: Optional[int] = Field(description="start position", ge=0)
-    limit: Optional[int] = Field(description="number of set", ge=0)
+@dataclass
+class ResultSetQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
 
 
 ############################

@@ -17,15 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
     validator
 )
+from pydantic.dataclasses import dataclass
 from web3 import Web3
 
-from app.model.schema.base import QueryModel
 
 ############################
 # COMMON
@@ -41,7 +42,7 @@ class OrderType(str, Enum):
     sell = "sell"
 
 
-class OrderBookRequest(BaseModel):
+class ListAllOrderBookRequest(BaseModel):
     account_address: Optional[str] = Field(description="Orderer's account address. Orders from the given address "
                                                        "will not be included in the response.")
     token_address: str = Field(description="Token address")
@@ -62,7 +63,7 @@ class OrderBookRequest(BaseModel):
         return v
 
 
-class LastPriceRequest(BaseModel):
+class ListAllLastPriceRequest(BaseModel):
     address_list: list[str] = Field(description="Token address list")
 
     @validator("address_list")
@@ -74,7 +75,7 @@ class LastPriceRequest(BaseModel):
         return v
 
 
-class TickRequest(BaseModel):
+class ListAllTickRequest(BaseModel):
     address_list: list[str] = Field(description="Token address list")
 
     @validator("address_list")
@@ -86,10 +87,11 @@ class TickRequest(BaseModel):
         return v
 
 
-class AgreementQuery(QueryModel):
-    order_id: int = Field(description="order id")
-    agreement_id: int = Field(description="agreement id")
-    exchange_address: str = Field(description="exchange_address")
+@dataclass
+class RetrieveAgreementQuery:
+    order_id: int = Query(description="order id")
+    agreement_id: int = Query(description="agreement id")
+    exchange_address: str = Query(description="exchange_address")
 
     @validator("exchange_address")
     def exchange_address_is_valid_address(cls, v):
@@ -110,13 +112,17 @@ class OrderBookItem(BaseModel):
     account_address: str = Field(description="An orderrer of each order book")
 
 
-class OrderBookList(BaseModel):
+class ListAllOrderBookItemResponse(BaseModel):
     __root__: list[OrderBookItem]
 
 
 class LastPrice(BaseModel):
     token_address: str
     last_price: int
+
+
+class ListAllLastPriceResponse(BaseModel):
+    __root__: list[LastPrice]
 
 
 class Tick(BaseModel):
@@ -129,12 +135,16 @@ class Tick(BaseModel):
     amount: int
 
 
-class TicksResponse(BaseModel):
+class Ticks(BaseModel):
     token_address: str
     tick: list[Tick]
 
 
-class AgreementDetail(BaseModel):
+class ListAllTicksResponse(BaseModel):
+    __root__: list[Ticks]
+
+
+class RetrieveAgreementDetailResponse(BaseModel):
     token_address: str = Field(description="token address")
     counterpart: str = Field(description="taker account address")
     buyer_address: str = Field(description="buyer account address")

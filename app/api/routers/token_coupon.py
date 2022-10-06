@@ -39,11 +39,11 @@ from app import config
 from app.model.blockchain import CouponToken
 from app.model.schema import (
     GenericSuccessResponse,
-    CouponTokensQuery,
-    CouponTokensResponse,
+    ListAllCouponTokensQuery,
+    ListAllCouponTokensResponse,
     SuccessResponse,
-    CouponTokenAddressesResponse,
-    CouponToken as CouponTokenSchema
+    ListAllCouponTokenAddressesResponse,
+    RetrieveCouponTokenResponse
 )
 from app.model.db import (
     Listing,
@@ -63,13 +63,13 @@ router = APIRouter(
     "",
     summary="Token detail list of Coupon tokens",
     operation_id="CouponTokens",
-    response_model=GenericSuccessResponse[CouponTokensResponse],
+    response_model=GenericSuccessResponse[ListAllCouponTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_coupon_tokens(
     req: Request,
     address_list: list[str] = Query(default=[], description="list of token address (**this affects total number**)"),
-    request_query: CouponTokensQuery = Depends(),
+    request_query: ListAllCouponTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -167,12 +167,12 @@ def list_all_coupon_tokens(
     "/Addresses",
     summary="List of Coupon token address",
     operation_id="CouponTokenAddresses",
-    response_model=GenericSuccessResponse[CouponTokenAddressesResponse],
+    response_model=GenericSuccessResponse[ListAllCouponTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_token_addresses(
     req: Request,
-    request_query: CouponTokensQuery = Depends(),
+    request_query: ListAllCouponTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -259,7 +259,7 @@ def list_all_coupon_token_addresses(
     "/{token_address}",
     summary="Coupon token details",
     operation_id="CouponTokenDetails",
-    response_model=GenericSuccessResponse[CouponTokenSchema],
+    response_model=GenericSuccessResponse[RetrieveCouponTokenResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError, DataNotExistsError)
 )
 def retrieve_coupon_token(

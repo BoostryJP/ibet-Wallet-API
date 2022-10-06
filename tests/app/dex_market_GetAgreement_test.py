@@ -400,7 +400,7 @@ class TestDEXMarketGetAgreement:
             "code": 88,
             "description": [
                 {
-                    "loc": ["query", "exchange_address"],
+                    "loc": ["exchange_address"],
                     "msg": "owner_address is not a valid address",
                     "type": "value_error"
                 }

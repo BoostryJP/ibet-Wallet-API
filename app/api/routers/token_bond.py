@@ -39,11 +39,11 @@ from app import config
 from app.model.blockchain import BondToken
 from app.model.schema import (
     GenericSuccessResponse,
-    StraightBondTokensQuery,
-    StraightBondTokensResponse,
+    ListAllStraightBondTokensQuery,
+    ListAllStraightBondTokensResponse,
     SuccessResponse,
-    StraightBondTokenAddressesResponse,
-    StraightBondToken as StraightBondTokenSchema
+    ListAllStraightBondTokenAddressesResponse,
+    RetrieveStraightBondTokenResponse
 )
 from app.model.db import (
     Listing,
@@ -63,13 +63,13 @@ router = APIRouter(
     "",
     summary="Token detail list of StraightBond tokens",
     operation_id="StraightBondTokens",
-    response_model=GenericSuccessResponse[StraightBondTokensResponse],
+    response_model=GenericSuccessResponse[ListAllStraightBondTokensResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def list_all_straight_bond_tokens(
     req: Request,
     address_list: list[str] = Query(default=[], description="list of token address (**this affects total number**)"),
-    request_query: StraightBondTokensQuery = Depends(),
+    request_query: ListAllStraightBondTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -176,12 +176,12 @@ def list_all_straight_bond_tokens(
     "/Addresses",
     summary="List of StraightBond token address",
     operation_id="StraightBondTokenAddresses",
-    response_model=GenericSuccessResponse[StraightBondTokenAddressesResponse],
+    response_model=GenericSuccessResponse[ListAllStraightBondTokenAddressesResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_token_addresses(
     req: Request,
-    request_query: StraightBondTokensQuery = Depends(),
+    request_query: ListAllStraightBondTokensQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -277,7 +277,7 @@ def list_all_straight_bond_token_addresses(
     "/{token_address}",
     summary="StraightBond token details",
     operation_id="StraightBondTokenDetails",
-    response_model=GenericSuccessResponse[StraightBondTokenSchema],
+    response_model=GenericSuccessResponse[RetrieveStraightBondTokenResponse],
     responses=get_routers_responses(NotSupportedError, DataNotExistsError, InvalidParameterError)
 )
 def retrieve_straight_bond_token(

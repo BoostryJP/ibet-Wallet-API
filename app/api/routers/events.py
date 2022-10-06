@@ -29,13 +29,13 @@ from app.contracts import Contract
 from app.errors import InvalidParameterError
 from app.model.schema import (
     GenericSuccessResponse,
-    Event as EventSchema,
     E2EMessagingEventsQuery,
     SuccessResponse,
     IbetEscrowEventsQuery,
     IbetSecurityTokenEscrowEventsQuery,
     E2EMessagingEventArguments,
-    EscrowEventArguments
+    EscrowEventArguments,
+    ListAllEventsResponse
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.web3_utils import Web3Wrapper
@@ -56,7 +56,7 @@ router = APIRouter(
     "/E2EMessaging",
     summary="List all E2EMessaging event logs",
     operation_id="E2EMessagingEvents",
-    response_model=GenericSuccessResponse[list[EventSchema]],
+    response_model=GenericSuccessResponse[ListAllEventsResponse],
     responses=get_routers_responses(InvalidParameterError)
 )
 def list_all_e2e_messaging_event_logs(
@@ -120,7 +120,7 @@ def list_all_e2e_messaging_event_logs(
     "/IbetEscrow",
     summary="List all IbetEscrow event logs",
     operation_id="IbetEscrowEvents",
-    response_model=GenericSuccessResponse[list[EventSchema]],
+    response_model=GenericSuccessResponse[ListAllEventsResponse],
     responses=get_routers_responses(InvalidParameterError)
 )
 def list_all_ibet_escrow_event_logs(
@@ -195,7 +195,7 @@ def list_all_ibet_escrow_event_logs(
     "/IbetSecurityTokenEscrow",
     summary="List all IbetSecurityTokenEscrow event logs",
     operation_id="IbetSecurityTokenEscrowEvents",
-    response_model=GenericSuccessResponse[list[EventSchema]],
+    response_model=GenericSuccessResponse[ListAllEventsResponse],
     responses=get_routers_responses(InvalidParameterError)
 )
 def list_all_ibet_security_token_escrow_event_logs(

@@ -17,15 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
     StrictStr
 )
+from pydantic.dataclasses import dataclass
 
 from app.model.schema.base import (
-    ResultSetQuery,
     ResultSet,
     SortOrder
 )
@@ -55,32 +56,36 @@ class StraightBondTokensSortItem(str, Enum):
     created = "created"
 
 
-class StraightBondTokensQuery(ResultSetQuery):
-    owner_address: Optional[str] = Field(description="issuer address")
-    name: Optional[str] = Field(description="token name")
-    symbol: Optional[str] = Field(description="token symbol")
-    company_name: Optional[str] = Field(description="company name")
-    tradable_exchange: Optional[str] = Field(description="tradable exchange address")
-    status: Optional[bool] = Field(description="token status")
-    personal_info_address: Optional[str] = Field(description="personal information address")
-    transferable: Optional[bool] = Field(description="transferable status")
-    is_offering: Optional[bool] = Field(description="offering status")
-    transfer_approval_required: Optional[bool] = Field(description="transfer approval required status")
-    is_redeemed: Optional[bool] = Field(description="redeem status")
+@dataclass
+class ListAllStraightBondTokensQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
 
-    sort_item: Optional[StraightBondTokensSortItem] = Field(
+    owner_address: Optional[str] = Query(default=None, description="issuer address")
+    name: Optional[str] = Query(default=None, description="token name")
+    symbol: Optional[str] = Query(default=None, description="token symbol")
+    company_name: Optional[str] = Query(default=None, description="company name")
+    tradable_exchange: Optional[str] = Query(default=None, description="tradable exchange address")
+    status: Optional[bool] = Query(default=None, description="token status")
+    personal_info_address: Optional[str] = Query(default=None, description="personal information address")
+    transferable: Optional[bool] = Query(default=None, description="transferable status")
+    is_offering: Optional[bool] = Query(default=None, description="offering status")
+    transfer_approval_required: Optional[bool] = Query(default=None, description="transfer approval required status")
+    is_redeemed: Optional[bool] = Query(default=None, description="redeem status")
+
+    sort_item: Optional[StraightBondTokensSortItem] = Query(
         default=StraightBondTokensSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
-    address_list: list[StrictStr] = Field(default=[], description="list of token address (**this affects total number**)")
+    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+    address_list: list[StrictStr] = Query(default=[], description="list of token address (**this affects total number**)")
 
 
 ############################
 # RESPONSE
 ############################
 
-class StraightBondToken(BaseModel):
+class RetrieveStraightBondTokenResponse(BaseModel):
     token_address: str
     token_template: str = Field(example="IbetStraightBond")
     owner_address: str = Field(description="issuer address")
@@ -122,11 +127,11 @@ class StraightBondToken(BaseModel):
     is_redeemed: bool
 
 
-class StraightBondTokensResponse(BaseModel):
+class ListAllStraightBondTokensResponse(BaseModel):
     result_set: ResultSet
-    tokens: list[StraightBondToken]
+    tokens: list[RetrieveStraightBondTokenResponse]
 
 
-class StraightBondTokenAddressesResponse(BaseModel):
+class ListAllStraightBondTokenAddressesResponse(BaseModel):
     result_set: ResultSet
     address_list: list[str]
