@@ -31,7 +31,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 from app import log
-from app.config import BRAND_NAME
 from app.api.routers import (
     admin as routers_admin,
     node_info as routers_node_info,
@@ -69,9 +68,6 @@ from app.utils.docs_utils import custom_openapi
 LOG = log.get_logger()
 
 tags_metadata = [
-    {
-        "name": "Root"
-    },
     {
         "name": "Admin",
         "description": "System administration"
@@ -124,6 +120,7 @@ tags_metadata = [
 
 app = FastAPI(
     title="ibet Wallet API",
+    description="ibet Wallet API",
     terms_of_service="",
     version="22.12.0",
     contact={"email": "dev@boostry.co.jp"},
@@ -137,11 +134,6 @@ app.openapi = custom_openapi(app)  # type: ignore
 ###############################################################
 # ROUTER
 ###############################################################
-
-@app.get("/", tags=["Root"])
-def root():
-    return {"server": BRAND_NAME}
-
 
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)

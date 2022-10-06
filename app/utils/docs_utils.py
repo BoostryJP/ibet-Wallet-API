@@ -74,7 +74,7 @@ AppErrorType = TypeVar("AppErrorType", bound=AppError)
 
 
 @lru_cache(None)
-def create_error_model(app_error: Type[AppErrorType]):
+def create_error_model(app_error: Type[AppError]):
     """
     This function creates Pydantic Model from AppError.
     * create_model() generates a different model each time when called,
@@ -83,29 +83,16 @@ def create_error_model(app_error: Type[AppErrorType]):
     @param app_error: AppError defined in ibet-Wallet-API
     @return: pydantic Model created dynamically
     """
-    class ErrorConfig(BaseConfig):
-        schema_extra = {
-            "meta": {
-                "code": {
-                    "example": app_error.error_code
-                },
-                "message": {
-                    "example": app_error.message
-                }
-            }
-        }
 
     metainfo_model = create_model(
         f"{app_error.error_type.strip()}Metainfo",
         code=(int, Field(..., example=app_error.error_code)),
-        message=(str, Field(..., example=app_error.message)),
-        __base__=ErrorInfo
+        message=(str, Field(..., example=app_error.message))
     )
     error_model = create_model(
         f"{app_error.error_type.strip()}Response",
         meta=(metainfo_model, Field(...,)),
         details=(dict | None, Field(default=None, example=None)),
-        __config__=ErrorConfig
     )
     return error_model
 
