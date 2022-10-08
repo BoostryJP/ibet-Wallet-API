@@ -34,7 +34,7 @@ from web3 import Web3
 ############################
 
 
-class RegisterAdminTokensRequest(BaseModel):
+class RegisterAdminTokenRequest(BaseModel):
     contract_address: str = Field(..., description="Token Address")
     is_public: bool = Field(..., description="Public and private listings")
     max_holding_quantity: int | None = Field(None, ge=0, description="Maximum holding quantity limit")
@@ -65,7 +65,7 @@ class UpdateAdminTokenRequest(BaseModel):
 ############################
 
 
-class AdminToken(BaseModel):
+class RetrieveAdminTokenResponse(BaseModel):
     id: int = Field(...)
     token_address: str = Field(...)
     is_public: bool = Field(...)
@@ -75,7 +75,11 @@ class AdminToken(BaseModel):
     created: str = Field(..., description="Create Datetime (JST)")
 
 
-class AdminTokensType(BaseModel):
+class ListAllAdminTokensResponse(BaseModel):
+    __root__: list[RetrieveAdminTokenResponse]
+
+
+class GetAdminTokenTypeResponse(BaseModel):
     IbetStraightBond: bool = Field(...)
     IbetShare: bool = Field(...)
     IbetMembership: bool = Field(...)

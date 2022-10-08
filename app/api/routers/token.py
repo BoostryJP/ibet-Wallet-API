@@ -42,17 +42,17 @@ from app import config
 from app.contracts import Contract
 from app.model.schema import (
     GenericSuccessResponse,
-    TokenStatus,
+    TokenStatusResponse,
     SuccessResponse,
-    TokenHolder as TokenHolderSchema,
-    TokenHoldersCount,
+    ResultSetQuery,
+    TokenHoldersResponse,
+    TokenHoldersCountResponse,
     CreateTokenHoldersCollectionResponse,
     CreateTokenHoldersCollectionRequest,
-    TokenHoldersCollection,
+    TokenHoldersCollectionResponse,
     TransferHistoriesResponse,
     TransferApprovalHistoriesResponse
 )
-from app.model.schema.base import ResultSetQuery
 from app.utils.docs_utils import get_routers_responses
 from app.utils.web3_utils import Web3Wrapper
 from app.model.db import (
@@ -78,7 +78,7 @@ router = APIRouter(
     "/{token_address}/Status",
     summary="Token Status",
     operation_id="TokenStatus",
-    response_model=GenericSuccessResponse[TokenStatus],
+    response_model=GenericSuccessResponse[TokenStatusResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_status(
@@ -153,7 +153,7 @@ def get_token_status(
     "/{token_address}/Holders",
     summary="Token holders",
     operation_id="TokenHolders",
-    response_model=GenericSuccessResponse[list[TokenHolderSchema]],
+    response_model=GenericSuccessResponse[TokenHoldersResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_holders(
@@ -212,7 +212,7 @@ def get_token_holders(
     "/{token_address}/Holders/Count",
     summary="Token holders count",
     operation_id="TokenHoldersCount",
-    response_model=GenericSuccessResponse[TokenHoldersCount],
+    response_model=GenericSuccessResponse[TokenHoldersCountResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_holders_count(
@@ -346,7 +346,7 @@ def create_token_holders_collection(
     "/{token_address}/Holders/Collection/{list_id}",
     summary="Token Holder At Specific BlockNumber",
     operation_id="TokenHoldersList",
-    response_model=GenericSuccessResponse[TokenHoldersCollection],
+    response_model=GenericSuccessResponse[TokenHoldersCollectionResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def get_token_holders_collection(

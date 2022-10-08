@@ -16,17 +16,16 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi import Query
 from typing import Optional, TypeVar, Generic, Union
 from pydantic import (
     BaseModel,
     Field,
 )
-from app.model.schema import CouponToken, MembershipToken
-
-from app.model.schema.base import (
-    ResultSetQuery,
-    ResultSet
-)
+from pydantic.dataclasses import dataclass
+from app.model.schema.base import ResultSet
+from app.model.schema.token_coupon import RetrieveCouponTokenResponse
+from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 
 ############################
 # COMMON
@@ -37,9 +36,12 @@ from app.model.schema.base import (
 # REQUEST
 ############################
 
-class PositionQuery(ResultSetQuery):
-    include_token_details: Optional[bool] = Field(default=False, description="include token details")
-    enable_index: Optional[bool] = Field(default=False, description="enable using indexed position data")
+@dataclass
+class ListAllPositionQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    include_token_details: Optional[bool] = Query(default=False, description="include token details")
+    enable_index: Optional[bool] = Query(default=False, description="enable using indexed position data")
 
 
 ############################
@@ -80,7 +82,7 @@ class MembershipPosition(BaseModel):
 
 
 class MembershipPositionWithDetail(MembershipPosition):
-    token: MembershipToken = Field(description="set when include_token_details=false or null")
+    token: RetrieveMembershipTokenResponse = Field(description="set when include_token_details=false or null")
 
 
 class MembershipPositionWithAddress(MembershipPosition):
@@ -100,7 +102,7 @@ class CouponPosition(BaseModel):
 
 
 class CouponPositionWithDetail(CouponPosition):
-    token: CouponToken = Field(description="set when include_token_details=false or null")
+    token: RetrieveCouponTokenResponse = Field(description="set when include_token_details=false or null")
 
 
 class CouponPositionWithAddress(CouponPosition):

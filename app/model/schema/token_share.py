@@ -17,15 +17,16 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
     condecimal
 )
+from pydantic.dataclasses import dataclass
 
 from app.model.schema.base import (
-    ResultSetQuery,
     ResultSet,
     SortOrder
 )
@@ -55,24 +56,28 @@ class ShareTokensSortItem(str, Enum):
     created = "created"
 
 
-class ShareTokensQuery(ResultSetQuery):
-    owner_address: Optional[str] = Field(description="issuer address")
-    name: Optional[str] = Field(description="token name")
-    symbol: Optional[str] = Field(description="token symbol")
-    company_name: Optional[str] = Field(description="company name")
-    tradable_exchange: Optional[str] = Field(description="tradable exchange address")
-    status: Optional[bool] = Field(description="token status")
-    personal_info_address: Optional[str] = Field(description="personal information address")
-    transferable: Optional[bool] = Field(description="transferable status")
-    is_offering: Optional[bool] = Field(description="offering status")
-    transfer_approval_required: Optional[bool] = Field(description="transfer approval required status")
-    is_canceled: Optional[bool] = Field(description="cancellation status")
+@dataclass
+class ListAllShareTokensQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
 
-    sort_item: Optional[ShareTokensSortItem] = Field(
+    owner_address: Optional[str] = Query(default=None, description="issuer address")
+    name: Optional[str] = Query(default=None, description="token name")
+    symbol: Optional[str] = Query(default=None, description="token symbol")
+    company_name: Optional[str] = Query(default=None, description="company name")
+    tradable_exchange: Optional[str] = Query(default=None, description="tradable exchange address")
+    status: Optional[bool] = Query(default=None, description="token status")
+    personal_info_address: Optional[str] = Query(default=None, description="personal information address")
+    transferable: Optional[bool] = Query(default=None, description="transferable status")
+    is_offering: Optional[bool] = Query(default=None, description="offering status")
+    transfer_approval_required: Optional[bool] = Query(default=None, description="transfer approval required status")
+    is_canceled: Optional[bool] = Query(default=None, description="cancellation status")
+
+    sort_item: Optional[ShareTokensSortItem] = Query(
         default=ShareTokensSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
 
 
 ############################
@@ -85,7 +90,7 @@ class DividendInformation(BaseModel):
     dividend_payment_date: str = Field(example="20201001")
 
 
-class ShareToken(BaseModel):
+class RetrieveShareTokenResponse(BaseModel):
     token_address: str
     token_template: str = Field(example="IbetShare")
     owner_address: str = Field(description="issuer address")
@@ -112,11 +117,11 @@ class ShareToken(BaseModel):
     dividend_information: DividendInformation
 
 
-class ShareTokensResponse(BaseModel):
+class ListAllShareTokensResponse(BaseModel):
     result_set: ResultSet
-    tokens: list[ShareToken]
+    tokens: list[RetrieveShareTokenResponse]
 
 
-class ShareTokenAddressesResponse(BaseModel):
+class ListAllShareTokenAddressesResponse(BaseModel):
     result_set: ResultSet
     address_list: list[str]

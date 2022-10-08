@@ -45,14 +45,14 @@ from app.contracts import Contract
 from app.model.schema import (
     GenericSuccessResponse,
     SuccessResponse,
-    AgreementQuery,
-    OrderBookItem,
-    OrderBookRequest,
-    LastPrice,
-    LastPriceRequest,
-    TickRequest,
-    TicksResponse,
-    AgreementDetail
+    RetrieveAgreementQuery,
+    ListAllOrderBookItemResponse,
+    ListAllOrderBookRequest,
+    ListAllLastPriceResponse,
+    ListAllLastPriceRequest,
+    ListAllTickRequest,
+    ListAllTicksResponse,
+    RetrieveAgreementDetailResponse
 )
 from app.utils.docs_utils import get_routers_responses
 
@@ -69,12 +69,12 @@ router = APIRouter(
     "/Agreement",
     summary="Agreement Details",
     operation_id="GetAgreement",
-    response_model=GenericSuccessResponse[AgreementDetail],
+    response_model=GenericSuccessResponse[RetrieveAgreementDetailResponse],
     responses=get_routers_responses(NotSupportedError, InvalidParameterError)
 )
 def retrieve_agreement(
     req: Request,
-    request_query: AgreementQuery = Depends()
+    request_query: RetrieveAgreementQuery = Depends()
 ):
     """約定情報参照"""
     if (
@@ -151,12 +151,12 @@ def retrieve_agreement(
     "/OrderBook/StraightBond",
     summary="StraightBond Token Order Book",
     operation_id="StraightBondOrderBook",
-    response_model=GenericSuccessResponse[list[OrderBookItem]],
+    response_model=GenericSuccessResponse[ListAllOrderBookItemResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_order_book(
     req: Request,
-    data: OrderBookRequest,
+    data: ListAllOrderBookRequest,
     session: Session = Depends(db_session)
 ):
     """[普通社債]板情報取得"""
@@ -338,12 +338,12 @@ def list_all_straight_bond_order_book(
     "/LastPrice/StraightBond",
     summary="StraightBond Token Last Price (Bulk Get)",
     operation_id="StraightBondLastPrice",
-    response_model=GenericSuccessResponse[list[LastPrice]],
+    response_model=GenericSuccessResponse[ListAllLastPriceResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_last_price(
     req: Request,
-    data: LastPriceRequest
+    data: ListAllLastPriceRequest
 ):
     """[普通社債]現在値取得"""
     if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -378,12 +378,12 @@ def list_all_straight_bond_last_price(
     "/Tick/StraightBond",
     summary="StraightBond Token Tick (Bulk Get)",
     operation_id="StraightBondTick",
-    response_model=GenericSuccessResponse[list[TicksResponse]],
+    response_model=GenericSuccessResponse[ListAllTicksResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_straight_bond_tick(
     req: Request,
-    data: TickRequest,
+    data: ListAllTickRequest,
     session: Session = Depends(db_session)
 ):
     """[普通社債]歩み値取得"""
@@ -432,12 +432,12 @@ def list_all_straight_bond_tick(
     "/OrderBook/Membership",
     summary="Membership Token Order Book",
     operation_id="MembershipOrderBook",
-    response_model=GenericSuccessResponse[list[OrderBookItem]],
+    response_model=GenericSuccessResponse[ListAllOrderBookItemResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_order_book(
     req: Request,
-    data: OrderBookRequest,
+    data: ListAllOrderBookRequest,
     session: Session = Depends(db_session)
 ):
     """[会員権]板情報取得"""
@@ -626,12 +626,12 @@ def list_all_membership_order_book(
     "/LastPrice/Membership",
     summary="Membership Token Last Price (Bulk Get)",
     operation_id="MembershipLastPrice",
-    response_model=GenericSuccessResponse[list[LastPrice]],
+    response_model=GenericSuccessResponse[ListAllLastPriceResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_last_price(
     req: Request,
-    data: LastPriceRequest
+    data: ListAllLastPriceRequest
 ):
     """[会員権]現在値取得"""
     if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -667,12 +667,12 @@ def list_all_membership_last_price(
     "/Tick/Membership",
     summary="Membership Token Tick (Bulk Get)",
     operation_id="MembershipTick",
-    response_model=GenericSuccessResponse[list[TicksResponse]],
+    response_model=GenericSuccessResponse[ListAllTicksResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_membership_tick(
     req: Request,
-    data: TickRequest,
+    data: ListAllTickRequest,
     session: Session = Depends(db_session)
 ):
     """[会員権]歩み値取得"""
@@ -722,12 +722,12 @@ def list_all_membership_tick(
     "/OrderBook/Coupon",
     summary="Coupon Token Order Book",
     operation_id="CouponOrderBook",
-    response_model=GenericSuccessResponse[list[OrderBookItem]],
+    response_model=GenericSuccessResponse[ListAllOrderBookItemResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_order_book(
     req: Request,
-    data: OrderBookRequest,
+    data: ListAllOrderBookRequest,
     session: Session = Depends(db_session)
 ):
     """[クーポン]板情報取得"""
@@ -916,12 +916,12 @@ def list_all_coupon_order_book(
     "/LastPrice/Coupon",
     summary="Coupon Token Last Price (Bulk Get)",
     operation_id="CouponLastPrice",
-    response_model=GenericSuccessResponse[list[LastPrice]],
+    response_model=GenericSuccessResponse[ListAllLastPriceResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_last_price(
     req: Request,
-    data: LastPriceRequest
+    data: ListAllLastPriceRequest
 ):
     """[クーポン]現在値取得"""
     if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
@@ -956,12 +956,12 @@ def list_all_coupon_last_price(
     "/Tick/Coupon",
     summary="Coupon Token Tick (Bulk Get)",
     operation_id="CouponTick",
-    response_model=GenericSuccessResponse[list[TicksResponse]],
+    response_model=GenericSuccessResponse[ListAllTicksResponse],
     responses=get_routers_responses(NotSupportedError)
 )
 def list_all_coupon_tick(
     req: Request,
-    data: TickRequest,
+    data: ListAllTickRequest,
     session: Session = Depends(db_session)
 ):
     """[クーポン]歩み値取得"""

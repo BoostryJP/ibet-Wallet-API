@@ -17,19 +17,20 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
     validator
 )
+from pydantic.dataclasses import dataclass
 from web3 import Web3
 
 from app.model.db import NotificationType
 from app.model.schema.base import (
-    ResultSetQuery,
     ResultSet,
-    SortOrder, QueryModel
+    SortOrder
 )
 from app.model.schema.token import TokenType
 
@@ -49,16 +50,19 @@ class NotificationsSortItem(str, Enum):
     created = "created"
 
 
-class NotificationsQuery(ResultSetQuery):
-    address: Optional[str]
-    notification_type: Optional[NotificationType]
-    priority: Optional[int] = Field(ge=0, le=2)
+@dataclass
+class NotificationsQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    address: Optional[str] = Query(default=None)
+    notification_type: Optional[NotificationType] = Query(default=None)
+    priority: Optional[int] = Query(default=None, ge=0, le=2)
 
-    sort_item: Optional[NotificationsSortItem] = Field(
+    sort_item: Optional[NotificationsSortItem] = Query(
         default=NotificationsSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
 
     @validator("address")
     def address_is_valid_address(cls, v):
@@ -79,7 +83,8 @@ class NotificationReadRequest(BaseModel):
         return v
 
 
-class NotificationsCountQuery(QueryModel):
+@dataclass
+class NotificationsCountQuery:
     address: str
 
     @validator("address")

@@ -17,14 +17,15 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
 )
+from pydantic.dataclasses import dataclass
 
 from app.model.schema.base import (
-    ResultSetQuery,
     ResultSet,
     SortOrder
 )
@@ -52,21 +53,24 @@ class MembershipTokensSortItem(str, Enum):
     created = "created"
 
 
-class MembershipTokensQuery(ResultSetQuery):
-    owner_address: Optional[str] = Field(description="issuer address")
-    name: Optional[str] = Field(description="token name")
-    symbol: Optional[str] = Field(description="token symbol")
-    company_name: Optional[str] = Field(description="company name")
-    tradable_exchange: Optional[str] = Field(description="tradable exchange address")
-    status: Optional[bool] = Field(description="token status")
-    transferable: Optional[bool] = Field(description="transferable status")
-    initial_offering_status: Optional[bool] = Field(description="offering status")
+@dataclass
+class ListAllMembershipTokensQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+    owner_address: Optional[str] = Query(default=None, description="issuer address")
+    name: Optional[str] = Query(default=None, description="token name")
+    symbol: Optional[str] = Query(default=None, description="token symbol")
+    company_name: Optional[str] = Query(default=None, description="company name")
+    tradable_exchange: Optional[str] = Query(default=None, description="tradable exchange address")
+    status: Optional[bool] = Query(default=None, description="token status")
+    transferable: Optional[bool] = Query(default=None, description="transferable status")
+    initial_offering_status: Optional[bool] = Query(default=None, description="offering status")
 
-    sort_item: Optional[MembershipTokensSortItem] = Field(
+    sort_item: Optional[MembershipTokensSortItem] = Query(
         default=MembershipTokensSortItem.created,
         description="sort item"
     )
-    sort_order: Optional[SortOrder] = Field(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
+    sort_order: Optional[SortOrder] = Query(default=SortOrder.ASC, description="sort order(0: ASC, 1: DESC)")
 
 
 ############################
@@ -78,7 +82,7 @@ class MembershipImage(BaseModel):
     url: str
 
 
-class MembershipToken(BaseModel):
+class RetrieveMembershipTokenResponse(BaseModel):
     token_address: str
     token_template: str = Field(example="IbetMembership")
     owner_address: str = Field(description="issuer address")
@@ -102,11 +106,11 @@ class MembershipToken(BaseModel):
     image_url: list[MembershipImage]
 
 
-class MembershipTokensResponse(BaseModel):
+class ListAllMembershipTokensResponse(BaseModel):
     result_set: ResultSet
-    tokens: list[MembershipToken]
+    tokens: list[RetrieveMembershipTokenResponse]
 
 
-class MembershipTokenAddressesResponse(BaseModel):
+class ListAllMembershipTokenAddressesResponse(BaseModel):
     result_set: ResultSet
     address_list: list[str]

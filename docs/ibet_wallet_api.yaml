@@ -1,17 +1,9 @@
 openapi: 3.0.2
 info:
   title: ibet Wallet API
-  version: 22.9.0
+  description: ibet Wallet API
+  version: 22.12.0
 paths:
-  /:
-    get:
-      tags:
-        - Root
-      summary: Root
-      operationId: root__get
-      responses:
-        '200':
-          description: Successful Response
   /Admin/Tokens:
     get:
       tags:
@@ -27,8 +19,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.admin.AdminToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllAdminTokensResponse_'
     post:
       tags:
         - Admin
@@ -41,7 +32,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterAdminTokensRequest'
+              $ref: '#/components/schemas/RegisterAdminTokenRequest'
         required: true
       responses:
         '200':
@@ -80,7 +71,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_AdminTokensType_'
+                $ref: '#/components/schemas/GenericSuccessResponse_GetAdminTokenTypeResponse_'
   /Admin/Tokens/{token_address}:
     get:
       tags:
@@ -105,7 +96,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_AdminToken_'
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveAdminTokenResponse_'
         '400':
           description: Bad Request
           content:
@@ -212,7 +203,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_NodeInfo_'
+                $ref: '#/components/schemas/GenericSuccessResponse_GetNodeInfoResponse_'
   /NodeInfo/BlockSyncStatus:
     get:
       tags:
@@ -226,7 +217,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_BlockSyncStatus_'
+                $ref: '#/components/schemas/GenericSuccessResponse_GetBlockSyncStatusResponse_'
   /ABI/StraightBond:
     get:
       tags:
@@ -354,8 +345,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.company_info.CompanyInfo__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyInfoResponse_'
         '400':
           description: Bad Request
           content:
@@ -384,7 +374,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_CompanyInfo_'
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCompanyInfoResponse_'
         '400':
           description: Bad Request
           content:
@@ -431,8 +421,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_Union_app.model.schema.token_bond.StraightBondToken__app.model.schema.token_share.ShareToken__app.model.schema.token_membership.MembershipToken__app.model.schema.token_coupon.CouponToken___
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCompanyTokensResponse_'
         '400':
           description: Bad Request
           content:
@@ -447,16 +436,20 @@ paths:
       description: 'Endpoint: /User/PaymentAccount'
       operationId: PaymentAccount
       parameters:
-        - required: true
+        - description: Account Address
+          required: true
           schema:
             title: Account Address
             type: string
+            description: Account Address
           name: account_address
           in: query
-        - required: true
+        - description: Agent Address
+          required: true
           schema:
             title: Agent Address
             type: string
+            description: Agent Address
           name: agent_address
           in: query
       responses:
@@ -465,8 +458,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_PaymentAccountRegistrationStatus_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrievePaymentAccountRegistrationStatusResponse_'
         '400':
           description: Bad Request
           content:
@@ -481,22 +473,28 @@ paths:
       description: 'Endpoint: /User/PersonalInfo'
       operationId: PersonalInfo
       parameters:
-        - required: false
+        - description: PersonalInfo contract address
+          required: false
           schema:
             title: Personal Info Address
             type: string
+            description: PersonalInfo contract address
           name: personal_info_address
           in: query
-        - required: true
+        - description: account address
+          required: true
           schema:
             title: Account Address
             type: string
+            description: account address
           name: account_address
           in: query
-        - required: true
+        - description: owner(issuer) address
+          required: true
           schema:
             title: Owner Address
             type: string
+            description: owner(issuer) address
           name: owner_address
           in: query
       responses:
@@ -505,8 +503,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_PersonalInfoRegistrationStatus_
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrievePersonalInfoRegistrationStatusResponse_'
         '400':
           description: Bad Request
           content:
@@ -538,7 +535,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_TransactionCount_'
+                $ref: '#/components/schemas/GenericSuccessResponse_TransactionCountResponse_'
         '400':
           description: Bad Request
           content:
@@ -567,8 +564,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.eth.SendRawTransactionResult__
+                $ref: '#/components/schemas/GenericSuccessResponse_SendRawTransactionsResponse_'
         '400':
           description: Bad Request
           content:
@@ -597,8 +593,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.eth.SendRawTransactionNoWaitResult__
+                $ref: '#/components/schemas/GenericSuccessResponse_SendRawTransactionsNoWaitResponse_'
         '400':
           description: Bad Request
           content:
@@ -627,8 +622,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_WaitForTransactionReceiptResult_
+                $ref: '#/components/schemas/GenericSuccessResponse_WaitForTransactionReceiptResponse_'
         '400':
           description: Bad Request
           content:
@@ -660,117 +654,137 @@ paths:
             default: []
           name: address_list
           in: query
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: personal information address
+          required: false
           schema:
             title: Personal Info Address
             type: string
+            description: personal information address
           name: personal_info_address
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Is Offering
             type: boolean
+            description: offering status
           name: is_offering
           in: query
-        - required: false
+        - description: transfer approval required status
+          required: false
           schema:
             title: Transfer Approval Required
             type: boolean
+            description: transfer approval required status
           name: transfer_approval_required
           in: query
-        - required: false
+        - description: redeem status
+          required: false
           schema:
             title: Is Redeemed
             type: boolean
+            description: redeem status
           name: is_redeemed
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/StraightBondTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
-      requestBody:
-        content:
-          application/json:
-            schema:
-              title: Address List
-              type: array
-              items:
-                type: string
-              default: []
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_StraightBondTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllStraightBondTokensResponse_'
         '400':
           description: Bad Request
           content:
@@ -794,117 +808,148 @@ paths:
       description: 'Endpoint: /Token/StraightBond/Addresses'
       operationId: StraightBondTokenAddresses
       parameters:
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: personal information address
+          required: false
           schema:
             title: Personal Info Address
             type: string
+            description: personal information address
           name: personal_info_address
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Is Offering
             type: boolean
+            description: offering status
           name: is_offering
           in: query
-        - required: false
+        - description: transfer approval required status
+          required: false
           schema:
             title: Transfer Approval Required
             type: boolean
+            description: transfer approval required status
           name: transfer_approval_required
           in: query
-        - required: false
+        - description: redeem status
+          required: false
           schema:
             title: Is Redeemed
             type: boolean
+            description: redeem status
           name: is_redeemed
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/StraightBondTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
-      requestBody:
-        content:
-          application/json:
-            schema:
-              title: Address List
-              type: array
-              items:
-                type: string
-              default: []
+        - description: list of token address (**this affects total number**)
+          required: false
+          schema:
+            title: Address List
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            default: []
+          name: address_list
+          in: query
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_StraightBondTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllStraightBondTokenAddressesResponse_'
         '400':
           description: Bad Request
           content:
@@ -937,7 +982,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_StraightBondToken_'
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveStraightBondTokenResponse_'
         '400':
           description: Bad Request
           content:
@@ -975,97 +1020,127 @@ paths:
             default: []
           name: address_list
           in: query
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: personal information address
+          required: false
           schema:
             title: Personal Info Address
             type: string
+            description: personal information address
           name: personal_info_address
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Is Offering
             type: boolean
+            description: offering status
           name: is_offering
           in: query
-        - required: false
+        - description: transfer approval required status
+          required: false
           schema:
             title: Transfer Approval Required
             type: boolean
+            description: transfer approval required status
           name: transfer_approval_required
           in: query
-        - required: false
+        - description: cancellation status
+          required: false
           schema:
             title: Is Canceled
             type: boolean
+            description: cancellation status
           name: is_canceled
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/ShareTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
@@ -1075,8 +1150,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ShareTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllShareTokensResponse_'
         '400':
           description: Bad Request
           content:
@@ -1100,97 +1174,127 @@ paths:
       description: 'Endpoint: /Token/Share/Addresses'
       operationId: ShareTokenAddresses
       parameters:
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: personal information address
+          required: false
           schema:
             title: Personal Info Address
             type: string
+            description: personal information address
           name: personal_info_address
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Is Offering
             type: boolean
+            description: offering status
           name: is_offering
           in: query
-        - required: false
+        - description: transfer approval required status
+          required: false
           schema:
             title: Transfer Approval Required
             type: boolean
+            description: transfer approval required status
           name: transfer_approval_required
           in: query
-        - required: false
+        - description: cancellation status
+          required: false
           schema:
             title: Is Canceled
             type: boolean
+            description: cancellation status
           name: is_canceled
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/ShareTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
@@ -1200,8 +1304,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_ShareTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllShareTokenAddressesResponse_'
         '400':
           description: Bad Request
           content:
@@ -1234,7 +1337,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ShareToken_'
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveShareTokenResponse_'
         '400':
           description: Bad Request
           content:
@@ -1269,79 +1372,103 @@ paths:
             default: []
           name: address_list
           in: query
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Initial Offering Status
             type: boolean
+            description: offering status
           name: initial_offering_status
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/MembershipTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
@@ -1351,8 +1478,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_MembershipTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllMembershipTokensResponse_'
         '400':
           description: Bad Request
           content:
@@ -1376,79 +1502,103 @@ paths:
       description: 'Endpoint: /Token/Membership/Addresses'
       operationId: MembershipTokenAddresses
       parameters:
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Initial Offering Status
             type: boolean
+            description: offering status
           name: initial_offering_status
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/MembershipTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
@@ -1458,8 +1608,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_MembershipTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_'
         '400':
           description: Bad Request
           content:
@@ -1492,7 +1641,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_MembershipToken_'
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveMembershipTokenResponse_'
         '400':
           description: Bad Request
           content:
@@ -1527,79 +1676,103 @@ paths:
             default: []
           name: address_list
           in: query
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Initial Offering Status
             type: boolean
+            description: offering status
           name: initial_offering_status
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/CouponTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
@@ -1609,8 +1782,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CouponTokensResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCouponTokensResponse_'
         '400':
           description: Bad Request
           content:
@@ -1634,79 +1806,103 @@ paths:
       description: 'Endpoint: /Token/Coupon/Addresses'
       operationId: CouponTokenAddresses
       parameters:
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: issuer address
+          required: false
           schema:
             title: Owner Address
             type: string
+            description: issuer address
           name: owner_address
           in: query
-        - required: false
+        - description: token name
+          required: false
           schema:
             title: Name
             type: string
+            description: token name
           name: name
           in: query
-        - required: false
+        - description: token symbol
+          required: false
           schema:
             title: Symbol
             type: string
+            description: token symbol
           name: symbol
           in: query
-        - required: false
+        - description: company name
+          required: false
           schema:
             title: Company Name
             type: string
+            description: company name
           name: company_name
           in: query
-        - required: false
+        - description: tradable exchange address
+          required: false
           schema:
             title: Tradable Exchange
             type: string
+            description: tradable exchange address
           name: tradable_exchange
           in: query
-        - required: false
+        - description: token status
+          required: false
           schema:
             title: Status
             type: boolean
+            description: token status
           name: status
           in: query
-        - required: false
+        - description: transferable status
+          required: false
           schema:
             title: Transferable
             type: boolean
+            description: transferable status
           name: transferable
           in: query
-        - required: false
+        - description: offering status
+          required: false
           schema:
             title: Initial Offering Status
             type: boolean
+            description: offering status
           name: initial_offering_status
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/CouponTokensSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
@@ -1716,8 +1912,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CouponTokenAddressesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllCouponTokenAddressesResponse_'
         '400':
           description: Bad Request
           content:
@@ -1750,7 +1945,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_CouponToken_'
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveCouponTokenResponse_'
         '400':
           description: Bad Request
           content:
@@ -1791,7 +1986,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_TokenStatus_'
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenStatusResponse_'
         '400':
           description: Bad Request
           content:
@@ -1829,8 +2024,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.token.TokenHolder__
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersResponse_'
         '400':
           description: Bad Request
           content:
@@ -1868,7 +2062,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersCount_'
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersCountResponse_'
         '400':
           description: Bad Request
           content:
@@ -1912,8 +2106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CreateTokenHoldersCollectionResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_CreateTokenHoldersCollectionResponse_'
         '400':
           description: Bad Request
           content:
@@ -1945,16 +2138,12 @@ paths:
             description: token address
           name: token_address
           in: path
-        - description: >-
-            Unique id to be assigned to each token holder list.This must be
-            Version4 UUID.
+        - description: Unique id to be assigned to each token holder list.This must be Version4 UUID.
           required: true
           schema:
             title: List Id
             type: string
-            description: >-
-              Unique id to be assigned to each token holder list.This must be
-              Version4 UUID.
+            description: Unique id to be assigned to each token holder list.This must be Version4 UUID.
             format: uuid
           example: cfd83622-34dc-4efe-a68b-2cc275d3d824
           name: list_id
@@ -1965,8 +2154,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TokenHoldersCollection_
+                $ref: '#/components/schemas/GenericSuccessResponse_TokenHoldersCollectionResponse_'
         '400':
           description: Bad Request
           content:
@@ -1998,18 +2186,22 @@ paths:
             description: token address
           name: token_address
           in: path
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
       responses:
@@ -2018,8 +2210,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferHistoriesResponse_'
         '400':
           description: Bad Request
           content:
@@ -2051,18 +2242,22 @@ paths:
             description: token address
           name: token_address
           in: path
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
       responses:
@@ -2071,8 +2266,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_TransferApprovalHistoriesResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_TransferApprovalHistoriesResponse_'
         '400':
           description: Bad Request
           content:
@@ -2102,31 +2296,39 @@ paths:
             type: string
           name: account_address
           in: path
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: include token details
+          required: false
           schema:
             title: Include Token Details
             type: boolean
+            description: include token details
             default: false
           name: include_token_details
           in: query
-        - required: false
+        - description: enable using indexed position data
+          required: false
           schema:
             title: Enable Index
             type: boolean
+            description: enable using indexed position data
             default: false
           name: enable_index
           in: query
@@ -2136,8 +2338,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_share.ShareToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_share.RetrieveShareTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -2170,31 +2371,39 @@ paths:
             type: string
           name: account_address
           in: path
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: include token details
+          required: false
           schema:
             title: Include Token Details
             type: boolean
+            description: include token details
             default: false
           name: include_token_details
           in: query
-        - required: false
+        - description: enable using indexed position data
+          required: false
           schema:
             title: Enable Index
             type: boolean
+            description: enable using indexed position data
             default: false
           name: enable_index
           in: query
@@ -2204,8 +2413,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_bond.StraightBondToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -2238,31 +2446,39 @@ paths:
             type: string
           name: account_address
           in: path
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: include token details
+          required: false
           schema:
             title: Include Token Details
             type: boolean
+            description: include token details
             default: false
           name: include_token_details
           in: query
-        - required: false
+        - description: enable using indexed position data
+          required: false
           schema:
             title: Enable Index
             type: boolean
+            description: enable using indexed position data
             default: false
           name: enable_index
           in: query
@@ -2272,8 +2488,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_MembershipPositionsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_MembershipPositionsResponse_'
         '400':
           description: Bad Request
           content:
@@ -2306,31 +2521,39 @@ paths:
             type: string
           name: account_address
           in: path
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
-        - required: false
+        - description: include token details
+          required: false
           schema:
             title: Include Token Details
             type: boolean
+            description: include token details
             default: false
           name: include_token_details
           in: query
-        - required: false
+        - description: enable using indexed position data
+          required: false
           schema:
             title: Enable Index
             type: boolean
+            description: enable using indexed position data
             default: false
           name: enable_index
           in: query
@@ -2340,8 +2563,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CouponPositionsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_CouponPositionsResponse_'
         '400':
           description: Bad Request
           content:
@@ -2386,8 +2608,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_share.ShareToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_share.RetrieveShareTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -2432,8 +2653,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_bond.StraightBondToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -2478,8 +2698,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_MembershipPositionWithDetail_
+                $ref: '#/components/schemas/GenericSuccessResponse_MembershipPositionWithDetail_'
         '400':
           description: Bad Request
           content:
@@ -2524,8 +2743,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_CouponPositionWithDetail_
+                $ref: '#/components/schemas/GenericSuccessResponse_CouponPositionWithDetail_'
         '400':
           description: Bad Request
           content:
@@ -2552,18 +2770,22 @@ paths:
       description: 'Endpoint: /Notifications/'
       operationId: GetNotifications
       parameters:
-        - required: false
+        - description: start position
+          required: false
           schema:
             title: Offset
             minimum: 0
             type: integer
+            description: start position
           name: offset
           in: query
-        - required: false
+        - description: number of set
+          required: false
           schema:
             title: Limit
             minimum: 0
             type: integer
+            description: number of set
           name: limit
           in: query
         - required: false
@@ -2585,17 +2807,21 @@ paths:
             type: integer
           name: priority
           in: query
-        - required: false
+        - description: sort item
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/NotificationsSortItem'
+            description: sort item
             default: created
           name: sort_item
           in: query
-        - required: false
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
           schema:
             allOf:
               - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
             default: 0
           name: sort_order
           in: query
@@ -2605,8 +2831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_NotificationsResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_NotificationsResponse_'
         '400':
           description: Bad Request
           content:
@@ -2659,8 +2884,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_NotificationsCountResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_NotificationsCountResponse_'
         '400':
           description: Bad Request
           content:
@@ -2695,8 +2919,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_NotificationUpdateResponse_
+                $ref: '#/components/schemas/GenericSuccessResponse_NotificationUpdateResponse_'
         '400':
           description: Bad Request
           content:
@@ -2764,8 +2987,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_E2EMessageEncryptionKey_
+                $ref: '#/components/schemas/GenericSuccessResponse_E2EMessageEncryptionKeyResponse_'
         '400':
           description: Bad Request
           content:
@@ -2789,29 +3011,38 @@ paths:
       description: List all E2EMessaging event logs
       operationId: E2EMessagingEvents
       parameters:
-        - required: true
+        - description: from block number
+          required: true
           schema:
             title: From Block
             minimum: 1
             type: integer
+            description: from block number
           name: from_block
           in: query
-        - required: true
+        - description: to block number
+          required: true
           schema:
             title: To Block
             minimum: 1
             type: integer
+            description: to block number
           name: to_block
           in: query
-        - required: false
+        - description: events to get
+          required: false
           schema:
-            $ref: '#/components/schemas/E2EMessagingEventType'
+            allOf:
+              - $ref: '#/components/schemas/E2EMessagingEventType'
+            description: events to get
           name: event
           in: query
-        - required: false
+        - description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{"sender": "0x0000000000000000000000000000000000000000"}```'
+          required: false
           schema:
             title: Argument Filters
             type: string
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{"sender": "0x0000000000000000000000000000000000000000"}```'
           name: argument_filters
           in: query
       responses:
@@ -2820,8 +3051,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.events.Event__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
         '400':
           description: Bad Request
           content:
@@ -2839,29 +3069,38 @@ paths:
       description: List all IbetEscrow event logs
       operationId: IbetEscrowEvents
       parameters:
-        - required: true
+        - description: from block number
+          required: true
           schema:
             title: From Block
             minimum: 1
             type: integer
+            description: from block number
           name: from_block
           in: query
-        - required: true
+        - description: to block number
+          required: true
           schema:
             title: To Block
             minimum: 1
             type: integer
+            description: to block number
           name: to_block
           in: query
-        - required: false
+        - description: events to get
+          required: false
           schema:
-            $ref: '#/components/schemas/IbetEscrowEventType'
+            allOf:
+              - $ref: '#/components/schemas/IbetEscrowEventType'
+            description: events to get
           name: event
           in: query
-        - required: false
+        - description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId": 0    "token": "0x0000000000000000000000000000000000000000"}```'
+          required: false
           schema:
             title: Argument Filters
             type: string
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId": 0    "token": "0x0000000000000000000000000000000000000000"}```'
           name: argument_filters
           in: query
       responses:
@@ -2870,8 +3109,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.events.Event__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
         '400':
           description: Bad Request
           content:
@@ -2889,29 +3127,38 @@ paths:
       description: List all IbetSecurityTokenEscrow event logs
       operationId: IbetSecurityTokenEscrowEvents
       parameters:
-        - required: true
+        - description: from block number
+          required: true
           schema:
             title: From Block
             minimum: 1
             type: integer
+            description: from block number
           name: from_block
           in: query
-        - required: true
+        - description: to block number
+          required: true
           schema:
             title: To Block
             minimum: 1
             type: integer
+            description: to block number
           name: to_block
           in: query
-        - required: false
+        - description: events to get
+          required: false
           schema:
-            $ref: '#/components/schemas/IbetSecurityTokenEscrowEventType'
+            allOf:
+              - $ref: '#/components/schemas/IbetSecurityTokenEscrowEventType'
+            description: events to get
           name: event
           in: query
-        - required: false
+        - description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId": 0    "token": "0x0000000000000000000000000000000000000000"}```'
+          required: false
           schema:
             title: Argument Filters
             type: string
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "escrowId": 0    "token": "0x0000000000000000000000000000000000000000"}```'
           name: argument_filters
           in: query
       responses:
@@ -2920,8 +3167,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.events.Event__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
         '400':
           description: Bad Request
           content:
@@ -2939,22 +3185,28 @@ paths:
       description: 約定情報参照
       operationId: GetAgreement
       parameters:
-        - required: true
+        - description: order id
+          required: true
           schema:
             title: Order Id
             type: integer
+            description: order id
           name: order_id
           in: query
-        - required: true
+        - description: agreement id
+          required: true
           schema:
             title: Agreement Id
             type: integer
+            description: agreement id
           name: agreement_id
           in: query
-        - required: true
+        - description: exchange_address
+          required: true
           schema:
             title: Exchange Address
             type: string
+            description: exchange_address
           name: exchange_address
           in: query
       responses:
@@ -2963,7 +3215,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_AgreementDetail_'
+                $ref: '#/components/schemas/GenericSuccessResponse_RetrieveAgreementDetailResponse_'
         '400':
           description: Bad Request
           content:
@@ -2990,7 +3242,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderBookRequest'
+              $ref: '#/components/schemas/ListAllOrderBookRequest'
         required: true
       responses:
         '200':
@@ -2998,8 +3250,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.OrderBookItem__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
         '400':
           description: Bad Request
           content:
@@ -3023,7 +3274,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LastPriceRequest'
+              $ref: '#/components/schemas/ListAllLastPriceRequest'
         required: true
       responses:
         '200':
@@ -3031,8 +3282,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.LastPrice__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
         '400':
           description: Bad Request
           content:
@@ -3056,7 +3306,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TickRequest'
+              $ref: '#/components/schemas/ListAllTickRequest'
         required: true
       responses:
         '200':
@@ -3064,8 +3314,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.TicksResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
         '400':
           description: Bad Request
           content:
@@ -3089,7 +3338,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderBookRequest'
+              $ref: '#/components/schemas/ListAllOrderBookRequest'
         required: true
       responses:
         '200':
@@ -3097,8 +3346,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.OrderBookItem__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
         '400':
           description: Bad Request
           content:
@@ -3122,7 +3370,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LastPriceRequest'
+              $ref: '#/components/schemas/ListAllLastPriceRequest'
         required: true
       responses:
         '200':
@@ -3130,8 +3378,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.LastPrice__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
         '400':
           description: Bad Request
           content:
@@ -3155,7 +3402,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TickRequest'
+              $ref: '#/components/schemas/ListAllTickRequest'
         required: true
       responses:
         '200':
@@ -3163,8 +3410,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.TicksResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
         '400':
           description: Bad Request
           content:
@@ -3188,7 +3434,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderBookRequest'
+              $ref: '#/components/schemas/ListAllOrderBookRequest'
         required: true
       responses:
         '200':
@@ -3196,8 +3442,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.OrderBookItem__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
         '400':
           description: Bad Request
           content:
@@ -3221,7 +3466,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LastPriceRequest'
+              $ref: '#/components/schemas/ListAllLastPriceRequest'
         required: true
       responses:
         '200':
@@ -3229,8 +3474,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.LastPrice__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
         '400':
           description: Bad Request
           content:
@@ -3254,7 +3498,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TickRequest'
+              $ref: '#/components/schemas/ListAllTickRequest'
         required: true
       responses:
         '200':
@@ -3262,8 +3506,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_list_app.model.schema.dex_market.TicksResponse__
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
         '400':
           description: Bad Request
           content:
@@ -3287,7 +3530,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderListRequest'
+              $ref: '#/components/schemas/ListAllOrderListRequest'
         required: true
       responses:
         '200':
@@ -3295,8 +3538,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_bond.StraightBondToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -3320,7 +3562,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderListRequest'
+              $ref: '#/components/schemas/ListAllOrderListRequest'
         required: true
       responses:
         '200':
@@ -3328,8 +3570,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_membership.MembershipToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_membership.RetrieveMembershipTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -3353,7 +3594,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderListRequest'
+              $ref: '#/components/schemas/ListAllOrderListRequest'
         required: true
       responses:
         '200':
@@ -3361,8 +3602,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_coupon.CouponToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_coupon.RetrieveCouponTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -3386,7 +3626,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderListRequest'
+              $ref: '#/components/schemas/ListAllOrderListRequest'
         required: true
       responses:
         '200':
@@ -3394,8 +3634,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_share.ShareToken__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_share.RetrieveShareTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -3426,7 +3665,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderListRequest'
+              $ref: '#/components/schemas/ListAllOrderListRequest'
         required: true
       responses:
         '200':
@@ -3434,8 +3673,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  #/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.dex_order_list.TokenAddress__
+                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.dex_order_list.TokenAddress__'
         '400':
           description: Bad Request
           content:
@@ -3457,59 +3695,6 @@ components:
       title: ABI
       type: array
       items: {}
-    AdminToken:
-      title: AdminToken
-      required:
-        - id
-        - token_address
-        - is_public
-        - owner_address
-        - created
-      type: object
-      properties:
-        id:
-          title: Id
-          type: integer
-        token_address:
-          title: Token Address
-          type: string
-        is_public:
-          title: Is Public
-          type: boolean
-        max_holding_quantity:
-          title: Max Holding Quantity
-          type: integer
-        max_sell_amount:
-          title: Max Sell Amount
-          type: integer
-        owner_address:
-          title: Owner Address
-          type: string
-        created:
-          title: Created
-          type: string
-          description: Create Datetime (JST)
-    AdminTokensType:
-      title: AdminTokensType
-      required:
-        - IbetStraightBond
-        - IbetShare
-        - IbetMembership
-        - IbetCoupon
-      type: object
-      properties:
-        IbetStraightBond:
-          title: Ibetstraightbond
-          type: boolean
-        IbetShare:
-          title: Ibetshare
-          type: boolean
-        IbetMembership:
-          title: Ibetmembership
-          type: boolean
-        IbetCoupon:
-          title: Ibetcoupon
-          type: boolean
     Agreement:
       title: Agreement
       required:
@@ -3548,56 +3733,6 @@ components:
         agreement_timestamp:
           title: Agreement Timestamp
           type: string
-    AgreementDetail:
-      title: AgreementDetail
-      required:
-        - token_address
-        - counterpart
-        - buyer_address
-        - seller_address
-        - amount
-        - price
-        - canceled
-        - paid
-        - expiry
-      type: object
-      properties:
-        token_address:
-          title: Token Address
-          type: string
-          description: token address
-        counterpart:
-          title: Counterpart
-          type: string
-          description: taker account address
-        buyer_address:
-          title: Buyer Address
-          type: string
-          description: buyer account address
-        seller_address:
-          title: Seller Address
-          type: string
-          description: seller account address
-        amount:
-          title: Amount
-          type: integer
-          description: agreement token amount
-        price:
-          title: Price
-          type: integer
-          description: agreement price
-        canceled:
-          title: Canceled
-          type: boolean
-          description: agreement canceled status
-        paid:
-          title: Paid
-          type: boolean
-          description: agreement payment status
-        expiry:
-          title: Expiry
-          type: string
-          description: expiry (unixtime)
     AgreementSet:
       title: AgreementSet
       required:
@@ -3609,12 +3744,11 @@ components:
         token:
           title: Token
           anyOf:
-            - $ref: '#/components/schemas/StraightBondToken'
-            - $ref: '#/components/schemas/ShareToken'
-            - $ref: '#/components/schemas/MembershipToken'
-            - $ref: '#/components/schemas/CouponToken'
-            - $ref: >-
-                #/components/schemas/app__model__schema__dex_order_list__TokenAddress
+            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+            - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+            - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+            - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
         agreement:
           $ref: '#/components/schemas/Agreement'
         sort_id:
@@ -3635,11 +3769,6 @@ components:
           title: Message
           type: string
           example: ''
-        description:
-          title: Description
-          anyOf:
-            - type: string
-            - type: object
     AppErrorResponse:
       title: AppErrorResponse
       required:
@@ -3651,11 +3780,6 @@ components:
         details:
           title: Details
           type: object
-      meta:
-        code:
-          example: 0
-        message:
-          example: ''
     ApprovalStatus:
       title: ApprovalStatus
       enum:
@@ -3674,42 +3798,6 @@ components:
         - pending
       type: string
       description: An enumeration.
-    BlockSyncStatus:
-      title: BlockSyncStatus
-      required:
-        - is_synced
-        - latest_block_number
-      type: object
-      properties:
-        is_synced:
-          title: Is Synced
-          type: boolean
-          description: block sync status
-        latest_block_number:
-          title: Latest Block Number
-          type: integer
-          description: latest block number (returns null if is_synced is false)
-    CompanyInfo:
-      title: CompanyInfo
-      required:
-        - address
-        - corporate_name
-        - rsa_publickey
-        - homepage
-      type: object
-      properties:
-        address:
-          title: Address
-          type: string
-        corporate_name:
-          title: Corporate Name
-          type: string
-        rsa_publickey:
-          title: Rsa Publickey
-          type: string
-        homepage:
-          title: Homepage
-          type: string
     CompleteAgreementSet:
       title: CompleteAgreementSet
       required:
@@ -3722,12 +3810,11 @@ components:
         token:
           title: Token
           anyOf:
-            - $ref: '#/components/schemas/StraightBondToken'
-            - $ref: '#/components/schemas/ShareToken'
-            - $ref: '#/components/schemas/MembershipToken'
-            - $ref: '#/components/schemas/CouponToken'
-            - $ref: >-
-                #/components/schemas/app__model__schema__dex_order_list__TokenAddress
+            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+            - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+            - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+            - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
         agreement:
           $ref: '#/components/schemas/Agreement'
         sort_id:
@@ -3801,7 +3888,7 @@ components:
         token:
           title: Token
           allOf:
-            - $ref: '#/components/schemas/CouponToken'
+            - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
           description: set when include_token_details=false or null
     CouponPositionsResponse:
       title: CouponPositionsResponse
@@ -3821,127 +3908,6 @@ components:
             - type: array
               items:
                 $ref: '#/components/schemas/CouponPositionWithAddress'
-    CouponToken:
-      title: CouponToken
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - details
-        - return_details
-        - expiration_date
-        - memo
-        - transferable
-        - initial_offering_status
-        - image_url
-      type: object
-      properties:
-        token_address:
-          title: Token Address
-          type: string
-        token_template:
-          title: Token Template
-          type: string
-          example: IbetCoupon
-        owner_address:
-          title: Owner Address
-          type: string
-          description: issuer address
-        company_name:
-          title: Company Name
-          type: string
-        rsa_publickey:
-          title: Rsa Publickey
-          type: string
-        name:
-          title: Name
-          type: string
-          description: token name
-        symbol:
-          title: Symbol
-          type: string
-          description: token symbol
-        total_supply:
-          title: Total Supply
-          type: integer
-        tradable_exchange:
-          title: Tradable Exchange
-          type: string
-        contact_information:
-          title: Contact Information
-          type: string
-        privacy_policy:
-          title: Privacy Policy
-          type: string
-        status:
-          title: Status
-          type: boolean
-        max_holding_quantity:
-          title: Max Holding Quantity
-          type: integer
-        max_sell_amount:
-          title: Max Sell Amount
-          type: integer
-        details:
-          title: Details
-          type: string
-        return_details:
-          title: Return Details
-          type: string
-        expiration_date:
-          title: Expiration Date
-          type: string
-        memo:
-          title: Memo
-          type: string
-        transferable:
-          title: Transferable
-          type: boolean
-        initial_offering_status:
-          title: Initial Offering Status
-          type: boolean
-        image_url:
-          title: Image Url
-          type: array
-          items:
-            $ref: '#/components/schemas/CouponImage'
-    CouponTokenAddressesResponse:
-      title: CouponTokenAddressesResponse
-      required:
-        - result_set
-        - address_list
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        address_list:
-          title: Address List
-          type: array
-          items:
-            type: string
-    CouponTokensResponse:
-      title: CouponTokensResponse
-      required:
-        - result_set
-        - tokens
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        tokens:
-          title: Tokens
-          type: array
-          items:
-            $ref: '#/components/schemas/CouponToken'
     CouponTokensSortItem:
       title: CouponTokensSortItem
       enum:
@@ -3968,9 +3934,7 @@ components:
         list_id:
           title: List Id
           type: string
-          description: >-
-            Unique id to be assigned to each token holder list.This must be
-            Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This must be Version4 UUID.
           format: uuid
           example: cfd83622-34dc-4efe-a68b-2cc275d3d824
         block_number:
@@ -3987,9 +3951,7 @@ components:
         list_id:
           title: List Id
           type: string
-          description: >-
-            Unique id to be assigned to each token holder list.This must be
-            Version4 UUID.
+          description: Unique id to be assigned to each token holder list.This must be Version4 UUID.
           format: uuid
           example: cfd83622-34dc-4efe-a68b-2cc275d3d824
         status:
@@ -4011,11 +3973,6 @@ components:
           title: Message
           type: string
           example: Data Conflict
-        description:
-          title: Description
-          anyOf:
-            - type: string
-            - type: object
     DataConflictErrorResponse:
       title: DataConflictErrorResponse
       required:
@@ -4027,11 +3984,6 @@ components:
         details:
           title: Details
           type: object
-      meta:
-        code:
-          example: 40
-        message:
-          example: Data Conflict
     DataNotExistsErrorMetainfo:
       title: DataNotExistsErrorMetainfo
       required:
@@ -4047,11 +3999,6 @@ components:
           title: Message
           type: string
           example: Data Not Exists
-        description:
-          title: Description
-          anyOf:
-            - type: string
-            - type: object
     DataNotExistsErrorResponse:
       title: DataNotExistsErrorResponse
       required:
@@ -4063,11 +4010,6 @@ components:
         details:
           title: Details
           type: object
-      meta:
-        code:
-          example: 30
-        message:
-          example: Data Not Exists
     DividendInformation:
       title: DividendInformation
       required:
@@ -4088,8 +4030,8 @@ components:
           title: Dividend Payment Date
           type: string
           example: '20201001'
-    E2EMessageEncryptionKey:
-      title: E2EMessageEncryptionKey
+    E2EMessageEncryptionKeyResponse:
+      title: E2EMessageEncryptionKeyResponse
       required:
         - key
         - key_type
@@ -4178,86 +4120,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ABI'
-    GenericSuccessResponse_AdminToken_:
-      title: GenericSuccessResponse[AdminToken]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/AdminToken'
-    GenericSuccessResponse_AdminTokensType_:
-      title: GenericSuccessResponse[AdminTokensType]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/AdminTokensType'
-    GenericSuccessResponse_AgreementDetail_:
-      title: GenericSuccessResponse[AgreementDetail]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/AgreementDetail'
-    GenericSuccessResponse_BlockSyncStatus_:
-      title: GenericSuccessResponse[BlockSyncStatus]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/BlockSyncStatus'
-    GenericSuccessResponse_CompanyInfo_:
-      title: GenericSuccessResponse[CompanyInfo]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/CompanyInfo'
     GenericSuccessResponse_CouponPositionWithDetail_:
       title: GenericSuccessResponse[CouponPositionWithDetail]
       required:
@@ -4290,54 +4152,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/CouponPositionsResponse'
-    GenericSuccessResponse_CouponTokenAddressesResponse_:
-      title: GenericSuccessResponse[CouponTokenAddressesResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/CouponTokenAddressesResponse'
-    GenericSuccessResponse_CouponToken_:
-      title: GenericSuccessResponse[CouponToken]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/CouponToken'
-    GenericSuccessResponse_CouponTokensResponse_:
-      title: GenericSuccessResponse[CouponTokensResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/CouponTokensResponse'
     GenericSuccessResponse_CreateTokenHoldersCollectionResponse_:
       title: GenericSuccessResponse[CreateTokenHoldersCollectionResponse]
       required:
@@ -4354,8 +4168,8 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/CreateTokenHoldersCollectionResponse'
-    GenericSuccessResponse_E2EMessageEncryptionKey_:
-      title: GenericSuccessResponse[E2EMessageEncryptionKey]
+    GenericSuccessResponse_E2EMessageEncryptionKeyResponse_:
+      title: GenericSuccessResponse[E2EMessageEncryptionKeyResponse]
       required:
         - meta
         - data
@@ -4369,7 +4183,295 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/E2EMessageEncryptionKey'
+          $ref: '#/components/schemas/E2EMessageEncryptionKeyResponse'
+    GenericSuccessResponse_GetAdminTokenTypeResponse_:
+      title: GenericSuccessResponse[GetAdminTokenTypeResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/GetAdminTokenTypeResponse'
+    GenericSuccessResponse_GetBlockSyncStatusResponse_:
+      title: GenericSuccessResponse[GetBlockSyncStatusResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/GetBlockSyncStatusResponse'
+    GenericSuccessResponse_GetNodeInfoResponse_:
+      title: GenericSuccessResponse[GetNodeInfoResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/GetNodeInfoResponse'
+    GenericSuccessResponse_ListAllAdminTokensResponse_:
+      title: GenericSuccessResponse[ListAllAdminTokensResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllAdminTokensResponse'
+    GenericSuccessResponse_ListAllCompanyInfoResponse_:
+      title: GenericSuccessResponse[ListAllCompanyInfoResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllCompanyInfoResponse'
+    GenericSuccessResponse_ListAllCompanyTokensResponse_:
+      title: GenericSuccessResponse[ListAllCompanyTokensResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllCompanyTokensResponse'
+    GenericSuccessResponse_ListAllCouponTokenAddressesResponse_:
+      title: GenericSuccessResponse[ListAllCouponTokenAddressesResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllCouponTokenAddressesResponse'
+    GenericSuccessResponse_ListAllCouponTokensResponse_:
+      title: GenericSuccessResponse[ListAllCouponTokensResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllCouponTokensResponse'
+    GenericSuccessResponse_ListAllEventsResponse_:
+      title: GenericSuccessResponse[ListAllEventsResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllEventsResponse'
+    GenericSuccessResponse_ListAllLastPriceResponse_:
+      title: GenericSuccessResponse[ListAllLastPriceResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLastPriceResponse'
+    GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_:
+      title: GenericSuccessResponse[ListAllMembershipTokenAddressesResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllMembershipTokenAddressesResponse'
+    GenericSuccessResponse_ListAllMembershipTokensResponse_:
+      title: GenericSuccessResponse[ListAllMembershipTokensResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllMembershipTokensResponse'
+    GenericSuccessResponse_ListAllOrderBookItemResponse_:
+      title: GenericSuccessResponse[ListAllOrderBookItemResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllOrderBookItemResponse'
+    GenericSuccessResponse_ListAllShareTokenAddressesResponse_:
+      title: GenericSuccessResponse[ListAllShareTokenAddressesResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllShareTokenAddressesResponse'
+    GenericSuccessResponse_ListAllShareTokensResponse_:
+      title: GenericSuccessResponse[ListAllShareTokensResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllShareTokensResponse'
+    GenericSuccessResponse_ListAllStraightBondTokenAddressesResponse_:
+      title: GenericSuccessResponse[ListAllStraightBondTokenAddressesResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllStraightBondTokenAddressesResponse'
+    GenericSuccessResponse_ListAllStraightBondTokensResponse_:
+      title: GenericSuccessResponse[ListAllStraightBondTokensResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllStraightBondTokensResponse'
+    GenericSuccessResponse_ListAllTicksResponse_:
+      title: GenericSuccessResponse[ListAllTicksResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllTicksResponse'
     GenericSuccessResponse_MembershipPositionWithDetail_:
       title: GenericSuccessResponse[MembershipPositionWithDetail]
       required:
@@ -4402,70 +4504,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/MembershipPositionsResponse'
-    GenericSuccessResponse_MembershipTokenAddressesResponse_:
-      title: GenericSuccessResponse[MembershipTokenAddressesResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/MembershipTokenAddressesResponse'
-    GenericSuccessResponse_MembershipToken_:
-      title: GenericSuccessResponse[MembershipToken]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/MembershipToken'
-    GenericSuccessResponse_MembershipTokensResponse_:
-      title: GenericSuccessResponse[MembershipTokensResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/MembershipTokensResponse'
-    GenericSuccessResponse_NodeInfo_:
-      title: GenericSuccessResponse[NodeInfo]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/NodeInfo'
     GenericSuccessResponse_NotificationUpdateResponse_:
       title: GenericSuccessResponse[NotificationUpdateResponse]
       required:
@@ -4514,8 +4552,8 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/NotificationsResponse'
-    GenericSuccessResponse_PaymentAccountRegistrationStatus_:
-      title: GenericSuccessResponse[PaymentAccountRegistrationStatus]
+    GenericSuccessResponse_RetrieveAdminTokenResponse_:
+      title: GenericSuccessResponse[RetrieveAdminTokenResponse]
       required:
         - meta
         - data
@@ -4529,9 +4567,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/PaymentAccountRegistrationStatus'
-    GenericSuccessResponse_PersonalInfoRegistrationStatus_:
-      title: GenericSuccessResponse[PersonalInfoRegistrationStatus]
+          $ref: '#/components/schemas/RetrieveAdminTokenResponse'
+    GenericSuccessResponse_RetrieveAgreementDetailResponse_:
+      title: GenericSuccessResponse[RetrieveAgreementDetailResponse]
       required:
         - meta
         - data
@@ -4545,9 +4583,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/PersonalInfoRegistrationStatus'
-    GenericSuccessResponse_ShareTokenAddressesResponse_:
-      title: GenericSuccessResponse[ShareTokenAddressesResponse]
+          $ref: '#/components/schemas/RetrieveAgreementDetailResponse'
+    GenericSuccessResponse_RetrieveCompanyInfoResponse_:
+      title: GenericSuccessResponse[RetrieveCompanyInfoResponse]
       required:
         - meta
         - data
@@ -4561,9 +4599,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/ShareTokenAddressesResponse'
-    GenericSuccessResponse_ShareToken_:
-      title: GenericSuccessResponse[ShareToken]
+          $ref: '#/components/schemas/RetrieveCompanyInfoResponse'
+    GenericSuccessResponse_RetrieveCouponTokenResponse_:
+      title: GenericSuccessResponse[RetrieveCouponTokenResponse]
       required:
         - meta
         - data
@@ -4577,9 +4615,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/ShareToken'
-    GenericSuccessResponse_ShareTokensResponse_:
-      title: GenericSuccessResponse[ShareTokensResponse]
+          $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+    GenericSuccessResponse_RetrieveMembershipTokenResponse_:
+      title: GenericSuccessResponse[RetrieveMembershipTokenResponse]
       required:
         - meta
         - data
@@ -4593,9 +4631,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/ShareTokensResponse'
-    GenericSuccessResponse_StraightBondTokenAddressesResponse_:
-      title: GenericSuccessResponse[StraightBondTokenAddressesResponse]
+          $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+    GenericSuccessResponse_RetrievePaymentAccountRegistrationStatusResponse_:
+      title: GenericSuccessResponse[RetrievePaymentAccountRegistrationStatusResponse]
       required:
         - meta
         - data
@@ -4609,9 +4647,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/StraightBondTokenAddressesResponse'
-    GenericSuccessResponse_StraightBondToken_:
-      title: GenericSuccessResponse[StraightBondToken]
+          $ref: '#/components/schemas/RetrievePaymentAccountRegistrationStatusResponse'
+    GenericSuccessResponse_RetrievePersonalInfoRegistrationStatusResponse_:
+      title: GenericSuccessResponse[RetrievePersonalInfoRegistrationStatusResponse]
       required:
         - meta
         - data
@@ -4625,9 +4663,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/StraightBondToken'
-    GenericSuccessResponse_StraightBondTokensResponse_:
-      title: GenericSuccessResponse[StraightBondTokensResponse]
+          $ref: '#/components/schemas/RetrievePersonalInfoRegistrationStatusResponse'
+    GenericSuccessResponse_RetrieveShareTokenResponse_:
+      title: GenericSuccessResponse[RetrieveShareTokenResponse]
       required:
         - meta
         - data
@@ -4641,9 +4679,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/StraightBondTokensResponse'
-    GenericSuccessResponse_TokenHoldersCollection_:
-      title: GenericSuccessResponse[TokenHoldersCollection]
+          $ref: '#/components/schemas/RetrieveShareTokenResponse'
+    GenericSuccessResponse_RetrieveStraightBondTokenResponse_:
+      title: GenericSuccessResponse[RetrieveStraightBondTokenResponse]
       required:
         - meta
         - data
@@ -4657,9 +4695,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/TokenHoldersCollection'
-    GenericSuccessResponse_TokenHoldersCount_:
-      title: GenericSuccessResponse[TokenHoldersCount]
+          $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+    GenericSuccessResponse_SendRawTransactionsNoWaitResponse_:
+      title: GenericSuccessResponse[SendRawTransactionsNoWaitResponse]
       required:
         - meta
         - data
@@ -4673,9 +4711,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/TokenHoldersCount'
-    GenericSuccessResponse_TokenStatus_:
-      title: GenericSuccessResponse[TokenStatus]
+          $ref: '#/components/schemas/SendRawTransactionsNoWaitResponse'
+    GenericSuccessResponse_SendRawTransactionsResponse_:
+      title: GenericSuccessResponse[SendRawTransactionsResponse]
       required:
         - meta
         - data
@@ -4689,9 +4727,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/TokenStatus'
-    GenericSuccessResponse_TransactionCount_:
-      title: GenericSuccessResponse[TransactionCount]
+          $ref: '#/components/schemas/SendRawTransactionsResponse'
+    GenericSuccessResponse_TokenHoldersCollectionResponse_:
+      title: GenericSuccessResponse[TokenHoldersCollectionResponse]
       required:
         - meta
         - data
@@ -4705,7 +4743,71 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/TransactionCount'
+          $ref: '#/components/schemas/TokenHoldersCollectionResponse'
+    GenericSuccessResponse_TokenHoldersCountResponse_:
+      title: GenericSuccessResponse[TokenHoldersCountResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/TokenHoldersCountResponse'
+    GenericSuccessResponse_TokenHoldersResponse_:
+      title: GenericSuccessResponse[TokenHoldersResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/TokenHoldersResponse'
+    GenericSuccessResponse_TokenStatusResponse_:
+      title: GenericSuccessResponse[TokenStatusResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/TokenStatusResponse'
+    GenericSuccessResponse_TransactionCountResponse_:
+      title: GenericSuccessResponse[TransactionCountResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/TransactionCountResponse'
     GenericSuccessResponse_TransferApprovalHistoriesResponse_:
       title: GenericSuccessResponse[TransferApprovalHistoriesResponse]
       required:
@@ -4738,8 +4840,8 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/TransferHistoriesResponse'
-    GenericSuccessResponse_WaitForTransactionReceiptResult_:
-      title: GenericSuccessResponse[WaitForTransactionReceiptResult]
+    GenericSuccessResponse_WaitForTransactionReceiptResponse_:
+      title: GenericSuccessResponse[WaitForTransactionReceiptResponse]
       required:
         - meta
         - data
@@ -4753,10 +4855,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/WaitForTransactionReceiptResult'
-    GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.dex_order_list.TokenAddress__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.dex_order_list.OrderListResponse[app.model.schema.dex_order_list.TokenAddress]]
+          $ref: '#/components/schemas/WaitForTransactionReceiptResponse'
+    GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.dex_order_list.TokenAddress__:
+      title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.dex_order_list.TokenAddress]]
       required:
         - meta
         - data
@@ -4770,10 +4871,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/OrderListResponse'
-    GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_bond.StraightBondToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.dex_order_list.OrderListResponse[app.model.schema.token_bond.StraightBondToken]]
+          $ref: '#/components/schemas/ListAllOrderListResponse'
+    GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
       required:
         - meta
         - data
@@ -4787,10 +4887,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/OrderListResponse'
-    GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_coupon.CouponToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.dex_order_list.OrderListResponse[app.model.schema.token_coupon.CouponToken]]
+          $ref: '#/components/schemas/ListAllOrderListResponse'
+    GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_coupon.RetrieveCouponTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_coupon.RetrieveCouponTokenResponse]]
       required:
         - meta
         - data
@@ -4804,10 +4903,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/OrderListResponse'
-    GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_membership.MembershipToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.dex_order_list.OrderListResponse[app.model.schema.token_membership.MembershipToken]]
+          $ref: '#/components/schemas/ListAllOrderListResponse'
+    GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_membership.RetrieveMembershipTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_membership.RetrieveMembershipTokenResponse]]
       required:
         - meta
         - data
@@ -4821,10 +4919,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/OrderListResponse'
-    GenericSuccessResponse_app.model.schema.dex_order_list.OrderListResponse_app.model.schema.token_share.ShareToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.dex_order_list.OrderListResponse[app.model.schema.token_share.ShareToken]]
+          $ref: '#/components/schemas/ListAllOrderListResponse'
+    GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_share.RetrieveShareTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_share.RetrieveShareTokenResponse]]
       required:
         - meta
         - data
@@ -4838,27 +4935,9 @@ components:
             code: 200
             message: OK
         data:
-          $ref: '#/components/schemas/OrderListResponse'
-    GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_bond.StraightBondToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.position.GenericSecurityTokenPositionsResponse[app.model.schema.token_bond.StraightBondToken]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/GenericSecurityTokenPositionsResponse'
-    GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_share.ShareToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.position.GenericSecurityTokenPositionsResponse[app.model.schema.token_share.ShareToken]]
+          $ref: '#/components/schemas/ListAllOrderListResponse'
+    GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.GenericSecurityTokenPositionsResponse[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
       required:
         - meta
         - data
@@ -4873,9 +4952,24 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/GenericSecurityTokenPositionsResponse'
-    GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_bond.StraightBondToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.position.SecurityTokenPositionWithDetail[app.model.schema.token_bond.StraightBondToken]]
+    GenericSuccessResponse_app.model.schema.position.GenericSecurityTokenPositionsResponse_app.model.schema.token_share.RetrieveShareTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.GenericSecurityTokenPositionsResponse[app.model.schema.token_share.RetrieveShareTokenResponse]]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/GenericSecurityTokenPositionsResponse'
+    GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.SecurityTokenPositionWithDetail[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
       required:
         - meta
         - data
@@ -4890,9 +4984,8 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/SecurityTokenPositionWithDetail'
-    GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_share.ShareToken__:
-      title: >-
-        GenericSuccessResponse[app.model.schema.position.SecurityTokenPositionWithDetail[app.model.schema.token_share.ShareToken]]
+    GenericSuccessResponse_app.model.schema.position.SecurityTokenPositionWithDetail_app.model.schema.token_share.RetrieveShareTokenResponse__:
+      title: GenericSuccessResponse[app.model.schema.position.SecurityTokenPositionWithDetail[app.model.schema.token_share.RetrieveShareTokenResponse]]
       required:
         - meta
         - data
@@ -4907,206 +5000,94 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/SecurityTokenPositionWithDetail'
-    GenericSuccessResponse_list_Union_app.model.schema.token_bond.StraightBondToken__app.model.schema.token_share.ShareToken__app.model.schema.token_membership.MembershipToken__app.model.schema.token_coupon.CouponToken___:
-      title: >-
-        GenericSuccessResponse[list[Union[app.model.schema.token_bond.StraightBondToken,
-        app.model.schema.token_share.ShareToken,
-        app.model.schema.token_membership.MembershipToken,
-        app.model.schema.token_coupon.CouponToken]]]
+    GetAdminTokenTypeResponse:
+      title: GetAdminTokenTypeResponse
       required:
-        - meta
-        - data
+        - IbetStraightBond
+        - IbetShare
+        - IbetMembership
+        - IbetCoupon
       type: object
       properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            anyOf:
-              - $ref: '#/components/schemas/StraightBondToken'
-              - $ref: '#/components/schemas/ShareToken'
-              - $ref: '#/components/schemas/MembershipToken'
-              - $ref: '#/components/schemas/CouponToken'
-    GenericSuccessResponse_list_app.model.schema.admin.AdminToken__:
-      title: GenericSuccessResponse[list[app.model.schema.admin.AdminToken]]
+        IbetStraightBond:
+          title: Ibetstraightbond
+          type: boolean
+        IbetShare:
+          title: Ibetshare
+          type: boolean
+        IbetMembership:
+          title: Ibetmembership
+          type: boolean
+        IbetCoupon:
+          title: Ibetcoupon
+          type: boolean
+    GetBlockSyncStatusResponse:
+      title: GetBlockSyncStatusResponse
       required:
-        - meta
-        - data
+        - is_synced
+        - latest_block_number
       type: object
       properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/AdminToken'
-    GenericSuccessResponse_list_app.model.schema.company_info.CompanyInfo__:
-      title: GenericSuccessResponse[list[app.model.schema.company_info.CompanyInfo]]
-      required:
-        - meta
-        - data
+        is_synced:
+          title: Is Synced
+          type: boolean
+          description: block sync status
+        latest_block_number:
+          title: Latest Block Number
+          type: integer
+          description: latest block number (returns null if is_synced is false)
+    GetNodeInfoResponse:
+      title: GetNodeInfoResponse
       type: object
       properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/CompanyInfo'
-    GenericSuccessResponse_list_app.model.schema.dex_market.LastPrice__:
-      title: GenericSuccessResponse[list[app.model.schema.dex_market.LastPrice]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/LastPrice'
-    GenericSuccessResponse_list_app.model.schema.dex_market.OrderBookItem__:
-      title: GenericSuccessResponse[list[app.model.schema.dex_market.OrderBookItem]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderBookItem'
-    GenericSuccessResponse_list_app.model.schema.dex_market.TicksResponse__:
-      title: GenericSuccessResponse[list[app.model.schema.dex_market.TicksResponse]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/TicksResponse'
-    GenericSuccessResponse_list_app.model.schema.eth.SendRawTransactionNoWaitResult__:
-      title: >-
-        GenericSuccessResponse[list[app.model.schema.eth.SendRawTransactionNoWaitResult]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/SendRawTransactionNoWaitResult'
-    GenericSuccessResponse_list_app.model.schema.eth.SendRawTransactionResult__:
-      title: >-
-        GenericSuccessResponse[list[app.model.schema.eth.SendRawTransactionResult]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/SendRawTransactionResult'
-    GenericSuccessResponse_list_app.model.schema.events.Event__:
-      title: GenericSuccessResponse[list[app.model.schema.events.Event]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/Event'
-    GenericSuccessResponse_list_app.model.schema.token.TokenHolder__:
-      title: GenericSuccessResponse[list[app.model.schema.token.TokenHolder]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          title: Data
-          type: array
-          items:
-            $ref: '#/components/schemas/TokenHolder'
+        payment_gateway_address:
+          title: Payment Gateway Address
+          type: string
+        payment_gateway_abi:
+          title: Payment Gateway Abi
+        personal_info_address:
+          title: Personal Info Address
+          type: string
+        personal_info_abi:
+          title: Personal Info Abi
+        ibet_straightbond_exchange_address:
+          title: Ibet Straightbond Exchange Address
+          type: string
+        ibet_straightbond_exchange_abi:
+          title: Ibet Straightbond Exchange Abi
+        ibet_membership_exchange_address:
+          title: Ibet Membership Exchange Address
+          type: string
+        ibet_membership_exchange_abi:
+          title: Ibet Membership Exchange Abi
+        ibet_coupon_exchange_address:
+          title: Ibet Coupon Exchange Address
+          type: string
+        ibet_coupon_exchange_abi:
+          title: Ibet Coupon Exchange Abi
+        ibet_share_exchange_address:
+          title: Ibet Share Exchange Address
+          type: string
+        ibet_share_exchange_abi:
+          title: Ibet Share Exchange Abi
+        ibet_escrow_address:
+          title: Ibet Escrow Address
+          type: string
+        ibet_escrow_abi:
+          title: Ibet Escrow Abi
+        ibet_security_token_escrow_address:
+          title: Ibet Security Token Escrow Address
+          type: string
+        ibet_security_token_escrow_abi:
+          title: Ibet Security Token Escrow Abi
+        e2e_messaging_address:
+          title: E2E Messaging Address
+          type: string
+        e2e_messaging_abi:
+          title: E2E Messaging Abi
+        agent_address:
+          title: Agent Address
+          type: string
     HTTPValidationError:
       title: HTTPValidationError
       type: object
@@ -5155,11 +5136,6 @@ components:
           title: Message
           type: string
           example: Invalid Parameter
-        description:
-          title: Description
-          anyOf:
-            - type: string
-            - type: object
     InvalidParameterErrorResponse:
       title: InvalidParameterErrorResponse
       required:
@@ -5171,11 +5147,6 @@ components:
         details:
           title: Details
           type: object
-      meta:
-        code:
-          example: 88
-        message:
-          example: Invalid Parameter
     LastPrice:
       title: LastPrice
       required:
@@ -5189,8 +5160,60 @@ components:
         last_price:
           title: Last Price
           type: integer
-    LastPriceRequest:
-      title: LastPriceRequest
+    ListAllAdminTokensResponse:
+      title: ListAllAdminTokensResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/RetrieveAdminTokenResponse'
+    ListAllCompanyInfoResponse:
+      title: ListAllCompanyInfoResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/RetrieveCompanyInfoResponse'
+    ListAllCompanyTokensResponse:
+      title: ListAllCompanyTokensResponse
+      type: array
+      items:
+        anyOf:
+          - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+          - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+          - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+          - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+    ListAllCouponTokenAddressesResponse:
+      title: ListAllCouponTokenAddressesResponse
+      required:
+        - result_set
+        - address_list
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        address_list:
+          title: Address List
+          type: array
+          items:
+            type: string
+    ListAllCouponTokensResponse:
+      title: ListAllCouponTokensResponse
+      required:
+        - result_set
+        - tokens
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tokens:
+          title: Tokens
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+    ListAllEventsResponse:
+      title: ListAllEventsResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/Event'
+    ListAllLastPriceRequest:
+      title: ListAllLastPriceRequest
       required:
         - address_list
       type: object
@@ -5201,6 +5224,175 @@ components:
           items:
             type: string
           description: Token address list
+    ListAllLastPriceResponse:
+      title: ListAllLastPriceResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/LastPrice'
+    ListAllMembershipTokenAddressesResponse:
+      title: ListAllMembershipTokenAddressesResponse
+      required:
+        - result_set
+        - address_list
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        address_list:
+          title: Address List
+          type: array
+          items:
+            type: string
+    ListAllMembershipTokensResponse:
+      title: ListAllMembershipTokensResponse
+      required:
+        - result_set
+        - tokens
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tokens:
+          title: Tokens
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+    ListAllOrderBookItemResponse:
+      title: ListAllOrderBookItemResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/OrderBookItem'
+    ListAllOrderBookRequest:
+      title: ListAllOrderBookRequest
+      required:
+        - token_address
+        - order_type
+      type: object
+      properties:
+        account_address:
+          title: Account Address
+          type: string
+          description: Orderer's account address. Orders from the given address will not be included in the response.
+        token_address:
+          title: Token Address
+          type: string
+          description: Token address
+        order_type:
+          allOf:
+            - $ref: '#/components/schemas/OrderType'
+          description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
+    ListAllOrderListRequest:
+      title: ListAllOrderListRequest
+      required:
+        - account_address_list
+      type: object
+      properties:
+        account_address_list:
+          title: Account Address List
+          type: array
+          items:
+            type: string
+          description: Account address list
+        include_canceled_items:
+          title: Include Canceled Items
+          type: boolean
+          description: Whether to include canceled orders or canceled agreements.
+    ListAllOrderListResponse:
+      title: ListAllOrderListResponse
+      required:
+        - order_list
+        - settlement_list
+        - complete_list
+      type: object
+      properties:
+        order_list:
+          title: Order List
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSet'
+        settlement_list:
+          title: Settlement List
+          type: array
+          items:
+            $ref: '#/components/schemas/AgreementSet'
+        complete_list:
+          title: Complete List
+          type: array
+          items:
+            $ref: '#/components/schemas/CompleteAgreementSet'
+    ListAllShareTokenAddressesResponse:
+      title: ListAllShareTokenAddressesResponse
+      required:
+        - result_set
+        - address_list
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        address_list:
+          title: Address List
+          type: array
+          items:
+            type: string
+    ListAllShareTokensResponse:
+      title: ListAllShareTokensResponse
+      required:
+        - result_set
+        - tokens
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tokens:
+          title: Tokens
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrieveShareTokenResponse'
+    ListAllStraightBondTokenAddressesResponse:
+      title: ListAllStraightBondTokenAddressesResponse
+      required:
+        - result_set
+        - address_list
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        address_list:
+          title: Address List
+          type: array
+          items:
+            type: string
+    ListAllStraightBondTokensResponse:
+      title: ListAllStraightBondTokensResponse
+      required:
+        - result_set
+        - tokens
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tokens:
+          title: Tokens
+          type: array
+          items:
+            $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+    ListAllTickRequest:
+      title: ListAllTickRequest
+      required:
+        - address_list
+      type: object
+      properties:
+        address_list:
+          title: Address List
+          type: array
+          items:
+            type: string
+          description: Token address list
+    ListAllTicksResponse:
+      title: ListAllTicksResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/Ticks'
     MembershipImage:
       title: MembershipImage
       required:
@@ -5257,7 +5449,7 @@ components:
         token:
           title: Token
           allOf:
-            - $ref: '#/components/schemas/MembershipToken'
+            - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
           description: set when include_token_details=false or null
     MembershipPositionsResponse:
       title: MembershipPositionsResponse
@@ -5277,127 +5469,6 @@ components:
             - type: array
               items:
                 $ref: '#/components/schemas/MembershipPositionWithAddress'
-    MembershipToken:
-      title: MembershipToken
-      required:
-        - token_address
-        - token_template
-        - owner_address
-        - company_name
-        - rsa_publickey
-        - name
-        - symbol
-        - total_supply
-        - tradable_exchange
-        - contact_information
-        - privacy_policy
-        - status
-        - details
-        - return_details
-        - expiration_date
-        - memo
-        - transferable
-        - initial_offering_status
-        - image_url
-      type: object
-      properties:
-        token_address:
-          title: Token Address
-          type: string
-        token_template:
-          title: Token Template
-          type: string
-          example: IbetMembership
-        owner_address:
-          title: Owner Address
-          type: string
-          description: issuer address
-        company_name:
-          title: Company Name
-          type: string
-        rsa_publickey:
-          title: Rsa Publickey
-          type: string
-        name:
-          title: Name
-          type: string
-          description: token name
-        symbol:
-          title: Symbol
-          type: string
-          description: token symbol
-        total_supply:
-          title: Total Supply
-          type: integer
-        tradable_exchange:
-          title: Tradable Exchange
-          type: string
-        contact_information:
-          title: Contact Information
-          type: string
-        privacy_policy:
-          title: Privacy Policy
-          type: string
-        status:
-          title: Status
-          type: boolean
-        max_holding_quantity:
-          title: Max Holding Quantity
-          type: integer
-        max_sell_amount:
-          title: Max Sell Amount
-          type: integer
-        details:
-          title: Details
-          type: string
-        return_details:
-          title: Return Details
-          type: string
-        expiration_date:
-          title: Expiration Date
-          type: string
-        memo:
-          title: Memo
-          type: string
-        transferable:
-          title: Transferable
-          type: boolean
-        initial_offering_status:
-          title: Initial Offering Status
-          type: boolean
-        image_url:
-          title: Image Url
-          type: array
-          items:
-            $ref: '#/components/schemas/MembershipImage'
-    MembershipTokenAddressesResponse:
-      title: MembershipTokenAddressesResponse
-      required:
-        - result_set
-        - address_list
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        address_list:
-          title: Address List
-          type: array
-          items:
-            type: string
-    MembershipTokensResponse:
-      title: MembershipTokensResponse
-      required:
-        - result_set
-        - tokens
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        tokens:
-          title: Tokens
-          type: array
-          items:
-            $ref: '#/components/schemas/MembershipToken'
     MembershipTokensSortItem:
       title: MembershipTokensSortItem
       enum:
@@ -5414,58 +5485,6 @@ components:
         - created
       type: string
       description: An enumeration.
-    NodeInfo:
-      title: NodeInfo
-      type: object
-      properties:
-        payment_gateway_address:
-          title: Payment Gateway Address
-          type: string
-        payment_gateway_abi:
-          title: Payment Gateway Abi
-        personal_info_address:
-          title: Personal Info Address
-          type: string
-        personal_info_abi:
-          title: Personal Info Abi
-        ibet_straightbond_exchange_address:
-          title: Ibet Straightbond Exchange Address
-          type: string
-        ibet_straightbond_exchange_abi:
-          title: Ibet Straightbond Exchange Abi
-        ibet_membership_exchange_address:
-          title: Ibet Membership Exchange Address
-          type: string
-        ibet_membership_exchange_abi:
-          title: Ibet Membership Exchange Abi
-        ibet_coupon_exchange_address:
-          title: Ibet Coupon Exchange Address
-          type: string
-        ibet_coupon_exchange_abi:
-          title: Ibet Coupon Exchange Abi
-        ibet_share_exchange_address:
-          title: Ibet Share Exchange Address
-          type: string
-        ibet_share_exchange_abi:
-          title: Ibet Share Exchange Abi
-        ibet_escrow_address:
-          title: Ibet Escrow Address
-          type: string
-        ibet_escrow_abi:
-          title: Ibet Escrow Abi
-        ibet_security_token_escrow_address:
-          title: Ibet Security Token Escrow Address
-          type: string
-        ibet_security_token_escrow_abi:
-          title: Ibet Security Token Escrow Abi
-        e2e_messaging_address:
-          title: E2E Messaging Address
-          type: string
-        e2e_messaging_abi:
-          title: E2E Messaging Abi
-        agent_address:
-          title: Agent Address
-          type: string
     NotSupportedErrorMetainfo:
       title: NotSupportedErrorMetainfo
       required:
@@ -5481,11 +5500,6 @@ components:
           title: Message
           type: string
           example: Not Supported
-        description:
-          title: Description
-          anyOf:
-            - type: string
-            - type: object
     NotSupportedErrorResponse:
       title: NotSupportedErrorResponse
       required:
@@ -5497,11 +5511,6 @@ components:
         details:
           title: Details
           type: object
-      meta:
-        code:
-          example: 10
-        message:
-          example: Not Supported
     Notification:
       title: Notification
       required:
@@ -5767,68 +5776,6 @@ components:
           title: Account Address
           type: string
           description: An orderrer of each order book
-    OrderBookRequest:
-      title: OrderBookRequest
-      required:
-        - token_address
-        - order_type
-      type: object
-      properties:
-        account_address:
-          title: Account Address
-          type: string
-          description: >-
-            Orderer's account address. Orders from the given address will not be
-            included in the response.
-        token_address:
-          title: Token Address
-          type: string
-          description: Token address
-        order_type:
-          allOf:
-            - $ref: '#/components/schemas/OrderType'
-          description: >-
-            Order type to be executed by the Orderer. If "buy" is selected, the
-            sell order book will be returned.
-    OrderListRequest:
-      title: OrderListRequest
-      required:
-        - account_address_list
-      type: object
-      properties:
-        account_address_list:
-          title: Account Address List
-          type: array
-          items:
-            type: string
-          description: Account address list
-        include_canceled_items:
-          title: Include Canceled Items
-          type: boolean
-          description: Whether to include canceled orders or canceled agreements.
-    OrderListResponse:
-      title: OrderListResponse
-      required:
-        - order_list
-        - settlement_list
-        - complete_list
-      type: object
-      properties:
-        order_list:
-          title: Order List
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderSet'
-        settlement_list:
-          title: Settlement List
-          type: array
-          items:
-            $ref: '#/components/schemas/AgreementSet'
-        complete_list:
-          title: Complete List
-          type: array
-          items:
-            $ref: '#/components/schemas/CompleteAgreementSet'
     OrderSet:
       title: OrderSet
       required:
@@ -5840,12 +5787,11 @@ components:
         token:
           title: Token
           anyOf:
-            - $ref: '#/components/schemas/StraightBondToken'
-            - $ref: '#/components/schemas/ShareToken'
-            - $ref: '#/components/schemas/MembershipToken'
-            - $ref: '#/components/schemas/CouponToken'
-            - $ref: >-
-                #/components/schemas/app__model__schema__dex_order_list__TokenAddress
+            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
+            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
+            - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
+            - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
+            - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
         order:
           $ref: '#/components/schemas/Order'
         sort_id:
@@ -5858,44 +5804,8 @@ components:
         - sell
       type: string
       description: An enumeration.
-    PaymentAccountRegistrationStatus:
-      title: PaymentAccountRegistrationStatus
-      required:
-        - account_address
-        - agent_address
-        - approval_status
-      type: object
-      properties:
-        account_address:
-          title: Account Address
-          type: string
-        agent_address:
-          title: Agent Address
-          type: string
-        approval_status:
-          allOf:
-            - $ref: '#/components/schemas/ApprovalStatus'
-          description: approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))
-    PersonalInfoRegistrationStatus:
-      title: PersonalInfoRegistrationStatus
-      required:
-        - account_address
-        - owner_address
-        - registered
-      type: object
-      properties:
-        account_address:
-          title: Account Address
-          type: string
-        owner_address:
-          title: Owner Address
-          type: string
-          description: link address
-        registered:
-          title: Registered
-          type: boolean
-    RegisterAdminTokensRequest:
-      title: RegisterAdminTokensRequest
+    RegisterAdminTokenRequest:
+      title: RegisterAdminTokenRequest
       required:
         - contract_address
         - is_public
@@ -5997,129 +5907,333 @@ components:
           title: Total
           type: integer
       description: result set for pagination
-    SecurityTokenPositionWithAddress:
-      title: SecurityTokenPositionWithAddress
+    RetrieveAdminTokenResponse:
+      title: RetrieveAdminTokenResponse
       required:
-        - balance
-        - pending_transfer
-        - exchange_balance
-        - exchange_commitment
+        - id
         - token_address
+        - is_public
+        - owner_address
+        - created
       type: object
       properties:
-        balance:
-          title: Balance
-          type: integer
-        pending_transfer:
-          title: Pending Transfer
-          type: integer
-        exchange_balance:
-          title: Exchange Balance
-          type: integer
-        exchange_commitment:
-          title: Exchange Commitment
+        id:
+          title: Id
           type: integer
         token_address:
           title: Token Address
           type: string
-          description: set when include_token_details=true
-    SecurityTokenPositionWithDetail:
-      title: SecurityTokenPositionWithDetail
+        is_public:
+          title: Is Public
+          type: boolean
+        max_holding_quantity:
+          title: Max Holding Quantity
+          type: integer
+        max_sell_amount:
+          title: Max Sell Amount
+          type: integer
+        owner_address:
+          title: Owner Address
+          type: string
+        created:
+          title: Created
+          type: string
+          description: Create Datetime (JST)
+    RetrieveAgreementDetailResponse:
+      title: RetrieveAgreementDetailResponse
       required:
-        - balance
-        - pending_transfer
-        - exchange_balance
-        - exchange_commitment
-        - token
+        - token_address
+        - counterpart
+        - buyer_address
+        - seller_address
+        - amount
+        - price
+        - canceled
+        - paid
+        - expiry
       type: object
       properties:
-        balance:
-          title: Balance
+        token_address:
+          title: Token Address
+          type: string
+          description: token address
+        counterpart:
+          title: Counterpart
+          type: string
+          description: taker account address
+        buyer_address:
+          title: Buyer Address
+          type: string
+          description: buyer account address
+        seller_address:
+          title: Seller Address
+          type: string
+          description: seller account address
+        amount:
+          title: Amount
           type: integer
-        pending_transfer:
-          title: Pending Transfer
+          description: agreement token amount
+        price:
+          title: Price
           type: integer
-        exchange_balance:
-          title: Exchange Balance
-          type: integer
-        exchange_commitment:
-          title: Exchange Commitment
-          type: integer
-        token:
-          title: Token
-          anyOf:
-            - {}
-            - $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
-          description: set when include_token_details=false or null
-    SendRawTransactionNoWaitResult:
-      title: SendRawTransactionNoWaitResult
+          description: agreement price
+        canceled:
+          title: Canceled
+          type: boolean
+          description: agreement canceled status
+        paid:
+          title: Paid
+          type: boolean
+          description: agreement payment status
+        expiry:
+          title: Expiry
+          type: string
+          description: expiry (unixtime)
+    RetrieveCompanyInfoResponse:
+      title: RetrieveCompanyInfoResponse
       required:
-        - id
+        - address
+        - corporate_name
+        - rsa_publickey
+        - homepage
+      type: object
+      properties:
+        address:
+          title: Address
+          type: string
+        corporate_name:
+          title: Corporate Name
+          type: string
+        rsa_publickey:
+          title: Rsa Publickey
+          type: string
+        homepage:
+          title: Homepage
+          type: string
+    RetrieveCouponTokenResponse:
+      title: RetrieveCouponTokenResponse
+      required:
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
         - status
+        - details
+        - return_details
+        - expiration_date
+        - memo
+        - transferable
+        - initial_offering_status
+        - image_url
       type: object
       properties:
-        id:
-          title: Id
+        token_address:
+          title: Token Address
+          type: string
+        token_template:
+          title: Token Template
+          type: string
+          example: IbetCoupon
+        owner_address:
+          title: Owner Address
+          type: string
+          description: issuer address
+        company_name:
+          title: Company Name
+          type: string
+        rsa_publickey:
+          title: Rsa Publickey
+          type: string
+        name:
+          title: Name
+          type: string
+          description: token name
+        symbol:
+          title: Symbol
+          type: string
+          description: token symbol
+        total_supply:
+          title: Total Supply
           type: integer
-          description: transaction send order
-          example: 1
+        tradable_exchange:
+          title: Tradable Exchange
+          type: string
+        contact_information:
+          title: Contact Information
+          type: string
+        privacy_policy:
+          title: Privacy Policy
+          type: string
         status:
           title: Status
+          type: boolean
+        max_holding_quantity:
+          title: Max Holding Quantity
           type: integer
-          description: execution failure:0, execution success:1
-          example: 1
-        transaction_hash:
-          title: Transaction Hash
+        max_sell_amount:
+          title: Max Sell Amount
+          type: integer
+        details:
+          title: Details
           type: string
-          description: transaction hash
-    SendRawTransactionRequest:
-      title: SendRawTransactionRequest
-      required:
-        - raw_tx_hex_list
-      type: object
-      properties:
-        raw_tx_hex_list:
-          title: Raw Tx Hex List
-          minItems: 1
+        return_details:
+          title: Return Details
+          type: string
+        expiration_date:
+          title: Expiration Date
+          type: string
+        memo:
+          title: Memo
+          type: string
+        transferable:
+          title: Transferable
+          type: boolean
+        initial_offering_status:
+          title: Initial Offering Status
+          type: boolean
+        image_url:
+          title: Image Url
           type: array
           items:
-            type: string
-          description: Signed transaction list
-    SendRawTransactionResult:
-      title: SendRawTransactionResult
+            $ref: '#/components/schemas/CouponImage'
+    RetrieveMembershipTokenResponse:
+      title: RetrieveMembershipTokenResponse
       required:
-        - id
+        - token_address
+        - token_template
+        - owner_address
+        - company_name
+        - rsa_publickey
+        - name
+        - symbol
+        - total_supply
+        - tradable_exchange
+        - contact_information
+        - privacy_policy
         - status
+        - details
+        - return_details
+        - expiration_date
+        - memo
+        - transferable
+        - initial_offering_status
+        - image_url
       type: object
       properties:
-        id:
-          title: Id
+        token_address:
+          title: Token Address
+          type: string
+        token_template:
+          title: Token Template
+          type: string
+          example: IbetMembership
+        owner_address:
+          title: Owner Address
+          type: string
+          description: issuer address
+        company_name:
+          title: Company Name
+          type: string
+        rsa_publickey:
+          title: Rsa Publickey
+          type: string
+        name:
+          title: Name
+          type: string
+          description: token name
+        symbol:
+          title: Symbol
+          type: string
+          description: token symbol
+        total_supply:
+          title: Total Supply
           type: integer
-          description: transaction send order
-          example: 1
+        tradable_exchange:
+          title: Tradable Exchange
+          type: string
+        contact_information:
+          title: Contact Information
+          type: string
+        privacy_policy:
+          title: Privacy Policy
+          type: string
         status:
           title: Status
+          type: boolean
+        max_holding_quantity:
+          title: Max Holding Quantity
           type: integer
-          description: >-
-            execution failure:0, execution success:1, execution success(pending
-            transaction):2
-          example: 1
-        transaction_hash:
-          title: Transaction Hash
-          type: string
-          description: transaction hash
-        error_code:
-          title: Error Code
+        max_sell_amount:
+          title: Max Sell Amount
           type: integer
-          description: error code thrown from contract
-          example: 240202
-        error_msg:
-          title: Error Msg
+        details:
+          title: Details
           type: string
-          description: error msg
-          example: Message sender is not token owner.
-    ShareToken:
-      title: ShareToken
+        return_details:
+          title: Return Details
+          type: string
+        expiration_date:
+          title: Expiration Date
+          type: string
+        memo:
+          title: Memo
+          type: string
+        transferable:
+          title: Transferable
+          type: boolean
+        initial_offering_status:
+          title: Initial Offering Status
+          type: boolean
+        image_url:
+          title: Image Url
+          type: array
+          items:
+            $ref: '#/components/schemas/MembershipImage'
+    RetrievePaymentAccountRegistrationStatusResponse:
+      title: RetrievePaymentAccountRegistrationStatusResponse
+      required:
+        - account_address
+        - agent_address
+        - approval_status
+      type: object
+      properties:
+        account_address:
+          title: Account Address
+          type: string
+        agent_address:
+          title: Agent Address
+          type: string
+        approval_status:
+          allOf:
+            - $ref: '#/components/schemas/ApprovalStatus'
+          description: approval status (NONE(0)/NG(1)/OK(2)/WARN(3)/BAN(4))
+    RetrievePersonalInfoRegistrationStatusResponse:
+      title: RetrievePersonalInfoRegistrationStatusResponse
+      required:
+        - account_address
+        - owner_address
+        - registered
+      type: object
+      properties:
+        account_address:
+          title: Account Address
+          type: string
+        owner_address:
+          title: Owner Address
+          type: string
+          description: link address
+        registered:
+          title: Registered
+          type: boolean
+    RetrieveShareTokenResponse:
+      title: RetrieveShareTokenResponse
       required:
         - token_address
         - token_template
@@ -6220,61 +6334,8 @@ components:
           type: boolean
         dividend_information:
           $ref: '#/components/schemas/DividendInformation'
-    ShareTokenAddressesResponse:
-      title: ShareTokenAddressesResponse
-      required:
-        - result_set
-        - address_list
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        address_list:
-          title: Address List
-          type: array
-          items:
-            type: string
-    ShareTokensResponse:
-      title: ShareTokensResponse
-      required:
-        - result_set
-        - tokens
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        tokens:
-          title: Tokens
-          type: array
-          items:
-            $ref: '#/components/schemas/ShareToken'
-    ShareTokensSortItem:
-      title: ShareTokensSortItem
-      enum:
-        - token_address
-        - owner_address
-        - name
-        - symbol
-        - company_name
-        - tradable_exchange
-        - status
-        - personal_info_address
-        - transferable
-        - is_offering
-        - transfer_approval_required
-        - is_canceled
-        - created
-      type: string
-      description: An enumeration.
-    SortOrder:
-      title: SortOrder
-      enum:
-        - 0
-        - 1
-      type: integer
-      description: An enumeration.
-    StraightBondToken:
-      title: StraightBondToken
+    RetrieveStraightBondTokenResponse:
+      title: RetrieveStraightBondTokenResponse
       required:
         - token_address
         - token_template
@@ -6424,34 +6485,160 @@ components:
         is_redeemed:
           title: Is Redeemed
           type: boolean
-    StraightBondTokenAddressesResponse:
-      title: StraightBondTokenAddressesResponse
+    SecurityTokenPositionWithAddress:
+      title: SecurityTokenPositionWithAddress
       required:
-        - result_set
-        - address_list
+        - balance
+        - pending_transfer
+        - exchange_balance
+        - exchange_commitment
+        - token_address
       type: object
       properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        address_list:
-          title: Address List
+        balance:
+          title: Balance
+          type: integer
+        pending_transfer:
+          title: Pending Transfer
+          type: integer
+        exchange_balance:
+          title: Exchange Balance
+          type: integer
+        exchange_commitment:
+          title: Exchange Commitment
+          type: integer
+        token_address:
+          title: Token Address
+          type: string
+          description: set when include_token_details=true
+    SecurityTokenPositionWithDetail:
+      title: SecurityTokenPositionWithDetail
+      required:
+        - balance
+        - pending_transfer
+        - exchange_balance
+        - exchange_commitment
+        - token
+      type: object
+      properties:
+        balance:
+          title: Balance
+          type: integer
+        pending_transfer:
+          title: Pending Transfer
+          type: integer
+        exchange_balance:
+          title: Exchange Balance
+          type: integer
+        exchange_commitment:
+          title: Exchange Commitment
+          type: integer
+        token:
+          title: Token
+          anyOf:
+            - {}
+            - $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
+          description: set when include_token_details=false or null
+    SendRawTransactionNoWaitResponse:
+      title: SendRawTransactionNoWaitResponse
+      required:
+        - id
+        - status
+      type: object
+      properties:
+        id:
+          title: Id
+          type: integer
+          description: transaction send order
+          example: 1
+        status:
+          title: Status
+          type: integer
+          description: execution failure:0, execution success:1
+          example: 1
+        transaction_hash:
+          title: Transaction Hash
+          type: string
+          description: transaction hash
+    SendRawTransactionRequest:
+      title: SendRawTransactionRequest
+      required:
+        - raw_tx_hex_list
+      type: object
+      properties:
+        raw_tx_hex_list:
+          title: Raw Tx Hex List
+          minItems: 1
           type: array
           items:
             type: string
-    StraightBondTokensResponse:
-      title: StraightBondTokensResponse
+          description: Signed transaction list
+    SendRawTransactionResponse:
+      title: SendRawTransactionResponse
       required:
-        - result_set
-        - tokens
+        - id
+        - status
       type: object
       properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        tokens:
-          title: Tokens
-          type: array
-          items:
-            $ref: '#/components/schemas/StraightBondToken'
+        id:
+          title: Id
+          type: integer
+          description: transaction send order
+          example: 1
+        status:
+          title: Status
+          type: integer
+          description: execution failure:0, execution success:1, execution success(pending transaction):2
+          example: 1
+        transaction_hash:
+          title: Transaction Hash
+          type: string
+          description: transaction hash
+        error_code:
+          title: Error Code
+          type: integer
+          description: error code thrown from contract
+          example: 240202
+        error_msg:
+          title: Error Msg
+          type: string
+          description: error msg
+          example: Message sender is not token owner.
+    SendRawTransactionsNoWaitResponse:
+      title: SendRawTransactionsNoWaitResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/SendRawTransactionNoWaitResponse'
+    SendRawTransactionsResponse:
+      title: SendRawTransactionsResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/SendRawTransactionResponse'
+    ShareTokensSortItem:
+      title: ShareTokensSortItem
+      enum:
+        - token_address
+        - owner_address
+        - name
+        - symbol
+        - company_name
+        - tradable_exchange
+        - status
+        - personal_info_address
+        - transferable
+        - is_offering
+        - transfer_approval_required
+        - is_canceled
+        - created
+      type: string
+      description: An enumeration.
+    SortOrder:
+      title: SortOrder
+      enum:
+        - 0
+        - 1
+      type: integer
+      description: An enumeration.
     StraightBondTokensSortItem:
       title: StraightBondTokensSortItem
       enum:
@@ -6517,11 +6704,6 @@ components:
           title: Message
           type: string
           example: Suspended Token
-        description:
-          title: Description
-          anyOf:
-            - type: string
-            - type: object
     SuspendedTokenErrorResponse:
       title: SuspendedTokenErrorResponse
       required:
@@ -6533,11 +6715,6 @@ components:
         details:
           title: Details
           type: object
-      meta:
-        code:
-          example: 20
-        message:
-          example: Suspended Token
     Tick:
       title: Tick
       required:
@@ -6572,20 +6749,8 @@ components:
         amount:
           title: Amount
           type: integer
-    TickRequest:
-      title: TickRequest
-      required:
-        - address_list
-      type: object
-      properties:
-        address_list:
-          title: Address List
-          type: array
-          items:
-            type: string
-          description: Token address list
-    TicksResponse:
-      title: TicksResponse
+    Ticks:
+      title: Ticks
       required:
         - token_address
         - tick
@@ -6628,21 +6793,6 @@ components:
           title: Exchange Commitment
           type: integer
           default: 0
-    TokenHoldersCollection:
-      title: TokenHoldersCollection
-      required:
-        - status
-        - holders
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/TokenHoldersCollectionBatchStatus'
-        holders:
-          title: Holders
-          type: array
-          items:
-            $ref: '#/components/schemas/TokenHoldersCollectionHolder'
-          description: Token holder list.This list is excluding token owner address.
     TokenHoldersCollectionBatchStatus:
       title: TokenHoldersCollectionBatchStatus
       enum:
@@ -6665,11 +6815,24 @@ components:
         hold_balance:
           title: Hold Balance
           type: integer
-          description: >-
-            Amount of balance.This includes
-            balance/pending_transfer/exchange_balance/exchange_commitment.
-    TokenHoldersCount:
-      title: TokenHoldersCount
+          description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment.
+    TokenHoldersCollectionResponse:
+      title: TokenHoldersCollectionResponse
+      required:
+        - status
+        - holders
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/TokenHoldersCollectionBatchStatus'
+        holders:
+          title: Holders
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenHoldersCollectionHolder'
+          description: Token holder list.This list is excluding token owner address.
+    TokenHoldersCountResponse:
+      title: TokenHoldersCountResponse
       required:
         - count
       type: object
@@ -6677,8 +6840,13 @@ components:
         count:
           title: Count
           type: integer
-    TokenStatus:
-      title: TokenStatus
+    TokenHoldersResponse:
+      title: TokenHoldersResponse
+      type: array
+      items:
+        $ref: '#/components/schemas/TokenHolder'
+    TokenStatusResponse:
+      title: TokenStatusResponse
       required:
         - token_template
         - status
@@ -6704,8 +6872,8 @@ components:
         - IbetCoupon
       type: string
       description: An enumeration.
-    TransactionCount:
-      title: TransactionCount
+    TransactionCountResponse:
+      title: TransactionCountResponse
       required:
         - nonce
         - gasprice
@@ -6921,8 +7089,8 @@ components:
           type: integer
           description: Timeout value
           default: 5
-    WaitForTransactionReceiptResult:
-      title: WaitForTransactionReceiptResult
+    WaitForTransactionReceiptResponse:
+      title: WaitForTransactionReceiptResponse
       required:
         - status
       type: object
@@ -6961,7 +7129,6 @@ components:
           title: Token Address
           type: string
 tags:
-  - name: Root
   - name: Admin
     description: System administration
   - name: NodeInfo

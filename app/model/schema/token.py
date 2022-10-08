@@ -55,7 +55,7 @@ class CreateTokenHoldersCollectionRequest(BaseModel):
 # RESPONSE
 ############################
 
-class TokenStatus(BaseModel):
+class TokenStatusResponse(BaseModel):
     token_template: str = Field(example="IbetStraightBond")
     status: bool
     transferable: bool
@@ -70,7 +70,11 @@ class TokenHolder(BaseModel):
     exchange_commitment: Optional[int] = Field(default=0)
 
 
-class TokenHoldersCount(BaseModel):
+class TokenHoldersResponse(BaseModel):
+    __root__: list[TokenHolder]
+
+
+class TokenHoldersCountResponse(BaseModel):
     count: int
 
 
@@ -93,7 +97,7 @@ class TokenHoldersCollectionHolder(BaseModel):
                                           "This includes balance/pending_transfer/exchange_balance/exchange_commitment.")
 
 
-class TokenHoldersCollection(BaseModel):
+class TokenHoldersCollectionResponse(BaseModel):
     status: TokenHoldersCollectionBatchStatus
     holders: list[TokenHoldersCollectionHolder] = Field(description="Token holder list."
                                                                     "This list is excluding token owner address.")

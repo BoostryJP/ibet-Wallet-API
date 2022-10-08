@@ -31,9 +31,9 @@ from app.database import db_session
 from app.model.db import Node
 from app.model.schema import (
     GenericSuccessResponse,
-    NodeInfo,
+    GetNodeInfoResponse,
     SuccessResponse,
-    BlockSyncStatus
+    GetBlockSyncStatusResponse
 )
 from app.utils.web3_utils import Web3Wrapper
 
@@ -54,7 +54,7 @@ router = APIRouter(
     "",
     summary="Blockchain node information",
     operation_id="NodeInfo",
-    response_model=GenericSuccessResponse[NodeInfo]
+    response_model=GenericSuccessResponse[GetNodeInfoResponse]
 )
 def get_node_info():
     """
@@ -101,7 +101,7 @@ def get_node_info():
     "/BlockSyncStatus",
     summary="Block synchronization status of the connected blockchain node",
     operation_id="NodeInfoBlockSyncStatus",
-    response_model=GenericSuccessResponse[BlockSyncStatus]
+    response_model=GenericSuccessResponse[GetBlockSyncStatusResponse]
 )
 def get_block_sync_status(
     session: Session = Depends(db_session)

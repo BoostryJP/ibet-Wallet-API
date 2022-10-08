@@ -17,14 +17,14 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from pydantic import (
     BaseModel,
     Field,
     StrictStr
 )
-
-from app.model.schema.base import QueryModel
+from pydantic.dataclasses import dataclass
 
 ############################
 # COMMON
@@ -41,8 +41,9 @@ class BlockIdentifier(str, Enum):
     pending = "pending"
 
 
-class TransactionCountQuery(QueryModel):
-    block_identifier: Optional[BlockIdentifier]
+@dataclass
+class GetTransactionCountQuery:
+    block_identifier: Optional[BlockIdentifier] = Query(default=None)
 
 
 class SendRawTransactionRequest(BaseModel):
@@ -58,13 +59,13 @@ class WaitForTransactionReceiptRequest(BaseModel):
 # RESPONSE
 ############################
 
-class TransactionCount(BaseModel):
+class TransactionCountResponse(BaseModel):
     nonce: int = Field(..., example=34)
     gasprice: int = Field(..., example=0)
     chainid: str = Field(..., example="2017")
 
 
-class SendRawTransactionResult(BaseModel):
+class SendRawTransactionResponse(BaseModel):
     id: int = Field(..., example=1, description="transaction send order")
     status: int = Field(..., example=1, description="execution failure:0, execution success:1, execution success("
                                                     "pending transaction):2")
@@ -73,13 +74,21 @@ class SendRawTransactionResult(BaseModel):
     error_msg: Optional[str] = Field(example="Message sender is not token owner.", description="error msg")
 
 
-class SendRawTransactionNoWaitResult(BaseModel):
+class SendRawTransactionsResponse(BaseModel):
+    __root__: list[SendRawTransactionResponse]
+
+
+class SendRawTransactionNoWaitResponse(BaseModel):
     id: int = Field(..., example=1, description="transaction send order")
     status: int = Field(..., example=1, description="execution failure:0, execution success:1")
     transaction_hash: Optional[str] = Field(description="transaction hash")
 
 
-class WaitForTransactionReceiptResult(BaseModel):
+class SendRawTransactionsNoWaitResponse(BaseModel):
+    __root__: list[SendRawTransactionNoWaitResponse]
+
+
+class WaitForTransactionReceiptResponse(BaseModel):
     status: int = Field(..., example=1, description="transaction revert:0, transaction success:1")
     error_code: Optional[int] = Field(example=240202, description="error code thrown from contract")
     error_msg: Optional[str] = Field(example="Message sender is not token owner.", description="error msg")

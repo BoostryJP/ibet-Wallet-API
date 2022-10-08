@@ -20,7 +20,6 @@ from pydantic import (
     BaseModel,
     Field,
 )
-from app.model.schema.token import TokenType
 
 ############################
 # COMMON
@@ -36,6 +35,6 @@ from app.model.schema.token import TokenType
 # RESPONSE
 ############################
 
-class E2EMessageEncryptionKey(BaseModel):
+class E2EMessageEncryptionKeyResponse(BaseModel):
     key: str = Field(description="Message encryption key")
     key_type: str = Field(description="key type", example="RSA4096")

@@ -145,7 +145,7 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
-                    "loc": ["query", "account_address"],
+                    "loc": ["account_address"],
                     "msg": "account_address is not a valid address",
                     "type": "value_error"
                 }
@@ -194,7 +194,7 @@ class TestUserInfoPaymentAccount:
             "code": 88,
             "description": [
                 {
-                    "loc": ["query", "agent_address"],
+                    "loc": ["agent_address"],
                     "msg": "agent_address is not a valid address",
                     "type": "value_error"
                 }

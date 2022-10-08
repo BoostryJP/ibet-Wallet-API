@@ -65,7 +65,7 @@ from app.model.blockchain import (
     TokenClassTypes as BlockChainTokenModel
 )
 from app.model.schema import (
-    PositionQuery,
+    ListAllPositionQuery,
     GenericSuccessResponse,
     SuccessResponse,
     SecurityTokenPositionWithDetail,
@@ -77,8 +77,8 @@ from app.model.schema import (
     CouponPositionsResponse,
     CouponPositionWithDetail,
     CouponPositionWithAddress,
-    StraightBondToken as StraightBondTokenSchema,
-    ShareToken as ShareTokenSchema,
+    RetrieveStraightBondTokenResponse,
+    RetrieveShareTokenResponse,
 )
 from app.utils.docs_utils import get_routers_responses
 
@@ -110,7 +110,7 @@ class BasePosition:
         self.token_model = token_model
         self.idx_token_model = idx_token_model
 
-    def get_list(self, req: Request, request_query: PositionQuery, session: Session, account_address=None):
+    def get_list(self, req: Request, request_query: ListAllPositionQuery, session: Session, account_address=None):
 
         # API Enabled Check
         if self.token_enabled is False:
@@ -142,7 +142,7 @@ class BasePosition:
         )
         return data
 
-    def get_list_from_index(self, request_query: PositionQuery, session: Session, account_address: str):
+    def get_list_from_index(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
@@ -190,7 +190,7 @@ class BasePosition:
             "positions": position_list
         }
 
-    def get_list_from_contract(self, request_query: PositionQuery, session: Session, account_address: str):
+    def get_list_from_contract(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
@@ -534,7 +534,7 @@ class BasePositionMembership(BasePosition):
             IDXMembershipToken
         )
 
-    def get_list_from_index(self, request_query: PositionQuery, session: Session, account_address: str):
+    def get_list_from_index(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
@@ -591,7 +591,7 @@ class BasePositionCoupon(BasePosition):
             IDXCouponToken
         )
 
-    def get_list_from_index(self, request_query: PositionQuery, session: Session, account_address: str):
+    def get_list_from_index(self, request_query: ListAllPositionQuery, session: Session, account_address: str):
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
@@ -769,7 +769,7 @@ class GetPositionList:
         self,
         req: Request,
         account_address: str = Path(),
-        request_query: PositionQuery = Depends(),
+        request_query: ListAllPositionQuery = Depends(),
         session: Session = Depends(db_session)
     ):
         return self.base_position().get_list(req, request_query, session, account_address)
@@ -797,7 +797,7 @@ class GetPosition:
     "/{account_address}/Share",
     summary="Share Token Position",
     operation_id="GetShareTokenPosition",
-    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[ShareTokenSchema]],
+    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[RetrieveShareTokenResponse]],
     responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def list_all_share_positions(
@@ -822,7 +822,7 @@ def list_all_share_positions(
     "/{account_address}/StraightBond",
     summary="StraightBond Token Position",
     operation_id="GetStraightBondTokenPosition",
-    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[StraightBondTokenSchema]],
+    response_model=GenericSuccessResponse[GenericSecurityTokenPositionsResponse[RetrieveStraightBondTokenResponse]],
     responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def list_all_straight_bond_positions(
@@ -897,7 +897,7 @@ def list_all_coupon_positions(
     "/{account_address}/Share/{token_address}",
     summary="Share Token Position By Token Address",
     operation_id="GetShareTokenPositionByAddress",
-    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[ShareTokenSchema]],
+    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[RetrieveShareTokenResponse]],
     responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def retrieve_share_position_by_token_address(
@@ -919,7 +919,7 @@ def retrieve_share_position_by_token_address(
     "/{account_address}/StraightBond/{token_address}",
     summary="StraightBond Token Position By Token Address",
     operation_id="GetStraightBondTokenPositionByAddress",
-    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[StraightBondTokenSchema]],
+    response_model=GenericSuccessResponse[SecurityTokenPositionWithDetail[RetrieveStraightBondTokenResponse]],
     responses=get_routers_responses(DataNotExistsError, NotSupportedError, InvalidParameterError)
 )
 def retrieve_straight_bond_position_by_token_address(

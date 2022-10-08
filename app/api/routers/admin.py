@@ -50,11 +50,12 @@ from app.model.db import (
 )
 from app.model.schema import (
     SuccessResponse,
-    RegisterAdminTokensRequest,
+    RegisterAdminTokenRequest,
     UpdateAdminTokenRequest,
     GenericSuccessResponse,
-    AdminToken,
-    AdminTokensType
+    ListAllAdminTokensResponse,
+    RetrieveAdminTokenResponse,
+    GetAdminTokenTypeResponse
 )
 from app.utils.docs_utils import get_routers_responses
 
@@ -74,7 +75,7 @@ router = APIRouter(
     "/Tokens",
     summary="List All Listed Tokens",
     operation_id="TokensGET",
-    response_model=GenericSuccessResponse[list[AdminToken]]
+    response_model=GenericSuccessResponse[ListAllAdminTokensResponse]
 )
 def list_all_admin_tokens(
     session: Session = Depends(db_session)
@@ -107,7 +108,7 @@ def list_all_admin_tokens(
     responses=get_routers_responses(DataConflictError, InvalidParameterError),
 )
 def register_admin_token(
-    data: RegisterAdminTokensRequest,
+    data: RegisterAdminTokenRequest,
     session: Session = Depends(db_session)
 ):
     """
@@ -191,10 +192,10 @@ def register_admin_token(
     "/Tokens/Type",
     summary="Available status by token type",
     operation_id="TokenType",
-    response_model=GenericSuccessResponse[AdminTokensType],
+    response_model=GenericSuccessResponse[GetAdminTokenTypeResponse],
     response_model_exclude_unset=True
 )
-def admin_token_type():
+def get_admin_token_type():
     """
     Endpoint: /Admin/Tokens/Type
       - GET: 取扱トークン種別
@@ -219,11 +220,11 @@ def admin_token_type():
     "/Tokens/{token_address}",
     summary="Retrieve a Listed Token",
     operation_id="TokenGET",
-    response_model=GenericSuccessResponse[AdminToken],
+    response_model=GenericSuccessResponse[RetrieveAdminTokenResponse],
     response_model_exclude_unset=True,
     responses=get_routers_responses(DataNotExistsError)
 )
-def retrieve_listed_token(
+def retrieve_admin_token(
     token_address: str = Path(description="Token Address"),
     session: Session = Depends(db_session)
 ):
