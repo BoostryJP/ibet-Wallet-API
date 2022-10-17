@@ -58,7 +58,7 @@ from .eth import (
     # Request
     GetTransactionCountQuery,
     SendRawTransactionRequest,
-    WaitForTransactionReceiptRequest,
+    WaitForTransactionReceiptQuery,
     # Response
     TransactionCountResponse,
     SendRawTransactionsResponse,

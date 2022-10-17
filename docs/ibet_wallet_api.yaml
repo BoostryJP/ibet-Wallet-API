@@ -604,18 +604,32 @@ paths:
                   - $ref: '#/components/schemas/SuspendedTokenErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Eth/WaitForTransactionReceipt:
-    post:
+    get:
       tags:
         - Eth
       summary: Wait for Transaction Receipt
       description: 'Endpoint: /Eth/WaitForTransactionReceipt'
       operationId: WaitForTransactionReceipt
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WaitForTransactionReceiptRequest'
-        required: true
+      parameters:
+        - description: transaction hash
+          required: true
+          schema:
+            title: Transaction Hash
+            type: string
+            description: transaction hash
+          name: transaction_hash
+          in: query
+        - description: Timeout value
+          required: false
+          schema:
+            title: Timeout
+            maximum: 30
+            minimum: 1
+            type: integer
+            description: Timeout value
+            default: 5
+          name: timeout
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -7072,23 +7086,6 @@ components:
         type:
           title: Error Type
           type: string
-    WaitForTransactionReceiptRequest:
-      title: WaitForTransactionReceiptRequest
-      required:
-        - transaction_hash
-      type: object
-      properties:
-        transaction_hash:
-          title: Transaction Hash
-          type: string
-          description: transaction hash
-        timeout:
-          title: Timeout
-          maximum: 30
-          minimum: 1
-          type: integer
-          description: Timeout value
-          default: 5
     WaitForTransactionReceiptResponse:
       title: WaitForTransactionReceiptResponse
       required:
