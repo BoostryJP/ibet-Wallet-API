@@ -49,7 +49,7 @@ from app.model.schema import (
     SendRawTransactionsResponse,
     SendRawTransactionsNoWaitResponse,
     WaitForTransactionReceiptResponse,
-    WaitForTransactionReceiptRequest,
+    WaitForTransactionReceiptQuery,
 )
 from app.contracts import Contract
 from app.utils.contract_error_code import error_code_msg
@@ -402,7 +402,7 @@ def send_raw_transaction_no_wait(
 # ------------------------------
 # waitForTransactionReceipt
 # ------------------------------
-@router.post(
+@router.get(
     "/WaitForTransactionReceipt",
     summary="Wait for Transaction Receipt",
     operation_id="WaitForTransactionReceipt",
@@ -411,13 +411,13 @@ def send_raw_transaction_no_wait(
     responses=get_routers_responses(DataNotExistsError)
 )
 def wait_for_transaction_receipt(
-    data: WaitForTransactionReceiptRequest
+    query: WaitForTransactionReceiptQuery = Depends()
 ):
     """
     Endpoint: /Eth/WaitForTransactionReceipt
     """
-    transaction_hash = data.transaction_hash
-    timeout = data.transaction_hash or 5
+    transaction_hash = query.transaction_hash
+    timeout = query.transaction_hash
 
     result: dict[str, Any] = {}
     # transaction receipt の監視

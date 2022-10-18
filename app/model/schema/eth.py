@@ -50,9 +50,10 @@ class SendRawTransactionRequest(BaseModel):
     raw_tx_hex_list: list[StrictStr] = Field(description="Signed transaction list", min_items=1)
 
 
-class WaitForTransactionReceiptRequest(BaseModel):
-    transaction_hash: StrictStr = Field(description="transaction hash")
-    timeout: Optional[int] = Field(default=5, description="Timeout value", ge=1, le=30)
+@dataclass
+class WaitForTransactionReceiptQuery:
+    transaction_hash: StrictStr = Query(description="transaction hash")
+    timeout: Optional[int] = Query(default=5, description="Timeout value", ge=1, le=30)
 
 
 ############################
