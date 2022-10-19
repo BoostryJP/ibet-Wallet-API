@@ -50,6 +50,7 @@ from app.api.routers import (
     dex_market as routers_dex_market,
     dex_order_list as routers_dex_order_list
 )
+from app.config import BRAND_NAME
 from app.errors import (
     AppError,
     InvalidParameterError,
@@ -134,6 +135,10 @@ app.openapi = custom_openapi(app)  # type: ignore
 ###############################################################
 # ROUTER
 ###############################################################
+
+@app.get("/", tags=["Root"])
+def root():
+    return {"server": BRAND_NAME}
 
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)
