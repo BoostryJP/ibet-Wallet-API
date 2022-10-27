@@ -54,7 +54,7 @@ WEB3_CHAINID = os.environ.get("WEB3_CHAINID") or CONFIG['web3']['chainid']
 TRANSACTION_WAIT_TIMEOUT = int(os.environ.get("TRANSACTION_WAIT_TIMEOUT")) \
     if os.environ.get("TRANSACTION_WAIT_TIMEOUT") else 5
 # トランザクションレシートポーリング間隔（秒）
-TRANSACTION_WAIT_POLL_LATENCY = int(os.environ.get("TRANSACTION_WAIT_POLL_LATENCY")) \
+TRANSACTION_WAIT_POLL_LATENCY = float(os.environ.get("TRANSACTION_WAIT_POLL_LATENCY")) \
     if os.environ.get("TRANSACTION_WAIT_POLL_LATENCY") else 0.5
 
 # サーバ設定
