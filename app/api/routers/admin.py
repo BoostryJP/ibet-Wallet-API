@@ -167,18 +167,19 @@ def register_admin_token(
 
     token_type = token[1]
     # Fetch token detail data to store cache
+    # If there is idx data already, it will be updated.
     if token_type == "IbetCoupon":
-        token_obj = CouponToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        token_obj = CouponToken.fetch(session, contract_address)
+        session.merge(token_obj.to_model())
     elif token_type == "IbetMembership":
-        token_obj = MembershipToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        token_obj = MembershipToken.fetch(session, contract_address)
+        session.merge(token_obj.to_model())
     elif token_type == "IbetStraightBond":
-        token_obj = BondToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        token_obj = BondToken.fetch(session, contract_address)
+        session.merge(token_obj.to_model())
     elif token_type == "IbetShare":
-        token_obj = ShareToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        token_obj = ShareToken.fetch(session, contract_address)
+        session.merge(token_obj.to_model())
     session.commit()
 
     return SuccessResponse.use()
@@ -300,10 +301,7 @@ def delete_token(
     try:
         session.query(Listing).filter(Listing.token_address == token_address).delete()
         session.query(ExecutableContract).filter(ExecutableContract.contract_address == token_address).delete()
-        session.query(IDXBondToken).filter(IDXBondToken.token_address == token_address).delete()
-        session.query(IDXShareToken).filter(IDXShareToken.token_address == token_address).delete()
-        session.query(IDXMembershipToken).filter(IDXMembershipToken.token_address == token_address).delete()
-        session.query(IDXCouponToken).filter(IDXCouponToken.token_address == token_address).delete()
+        # IDX Token datas are not deleted to avoid race condition.
     except Exception as err:
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()

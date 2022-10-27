@@ -28,7 +28,11 @@ from app import config
 from app.contracts import Contract
 from app.model.db import (
     Listing,
-    ExecutableContract
+    ExecutableContract,
+    IDXBondToken,
+    IDXShareToken,
+    IDXMembershipToken,
+    IDXCouponToken
 )
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -114,6 +118,34 @@ class TestAdminTokensPOST:
         contract.contract_address = _contract["contract_address"]
         session.add(contract)
 
+    @staticmethod
+    def insert_idx_bond_token(session: Session, token_address: str):
+        idx_token = IDXBondToken()
+        idx_token.token_address = token_address
+        idx_token.token_template = "IbetStraightBond"
+        session.add(idx_token)
+
+    @staticmethod
+    def insert_idx_share_token(session: Session, token_address: str):
+        idx_token = IDXShareToken()
+        idx_token.token_address = token_address
+        idx_token.token_template = "IbetShare"
+        session.add(idx_token)
+
+    @staticmethod
+    def insert_idx_membership_token(session: Session, token_address: str):
+        idx_token = IDXMembershipToken()
+        idx_token.token_address = token_address
+        idx_token.token_template = "IbetMembership"
+        session.add(idx_token)
+
+    @staticmethod
+    def insert_idx_coupon_token(session: Session, token_address: str):
+        idx_token = IDXCouponToken()
+        idx_token.token_address = token_address
+        idx_token.token_template = "IbetCoupon"
+        session.add(idx_token)
+
     ###########################################################################
     # Normal
     ###########################################################################
@@ -198,23 +230,95 @@ class TestAdminTokensPOST:
         assert listing.max_sell_amount is None
         assert listing.owner_address == issuer["account_address"]
 
+    # <Normal_3>
+    # IDXデータが既に存在している
+    def test_normal_3_1(self, client: TestClient, session: Session, shared_contract):
+        # テスト用発行体アカウント
+        issuer = eth_account['issuer']
+
+        # [事前準備]tokenの発行(TokenListへの登録のみ)
+        config.BOND_TOKEN_ENABLED = True
+        token_list = TestAdminTokensPOST.tokenlist_contract()
+        config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
+        exchange_address = to_checksum_address(
+            shared_contract['IbetStraightBondExchange']['address'])
+        personal_info = to_checksum_address(
+            shared_contract['PersonalInfo']['address'])
+        attribute = TestAdminTokensPOST.bond_token_attribute(
+            exchange_address, personal_info)
+        bond_token = issue_bond_token(issuer, attribute)
+
+        register_bond_list(issuer, bond_token, token_list)
+        self.insert_idx_bond_token(session, bond_token["address"])
+        session.commit()
+
+        request_params = self.token_1
+        request_params["contract_address"] = bond_token["address"]
+        headers = {'Content-Type': 'application/json'}
+        request_body = json.dumps(request_params)
+        resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
+
+        assert resp.status_code == 200
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+
+        listing: Listing = session.query(Listing). \
+            filter(Listing.token_address == self.token_1["contract_address"]). \
+            first()
+        assert listing.token_address == self.token_1["contract_address"]
+        assert listing.is_public == self.token_1["is_public"]
+        assert listing.max_holding_quantity == self.token_1["max_holding_quantity"]
+        assert listing.max_sell_amount == self.token_1["max_sell_amount"]
+        assert listing.owner_address == issuer["account_address"]
+
+        executable_contract: ExecutableContract = session.query(ExecutableContract). \
+            filter(ExecutableContract.contract_address == self.token_1["contract_address"]). \
+            first()
+        assert executable_contract.contract_address == self.token_1["contract_address"]
+
+        idx_token: IDXBondToken = session.query(IDXBondToken). \
+            filter(IDXBondToken.token_address == self.token_1["contract_address"]). \
+            first()
+
+        assert idx_token.name == "テスト債券"
+        assert idx_token.symbol == "BOND"
+        assert idx_token.total_supply == 1000000
+        assert idx_token.tradable_exchange == shared_contract["IbetStraightBondExchange"]["address"]
+        assert idx_token.face_value == 10000
+        assert idx_token.interest_rate == 0.0602
+        assert len(idx_token.interest_payment_date) == 12
+        assert idx_token.redemption_date == "20191231"
+        assert idx_token.redemption_value == 10000
+        assert idx_token.return_date == "20191231"
+        assert idx_token.return_amount == "商品券をプレゼント"
+        assert idx_token.purpose == "新商品の開発資金として利用。"
+        assert idx_token.memo == "メモ"
+        assert idx_token.contact_information == "問い合わせ先"
+        assert idx_token.privacy_policy == "プライバシーポリシー"
+        assert idx_token.personal_info_address == shared_contract["PersonalInfo"]["address"]
+
     ###########################################################################
     # Error
     ###########################################################################
 
     # <Error_1>
-    # headersなし
+    # headers不正
     # 400（InvalidParameterError）
     def test_error_1(self, client: TestClient, session: Session):
         request_params = self.token_1
-        headers: dict[str, str] = {}
+        headers = {"Content-Type": "invalid_type"}
         request_body = json.dumps(request_params)
         resp = client.post(self.apiurl, headers=headers, json=json.loads(request_body))
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
             "code": 88,
-            "description": "contract_address is invalid token address",
+            "description": [
+                {
+                    "loc": ["body"],
+                    "msg": "value is not a valid dict",
+                    "type": "type_error.dict"
+                }
+            ],
             "message": "Invalid Parameter"
         }
 

@@ -112,10 +112,11 @@ class TestAdminTokenDELETE:
             all()
         assert executable_contract == []
 
-        idx_token = session.query(IDXBondToken). \
+        # IDXToken data is not deleted
+        idx_token_list: list[IDXBondToken] = session.query(IDXBondToken). \
             filter(IDXBondToken.token_address == token["token_address"]). \
             all()
-        assert idx_token == []
+        assert len(idx_token_list) == 1
 
     # Normal_2
     # Share
@@ -149,10 +150,11 @@ class TestAdminTokenDELETE:
             all()
         assert executable_contract == []
 
-        idx_token = session.query(IDXShareToken). \
+        # IDXToken data is not deleted
+        idx_token_list: list[IDXShareToken] = session.query(IDXShareToken). \
             filter(IDXShareToken.token_address == token["token_address"]). \
             all()
-        assert idx_token == []
+        assert len(idx_token_list) == 1
 
     # Normal_3
     # Membership
@@ -186,10 +188,11 @@ class TestAdminTokenDELETE:
             all()
         assert executable_contract == []
 
-        idx_token = session.query(IDXMembershipToken). \
+        # IDXToken data is not deleted
+        idx_token_list: list[IDXMembershipToken] = session.query(IDXMembershipToken). \
             filter(IDXMembershipToken.token_address == token["token_address"]). \
             all()
-        assert idx_token == []
+        assert len(idx_token_list) == 1
 
     # Normal_4
     # Coupon
@@ -223,10 +226,11 @@ class TestAdminTokenDELETE:
             all()
         assert executable_contract == []
 
-        idx_token = session.query(IDXCouponToken). \
+        # IDXToken data is not deleted
+        idx_token_list: list[IDXCouponToken] = session.query(IDXCouponToken). \
             filter(IDXCouponToken.token_address == token["token_address"]). \
             all()
-        assert idx_token == []
+        assert len(idx_token_list) == 1
 
     # Normal_5
     # Multiple token type(template)
@@ -261,12 +265,13 @@ class TestAdminTokenDELETE:
             all()
         assert executable_contract == []
 
-        idx_token = session.query(IDXBondToken). \
+        # IDXToken data is not deleted
+        idx_token_list: list[IDXBondToken] = session.query(IDXBondToken). \
             filter(IDXBondToken.token_address == token["token_address"]). \
             all()
-        assert idx_token == []
+        assert len(idx_token_list) == 1
 
-        idx_token = session.query(IDXCouponToken). \
+        idx_token_list: list[IDXCouponToken] = session.query(IDXCouponToken). \
             filter(IDXCouponToken.token_address == token["token_address"]). \
             all()
-        assert idx_token == []
+        assert len(idx_token_list) == 1
