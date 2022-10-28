@@ -35,8 +35,9 @@ class TestDEXMarketStraightBondOrderBook:
     # テスト対象API
     apiurl = '/DEX/Market/OrderBook/StraightBond'
 
-    # 環境変数設定
-    config.AGENT_ADDRESS = eth_account['agent']['account_address']
+    def setup(self):
+        # 環境変数設定
+        config.AGENT_ADDRESS = eth_account['agent']['account_address']
 
     # ＜正常系1-1-1＞
     # 未約定＆未キャンセルの売り注文が1件存在
