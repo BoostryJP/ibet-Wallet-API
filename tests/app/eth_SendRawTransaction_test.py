@@ -158,7 +158,7 @@ class TestEthSendRawTransaction:
                 "gasPrice": 0
             })
             tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-            signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+            signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
             request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
             headers = {'Content-Type': 'application/json'}
@@ -242,7 +242,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         token_contract_2 = web3.eth.contract(
             address=to_checksum_address(coupontoken_2["address"]),
@@ -269,7 +269,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_2.address))
-        signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.privateKey)
+        signed_tx_2 = web3.eth.account.sign_transaction(tx, local_account_2.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex(), signed_tx_2.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -342,7 +342,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -595,7 +595,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -661,7 +661,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -716,7 +716,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -774,7 +774,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -835,7 +835,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -901,7 +901,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -967,13 +967,13 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
-        with mock.patch.object(eth.web3.eth, "getTransaction", ConnectionError):
+        with mock.patch.object(eth.web3.eth, "get_transaction", ConnectionError):
             resp = client.post(
                 self.apiurl, headers=headers, data=request_body)
 
@@ -1037,7 +1037,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
@@ -1063,7 +1063,7 @@ class TestEthSendRawTransaction:
         }]
 
     # <Error_12>
-    # recoverTransaction error
+    # recover_transaction error
     def test_error_12(self, client: TestClient, session: Session):
 
         # トークンリスト登録
@@ -1114,20 +1114,20 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         # waitForTransactionReceiptエラー
         mock.patch.object(web3.eth, "waitForTransactionReceipt", MagicMock(side_effect=TimeExhausted()))
-        mock.patch.object(web3.eth.account, "recoverTransaction", MagicMock(side_effect=Exception()))
+        mock.patch.object(web3.eth.account, "recover_transaction", MagicMock(side_effect=Exception()))
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
         request_body = json.dumps(request_params)
 
         # タイムアウト
-        # recoverTransactionエラー
+        # recover_transactionエラー
         with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
-                "eth_account.Account.recoverTransaction", MagicMock(side_effect=Exception())):
+                "eth_account.Account.recover_transaction", MagicMock(side_effect=Exception())):
             resp = client.post(
                 self.apiurl, headers=headers, data=request_body)
 
@@ -1191,7 +1191,7 @@ class TestEthSendRawTransaction:
             "gasPrice": 0
         })
         tx["nonce"] = web3.eth.get_transaction_count(to_checksum_address(local_account_1.address))
-        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.privateKey)
+        signed_tx_1 = web3.eth.account.sign_transaction(tx, local_account_1.key)
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
