@@ -240,7 +240,7 @@ def send_raw_transaction(
             # Transactions that are not promoted to pending and remain in the queued state
             # will return an error status.
             try:
-                from_address = Account.recoverTransaction(raw_tx_hex)
+                from_address = Account.recover_transaction(raw_tx_hex)
             except Exception as err:
                 result.append({
                     "id": i + 1,
