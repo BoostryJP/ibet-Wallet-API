@@ -65,9 +65,6 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 token_factory = TokenFactory(web3)
 
-# 起動時のblockNumberを取得
-NOW_BLOCKNUMBER = web3.eth.block_number
-
 # コントラクトの生成
 cp_exchange_contract = Contract.get_contract(
     contract_name="IbetExchange",
