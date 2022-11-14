@@ -202,6 +202,7 @@ class BondToken(TokenBase):
         is_offering = Contract.call_function(token_contract, "isOffering", (), False)
         transfer_approval_required = Contract.call_function(token_contract, "transferApprovalRequired", (), False)
         is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -213,6 +214,7 @@ class BondToken(TokenBase):
         self.is_offering = is_offering
         self.transfer_approval_required = transfer_approval_required
         self.is_redeemed = is_redeemed
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> BondToken:
@@ -409,6 +411,7 @@ class ShareToken(TokenBase):
         dividend_information = Contract.call_function(
             token_contract, "dividendInformation", (), (0, "", "")
         )
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -426,6 +429,7 @@ class ShareToken(TokenBase):
             'dividend_record_date': dividend_information[1],
             'dividend_payment_date': dividend_information[2],
         }
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> ShareToken:
@@ -552,6 +556,7 @@ class MembershipToken(TokenBase):
         initial_offering_status = Contract.call_function(
             token_contract, "initialOfferingStatus", (), False
         )
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -561,6 +566,7 @@ class MembershipToken(TokenBase):
         self.status = status
         self.transferable = transferable
         self.initial_offering_status = initial_offering_status
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> MembershipToken:
@@ -685,6 +691,7 @@ class CouponToken(TokenBase):
         initial_offering_status = Contract.call_function(
             token_contract, "initialOfferingStatus", (), False
         )
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
         self.owner_address = owner_address
@@ -694,6 +701,7 @@ class CouponToken(TokenBase):
         self.status = status
         self.transferable = transferable
         self.initial_offering_status = initial_offering_status
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> CouponToken:
