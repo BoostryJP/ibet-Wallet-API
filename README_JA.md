@@ -16,7 +16,7 @@
 
 ## 依存
 - [python3](https://www.python.org/)
-  - バージョン 3.10 以上
+  - バージョン 3.10
 - RDB
   - [PostgreSQL](https://www.postgresql.org/) - バージョン 13
   - [MySQL](https://www.mysql.com/) - バージョン 5.7
@@ -26,7 +26,8 @@
 
 ## コントラクトのバージョン
 
-* ibet-SmartContract: バージョン 22.6
+* ibet-SmartContract: バージョン 22.12
+* [詳細](./app/contracts/contract_version.md)を参照ください。
 
 ## セットアップ
 
