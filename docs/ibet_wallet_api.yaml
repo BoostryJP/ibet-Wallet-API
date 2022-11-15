@@ -4,6 +4,15 @@ info:
   description: ibet Wallet API
   version: 22.12.0
 paths:
+  /:
+    get:
+      tags:
+        - Root
+      summary: Root
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
   /Admin/Tokens:
     get:
       tags:
@@ -3534,18 +3543,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/OrderList/StraightBond:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Straight Bond Order History (Bulk Get)
       description: 'Endpoint: /DEX/OrderList/StraightBond'
       operationId: StraightBondOrderList
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderListRequest'
-        required: true
+      parameters:
+        - description: Account address list
+          required: true
+          schema:
+            title: Account Address List
+            type: array
+            items:
+              type: string
+            description: Account address list
+          name: account_address_list
+          in: query
+        - description: Whether to include canceled orders or canceled agreements.
+          required: false
+          schema:
+            title: Include Canceled Items
+            type: boolean
+            description: Whether to include canceled orders or canceled agreements.
+          name: include_canceled_items
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3566,18 +3588,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/OrderList/Membership:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Membership Order History (Bulk Get)
       description: 'Endpoint: /DEX/OrderList/Membership'
       operationId: MembershipOrderList
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderListRequest'
-        required: true
+      parameters:
+        - description: Account address list
+          required: true
+          schema:
+            title: Account Address List
+            type: array
+            items:
+              type: string
+            description: Account address list
+          name: account_address_list
+          in: query
+        - description: Whether to include canceled orders or canceled agreements.
+          required: false
+          schema:
+            title: Include Canceled Items
+            type: boolean
+            description: Whether to include canceled orders or canceled agreements.
+          name: include_canceled_items
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3598,18 +3633,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/OrderList/Coupon:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Coupon Order History (Bulk Get)
       description: 'Endpoint: /DEX/OrderList/Coupon'
       operationId: CouponOrderList
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderListRequest'
-        required: true
+      parameters:
+        - description: Account address list
+          required: true
+          schema:
+            title: Account Address List
+            type: array
+            items:
+              type: string
+            description: Account address list
+          name: account_address_list
+          in: query
+        - description: Whether to include canceled orders or canceled agreements.
+          required: false
+          schema:
+            title: Include Canceled Items
+            type: boolean
+            description: Whether to include canceled orders or canceled agreements.
+          name: include_canceled_items
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3630,18 +3678,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/OrderList/Share:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Share Order History (Bulk Get)
       description: 'Endpoint: /DEX/OrderList/Share'
       operationId: ShareOrderList
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderListRequest'
-        required: true
+      parameters:
+        - description: Account address list
+          required: true
+          schema:
+            title: Account Address List
+            type: array
+            items:
+              type: string
+            description: Account address list
+          name: account_address_list
+          in: query
+        - description: Whether to include canceled orders or canceled agreements.
+          required: false
+          schema:
+            title: Include Canceled Items
+            type: boolean
+            description: Whether to include canceled orders or canceled agreements.
+          name: include_canceled_items
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3662,7 +3723,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/OrderList/{token_address}:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Order History filtered by token (Bulk Get)
@@ -3675,12 +3736,24 @@ paths:
             type: string
           name: token_address
           in: path
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderListRequest'
-        required: true
+        - description: Account address list
+          required: true
+          schema:
+            title: Account Address List
+            type: array
+            items:
+              type: string
+            description: Account address list
+          name: account_address_list
+          in: query
+        - description: Whether to include canceled orders or canceled agreements.
+          required: false
+          schema:
+            title: Include Canceled Items
+            type: boolean
+            description: Whether to include canceled orders or canceled agreements.
+          name: include_canceled_items
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -5295,22 +5368,6 @@ components:
           allOf:
             - $ref: '#/components/schemas/OrderType'
           description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
-    ListAllOrderListRequest:
-      title: ListAllOrderListRequest
-      required:
-        - account_address_list
-      type: object
-      properties:
-        account_address_list:
-          title: Account Address List
-          type: array
-          items:
-            type: string
-          description: Account address list
-        include_canceled_items:
-          title: Include Canceled Items
-          type: boolean
-          description: Whether to include canceled orders or canceled agreements.
     ListAllOrderListResponse:
       title: ListAllOrderListResponse
       required:

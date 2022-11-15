@@ -166,7 +166,7 @@ from .dex_market import (
 )
 from .dex_order_list import (
     # Request
-    ListAllOrderListRequest,
+    ListAllOrderListQuery,
     # Response
     ListAllOrderListResponse,
     TokenAddress
