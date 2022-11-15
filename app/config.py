@@ -94,7 +94,6 @@ DEBUG_LOG_FORMAT = '[%(asctime)s] [%(process)d] [%(levelname)s] {} %(message)s [
 LOG_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S %z"
 
 APP_LOGFILE = os.environ.get('APP_LOGFILE') or '/dev/stdout'
-AUTH_LOGFILE = os.environ.get('AUTH_LOGFILE') or '/dev/stdout'
 ACCESS_LOGFILE = os.environ.get('ACCESS_LOGFILE') or '/dev/stdout'
 
 # 取扱トークン種別
