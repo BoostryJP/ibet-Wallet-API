@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from unittest import mock
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.model.db import (
@@ -225,12 +224,9 @@ class TestDEXOrderList:
         request_params = {
             "account_address_list": [account["account_address"]]
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -288,12 +284,9 @@ class TestDEXOrderList:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -365,12 +358,9 @@ class TestDEXOrderList:
         request_params = {
             "account_address_list": [account["account_address"]]
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -446,12 +436,9 @@ class TestDEXOrderList:
         request_params = {
             "account_address_list": [account["account_address"]]
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -530,12 +517,9 @@ class TestDEXOrderList:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -565,16 +549,14 @@ class TestDEXOrderList:
     ###########################################################################
 
     # Error_1
-    # invalid token address
-    # -> 400
+    # field required
+    # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         # request target API
-        headers = {"Content-Type": "application/json"}
         request_body = json.dumps({})
-        resp = client.post(
+        resp = client.get(
             self.base_url + "invalid_token_address",
-            headers=headers,
-            data=request_body
+            params=request_body
         )
 
         # assertion
@@ -583,7 +565,7 @@ class TestDEXOrderList:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['query', 'account_address_list'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
                 }
@@ -592,85 +574,9 @@ class TestDEXOrderList:
         }
 
     # Error_2
-    # No headers
-    # -> 400
+    # account_address_list has not a valid address
+    # Invalid Parameter
     def test_error_2(self, client: TestClient, session: Session, shared_contract):
-        # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
-
-        # emit NewOrder event
-        bond_token, order_id, _ = self.bond_order_event(
-            bond_exchange=bond_exchange,
-            personal_info=personal_info,
-            token_list=token_list
-        )
-
-        # request target API
-        headers = {}
-        request_body = json.dumps({})
-        resp = client.post(
-            self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body', 'account_address_list'],
-                    'msg': 'field required',
-                    'type': 'value_error.missing'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_1
-    # Validation error: no request-body
-    # -> 400
-    def test_error_3_1(self, client: TestClient, session: Session, shared_contract):
-        # set environment variables
-        bond_exchange, _, _, personal_info, _, token_list = \
-            self.set_env(shared_contract)
-
-        # emit NewOrder event
-        bond_token, order_id, _ = self.bond_order_event(
-            bond_exchange=bond_exchange,
-            personal_info=personal_info,
-            token_list=token_list
-        )
-
-        # request target API
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps({})
-        resp = client.post(
-            self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body', 'account_address_list'],
-                    'msg': 'field required',
-                    'type': 'value_error.missing'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_2
-    # Validation error: invalid type (account_address)
-    # -> 400
-    def test_error_3_2(self, client: TestClient, session: Session, shared_contract):
         account = eth_account["trader"]
 
         # set environment variables
@@ -685,15 +591,12 @@ class TestDEXOrderList:
         )
 
         # request target API
-        headers = {"Content-Type": "application/json"}
         request_params = {
             "account_address_list": [account["account_address"][:-1]]
         }
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.base_url + bond_token["address"],
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -702,7 +605,7 @@ class TestDEXOrderList:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['account_address_list'],
                     'msg': 'account_address_list has not a valid address',
                     'type': 'value_error'
                 }
@@ -924,12 +827,9 @@ class TestDEXOrderListBond:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1032,12 +932,9 @@ class TestDEXOrderListBond:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1139,12 +1036,9 @@ class TestDEXOrderListBond:
         request_params = {
             "account_address_list": [account["account_address"]]
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1245,12 +1139,9 @@ class TestDEXOrderListBond:
         request_params = {
             "account_address_list": [account["account_address"]]
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1355,12 +1246,9 @@ class TestDEXOrderListBond:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1433,17 +1321,13 @@ class TestDEXOrderListBond:
     ###########################################################################
 
     # Error_1
-    # Validation error: no request-body
-    # -> 400
+    # field required: account_address_list
+    # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps({})
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params={}
         )
 
         # assertion
@@ -1452,7 +1336,7 @@ class TestDEXOrderListBond:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['query', 'account_address_list'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
                 }
@@ -1461,51 +1345,18 @@ class TestDEXOrderListBond:
         }
 
     # Error_2
-    # Invalid headers(Content-Type)
-    # -> 400
+    # account_address_list has not a valid address
+    # Invalid Parameter
     def test_error_2(self, client: TestClient, session: Session):
-        config.BOND_TOKEN_ENABLED = True
-        account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
-
-        headers: dict = {"Content-Type": "invalid type"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body'],
-                    'msg': 'value is not a valid dict',
-                    'type': 'type_error.dict'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_1
-    # Validation error: invalid account_address format
-    # -> 400
-    def test_error_3_1(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
 
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {
             "account_address_list": [account_address]
         }
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers={"Content-Type": "application/json"},
-            data=json.dumps(request_params)
+            params=request_params
         )
 
         # assertion
@@ -1514,7 +1365,7 @@ class TestDEXOrderListBond:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['account_address_list'],
                     'msg': 'account_address_list has not a valid address',
                     'type': 'value_error'
                 }
@@ -1522,37 +1373,10 @@ class TestDEXOrderListBond:
             'message': 'Invalid Parameter'
         }
 
-    # Error_3_2
-    # Validation error: account_address must be string
-    # -> 400
-    def test_error_3_2(self, client: TestClient, session: Session):
-        config.BOND_TOKEN_ENABLED = True
-        account_address = 123456789123456789123456789123456789
-        request_params = {"account_address_list": [account_address]}
-
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body', 'account_address_list'],
-                    'msg': 'account_address_list has not a valid address',
-                    'type': 'value_error'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_3
+    # Error_3
     # Validation error: include_canceled_items must be boolean
-    # -> 400
-    def test_error_3_3(self, client: TestClient, session: Session):
+    # Invalid Parameter
+    def test_error_3(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -1560,13 +1384,9 @@ class TestDEXOrderListBond:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": "test"
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1575,7 +1395,7 @@ class TestDEXOrderListBond:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'include_canceled_items'],
+                    'loc': ['query', 'include_canceled_items'],
                     'msg': 'value could not be parsed to a boolean',
                     'type': 'type_error.bool'
                 }
@@ -1587,32 +1407,31 @@ class TestDEXOrderListBond:
     # Not supported HTTP method
     def test_error_4(self, client: TestClient, session: Session):
         config.BOND_TOKEN_ENABLED = True
-        resp = client.get(self.apiurl)
+        resp = client.post(self.apiurl)
 
         # assertion
         assert resp.status_code == 405
         assert resp.json()["meta"] == {
             "code": 1,
             "message": "Method Not Allowed",
-            "description": "method: GET, url: /DEX/OrderList/StraightBond"
+            "description": "method: POST, url: /DEX/OrderList/StraightBond"
         }
 
     # Error_5
     # Bond token is not enabled
     def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
 
+        request_params = {"account_address_list": [account["account_address"]]}
         config.BOND_TOKEN_ENABLED = False
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/StraightBond"
+            "description": "method: GET, url: /DEX/OrderList/StraightBond"
         }
 
     # Error_6
@@ -1620,18 +1439,17 @@ class TestDEXOrderListBond:
     def test_error_6(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
 
         config.BOND_TOKEN_ENABLED = True
         config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/StraightBond"
+            "description": "method: GET, url: /DEX/OrderList/StraightBond"
         }
 
 
@@ -1815,12 +1633,9 @@ class TestDEXOrderListMembership:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1904,12 +1719,9 @@ class TestDEXOrderListMembership:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -1991,12 +1803,9 @@ class TestDEXOrderListMembership:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -2085,12 +1894,9 @@ class TestDEXOrderListMembership:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -2179,12 +1985,9 @@ class TestDEXOrderListMembership:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -2243,17 +2046,13 @@ class TestDEXOrderListMembership:
     ###########################################################################
 
     # Error_1
-    # Validation error: no request-body
-    # -> 400
+    # field required: account_address_list
+    # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps({})
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params={}
         )
 
         # assertion
@@ -2262,7 +2061,7 @@ class TestDEXOrderListMembership:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['query', 'account_address_list'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
                 }
@@ -2271,51 +2070,16 @@ class TestDEXOrderListMembership:
         }
 
     # Error_2
-    # 入力値エラー（headers Content-Type不正）
-    # -> 400
+    # account_address_list has not a valid address
+    # Invalid Parameter
     def test_error_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
 
-        headers: dict = {"Content-Type": "invalid type"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body'],
-                    'msg': 'value is not a valid dict',
-                    'type': 'type_error.dict'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_1
-    # Validation error: invalid account_address format
-    # -> 400
-    def test_error_3_1(self, client: TestClient, session: Session):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
-
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         assert resp.status_code == 400
@@ -2323,7 +2087,7 @@ class TestDEXOrderListMembership:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['account_address_list'],
                     'msg': 'account_address_list has not a valid address',
                     'type': 'value_error'
                 }
@@ -2331,40 +2095,10 @@ class TestDEXOrderListMembership:
             'message': 'Invalid Parameter'
         }
 
-    # Error_3_2
-    # Validation error: account_address must be string
-    # -> 400
-    def test_error_3_2(self, client: TestClient, session: Session):
-        config.MEMBERSHIP_TOKEN_ENABLED = True
-        account_address = 123456789123456789123456789123456789
-        request_params = {"account_address_list": [account_address]}
-
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            data=request_body
-        )
-
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body', 'account_address_list'],
-                    'msg': 'account_address_list has not a valid address',
-                    'type': 'value_error'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_3
+    # Error_3
     # Validation error: include_canceled_items must be boolean
-    # -> 400
-    def test_error_3_3(self, client: TestClient, session: Session):
+    # Invalid Parameter
+    def test_error_3(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -2372,13 +2106,9 @@ class TestDEXOrderListMembership:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": "test"
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         assert resp.status_code == 400
@@ -2386,7 +2116,7 @@ class TestDEXOrderListMembership:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'include_canceled_items'],
+                    'loc': ['query', 'include_canceled_items'],
                     'msg': 'value could not be parsed to a boolean',
                     'type': 'type_error.bool'
                 }
@@ -2398,13 +2128,13 @@ class TestDEXOrderListMembership:
     # Not supported HTTP method
     def test_error_4(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
-        resp = client.get(self.apiurl)
+        resp = client.post(self.apiurl)
 
         assert resp.status_code == 405
         assert resp.json()["meta"] == {
             "code": 1,
             "message": "Method Not Allowed",
-            "description": "method: GET, url: /DEX/OrderList/Membership"
+            "description": "method: POST, url: /DEX/OrderList/Membership"
         }
 
     # Error_5
@@ -2412,15 +2142,14 @@ class TestDEXOrderListMembership:
     def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
         config.MEMBERSHIP_TOKEN_ENABLED = False
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/Membership"
+            "description": "method: GET, url: /DEX/OrderList/Membership"
         }
 
     # Error_6
@@ -2428,16 +2157,15 @@ class TestDEXOrderListMembership:
     def test_error_6(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/Membership"
+            "description": "method: GET, url: /DEX/OrderList/Membership"
         }
 
 
@@ -2625,12 +2353,9 @@ class TestDEXOrderListCoupon:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -2716,12 +2441,9 @@ class TestDEXOrderListCoupon:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -2802,12 +2524,9 @@ class TestDEXOrderListCoupon:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -2892,12 +2611,9 @@ class TestDEXOrderListCoupon:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -2987,12 +2703,9 @@ class TestDEXOrderListCoupon:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3051,17 +2764,13 @@ class TestDEXOrderListCoupon:
     ###########################################################################
 
     # Error_1
-    # Validation error: no request-body
-    # -> 400
+    # field required: account_address_list
+    # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps({})
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params={}
         )
 
         # assertion
@@ -3070,7 +2779,7 @@ class TestDEXOrderListCoupon:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['query', 'account_address_list'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
                 }
@@ -3079,51 +2788,16 @@ class TestDEXOrderListCoupon:
         }
 
     # Error_2
-    # 入力値エラー（headers Content-Type不正）
-    # -> 400
+    # account_address_list has not a valid address
+    # Invalid Parameter
     def test_error_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
-        account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
 
-        headers: dict = {"Content-Type": "invalid type"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body'],
-                    'msg': 'value is not a valid dict',
-                    'type': 'type_error.dict'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_1
-    # Validation error: invalid account_address format
-    # -> 400
-    def test_error_3_1(self, client: TestClient, session: Session):
-        config.COUPON_TOKEN_ENABLED = True
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
-
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3132,7 +2806,7 @@ class TestDEXOrderListCoupon:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['account_address_list'],
                     'msg': 'account_address_list has not a valid address',
                     'type': 'value_error'
                 }
@@ -3140,41 +2814,10 @@ class TestDEXOrderListCoupon:
             'message': 'Invalid Parameter'
         }
 
-    # Error_3_2
-    # Validation error: account_address must be string
-    # -> 400
-    def test_error_3_2(self, client: TestClient, session: Session):
-        config.COUPON_TOKEN_ENABLED = True
-        account_address = 123456789123456789123456789123456789
-        request_params = {"account_address_list": [account_address]}
-
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body', 'account_address_list'],
-                    'msg': 'account_address_list has not a valid address',
-                    'type': 'value_error'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_3
+    # Error_3
     # Validation error: include_canceled_items must be boolean
-    # -> 400
-    def test_error_3_3(self, client: TestClient, session: Session):
+    # Invalid Parameter
+    def test_error_3(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -3182,13 +2825,9 @@ class TestDEXOrderListCoupon:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": "test"
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         assert resp.status_code == 400
@@ -3196,7 +2835,7 @@ class TestDEXOrderListCoupon:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'include_canceled_items'],
+                    'loc': ['query', 'include_canceled_items'],
                     'msg': 'value could not be parsed to a boolean',
                     'type': 'type_error.bool'
                 }
@@ -3208,32 +2847,31 @@ class TestDEXOrderListCoupon:
     # Not supported HTTP method
     def test_error_4(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
-        resp = client.get(self.apiurl)
+        resp = client.post(self.apiurl)
 
         # assertion
         assert resp.status_code == 405
         assert resp.json()["meta"] == {
             "code": 1,
             "message": "Method Not Allowed",
-            "description": "method: GET, url: /DEX/OrderList/Coupon"
+            "description": "method: POST, url: /DEX/OrderList/Coupon"
         }
 
     # Error_5
     # Coupon token is not enabled
     def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
 
+        request_params = {"account_address_list": [account["account_address"]]}
         config.COUPON_TOKEN_ENABLED = False
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/Coupon"
+            "description": "method: GET, url: /DEX/OrderList/Coupon"
         }
 
     # Error_6
@@ -3241,17 +2879,16 @@ class TestDEXOrderListCoupon:
     def test_error_6(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
 
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/Coupon"
+            "description": "method: GET, url: /DEX/OrderList/Coupon"
         }
 
 
@@ -3458,12 +3095,9 @@ class TestDEXOrderListShare:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3555,12 +3189,9 @@ class TestDEXOrderListShare:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3649,10 +3280,9 @@ class TestDEXOrderListShare:
         request_params = {"account_address_list": [account["account_address"]]}
         headers = {"Content-Type": "application/json"}
         request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3741,12 +3371,9 @@ class TestDEXOrderListShare:
 
         # request target API
         request_params = {"account_address_list": [account["account_address"]]}
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3840,12 +3467,9 @@ class TestDEXOrderListShare:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": True
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3907,17 +3531,13 @@ class TestDEXOrderListShare:
     ###########################################################################
 
     # Error_1
-    # Validation error: no request-body
-    # -> 400
+    # field required: account_address_list
+    # Invalid Parameter
     def test_error_1(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps({})
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params={}
         )
 
         # assertion
@@ -3926,40 +3546,9 @@ class TestDEXOrderListShare:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['query', 'account_address_list'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_2
-    # 入力値エラー（headers Content-Type不正）
-    # -> 400
-    def test_error_2(self, client: TestClient, session: Session):
-        config.SHARE_TOKEN_ENABLED = True
-        account = eth_account["trader"]
-        request_params = {"account_address_list": [account["account_address"]]}
-
-        headers: dict = {"Content-Type": "invalid type"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body'],
-                    'msg': 'value is not a valid dict',
-                    'type': 'type_error.dict'
                 }
             ],
             'message': 'Invalid Parameter'
@@ -3970,16 +3559,12 @@ class TestDEXOrderListShare:
     # -> 400
     def test_error_3_1(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
+
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # invalid address
         request_params = {"account_address_list": [account_address]}
-
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -3988,7 +3573,7 @@ class TestDEXOrderListShare:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address_list'],
+                    'loc': ['account_address_list'],
                     'msg': 'account_address_list has not a valid address',
                     'type': 'value_error'
                 }
@@ -3996,41 +3581,10 @@ class TestDEXOrderListShare:
             'message': 'Invalid Parameter'
         }
 
-    # Error_3_2
-    # Validation error: account_address must be string
-    # -> 400
-    def test_error_3_2(self, client: TestClient, session: Session):
-        config.SHARE_TOKEN_ENABLED = True
-        account_address = 123456789123456789123456789123456789
-        request_params = {"account_address_list": [account_address]}
-
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl,
-            headers=headers,
-            data=request_body
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json()["meta"] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body', 'account_address_list'],
-                    'msg': 'account_address_list has not a valid address',
-                    'type': 'value_error'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # Error_3_3
+    # Error_3
     # Validation error: include_canceled_items must be boolean
-    # -> 400
-    def test_error_3_3(self, client: TestClient, session: Session):
+    # Invalid Parameter
+    def test_error_3(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
         account = eth_account["trader"]
 
@@ -4038,13 +3592,9 @@ class TestDEXOrderListShare:
             "account_address_list": [account["account_address"]],
             "include_canceled_items": "test"
         }
-        headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
+        resp = client.get(
             self.apiurl,
-            headers=headers,
-            data=request_body
+            params=request_params
         )
 
         # assertion
@@ -4053,7 +3603,7 @@ class TestDEXOrderListShare:
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'include_canceled_items'],
+                    'loc': ['query', 'include_canceled_items'],
                     'msg': 'value could not be parsed to a boolean',
                     'type': 'type_error.bool'
                 }
@@ -4065,14 +3615,14 @@ class TestDEXOrderListShare:
     # Not supported HTTP method
     def test_error_4(self, client: TestClient, session: Session):
         config.SHARE_TOKEN_ENABLED = True
-        resp = client.get(self.apiurl)
+        resp = client.post(self.apiurl)
 
         # assertion
         assert resp.status_code == 405
         assert resp.json()["meta"] == {
             "code": 1,
             "message": "Method Not Allowed",
-            "description": "method: GET, url: /DEX/OrderList/Share"
+            "description": "method: POST, url: /DEX/OrderList/Share"
         }
 
     # Error_5
@@ -4080,17 +3630,16 @@ class TestDEXOrderListShare:
     def test_error_5(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
 
         config.SHARE_TOKEN_ENABLED = False
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/Share"
+            "description": "method: GET, url: /DEX/OrderList/Share"
         }
 
     # Error_6
@@ -4098,16 +3647,15 @@ class TestDEXOrderListShare:
     def test_error_6(self, client: TestClient, session: Session):
         account = eth_account["trader"]
         request_params = {"account_address_list": [account["account_address"]]}
-        request_body = json.dumps(request_params)
 
         config.SHARE_TOKEN_ENABLED = True
         config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        resp = client.post(self.apiurl, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         # assertion
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 10,
             "message": "Not Supported",
-            "description": "method: POST, url: /DEX/OrderList/Share"
+            "description": "method: GET, url: /DEX/OrderList/Share"
         }

@@ -47,7 +47,7 @@ from app.model.blockchain import (
     ShareToken
 )
 from app.model.schema import (
-    ListAllOrderListRequest,
+    ListAllOrderListQuery,
     GenericSuccessResponse,
     ListAllOrderListResponse,
     SuccessResponse,
@@ -468,16 +468,16 @@ class StraightBondOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: ListAllOrderListRequest,
+        request_query: ListAllOrderListQuery = Depends(),
         session: Session = Depends(db_session)
     ):
         if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.url.path)
+            raise NotSupportedError(method="GET", url=req.url.path)
 
         order_list = []
         settlement_list = []
         complete_list = []
-        for account_address in data.account_address_list:
+        for account_address in request_query.account_address_list:
             try:
                 # order_list
                 order_list.extend(
@@ -486,7 +486,7 @@ class StraightBondOrderList(BaseOrderList):
                         token_model=BondToken,
                         exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -509,7 +509,7 @@ class StraightBondOrderList(BaseOrderList):
                         token_model=BondToken,
                         exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -525,7 +525,7 @@ class StraightBondOrderList(BaseOrderList):
         return response_json
 
 
-@router.post(
+@router.get(
     "/StraightBond",
     summary="Straight Bond Order History (Bulk Get)",
     operation_id="StraightBondOrderList",
@@ -551,17 +551,17 @@ class MembershipOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: ListAllOrderListRequest,
+        request_query: ListAllOrderListQuery = Depends(),
         session: Session = Depends(db_session)
     ):
         if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.url.path)
+            raise NotSupportedError(method="GET", url=req.url.path)
 
         order_list = []
         settlement_list = []
         complete_list = []
 
-        for account_address in data.account_address_list:
+        for account_address in request_query.account_address_list:
             try:
                 # order_list
                 order_list.extend(
@@ -570,7 +570,7 @@ class MembershipOrderList(BaseOrderList):
                         token_model=MembershipToken,
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -593,7 +593,7 @@ class MembershipOrderList(BaseOrderList):
                         token_model=MembershipToken,
                         exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -609,7 +609,7 @@ class MembershipOrderList(BaseOrderList):
         return response_json
 
 
-@router.post(
+@router.get(
     "/Membership",
     summary="Membership Order History (Bulk Get)",
     operation_id="MembershipOrderList",
@@ -635,17 +635,17 @@ class CouponOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: ListAllOrderListRequest,
+        request_query: ListAllOrderListQuery = Depends(),
         session: Session = Depends(db_session)
     ):
         if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.url.path)
+            raise NotSupportedError(method="GET", url=req.url.path)
 
         order_list = []
         settlement_list = []
         complete_list = []
 
-        for account_address in data.account_address_list:
+        for account_address in request_query.account_address_list:
             try:
                 # order_list
                 order_list.extend(
@@ -654,7 +654,7 @@ class CouponOrderList(BaseOrderList):
                         token_model=CouponToken,
                         exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -677,7 +677,7 @@ class CouponOrderList(BaseOrderList):
                         token_model=CouponToken,
                         exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -693,7 +693,7 @@ class CouponOrderList(BaseOrderList):
         return response_json
 
 
-@router.post(
+@router.get(
     "/Coupon",
     summary="Coupon Order History (Bulk Get)",
     operation_id="CouponOrderList",
@@ -719,17 +719,17 @@ class ShareOrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: ListAllOrderListRequest,
+        request_query: ListAllOrderListQuery = Depends(),
         session: Session = Depends(db_session)
     ):
         if config.SHARE_TOKEN_ENABLED is False or config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.url.path)
+            raise NotSupportedError(method="GET", url=req.url.path)
 
         order_list = []
         settlement_list = []
         complete_list = []
 
-        for account_address in data.account_address_list:
+        for account_address in request_query.account_address_list:
             try:
                 # order_list
                 order_list.extend(
@@ -738,7 +738,7 @@ class ShareOrderList(BaseOrderList):
                         token_model=ShareToken,
                         exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -761,7 +761,7 @@ class ShareOrderList(BaseOrderList):
                         token_model=ShareToken,
                         exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -777,7 +777,7 @@ class ShareOrderList(BaseOrderList):
         return response_json
 
 
-@router.post(
+@router.get(
     "/Share",
     summary="Share Order History (Bulk Get)",
     operation_id="ShareOrderList",
@@ -803,7 +803,7 @@ class OrderList(BaseOrderList):
     def __call__(
         self,
         req: Request,
-        data: ListAllOrderListRequest,
+        request_query: ListAllOrderListQuery = Depends(),
         token_address: str = Path(),
         session: Session = Depends(db_session)
     ):
@@ -820,7 +820,7 @@ class OrderList(BaseOrderList):
         order_list = []
         settlement_list = []
         complete_list = []
-        for account_address in data.account_address_list:
+        for account_address in request_query.account_address_list:
             try:
                 # order_list
                 order_list.extend(
@@ -828,7 +828,7 @@ class OrderList(BaseOrderList):
                         session=session,
                         token_address=token_address,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -849,7 +849,7 @@ class OrderList(BaseOrderList):
                         session=session,
                         token_address=token_address,
                         account_address=account_address,
-                        include_canceled_items=data.include_canceled_items
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -865,7 +865,7 @@ class OrderList(BaseOrderList):
         return response_json
 
 
-@router.post(
+@router.get(
     "/{token_address}",
     summary="Order History filtered by token (Bulk Get)",
     operation_id="IbetExchange",

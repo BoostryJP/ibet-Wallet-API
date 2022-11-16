@@ -21,11 +21,14 @@ from typing import (
     Generic,
     TypeVar
 )
+
+from fastapi import Query
 from pydantic import (
     BaseModel,
     Field,
     validator
 )
+from pydantic.dataclasses import dataclass
 from pydantic.generics import GenericModel
 from web3 import Web3
 from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
@@ -42,9 +45,11 @@ from app.model.schema.token_share import RetrieveShareTokenResponse
 # REQUEST
 ############################
 
-class ListAllOrderListRequest(BaseModel):
-    account_address_list: list[str] = Field(description="Account address list")
-    include_canceled_items: Optional[bool] = Field(
+@dataclass
+class ListAllOrderListQuery:
+    account_address_list: list[str] = Query(description="Account address list")
+    include_canceled_items: Optional[bool] = Query(
+        default=None,
         description="Whether to include canceled orders or canceled agreements."
     )
 
