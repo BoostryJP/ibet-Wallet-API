@@ -115,7 +115,7 @@ tags_metadata = [
     },
     {
         "name": "IbetExchange",
-        "description": "Trade related features on IbetExchange"
+        "description": "Trade related features on IbetExchange (Only for utility tokens)"
     }
 ]
 

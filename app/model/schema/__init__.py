@@ -154,9 +154,9 @@ from .events import (
 )
 from .dex_market import (
     # Request
-    ListAllOrderBookRequest,
-    ListAllLastPriceRequest,
-    ListAllTickRequest,
+    ListAllOrderBookQuery,
+    ListAllLastPriceQuery,
+    ListAllTickQuery,
     RetrieveAgreementQuery,
     # Response
     ListAllOrderBookItemResponse,

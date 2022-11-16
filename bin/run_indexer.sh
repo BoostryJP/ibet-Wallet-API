@@ -60,10 +60,8 @@ if [ $COUPON_TOKEN_ENABLED = 1 ]; then
   python batch/indexer_Position_Coupon.py &
 fi
 
-if [ -n "$IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS" -o \
-  -n "$IBET_SB_EXCHANGE_CONTRACT_ADDRESS" -o \
-  -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" -o \
-  -n "$IBET_CP_EXCHANGE_CONTRACT_ADDRESS" ]; then
+if [ -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" -o \
+  -n "$IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS" ]; then
   python batch/indexer_DEX.py &
 fi
 

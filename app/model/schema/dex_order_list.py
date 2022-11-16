@@ -31,10 +31,8 @@ from pydantic import (
 from pydantic.dataclasses import dataclass
 from pydantic.generics import GenericModel
 from web3 import Web3
-from app.model.schema.token_bond import RetrieveStraightBondTokenResponse
 from app.model.schema.token_coupon import RetrieveCouponTokenResponse
 from app.model.schema.token_membership import RetrieveMembershipTokenResponse
-from app.model.schema.token_share import RetrieveShareTokenResponse
 
 ############################
 # COMMON
@@ -80,7 +78,7 @@ class Order(BaseModel):
     order_timestamp: str
 
 
-TokenModel = TypeVar("TokenModel", RetrieveStraightBondTokenResponse, RetrieveShareTokenResponse, RetrieveMembershipTokenResponse, RetrieveCouponTokenResponse, TokenAddress)
+TokenModel = TypeVar("TokenModel", RetrieveMembershipTokenResponse, RetrieveCouponTokenResponse, TokenAddress)
 
 
 class OrderSet(GenericModel, Generic[TokenModel]):

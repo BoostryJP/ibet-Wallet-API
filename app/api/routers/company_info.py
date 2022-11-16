@@ -16,7 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from typing import Optional, Callable, Union
+from typing import Optional, Callable
 from eth_utils import to_checksum_address
 from fastapi import (
     APIRouter,

@@ -33,15 +33,17 @@ The list of environment variables that can be set for this system is as follows.
 | TOKEN_CACHE_TTL                | False    | Token attribute data cache expiration time (seconds)               | 36000                                      | 43200   |
 | TOKEN_SHORT_TERM_CACHE_TTL     | False    | Token attribute data cache (Short-Term) expiration time (seconds)  | 60                                         | 40      |
 
-### Exchange
+### Token Escrow
 | Variable Name                                | Required | Details                                                                  | Example                                    | Default | 
 |----------------------------------------------|----------|--------------------------------------------------------------------------|--------------------------------------------|---------|
-| AGENT_ADDRESS                                | True*    | Paying agent address (*Set only if you use IbetExchange)                 | 0x0000000000000000000000000000000000000000 | --      |
-| PAYMENT_GATEWAY_CONTRACT_ADDRESS             | False    | PaymentGateway contract address                                          | 0x0000000000000000000000000000000000000000 | --      |
-| IBET_SB_EXCHANGE_CONTRACT_ADDRESS            | False    | IbetExchange contract address for Bond tokens                            | 0x0000000000000000000000000000000000000000 | --      |
-| IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS         | False    | IbetExchange contract address for Share tokens                           | 0x0000000000000000000000000000000000000000 | --      |
-| IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS    | False    | IbetExchange contract address for Membership tokens                      | 0x0000000000000000000000000000000000000000 | --      |
-| IBET_CP_EXCHANGE_CONTRACT_ADDRESS            | False    | IbetExchange contract address for Coupon tokens                          | 0x0000000000000000000000000000000000000000 | --      |
 | IBET_ESCROW_CONTRACT_ADDRESS                 | False    | Ibet Escrow contract address                                             | 0x0000000000000000000000000000000000000000 | --      |
 | IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS  | False    | Ibet Security Token Escrow contract address                              | 0x0000000000000000000000000000000000000000 | --      |
-| EXCHANGE_NOTIFICATION_ENABLED                | True*    | Use of exchange-related notification (*Set only if you use IbetExchange) | 0 (not using) / 1 (using)                  | --      |
+
+### On-chain Exchange (Only for utility tokens)
+| Variable Name                               | Required | Details                                                                  | Example                                    | Default | 
+|---------------------------------------------|----------|--------------------------------------------------------------------------|--------------------------------------------|---------|
+| AGENT_ADDRESS                               | True*    | Paying agent address (*Set only if you use IbetExchange)                 | 0x0000000000000000000000000000000000000000 | --      |
+| PAYMENT_GATEWAY_CONTRACT_ADDRESS            | False    | PaymentGateway contract address                                          | 0x0000000000000000000000000000000000000000 | --      |
+| IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS   | False    | IbetExchange contract address for Membership tokens                      | 0x0000000000000000000000000000000000000000 | --      |
+| IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS       | False    | IbetExchange contract address for Coupon tokens                          | 0x0000000000000000000000000000000000000000 | --      |
+| EXCHANGE_NOTIFICATION_ENABLED               | True*    | Use of exchange-related notification (*Set only if you use IbetExchange) | 0 (not using) / 1 (using)                  | --      |

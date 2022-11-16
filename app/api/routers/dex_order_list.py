@@ -41,10 +41,8 @@ from app.model.db import (
     AgreementStatus
 )
 from app.model.blockchain import (
-    BondToken,
     MembershipToken,
-    CouponToken,
-    ShareToken
+    CouponToken
 )
 from app.model.schema import (
     ListAllOrderListQuery,
@@ -52,8 +50,6 @@ from app.model.schema import (
     ListAllOrderListResponse,
     SuccessResponse,
     TokenAddress,
-    RetrieveShareTokenResponse,
-    RetrieveStraightBondTokenResponse,
     RetrieveMembershipTokenResponse,
     RetrieveCouponTokenResponse
 )
@@ -462,89 +458,6 @@ class BaseOrderList(object):
 
 
 # ------------------------------
-# 注文一覧・約定一覧（普通社債）
-# ------------------------------
-class StraightBondOrderList(BaseOrderList):
-    def __call__(
-        self,
-        req: Request,
-        request_query: ListAllOrderListQuery = Depends(),
-        session: Session = Depends(db_session)
-    ):
-        if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="GET", url=req.url.path)
-
-        order_list = []
-        settlement_list = []
-        complete_list = []
-        for account_address in request_query.account_address_list:
-            try:
-                # order_list
-                order_list.extend(
-                    self.get_order_list(
-                        session=session,
-                        token_model=BondToken,
-                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_query.include_canceled_items
-                    )
-                )
-                order_list = sorted(order_list, key=lambda x: x["sort_id"])
-
-                # settlement_list
-                settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
-                        token_model=BondToken,
-                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
-                    )
-                )
-                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
-
-                # complete_list
-                complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
-                        token_model=BondToken,
-                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_query.include_canceled_items
-                    )
-                )
-                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
-            except Exception as err:
-                LOG.exception(err)
-
-        response_json = {
-            "order_list": order_list,
-            "settlement_list": settlement_list,
-            "complete_list": complete_list
-        }
-
-        return response_json
-
-
-@router.get(
-    "/StraightBond",
-    summary="Straight Bond Order History (Bulk Get)",
-    operation_id="StraightBondOrderList",
-    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveStraightBondTokenResponse]],
-    responses=get_routers_responses(NotSupportedError)
-)
-def list_all_straight_bond_order_history(
-    order_list_res: ListAllOrderListResponse[RetrieveStraightBondTokenResponse] = Depends(StraightBondOrderList())
-):
-    """
-    Endpoint: /DEX/OrderList/StraightBond
-    """
-    return {
-        **SuccessResponse.use().dict(),
-        "data": order_list_res
-    }
-
-
-# ------------------------------
 # 注文一覧・約定一覧（会員権）
 # ------------------------------
 class MembershipOrderList(BaseOrderList):
@@ -638,7 +551,7 @@ class CouponOrderList(BaseOrderList):
         request_query: ListAllOrderListQuery = Depends(),
         session: Session = Depends(db_session)
     ):
-        if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
+        if config.COUPON_TOKEN_ENABLED is False or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None:
             raise NotSupportedError(method="GET", url=req.url.path)
 
         order_list = []
@@ -652,7 +565,7 @@ class CouponOrderList(BaseOrderList):
                     self.get_order_list(
                         session=session,
                         token_model=CouponToken,
-                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                        exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
                         include_canceled_items=request_query.include_canceled_items
                     )
@@ -664,7 +577,7 @@ class CouponOrderList(BaseOrderList):
                     self.get_settlement_list(
                         session=session,
                         token_model=CouponToken,
-                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                        exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address
                     )
                 )
@@ -675,7 +588,7 @@ class CouponOrderList(BaseOrderList):
                     self.get_complete_list(
                         session=session,
                         token_model=CouponToken,
-                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                        exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                         account_address=account_address,
                         include_canceled_items=request_query.include_canceled_items
                     )
@@ -705,90 +618,6 @@ def list_all_coupon_order_history(
 ):
     """
     Endpoint: /DEX/OrderList/Coupon
-    """
-    return {
-        **SuccessResponse.use().dict(),
-        "data": order_list_res
-    }
-
-
-# ------------------------------
-# 注文一覧・約定一覧（株式）
-# ------------------------------
-class ShareOrderList(BaseOrderList):
-    def __call__(
-        self,
-        req: Request,
-        request_query: ListAllOrderListQuery = Depends(),
-        session: Session = Depends(db_session)
-    ):
-        if config.SHARE_TOKEN_ENABLED is False or config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="GET", url=req.url.path)
-
-        order_list = []
-        settlement_list = []
-        complete_list = []
-
-        for account_address in request_query.account_address_list:
-            try:
-                # order_list
-                order_list.extend(
-                    self.get_order_list(
-                        session=session,
-                        token_model=ShareToken,
-                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_query.include_canceled_items
-                    )
-                )
-                order_list = sorted(order_list, key=lambda x: x["sort_id"])
-
-                # settlement_list
-                settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
-                        token_model=ShareToken,
-                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
-                    )
-                )
-                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
-
-                # complete_list
-                complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
-                        token_model=ShareToken,
-                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_query.include_canceled_items
-                    )
-                )
-                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
-            except Exception as err:
-                LOG.exception(err)
-
-        response_json = {
-            "order_list": order_list,
-            "settlement_list": settlement_list,
-            "complete_list": complete_list
-        }
-
-        return response_json
-
-
-@router.get(
-    "/Share",
-    summary="Share Order History (Bulk Get)",
-    operation_id="ShareOrderList",
-    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveShareTokenResponse]],
-    responses=get_routers_responses(NotSupportedError)
-)
-def list_all_share_order_history(
-    order_list_res: ListAllOrderListResponse[RetrieveShareTokenResponse] = Depends(ShareOrderList())
-):
-    """
-    Endpoint: /DEX/OrderList/Share
     """
     return {
         **SuccessResponse.use().dict(),

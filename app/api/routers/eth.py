@@ -187,10 +187,8 @@ def send_raw_transaction(
             # If it is not a default contract, return error status.
             if to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS and \
                     to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS and \
-                    to_contract_address != config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS and \
-                    to_contract_address != config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS and \
                     to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
-                    to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS and \
+                    to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS and \
                     to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS and \
                     to_contract_address != config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS and \
                     to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS:
@@ -364,10 +362,8 @@ def send_raw_transaction_no_wait(
             # If it is not a default contract, return error status.
             if to_contract_address != config.PAYMENT_GATEWAY_CONTRACT_ADDRESS and \
                     to_contract_address != config.PERSONAL_INFO_CONTRACT_ADDRESS and \
-                    to_contract_address != config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS and \
-                    to_contract_address != config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS and \
                     to_contract_address != config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS and \
-                    to_contract_address != config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS and \
+                    to_contract_address != config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS and \
                     to_contract_address != config.IBET_ESCROW_CONTRACT_ADDRESS and \
                     to_contract_address != config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS and \
                     to_contract_address != config.E2E_MESSAGING_CONTRACT_ADDRESS:
