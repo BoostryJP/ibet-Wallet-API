@@ -21,9 +21,6 @@ from pydantic import (
     BaseModel,
     Field
 )
-from web3 import Web3
-
-from app.model.schema.base import SuccessResponse
 
 ############################
 # COMMON
@@ -44,14 +41,10 @@ class GetNodeInfoResponse(BaseModel):
     payment_gateway_abi: Optional[object]
     personal_info_address: Optional[str]
     personal_info_abi: Optional[object]
-    ibet_straightbond_exchange_address: Optional[str]
-    ibet_straightbond_exchange_abi: Optional[object]
     ibet_membership_exchange_address: Optional[str]
     ibet_membership_exchange_abi: Optional[object]
     ibet_coupon_exchange_address: Optional[str]
     ibet_coupon_exchange_abi: Optional[object]
-    ibet_share_exchange_address: Optional[str]
-    ibet_share_exchange_abi: Optional[object]
     ibet_escrow_address: Optional[str]
     ibet_escrow_abi: Optional[object]
     ibet_security_token_escrow_address: Optional[str]

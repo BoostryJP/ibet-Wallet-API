@@ -35,10 +35,8 @@ sys.path.append(path)
 
 from app.config import (
     DATABASE_URL,
-    IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-    IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-    IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
@@ -66,13 +64,6 @@ class Processor:
 
     def __init__(self):
         self.exchange_list = []
-        # BOND Exchange
-        if IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
-            bond_exchange_contract = Contract.get_contract(
-                "IbetExchange",
-                IBET_SB_EXCHANGE_CONTRACT_ADDRESS
-            )
-            self.exchange_list.append(bond_exchange_contract)
         # MEMBERSHIP Exchange
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             membership_exchange_contract = Contract.get_contract(
@@ -81,19 +72,12 @@ class Processor:
             )
             self.exchange_list.append(membership_exchange_contract)
         # COUPON Exchange
-        if IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
+        if IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is not None:
             coupon_exchange_contract = Contract.get_contract(
                 "IbetExchange",
-                IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+                IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(coupon_exchange_contract)
-        # SHARE Exchange
-        if IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
-            share_exchange_contract = Contract.get_contract(
-                "IbetExchange",
-                IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
-            )
-            self.exchange_list.append(share_exchange_contract)
 
     @staticmethod
     def __get_db_session():

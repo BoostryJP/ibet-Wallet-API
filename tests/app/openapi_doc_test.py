@@ -16,11 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from unittest import mock
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-
-from app.model.db import Listing
 
 
 class TestOpenAPIDoc:

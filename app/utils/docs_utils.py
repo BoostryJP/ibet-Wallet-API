@@ -19,7 +19,6 @@ SPDX-License-Identifier: Apache-2.0
 from fastapi.openapi.utils import get_openapi
 from functools import lru_cache
 from pydantic import (
-    BaseConfig,
     BaseModel,
     create_model,
     Field

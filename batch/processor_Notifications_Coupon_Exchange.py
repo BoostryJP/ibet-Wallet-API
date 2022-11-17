@@ -38,7 +38,7 @@ from app.config import (
     WORKER_COUNT,
     SLEEP_INTERVAL,
     TOKEN_LIST_CONTRACT_ADDRESS,
-    IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
@@ -68,7 +68,7 @@ token_factory = TokenFactory(web3)
 # コントラクトの生成
 cp_exchange_contract = Contract.get_contract(
     contract_name="IbetExchange",
-    address=IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+    address=IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
 )
 list_contract = Contract.get_contract(
     contract_name="TokenList",
@@ -178,7 +178,7 @@ class WatchCouponNewOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -215,7 +215,7 @@ class WatchCouponCancelOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -252,7 +252,7 @@ class WatchCouponForceCancelOrder(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -289,7 +289,7 @@ class WatchCouponBuyAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -326,7 +326,7 @@ class WatchCouponSellAgreement(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -363,7 +363,7 @@ class WatchCouponBuySettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -400,7 +400,7 @@ class WatchCouponSellSettlementOK(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -437,7 +437,7 @@ class WatchCouponBuySettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 
@@ -474,7 +474,7 @@ class WatchCouponSellSettlementNG(Watcher):
                 "company_name": company.corporate_name,
                 "token_address": token_address,
                 "token_name": token.name,
-                "exchange_address": IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
+                "exchange_address": IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
                 "token_type": "IbetCoupon"
             }
 

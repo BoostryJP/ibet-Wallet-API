@@ -3254,115 +3254,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /DEX/Market/OrderBook/StraightBond:
-    post:
-      tags:
-        - IbetExchange
-      summary: StraightBond Token Order Book
-      description: '[普通社債]板情報取得'
-      operationId: StraightBondOrderBook
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderBookRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllOrderBookItemResponse_'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /DEX/Market/LastPrice/StraightBond:
-    post:
-      tags:
-        - IbetExchange
-      summary: StraightBond Token Last Price (Bulk Get)
-      description: '[普通社債]現在値取得'
-      operationId: StraightBondLastPrice
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllLastPriceRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLastPriceResponse_'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /DEX/Market/Tick/StraightBond:
-    post:
-      tags:
-        - IbetExchange
-      summary: StraightBond Token Tick (Bulk Get)
-      description: '[普通社債]歩み値取得'
-      operationId: StraightBondTick
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllTickRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/Market/OrderBook/Membership:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Membership Token Order Book
       description: '[会員権]板情報取得'
       operationId: MembershipOrderBook
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderBookRequest'
-        required: true
+      parameters:
+        - description: Orderer's account address. Orders from the given address will not be included in the response.
+          required: false
+          schema:
+            title: Account Address
+            type: string
+            description: Orderer's account address. Orders from the given address will not be included in the response.
+          name: account_address
+          in: query
+        - description: Token address
+          required: true
+          schema:
+            title: Token Address
+            type: string
+            description: Token address
+          name: token_address
+          in: query
+        - description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
+          required: true
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/OrderType'
+            description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
+          name: order_type
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3383,18 +3306,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/Market/LastPrice/Membership:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Membership Token Last Price (Bulk Get)
       description: '[会員権]現在値取得'
       operationId: MembershipLastPrice
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllLastPriceRequest'
-        required: true
+      parameters:
+        - description: Token address list
+          required: true
+          schema:
+            title: Address List
+            type: array
+            items:
+              type: string
+            description: Token address list
+          name: address_list
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3415,18 +3343,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/Market/Tick/Membership:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Membership Token Tick (Bulk Get)
       description: '[会員権]歩み値取得'
       operationId: MembershipTick
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllTickRequest'
-        required: true
+      parameters:
+        - description: Token address list
+          required: true
+          schema:
+            title: Address List
+            type: array
+            items:
+              type: string
+            description: Token address list
+          name: address_list
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3447,18 +3380,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/Market/OrderBook/Coupon:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Coupon Token Order Book
       description: '[クーポン]板情報取得'
       operationId: CouponOrderBook
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllOrderBookRequest'
-        required: true
+      parameters:
+        - description: Orderer's account address. Orders from the given address will not be included in the response.
+          required: false
+          schema:
+            title: Account Address
+            type: string
+            description: Orderer's account address. Orders from the given address will not be included in the response.
+          name: account_address
+          in: query
+        - description: Token address
+          required: true
+          schema:
+            title: Token Address
+            type: string
+            description: Token address
+          name: token_address
+          in: query
+        - description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
+          required: true
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/OrderType'
+            description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
+          name: order_type
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3479,18 +3431,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/Market/LastPrice/Coupon:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Coupon Token Last Price (Bulk Get)
       description: '[クーポン]現在値取得'
       operationId: CouponLastPrice
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllLastPriceRequest'
-        required: true
+      parameters:
+        - description: Token address list
+          required: true
+          schema:
+            title: Address List
+            type: array
+            items:
+              type: string
+            description: Token address list
+          name: address_list
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3511,18 +3468,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
   /DEX/Market/Tick/Coupon:
-    post:
+    get:
       tags:
         - IbetExchange
       summary: Coupon Token Tick (Bulk Get)
       description: '[クーポン]歩み値取得'
       operationId: CouponTick
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ListAllTickRequest'
-        required: true
+      parameters:
+        - description: Token address list
+          required: true
+          schema:
+            title: Address List
+            type: array
+            items:
+              type: string
+            description: Token address list
+          name: address_list
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3530,51 +3492,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericSuccessResponse_ListAllTicksResponse_'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /DEX/OrderList/StraightBond:
-    get:
-      tags:
-        - IbetExchange
-      summary: Straight Bond Order History (Bulk Get)
-      description: 'Endpoint: /DEX/OrderList/StraightBond'
-      operationId: StraightBondOrderList
-      parameters:
-        - description: Account address list
-          required: true
-          schema:
-            title: Account Address List
-            type: array
-            items:
-              type: string
-            description: Account address list
-          name: account_address_list
-          in: query
-        - description: Whether to include canceled orders or canceled agreements.
-          required: false
-          schema:
-            title: Include Canceled Items
-            type: boolean
-            description: Whether to include canceled orders or canceled agreements.
-          name: include_canceled_items
-          in: query
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -3665,51 +3582,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_coupon.RetrieveCouponTokenResponse__'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RequestValidationErrorResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /DEX/OrderList/Share:
-    get:
-      tags:
-        - IbetExchange
-      summary: Share Order History (Bulk Get)
-      description: 'Endpoint: /DEX/OrderList/Share'
-      operationId: ShareOrderList
-      parameters:
-        - description: Account address list
-          required: true
-          schema:
-            title: Account Address List
-            type: array
-            items:
-              type: string
-            description: Account address list
-          name: account_address_list
-          in: query
-        - description: Whether to include canceled orders or canceled agreements.
-          required: false
-          schema:
-            title: Include Canceled Items
-            type: boolean
-            description: Whether to include canceled orders or canceled agreements.
-          name: include_canceled_items
-          in: query
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_share.RetrieveShareTokenResponse__'
         '400':
           description: Bad Request
           content:
@@ -3831,8 +3703,6 @@ components:
         token:
           title: Token
           anyOf:
-            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
-            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
             - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
             - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
             - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
@@ -3897,8 +3767,6 @@ components:
         token:
           title: Token
           anyOf:
-            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
-            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
             - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
             - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
             - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
@@ -4959,22 +4827,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllOrderListResponse'
-    GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_bond.RetrieveStraightBondTokenResponse__:
-      title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_bond.RetrieveStraightBondTokenResponse]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/ListAllOrderListResponse'
     GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_coupon.RetrieveCouponTokenResponse__:
       title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_coupon.RetrieveCouponTokenResponse]]
       required:
@@ -4993,22 +4845,6 @@ components:
           $ref: '#/components/schemas/ListAllOrderListResponse'
     GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_membership.RetrieveMembershipTokenResponse__:
       title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_membership.RetrieveMembershipTokenResponse]]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/ListAllOrderListResponse'
-    GenericSuccessResponse_app.model.schema.dex_order_list.ListAllOrderListResponse_app.model.schema.token_share.RetrieveShareTokenResponse__:
-      title: GenericSuccessResponse[app.model.schema.dex_order_list.ListAllOrderListResponse[app.model.schema.token_share.RetrieveShareTokenResponse]]
       required:
         - meta
         - data
@@ -5137,11 +4973,6 @@ components:
           type: string
         personal_info_abi:
           title: Personal Info Abi
-        ibet_straightbond_exchange_address:
-          title: Ibet Straightbond Exchange Address
-          type: string
-        ibet_straightbond_exchange_abi:
-          title: Ibet Straightbond Exchange Abi
         ibet_membership_exchange_address:
           title: Ibet Membership Exchange Address
           type: string
@@ -5152,11 +4983,6 @@ components:
           type: string
         ibet_coupon_exchange_abi:
           title: Ibet Coupon Exchange Abi
-        ibet_share_exchange_address:
-          title: Ibet Share Exchange Address
-          type: string
-        ibet_share_exchange_abi:
-          title: Ibet Share Exchange Abi
         ibet_escrow_address:
           title: Ibet Escrow Address
           type: string
@@ -5299,18 +5125,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Event'
-    ListAllLastPriceRequest:
-      title: ListAllLastPriceRequest
-      required:
-        - address_list
-      type: object
-      properties:
-        address_list:
-          title: Address List
-          type: array
-          items:
-            type: string
-          description: Token address list
     ListAllLastPriceResponse:
       title: ListAllLastPriceResponse
       type: array
@@ -5349,25 +5163,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/OrderBookItem'
-    ListAllOrderBookRequest:
-      title: ListAllOrderBookRequest
-      required:
-        - token_address
-        - order_type
-      type: object
-      properties:
-        account_address:
-          title: Account Address
-          type: string
-          description: Orderer's account address. Orders from the given address will not be included in the response.
-        token_address:
-          title: Token Address
-          type: string
-          description: Token address
-        order_type:
-          allOf:
-            - $ref: '#/components/schemas/OrderType'
-          description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
     ListAllOrderListResponse:
       title: ListAllOrderListResponse
       required:
@@ -5447,18 +5242,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
-    ListAllTickRequest:
-      title: ListAllTickRequest
-      required:
-        - address_list
-      type: object
-      properties:
-        address_list:
-          title: Address List
-          type: array
-          items:
-            type: string
-          description: Token address list
     ListAllTicksResponse:
       title: ListAllTicksResponse
       type: array
@@ -5858,8 +5641,6 @@ components:
         token:
           title: Token
           anyOf:
-            - $ref: '#/components/schemas/RetrieveStraightBondTokenResponse'
-            - $ref: '#/components/schemas/RetrieveShareTokenResponse'
             - $ref: '#/components/schemas/RetrieveMembershipTokenResponse'
             - $ref: '#/components/schemas/RetrieveCouponTokenResponse'
             - $ref: '#/components/schemas/app__model__schema__dex_order_list__TokenAddress'
@@ -7206,4 +6987,4 @@ tags:
   - name: Events
     description: Contract event logs
   - name: IbetExchange
-    description: Trade related features on IbetExchange
+    description: Trade related features on IbetExchange (Only for utility tokens)

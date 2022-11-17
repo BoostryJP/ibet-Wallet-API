@@ -207,19 +207,15 @@ class TestDEXMarketGetAgreement:
     ########################################################################################
 
     # <Normal_1>
-    # StraightBond
+    # Membership
     def test_normal_1(self, client: TestClient, session: Session, shared_contract):
-        exchange = shared_contract['IbetStraightBondExchange']
-        personal_info = shared_contract['PersonalInfo']
-        payment_gateway = shared_contract['PaymentGateway']
+        exchange = shared_contract['IbetMembershipExchange']
 
-        _, order_id, agreement_id = self._generate_agree_event_bond(exchange, personal_info, payment_gateway)
+        _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
 
         # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
         resp = client.get(self.apiurl, params=query_string)
@@ -245,90 +241,15 @@ class TestDEXMarketGetAgreement:
         assert resp.json()['data']['price'] == assumed_body['price']
 
     # <Normal_2>
-    # Membership
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
-        exchange = shared_contract['IbetMembershipExchange']
-
-        _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
-
-        # 環境変数設定
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
-
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.get(self.apiurl, params=query_string)
-
-        assumed_body = {
-            'amount': 100,
-            'canceled': False,
-            'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': eth_account['trader']['account_address'],
-            'seller_address': eth_account['issuer']['account_address'],
-            'paid': False,
-            'price': 1000
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['amount'] == assumed_body['amount']
-        assert resp.json()['data']['canceled'] == assumed_body['canceled']
-        assert resp.json()['data']['counterpart'] == assumed_body['counterpart']
-        assert resp.json()['data']['buyer_address'] == assumed_body['buyer_address']
-        assert resp.json()['data']['seller_address'] == assumed_body['seller_address']
-        assert resp.json()['data']['paid'] == assumed_body['paid']
-        assert resp.json()['data']['price'] == assumed_body['price']
-
-    # <Normal_3>
     # Coupon
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
 
         _, order_id, agreement_id = self._generate_agree_event_coupon(exchange)
 
         # 環境変数設定
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.get(self.apiurl, params=query_string)
-
-        assumed_body = {
-            'amount': 100,
-            'canceled': False,
-            'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': eth_account['trader']['account_address'],
-            'seller_address': eth_account['issuer']['account_address'],
-            'paid': False,
-            'price': 1000
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json()['data']['amount'] == assumed_body['amount']
-        assert resp.json()['data']['canceled'] == assumed_body['canceled']
-        assert resp.json()['data']['counterpart'] == assumed_body['counterpart']
-        assert resp.json()['data']['buyer_address'] == assumed_body['buyer_address']
-        assert resp.json()['data']['seller_address'] == assumed_body['seller_address']
-        assert resp.json()['data']['paid'] == assumed_body['paid']
-        assert resp.json()['data']['price'] == assumed_body['price']
-
-    # <Normal_4>
-    # Share
-    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
-        exchange = shared_contract['IbetShareExchange']
-        personal_info = shared_contract['PersonalInfo']
-
-        _, order_id, agreement_id = self._generate_agree_event_share(exchange, personal_info)
-
-        # 環境変数設定
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
         resp = client.get(self.apiurl, params=query_string)
@@ -438,19 +359,15 @@ class TestDEXMarketGetAgreement:
     # 指定した約定情報が存在しない
     # 400
     def test_error_4(self, client: TestClient, session: Session, shared_contract):
-        exchange = shared_contract['IbetStraightBondExchange']
-        personal_info = shared_contract['PersonalInfo']
-        payment_gateway = shared_contract['PaymentGateway']
+        exchange = shared_contract['IbetMembershipExchange']
 
-        _, order_id, agreement_id = self._generate_agree_event_bond(exchange, personal_info, payment_gateway)
+        _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
         not_exist_order_id = 999
         not_exist_agreement_id = 999
 
         # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={not_exist_order_id}&agreement_id={not_exist_agreement_id}&' \
                        f'exchange_address={exchange["address"]}'
@@ -472,10 +389,8 @@ class TestDEXMarketGetAgreement:
         agreement_id = 102
 
         # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = shared_contract['IbetStraightBondExchange']['address']
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = shared_contract['IbetMembershipExchange']['address']
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
         resp = client.get(self.apiurl, params=query_string)
@@ -496,10 +411,8 @@ class TestDEXMarketGetAgreement:
         agreement_id = 102
 
         # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
         resp = client.get(self.apiurl, params=query_string)

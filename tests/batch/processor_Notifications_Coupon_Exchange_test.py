@@ -54,7 +54,7 @@ def watcher_factory(session, shared_contract):
         coupon_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
 
         from batch import processor_Notifications_Coupon_Exchange
         test_module = reload(processor_Notifications_Coupon_Exchange)

@@ -130,7 +130,7 @@ class TestTokenCouponTokenAddresses:
         processor.process()
 
         query_string = ""
-        resp: _ResultBase = client.get(self.apiurl, params=query_string)
+        resp = client.get(self.apiurl, params=query_string)
         tokens = [coupon["address"]]
 
         assumed_body = {
@@ -206,7 +206,7 @@ class TestTokenCouponTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "offset": 1,
             "limit": 2,
         })
@@ -286,7 +286,7 @@ class TestTokenCouponTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "offset": 7
         })
         tokens = []
@@ -364,7 +364,7 @@ class TestTokenCouponTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "name": "テストクーポン",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -461,7 +461,7 @@ class TestTokenCouponTokenAddresses:
         }
 
         for key, value in not_matched_key_value.items():
-            resp: _ResultBase = client.get(self.apiurl, params={
+            resp = client.get(self.apiurl, params={
                 key: value
             })
 
@@ -538,7 +538,7 @@ class TestTokenCouponTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "name": "テストクーポン",
             "initial_offering_status": False,
             "sort_item": "name",

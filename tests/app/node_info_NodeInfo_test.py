@@ -45,17 +45,11 @@ class TestNodeInfoNodeInfo:
         personalinfo_address = config.PERSONAL_INFO_CONTRACT_ADDRESS
         personalinfo_abi = personal_info['abi']
 
-        bond_exchange_address = config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
-        bond_exchange_abi = ibet_exchange['abi']
-
         membership_exchange_address = config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
         membership_exchange_abi = ibet_exchange['abi']
 
-        coupon_exchange_address = config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+        coupon_exchange_address = config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
         coupon_exchange_abi = ibet_exchange['abi']
-
-        share_exchange_address = config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
-        share_exchange_abi = ibet_exchange['abi']
 
         ibet_escrow_address = config.IBET_ESCROW_CONTRACT_ADDRESS
         ibet_escrow_abi = ibet_escrow_json['abi']
@@ -73,14 +67,10 @@ class TestNodeInfoNodeInfo:
             'payment_gateway_abi': payment_gateway_abi,
             'personal_info_address': personalinfo_address,
             'personal_info_abi': personalinfo_abi,
-            'ibet_straightbond_exchange_address': bond_exchange_address,
-            'ibet_straightbond_exchange_abi': bond_exchange_abi,
             'ibet_membership_exchange_address': membership_exchange_address,
             'ibet_membership_exchange_abi': membership_exchange_abi,
             'ibet_coupon_exchange_address': coupon_exchange_address,
             'ibet_coupon_exchange_abi': coupon_exchange_abi,
-            'ibet_share_exchange_address': share_exchange_address,
-            'ibet_share_exchange_abi': share_exchange_abi,
             'ibet_escrow_address': ibet_escrow_address,
             'ibet_escrow_abi': ibet_escrow_abi,
             'ibet_security_token_escrow_address': ibet_security_token_escrow_address,

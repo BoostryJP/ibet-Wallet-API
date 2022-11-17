@@ -28,17 +28,6 @@ if [ "$TOKEN_NOTIFICATION_ENABLED" = 1 ]; then
 fi
 
 if [ "$EXCHANGE_NOTIFICATION_ENABLED" = 1 ]; then
-  if [ "$BOND_TOKEN_ENABLED" = 1 ]; then
-    if [ ! -z "${IBET_SB_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-      python batch/processor_Notifications_Bond_Exchange.py &
-    fi
-  fi
-
-  if [ "$SHARE_TOKEN_ENABLED" = 1 ]; then
-    if [ ! -z "${IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS}" ]; then
-      python batch/processor_Notifications_Share_Exchange.py &
-    fi
-  fi
 
   if [ "$MEMBERSHIP_TOKEN_ENABLED" = 1 ]; then
     if [ ! -z "${IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
@@ -47,7 +36,7 @@ if [ "$EXCHANGE_NOTIFICATION_ENABLED" = 1 ]; then
   fi
 
   if [ "$COUPON_TOKEN_ENABLED" = 1 ]; then
-    if [ ! -z "${IBET_CP_EXCHANGE_CONTRACT_ADDRESS}" ]; then
+    if [ ! -z "${IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS}" ]; then
       python batch/processor_Notifications_Coupon_Exchange.py &
     fi
   fi

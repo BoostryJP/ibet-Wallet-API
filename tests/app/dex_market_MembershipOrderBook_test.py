@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import json
 import sys
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -41,6 +40,10 @@ class TestDEXMarketMembershipOrderBook:
         # 環境変数設定
         config.AGENT_ADDRESS = eth_account['agent']['account_address']
 
+    ###########################################################################
+    # Normal
+    ###########################################################################
+
     # ＜正常系1-1-1＞
     # 未約定＆未キャンセルの売り注文が1件存在
     # 以下の条件でリクエスト
@@ -49,10 +52,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
-    def test_membershiporderbook_normal_1_1_1(self, client: TestClient, session: Session):
+    def test_normal_1_1_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -74,13 +76,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -103,10 +105,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
-    def test_membershiporderbook_normal_1_1_2(self, client: TestClient, session: Session):
+    def test_normal_1_1_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -128,12 +129,12 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy"
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -156,10 +157,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_1_2(self, client: TestClient, session: Session):
+    def test_normal_1_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -181,13 +181,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",
             "order_type": "buy",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -202,10 +202,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_1_3(self, client: TestClient, session: Session):
+    def test_normal_1_3(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -227,13 +226,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -248,10 +247,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 売り注文と同一のアカウントアドレス　※
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_1_4(self, client: TestClient, session: Session):
+    def test_normal_1_4(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -273,13 +271,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
             "account_address": account_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -289,10 +287,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系1-5＞
     # 未約定＆未キャンセルの売り注文が1件存在
     # 限界値
-    def test_membershiporderbook_normal_1_5(self, client: TestClient, session: Session):
+    def test_normal_1_5(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -315,13 +312,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -344,10 +341,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 売り注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_1_6(self, client: TestClient, session: Session):
+    def test_normal_1_6(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -369,13 +365,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -390,10 +386,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> リスト1件が返却
-    def test_membershiporderbook_normal_2_1(self, client: TestClient, session: Session):
+    def test_normal_2_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -415,13 +410,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -444,10 +439,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_2_2(self, client: TestClient, session: Session):
+    def test_normal_2_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -469,13 +463,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",
             "order_type": "sell",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -490,10 +484,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_2_3(self, client: TestClient, session: Session):
+    def test_normal_2_3(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -515,13 +508,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -536,10 +529,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 買い注文と同一のアカウントアドレス　※
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_2_4(self, client: TestClient, session: Session):
+    def test_normal_2_4(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -561,13 +553,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
             "account_address": account_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -577,10 +569,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系2-5＞
     # 未約定＆未キャンセルの買い注文が1件存在
     # 限界値
-    def test_membershiporderbook_normal_2_5(self, client: TestClient, session: Session):
+    def test_normal_2_5(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -603,13 +594,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [
             {
                 "exchange_address": exchange_address,
@@ -632,10 +623,9 @@ class TestDEXMarketMembershipOrderBook:
     #   3) 買い注文とは異なるアカウントアドレス
     #
     # -> ゼロ件リストが返却
-    def test_membershiporderbook_normal_2_6(self, client: TestClient, session: Session):
+    def test_normal_2_6(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -657,13 +647,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = []
 
         assert resp.status_code == 200
@@ -673,10 +663,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系3-1＞
     # 未約定＆未キャンセルの売り注文が複数件存在
     # -> リストのソート順が価格の昇順
-    def test_membershiporderbook_normal_3_1(self, client: TestClient, session: Session):
+    def test_normal_3_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -712,13 +701,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             'order_id': 2,
@@ -740,10 +729,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系3-2＞
     # 未約定＆未キャンセルの買い注文が複数件存在
     # -> リストのソート順が価格の降順
-    def test_membershiporderbook_normal_3_2(self, client: TestClient, session: Session):
+    def test_normal_3_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
@@ -779,13 +767,13 @@ class TestDEXMarketMembershipOrderBook:
         session.add(order)
 
         # リクエスト情報
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             'order_id': 2,
@@ -807,10 +795,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系4-1＞
     # 約定済み（※部分約定,約定否認含む）の売り注文が複数存在:アカウントアドレス指定
     #  -> 未約定のOrderBookリストが返却される
-    def test_membershiporderbook_normal_4_1(self, client: TestClient, session: Session):
+    def test_normal_4_1(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
@@ -928,13 +915,13 @@ class TestDEXMarketMembershipOrderBook:
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
             "account_address": account_addresses[0],
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             "order_id": 2,
@@ -956,10 +943,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系4-2＞
     # 約定済み（※部分約定,約定否認含む）の買い注文が複数存在:アカウントアドレス指定
     #  -> 未約定のOrderBookリストが返却される
-    def test_membershiporderbook_normal_4_2(self, client: TestClient, session: Session):
+    def test_normal_4_2(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
@@ -1077,13 +1063,12 @@ class TestDEXMarketMembershipOrderBook:
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
             "account_address": account_addresses[0],
         }
-
-        resp = client.post(self.apiurl, json=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assumed_body = [
             {
@@ -1108,10 +1093,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系4-3＞
     # 約定済み（※部分約定,約定否認含む）の売り注文が複数存在:アカウントアドレス指定なし
     #  -> 未約定のOrderBookリストが返却される
-    def test_membershiporderbook_normal_4_3(self, client: TestClient, session: Session):
+    def test_normal_4_3(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
@@ -1229,12 +1213,12 @@ class TestDEXMarketMembershipOrderBook:
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "buy",
         }
+        resp = client.get(self.apiurl, params=request_params)
 
-        resp = client.post(self.apiurl, json=request_body)
         assumed_body = [{
             "exchange_address": exchange_address,
             "order_id": 0,
@@ -1262,10 +1246,9 @@ class TestDEXMarketMembershipOrderBook:
     # ＜正常系4-4＞
     # 約定済み（※部分約定,約定否認含む）の買い注文が複数存在:アカウントアドレス指定なし
     #  -> 未約定のOrderBookリストが返却される
-    def test_membershiporderbook_normal_4_4(self, client: TestClient, session: Session):
+    def test_normal_4_4(self, client: TestClient, session: Session):
         token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_addresses = [
@@ -1383,12 +1366,11 @@ class TestDEXMarketMembershipOrderBook:
         agreement.status = AgreementStatus.CANCELED.value
         session.add(agreement)
 
-        request_body = {
+        request_params = {
             "token_address": token_address,
             "order_type": "sell",
         }
-
-        resp = client.post(self.apiurl, json=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assumed_body = [
             {
@@ -1417,29 +1399,31 @@ class TestDEXMarketMembershipOrderBook:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == assumed_body
 
-    # エラー系1：入力値エラー（request-bodyなし）
-    def test_membershiporderbook_error_1(self, client: TestClient, session: Session):
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # Error_1
+    # field required
+    # Invalid Parameter
+    def test_error_1(self, client: TestClient, session: Session):
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps({})
 
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.get(self.apiurl, params={})
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'token_address'],
+                    'loc': ['query', 'token_address'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
                 },
                 {
-                    'loc': ['body', 'order_type'],
+                    'loc': ['query', 'order_type'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
                 }
@@ -1447,44 +1431,12 @@ class TestDEXMarketMembershipOrderBook:
             'message': 'Invalid Parameter'
         }
 
-    # エラー系2：入力値エラー（headers Content-Type不正）
-    def test_membershiporderbook_error_2(self, client: TestClient, session: Session):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "account_address": account_address,
-        }
-
-        headers: dict = {"Content-Type": "invalid type"}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body'],
-                    'msg': 'value is not a valid dict',
-                    'type': 'type_error.dict'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # エラー系3-1：入力値エラー（token_addressがアドレスフォーマットではない）
-    def test_membershiporderbook_error_3_1(self, client: TestClient, session: Session):
+    # Error_2
+    # token_address is not a valid address
+    # Invalid Parameter
+    def test_error_2(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレスが短い
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
@@ -1494,19 +1446,14 @@ class TestDEXMarketMembershipOrderBook:
             "order_type": "buy",
             "account_address": account_address,
         }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'token_address'],
+                    'loc': ['token_address'],
                     'msg': 'token_address is not a valid address',
                     'type': 'value_error'
                 }
@@ -1514,45 +1461,12 @@ class TestDEXMarketMembershipOrderBook:
             'message': 'Invalid Parameter'
         }
 
-    # エラー系3-2：入力値エラー（token_addressがstring以外）
-    def test_membershiporderbook_error_3_2(self, client: TestClient, session: Session):
-        token_address = 123456789123456789123456789123456789
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
-        config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description': [
-                {
-                    'loc': ['body', 'token_address'],
-                    'msg': 'token_address is not a valid address',
-                    'type': 'value_error'
-                }
-            ],
-            'message': 'Invalid Parameter'
-        }
-
-    # エラー系4-1：入力値エラー（account_addressがアドレスフォーマットではない）
-    def test_membershiporderbook_error_4_1(self, client: TestClient, session: Session):
+    # Error_3
+    # account_address is not a valid address
+    # Invalid Parameter
+    def test_error_3(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
@@ -1562,54 +1476,14 @@ class TestDEXMarketMembershipOrderBook:
             "order_type": "buy",
             "account_address": account_address,
         }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
-
-        assert resp.status_code == 400
-        assert resp.json()['meta'] == {
-            'code': 88,
-            'description':
-                [
-                    {
-                        'loc': ['body', 'account_address'],
-                        'msg': 'account_address is not a valid address',
-                        'type': 'value_error'
-                    }
-                ],
-            'message': 'Invalid Parameter'
-        }
-
-    # エラー系4-2：入力値エラー（account_addressがstring以外）
-    def test_membershiporderbook_error_4_2(self, client: TestClient, session: Session):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
-        config.MEMBERSHIP_TOKEN_ENABLED = True
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-        account_address = 123456789123456789123456789123456789
-
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "account_address": account_address,
-        }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
             'code': 88,
             'description': [
                 {
-                    'loc': ['body', 'account_address'],
+                    'loc': ['account_address'],
                     'msg': 'account_address is not a valid address',
                     'type': 'value_error'
                 }
@@ -1617,11 +1491,12 @@ class TestDEXMarketMembershipOrderBook:
             'message': 'Invalid Parameter'
         }
 
-    # エラー系5：入力値エラー（order_typeがbuy/sell以外）
-    def test_membershiporderbook_error_5(self, client: TestClient, session: Session):
+    # Error_4
+    # order_type: value is not a valid enumeration member
+    # Invalid Parameter
+    def test_error_4(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
@@ -1631,12 +1506,7 @@ class TestDEXMarketMembershipOrderBook:
             "order_type": "buyyyyy",
             "account_address": account_address,
         }
-
-        headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
@@ -1644,73 +1514,67 @@ class TestDEXMarketMembershipOrderBook:
             'description': [
                 {
                     'ctx': {'enum_values': ['buy', 'sell']},
-                    'loc': ['body', 'order_type'],
-                    'msg': 'value is not a valid enumeration member; permitted: '
-                           "'buy', 'sell'",
+                    'loc': ['query', 'order_type'],
+                    'msg': 'value is not a valid enumeration member; permitted: \'buy\', \'sell\'',
                     'type': 'type_error.enum'
                 }
             ],
             'message': 'Invalid Parameter'
         }
 
-    # エラー系6：HTTPメソッドが不正
-    def test_membershiporderbook_error_6(self, client: TestClient, session: Session):
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+    # Error_5
+    # Method Not Allowed
+    def test_error_5(self, client: TestClient, session: Session):
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
 
-        resp = client.get(self.apiurl)
+        resp = client.post(self.apiurl)
 
         assert resp.status_code == 405
         assert resp.json()['meta'] == {
             'code': 1,
             'message': 'Method Not Allowed',
+            'description': 'method: POST, url: /DEX/Market/OrderBook/Membership'
+        }
+
+    # Error_6_1
+    # Membership token is not enabled
+    def test_error_6_1(self, client: TestClient, session: Session):
+        exchange_address = to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.MEMBERSHIP_TOKEN_ENABLED = False
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+
+        request_params = {
+            "token_address": token_address,
+            "order_type": "sell",
+        }
+        resp = client.get(self.apiurl, params=request_params)
+
+        assert resp.status_code == 404
+        assert resp.json()['meta'] == {
+            'code': 10,
+            'message': 'Not Supported',
             'description': 'method: GET, url: /DEX/Market/OrderBook/Membership'
         }
 
-    # エラー系7：取扱トークン対象外
-    def test_membershiporderbook_error_7(self, client: TestClient, session: Session):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "account_address": account_address,
-        }
-        request_body = json.dumps(request_params)
-        exchange_address = \
-            to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
-        config.MEMBERSHIP_TOKEN_ENABLED = False
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
-
-        resp = client.post(self.apiurl, data=request_body)
-
-        assert resp.status_code == 404
-        assert resp.json()['meta'] == {
-            'code': 10,
-            'message': 'Not Supported',
-            'description': 'method: POST, url: /DEX/Market/OrderBook/Membership'
-        }
-
-    # エラー系8：exchangeアドレス未設定
-    def test_membershiporderbook_error_8(self, client: TestClient, session: Session):
-        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
-        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
-        request_params = {
-            "token_address": token_address,
-            "order_type": "buy",
-            "account_address": account_address,
-        }
-        request_body = json.dumps(request_params)
+    # Error_6_2
+    # Exchange address is not set
+    def test_error_6_2(self, client: TestClient, session: Session):
         config.MEMBERSHIP_TOKEN_ENABLED = True
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
 
-        resp = client.post(self.apiurl, data=request_body)
+        request_params = {
+            "token_address": token_address,
+            "order_type": "sell",
+        }
+        resp = client.get(self.apiurl, params=request_params)
 
         assert resp.status_code == 404
         assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
-            'description': 'method: POST, url: /DEX/Market/OrderBook/Membership'
+            'description': 'method: GET, url: /DEX/Market/OrderBook/Membership'
         }

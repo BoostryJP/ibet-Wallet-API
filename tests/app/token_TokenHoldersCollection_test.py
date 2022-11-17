@@ -19,9 +19,9 @@ SPDX-License-Identifier: Apache-2.0
 import json
 import pytest
 import uuid
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 from unittest import mock
+
+from fastapi.testclient import TestClient
 from web3.middleware import geth_poa_middleware
 from web3 import Web3
 

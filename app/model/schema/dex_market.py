@@ -42,11 +42,14 @@ class OrderType(str, Enum):
     sell = "sell"
 
 
-class ListAllOrderBookRequest(BaseModel):
-    account_address: Optional[str] = Field(description="Orderer's account address. Orders from the given address "
-                                                       "will not be included in the response.")
-    token_address: str = Field(description="Token address")
-    order_type: OrderType = Field(description="Order type to be executed by the Orderer. "
+@dataclass
+class ListAllOrderBookQuery:
+    account_address: Optional[str] = Query(
+        default=None,
+        description="Orderer's account address. Orders from the given address will not be included in the response."
+    )
+    token_address: str = Query(description="Token address")
+    order_type: OrderType = Query(description="Order type to be executed by the Orderer. "
                                               "If \"buy\" is selected, the sell order book will be returned.")
 
     @validator("token_address")
@@ -63,8 +66,9 @@ class ListAllOrderBookRequest(BaseModel):
         return v
 
 
-class ListAllLastPriceRequest(BaseModel):
-    address_list: list[str] = Field(description="Token address list")
+@dataclass
+class ListAllLastPriceQuery:
+    address_list: list[str] = Query(description="Token address list")
 
     @validator("address_list")
     def address_list_is_valid_address(cls, v):
@@ -75,8 +79,9 @@ class ListAllLastPriceRequest(BaseModel):
         return v
 
 
-class ListAllTickRequest(BaseModel):
-    address_list: list[str] = Field(description="Token address list")
+@dataclass
+class ListAllTickQuery:
+    address_list: list[str] = Query(description="Token address list")
 
     @validator("address_list")
     def address_list_is_valid_address(cls, v):

@@ -148,11 +148,9 @@ class TestCompanyInfoCompanyTokenList:
         personal_info = shared_contract['PersonalInfo']
         payment_gateway = shared_contract['PaymentGateway']
         token_list = shared_contract['TokenList']
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = bond_exchange['address']
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = membership_exchange['address']
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange['address']
         config.TOKEN_LIST_CONTRACT_ADDRESS = token_list['address']
-        return bond_exchange, membership_exchange, coupon_exchange, share_exchange, personal_info, payment_gateway, token_list
+        return bond_exchange, membership_exchange, coupon_exchange, share_exchange, \
+               personal_info, payment_gateway, token_list
 
     ###########################################################################
     # Normal

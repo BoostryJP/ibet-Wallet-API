@@ -147,7 +147,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.process()
 
         query_string = ""
-        resp: _ResultBase = client.get(self.apiurl, params=query_string)
+        resp = client.get(self.apiurl, params=query_string)
         tokens = [bond_token["address"]]
 
         assumed_body = {
@@ -224,7 +224,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "offset": 1,
             "limit": 2,
         })
@@ -304,7 +304,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "offset": 7
         })
         tokens = []
@@ -383,7 +383,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "name": "テスト債券",
             "owner_address": issuer["account_address"],
             "company_name": "",
@@ -487,7 +487,7 @@ class TestTokenStraightBondTokenAddresses:
         }
 
         for key, value in not_matched_key_value.items():
-            resp: _ResultBase = client.get(self.apiurl, params={
+            resp = client.get(self.apiurl, params={
                 key: value
             })
 
@@ -565,7 +565,7 @@ class TestTokenStraightBondTokenAddresses:
         processor.SEC_PER_RECORD = 0
         processor.process()
 
-        resp: _ResultBase = client.get(self.apiurl, params={
+        resp = client.get(self.apiurl, params={
             "name": "テスト債券",
             "is_redeemed": False,
             "sort_item": "name",

@@ -46,11 +46,11 @@ from app.model.schema import (
     GenericSuccessResponse,
     SuccessResponse,
     RetrieveAgreementQuery,
+    ListAllOrderBookQuery,
     ListAllOrderBookItemResponse,
-    ListAllOrderBookRequest,
+    ListAllLastPriceQuery,
     ListAllLastPriceResponse,
-    ListAllLastPriceRequest,
-    ListAllTickRequest,
+    ListAllTickQuery,
     ListAllTicksResponse,
     RetrieveAgreementDetailResponse
 )
@@ -78,10 +78,8 @@ def retrieve_agreement(
 ):
     """約定情報参照"""
     if (
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None and
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None and
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None and
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None
     ):
         raise NotSupportedError(method="GET", url=req.url.path)
 
@@ -92,10 +90,8 @@ def retrieve_agreement(
 
     # 取引コントラクトに接続
     address_list = [
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
     ]
     address_list = [to_checksum_address(address) for address in address_list if address is not None]
     if exchange_address not in address_list:
@@ -146,289 +142,8 @@ def retrieve_agreement(
     }
 
 
-# /DEX/Market/OrderBook/StraightBond
-@router.post(
-    "/OrderBook/StraightBond",
-    summary="StraightBond Token Order Book",
-    operation_id="StraightBondOrderBook",
-    response_model=GenericSuccessResponse[ListAllOrderBookItemResponse],
-    responses=get_routers_responses(NotSupportedError)
-)
-def list_all_straight_bond_order_book(
-    req: Request,
-    data: ListAllOrderBookRequest,
-    session: Session = Depends(db_session)
-):
-    """[普通社債]板情報取得"""
-    if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
-
-    # 入力値を抽出
-    token_address = to_checksum_address(data.token_address)
-
-    # 注文を抽出
-    is_buy = data.order_type == "buy"  # 相対注文が買い注文かどうか
-    exchange_address = to_checksum_address(config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS)
-
-    # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
-    # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
-    if data.account_address is not None:
-        account_address = to_checksum_address(data.account_address)
-        if is_buy:  # 買注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 売り注文
-            #  3) 未キャンセル
-            #  4) 指定したアカウントアドレス以外
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == False). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.account_address != account_address). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-        else:  # 売注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 買い注文
-            #  3) 未キャンセル
-            #  4) 指定したアカウントアドレス以外
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == True). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.account_address != account_address). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-    else:
-        if is_buy:  # 買注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 売り注文
-            #  3) 未キャンセル
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(Order.order_id, Order.amount, Order.price, Order.exchange_address, Order.account_address). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == False). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-        else:  # 売注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 買い注文
-            #  3) 未キャンセル
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == True). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-
-    # レスポンス用の注文一覧を構築
-    order_list_tmp = []
-    for (order_id, amount, price, exchange_address,
-         account_address, agreement_amount) in orders:
-        # 残存注文数量 = 発注数量 - 約定済み数量
-        if not (agreement_amount is None):
-            amount -= int(agreement_amount)
-        # 残注文ありの注文のみを抽出する
-        if amount <= 0:
-            continue
-
-        order_list_tmp.append({
-            "exchange_address": exchange_address,
-            "order_id": order_id,
-            "price": price,
-            "amount": amount,
-            "account_address": account_address,
-        })
-
-    # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
-    if data.order_type == "buy":
-        order_list = sorted(order_list_tmp, key=lambda x: x["price"])
-    else:
-        order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
-
-    return {
-        **SuccessResponse.use().dict(),
-        "data": list(order_list)
-    }
-
-
-# /DEX/Market/LastPrice/StraightBond
-@router.post(
-    "/LastPrice/StraightBond",
-    summary="StraightBond Token Last Price (Bulk Get)",
-    operation_id="StraightBondLastPrice",
-    response_model=GenericSuccessResponse[ListAllLastPriceResponse],
-    responses=get_routers_responses(NotSupportedError)
-)
-def list_all_straight_bond_last_price(
-    req: Request,
-    data: ListAllLastPriceRequest
-):
-    """[普通社債]現在値取得"""
-    if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
-
-    exchange_contract = Contract.get_contract(
-        "IbetExchange",
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS
-    )
-
-    price_list = []
-    for token_address in data.address_list:
-        last_price = Contract.call_function(
-            contract=exchange_contract,
-            function_name="lastPrice",
-            args=(to_checksum_address(token_address),),
-            default_returns=0
-        )
-        price_list.append({
-            "token_address": token_address,
-            "last_price": last_price
-        })
-
-    return {
-        **SuccessResponse.use().dict(),
-        "data": price_list
-    }
-
-
-# /DEX/Market/Tick/StraightBond
-@router.post(
-    "/Tick/StraightBond",
-    summary="StraightBond Token Tick (Bulk Get)",
-    operation_id="StraightBondTick",
-    response_model=GenericSuccessResponse[ListAllTicksResponse],
-    responses=get_routers_responses(NotSupportedError)
-)
-def list_all_straight_bond_tick(
-    req: Request,
-    data: ListAllTickRequest,
-    session: Session = Depends(db_session)
-):
-    """[普通社債]歩み値取得"""
-    if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
-
-    tick_list = []
-    for token_address in data.address_list:
-        token = to_checksum_address(token_address)
-        tick = []
-        try:
-            entries = session.query(Agreement, Order). \
-                join(Order, Agreement.unique_order_id == Order.unique_order_id). \
-                filter(Order.token_address == token). \
-                filter(Agreement.status == AgreementStatus.DONE.value). \
-                order_by(desc(Agreement.settlement_timestamp)). \
-                all()
-
-            for entry in entries:
-                block_timestamp_utc = entry.IDXAgreement.settlement_timestamp
-                tick.append({
-                    "block_timestamp": block_timestamp_utc.strftime("%Y/%m/%d %H:%M:%S"),
-                    "buy_address": entry.IDXAgreement.buyer_address,
-                    "sell_address": entry.IDXAgreement.seller_address,
-                    "order_id": entry.IDXAgreement.order_id,
-                    "agreement_id": entry.IDXAgreement.agreement_id,
-                    "price": entry.IDXOrder.price,
-                    "amount": entry.IDXAgreement.amount
-                })
-            tick_list.append({
-                "token_address": token_address,
-                "tick": tick
-            })
-        except Exception as e:
-            LOG.error(e)
-            tick_list = []
-
-    return {
-        **SuccessResponse.use().dict(),
-        "data": tick_list
-    }
-
-
 # /DEX/Market/OrderBook/Membership
-@router.post(
+@router.get(
     "/OrderBook/Membership",
     summary="Membership Token Order Book",
     operation_id="MembershipOrderBook",
@@ -437,24 +152,24 @@ def list_all_straight_bond_tick(
 )
 def list_all_membership_order_book(
     req: Request,
-    data: ListAllOrderBookRequest,
+    request_query: ListAllOrderBookQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """[会員権]板情報取得"""
     if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     # 入力値を抽出
-    token_address = to_checksum_address(data.token_address)
+    token_address = to_checksum_address(request_query.token_address)
 
     # 注文を抽出
-    is_buy = data.order_type == "buy"  # 相対注文が買い注文かどうか
+    is_buy = request_query.order_type == "buy"  # 相対注文が買い注文かどうか
     exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
 
     # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
-    if data.account_address is not None:
-        account_address = to_checksum_address(data.account_address)
+    if request_query.account_address is not None:
+        account_address = to_checksum_address(request_query.account_address)
 
         if is_buy:  # 買注文
             # ＜抽出条件＞
@@ -610,7 +325,7 @@ def list_all_membership_order_book(
         })
 
     # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
-    if data.order_type == "buy":
+    if request_query.order_type == "buy":
         order_list = sorted(order_list_tmp, key=lambda x: x["price"])
     else:
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
@@ -622,7 +337,7 @@ def list_all_membership_order_book(
 
 
 # /DEX/Market/LastPrice/Membership
-@router.post(
+@router.get(
     "/LastPrice/Membership",
     summary="Membership Token Last Price (Bulk Get)",
     operation_id="MembershipLastPrice",
@@ -631,11 +346,11 @@ def list_all_membership_order_book(
 )
 def list_all_membership_last_price(
     req: Request,
-    data: ListAllLastPriceRequest
+    request_query: ListAllLastPriceQuery = Depends()
 ):
     """[会員権]現在値取得"""
     if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     exchange_contract = Contract.get_contract(
         "IbetExchange",
@@ -643,7 +358,7 @@ def list_all_membership_last_price(
     )
 
     price_list = []
-    for token_address in data.address_list:
+    for token_address in request_query.address_list:
         last_price = Contract.call_function(
             contract=exchange_contract,
             function_name="lastPrice",
@@ -663,7 +378,7 @@ def list_all_membership_last_price(
 
 
 # /DEX/Market/Tick/Membership
-@router.post(
+@router.get(
     "/Tick/Membership",
     summary="Membership Token Tick (Bulk Get)",
     operation_id="MembershipTick",
@@ -672,16 +387,16 @@ def list_all_membership_last_price(
 )
 def list_all_membership_tick(
     req: Request,
-    data: ListAllTickRequest,
+    request_query: ListAllTickQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """[会員権]歩み値取得"""
     if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     tick_list = []
     # TokenごとにTickを取得
-    for token_address in data.address_list:
+    for token_address in request_query.address_list:
         token = to_checksum_address(token_address)
         tick = []
         try:
@@ -718,7 +433,7 @@ def list_all_membership_tick(
 
 
 # /DEX/Market/OrderBook/Coupon
-@router.post(
+@router.get(
     "/OrderBook/Coupon",
     summary="Coupon Token Order Book",
     operation_id="CouponOrderBook",
@@ -727,24 +442,24 @@ def list_all_membership_tick(
 )
 def list_all_coupon_order_book(
     req: Request,
-    data: ListAllOrderBookRequest,
+    request_query: ListAllOrderBookQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """[クーポン]板情報取得"""
-    if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
+    if config.COUPON_TOKEN_ENABLED is False or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None:
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     # 入力値を抽出
-    token_address = to_checksum_address(data.token_address)
+    token_address = to_checksum_address(request_query.token_address)
 
     # 注文を抽出
-    is_buy = data.order_type == "buy"  # 相対注文が買い注文かどうか
-    exchange_address = to_checksum_address(config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS)
+    is_buy = request_query.order_type == "buy"  # 相対注文が買い注文かどうか
+    exchange_address = to_checksum_address(config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS)
 
     # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
-    if data.account_address:
-        account_address = to_checksum_address(data.account_address)
+    if request_query.account_address:
+        account_address = to_checksum_address(request_query.account_address)
 
         if is_buy:  # 買注文
             # ＜抽出条件＞
@@ -900,7 +615,7 @@ def list_all_coupon_order_book(
         })
 
     # 買い注文の場合は価格で昇順に、売り注文の場合は価格で降順にソートする
-    if data.order_type == "buy":
+    if request_query.order_type == "buy":
         order_list = sorted(order_list_tmp, key=lambda x: x["price"])
     else:
         order_list = sorted(order_list_tmp, key=lambda x: -x["price"])
@@ -912,7 +627,7 @@ def list_all_coupon_order_book(
 
 
 # /DEX/Market/LastPrice/Coupon
-@router.post(
+@router.get(
     "/LastPrice/Coupon",
     summary="Coupon Token Last Price (Bulk Get)",
     operation_id="CouponLastPrice",
@@ -921,19 +636,19 @@ def list_all_coupon_order_book(
 )
 def list_all_coupon_last_price(
     req: Request,
-    data: ListAllLastPriceRequest
+    request_query: ListAllLastPriceQuery = Depends()
 ):
     """[クーポン]現在値取得"""
-    if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
+    if config.COUPON_TOKEN_ENABLED is False or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None:
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     exchange_contract = Contract.get_contract(
         "IbetExchange",
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
     )
 
     price_list = []
-    for token_address in data.address_list:
+    for token_address in request_query.address_list:
         last_price = Contract.call_function(
             contract=exchange_contract,
             function_name="lastPrice",
@@ -952,7 +667,7 @@ def list_all_coupon_last_price(
 
 
 # /DEX/Market/Tick/Coupon
-@router.post(
+@router.get(
     "/Tick/Coupon",
     summary="Coupon Token Tick (Bulk Get)",
     operation_id="CouponTick",
@@ -961,16 +676,16 @@ def list_all_coupon_last_price(
 )
 def list_all_coupon_tick(
     req: Request,
-    data: ListAllTickRequest,
+    request_query: ListAllTickQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """[クーポン]歩み値取得"""
-    if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-        raise NotSupportedError(method="POST", url=req.url.path)
+    if config.COUPON_TOKEN_ENABLED is False or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None:
+        raise NotSupportedError(method="GET", url=req.url.path)
 
     tick_list = []
     # TokenごとにTickを取得
-    for token_address in data.address_list:
+    for token_address in request_query.address_list:
         token = to_checksum_address(token_address)
         tick = []
         try:
