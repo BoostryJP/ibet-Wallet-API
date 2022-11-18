@@ -189,6 +189,7 @@ def list_all_membership_order_book(
         ).
         filter(Order.exchange_address == exchange_address).
         filter(Order.token_address == token_address).
+        filter(Order.agent_address == request_query.exchange_agent_address).
         filter(Order.is_cancelled == False)  # 未キャンセル
     )
 
@@ -379,6 +380,7 @@ def list_all_coupon_order_book(
         ).
         filter(Order.exchange_address == exchange_address).
         filter(Order.token_address == token_address).
+        filter(Order.agent_address == request_query.exchange_agent_address).
         filter(Order.is_cancelled == False)  # 未キャンセル
     )
 

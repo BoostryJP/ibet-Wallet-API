@@ -1418,6 +1418,46 @@ class TestDEXMarketMembershipOrderBook:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == assumed_body
 
+    # ＜正常系5＞
+    # 異なる exchange_agent_address
+    def test_normal_5(self, client: TestClient, session: Session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        config.MEMBERSHIP_TOKEN_ENABLED = True
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
+        agent_address_1 = eth_account['agent']['account_address']
+        agent_address_2 = eth_account['user1']['account_address']
+
+        # テストデータを挿入
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
+        order.account_address = account_address
+        order.counterpart_address = ''
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address_1
+        order.is_cancelled = False
+        session.add(order)
+
+        # リクエスト情報
+        request_params = {
+            "token_address": token_address,
+            "exchange_agent_address": agent_address_2,
+            "order_type": "buy"
+        }
+        resp = client.get(self.apiurl, params=request_params)
+
+        assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
+
     ###########################################################################
     # Error
     ###########################################################################
