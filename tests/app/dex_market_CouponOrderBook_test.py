@@ -77,6 +77,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
@@ -130,6 +131,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy"
         }
         resp = client.get(self.apiurl, params=request_params)
@@ -182,6 +184,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
@@ -227,6 +230,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
@@ -272,6 +276,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": account_address,
         }
@@ -313,6 +318,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
@@ -366,6 +372,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
@@ -411,6 +418,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
@@ -464,6 +472,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A",
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
@@ -509,6 +518,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
@@ -554,6 +564,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": account_address,
         }
@@ -595,6 +606,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
@@ -648,6 +660,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
@@ -702,6 +715,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": agent_address,
         }
@@ -769,6 +783,7 @@ class TestDEXMarketCouponOrderBook:
         # リクエスト情報
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": agent_address,
         }
@@ -917,6 +932,7 @@ class TestDEXMarketCouponOrderBook:
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": account_addresses[0],
         }
@@ -1065,6 +1081,7 @@ class TestDEXMarketCouponOrderBook:
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
             "account_address": account_addresses[0],
         }
@@ -1215,6 +1232,7 @@ class TestDEXMarketCouponOrderBook:
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
         }
         resp = client.get(self.apiurl, params=request_params)
@@ -1368,6 +1386,7 @@ class TestDEXMarketCouponOrderBook:
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
         }
         resp = client.get(self.apiurl, params=request_params)
@@ -1398,6 +1417,46 @@ class TestDEXMarketCouponOrderBook:
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == assumed_body
 
+    # ＜正常系5＞
+    # 異なる exchange_agent_address
+    def test_normal_5(self, client: TestClient, session: Session):
+        token_address = "0x4814B3b0b7aC56097F280B254F8A909A76ca7f51"
+        exchange_address = to_checksum_address("0xe88d2561d2ffbb98a6a1982f7324f69df7f444c6")
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        account_address = "0x26E9F441d9bE19E42A5a0A792E3Ef8b661182c9A"
+        agent_address_1 = eth_account['agent']['account_address']
+        agent_address_2 = eth_account['user1']['account_address']
+
+        # テストデータを挿入
+        order = Order()
+        order.token_address = token_address
+        order.exchange_address = exchange_address
+        order.order_id = 1
+        order.unique_order_id = exchange_address + '_' + str(1)
+        order.account_address = account_address
+        order.counterpart_address = ''
+        order.is_buy = False
+        order.price = 1000
+        order.amount = 100
+        order.agent_address = agent_address_1
+        order.is_cancelled = False
+        session.add(order)
+
+        # リクエスト情報
+        request_params = {
+            "token_address": token_address,
+            "exchange_agent_address": agent_address_2,
+            "order_type": "buy"
+        }
+        resp = client.get(self.apiurl, params=request_params)
+
+        assumed_body = []
+
+        assert resp.status_code == 200
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
+
     ###########################################################################
     # Error
     ###########################################################################
@@ -1422,6 +1481,11 @@ class TestDEXMarketCouponOrderBook:
                     'type': 'value_error.missing'
                 },
                 {
+                    'loc': ['query', 'exchange_agent_address'],
+                    'msg': 'field required',
+                    'type': 'value_error.missing'
+                },
+                {
                     'loc': ['query', 'order_type'],
                     'msg': 'field required',
                     'type': 'value_error.missing'
@@ -1430,18 +1494,20 @@ class TestDEXMarketCouponOrderBook:
             'message': 'Invalid Parameter'
         }
 
-    # Error_2
+    # Error_2_1
     # token_address is not a valid address
     # Invalid Parameter
-    def test_error_2(self, client: TestClient, session: Session):
+    def test_error_2_1(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a74"  # アドレスが短い
         exchange_address = to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        agent_address = eth_account['agent']['account_address']
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": account_address,
         }
@@ -1460,18 +1526,52 @@ class TestDEXMarketCouponOrderBook:
             'message': 'Invalid Parameter'
         }
 
-    # Error_3
-    # account_address is not a valid address
+    # Error_2_2
+    # token_address is not a valid address
     # Invalid Parameter
-    def test_error_3(self, client: TestClient, session: Session):
+    def test_error_2_2(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        agent_address = eth_account['agent']['account_address'][:-1]  # アドレスが短い
+        account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
+
+        request_params = {
+            "token_address": token_address,
+            "exchange_agent_address": agent_address,
+            "order_type": "buy",
+            "account_address": account_address,
+        }
+        resp = client.get(self.apiurl, params=request_params)
+
+        assert resp.status_code == 400
+        assert resp.json()['meta'] == {
+            'code': 88,
+            'description': [
+                {
+                    'loc': ['exchange_agent_address'],
+                    'msg': 'exchange_agent_address is not a valid address',
+                    'type': 'value_error'
+                }
+            ],
+            'message': 'Invalid Parameter'
+        }
+
+    # Error_2_3
+    # account_address is not a valid address
+    # Invalid Parameter
+    def test_error_2_3(self, client: TestClient, session: Session):
+        token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        exchange_address = to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
+        config.COUPON_TOKEN_ENABLED = True
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        agent_address = eth_account['agent']['account_address']
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a382637"  # アドレスが短い
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buy",
             "account_address": account_address,
         }
@@ -1490,18 +1590,20 @@ class TestDEXMarketCouponOrderBook:
             'message': 'Invalid Parameter'
         }
 
-    # Error_4
+    # Error_3
     # order_type: value is not a valid enumeration member
     # Invalid Parameter
-    def test_error_4(self, client: TestClient, session: Session):
+    def test_error_3(self, client: TestClient, session: Session):
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
         exchange_address = to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange_address
+        agent_address = eth_account['agent']['account_address']
         account_address = "0xeb6e99675595fb052cc68da0eeecb2d5a3826378"
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "buyyyyy",
             "account_address": account_address,
         }
@@ -1521,9 +1623,9 @@ class TestDEXMarketCouponOrderBook:
             'message': 'Invalid Parameter'
         }
 
-    # Error_5
+    # Error_4
     # Method Not Allowed
-    def test_error_5(self, client: TestClient, session: Session):
+    def test_error_4(self, client: TestClient, session: Session):
         exchange_address = to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange_address
@@ -1537,16 +1639,18 @@ class TestDEXMarketCouponOrderBook:
             'description': 'method: POST, url: /DEX/Market/OrderBook/Coupon'
         }
 
-    # Error_6_1
+    # Error_5_1
     # Coupon token is not enabled
-    def test_error_6_1(self, client: TestClient, session: Session):
+    def test_error_5_1(self, client: TestClient, session: Session):
         exchange_address = to_checksum_address("0x421b0ee9a0a3d1887bd4972790c50c092e1aec1b")
         config.COUPON_TOKEN_ENABLED = False
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange_address
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        agent_address = eth_account['agent']['account_address']
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
         }
         resp = client.get(self.apiurl, params=request_params)
@@ -1558,15 +1662,17 @@ class TestDEXMarketCouponOrderBook:
             'description': 'method: GET, url: /DEX/Market/OrderBook/Coupon'
         }
 
-    # Error_6_2
+    # Error_5_2
     # Exchange address is not set
-    def test_error_6_2(self, client: TestClient, session: Session):
+    def test_error_5_2(self, client: TestClient, session: Session):
         config.COUPON_TOKEN_ENABLED = True
         config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
         token_address = "0xe883a6f441ad5682d37df31d34fc012bcb07a740"
+        agent_address = eth_account['agent']['account_address']
 
         request_params = {
             "token_address": token_address,
+            "exchange_agent_address": agent_address,
             "order_type": "sell",
         }
         resp = client.get(self.apiurl, params=request_params)

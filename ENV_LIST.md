@@ -42,7 +42,6 @@ The list of environment variables that can be set for this system is as follows.
 ### On-chain Exchange (Only for utility tokens)
 | Variable Name                               | Required | Details                                                                  | Example                                    | Default | 
 |---------------------------------------------|----------|--------------------------------------------------------------------------|--------------------------------------------|---------|
-| AGENT_ADDRESS                               | True*    | Paying agent address (*Set only if you use IbetExchange)                 | 0x0000000000000000000000000000000000000000 | --      |
 | PAYMENT_GATEWAY_CONTRACT_ADDRESS            | False    | PaymentGateway contract address                                          | 0x0000000000000000000000000000000000000000 | --      |
 | IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS   | False    | IbetExchange contract address for Membership tokens                      | 0x0000000000000000000000000000000000000000 | --      |
 | IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS       | False    | IbetExchange contract address for Coupon tokens                          | 0x0000000000000000000000000000000000000000 | --      |

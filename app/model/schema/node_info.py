@@ -51,7 +51,6 @@ class GetNodeInfoResponse(BaseModel):
     ibet_security_token_escrow_abi: Optional[object]
     e2e_messaging_address: Optional[str]
     e2e_messaging_abi: Optional[object]
-    agent_address: Optional[str]
 
 
 class GetBlockSyncStatusResponse(BaseModel):

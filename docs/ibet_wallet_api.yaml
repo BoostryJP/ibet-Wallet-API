@@ -3278,6 +3278,14 @@ paths:
             description: Token address
           name: token_address
           in: query
+        - description: Settlement agent address on ibet exchange
+          required: true
+          schema:
+            title: Exchange Agent Address
+            type: string
+            description: Settlement agent address on ibet exchange
+          name: exchange_agent_address
+          in: query
         - description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
           required: true
           schema:
@@ -3402,6 +3410,14 @@ paths:
             type: string
             description: Token address
           name: token_address
+          in: query
+        - description: Settlement agent address on ibet exchange
+          required: true
+          schema:
+            title: Exchange Agent Address
+            type: string
+            description: Settlement agent address on ibet exchange
+          name: exchange_agent_address
           in: query
         - description: Order type to be executed by the Orderer. If "buy" is selected, the sell order book will be returned.
           required: true
@@ -4998,9 +5014,6 @@ components:
           type: string
         e2e_messaging_abi:
           title: E2E Messaging Abi
-        agent_address:
-          title: Agent Address
-          type: string
     HTTPValidationError:
       title: HTTPValidationError
       type: object

@@ -81,8 +81,7 @@ def get_node_info():
         'ibet_security_token_escrow_address': config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS,
         'ibet_security_token_escrow_abi': ibet_security_token_escrow_json['abi'],
         'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
-        'e2e_messaging_abi': e2e_messaging_json['abi'],
-        'agent_address': config.AGENT_ADDRESS,
+        'e2e_messaging_abi': e2e_messaging_json['abi']
     }
     return {
         **SuccessResponse.use().dict(),

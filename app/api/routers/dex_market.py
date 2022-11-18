@@ -166,144 +166,45 @@ def list_all_membership_order_book(
     is_buy = request_query.order_type == "buy"  # 相対注文が買い注文かどうか
     exchange_address = to_checksum_address(config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS)
 
+    query = (
+        session.query(
+            Order.order_id,
+            Order.amount,
+            Order.price,
+            Order.exchange_address,
+            Order.account_address,
+            func.sum(Agreement.amount)
+        ).
+        outerjoin(
+            Agreement,
+            and_(Order.unique_order_id == Agreement.unique_order_id,
+                 Agreement.status != AgreementStatus.CANCELED.value)  # 約定取消時に注文中状態に戻るため約定数量には取消分を含めない
+        ).
+        group_by(
+            Order.order_id,
+            Order.amount,
+            Order.price,
+            Order.exchange_address,
+            Order.account_address
+        ).
+        filter(Order.exchange_address == exchange_address).
+        filter(Order.token_address == token_address).
+        filter(Order.agent_address == request_query.exchange_agent_address).
+        filter(Order.is_cancelled == False)  # 未キャンセル
+    )
+
+    if is_buy:  # 買注文
+        query = query.filter(Order.is_buy == False)
+    else:  # 売注文
+        query = query.filter(Order.is_buy == True)
+
     # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
     if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-
-        if is_buy:  # 買注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 売り注文
-            #  3) 未キャンセル
-            #  4) 指定したアカウントアドレス以外
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == False). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.account_address != account_address). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-        else:  # 売注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 買い注文
-            #  3) 未キャンセル
-            #  4) 指定したアカウントアドレス以外
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == True). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.account_address != account_address). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
+        orders = query.filter(Order.account_address != account_address).all()
     else:
-        if is_buy:  # 買注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 売り注文
-            #  3) 未キャンセル
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == False). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-        else:  # 売注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 買い注文
-            #  3) 未キャンセル
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == True). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
+        orders = query.all()
 
     # レスポンス用の注文一覧を構築
     order_list_tmp = []
@@ -456,144 +357,45 @@ def list_all_coupon_order_book(
     is_buy = request_query.order_type == "buy"  # 相対注文が買い注文かどうか
     exchange_address = to_checksum_address(config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS)
 
+    query = (
+        session.query(
+            Order.order_id,
+            Order.amount,
+            Order.price,
+            Order.exchange_address,
+            Order.account_address,
+            func.sum(Agreement.amount)
+        ).
+        outerjoin(
+            Agreement,
+            and_(Order.unique_order_id == Agreement.unique_order_id,
+                 Agreement.status != AgreementStatus.CANCELED.value)  # 約定取消時に注文中状態に戻るため約定数量には取消分を含めない
+        ).
+        group_by(
+            Order.order_id,
+            Order.amount,
+            Order.price,
+            Order.exchange_address,
+            Order.account_address
+        ).
+        filter(Order.exchange_address == exchange_address).
+        filter(Order.token_address == token_address).
+        filter(Order.agent_address == request_query.exchange_agent_address).
+        filter(Order.is_cancelled == False)  # 未キャンセル
+    )
+
+    if is_buy:  # 買注文
+        query = query.filter(Order.is_buy == False)
+    else:  # 売注文
+        query = query.filter(Order.is_buy == True)
+
     # account_address（注文者のアドレス）指定時は注文者以外の注文板を取得する
     # account_address（注文者のアドレス）未指定時は全ての注文板を取得する
-    if request_query.account_address:
+    if request_query.account_address is not None:
         account_address = to_checksum_address(request_query.account_address)
-
-        if is_buy:  # 買注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 売り注文
-            #  3) 未キャンセル
-            #  4) 指定したアカウントアドレス以外
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == False). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.account_address != account_address). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-        else:  # 売注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 買い注文
-            #  3) 未キャンセル
-            #  4) 指定したアカウントアドレス以外
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == True). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.account_address != account_address). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
+        orders = query.filter(Order.account_address != account_address).all()
     else:
-        if is_buy:  # 買注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 売り注文
-            #  3) 未キャンセル
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == False). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
-        else:  # 売注文
-            # ＜抽出条件＞
-            #  1) Token Addressが指定したものと同じ
-            #  2) 買い注文を抽出
-            #  3) 未キャンセル
-            #  NOTE: DEXでは約定取消時に注文中状態に戻すため、約定数量には取消分を含めていない
-            orders = session.query(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address,
-                    func.sum(Agreement.amount)
-                ). \
-                outerjoin(
-                    Agreement,
-                    and_(Order.unique_order_id == Agreement.unique_order_id,
-                         Agreement.status != AgreementStatus.CANCELED.value)
-                ). \
-                group_by(
-                    Order.order_id,
-                    Order.amount,
-                    Order.price,
-                    Order.exchange_address,
-                    Order.account_address
-                ). \
-                filter(Order.exchange_address == exchange_address). \
-                filter(Order.token_address == token_address). \
-                filter(Order.is_buy == True). \
-                filter(Order.is_cancelled == False). \
-                filter(Order.agent_address == config.AGENT_ADDRESS). \
-                all()
+        orders = query.all()
 
     # レスポンス用の注文一覧を構築
     order_list_tmp = []
