@@ -60,8 +60,6 @@ class TestNodeInfoNodeInfo:
         e2e_messaging_address = config.E2E_MESSAGING_CONTRACT_ADDRESS
         e2e_messaging_abi = e2e_messaging_json['abi']
 
-        agent_address = config.AGENT_ADDRESS
-
         assumed_body = {
             'payment_gateway_address': payment_gateway_address,
             'payment_gateway_abi': payment_gateway_abi,
@@ -77,7 +75,6 @@ class TestNodeInfoNodeInfo:
             'ibet_security_token_escrow_abi': ibet_security_token_escrow_abi,
             'e2e_messaging_address': e2e_messaging_address,
             'e2e_messaging_abi': e2e_messaging_abi,
-            'agent_address': agent_address
         }
 
         assert resp.status_code == 200

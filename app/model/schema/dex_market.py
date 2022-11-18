@@ -49,6 +49,7 @@ class ListAllOrderBookQuery:
         description="Orderer's account address. Orders from the given address will not be included in the response."
     )
     token_address: str = Query(description="Token address")
+    exchange_agent_address: str = Query(description="Settlement agent address on ibet exchange")
     order_type: OrderType = Query(description="Order type to be executed by the Orderer. "
                                               "If \"buy\" is selected, the sell order book will be returned.")
 
@@ -56,6 +57,12 @@ class ListAllOrderBookQuery:
     def token_address_is_valid_address(cls, v):
         if not Web3.isAddress(v):
             raise ValueError("token_address is not a valid address")
+        return v
+
+    @validator("exchange_agent_address")
+    def exchange_agent_address_is_valid_address(cls, v):
+        if not Web3.isAddress(v):
+            raise ValueError("exchange_agent_address is not a valid address")
         return v
 
     @validator("account_address")
