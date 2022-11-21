@@ -36,26 +36,32 @@ if [[ "${APP_ENV:-}" != "local" && "${COMPANY_LIST_LOCAL_MODE:-}" -ne 1 ]]; then
     echo "please confirm COMPANY_LIST_URL, which response code is ${resp}" >&2
   fi
   python batch/indexer_CompanyList.py &
+else
+  # check company_list.json is default one
+  content_length="$(wc -c data/company_list.json | awk '{print $1}')"
+  if [ "${content_length}" = 2 ]; then
+    echo '[WARNING] company_list.json is empty. Please mount company_list.json if you use company list local mode.' >&2
+  fi
 fi
 
 python batch/indexer_Transfer.py &
 python batch/indexer_Token_Holders.py &
 python batch/indexer_Token_List.py &
 
-if [ $SHARE_TOKEN_ENABLED = 1 ]; then
+if [[ $SHARE_TOKEN_ENABLED = 1 ]]; then
   python batch/indexer_Position_Share.py &
   python batch/indexer_TransferApproval.py &
 fi
 
-if [ $BOND_TOKEN_ENABLED = 1 ]; then
+if [[ $BOND_TOKEN_ENABLED = 1 ]]; then
   python batch/indexer_Position_Bond.py &
 fi
 
-if [ $MEMBERSHIP_TOKEN_ENABLED = 1 ]; then
+if [[ $MEMBERSHIP_TOKEN_ENABLED = 1 ]]; then
   python batch/indexer_Position_Membership.py &
 fi
 
-if [ $COUPON_TOKEN_ENABLED = 1 ]; then
+if [[ $COUPON_TOKEN_ENABLED = 1 ]]; then
   python batch/indexer_Consume_Coupon.py &
   python batch/indexer_Position_Coupon.py &
 fi
