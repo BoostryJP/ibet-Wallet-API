@@ -57,10 +57,10 @@ Tempita==0.5.2
 toolz==0.12.0
 typing_extensions==4.4.0
 urllib3==1.26.12
-uvicorn==0.18.3
+uvicorn==0.20.0
 varint==1.0.2
 web3==5.31.1
 websockets==9.1
 yarl==1.8.1
 zope.event==4.5.0
-zope.interface==5.5.1
+zope.interface==5.5.2
