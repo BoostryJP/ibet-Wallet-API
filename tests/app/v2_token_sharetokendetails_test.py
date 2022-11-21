@@ -122,7 +122,7 @@ class TestV2TokenShareTokenDetails:
             'issue_price': 10000,
             'principal_value': 10000,
             'dividend_information': {
-                'dividends': 1.01,
+                'dividends': 0.0000000000101,
                 'dividend_record_date': '20200909',
                 'dividend_payment_date': '20201001'
             },
@@ -185,7 +185,7 @@ class TestV2TokenShareTokenDetails:
             'issue_price': 10000,
             'principal_value': 10000,
             'dividend_information': {
-                'dividends': 1.01,
+                'dividends': 0.0000000000101,
                 'dividend_record_date': '20200909',
                 'dividend_payment_date': '20201001'
             },
