@@ -337,7 +337,7 @@ class TestPositionShareContractAddress:
                 'issue_price': 1000,
                 'principal_value': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
+                    'dividends': 0.0000000000101,
                     'dividend_record_date': '20200401',
                     'dividend_payment_date': '20200502'
                 },
@@ -499,7 +499,7 @@ class TestPositionShareContractAddress:
                 'issue_price': 1000,
                 'principal_value': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
+                    'dividends': 0.0000000000101,
                     'dividend_record_date': '20200401',
                     'dividend_payment_date': '20200502'
                 },
@@ -660,7 +660,7 @@ class TestPositionShareContractAddress:
                 'issue_price': 1000,
                 'principal_value': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
+                    'dividends': 0.0000000000101,
                     'dividend_record_date': '20200401',
                     'dividend_payment_date': '20200502'
                 },
@@ -821,7 +821,7 @@ class TestPositionShareContractAddress:
                 'issue_price': 1000,
                 'principal_value': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
+                    'dividends': 0.0000000000101,
                     'dividend_record_date': '20200401',
                     'dividend_payment_date': '20200502'
                 },
@@ -983,7 +983,7 @@ class TestPositionShareContractAddress:
                 'issue_price': 1000,
                 'principal_value': 1000,
                 'dividend_information': {
-                    'dividends': 1.01,
+                    'dividends': 0.0000000000101,
                     'dividend_record_date': '20200401',
                     'dividend_payment_date': '20200502'
                 },

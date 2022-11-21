@@ -498,7 +498,7 @@ class TestProcessor:
             assert _share_token.is_offering == False
             assert _share_token.is_canceled == True
             assert _share_token.dividend_information == {
-                'dividends': float(Decimal(str(50)) * Decimal("0.01")),
+                'dividends': float(Decimal(str(50)) * Decimal("0.0000000000001")),
                 'dividend_record_date': "20200401",
                 'dividend_payment_date': "20200401",
             }
