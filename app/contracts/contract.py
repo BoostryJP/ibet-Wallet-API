@@ -20,7 +20,11 @@ import json
 
 from eth_utils import to_checksum_address
 from web3 import contract
-from web3.exceptions import BadFunctionCallOutput, ABIFunctionNotFound
+from web3.exceptions import (
+    BadFunctionCallOutput,
+    ABIFunctionNotFound,
+    ContractLogicError
+)
 
 from app.utils.web3_utils import Web3Wrapper
 
@@ -108,7 +112,7 @@ class Contract:
         try:
             _function = getattr(contract.functions, function_name)
             result = _function(*args).call()
-        except (BadFunctionCallOutput, ABIFunctionNotFound) as web3_exception:
+        except (BadFunctionCallOutput, ABIFunctionNotFound, ContractLogicError) as web3_exception:
             if default_returns is not None:
                 return default_returns
             else:
