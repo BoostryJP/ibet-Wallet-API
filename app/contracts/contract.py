@@ -17,10 +17,11 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from typing import TypeVar
 
 from eth_utils import to_checksum_address
 from web3 import contract
-from web3.exceptions import BadFunctionCallOutput
+from web3.exceptions import BadFunctionCallOutput, ContractLogicError
 
 from app.utils.web3_utils import Web3Wrapper
 
@@ -91,11 +92,13 @@ class Contract:
 
         return contract_address, contract_json['abi']
 
+    T = TypeVar("T")
+
     @staticmethod
     def call_function(contract: contract,
                       function_name: str,
                       args: tuple,
-                      default_returns=None):
+                      default_returns: T = None) -> T:
         """Call contract function
 
         :param contract: Contract
@@ -108,10 +111,10 @@ class Contract:
 
         try:
             result = _function(*args).call()
-        except BadFunctionCallOutput:
+        except (BadFunctionCallOutput, ContractLogicError) as exc:
             if default_returns is not None:
                 return default_returns
             else:
-                raise BadFunctionCallOutput
+                raise exc
 
         return result
