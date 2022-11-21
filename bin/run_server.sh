@@ -25,7 +25,7 @@ if [[ "${APP_ENV:-}" == "local" || "${COMPANY_LIST_LOCAL_MODE:-}" -eq 1 ]]; then
   # check company_list.json is default one
   content_length="$(wc -c data/company_list.json | awk '{print $1}')"
   if [ "${content_length}" = 2 ]; then
-    echo -n '[WARNING] company_list.json is empty. Please mount company_list.json if you use company list local mode.' >&2
+    echo '[WARNING] company_list.json is empty. Please mount company_list.json if you use company list local mode.' >&2
   fi
 fi
 
