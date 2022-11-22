@@ -148,3 +148,23 @@ class NotificationType(str, Enum):
     APPLY_FOR_TRANSFER = "ApplyForTransfer"
     APPROVE_TRANSFER = "ApproveTransfer"
     CANCEL_TRANSFER = "CancelTransfer"
+
+
+class NotificationBlockNumber(Base):
+    """Synchronized blockNumber of Notification"""
+    __tablename__ = "notification_block_number"
+
+    # notification type: NotificationType
+    notification_type = Column(String(256), primary_key=True)
+    # contract address
+    contract_address = Column(String(42), primary_key=True)
+    # latest blockNumber
+    latest_block_number = Column(BigInteger)
+
+    FIELDS = {
+        'notification_type': str,
+        'contract_address': str,
+        'latest_block_number': int,
+    }
+
+    FIELDS.update(Base.FIELDS)
