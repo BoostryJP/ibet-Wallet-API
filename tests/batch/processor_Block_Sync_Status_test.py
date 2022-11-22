@@ -47,8 +47,8 @@ class TestProcessor:
     # Execute Batch Run 1st: synced
     # Execute Batch Run 2nd: block generation speed down(same the previous)
     # Execute Batch Run 3rd: synced
-    # Execute Batch Run 4th: node syncing(DIFF:over 1)
-    # Execute Batch Run 5th: node syncing(DIFF:1) == synced
+    # Execute Batch Run 4th: node syncing(DIFF:over 2)
+    # Execute Batch Run 5th: node syncing(DIFF:2) == synced
     def test_normal_1(self, processor, session):
         # Run 1st: synced
         processor.process()
@@ -90,7 +90,7 @@ class TestProcessor:
             mock_is_syncing.side_effect = [
                 {
                     "highestBlock": block_number,
-                    "currentBlock": block_number - 2
+                    "currentBlock": block_number - 3
                 }
             ]
             processor.process()
@@ -108,7 +108,7 @@ class TestProcessor:
             mock_is_syncing.side_effect = [
                 {
                     "highestBlock": block_number,
-                    "currentBlock": block_number - 1
+                    "currentBlock": block_number - 2
                 }
             ]
             processor.process()
