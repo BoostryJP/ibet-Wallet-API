@@ -66,7 +66,7 @@ BLOCK_SYNC_STATUS_SLEEP_INTERVAL = int(os.environ.get("BLOCK_SYNC_STATUS_SLEEP_I
 BLOCK_SYNC_STATUS_CALC_PERIOD = int(os.environ.get("BLOCK_SYNC_STATUS_CALC_PERIOD", 5))
 # ブロック同期残のしきい値（block）
 # NOTE: highestBlock と currentBlock の差のしきい値
-BLOCK_SYNC_REMAINING_THRESHOLD = int(os.environ.get("BLOCK_SYNC_REMAINING_THRESHOLD", 1))
+BLOCK_SYNC_REMAINING_THRESHOLD = int(os.environ.get("BLOCK_SYNC_REMAINING_THRESHOLD", 2))
 # ブロック同期停止と判断するブロック生成速度のしきい値 (%)
 # NOTE: Quorum Validator 4台中1台がクラッシュ障害状態のとき、ブロック生成速度は 20% 〜 35% ぐらいになる
 if APP_ENV == "local":
