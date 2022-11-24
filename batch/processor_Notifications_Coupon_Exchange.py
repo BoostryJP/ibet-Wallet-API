@@ -146,13 +146,16 @@ class Watcher:
                     db_session=db_session,
                     entries=entries
                 )
-                self.__set_synchronized_block_number(
-                    db_session=db_session,
-                    contract_address=self.contract.address,
-                    notification_type=self.notification_type,
-                    block_number=to_block_number
-                )
-                db_session.commit()
+
+            # Update synchronized block number
+            self.__set_synchronized_block_number(
+                db_session=db_session,
+                contract_address=self.contract.address,
+                notification_type=self.notification_type,
+                block_number=to_block_number
+            )
+
+            db_session.commit()
 
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
