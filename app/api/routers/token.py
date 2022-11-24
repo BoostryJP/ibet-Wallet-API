@@ -52,6 +52,7 @@ from app.model.schema import (
     CreateTokenHoldersCollectionResponse,
     TokenHoldersCollectionResponse,
     TransferHistoriesResponse,
+    ListAllTokenHoldersQuery,
     TransferApprovalHistoriesResponse
 )
 from app.utils.docs_utils import get_routers_responses
@@ -159,6 +160,7 @@ def get_token_status(
 )
 def get_token_holders(
     token_address: str = Path(description="token address"),
+    request_query: ListAllTokenHoldersQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -182,15 +184,17 @@ def get_token_holders(
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    holders = session.query(IDXPosition). \
+    query = session.query(IDXPosition). \
         filter(IDXPosition.token_address == contract_address). \
         filter(or_(
             IDXPosition.balance > 0,
             IDXPosition.pending_transfer > 0,
             IDXPosition.exchange_balance > 0,
-            IDXPosition.exchange_commitment > 0)). \
-        order_by(desc(IDXPosition.id)) .\
-        all()
+            IDXPosition.exchange_commitment > 0))
+    if request_query.exclude_owner is True:
+        query = query.filter(IDXPosition.account_address != listed_token.owner_address)
+
+    holders: list[IDXPosition] = query.order_by(desc(IDXPosition.id)).all()
 
     resp_body = []
     for holder in holders:

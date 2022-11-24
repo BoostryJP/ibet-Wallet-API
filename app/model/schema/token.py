@@ -54,6 +54,11 @@ class CreateTokenHoldersCollectionRequest(BaseModel):
 
 
 @dataclass
+class ListAllTokenHoldersQuery:
+    exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
+
+
+@dataclass
 class RetrieveTokenHoldersCountQuery:
     exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
 
