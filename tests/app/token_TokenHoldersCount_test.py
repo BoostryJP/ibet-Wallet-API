@@ -207,7 +207,7 @@ class TestTokenTokenHoldersCount:
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query = {
-            "exclude_issuer": True
+            "exclude_owner": True
         }
         resp = client.get(apiurl, params=query)
 
