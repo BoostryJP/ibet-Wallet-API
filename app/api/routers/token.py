@@ -251,7 +251,7 @@ def get_token_holders_count(
             IDXPosition.exchange_balance > 0,
             IDXPosition.exchange_commitment > 0))
     if request_query.exclude_owner is True:
-        query = query.flter(IDXPosition.account_address != listed_token.owner_address)
+        query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
     _count = query.order_by(desc(IDXPosition.id)).count()
 
