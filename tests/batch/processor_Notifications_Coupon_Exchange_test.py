@@ -23,6 +23,7 @@ from importlib import reload
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.types import RPCEndpoint
 
 from app import config
 from app.model.db import (
@@ -229,14 +230,17 @@ class TestWatchCouponNewOrder:
 
         # Not Create Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -409,14 +413,17 @@ class TestWatchCouponCancelOrder:
 
         # Not Cancel Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -653,14 +660,17 @@ class TestWatchCouponForceCancelOrder:
         # Not Cancel Order
 
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -836,14 +846,17 @@ class TestWatchCouponBuyAgreement:
 
         # Not Buy Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1016,14 +1029,17 @@ class TestWatchCouponSellAgreement:
 
         # Not Buy Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1209,14 +1225,17 @@ class TestWatchCouponBuySettlementOK:
 
         # Not Confirm Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1402,14 +1421,17 @@ class TestWatchCouponSellSettlementOK:
 
         # Not Confirm Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1595,14 +1617,17 @@ class TestWatchCouponBuySettlementNG:
 
         # Not Cancel Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1788,14 +1813,17 @@ class TestWatchCouponSellSettlementNG:
 
         # Not Cancel Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
 
         _notification_block_number = session.query(NotificationBlockNumber).first()
-        assert _notification_block_number is None
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
