@@ -41,14 +41,15 @@ from app.errors import (
 from app import config
 from app.contracts import Contract
 from app.model.schema import (
+    CreateTokenHoldersCollectionRequest,
+    RetrieveTokenHoldersCountQuery,
+    ResultSetQuery,
     GenericSuccessResponse,
     TokenStatusResponse,
     SuccessResponse,
-    ResultSetQuery,
     TokenHoldersResponse,
     TokenHoldersCountResponse,
     CreateTokenHoldersCollectionResponse,
-    CreateTokenHoldersCollectionRequest,
     TokenHoldersCollectionResponse,
     TransferHistoriesResponse,
     TransferApprovalHistoriesResponse
@@ -217,6 +218,7 @@ def get_token_holders(
 )
 def get_token_holders_count(
     token_address: str = Path(description="token address"),
+    request_query: RetrieveTokenHoldersCountQuery = Depends(),
     session: Session = Depends(db_session)
 ):
     """
@@ -241,14 +243,17 @@ def get_token_holders_count(
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    _count = session.query(IDXPosition). \
+    query = session.query(IDXPosition). \
         filter(IDXPosition.token_address == contract_address). \
         filter(or_(
             IDXPosition.balance > 0,
             IDXPosition.pending_transfer > 0,
             IDXPosition.exchange_balance > 0,
-            IDXPosition.exchange_commitment > 0)). \
-        order_by(desc(IDXPosition.id)).count()
+            IDXPosition.exchange_commitment > 0))
+    if request_query.exclude_owner is True:
+        query = query.flter(IDXPosition.account_address != listed_token.owner_address)
+
+    _count = query.order_by(desc(IDXPosition.id)).count()
 
     resp_body = {
         "count": _count
