@@ -87,7 +87,6 @@ class Watcher:
         self.contract = contract
         self.filter_name = filter_name
         self.filter_params = filter_params
-        self.from_block = 0
         self.notification_type = notification_type
 
     @staticmethod
@@ -111,8 +110,6 @@ class Watcher:
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
 
         try:
-            LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
-
             # Get synchronized block number
             from_block_number = self.__get_synchronized_block_number(
                 db_session=db_session,

@@ -77,7 +77,6 @@ class Watcher:
     def __init__(self, filter_name: str, filter_params: dict, notification_type: str):
         self.filter_name = filter_name
         self.filter_params = filter_params
-        self.from_block = 0
         self.notification_type = notification_type
 
     @staticmethod
@@ -116,7 +115,6 @@ class Watcher:
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
 
         try:
-            LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
             # Get listed tokens
             _token_list = self._get_token_all_list(db_session)
 
