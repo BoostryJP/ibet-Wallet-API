@@ -20,7 +20,8 @@ from .base import Base
 from .company import Company
 from .notification import (
     Notification,
-    NotificationType
+    NotificationType,
+    NotificationBlockNumber
 )
 from .listing import Listing
 from .executable_contract import ExecutableContract

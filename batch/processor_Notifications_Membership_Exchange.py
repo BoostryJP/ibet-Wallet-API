@@ -44,7 +44,8 @@ from app.contracts import Contract
 from app.errors import ServiceUnavailable
 from app.model.db import (
     Notification,
-    NotificationType
+    NotificationType,
+    NotificationBlockNumber
 )
 from app.utils.web3_utils import Web3Wrapper
 from batch.lib.token import TokenFactory
@@ -65,11 +66,13 @@ db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
 token_factory = TokenFactory(web3)
 
-# コントラクトの生成
+# Get membership IbetExchange contract
 membership_exchange_contract = Contract.get_contract(
     contract_name="IbetExchange",
     address=IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS
 )
+
+# Get TokenList contract
 list_contract = Contract.get_contract(
     contract_name="TokenList",
     address=TOKEN_LIST_CONTRACT_ADDRESS
@@ -80,11 +83,12 @@ token_list = TokenList(list_contract, "IbetMembership")
 # Watcher
 class Watcher:
 
-    def __init__(self, contract, filter_name, filter_params):
+    def __init__(self, contract, filter_name: str, filter_params: dict, notification_type: str):
         self.contract = contract
         self.filter_name = filter_name
         self.filter_params = filter_params
         self.from_block = 0
+        self.notification_type = notification_type
 
     @staticmethod
     def _gen_notification_id(entry, option_type=0):
@@ -105,37 +109,51 @@ class Watcher:
     def loop(self):
         start_time = time.time()
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
+
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
 
-            self.filter_params["fromBlock"] = self.from_block
+            # Get synchronized block number
+            from_block_number = self.__get_synchronized_block_number(
+                db_session=db_session,
+                contract_address=self.contract.address,
+                notification_type=self.notification_type
+            ) + 1
 
-            # 最新のブロックナンバーを取得
-            _latest_block = web3.eth.block_number
+            # Get the latest block number
+            latest_block_number = web3.eth.block_number
+            if from_block_number > latest_block_number:
+                LOG.info(f"[{self.__class__.__name__}]: skip processing")
+                return
 
-            # レスポンスタイムアウト抑止
-            # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
-            # toBlock に fromBlock + 999,999 を設定
-            if _latest_block - self.from_block >= 1000000:
-                self.filter_params["toBlock"] = self.from_block + 999999
-                _next_from = self.from_block + 1000000
+            # If the difference between the latest block number and fromBlock is 1,000,000 or more,
+            # set toBlock to fromBlock + 999,999
+            if latest_block_number - from_block_number >= 1000000:
+                to_block_number = from_block_number + 999999
             else:
-                self.filter_params["toBlock"] = _latest_block
-                _next_from = _latest_block + 1
+                to_block_number = latest_block_number
 
+            # Get event logs
             _event = getattr(self.contract.events, self.filter_name)
             entries = _event.getLogs(
-                fromBlock=self.filter_params["fromBlock"],
-                toBlock=self.filter_params["toBlock"]
+                fromBlock=from_block_number,
+                toBlock=to_block_number
             )
+
+            # Register notifications
             if len(entries) > 0:
                 self.watch(
                     db_session=db_session,
                     entries=entries
                 )
+                self.__set_synchronized_block_number(
+                    db_session=db_session,
+                    contract_address=self.contract.address,
+                    notification_type=self.notification_type,
+                    block_number=to_block_number
+                )
                 db_session.commit()
 
-            self.from_block = _next_from
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -143,19 +161,42 @@ class Watcher:
         except Exception as err:  # Exceptionが発生した場合は処理を継続
             LOG.error(err)
         finally:
+            db_session.close()
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
+    @staticmethod
+    def __get_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str):
+        """Get latest synchronized blockNumber"""
+        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == notification_type). \
+            filter(NotificationBlockNumber.contract_address == contract_address).\
+            first()
+        if notification_block_number is None:
+            return -1
+        else:
+            return notification_block_number.latest_block_number
 
-"""
-会員権取引関連（IbetExchange）
-"""
+    @staticmethod
+    def __set_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str, block_number: int):
+        """Set latest synchronized blockNumber"""
+        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == notification_type). \
+            filter(NotificationBlockNumber.contract_address == contract_address). \
+            first()
+        if notification_block_number is None:
+            notification_block_number = NotificationBlockNumber()
+        notification_block_number.notification_type = notification_type
+        notification_block_number.contract_address = contract_address
+        notification_block_number.latest_block_number = block_number
+        db_session.merge(notification_block_number)
 
 
-# イベント：注文
 class WatchMembershipNewOrder(Watcher):
+    """Watch NewOrder event"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "NewOrder", {})
+        super().__init__(membership_exchange_contract, "NewOrder", {}, NotificationType.NEW_ORDER)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -180,7 +221,7 @@ class WatchMembershipNewOrder(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.NEW_ORDER.value
+            notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -189,10 +230,11 @@ class WatchMembershipNewOrder(Watcher):
             db_session.merge(notification)
 
 
-# イベント：注文取消
 class WatchMembershipCancelOrder(Watcher):
+    """Watch CancelOrder event"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "CancelOrder", {})
+        super().__init__(membership_exchange_contract, "CancelOrder", {}, NotificationType.CANCEL_ORDER)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -217,7 +259,7 @@ class WatchMembershipCancelOrder(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.CANCEL_ORDER.value
+            notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -226,10 +268,11 @@ class WatchMembershipCancelOrder(Watcher):
             db_session.merge(notification)
 
 
-# イベント：強制注文取消
 class WatchMembershipForceCancelOrder(Watcher):
+    """Watch ForceCancelOrder event"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "ForceCancelOrder", {})
+        super().__init__(membership_exchange_contract, "ForceCancelOrder", {}, NotificationType.FORCE_CANCEL_ORDER)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -254,7 +297,7 @@ class WatchMembershipForceCancelOrder(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.FORCE_CANCEL_ORDER.value
+            notification.notification_type = self.notification_type
             notification.priority = 2
             notification.address = entry["args"]["accountAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -263,10 +306,11 @@ class WatchMembershipForceCancelOrder(Watcher):
             db_session.merge(notification)
 
 
-# イベント：約定（買）
 class WatchMembershipBuyAgreement(Watcher):
+    """Watch Agree event (BUY)"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "Agree", {})
+        super().__init__(membership_exchange_contract, "Agree", {}, NotificationType.BUY_AGREEMENT)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -291,7 +335,7 @@ class WatchMembershipBuyAgreement(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
-            notification.notification_type = NotificationType.BUY_AGREEMENT.value
+            notification.notification_type = self.notification_type
             notification.priority = 1
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -300,10 +344,11 @@ class WatchMembershipBuyAgreement(Watcher):
             db_session.merge(notification)
 
 
-# イベント：約定（売）
 class WatchMembershipSellAgreement(Watcher):
+    """Watch Agree event (SELL)"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "Agree", {})
+        super().__init__(membership_exchange_contract, "Agree", {}, NotificationType.SELL_AGREEMENT)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -328,7 +373,7 @@ class WatchMembershipSellAgreement(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
-            notification.notification_type = NotificationType.SELL_AGREEMENT.value
+            notification.notification_type = self.notification_type
             notification.priority = 2
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -337,10 +382,11 @@ class WatchMembershipSellAgreement(Watcher):
             db_session.merge(notification)
 
 
-# イベント：決済OK（買）
 class WatchMembershipBuySettlementOK(Watcher):
+    """Watch SettlementOK event (BUY)"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "SettlementOK", {})
+        super().__init__(membership_exchange_contract, "SettlementOK", {}, NotificationType.BUY_SETTLEMENT_OK)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -365,7 +411,7 @@ class WatchMembershipBuySettlementOK(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
-            notification.notification_type = NotificationType.BUY_SETTLEMENT_OK.value
+            notification.notification_type = self.notification_type
             notification.priority = 1
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -374,10 +420,11 @@ class WatchMembershipBuySettlementOK(Watcher):
             db_session.merge(notification)
 
 
-# イベント：決済OK（売）
 class WatchMembershipSellSettlementOK(Watcher):
+    """Watch SettlementOK event (SELL)"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "SettlementOK", {})
+        super().__init__(membership_exchange_contract, "SettlementOK", {}, NotificationType.SELL_SETTLEMENT_OK)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -402,7 +449,7 @@ class WatchMembershipSellSettlementOK(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
-            notification.notification_type = NotificationType.SELL_SETTLEMENT_OK.value
+            notification.notification_type = self.notification_type
             notification.priority = 1
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -411,10 +458,11 @@ class WatchMembershipSellSettlementOK(Watcher):
             db_session.merge(notification)
 
 
-# イベント：決済NG（買）
 class WatchMembershipBuySettlementNG(Watcher):
+    """Watch SettlementNG event (BUY)"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "SettlementNG", {})
+        super().__init__(membership_exchange_contract, "SettlementNG", {}, NotificationType.BUY_SETTLEMENT_NG)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -439,7 +487,7 @@ class WatchMembershipBuySettlementNG(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 1)
-            notification.notification_type = NotificationType.BUY_SETTLEMENT_NG.value
+            notification.notification_type = self.notification_type
             notification.priority = 2
             notification.address = entry["args"]["buyAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -448,10 +496,11 @@ class WatchMembershipBuySettlementNG(Watcher):
             db_session.merge(notification)
 
 
-# イベント：決済NG（売）
 class WatchMembershipSellSettlementNG(Watcher):
+    """Watch SettlementNG event (SELL)"""
+
     def __init__(self):
-        super().__init__(membership_exchange_contract, "SettlementNG", {})
+        super().__init__(membership_exchange_contract, "SettlementNG", {}, NotificationType.SELL_SETTLEMENT_NG)
 
     def watch(self, db_session: Session, entries):
         company_list = CompanyList.get()
@@ -476,7 +525,7 @@ class WatchMembershipSellSettlementNG(Watcher):
 
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry, 2)
-            notification.notification_type = NotificationType.SELL_SETTLEMENT_NG.value
+            notification.notification_type = self.notification_type
             notification.priority = 2
             notification.address = entry["args"]["sellAddress"]
             notification.block_timestamp = self._gen_block_timestamp(entry)

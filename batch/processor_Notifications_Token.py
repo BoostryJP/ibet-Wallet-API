@@ -44,6 +44,7 @@ from app.errors import ServiceUnavailable
 from app.model.db import (
     Notification,
     NotificationType,
+    NotificationBlockNumber,
     Listing
 )
 from app.utils.web3_utils import Web3Wrapper
@@ -62,7 +63,7 @@ web3 = Web3Wrapper()
 
 db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
-# コントラクトの生成
+# Get TokenList contract
 list_contract = Contract.get_contract(
     contract_name="TokenList",
     address=TOKEN_LIST_CONTRACT_ADDRESS
@@ -73,10 +74,11 @@ token_list = TokenList(list_contract)
 # Watcher
 class Watcher:
 
-    def __init__(self, filter_name, filter_params):
+    def __init__(self, filter_name: str, filter_params: dict, notification_type: str):
         self.filter_name = filter_name
         self.filter_params = filter_params
         self.from_block = 0
+        self.notification_type = notification_type
 
     @staticmethod
     def _gen_notification_id(entry, option_type=0):
@@ -94,7 +96,7 @@ class Watcher:
     @staticmethod
     def _get_token_all_list(db_session: Session):
         _tokens = []
-        listed_tokens = db_session.query(Listing).all()
+        listed_tokens: list[Listing] = db_session.query(Listing).all()
         for listed_token in listed_tokens:
             if not token_list.is_registered(listed_token.token_address):
                 continue
@@ -112,32 +114,34 @@ class Watcher:
     def loop(self):
         start_time = time.time()
         db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
+
         try:
             LOG.info("[{}]: retrieving from {} block".format(self.__class__.__name__, self.from_block))
-
-            self.filter_params["fromBlock"] = self.from_block
-
-            # 最新のブロックナンバーを取得
-            _latest_block = web3.eth.block_number
-            if self.from_block > _latest_block:
-                LOG.info(f"[{self.__class__.__name__}]: skip processing")
-                return
-
-            # リスティング済みトークンを取得
+            # Get listed tokens
             _token_list = self._get_token_all_list(db_session)
 
-            # レスポンスタイムアウト抑止
-            # 最新のブロックナンバーと fromBlock の差が 1,000,000 以上の場合は
-            # toBlock に fromBlock + 999,999 を設定
-            if _latest_block - self.from_block >= 1000000:
-                self.filter_params["toBlock"] = self.from_block + 999999
-                _next_from = self.from_block + 1000000
-            else:
-                self.filter_params["toBlock"] = _latest_block
-                _next_from = _latest_block + 1
-
-            # イベント処理
             for _token in _token_list:
+                # Get synchronized block number
+                from_block_number = self.__get_synchronized_block_number(
+                    db_session=db_session,
+                    contract_address=_token["token"].token_address,
+                    notification_type=self.notification_type
+                ) + 1
+
+                # Get the latest block number
+                latest_block_number = web3.eth.block_number
+                if from_block_number > latest_block_number:
+                    LOG.info(f"[{self.__class__.__name__}]: skip processing")
+                    return
+
+                # If the difference between the latest block number and fromBlock is 1,000,000 or more,
+                # set toBlock to fromBlock + 999,999
+                if latest_block_number - from_block_number >= 1000000:
+                    to_block_number = from_block_number + 999999
+                else:
+                    to_block_number = latest_block_number
+
+                # Get event logs
                 try:
                     token_contract = Contract.get_contract(
                         contract_name=_token["token_type"],
@@ -145,14 +149,16 @@ class Watcher:
                     )
                     _event = getattr(token_contract.events, self.filter_name)
                     entries = _event.getLogs(
-                        fromBlock=self.filter_params["fromBlock"],
-                        toBlock=self.filter_params["toBlock"]
+                        fromBlock=from_block_number,
+                        toBlock=to_block_number
                     )
                 except FileNotFoundError:
                     continue
-                except Exception as err:  # Exception が発生した場合は処理を継続
+                except Exception as err:  # If an Exception occurs, processing continues
                     LOG.error(err)
                     continue
+
+                # Register notifications
                 if len(entries) > 0:
                     self.db_merge(
                         db_session=db_session,
@@ -160,9 +166,14 @@ class Watcher:
                         token_type=_token["token_type"],
                         log_entries=entries
                     )
+                    self.__set_synchronized_block_number(
+                        db_session=db_session,
+                        contract_address=_token["token"].token_address,
+                        notification_type=self.notification_type,
+                        block_number=to_block_number
+                    )
                     db_session.commit()
 
-            self.from_block = _next_from
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
@@ -172,8 +183,33 @@ class Watcher:
             elapsed_time = time.time() - start_time
             LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
+    @staticmethod
+    def __get_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str):
+        """Get latest synchronized blockNumber"""
+        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == notification_type). \
+            filter(NotificationBlockNumber.contract_address == contract_address).\
+            first()
+        if notification_block_number is None:
+            return -1
+        else:
+            return notification_block_number.latest_block_number
 
-# イベント：トークン移転（受領時）
+    @staticmethod
+    def __set_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str, block_number: int):
+        """Set latest synchronized blockNumber"""
+        notification_block_number: NotificationBlockNumber | None = db_session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == notification_type). \
+            filter(NotificationBlockNumber.contract_address == contract_address). \
+            first()
+        if notification_block_number is None:
+            notification_block_number = NotificationBlockNumber()
+        notification_block_number.notification_type = notification_type
+        notification_block_number.contract_address = contract_address
+        notification_block_number.latest_block_number = block_number
+        db_session.merge(notification_block_number)
+
+
 class WatchTransfer(Watcher):
     """Watch Token Receive Event
 
@@ -181,7 +217,7 @@ class WatchTransfer(Watcher):
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
     def __init__(self):
-        super().__init__("Transfer", {})
+        super().__init__("Transfer", {}, NotificationType.TRANSFER)
 
     def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
@@ -212,7 +248,7 @@ class WatchTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.TRANSFER.value
+            notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -221,7 +257,6 @@ class WatchTransfer(Watcher):
             db_session.merge(notification)
 
 
-# イベント：トークン移転申請
 class WatchApplyForTransfer(Watcher):
     """Watch Token ApplyForTransfer Event
 
@@ -229,7 +264,7 @@ class WatchApplyForTransfer(Watcher):
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
     def __init__(self):
-        super().__init__("ApplyForTransfer", {})
+        super().__init__("ApplyForTransfer", {}, NotificationType.APPLY_FOR_TRANSFER)
 
     def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
@@ -259,7 +294,7 @@ class WatchApplyForTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.APPLY_FOR_TRANSFER.value
+            notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["to"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -268,7 +303,6 @@ class WatchApplyForTransfer(Watcher):
             db_session.merge(notification)
 
 
-# イベント：トークン移転承諾
 class WatchApproveTransfer(Watcher):
     """Watch Token ApproveTransfer Event
 
@@ -276,7 +310,7 @@ class WatchApproveTransfer(Watcher):
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
     def __init__(self):
-        super().__init__("ApproveTransfer", {})
+        super().__init__("ApproveTransfer", {}, NotificationType.APPROVE_TRANSFER)
 
     def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
@@ -306,7 +340,7 @@ class WatchApproveTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.APPROVE_TRANSFER.value
+            notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["from"]
             notification.block_timestamp = self._gen_block_timestamp(entry)
@@ -315,7 +349,6 @@ class WatchApproveTransfer(Watcher):
             db_session.merge(notification)
 
 
-# イベント：トークン移転申請取消
 class WatchCancelTransfer(Watcher):
     """Watch Token CancelTransfer Event
 
@@ -323,7 +356,7 @@ class WatchCancelTransfer(Watcher):
     - Register a notification only if the account address (private key address) is the source of the transfer.
     """
     def __init__(self):
-        super().__init__("CancelTransfer", {})
+        super().__init__("CancelTransfer", {}, NotificationType.CANCEL_TRANSFER)
 
     def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
         company_list = CompanyList.get()
@@ -353,7 +386,7 @@ class WatchCancelTransfer(Watcher):
             }
             notification = Notification()
             notification.notification_id = self._gen_notification_id(entry)
-            notification.notification_type = NotificationType.CANCEL_TRANSFER.value
+            notification.notification_type = self.notification_type
             notification.priority = 0
             notification.address = entry["args"]["from"]
             notification.block_timestamp = self._gen_block_timestamp(entry)

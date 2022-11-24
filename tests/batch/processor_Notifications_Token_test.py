@@ -30,6 +30,7 @@ from app import config
 from app.model.db import (
     Notification,
     NotificationType,
+    NotificationBlockNumber,
     Listing
 )
 from tests.account_config import eth_account
@@ -168,7 +169,7 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
-        block = web3.eth.get_block(block_number)
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
@@ -187,6 +188,12 @@ class TestWatchTransfer:
             "exchange_address": "",
             "token_type": "IbetCoupon"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -206,8 +213,10 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
@@ -226,6 +235,7 @@ class TestWatchTransfer:
             "exchange_address": "",
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
@@ -245,6 +255,12 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -252,7 +268,7 @@ class TestWatchTransfer:
 
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
-        token = prepare_coupon_token(self.issuer, exchange_contract, token_list_contract, session)
+        prepare_coupon_token(self.issuer, exchange_contract, token_list_contract, session)
 
         # Not Transfer
         # Run target process
@@ -261,6 +277,9 @@ class TestWatchTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
     # <Normal_4>
     # Transfer from DEX
@@ -292,6 +311,7 @@ class TestWatchTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).\
             order_by(Notification.created).\
             all()
@@ -317,6 +337,12 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     ###########################################################################
     # Error Case
     ###########################################################################
@@ -337,6 +363,9 @@ class TestWatchTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchApplyForTransfer:
@@ -371,6 +400,7 @@ class TestWatchApplyForTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
@@ -391,6 +421,12 @@ class TestWatchApplyForTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPLY_FOR_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -418,8 +454,10 @@ class TestWatchApplyForTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
@@ -440,6 +478,7 @@ class TestWatchApplyForTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
@@ -460,6 +499,12 @@ class TestWatchApplyForTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPLY_FOR_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
@@ -485,6 +530,9 @@ class TestWatchApplyForTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
     ###########################################################################
     # Error Case
@@ -517,6 +565,9 @@ class TestWatchApplyForTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchApproveTransfer:
@@ -552,6 +603,7 @@ class TestWatchApproveTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
@@ -571,6 +623,12 @@ class TestWatchApproveTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPROVE_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -600,8 +658,10 @@ class TestWatchApproveTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
@@ -621,6 +681,7 @@ class TestWatchApproveTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
@@ -640,6 +701,12 @@ class TestWatchApproveTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPROVE_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
@@ -665,6 +732,9 @@ class TestWatchApproveTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
     ###########################################################################
     # Error Case
@@ -698,6 +768,9 @@ class TestWatchApproveTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCancelTransfer:
@@ -733,6 +806,7 @@ class TestWatchCancelTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
@@ -752,6 +826,12 @@ class TestWatchCancelTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -781,8 +861,10 @@ class TestWatchCancelTransfer:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
@@ -802,6 +884,7 @@ class TestWatchCancelTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
@@ -821,6 +904,12 @@ class TestWatchCancelTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_3>
     # No event logs
@@ -846,6 +935,9 @@ class TestWatchCancelTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
     ###########################################################################
     # Error Case
@@ -879,3 +971,6 @@ class TestWatchCancelTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
