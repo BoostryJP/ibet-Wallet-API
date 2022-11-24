@@ -16,7 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from dataclasses import dataclass
 from enum import Enum
+from fastapi import Query
 from typing import Optional
 from uuid import UUID
 from pydantic import (
@@ -49,6 +51,16 @@ class CreateTokenHoldersCollectionRequest(BaseModel):
                                       "This must be Version4 UUID.",
                           example="cfd83622-34dc-4efe-a68b-2cc275d3d824")
     block_number: int = Field(description="block number")
+
+
+@dataclass
+class ListAllTokenHoldersQuery:
+    exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
+
+
+@dataclass
+class RetrieveTokenHoldersCountQuery:
+    exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
 
 
 ############################

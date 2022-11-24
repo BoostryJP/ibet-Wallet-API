@@ -100,6 +100,8 @@ from .token_coupon import (
 from .token import (
     # Request
     CreateTokenHoldersCollectionRequest,
+    RetrieveTokenHoldersCountQuery,
+    ListAllTokenHoldersQuery,
     # Response
     TokenStatusResponse,
     TokenHoldersResponse,

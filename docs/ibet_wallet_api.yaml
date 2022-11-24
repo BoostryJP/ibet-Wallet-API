@@ -2041,6 +2041,15 @@ paths:
             description: token address
           name: token_address
           in: path
+        - description: exclude owner
+          required: false
+          schema:
+            title: Exclude Owner
+            type: boolean
+            description: exclude owner
+            default: false
+          name: exclude_owner
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -2079,6 +2088,15 @@ paths:
             description: token address
           name: token_address
           in: path
+        - description: exclude owner
+          required: false
+          schema:
+            title: Exclude Owner
+            type: boolean
+            description: exclude owner
+            default: false
+          name: exclude_owner
+          in: query
       responses:
         '200':
           description: Successful Response
