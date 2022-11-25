@@ -182,7 +182,7 @@ def register_admin_token(
         session.merge(token_obj.to_model())
 
     balance, pending_transfer, exchange_balance, exchange_commitment = (
-        __get_account_balance_all(
+        get_account_balance_all(
             token_template=token_type,
             token_address=contract_address,
             account_address=owner_address
@@ -345,7 +345,7 @@ def available_token_template():
     return available_token_template_list
 
 
-def __get_account_balance_all(token_template: str, token_address: str, account_address: str) -> tuple[int, int, int, int]:
+def get_account_balance_all(token_template: str, token_address: str, account_address: str) -> tuple[int, int, int, int]:
     """Get balance"""
     token_contract = Contract.get_contract(
         contract_name=token_template,
