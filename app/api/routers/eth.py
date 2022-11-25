@@ -27,6 +27,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 from rlp import decode
 from hexbytes import HexBytes
+from web3.types import TxReceipt
 
 from app import log
 from app.database import db_session
@@ -413,17 +414,17 @@ def wait_for_transaction_receipt(
     Endpoint: /Eth/WaitForTransactionReceipt
     """
     transaction_hash = query.transaction_hash
-    timeout = query.transaction_hash
+    timeout = query.timeout
 
     result: dict[str, Any] = {}
-    # transaction receipt の監視
+    # Watch transaction receipt for given timeout duration.
     try:
-        tx = web3.eth.wait_for_transaction_receipt(
+        tx: TxReceipt = web3.eth.wait_for_transaction_receipt(
             transaction_hash=transaction_hash,
             timeout=timeout
         )
         if tx["status"] == 0:
-            # inspect reason of transaction fail
+            # Inspect reason of transaction fail.
             err_msg = inspect_tx_failure(transaction_hash)
             code, message = error_code_msg(err_msg)
             result["status"] = 0
@@ -431,10 +432,7 @@ def wait_for_transaction_receipt(
             result["error_msg"] = message
         else:
             result["status"] = 1
-    except Exception:
-        raise DataNotExistsError
-
-    if tx is None:
+    except TimeExhausted:
         raise DataNotExistsError
 
     return {
