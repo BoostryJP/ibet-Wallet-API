@@ -46,7 +46,8 @@ from app.model.db import (
     IDXBondToken,
     IDXShareToken,
     IDXMembershipToken,
-    IDXCouponToken
+    IDXCouponToken,
+    IDXPosition
 )
 from app.model.schema import (
     SuccessResponse,
@@ -169,16 +170,32 @@ def register_admin_token(
     # Fetch token detail data to store cache
     if token_type == "IbetCoupon":
         token_obj = CouponToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        session.merge(token_obj.to_model())
     elif token_type == "IbetMembership":
         token_obj = MembershipToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        session.merge(token_obj.to_model())
     elif token_type == "IbetStraightBond":
         token_obj = BondToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        session.merge(token_obj.to_model())
     elif token_type == "IbetShare":
         token_obj = ShareToken.get(session, contract_address)
-        session.add(token_obj.to_model())
+        session.merge(token_obj.to_model())
+
+    balance, pending_transfer, exchange_balance, exchange_commitment = (
+        get_account_balance_all(
+            token_template=token_type,
+            token_address=contract_address,
+            account_address=owner_address
+        )
+    )
+    position = IDXPosition()
+    position.token_address = contract_address
+    position.account_address = owner_address
+    position.balance = balance or 0
+    position.pending_transfer = pending_transfer or 0
+    position.exchange_balance = exchange_balance or 0
+    position.exchange_commitment = exchange_commitment or 0
+    session.merge(position)
     session.commit()
 
     return SuccessResponse.use()
@@ -326,3 +343,50 @@ def available_token_template():
     if config.COUPON_TOKEN_ENABLED:
         available_token_template_list.append("IbetCoupon")
     return available_token_template_list
+
+
+def get_account_balance_all(token_template: str, token_address: str, account_address: str) -> tuple[int, int, int, int]:
+    """Get balance"""
+    token_contract = Contract.get_contract(
+        contract_name=token_template,
+        address=token_address
+    )
+    balance = Contract.call_function(
+        contract=token_contract,
+        function_name="balanceOf",
+        args=(account_address,),
+        default_returns=0
+    )
+    pending_transfer = 0
+    if token_template in ["IbetStraightBond", "IbetShare"]:
+        # if security token, amount of pending transfer is needed
+        pending_transfer = Contract.call_function(
+            contract=token_contract,
+            function_name="pendingTransfer",
+            args=(account_address,),
+            default_returns=0
+        )
+    exchange_balance = 0
+    exchange_commitment = 0
+    tradable_exchange_address = Contract.call_function(
+        contract=token_contract,
+        function_name="tradableExchange",
+        args=(),
+        default_returns=config.ZERO_ADDRESS
+    )
+    if tradable_exchange_address != config.ZERO_ADDRESS:
+        exchange_contract = Contract.get_contract(
+            "IbetExchangeInterface", tradable_exchange_address)
+        exchange_balance = Contract.call_function(
+            contract=exchange_contract,
+            function_name="balanceOf",
+            args=(account_address, token_contract.address,),
+            default_returns=0
+        )
+        exchange_commitment = Contract.call_function(
+            contract=exchange_contract,
+            function_name="commitmentOf",
+            args=(account_address, token_contract.address,),
+            default_returns=0
+        )
+    return balance, pending_transfer, exchange_balance, exchange_commitment
