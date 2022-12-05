@@ -52,7 +52,7 @@ class IDXBlockData(Base):
     # Other data
     hash = Column(String(66), nullable=False, index=True)
     size = Column(Integer)
-    transactions = Column(ARRAY(String))
+    transactions = Column(ARRAY(String(66)))
 
     FIELDS = {
         "number": int,
