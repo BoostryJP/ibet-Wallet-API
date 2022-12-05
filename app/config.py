@@ -141,7 +141,6 @@ TOKEN_FETCH_INTERVAL = int(os.environ.get("TOKEN_FETCH_INTERVAL")) \
 TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC = int(os.environ.get("TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC")) \
     if os.environ.get("TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC") else 100
 
-
 # テスト用設定：Locust
 BASIC_AUTH_USER = os.environ.get('BASIC_AUTH_USER')
 BASIC_AUTH_PASS = os.environ.get('BASIC_AUTH_PASS')
@@ -151,3 +150,6 @@ TOKEN_NOTIFICATION_ENABLED = False if os.environ.get('TOKEN_NOTIFICATION_ENABLED
 
 # Exchange関連通知
 EXCHANGE_NOTIFICATION_ENABLED = False if os.environ.get("EXCHANGE_NOTIFICATION_ENABLED") == "0" else True
+
+# Blockchain Explorer
+BC_EXPLORER_ENABLED = True if os.environ.get("BC_EXPLORER_ENABLED") == "1" else False

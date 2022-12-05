@@ -39,6 +39,10 @@ from .idx_agreement import (
     IDXAgreement,
     AgreementStatus
 )
+from .idx_block_data import (
+    IDXBlockData,
+    IDXBlockDataBlockNumber
+)
 from .idx_consume_coupon import IDXConsumeCoupon
 from .idx_position import (
     IDXPosition,
@@ -59,6 +63,7 @@ from .idx_token_list import (
     IDXTokenListItem,
     IDXTokenListBlockNumber
 )
+from .idx_tx_data import IDXTxData
 from .tokenholders import (
     TokenHoldersList,
     TokenHolderBatchStatus,
