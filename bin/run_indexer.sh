@@ -66,14 +66,17 @@ if [[ $COUPON_TOKEN_ENABLED = 1 ]]; then
   python batch/indexer_Position_Coupon.py &
 fi
 
-if [ -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" -o \
-  -n "$IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS" ]; then
+if [ -n "$IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS" ] || [ -n "$IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS" ]; then
   python batch/indexer_DEX.py &
 fi
 
 if [ -z $TOKEN_CACHE ] || [ $TOKEN_CACHE -ne 0 ]; then
   python batch/indexer_Token_Detail.py &
   python batch/indexer_Token_Detail_ShortTerm.py &
+fi
+
+if [[ $BC_EXPLORER_ENABLED = 1 ]]; then
+  python batch/indexer_Block_Tx_Data.py &
 fi
 
 tail -f /dev/null
