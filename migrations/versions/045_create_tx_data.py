@@ -34,7 +34,7 @@ table = Table(
     Column("transaction_index", Integer),
     Column("from_address", String(42), index=True),
     Column("to_address", String(42), index=True),
-    Column("input", String),
+    Column("input", Text),
     Column("gas", Integer),
     Column("gas_price", BigInteger),
     Column("value", BigInteger),

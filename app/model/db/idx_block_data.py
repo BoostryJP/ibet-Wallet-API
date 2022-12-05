@@ -21,7 +21,8 @@ from sqlalchemy import (
     String,
     BigInteger,
     Integer,
-    ARRAY
+    ARRAY,
+    Text
 )
 
 from app.model.db import Base
@@ -44,7 +45,7 @@ class IDXBlockData(Base):
     gas_limit = Column(Integer)
     gas_used = Column(Integer)
     timestamp = Column(Integer, nullable=False, index=True)
-    proof_of_authority_data = Column(String)
+    proof_of_authority_data = Column(Text)
     mix_hash = Column(String(66))
     nonce = Column(String(18))
 

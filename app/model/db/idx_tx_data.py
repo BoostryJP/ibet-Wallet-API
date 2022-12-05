@@ -20,7 +20,8 @@ from sqlalchemy import (
     Column,
     String,
     BigInteger,
-    Integer
+    Integer,
+    Text
 )
 
 from app.model.db import Base
@@ -36,7 +37,7 @@ class IDXTxData(Base):
     transaction_index = Column(Integer)
     from_address = Column(String(42), index=True)
     to_address = Column(String(42), index=True)
-    input = Column(String)
+    input = Column(Text)
     gas = Column(Integer)
     gas_price = Column(BigInteger)
     value = Column(BigInteger)

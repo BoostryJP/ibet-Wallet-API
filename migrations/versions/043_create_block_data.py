@@ -40,7 +40,7 @@ table = Table(
     Column("gas_limit", Integer),
     Column("gas_used", Integer),
     Column("timestamp", Integer, nullable=False, index=True),
-    Column("proof_of_authority_data", String),
+    Column("proof_of_authority_data", Text),
     Column("mix_hash", String(66)),
     Column("nonce", String(18)),
     Column("hash", String(66), nullable=False, index=True),
