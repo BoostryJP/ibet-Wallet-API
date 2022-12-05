@@ -21,8 +21,8 @@ from sqlalchemy import (
     String,
     BigInteger,
     Integer,
-    ARRAY,
-    Text
+    Text,
+    JSON
 )
 
 from app.model.db import Base
@@ -52,7 +52,7 @@ class IDXBlockData(Base):
     # Other data
     hash = Column(String(66), nullable=False, index=True)
     size = Column(Integer)
-    transactions = Column(ARRAY(String(66)))
+    transactions = Column(JSON)
 
     FIELDS = {
         "number": int,
@@ -82,7 +82,7 @@ class IDXBlockDataBlockNumber(Base):
     __tablename__ = "idx_block_data_block_number"
 
     # Chain id
-    chain_id = Column(String, primary_key=True)
+    chain_id = Column(String(10), primary_key=True)
     # Latest blockNumber
     latest_block_number = Column(BigInteger)
 

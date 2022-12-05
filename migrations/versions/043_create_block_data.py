@@ -45,7 +45,7 @@ table = Table(
     Column("nonce", String(18)),
     Column("hash", String(66), nullable=False, index=True),
     Column("size", Integer),
-    Column("transactions", ARRAY(String(66))),
+    Column("transactions", JSON),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )

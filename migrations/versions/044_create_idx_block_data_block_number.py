@@ -28,7 +28,7 @@ meta = MetaData()
 
 table = Table(
     "idx_block_data_block_number", meta,
-    Column("chain_id", String, primary_key=True),
+    Column("chain_id", String(10), primary_key=True),
     Column("latest_block_number", BigInteger),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
