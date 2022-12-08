@@ -216,8 +216,8 @@ def list_tx_data(
     session: Session = Depends(db_session)
 ):
     """
-
-    The maximum number of search results is 1000.
+    Returns a list of transactions by various search parameters.
+    The maximum number of search results is 10000.
     """
     if config.BC_EXPLORER_ENABLED is False:
         raise NotSupportedError(method="GET", url=req.url.path)
