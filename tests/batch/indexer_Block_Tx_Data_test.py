@@ -223,7 +223,7 @@ class TestProcessor:
             first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = session.query(IDXBlockData).all()
+        block_data: list[IDXBlockData] = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
         assert len(block_data) == 2
 
         assert block_data[0].number == before_block_number + 1
