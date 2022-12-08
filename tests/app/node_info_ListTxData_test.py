@@ -33,8 +33,8 @@ class TestListTxData:
     A_tx_1 = {
         "block_hash": "0x94670853c83f3c444d8515cbb9902c9e88b3619c27b9577714baaa07d35874ff",
         "block_number": 6791869,
-        "from_address": "0x30406cd5f18dd87367b782b9d63b4d79f7f5ebb8",
-        "to_address": "0x1fbb27d6682ab47654f0150457b64f9a96c926d4",
+        "from_address": "0x30406Cd5f18DD87367B782b9D63b4d79F7f5eBb8",
+        "to_address": "0x1FBb27d6682aB47654f0150457B64F9A96C926d4",
         "gas": 6000000,
         "gas_price": 0,
         "hash": "0x560f6761de57832d2a1adcd10434f85762c9f833b45717b1cae778f8a23fc6cb",
@@ -46,8 +46,8 @@ class TestListTxData:
     A_tx_2 = {
         "block_hash": "0x077e42cfe8bc9577b85a6347136c2d38a2b165e7b31bb340c33d302565b900b6",
         "block_number": 6791871,
-        "from_address": "0x30406cd5f18dd87367b782b9d63b4d79f7f5ebb8",
-        "to_address": "0x1fbb27d6682ab47654f0150457b64f9a96c926d4",
+        "from_address": "0x30406Cd5f18DD87367B782b9D63b4d79F7f5eBb8",
+        "to_address": "0x1FBb27d6682aB47654f0150457B64F9A96C926d4",
         "gas": 6000000,
         "gas_price": 0,
         "hash": "0x4ad0b5e395f8c7cc843ba9ffc8b86e6a8b0c71cb724c68b5842839954410892c",
@@ -59,8 +59,8 @@ class TestListTxData:
     B_tx_1 = {
         "block_hash": "0x6698ebc4866223855dbea153eec7a9455682fd6d2f8451746102afb320412a6b",
         "block_number": 10407084,
-        "from_address": "0x8456ac4fec4869a16ad5c3584306181af6410682",
-        "to_address": "0xeceb9fdbd2cf677be5fa8b1ceeb53e53d582f0eb",
+        "from_address": "0x8456ac4FEc4869A16ad5C3584306181Af6410682",
+        "to_address": "0xECeB9FdBd2CF677Be5fA8B1ceEb53e53D582f0Eb",
         "gas": 6000000,
         "gas_price": 0,
         "hash": "0x403f9cea4db07aecf71a440c45ae415569cb218bb1a7f4d3a2d83004e29d1644",
@@ -292,9 +292,9 @@ class TestListTxData:
             'description': 'method: GET, url: /NodeInfo/TxData'
         }
 
-    # Error_2
+    # Error_2_1
     # Invalid Parameter
-    def test_error_2(self, client: TestClient, session: Session):
+    def test_error_2_1(self, client: TestClient, session: Session):
         config.BC_EXPLORER_ENABLED = True
 
         # Request target API
@@ -329,6 +329,36 @@ class TestListTxData:
                     'type': 'value_error.number.not_ge',
                     'ctx': {'limit_value': 0}
                 }
+            ]
+        }
+
+    # Error_2_2
+    # Invalid Parameter
+    def test_error_2_2(self, client: TestClient, session: Session):
+        config.BC_EXPLORER_ENABLED = True
+
+        # Request target API
+        params = {
+            "from_address": "abcd",
+            "to_address": "abcd"
+        }
+        resp = client.get(self.apiurl, params=params)
+
+        # Assertion
+        assert resp.status_code == 400
+        assert resp.json()["meta"] == {
+            'code': 88,
+            'message': 'Invalid Parameter',
+            'description': [
+                {
+                    'loc': ['from_address'],
+                    'msg': 'from_address is not a valid address',
+                    'type': 'value_error'
+                },
+                {
+                    'loc': ['to_address'],
+                    'msg': 'to_address is not a valid address',
+                    'type': 'value_error'}
             ]
         }
 

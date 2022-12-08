@@ -28,7 +28,7 @@ meta = MetaData()
 
 table = Table(
     "block_data", meta,
-    Column("number", BigInteger, primary_key=True),
+    Column("number", BigInteger, primary_key=True, autoincrement=False),
     Column("parent_hash", String(66), nullable=False),
     Column("sha3_uncles", String(66)),
     Column("miner", String(42)),

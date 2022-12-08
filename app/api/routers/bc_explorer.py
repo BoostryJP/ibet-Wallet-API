@@ -235,9 +235,9 @@ def list_tx_data(
     if block_number is not None:
         query = query.filter(IDXTxData.block_number == block_number)
     if from_address is not None:
-        query = query.filter(IDXTxData.from_address == from_address)
+        query = query.filter(IDXTxData.from_address == to_checksum_address(from_address))
     if to_address is not None:
-        query = query.filter(IDXTxData.to_address == to_address)
+        query = query.filter(IDXTxData.to_address == to_checksum_address(to_address))
 
     count = query.count()
 
@@ -316,7 +316,7 @@ def get_tx_data(
     contract_parameters: dict | None = None
     token_contract = (
         session.query(IDXTokenListItem).
-        filter(IDXTokenListItem.token_address == to_checksum_address(tx_data.to_address)).
+        filter(IDXTokenListItem.token_address == tx_data.to_address).
         first()
     )
     if token_contract is not None:

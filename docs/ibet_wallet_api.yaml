@@ -333,7 +333,9 @@ paths:
       tags:
         - NodeInfo
       summary: '[ibet Blockchain Explorer] List tx data'
-      description: The maximum number of search results is 1000.
+      description: |-
+        Returns a list of transactions by various search parameters.
+        The maximum number of search results is 10000.
       operationId: ListTxData
       parameters:
         - description: start position
@@ -7349,7 +7351,6 @@ components:
         - block_number
         - transaction_index
         - from_address
-        - to_address
       type: object
       properties:
         hash:
@@ -7381,7 +7382,6 @@ components:
         - block_number
         - transaction_index
         - from_address
-        - to_address
         - gas
         - gas_price
         - value

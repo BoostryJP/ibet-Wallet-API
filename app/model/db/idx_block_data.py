@@ -33,7 +33,7 @@ class IDXBlockData(Base):
     __tablename__ = "block_data"
 
     # Header data
-    number = Column(BigInteger, primary_key=True)
+    number = Column(BigInteger, primary_key=True, autoincrement=False)
     parent_hash = Column(String(66), nullable=False)
     sha3_uncles = Column(String(66))
     miner = Column(String(42))

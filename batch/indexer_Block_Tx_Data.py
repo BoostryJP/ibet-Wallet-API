@@ -21,6 +21,7 @@ import sys
 import time
 from typing import Sequence
 
+from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -102,8 +103,8 @@ class Processor:
                     tx_model.block_hash = transaction.get("blockHash").hex()
                     tx_model.block_number = transaction.get("blockNumber")
                     tx_model.transaction_index = transaction.get("transactionIndex")
-                    tx_model.from_address = transaction.get("from")
-                    tx_model.to_address = transaction.get("to")
+                    tx_model.from_address = to_checksum_address(transaction.get("from"))
+                    tx_model.to_address = to_checksum_address(transaction.get("to")) if transaction.get("to") else None
                     tx_model.input = transaction.get("input")
                     tx_model.gas = transaction.get("gas")
                     tx_model.gas_price = transaction.get("gasPrice")

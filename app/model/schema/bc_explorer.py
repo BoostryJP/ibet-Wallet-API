@@ -23,9 +23,10 @@ from pydantic import (
     BaseModel,
     Field,
     NonNegativeInt,
-    PositiveInt
+    validator
 )
 from pydantic.dataclasses import dataclass
+from web3 import Web3
 
 from app.model.schema.base import ResultSet
 
@@ -69,7 +70,7 @@ class TxData(BaseModel):
     block_number: NonNegativeInt
     transaction_index: NonNegativeInt
     from_address: str
-    to_address: str
+    to_address: Optional[str]
 
 class TxDataDetail(BaseModel):
     hash: str = Field(description="Transaction hash")
@@ -77,7 +78,7 @@ class TxDataDetail(BaseModel):
     block_number: NonNegativeInt
     transaction_index: NonNegativeInt
     from_address: str
-    to_address: str
+    to_address: Optional[str]
     contract_name: Optional[str]
     contract_function: Optional[str]
     contract_parameters: Optional[dict]
@@ -104,6 +105,20 @@ class ListTxDataQuery:
     block_number: Optional[NonNegativeInt] = Query(default=None, description="block number")
     from_address: Optional[str] = Query(default=None, description="tx from")
     to_address: Optional[str] = Query(default=None, description="tx to")
+
+    @validator("from_address")
+    def from_address_is_valid_address(cls, v):
+        if v is not None:
+            if not Web3.isAddress(v):
+                raise ValueError("from_address is not a valid address")
+        return v
+
+    @validator("to_address")
+    def to_address_is_valid_address(cls, v):
+        if v is not None:
+            if not Web3.isAddress(v):
+                raise ValueError("to_address is not a valid address")
+        return v
 
 ############################
 # RESPONSE
