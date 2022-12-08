@@ -37,6 +37,16 @@ from .node_info import (
     GetNodeInfoResponse,
     GetBlockSyncStatusResponse
 )
+from .bc_explorer import (
+    # Request
+    ListBlockDataQuery,
+    ListTxDataQuery,
+    # Response
+    BlockDataResponse,
+    BlockDataListResponse,
+    TxDataResponse,
+    TxDataListResponse
+)
 from .contract_abi import (
     ABI
 )

@@ -21,6 +21,7 @@ import sys
 import time
 from typing import Sequence
 
+from eth_utils import to_checksum_address
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -81,7 +82,7 @@ class Processor:
                 block_model.miner = block_data.get("miner")
                 block_model.state_root = block_data.get("stateRoot").hex()
                 block_model.transactions_root = block_data.get("transactionsRoot").hex()
-                block_model.receipts_root = block_data.get("receiptRoot").hex() if block_data.get("receiptRoot") else None
+                block_model.receipts_root = block_data.get("receiptsRoot").hex()
                 block_model.logs_bloom = block_data.get("logsBloom").hex()
                 block_model.difficulty = block_data.get("difficulty")
                 block_model.gas_limit = block_data.get("gasLimit")
@@ -102,8 +103,8 @@ class Processor:
                     tx_model.block_hash = transaction.get("blockHash").hex()
                     tx_model.block_number = transaction.get("blockNumber")
                     tx_model.transaction_index = transaction.get("transactionIndex")
-                    tx_model.from_address = transaction.get("from")
-                    tx_model.to_address = transaction.get("to")
+                    tx_model.from_address = to_checksum_address(transaction.get("from"))
+                    tx_model.to_address = to_checksum_address(transaction.get("to")) if transaction.get("to") else None
                     tx_model.input = transaction.get("input")
                     tx_model.gas = transaction.get("gas")
                     tx_model.gas_price = transaction.get("gasPrice")
