@@ -34,6 +34,7 @@ from app import log
 from app.api.routers import (
     admin as routers_admin,
     node_info as routers_node_info,
+    bc_explorer as routers_bc_explorer,
     contract_abi as routers_contract_abi,
     company_info as routers_company_info,
     user_info as routers_user_info,
@@ -142,6 +143,7 @@ def root():
 
 app.include_router(routers_admin.router)
 app.include_router(routers_node_info.router)
+app.include_router(routers_bc_explorer.router)
 app.include_router(routers_contract_abi.router)
 app.include_router(routers_company_info.router)
 app.include_router(routers_user_info.router)

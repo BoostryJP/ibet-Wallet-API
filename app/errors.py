@@ -33,9 +33,13 @@ class AppError(Exception):
         self.description = description
 
 
+#################################################
+# 400 Bad Request
+#################################################
+
 class InvalidParameterError(AppError):
     """
-    400 ERROR: 無効なパラメータ
+    400 ERROR: Invalid Parameter
     """
     status_code = 400
     error_type = "InvalidParameterError"
@@ -43,9 +47,32 @@ class InvalidParameterError(AppError):
     message = "Invalid Parameter"
 
 
+class SuspendedTokenError(AppError):
+    """
+    400 ERROR: Suspended tokens
+    """
+    status_code = 400
+    error_type = "SuspendedTokenError"
+    error_code = 20
+    message = "Suspended Token"
+
+
+class ResponseLimitExceededError(AppError):
+    """
+    400 ERROR: Search results are over the limit
+    """
+    status_code = 400
+    error_type = "ResponseLimitExceededError"
+    error_code = 30
+    message = "Response Limit Exceeded"
+
+#################################################
+# 404 Not Found
+#################################################
+
 class NotSupportedError(AppError):
     """
-    404 ERROR: サポートしていないHTTPメソッド
+    404 ERROR: Unsupported Request
     """
     status_code = 404
     error_type = "NotSupportedError"
@@ -61,37 +88,33 @@ class NotSupportedError(AppError):
 
 class DataNotExistsError(AppError):
     """
-    404 ERROR: データが存在しない
+    404 ERROR: Data not exists
     """
     status_code = 404
     error_type = "DataNotExistsError"
     error_code = 30
     message = "Data Not Exists"
 
-
-class SuspendedTokenError(AppError):
-    """
-    400 ERROR: 取扱停止中のトークン
-    """
-    status_code = 400
-    error_type = "SuspendedTokenError"
-    error_code = 20
-    message = "Suspended Token"
-
+#################################################
+# 409 Conflict
+#################################################
 
 class DataConflictError(AppError):
     """
-    409 ERROR: データが重複
+    409 ERROR: Data is conflicted
     """
     status_code = 409
     error_type = "DataConflictError"
     error_code = 40
     message = "Data Conflict"
 
+#################################################
+# 503 Service Unavailable
+#################################################
 
 class ServiceUnavailable(AppError):
     """
-    503 ERROR: サービス利用不可
+    503 ERROR: Service is temporarily unavailable
     """
     status_code = 503
     error_type = "ServiceUnavailable"

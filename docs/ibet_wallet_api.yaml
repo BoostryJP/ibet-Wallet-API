@@ -227,6 +227,216 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericSuccessResponse_GetBlockSyncStatusResponse_'
+  /NodeInfo/BlockData:
+    get:
+      tags:
+        - NodeInfo
+      summary: '[ibet Blockchain Explorer] List block data'
+      description: |-
+        Returns a list of block data within the specified block number range.
+        The maximum number of search results is 1000.
+      operationId: ListBlockData
+      parameters:
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - required: false
+          schema:
+            title: From Block Number
+            minimum: 0
+            type: integer
+          name: from_block_number
+          in: query
+        - required: false
+          schema:
+            title: To Block Number
+            minimum: 0
+            type: integer
+          name: to_block_number
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_BlockDataListResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Listblockdata
+                anyOf:
+                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotSupportedErrorResponse'
+  /NodeInfo/BlockData/{block_number}:
+    get:
+      tags:
+        - NodeInfo
+      summary: '[ibet Blockchain Explorer] Retrieve block data'
+      description: Returns block data in the specified block number.
+      operationId: GetBlockData
+      parameters:
+        - required: true
+          schema:
+            title: Block Number
+            minimum: 0
+            type: integer
+          name: block_number
+          in: path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_BlockDataResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                title: Response 404 Getblockdata
+                anyOf:
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
+                  - $ref: '#/components/schemas/DataNotExistsErrorResponse'
+  /NodeInfo/TxData:
+    get:
+      tags:
+        - NodeInfo
+      summary: '[ibet Blockchain Explorer] List tx data'
+      description: The maximum number of search results is 1000.
+      operationId: ListTxData
+      parameters:
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: block number
+          required: false
+          schema:
+            title: Block Number
+            minimum: 0
+            type: integer
+            description: block number
+          name: block_number
+          in: query
+        - description: tx from
+          required: false
+          schema:
+            title: From Address
+            type: string
+            description: tx from
+          name: from_address
+          in: query
+        - description: tx to
+          required: false
+          schema:
+            title: To Address
+            type: string
+            description: tx to
+          name: to_address
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_TxDataListResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Listtxdata
+                anyOf:
+                  - $ref: '#/components/schemas/ResponseLimitExceededErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotSupportedErrorResponse'
+  /NodeInfo/TxData/{hash}:
+    get:
+      tags:
+        - NodeInfo
+      summary: '[ibet Blockchain Explorer] Retrieve transaction data'
+      description: Searching for the transaction by transaction hash
+      operationId: GetTxData
+      parameters:
+        - required: true
+          schema:
+            title: Hash
+            type: string
+          name: hash
+          in: path
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_TxDataResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                title: Response 404 Gettxdata
+                anyOf:
+                  - $ref: '#/components/schemas/NotSupportedErrorResponse'
+                  - $ref: '#/components/schemas/DataNotExistsErrorResponse'
   /ABI/StraightBond:
     get:
       tags:
@@ -3781,6 +3991,147 @@ components:
         - 4
       type: integer
       description: An enumeration.
+    BlockData:
+      title: BlockData
+      required:
+        - number
+        - hash
+        - transactions
+        - timestamp
+        - gas_limit
+        - gas_used
+        - size
+      type: object
+      properties:
+        number:
+          title: Number
+          minimum: 0
+          type: integer
+          description: Block number
+        hash:
+          title: Hash
+          type: string
+          description: Block hash
+        transactions:
+          title: Transactions
+          type: array
+          items:
+            type: string
+          description: Transaction list
+        timestamp:
+          title: Timestamp
+          type: integer
+        gas_limit:
+          title: Gas Limit
+          type: integer
+        gas_used:
+          title: Gas Used
+          type: integer
+        size:
+          title: Size
+          minimum: 0
+          type: integer
+    BlockDataDetail:
+      title: BlockDataDetail
+      required:
+        - number
+        - parent_hash
+        - sha3_uncles
+        - miner
+        - state_root
+        - transactions_root
+        - receipts_root
+        - logs_bloom
+        - difficulty
+        - gas_limit
+        - gas_used
+        - timestamp
+        - proof_of_authority_data
+        - mix_hash
+        - nonce
+        - hash
+        - size
+        - transactions
+      type: object
+      properties:
+        number:
+          title: Number
+          minimum: 0
+          type: integer
+          description: Block number
+        parent_hash:
+          title: Parent Hash
+          type: string
+        sha3_uncles:
+          title: Sha3 Uncles
+          type: string
+        miner:
+          title: Miner
+          type: string
+        state_root:
+          title: State Root
+          type: string
+        transactions_root:
+          title: Transactions Root
+          type: string
+        receipts_root:
+          title: Receipts Root
+          type: string
+        logs_bloom:
+          title: Logs Bloom
+          type: string
+        difficulty:
+          title: Difficulty
+          type: integer
+        gas_limit:
+          title: Gas Limit
+          type: integer
+        gas_used:
+          title: Gas Used
+          type: integer
+        timestamp:
+          title: Timestamp
+          type: integer
+        proof_of_authority_data:
+          title: Proof Of Authority Data
+          type: string
+        mix_hash:
+          title: Mix Hash
+          type: string
+        nonce:
+          title: Nonce
+          type: string
+        hash:
+          title: Hash
+          type: string
+          description: Block hash
+        size:
+          title: Size
+          minimum: 0
+          type: integer
+        transactions:
+          title: Transactions
+          type: array
+          items:
+            type: string
+          description: Transaction list
+    BlockDataListResponse:
+      title: BlockDataListResponse
+      required:
+        - result_set
+        - block_data
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        block_data:
+          title: Block Data
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockData'
+    BlockDataResponse:
+      $ref: '#/components/schemas/BlockDataDetail'
+      title: BlockDataResponse
     BlockIdentifier:
       title: BlockIdentifier
       enum:
@@ -4109,6 +4460,38 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ABI'
+    GenericSuccessResponse_BlockDataListResponse_:
+      title: GenericSuccessResponse[BlockDataListResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/BlockDataListResponse'
+    GenericSuccessResponse_BlockDataResponse_:
+      title: GenericSuccessResponse[BlockDataResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/BlockDataResponse'
     GenericSuccessResponse_CouponPositionWithDetail_:
       title: GenericSuccessResponse[CouponPositionWithDetail]
       required:
@@ -4829,6 +5212,38 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/TransferHistoriesResponse'
+    GenericSuccessResponse_TxDataListResponse_:
+      title: GenericSuccessResponse[TxDataListResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/TxDataListResponse'
+    GenericSuccessResponse_TxDataResponse_:
+      title: GenericSuccessResponse[TxDataResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/TxDataResponse'
     GenericSuccessResponse_WaitForTransactionReceiptResponse_:
       title: GenericSuccessResponse[WaitForTransactionReceiptResponse]
       required:
@@ -5765,6 +6180,32 @@ components:
       properties:
         meta:
           $ref: '#/components/schemas/RequestValidationErrorInfo'
+        details:
+          title: Details
+          type: object
+    ResponseLimitExceededErrorMetainfo:
+      title: ResponseLimitExceededErrorMetainfo
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          title: Code
+          type: integer
+          example: 30
+        message:
+          title: Message
+          type: string
+          example: Response Limit Exceeded
+    ResponseLimitExceededErrorResponse:
+      title: ResponseLimitExceededErrorResponse
+      required:
+        - meta
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/ResponseLimitExceededErrorMetainfo'
         details:
           title: Details
           type: object
@@ -6900,6 +7341,116 @@ components:
           title: Created
           type: string
           description: block_timestamp when Transfer log was emitted (JST)
+    TxData:
+      title: TxData
+      required:
+        - hash
+        - block_hash
+        - block_number
+        - transaction_index
+        - from_address
+        - to_address
+      type: object
+      properties:
+        hash:
+          title: Hash
+          type: string
+          description: Transaction hash
+        block_hash:
+          title: Block Hash
+          type: string
+        block_number:
+          title: Block Number
+          minimum: 0
+          type: integer
+        transaction_index:
+          title: Transaction Index
+          minimum: 0
+          type: integer
+        from_address:
+          title: From Address
+          type: string
+        to_address:
+          title: To Address
+          type: string
+    TxDataDetail:
+      title: TxDataDetail
+      required:
+        - hash
+        - block_hash
+        - block_number
+        - transaction_index
+        - from_address
+        - to_address
+        - gas
+        - gas_price
+        - value
+        - nonce
+      type: object
+      properties:
+        hash:
+          title: Hash
+          type: string
+          description: Transaction hash
+        block_hash:
+          title: Block Hash
+          type: string
+        block_number:
+          title: Block Number
+          minimum: 0
+          type: integer
+        transaction_index:
+          title: Transaction Index
+          minimum: 0
+          type: integer
+        from_address:
+          title: From Address
+          type: string
+        to_address:
+          title: To Address
+          type: string
+        contract_name:
+          title: Contract Name
+          type: string
+        contract_function:
+          title: Contract Function
+          type: string
+        contract_parameters:
+          title: Contract Parameters
+          type: object
+        gas:
+          title: Gas
+          minimum: 0
+          type: integer
+        gas_price:
+          title: Gas Price
+          minimum: 0
+          type: integer
+        value:
+          title: Value
+          minimum: 0
+          type: integer
+        nonce:
+          title: Nonce
+          minimum: 0
+          type: integer
+    TxDataListResponse:
+      title: TxDataListResponse
+      required:
+        - result_set
+        - tx_data
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        tx_data:
+          title: Tx Data
+          type: array
+          items:
+            $ref: '#/components/schemas/TxData'
+    TxDataResponse:
+      $ref: '#/components/schemas/TxDataDetail'
+      title: TxDataResponse
     UpdateAdminTokenRequest:
       title: UpdateAdminTokenRequest
       type: object

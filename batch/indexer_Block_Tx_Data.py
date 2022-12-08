@@ -81,7 +81,7 @@ class Processor:
                 block_model.miner = block_data.get("miner")
                 block_model.state_root = block_data.get("stateRoot").hex()
                 block_model.transactions_root = block_data.get("transactionsRoot").hex()
-                block_model.receipts_root = block_data.get("receiptRoot").hex() if block_data.get("receiptRoot") else None
+                block_model.receipts_root = block_data.get("receiptsRoot").hex()
                 block_model.logs_bloom = block_data.get("logsBloom").hex()
                 block_model.difficulty = block_data.get("difficulty")
                 block_model.gas_limit = block_data.get("gasLimit")
