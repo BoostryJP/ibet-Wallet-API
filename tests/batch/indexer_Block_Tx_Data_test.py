@@ -232,7 +232,7 @@ class TestProcessor:
         assert block_data[1].number == before_block_number + 2
         assert len(block_data[1].transactions) == 1
 
-        tx_data: list[IDXTxData] = session.query(IDXTxData).all()
+        tx_data: list[IDXTxData] = session.query(IDXTxData).order_by(IDXTxData.created).all()
         assert len(tx_data) == 2
 
         assert tx_data[0].block_hash == block_data[0].hash
