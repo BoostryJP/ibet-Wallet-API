@@ -94,10 +94,10 @@ class TestProcessor:
             first()
         assert indexed_block.latest_block_number == before_block_number
 
-        block_data = session.query(IDXBlockData).all()
+        block_data = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
         assert len(block_data) == 0
 
-        tx_data = session.query(IDXTxData).all()
+        tx_data = session.query(IDXTxData).order_by(IDXTxData.block_number).all()
         assert len(tx_data) == 0
 
         assert 1 == caplog.record_tuples.count((
@@ -125,11 +125,11 @@ class TestProcessor:
             first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = session.query(IDXBlockData).all()
+        block_data: list[IDXBlockData] = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
         assert len(block_data) == 1
         assert block_data[0].number == before_block_number + 1
 
-        tx_data = session.query(IDXTxData).all()
+        tx_data = session.query(IDXTxData).order_by(IDXTxData.block_number).all()
         assert len(tx_data) == 0
 
         # Assertion: Log
@@ -175,12 +175,12 @@ class TestProcessor:
             first()
         assert indexed_block.latest_block_number == after_block_number
 
-        block_data: list[IDXBlockData] = session.query(IDXBlockData).all()
+        block_data: list[IDXBlockData] = session.query(IDXBlockData).order_by(IDXBlockData.number).all()
         assert len(block_data) == 1
         assert block_data[0].number == before_block_number + 1
         assert len(block_data[0].transactions) == 1
 
-        tx_data: list[IDXTxData] = session.query(IDXTxData).all()
+        tx_data: list[IDXTxData] = session.query(IDXTxData).order_by(IDXTxData.block_number).all()
         assert len(tx_data) == 1
         assert tx_data[0].block_hash == block_data[0].hash
         assert tx_data[0].block_number == before_block_number + 1
@@ -232,7 +232,7 @@ class TestProcessor:
         assert block_data[1].number == before_block_number + 2
         assert len(block_data[1].transactions) == 1
 
-        tx_data: list[IDXTxData] = session.query(IDXTxData).all()
+        tx_data: list[IDXTxData] = session.query(IDXTxData).order_by(IDXTxData.block_number).all()
         assert len(tx_data) == 2
 
         assert tx_data[0].block_hash == block_data[0].hash

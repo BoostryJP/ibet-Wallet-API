@@ -97,6 +97,7 @@ class TestTokenMembershipTokens:
         token_list_item.token_template = "IbetMembership"
         token_list_item.owner_address = ""
         session.add(token_list_item)
+        session.commit()
 
     ###########################################################################
     # Normal
@@ -122,7 +123,6 @@ class TestTokenMembershipTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -225,10 +225,9 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         target_token_addrss_list = token_address_list[1:4]
@@ -331,10 +330,9 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -436,7 +434,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -514,10 +511,9 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -625,7 +621,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -714,10 +709,9 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -787,7 +781,6 @@ class TestTokenMembershipTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -823,7 +816,6 @@ class TestTokenMembershipTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0

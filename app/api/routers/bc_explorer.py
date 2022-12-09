@@ -321,13 +321,16 @@ def get_tx_data(
     )
     if token_contract is not None:
         contract_name = token_contract.token_template
-        contract = Contract.get_contract(
-            contract_name=contract_name,
-            address=tx_data.to_address
-        )
-        decoded_input: Tuple['ContractFunction', Dict[str, Any]] = contract.decode_function_input(tx_data.input)
-        contract_function = decoded_input[0].fn_name
-        contract_parameters = decoded_input[1]
+        try:
+            contract = Contract.get_contract(
+                contract_name=contract_name,
+                address=tx_data.to_address
+            )
+            decoded_input: Tuple['ContractFunction', Dict[str, Any]] = contract.decode_function_input(tx_data.input)
+            contract_function = decoded_input[0].fn_name
+            contract_parameters = decoded_input[1]
+        except FileNotFoundError:
+            pass
 
     return {
         **SuccessResponse.use().dict(),

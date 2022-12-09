@@ -114,6 +114,7 @@ class TestTokenStraightBondTokens:
         token_list_item.token_template = "IbetStraightBond"
         token_list_item.owner_address = ""
         session.add(token_list_item)
+        session.commit()
 
     ###########################################################################
     # Normal
@@ -140,7 +141,6 @@ class TestTokenStraightBondTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -258,10 +258,9 @@ class TestTokenStraightBondTokens:
         self.list_token(session, bond_token3)
         self.list_token(session, bond_token4)
         self.list_token(session, bond_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         target_token_addrss_list = token_address_list[1:4]
@@ -380,10 +379,9 @@ class TestTokenStraightBondTokens:
         self.list_token(session, bond_token3)
         self.list_token(session, bond_token4)
         self.list_token(session, bond_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -500,7 +498,6 @@ class TestTokenStraightBondTokens:
         self.list_token(session, bond_token3)
         self.list_token(session, bond_token4)
         self.list_token(session, bond_token5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -579,10 +576,9 @@ class TestTokenStraightBondTokens:
         self.list_token(session, bond_token3)
         self.list_token(session, bond_token4)
         self.list_token(session, bond_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -708,7 +704,6 @@ class TestTokenStraightBondTokens:
         self.list_token(session, bond_token3)
         self.list_token(session, bond_token4)
         self.list_token(session, bond_token5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -801,10 +796,9 @@ class TestTokenStraightBondTokens:
         self.list_token(session, bond_token3)
         self.list_token(session, bond_token4)
         self.list_token(session, bond_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -889,7 +883,6 @@ class TestTokenStraightBondTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -926,7 +919,6 @@ class TestTokenStraightBondTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, bond_token)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0

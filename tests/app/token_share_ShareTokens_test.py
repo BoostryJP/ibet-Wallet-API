@@ -102,6 +102,7 @@ class TestTokenShareTokens:
         token_list_item.token_template = "IbetShare"
         token_list_item.owner_address = ""
         session.add(token_list_item)
+        session.commit()
 
     ###########################################################################
     # Normal
@@ -128,7 +129,6 @@ class TestTokenShareTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -235,10 +235,9 @@ class TestTokenShareTokens:
         self.list_token(session, share_token3)
         self.list_token(session, share_token4)
         self.list_token(session, share_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         target_token_addrss_list = token_address_list[1:4]
@@ -345,10 +344,9 @@ class TestTokenShareTokens:
         self.list_token(session, share_token3)
         self.list_token(session, share_token4)
         self.list_token(session, share_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -454,7 +452,6 @@ class TestTokenShareTokens:
         self.list_token(session, share_token3)
         self.list_token(session, share_token4)
         self.list_token(session, share_token5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -533,10 +530,9 @@ class TestTokenShareTokens:
         self.list_token(session, share_token3)
         self.list_token(session, share_token4)
         self.list_token(session, share_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -651,7 +647,6 @@ class TestTokenShareTokens:
         self.list_token(session, share_token3)
         self.list_token(session, share_token4)
         self.list_token(session, share_token5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -744,10 +739,9 @@ class TestTokenShareTokens:
         self.list_token(session, share_token3)
         self.list_token(session, share_token4)
         self.list_token(session, share_token5)
-        session.commit()
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -821,7 +815,6 @@ class TestTokenShareTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -858,7 +851,6 @@ class TestTokenShareTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, share_token)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
