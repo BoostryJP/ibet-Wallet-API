@@ -16,8 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import time
-
 import pytest
 
 from eth_utils import to_checksum_address
@@ -94,14 +92,11 @@ class TestTokenCouponTokens:
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
-
         token_list_item = IDXTokenListItem()
         token_list_item.token_address = token["address"]
         token_list_item.token_template = "IbetCoupon"
         token_list_item.owner_address = ""
         session.add(token_list_item)
-
-        time.sleep(1)
         session.commit()
 
     ###########################################################################
@@ -232,7 +227,7 @@ class TestTokenCouponTokens:
         self.list_token(session, coupon5)
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         target_token_addrss_list = token_address_list[1:4]
@@ -337,7 +332,7 @@ class TestTokenCouponTokens:
         self.list_token(session, coupon5)
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -518,7 +513,7 @@ class TestTokenCouponTokens:
         self.list_token(session, coupon5)
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
@@ -716,7 +711,7 @@ class TestTokenCouponTokens:
         self.list_token(session, coupon5)
 
         # 事前準備
-        processor.SEC_PER_RECORD = 0
+        processor.SEC_PER_RECORD = 1
         processor.process()
 
         resp = client.get(self.apiurl, params={
