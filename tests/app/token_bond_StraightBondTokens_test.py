@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import time
+
 import pytest
 
 from eth_utils import to_checksum_address
@@ -116,6 +118,7 @@ class TestTokenStraightBondTokens:
         token_list_item.owner_address = ""
         session.add(token_list_item)
 
+        time.sleep(1)
         session.commit()
 
     ###########################################################################
