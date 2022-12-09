@@ -92,11 +92,14 @@ class TestTokenMembershipTokens:
         listed_token.max_holding_quantity = 1
         listed_token.max_sell_amount = 1000
         session.add(listed_token)
+
         token_list_item = IDXTokenListItem()
         token_list_item.token_address = token["address"]
         token_list_item.token_template = "IbetMembership"
         token_list_item.owner_address = ""
         session.add(token_list_item)
+
+        session.commit()
 
     ###########################################################################
     # Normal
@@ -122,7 +125,6 @@ class TestTokenMembershipTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -225,7 +227,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -331,7 +332,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -436,7 +436,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -514,7 +513,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -625,7 +623,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -714,7 +711,6 @@ class TestTokenMembershipTokens:
         self.list_token(session, membership3)
         self.list_token(session, membership4)
         self.list_token(session, membership5)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -787,7 +783,6 @@ class TestTokenMembershipTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
@@ -823,7 +818,6 @@ class TestTokenMembershipTokens:
 
         # 取扱トークンデータ挿入
         self.list_token(session, membership)
-        session.commit()
 
         # 事前準備
         processor.SEC_PER_RECORD = 0
