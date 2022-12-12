@@ -26,9 +26,11 @@ from datetime import (
     timedelta
 )
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from web3.contract import Contract as Web3Contract
+from web3.types import EventData
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
@@ -45,7 +47,8 @@ from app.model.db import (
     Notification,
     NotificationType,
     NotificationBlockNumber,
-    Listing
+    Listing,
+    IDXTokenListItem
 )
 from app.utils.web3_utils import Web3Wrapper
 from app.utils.company_list import CompanyList
@@ -73,6 +76,7 @@ token_list = TokenList(list_contract)
 
 # Watcher
 class Watcher:
+    contract_cache: dict[str, Web3Contract] = {}
 
     def __init__(self, filter_name: str, filter_params: dict, notification_type: str):
         self.filter_name = filter_name
@@ -95,19 +99,22 @@ class Watcher:
     @staticmethod
     def _get_token_all_list(db_session: Session):
         _tokens = []
-        listed_tokens: list[Listing] = db_session.query(Listing).all()
-        for listed_token in listed_tokens:
-            if not token_list.is_registered(listed_token.token_address):
-                continue
-            else:
-                token_type = token_list.get_token(listed_token.token_address)[1]
-                _tokens.append({
-                    "token": listed_token,
-                    "token_type": token_type
-                })
+        registered_tokens: list[IDXTokenListItem] = (
+            db_session.query(IDXTokenListItem).
+            join(Listing, and_(Listing.token_address == IDXTokenListItem.token_address)).all()
+        )
+        for registered_token in registered_tokens:
+            _tokens.append({
+                "token": registered_token,
+                "token_type": registered_token.token_template
+            })
         return _tokens
 
-    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+    def db_merge(
+        self, db_session: Session,
+        token_contract: Web3Contract, token_type: str,
+        log_entries: list[EventData], token_owner_address: str
+    ):
         pass
 
     def loop(self):
@@ -117,6 +124,7 @@ class Watcher:
         try:
             # Get listed tokens
             _token_list = self._get_token_all_list(db_session)
+            latest_block_number = web3.eth.block_number
 
             for _token in _token_list:
                 # Get synchronized block number
@@ -127,7 +135,6 @@ class Watcher:
                 ) + 1
 
                 # Get the latest block number
-                latest_block_number = web3.eth.block_number
                 if from_block_number > latest_block_number:
                     LOG.info(f"[{self.__class__.__name__}]: skip processing")
                     return
@@ -141,10 +148,13 @@ class Watcher:
 
                 # Get event logs
                 try:
-                    token_contract = Contract.get_contract(
-                        contract_name=_token["token_type"],
-                        address=_token["token"].token_address
-                    )
+                    token_contract = self.contract_cache.get(_token["token"].token_address, None)
+                    if token_contract is None:
+                        token_contract = Contract.get_contract(
+                            contract_name=_token["token_type"],
+                            address=_token["token"].token_address
+                        )
+                        self.contract_cache[_token["token"].token_address] = token_contract
                     _event = getattr(token_contract.events, self.filter_name)
                     entries = _event.getLogs(
                         fromBlock=from_block_number,
@@ -162,7 +172,8 @@ class Watcher:
                         db_session=db_session,
                         token_contract=token_contract,
                         token_type=_token["token_type"],
-                        log_entries=entries
+                        log_entries=entries,
+                        token_owner_address=_token["token"].owner_address
                     )
 
                 # Update synchronized block number
@@ -220,25 +231,23 @@ class WatchTransfer(Watcher):
     def __init__(self):
         super().__init__("Transfer", {}, NotificationType.TRANSFER)
 
-    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+    def db_merge(
+        self, db_session: Session,
+        token_contract: Web3Contract, token_type: str,
+        log_entries: list[EventData], token_owner_address: str
+    ):
         company_list = CompanyList.get()
+        token_name = Contract.call_function(
+            contract=token_contract,
+            function_name="name",
+            args=(),
+            default_returns=""
+        )
         for entry in log_entries:
             # If the contract address is the source of the transfer, skip the process
             if web3.eth.get_code(entry["args"]["from"]).hex() != "0x":
                 continue
 
-            token_owner_address = Contract.call_function(
-                contract=token_contract,
-                function_name="owner",
-                args=(),
-                default_returns=""
-            )
-            token_name = Contract.call_function(
-                contract=token_contract,
-                function_name="name",
-                args=(),
-                default_returns=""
-            )
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
@@ -267,24 +276,22 @@ class WatchApplyForTransfer(Watcher):
     def __init__(self):
         super().__init__("ApplyForTransfer", {}, NotificationType.APPLY_FOR_TRANSFER)
 
-    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+    def db_merge(
+        self, db_session: Session,
+        token_contract: Web3Contract, token_type: str,
+        log_entries: list[EventData], token_owner_address: str
+    ):
         company_list = CompanyList.get()
+        token_name = Contract.call_function(
+            contract=token_contract,
+            function_name="name",
+            args=(),
+            default_returns=""
+        )
         for entry in log_entries:
             if not token_list.is_registered(entry["address"]):
                 continue
 
-            token_owner_address = Contract.call_function(
-                contract=token_contract,
-                function_name="owner",
-                args=(),
-                default_returns=""
-            )
-            token_name = Contract.call_function(
-                contract=token_contract,
-                function_name="name",
-                args=(),
-                default_returns=""
-            )
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
@@ -313,24 +320,22 @@ class WatchApproveTransfer(Watcher):
     def __init__(self):
         super().__init__("ApproveTransfer", {}, NotificationType.APPROVE_TRANSFER)
 
-    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+    def db_merge(
+        self, db_session: Session,
+        token_contract: Web3Contract, token_type: str,
+        log_entries: list[EventData], token_owner_address: str
+    ):
         company_list = CompanyList.get()
+        token_name = Contract.call_function(
+            contract=token_contract,
+            function_name="name",
+            args=(),
+            default_returns=""
+        )
         for entry in log_entries:
             if not token_list.is_registered(entry["address"]):
                 continue
 
-            token_owner_address = Contract.call_function(
-                contract=token_contract,
-                function_name="owner",
-                args=(),
-                default_returns=""
-            )
-            token_name = Contract.call_function(
-                contract=token_contract,
-                function_name="name",
-                args=(),
-                default_returns=""
-            )
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
@@ -359,24 +364,22 @@ class WatchCancelTransfer(Watcher):
     def __init__(self):
         super().__init__("CancelTransfer", {}, NotificationType.CANCEL_TRANSFER)
 
-    def db_merge(self, db_session: Session, token_contract, token_type, log_entries):
+    def db_merge(
+        self, db_session: Session,
+        token_contract: Web3Contract, token_type: str,
+        log_entries: list[EventData], token_owner_address: str
+    ):
         company_list = CompanyList.get()
+        token_name = Contract.call_function(
+            contract=token_contract,
+            function_name="name",
+            args=(),
+            default_returns=""
+        )
         for entry in log_entries:
             if not token_list.is_registered(entry["address"]):
                 continue
 
-            token_owner_address = Contract.call_function(
-                contract=token_contract,
-                function_name="owner",
-                args=(),
-                default_returns=""
-            )
-            token_name = Contract.call_function(
-                contract=token_contract,
-                function_name="name",
-                args=(),
-                default_returns=""
-            )
             company = company_list.find(token_owner_address)
             metadata = {
                 "company_name": company.corporate_name,
