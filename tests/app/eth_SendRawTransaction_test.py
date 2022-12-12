@@ -1219,6 +1219,13 @@ class TestEthSendRawTransaction:
             poll_latency=config.TRANSACTION_WAIT_POLL_LATENCY
         )
 
+        # wait_for_transaction_receipt should be called with timeout/poll_latency value from config
+        m.assert_called_with(
+            signed_tx_1.hash,
+            timeout=config.TRANSACTION_WAIT_TIMEOUT,
+            poll_latency=config.TRANSACTION_WAIT_POLL_LATENCY
+        )
+
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
         assert resp.json()['data'] == [{
