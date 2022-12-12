@@ -1541,7 +1541,7 @@ class TestProcessor:
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Token holder list({target_token_holders_list1.list_id}) status changes to be done."))
         assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Token holder list({target_token_holders_list2.list_id}) status changes to be done."))
-        assert 2 == caplog.record_tuples.count((LOG.name, logging.INFO, f"<{self.target_process_name}> Collect job has been completed"))
+        assert 2 == caplog.record_tuples.count((LOG.name, logging.INFO, f"Collect job has been completed"))
 
     ###########################################################################
     # Error Case
@@ -1556,7 +1556,6 @@ class TestProcessor:
             processor.collect()
 
         assert 1 == caplog.record_tuples.count((LOG.name, logging.DEBUG, f"There are no pending collect batch"))
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.INFO, f"<{self.target_process_name}> Collect job has been completed"))
 
     # <Error_2>
     # There is target token holders list id with batch_status PENDING.

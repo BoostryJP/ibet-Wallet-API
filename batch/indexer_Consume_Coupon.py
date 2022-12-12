@@ -105,8 +105,7 @@ class Processor:
             raise e
         finally:
             local_session.close()
-
-        LOG.info(f"<{process_name}> Initial sync has been completed")
+        LOG.info("Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
@@ -131,6 +130,7 @@ class Processor:
             raise e
         finally:
             local_session.close()
+        LOG.info("Sync job has been completed")
 
     def __get_token_list(self, db_session: Session):
         self.token_list = []
@@ -154,7 +154,7 @@ class Processor:
                 self.token_list.append(coupon_token_contract)
 
     def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("Syncing from={}, to={}".format(block_from, block_to))
         self.__sync_consume(db_session, block_from, block_to)
 
     def __sync_consume(self, db_session: Session, block_from: int, block_to: int):
@@ -222,7 +222,6 @@ def main():
     while not initial_synced_completed:
         try:
             processor.initial_sync()
-            LOG.debug("Initial sync is processed successfully")
             initial_synced_completed = True
         except Exception:
             LOG.exception("Initial sync failed")
@@ -232,7 +231,6 @@ def main():
     while True:
         try:
             processor.sync_new_logs()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:

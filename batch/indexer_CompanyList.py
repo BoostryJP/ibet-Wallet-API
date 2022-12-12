@@ -52,7 +52,7 @@ class Processor:
     """Processor for indexing company list"""
 
     def process(self):
-        LOG.info("syncing company list")
+        LOG.info("Syncing company list")
 
         # Get from COMPANY_LIST_URL
         try:
@@ -109,6 +109,7 @@ class Processor:
             db_session.rollback()
             db_session.close()
             raise e
+        LOG.info("Sync job has been completed")
 
     @staticmethod
     def __sink_on_company(db_session: Session,
@@ -134,7 +135,6 @@ def main():
 
         try:
             processor.process()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:

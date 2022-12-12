@@ -67,10 +67,10 @@ class Processor:
             from_block = self.__get_indexed_block_number(local_session) + 1
 
             if from_block > latest_block:
-                LOG.info("skip process: from_block > latest_block")
+                LOG.info("Skip process: from_block > latest_block")
                 return
 
-            LOG.info("syncing from={}, to={}".format(from_block, latest_block))
+            LOG.info("Syncing from={}, to={}".format(from_block, latest_block))
             for block_number in range(from_block, latest_block + 1):
                 block_data: BlockData = web3.eth.get_block(block_number, full_transactions=True)
 
@@ -125,7 +125,7 @@ class Processor:
             raise
         finally:
             local_session.close()
-        LOG.info("sync process has been completed")
+        LOG.info("Sync job has been completed")
 
     @staticmethod
     def __get_indexed_block_number(db_session: Session):
@@ -154,7 +154,6 @@ def main():
     while True:
         try:
             processor.process()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:

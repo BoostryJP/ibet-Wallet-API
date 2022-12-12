@@ -96,6 +96,7 @@ class Processor:
         return Session(autocommit=False, autoflush=True, bind=db_engine)
 
     def process(self):
+        LOG.info("Syncing token details")
         start_time = time.time()
         local_session = self.__get_db_session()
         try:
@@ -107,7 +108,7 @@ class Processor:
         finally:
             local_session.close()
         elapsed_time = time.time() - start_time
-        LOG.info(f"<{process_name}> Sync job has been completed in {elapsed_time:.3f} sec")
+        LOG.info(f"Sync job has been completed in {elapsed_time:.3f} sec")
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
@@ -142,7 +143,6 @@ def main():
 
         try:
             processor.process()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:

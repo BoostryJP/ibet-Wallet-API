@@ -107,10 +107,10 @@ class Processor:
             raise
         finally:
             local_session.close()
-        LOG.info(f"<{process_name}> Sync job has been completed")
+        LOG.info("Sync job has been completed")
 
     def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("Syncing from={}, to={}".format(block_from, block_to))
         self.__sync_register(db_session, block_from, block_to)
 
     def __sync_register(self, db_session: Session, block_from: int, block_to: int):

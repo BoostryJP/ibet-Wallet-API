@@ -178,7 +178,7 @@ class Processor:
             local_session.close()
             self.token_list = self.TargetTokenList()
             self.exchange_list = self.TargetExchangeList()
-        LOG.info(f"<{process_name}> Initial sync has been completed")
+        LOG.info("Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
@@ -214,6 +214,7 @@ class Processor:
             local_session.close()
             self.token_list = self.TargetTokenList()
             self.exchange_list = self.TargetExchangeList()
+        LOG.info("Sync job has been completed")
 
     def __get_contract_list(self, db_session: Session):
         self.token_list = self.TargetTokenList()
@@ -255,7 +256,7 @@ class Processor:
                     self.exchange_list.append(tradable_exchange_address, block_from)
 
     def __sync_all(self, db_session: Session, block_to: int):
-        LOG.info("syncing to={}".format(block_to))
+        LOG.info("Syncing to={}".format(block_to))
 
         self.__sync_transfer(db_session, block_to)
         self.__sync_lock(db_session, block_to)
@@ -1047,7 +1048,6 @@ def main():
     while not initial_synced_completed:
         try:
             processor.initial_sync()
-            LOG.debug("Initial sync is processed successfully")
             initial_synced_completed = True
         except Exception:
             LOG.exception("Initial sync failed")
@@ -1057,7 +1057,6 @@ def main():
     while True:
         try:
             processor.sync_new_logs()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
