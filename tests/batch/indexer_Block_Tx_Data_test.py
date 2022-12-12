@@ -103,7 +103,7 @@ class TestProcessor:
         assert 1 == caplog.record_tuples.count((
             LOG.name,
             logging.INFO,
-            "skip process: from_block > latest_block"
+            "Skip process: from_block > latest_block"
         ))
 
     # Normal_2
@@ -136,12 +136,12 @@ class TestProcessor:
         assert 1 == caplog.record_tuples.count((
             LOG.name,
             logging.INFO,
-            f"syncing from={before_block_number + 1}, to={after_block_number}"
+            f"Syncing from={before_block_number + 1}, to={after_block_number}"
         ))
         assert 1 == caplog.record_tuples.count((
             LOG.name,
             logging.INFO,
-            "sync process has been completed"
+            "Sync job has been completed"
         ))
 
     # Normal_3_1

@@ -136,7 +136,7 @@ class Watcher:
 
                 # Get the latest block number
                 if from_block_number > latest_block_number:
-                    LOG.info(f"[{self.__class__.__name__}]: skip processing")
+                    LOG.info(f"<{self.__class__.__name__}> skip processing")
                     return
 
                 # If the difference between the latest block number and fromBlock is 1,000,000 or more,
@@ -193,7 +193,7 @@ class Watcher:
         finally:
             db_session.close()
             elapsed_time = time.time() - start_time
-            LOG.info("[{}] finished in {} secs".format(self.__class__.__name__, elapsed_time))
+            LOG.info("<{}> finished in {} secs".format(self.__class__.__name__, elapsed_time))
 
     @staticmethod
     def __get_synchronized_block_number(db_session: Session, contract_address: str, notification_type: str):
@@ -420,7 +420,7 @@ def main():
         wait_all_futures(fs)
 
         elapsed_time = time.time() - start_time
-        LOG.info("[LOOP] finished in {} secs".format(elapsed_time))
+        LOG.info("<LOOP> finished in {} secs".format(elapsed_time))
 
         time.sleep(max(SLEEP_INTERVAL - elapsed_time, 0))
 

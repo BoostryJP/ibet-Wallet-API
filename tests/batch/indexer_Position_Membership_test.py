@@ -808,6 +808,5 @@ class TestProcessor:
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             main_func()
 
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.DEBUG, "Initial sync is processed successfully"))
         assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
         caplog.clear()

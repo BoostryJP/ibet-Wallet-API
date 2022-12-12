@@ -281,9 +281,10 @@ class Processor:
             local_session.close()
             self.token_list = self.TargetTokenList()
             self.exchange_list = self.TargetExchangeList()
+        LOG.info("Sync job has been completed")
 
     def __sync_all(self, db_session: Session, block_to: int):
-        LOG.info("syncing to={}".format(block_to))
+        LOG.info("Syncing to={}".format(block_to))
         self.__sync_token_apply_for_transfer(db_session, block_to)
         self.__sync_token_cancel_transfer(db_session, block_to)
         self.__sync_token_approve_transfer(db_session, block_to)
@@ -704,7 +705,6 @@ def main():
     while not initial_synced_completed:
         try:
             processor.initial_sync()
-            LOG.debug("Initial sync is processed successfully")
             initial_synced_completed = True
         except Exception:
             LOG.exception("Initial sync failed")
@@ -714,7 +714,6 @@ def main():
     while True:
         try:
             processor.sync_new_logs()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:
