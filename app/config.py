@@ -57,7 +57,7 @@ WORKER_COUNT = int(os.environ.get("WORKER_COUNT")) if os.environ.get("WORKER_COU
 REQUEST_TIMEOUT = (3.0, 7.5)
 
 # Batch processing interval
-BATCH_PROCESS_INTERVAL = int(os.environ.get("SLEEP_INTERVAL")) if os.environ.get("SLEEP_INTERVAL") else 3
+BATCH_PROCESS_INTERVAL = int(os.environ.get("BATCH_PROCESS_INTERVAL")) if os.environ.get("BATCH_PROCESS_INTERVAL") else 3
 NOTIFICATION_PROCESS_INTERVAL = int(os.environ.get("NOTIFICATION_PROCESS_INTERVAL")) if os.environ.get("NOTIFICATION_PROCESS_INTERVAL") else 60
 
 # Database
