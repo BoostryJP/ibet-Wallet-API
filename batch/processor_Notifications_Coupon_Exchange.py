@@ -36,7 +36,7 @@ sys.path.append(path)
 from app.config import (
     DATABASE_URL,
     WORKER_COUNT,
-    SLEEP_INTERVAL,
+    NOTIFICATION_PROCESS_INTERVAL,
     TOKEN_LIST_CONTRACT_ADDRESS,
     IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
 )
@@ -58,7 +58,7 @@ JST = timezone(timedelta(hours=+9), "JST")
 LOG = log.get_logger(process_name="PROCESSOR-NOTIFICATIONS-COUPON-EXCHANGE")
 
 WORKER_COUNT = int(WORKER_COUNT)
-SLEEP_INTERVAL = int(SLEEP_INTERVAL)
+NOTIFICATION_PROCESS_INTERVAL = int(NOTIFICATION_PROCESS_INTERVAL)
 
 web3 = Web3Wrapper()
 
@@ -561,7 +561,7 @@ def main():
         elapsed_time = time.time() - start_time
         LOG.info("<LOOP> finished in {} secs".format(elapsed_time))
 
-        time.sleep(max(SLEEP_INTERVAL - elapsed_time, 0))
+        time.sleep(max(NOTIFICATION_PROCESS_INTERVAL - elapsed_time, 0))
 
 
 if __name__ == "__main__":
