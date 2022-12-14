@@ -270,16 +270,6 @@ def bond_approve_transfer(invoker, token, application_id, application_data):
     web3.eth.wait_for_transaction_receipt(tx_hash)
 
 
-# 資産ロックアドレスの認可
-def bond_authorize_lock_address(invoker, token, lock_address: str, auth: bool):
-    web3.eth.default_account = invoker['account_address']
-
-    TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
-    tx_hash = TokenContract.functions.authorizeLockAddress(lock_address, auth). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.wait_for_transaction_receipt(tx_hash)
-
-
 # トークン資産ロック
 def bond_lock(invoker, token, lock_address: str, amount: int):
     web3.eth.default_account = invoker['account_address']
@@ -477,16 +467,6 @@ def share_approve_transfer(invoker, token, application_id, application_data):
 
     TokenContract = Contract.get_contract('IbetShare', token['address'])
     tx_hash = TokenContract.functions.approveTransfer(application_id, application_data). \
-        transact({'from': invoker['account_address'], 'gas': 4000000})
-    web3.eth.wait_for_transaction_receipt(tx_hash)
-
-
-# 資産ロックアドレスの認可
-def share_authorize_lock_address(invoker, token, lock_address: str, auth: bool):
-    web3.eth.default_account = invoker['account_address']
-
-    TokenContract = Contract.get_contract('IbetShare', token['address'])
-    tx_hash = TokenContract.functions.authorizeLockAddress(lock_address, auth). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.wait_for_transaction_receipt(tx_hash)
 
