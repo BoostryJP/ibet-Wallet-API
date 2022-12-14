@@ -73,12 +73,10 @@ from tests.contract_modules import (
     bond_apply_for_transfer,
     bond_cancel_transfer,
     bond_approve_transfer,
-    bond_authorize_lock_address,
     bond_issue_from,
     share_set_transfer_approval_required,
     bond_redeem_from,
     bond_set_transfer_approval_required,
-    share_authorize_lock_address,
     share_issue_from,
     share_redeem_from,
     share_apply_for_transfer,
@@ -287,9 +285,6 @@ class TestProcessor:
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract["address"]}, token, 10000)
         # user1: 20000 trader: 10000
-
-        bond_authorize_lock_address(self.issuer, token, self.user1["account_address"], True)
-        bond_authorize_lock_address(self.issuer, token, self.trader["account_address"], True)
 
         bond_transfer_to_exchange(self.user1, {"address": exchange_contract["address"]}, token, 10000)
         make_sell(self.user1, exchange_contract, token, 10000, 100)
@@ -585,9 +580,6 @@ class TestProcessor:
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
         share_transfer_to_exchange(self.issuer, {"address": exchange["address"]}, token, 10000)
         # user1: 20000 trader: 10000
-
-        share_authorize_lock_address(self.issuer, token, self.user1["account_address"], True)
-        share_authorize_lock_address(self.issuer, token, self.trader["account_address"], True)
 
         share_transfer_to_exchange(self.user1, {"address": exchange["address"]}, token, 10000)
         make_sell(self.user1, exchange, token, 10000, 100)
@@ -1379,9 +1371,6 @@ class TestProcessor:
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 10000)
         bond_transfer_to_exchange(self.issuer, {"address": exchange_contract["address"]}, token, 10000)
         # user1: 20000 trader: 10000
-
-        bond_authorize_lock_address(self.issuer, token, self.user1["account_address"], True)
-        bond_authorize_lock_address(self.issuer, token, self.trader["account_address"], True)
 
         # Insert collection record with above token and current block number
         target_token_holders_list1 = self.token_holders_list(token, web3.eth.block_number)
