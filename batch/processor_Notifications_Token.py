@@ -62,9 +62,6 @@ web3 = Web3Wrapper()
 
 db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
-# 起動時のblockNumberを取得
-NOW_BLOCKNUMBER = web3.eth.block_number
-
 # コントラクトの生成
 list_contract = Contract.get_contract(
     contract_name="TokenList",
