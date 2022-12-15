@@ -29,7 +29,7 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | WORKER_TIMEOUT             | False    | Workers silent for more than this many seconds are killed and restarted. | 30      |
 | WORKER_MAX_REQUESTS        | False    | The maximum number of requests a worker will process before restarting.  | 500     |
 | WORKER_MAX_REQUESTS_JITTER | False    | The maximum jitter to add to the max_requests setting.                   | 200     |
-| KEEP_ALIVE                 | False    | The number of seconds to wait for requests on a Keep-Alive connection.   | 75      |
+| KEEP_ALIVE                 | False    | The number of seconds to wait for requests on a Keep-Alive connection.   | 30      |
 
 ## Settings for each use case
 
