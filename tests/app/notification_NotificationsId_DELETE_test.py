@@ -128,6 +128,7 @@ class TestNotificationsIdDELETE:
     def test_normal_1(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
+        session.commit()
 
         notification_id = "0x00000011032000000000000000"
 
@@ -137,6 +138,7 @@ class TestNotificationsIdDELETE:
         )
 
         # Assertion
+        session.rollback()
         assert resp.status_code == 200
         _notification_list = session.query(Notification).all()
         assert len(_notification_list) == 4
@@ -152,6 +154,7 @@ class TestNotificationsIdDELETE:
     def test_error_1(self, client: TestClient, session: Session):
         # Prepare data
         self._insert_test_data(session)
+        session.commit()
 
         notification_id = "xxxxx"
 
@@ -161,6 +164,7 @@ class TestNotificationsIdDELETE:
         )
 
         # Assertion
+        session.rollback()
         assert resp.status_code == 404
         assert resp.json()["meta"] == {
             "code": 30,

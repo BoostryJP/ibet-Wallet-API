@@ -324,6 +324,7 @@ def delete_token(
     except Exception as err:
         LOG.exception(f"Failed to delete the data: {err}")
         raise AppError()
+    session.commit()
     return SuccessResponse.use()
 
 

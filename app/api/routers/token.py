@@ -91,10 +91,6 @@ def get_token_status(
     Endpoint: /Token/{contract_address}/Status
     """
 
-    def __init__(self):
-        super().__init__()
-        self.web3 = Web3Wrapper()
-
     # 入力アドレスフォーマットチェック
     try:
         contract_address = to_checksum_address(token_address)
