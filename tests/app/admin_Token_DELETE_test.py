@@ -93,12 +93,14 @@ class TestAdminTokenDELETE:
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
         self.insert_IDXBondToken(session, token)
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + str(token["token_address"])
         resp = client.delete(apiurl)
 
         # Assertion
+        session.rollback()
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
@@ -130,12 +132,14 @@ class TestAdminTokenDELETE:
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
         self.insert_IDXShareToken(session, token)
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + str(token["token_address"])
         resp = client.delete(apiurl)
 
         # Assertion
+        session.rollback()
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
@@ -167,12 +171,14 @@ class TestAdminTokenDELETE:
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
         self.insert_IDXMembershipToken(session, token)
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + str(token["token_address"])
         resp = client.delete(apiurl)
 
         # Assertion
+        session.rollback()
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
@@ -204,12 +210,14 @@ class TestAdminTokenDELETE:
         self.insert_Listing(session, token)
         self.insert_ExecutableContract(session, token)
         self.insert_IDXCouponToken(session, token)
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + str(token["token_address"])
         resp = client.delete(apiurl)
 
         # Assertion
+        session.rollback()
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
@@ -242,12 +250,14 @@ class TestAdminTokenDELETE:
         self.insert_ExecutableContract(session, token)
         self.insert_IDXBondToken(session, token)
         self.insert_IDXCouponToken(session, token)
+        session.commit()
 
         # Request target API
         apiurl = self.apiurl_base + str(token["token_address"])
         resp = client.delete(apiurl)
 
         # Assertion
+        session.rollback()
         assert resp.status_code == 200
         assert resp.json() == {"data": {}, "meta": {"code": 200, "message": "OK"}}
 
