@@ -35,10 +35,8 @@ sys.path.append(path)
 
 from app.config import (
     DATABASE_URL,
-    IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
     IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-    IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-    IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
+    IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
 )
 from app.contracts import Contract
 from app.errors import ServiceUnavailable
@@ -66,13 +64,6 @@ class Processor:
 
     def __init__(self):
         self.exchange_list = []
-        # BOND Exchange
-        if IBET_SB_EXCHANGE_CONTRACT_ADDRESS is not None:
-            bond_exchange_contract = Contract.get_contract(
-                "IbetExchange",
-                IBET_SB_EXCHANGE_CONTRACT_ADDRESS
-            )
-            self.exchange_list.append(bond_exchange_contract)
         # MEMBERSHIP Exchange
         if IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is not None:
             membership_exchange_contract = Contract.get_contract(
@@ -81,19 +72,12 @@ class Processor:
             )
             self.exchange_list.append(membership_exchange_contract)
         # COUPON Exchange
-        if IBET_CP_EXCHANGE_CONTRACT_ADDRESS is not None:
+        if IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is not None:
             coupon_exchange_contract = Contract.get_contract(
                 "IbetExchange",
-                IBET_CP_EXCHANGE_CONTRACT_ADDRESS
+                IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS
             )
             self.exchange_list.append(coupon_exchange_contract)
-        # SHARE Exchange
-        if IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is not None:
-            share_exchange_contract = Contract.get_contract(
-                "IbetExchange",
-                IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS
-            )
-            self.exchange_list.append(share_exchange_contract)
 
     @staticmethod
     def __get_db_session():
@@ -134,7 +118,7 @@ class Processor:
             raise e
         finally:
             local_session.close()
-        LOG.info(f"<{process_name}> Initial sync has been completed")
+        LOG.info("Initial sync has been completed")
 
     def sync_new_logs(self):
         local_session = self.__get_db_session()
@@ -156,9 +140,10 @@ class Processor:
             raise e
         finally:
             local_session.close()
+        LOG.info("Sync job has been completed")
 
     def __sync_all(self, db_session: Session, block_from: int, block_to: int):
-        LOG.info("syncing from={}, to={}".format(block_from, block_to))
+        LOG.info("Syncing from={}, to={}".format(block_from, block_to))
         self.__sync_new_order(db_session, block_from, block_to)
         self.__sync_cancel_order(db_session, block_from, block_to)
         self.__sync_force_cancel_order(db_session, block_from, block_to)
@@ -489,7 +474,6 @@ def main():
     while not initial_synced_completed:
         try:
             processor.initial_sync()
-            LOG.debug("Initial sync is processed successfully")
             initial_synced_completed = True
         except Exception:
             LOG.exception("Initial sync failed")
@@ -499,7 +483,6 @@ def main():
     while True:
         try:
             processor.sync_new_logs()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:

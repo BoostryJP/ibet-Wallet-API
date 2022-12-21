@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from eth_utils import to_checksum_address
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -163,7 +165,7 @@ class TestTokenTokenStatus:
 
     # ＜正常系1＞
     #   債券：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_1(self, client, session, shared_contract):
+    def test_tokenstatus_normal_1(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -183,7 +185,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=bond_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetStraightBond',
@@ -192,12 +194,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系2＞
     #   債券：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_2(self, client, session, shared_contract):
+    def test_tokenstatus_normal_2(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -220,7 +222,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetStraightBond',
@@ -229,12 +231,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系3＞
     #   債券：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_3(self, client, session, shared_contract):
+    def test_tokenstatus_normal_3(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -257,7 +259,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=bond_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetStraightBond',
@@ -266,12 +268,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系4＞
     #   株式：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_4(self, client, session, shared_contract):
+    def test_tokenstatus_normal_4(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -291,7 +293,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=share_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetShare',
@@ -300,12 +302,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系5＞
     #   株式：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_5(self, client, session, shared_contract):
+    def test_tokenstatus_normal_5(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -328,7 +330,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=share_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetShare',
@@ -337,12 +339,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系6＞
     #   株式：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_6(self, client, session, shared_contract):
+    def test_tokenstatus_normal_6(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -365,7 +367,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=share_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetShare',
@@ -374,12 +376,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系7＞
     #   会員権：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_7(self, client, session, shared_contract):
+    def test_tokenstatus_normal_7(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -398,7 +400,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=membership_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetMembership',
@@ -407,12 +409,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系8＞
     #   会員権：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_8(self, client, session, shared_contract):
+    def test_tokenstatus_normal_8(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -434,7 +436,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=membership_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetMembership',
@@ -443,12 +445,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系9＞
     #   会員権：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_9(self, client, session, shared_contract):
+    def test_tokenstatus_normal_9(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -470,7 +472,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=membership_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetMembership',
@@ -479,12 +481,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系10＞
     #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = True）
-    def test_tokenstatus_normal_10(self, client, session, shared_contract):
+    def test_tokenstatus_normal_10(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -503,7 +505,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=coupon_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetCoupon',
@@ -512,12 +514,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系11＞
     #   クーポン：データ有り（トークン無効化済み）
-    def test_tokenstatus_normal_11(self, client, session, shared_contract):
+    def test_tokenstatus_normal_11(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -539,7 +541,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=coupon_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetCoupon',
@@ -548,12 +550,12 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜正常系12＞
     #   クーポン：データあり（取扱ステータス = True, 譲渡可否 = False）
-    def test_tokenstatus_normal_12(self, client, session, shared_contract):
+    def test_tokenstatus_normal_12(self, client: TestClient, session: Session, shared_contract):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -575,7 +577,7 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=coupon_token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = {
             'token_template': 'IbetCoupon',
@@ -584,20 +586,20 @@ class TestTokenTokenStatus:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data'] == assumed_body
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data'] == assumed_body
 
     # ＜エラー系1＞
     #   無効なコントラクトアドレス（不正な形式）
     #   -> 400エラー
-    def test_tokenstatus_error_1(self, client, session):
+    def test_tokenstatus_error_1(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address='0xabcd')
 
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
             'description': 'invalid contract_address'
@@ -605,7 +607,7 @@ class TestTokenTokenStatus:
 
     # ＜エラー系2＞
     #   取扱トークン（DB）に情報が存在しない
-    def test_tokenstatus_error_2(self, client, shared_contract, session):
+    def test_tokenstatus_error_2(self, client: TestClient, shared_contract, session: Session):
         # テスト用アカウント
         issuer = eth_account['issuer']
 
@@ -624,10 +626,10 @@ class TestTokenTokenStatus:
 
         apiurl = self.apiurl_base.format(contract_address=token['address'])
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + token['address']
@@ -636,7 +638,7 @@ class TestTokenTokenStatus:
     # ＜エラー系3＞
     #   無効なコントラクトアドレス（TokenInterfaceを継承しているが譲渡可否を持たないコントラクト）
     #   -> 404エラー
-    def test_tokenstatus_error_3(self, client, session, shared_contract):
+    def test_tokenstatus_error_3(self, client: TestClient, session: Session, shared_contract):
         share_exchange = shared_contract['IbetShareExchange']
 
         # 取扱トークンデータ挿入
@@ -645,10 +647,10 @@ class TestTokenTokenStatus:
         apiurl = self.apiurl_base.format(contract_address=share_exchange['address'])
 
         query_string = ''
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + share_exchange['address']

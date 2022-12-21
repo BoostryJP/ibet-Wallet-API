@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.model.db import (
     Listing,
@@ -59,7 +61,7 @@ class TestTokenTransferHistory:
 
     # Normal_1
     # Transferイベントなし
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -68,24 +70,24 @@ class TestTokenTransferHistory:
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assumed_body = []
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['result_set'] == {
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['result_set'] == {
             'count': 0,
             'offset': None,
             'limit': None,
             'total': 0
         }
-        assert resp.json['data']['transfer_history'] == assumed_body
+        assert resp.json()['data']['transfer_history'] == assumed_body
 
     # Normal_2
     # Transferイベントあり：1件
     # offset=設定なし、 limit=設定なし
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -103,17 +105,17 @@ class TestTokenTransferHistory:
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['result_set'] == {
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['result_set'] == {
             'count': 1,
             'offset': None,
             'limit': None,
             'total': 1
         }
-        data = resp.json['data']['transfer_history']
+        data = resp.json()['data']['transfer_history']
         assert len(data) == 1
         assert data[0]['transaction_hash'] == transfer_event['transaction_hash']
         assert data[0]['token_address'] == transfer_event['token_address']
@@ -124,7 +126,7 @@ class TestTokenTransferHistory:
     # Normal_3
     # Transferイベントあり：2件
     # offset=設定なし、 limit=設定なし
-    def test_normal_3(self, client, session):
+    def test_normal_3(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -153,17 +155,17 @@ class TestTokenTransferHistory:
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['result_set'] == {
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['result_set'] == {
             'count': 2,
             'offset': None,
             'limit': None,
             'total': 2
         }
-        data = resp.json['data']['transfer_history']
+        data = resp.json()['data']['transfer_history']
         assert len(data) == 2
         assert data[0]['transaction_hash'] == transfer_event_1['transaction_hash']
         assert data[0]['token_address'] == transfer_event_1['token_address']
@@ -180,7 +182,7 @@ class TestTokenTransferHistory:
     # Normal_4
     # offset=2, limit=設定なし
     # Transferイベントあり：2件
-    def test_normal_4(self, client, session):
+    def test_normal_4(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -209,17 +211,17 @@ class TestTokenTransferHistory:
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = 'offset=1'
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['result_set'] == {
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['result_set'] == {
             'count': 2,
             'offset': 1,
             'limit': None,
             'total': 2
         }
-        data = resp.json['data']['transfer_history']
+        data = resp.json()['data']['transfer_history']
         assert len(data) == 1
 
         assert data[0]["transaction_hash"] == transfer_event_2["transaction_hash"]
@@ -231,7 +233,7 @@ class TestTokenTransferHistory:
     # Normal_5
     # offset=0, limit=設定なし
     # Transferイベントあり：2件
-    def test_normal_5(self, client, session):
+    def test_normal_5(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -260,17 +262,17 @@ class TestTokenTransferHistory:
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = 'offset=0'
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['result_set'] == {
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['result_set'] == {
             'count': 2,
             'offset': 0,
             'limit': None,
             'total': 2
         }
-        data = resp.json['data']['transfer_history']
+        data = resp.json()['data']['transfer_history']
         assert len(data) == 2
 
         assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
@@ -287,7 +289,7 @@ class TestTokenTransferHistory:
     # Normal_6
     # offset =設定なし, limit=2
     # Transferイベントあり：2件
-    def test_normal_6(self, client, session):
+    def test_normal_6(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -316,17 +318,17 @@ class TestTokenTransferHistory:
 
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = 'limit=1'
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['result_set'] == {
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['result_set'] == {
             'count': 2,
             'offset': None,
             'limit': 1,
             'total': 2
         }
-        data = resp.json['data']['transfer_history']
+        data = resp.json()['data']['transfer_history']
         assert len(data) == 1
 
         assert data[0]["transaction_hash"] == transfer_event_1["transaction_hash"]
@@ -342,13 +344,13 @@ class TestTokenTransferHistory:
     # Error_1
     # 無効なコントラクトアドレス
     # 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address='0xabcd')
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
             'description': 'invalid contract_address'
@@ -357,13 +359,13 @@ class TestTokenTransferHistory:
     # Error_2
     # 取扱していないトークン
     # 404
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'contract_address: ' + self.token_address
@@ -372,109 +374,127 @@ class TestTokenTransferHistory:
     # Error_3_1
     # offset validation : String
     # 400
-    def test_error_3_1(self, client, session):
+    def test_error_3_1(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "offset=string"
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'offset': [
-                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: 'string'",
-                    'must be of integer type'
-                ]
-            }
+            'description': [
+                {
+                    'loc': ['query', 'offset'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_2
     # offset validation : 負値
     # 400
-    def test_error_3_2(self, client, session):
+    def test_error_3_2(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "offset=-1"
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'offset': ['min value is 0']}
+            'description': [
+                {
+                    'ctx': {'limit_value': 0},
+                    'loc': ['query', 'offset'],
+                    'msg': 'ensure this value is greater than or equal to 0',
+                    'type': 'value_error.number.not_ge'
+                }
+            ],
+            'message': 'Invalid Parameter'
         }
 
     # Error_3_3
     # offset validation : 小数
     # 400
-    def test_error_3_3(self, client, session):
+    def test_error_3_3(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "offset=1.5"
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'offset': [
-                    "field 'offset' cannot be coerced: invalid literal for int() with base 10: '1.5'",
-                    'must be of integer type'
-                ]
-            }
+            'description': [
+                {
+                    'loc': ['query', 'offset'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Invalid Parameter'
         }
 
     # Error_4_1
     # limit validation : String
     # 400
-    def test_error_4_1(self, client, session):
+    def test_error_4_1(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "limit=string"
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'limit': [
-                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: 'string'",
-                    'must be of integer type'
-                ]
-            }
+            'description': [
+                {
+                    'loc': ['query', 'limit'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Invalid Parameter'
         }
 
     # Error_4_2
     # limit validation : 負値
     # 400
-    def test_error_4_2(self, client, session):
+    def test_error_4_2(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "limit=-1"
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {'limit': ['min value is 0']}
+            'description': [
+                {
+                    'ctx': {'limit_value': 0},
+                    'loc': ['query', 'limit'],
+                    'msg': 'ensure this value is greater than or equal to 0',
+                    'type': 'value_error.number.not_ge'
+                }
+            ],
+            'message': 'Invalid Parameter'
         }
 
     # Error_4_3
     # limit validation : 小数
     # 400
-    def test_error_4_3(self, client, session):
+    def test_error_4_3(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = "limit=1.5"
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'limit': [
-                    "field 'limit' cannot be coerced: invalid literal for int() with base 10: '1.5'",
-                    'must be of integer type'
-                ]
-            }
+            'description': [
+                {
+                    'loc': ['query', 'limit'],
+                    'msg': 'value is not a valid integer',
+                    'type': 'type_error.integer'
+                }
+            ],
+            'message': 'Invalid Parameter'
         }

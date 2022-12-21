@@ -25,12 +25,15 @@ from sqlalchemy.orm import Session
 from typing import Callable, TYPE_CHECKING
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.types import RPCEndpoint
 
 from app import config
 from app.model.db import (
     Notification,
     NotificationType,
-    Listing
+    NotificationBlockNumber,
+    Listing,
+    IDXTokenListItem
 )
 from tests.account_config import eth_account
 from tests.conftest import SharedContract, DeployedContract, TestAccount
@@ -163,12 +166,19 @@ class TestWatchTransfer:
         # Transfer
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 100)
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetCoupon"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
-        block = web3.eth.get_block(block_number)
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
@@ -188,6 +198,12 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -201,13 +217,22 @@ class TestWatchTransfer:
         transfer_coupon_token(self.issuer, token, self.trader["account_address"], 100)
         transfer_coupon_token(self.issuer, token, self.trader2["account_address"], 200)
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetCoupon"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
@@ -226,6 +251,7 @@ class TestWatchTransfer:
             "exchange_address": "",
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.TRANSFER.value
@@ -245,6 +271,12 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -254,13 +286,26 @@ class TestWatchTransfer:
         token_list_contract = shared_contract["TokenList"]
         token = prepare_coupon_token(self.issuer, exchange_contract, token_list_contract, session)
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetCoupon"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Not Transfer
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_4>
     # Transfer from DEX
@@ -287,11 +332,19 @@ class TestWatchTransfer:
             amount=100
         )
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetCoupon"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).\
             order_by(Notification.created).\
             all()
@@ -317,6 +370,12 @@ class TestWatchTransfer:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     ###########################################################################
     # Error Case
     ###########################################################################
@@ -329,7 +388,14 @@ class TestWatchTransfer:
 
         exchange_contract = shared_contract["IbetCouponExchange"]
         token_list_contract = shared_contract["TokenList"]
-        prepare_coupon_token(self.issuer, exchange_contract, token_list_contract, session)
+        token = prepare_coupon_token(self.issuer, exchange_contract, token_list_contract, session)
+
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetCoupon"
+        session.add(idx_token_list_item)
+        session.commit()
 
         # Run target process
         watcher.loop()
@@ -337,6 +403,9 @@ class TestWatchTransfer:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchApplyForTransfer:
@@ -366,11 +435,19 @@ class TestWatchApplyForTransfer:
 
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
@@ -391,6 +468,12 @@ class TestWatchApplyForTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPLY_FOR_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -413,13 +496,22 @@ class TestWatchApplyForTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_apply_for_transfer(self.trader, token, self.trader2, 20, "TEST_DATA2")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
@@ -440,6 +532,7 @@ class TestWatchApplyForTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPLY_FOR_TRANSFER.value
@@ -461,6 +554,12 @@ class TestWatchApplyForTransfer:
             "token_type": "IbetShare"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPLY_FOR_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -478,13 +577,26 @@ class TestWatchApplyForTransfer:
         transfer_share_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Not Transfer
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -511,12 +623,22 @@ class TestWatchApplyForTransfer:
         # Transfer
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchApproveTransfer:
@@ -547,11 +669,19 @@ class TestWatchApproveTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
         share_approve_transfer(self.issuer, token, 0, "TEST_DATA")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
@@ -571,6 +701,12 @@ class TestWatchApproveTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPROVE_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -595,13 +731,22 @@ class TestWatchApproveTransfer:
         share_approve_transfer(self.issuer, token, 0, "TEST_DATA1")
         share_approve_transfer(self.issuer, token, 1, "TEST_DATA2")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
@@ -621,6 +766,7 @@ class TestWatchApproveTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.APPROVE_TRANSFER.value
@@ -641,6 +787,12 @@ class TestWatchApproveTransfer:
             "token_type": "IbetShare"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.APPROVE_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -658,13 +810,26 @@ class TestWatchApproveTransfer:
         transfer_share_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Not Transfer
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -692,12 +857,22 @@ class TestWatchApproveTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_approve_transfer(self.issuer, token, 0, "TEST_DATA1")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCancelTransfer:
@@ -728,11 +903,19 @@ class TestWatchCancelTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 100, "TEST_DATA")
         share_cancel_transfer(self.issuer, token, 0, "TEST_DATA")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
@@ -752,6 +935,12 @@ class TestWatchCancelTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -776,13 +965,22 @@ class TestWatchCancelTransfer:
         share_cancel_transfer(self.issuer, token, 0, "TEST_DATA1")
         share_cancel_transfer(self.issuer, token, 1, "TEST_DATA2")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
@@ -802,6 +1000,7 @@ class TestWatchCancelTransfer:
             "exchange_address": "",
             "token_type": "IbetShare"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.CANCEL_TRANSFER.value
@@ -822,6 +1021,12 @@ class TestWatchCancelTransfer:
             "token_type": "IbetShare"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber).\
+            filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_TRANSFER).\
+            filter(NotificationBlockNumber.contract_address == token["address"]).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -839,13 +1044,26 @@ class TestWatchCancelTransfer:
         transfer_share_token(self.issuer, self.trader, token, 100)
         share_set_transfer_approval_required(self.issuer, token, True)
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Not Transfer
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -873,9 +1091,19 @@ class TestWatchCancelTransfer:
         share_apply_for_transfer(self.trader, token, self.trader2, 10, "TEST_DATA1")
         share_cancel_transfer(self.issuer, token, 0, "TEST_DATA1")
 
+        idx_token_list_item = IDXTokenListItem()
+        idx_token_list_item.token_address = token["address"]
+        idx_token_list_item.owner_address = self.issuer["account_address"]
+        idx_token_list_item.token_template = "IbetShare"
+        session.add(idx_token_list_item)
+        session.commit()
+
         # Run target process
         watcher.loop()
 
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None

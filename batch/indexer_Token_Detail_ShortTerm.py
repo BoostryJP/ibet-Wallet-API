@@ -20,12 +20,10 @@ import os
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime
 from sqlalchemy import create_engine
-from sqlalchemy.exc import (
-    SQLAlchemyError
-)
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import ObjectDeletedError
 from typing import List, Type
 
 path = os.path.join(os.path.dirname(__file__), "../")
@@ -99,6 +97,7 @@ class Processor:
         return Session(autocommit=False, autoflush=True, bind=db_engine)
 
     def process(self):
+        LOG.info("Syncing token details")
         start_time = time.time()
         local_session = self.__get_db_session()
         try:
@@ -110,7 +109,7 @@ class Processor:
         finally:
             local_session.close()
         elapsed_time = time.time() - start_time
-        LOG.info(f"<{process_name}> Sync job has been completed in {elapsed_time:.3f} sec")
+        LOG.info(f"Sync job has been completed in {elapsed_time:.3f} sec")
 
     def __sync(self, local_session: Session):
         for token_type in self.target_token_types:
@@ -119,17 +118,19 @@ class Processor:
                 filter(Listing.is_public == True).all()
 
             for available_token in available_tokens:
-                start_time = time.time()
-                token = token_type.token_class.from_model(available_token)
-                token.fetch_expiry_short()
-                token_model = token.to_model()
-                local_session.merge(token_model)
-                local_session.commit()
+                try:
+                    start_time = time.time()
+                    token = token_type.token_class.from_model(available_token)
+                    token.fetch_expiry_short()
+                    token_model = token.to_model()
+                    local_session.merge(token_model)
+                    local_session.commit()
 
-                # Keep request interval constant to avoid throwing many request to JSON-RPC
-                elapsed_time = time.time() - start_time
-                time.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
-
+                    # Keep request interval constant to avoid throwing many request to JSON-RPC
+                    elapsed_time = time.time() - start_time
+                    time.sleep(max(self.SEC_PER_RECORD - elapsed_time, 0))
+                except ObjectDeletedError:
+                    LOG.warning("The record may have been deleted in another session during the update")
 
 
 def main():
@@ -140,7 +141,6 @@ def main():
 
         try:
             processor.process()
-            LOG.debug("Processed")
         except ServiceUnavailable:
             LOG.warning("An external service was unavailable")
         except SQLAlchemyError as sa_err:

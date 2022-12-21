@@ -55,8 +55,7 @@ class IDXTokenListBlockNumber(Base):
     latest_block_number = Column(BigInteger)
 
     FIELDS = {
-        'id': int,
-        'target_address': str,
+        'contract_address': str,
         'latest_block_number': int,
     }
 

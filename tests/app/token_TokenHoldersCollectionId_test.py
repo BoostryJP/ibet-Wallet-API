@@ -16,9 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import uuid
-from unittest import mock
 import pytest
+import uuid
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+from unittest import mock
 
 from web3.middleware import geth_poa_middleware
 from web3 import Web3
@@ -29,7 +31,6 @@ from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-from sqlalchemy.orm import Session
 
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -125,7 +126,7 @@ class TestTokenTokenHoldersCollectionId:
     # Normal_1
     # GET
     # Holders in response is empty.
-    def test_normal_1(self, client, shared_contract, session: Session, processor: Processor, block_number: None):
+    def test_normal_1(self, client: TestClient, shared_contract, session: Session, processor: Processor, block_number: None):
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = self.token_address
         target_token_holders_list.list_id = str(uuid.uuid4())
@@ -139,16 +140,16 @@ class TestTokenTokenHoldersCollectionId:
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address, list_id=target_token_holders_list.list_id)
 
-        resp = client.simulate_get(apiurl)
+        resp = client.get(apiurl)
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"] == {"status": TokenHolderBatchStatus.PENDING.value, "holders": []}
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == {"status": TokenHolderBatchStatus.PENDING.value, "holders": []}
 
     # Normal_2
     # GET
     # Holders in response is filled after holders data is generated properly by batch.
-    def test_normal_2(self, client, shared_contract, session: Session, processor: Processor, block_number: None):
+    def test_normal_2(self, client: TestClient, shared_contract, session: Session, processor: Processor, block_number: None):
         # Issue Token
         token_list_contract = shared_contract["TokenList"]
         escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
@@ -182,7 +183,7 @@ class TestTokenTokenHoldersCollectionId:
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=token["address"], list_id=target_token_holders_list.list_id)
-        resp = client.simulate_get(apiurl)
+        resp = client.get(apiurl)
 
         holders = [{
             "account_address": self.trader["account_address"],
@@ -195,10 +196,10 @@ class TestTokenTokenHoldersCollectionId:
         sorted_holders = sorted(holders, key=lambda x: x['account_address'])
 
         assert resp.status_code == 200
-        assert resp.json["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json["data"]["status"] == TokenHolderBatchStatus.DONE.value
-        assert len(resp.json["data"]["holders"]) == 2
-        resp_holders = resp.json["data"]["holders"]
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"]["status"] == TokenHolderBatchStatus.DONE.value
+        assert len(resp.json()["data"]["holders"]) == 2
+        resp_holders = resp.json()["data"]["holders"]
         for holder in sorted_holders:
             for resp_holder in resp_holders:
                 if resp_holder["account_address"] == holder["account_address"]:
@@ -211,36 +212,46 @@ class TestTokenTokenHoldersCollectionId:
     # Error_1
     # 400: Invalid Parameter Error
     # Invalid contract address
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         list_id = str(uuid.uuid4())
         apiurl = self.apiurl_base.format(contract_address="0xabcd", list_id=list_id)
 
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json["meta"] == {"code": 88, "message": "Invalid Parameter", "description": "invalid contract_address"}
+        assert resp.json()["meta"] == {"code": 88, "message": "Invalid Parameter", "description": "invalid contract_address"}
 
     # Error_2
     # 400: Invalid Parameter Error
     # Invalid list_id
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base.format(contract_address=config.ZERO_ADDRESS, list_id="some_id")
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json["meta"] == {"code": 88, "message": "Invalid Parameter", "description": "list_id must be UUIDv4."}
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["path", "list_id"],
+                    "msg": "value is not a valid uuid",
+                    "type": "type_error.uuid"
+                }
+            ],
+            "message": "Invalid Parameter"
+        }
 
     # Error_3
     # 404: Data Not Exists Error
     # There is no record with given list_id.
-    def test_error_3(self, client, session):
+    def test_error_3(self, client: TestClient, session: Session):
         self.listing_token(self.token_address, session)
         list_id = str(uuid.uuid4())
         apiurl = self.apiurl_base.format(contract_address=self.token_address, list_id=list_id)
         query_string = ""
-        resp = client.simulate_get(apiurl, query_string=query_string)
+        resp = client.get(apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {"code": 30, "message": "Data Not Exists", "description": "list_id: " + list_id}
+        assert resp.json()["meta"] == {"code": 30, "message": "Data Not Exists", "description": "list_id: " + list_id}

@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
@@ -37,7 +39,7 @@ class TestE2EMessageEncryptionKey:
     ###########################################################################
 
     # Normal_1
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -55,7 +57,7 @@ class TestE2EMessageEncryptionKey:
         })
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(account_address=user1)
         )
 
@@ -65,11 +67,11 @@ class TestE2EMessageEncryptionKey:
             "key_type": "test_key_type"
         }
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
 
     ###########################################################################
     # Error
@@ -78,7 +80,7 @@ class TestE2EMessageEncryptionKey:
     # Error_1
     # InvalidParameterError
     # invalid account_address
-    def test_error_1(self, client, session, shared_contract):
+    def test_error_1(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -96,13 +98,13 @@ class TestE2EMessageEncryptionKey:
         })
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(account_address=user1[:-1])
         )
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
             "message": "Invalid Parameter",
             "description": "invalid account_address"
@@ -111,19 +113,19 @@ class TestE2EMessageEncryptionKey:
     # Error_2
     # DataNotExistsError
     # encryption key is not registered
-    def test_error_2(self, client, session, shared_contract):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract):
         user = eth_account["deployer"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl.format(account_address=user)
         )
 
         # assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 30,
             "message": "Data Not Exists",
             "description": f"account_address: {user}"

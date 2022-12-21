@@ -17,8 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime, timedelta, timezone
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
-from app.model.db import Notification
+from app.model.db import Notification, NotificationType
 
 JST = timezone(timedelta(hours=+9), "JST")
 
@@ -36,7 +38,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000021034300000000000000"
-        n.notification_type = "SampleNotification1"
+        n.notification_type = NotificationType.NEW_ORDER
         n.priority = 1
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         n.is_read = True
@@ -54,7 +56,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000021034000000000000000"
-        n.notification_type = "SampleNotification2"
+        n.notification_type = NotificationType.APPROVE_TRANSFER
         n.priority = 1
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         n.is_read = False
@@ -70,7 +72,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000011034000000000000000"
-        n.notification_type = "SampleNotification3"
+        n.notification_type = NotificationType.APPLY_FOR_TRANSFER
         n.priority = 2
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         n.is_read = False
@@ -86,7 +88,7 @@ class TestNotificationsIdPOST:
 
         n = Notification()
         n.notification_id = "0x00000011032000000000000000"
-        n.notification_type = "SampleNotification4"
+        n.notification_type = NotificationType.BUY_AGREEMENT
         n.priority = 1
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395B00"
         n.is_read = True
@@ -101,7 +103,7 @@ class TestNotificationsIdPOST:
         session.add(n)
 
         n = Notification()
-        n.notification_id = "0x00000001034000000000000000"
+        n.notification_id = NotificationType.BUY_SETTLEMENT_NG
         n.notification_type = "SampleNotification5"
         n.priority = 0
         n.address = "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
@@ -124,13 +126,13 @@ class TestNotificationsIdPOST:
 
     # <Normal_1>
     # Update is_flagged
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
         notification_id = "0x00000021034300000000000000"
 
         # Request target API
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl.format(id=notification_id),
             json={
                 "is_flagged": True
@@ -138,12 +140,12 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n = session.query(Notification). \
+        n: Notification | None = session.query(Notification). \
             filter(Notification.notification_id == notification_id). \
             first()
 
         assumed_body = {
-            "notification_type": "SampleNotification1",
+            "notification_type": NotificationType.NEW_ORDER,
             "id": "0x00000021034300000000000000",
             "priority": 1,
             "block_timestamp": "2017/06/10 10:00:00",
@@ -160,19 +162,20 @@ class TestNotificationsIdPOST:
             "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         }
 
+        assert n
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
         assert n.is_flagged == True
 
     # <Normal_2>
     # Update is_flagged and is_deleted
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
 
         # Request target API
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl.format(id=notification_id),
             json={
                 "is_flagged": False,
@@ -181,12 +184,12 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n = session.query(Notification). \
+        n: Notification | None = session.query(Notification). \
             filter(Notification.notification_id == notification_id). \
             first()
 
         assumed_body = {
-            "notification_type": "SampleNotification3",
+            "notification_type": NotificationType.APPLY_FOR_TRANSFER,
             "id": "0x00000011034000000000000000",
             "priority": 2,
             "block_timestamp": "2017/04/10 10:00:00",
@@ -202,20 +205,21 @@ class TestNotificationsIdPOST:
             "account_address": "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
         }
 
+        assert n
         assert resp.status_code == 200
-        assert resp.json["data"] == assumed_body
+        assert resp.json()["data"] == assumed_body
         assert n.is_flagged == False
         assert n.is_read == True
 
     # <Normal_3>
     # Update is_deleted (True)
-    def test_normal_3(self, client, session):
+    def test_normal_3(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
 
         # Request target API
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl.format(id=notification_id),
             json={
                 "is_deleted": True,
@@ -223,10 +227,11 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n = session.query(Notification). \
+        n: Notification | None = session.query(Notification). \
             filter(Notification.notification_id == notification_id). \
             first()
 
+        assert n
         assert resp.status_code == 200
         assert n.is_read == False
         assert n.is_flagged == True
@@ -235,20 +240,20 @@ class TestNotificationsIdPOST:
 
     # <Normal_4>
     # Update is_deleted (True -> False)
-    def test_normal_4(self, client, session):
+    def test_normal_4(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
         notification_id = "0x00000011034000000000000000"
 
         # Request target API
-        client.simulate_post(
+        client.post(
             self.apiurl.format(id=notification_id),
             json={
                 "is_deleted": True,
             }
         )
 
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl.format(id=notification_id),
             json={
                 "is_deleted": False,
@@ -256,10 +261,11 @@ class TestNotificationsIdPOST:
         )
 
         # Assertion
-        n = session.query(Notification). \
+        n: Notification | None = session.query(Notification). \
             filter(Notification.notification_id == notification_id). \
             first()
 
+        assert n
         assert resp.status_code == 200
         assert n.is_read == False
         assert n.is_flagged == True
@@ -272,13 +278,13 @@ class TestNotificationsIdPOST:
 
     # <Error_1>
     # DataNotExistsError
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         self._insert_test_data(session)
 
         notification_id = "0x00000021034100000000000003"
 
         # Request target API
-        resp = client.simulate_post(
+        resp = client.post(
             self.apiurl.format(id=notification_id),
             json={
                 "is_flagged": True,
@@ -287,7 +293,7 @@ class TestNotificationsIdPOST:
 
         # Assertion
         assert resp.status_code == 404
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             'code': 30,
             'message': 'Data Not Exists',
             'description': 'notification not found'

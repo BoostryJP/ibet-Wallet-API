@@ -27,7 +27,7 @@ sys.path.append(path)
 
 import json
 import pytest
-from falcon import testing
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.eth import Contract as Web3Contract
@@ -37,16 +37,11 @@ from web3.types import (
     ChecksumAddress
 )
 
-from app.main import App
-from app.middleware import (
-    JSONTranslator,
-    DatabaseSessionManager,
-    CORSMiddleware
-)
+from app.main import app
 from app.database import (
     db_session,
-    init_session,
-    engine
+    engine,
+    SessionLocal
 )
 from app import config
 from app.contracts import Contract
@@ -81,14 +76,11 @@ class TestAccount(TypedDict):
 
 
 @pytest.fixture(scope='session')
-def client() -> testing.TestClient:
+def client() -> TestClient:
     FailOverHTTPProvider.is_default = None
 
-    init_session()
-    middleware = [JSONTranslator(), DatabaseSessionManager(db_session), CORSMiddleware()]
-    application = App(middleware=middleware)
-    application.req_options.strip_url_path_trailing_slash = True
-    return testing.TestClient(application)
+    client = TestClient(app)
+    return client
 
 
 @pytest.fixture(scope='session')
@@ -245,15 +237,27 @@ def db(request):
         # NOTE:MySQLの場合はSEQ機能が利用できない
         Notification.notification_id_seq.create(bind=engine)
 
+    # Create DB session
+    db = SessionLocal()
+
+    def override_inject_db_session():
+        return db
+
+    # Replace target API's dependency DB session.
+    app.dependency_overrides[db_session] = override_inject_db_session
+
+    # Create DB tables
     from app.model.db import Base
     Base.metadata.create_all(engine)
 
-    def teardown():
-        Base.metadata.drop_all(engine)
-        return
+    yield db
 
-    request.addfinalizer(teardown)
-    return db_session
+    # Remove DB tables
+    db.rollback()
+    Base.metadata.drop_all(engine)
+    db.close()
+
+    app.dependency_overrides[db_session] = db_session
 
 
 # ブロックナンバーの保存・復元
@@ -269,14 +273,11 @@ def block_number(request):
 
 # セッションの作成・自動ロールバック
 @pytest.fixture(scope='function')
-def session(request, db) -> Session:
-    session = db_session()
+def session(request, db: Session):
+    yield db
 
-    def teardown():
-        session.rollback()
-
-    request.addfinalizer(teardown)
-    return session
+    # Rollback DB after session is closed
+    db.rollback()
 
 
 # 発行企業リストのモック

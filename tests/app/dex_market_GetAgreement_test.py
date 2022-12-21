@@ -16,6 +16,8 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from app import config
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -205,58 +207,18 @@ class TestDEXMarketGetAgreement:
     ########################################################################################
 
     # <Normal_1>
-    # StraightBond
-    def test_normal_1(self, client, session, shared_contract):
-        exchange = shared_contract['IbetStraightBondExchange']
-        personal_info = shared_contract['PersonalInfo']
-        payment_gateway = shared_contract['PaymentGateway']
-
-        _, order_id, agreement_id = self._generate_agree_event_bond(exchange, personal_info, payment_gateway)
-
-        # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
-
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
-
-        assumed_body = {
-            'amount': 100,
-            'canceled': False,
-            'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': eth_account['trader']['account_address'],
-            'seller_address': eth_account['issuer']['account_address'],
-            'paid': False,
-            'price': 1000
-        }
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['amount'] == assumed_body['amount']
-        assert resp.json['data']['canceled'] == assumed_body['canceled']
-        assert resp.json['data']['counterpart'] == assumed_body['counterpart']
-        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
-        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
-        assert resp.json['data']['paid'] == assumed_body['paid']
-        assert resp.json['data']['price'] == assumed_body['price']
-
-    # <Normal_2>
     # Membership
-    def test_normal_2(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         exchange = shared_contract['IbetMembershipExchange']
 
         _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
 
         # 環境変数設定
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assumed_body = {
             'amount': 100,
@@ -269,30 +231,28 @@ class TestDEXMarketGetAgreement:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['amount'] == assumed_body['amount']
-        assert resp.json['data']['canceled'] == assumed_body['canceled']
-        assert resp.json['data']['counterpart'] == assumed_body['counterpart']
-        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
-        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
-        assert resp.json['data']['paid'] == assumed_body['paid']
-        assert resp.json['data']['price'] == assumed_body['price']
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['amount'] == assumed_body['amount']
+        assert resp.json()['data']['canceled'] == assumed_body['canceled']
+        assert resp.json()['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json()['data']['buyer_address'] == assumed_body['buyer_address']
+        assert resp.json()['data']['seller_address'] == assumed_body['seller_address']
+        assert resp.json()['data']['paid'] == assumed_body['paid']
+        assert resp.json()['data']['price'] == assumed_body['price']
 
-    # <Normal_3>
+    # <Normal_2>
     # Coupon
-    def test_normal_3(self, client, session, shared_contract):
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
         exchange = shared_contract['IbetCouponExchange']
 
         _, order_id, agreement_id = self._generate_agree_event_coupon(exchange)
 
         # 環境変数設定
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assumed_body = {
             'amount': 100,
@@ -305,51 +265,14 @@ class TestDEXMarketGetAgreement:
         }
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['amount'] == assumed_body['amount']
-        assert resp.json['data']['canceled'] == assumed_body['canceled']
-        assert resp.json['data']['counterpart'] == assumed_body['counterpart']
-        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
-        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
-        assert resp.json['data']['paid'] == assumed_body['paid']
-        assert resp.json['data']['price'] == assumed_body['price']
-
-    # <Normal_4>
-    # Share
-    def test_normal_4(self, client, session, shared_contract):
-        exchange = shared_contract['IbetShareExchange']
-        personal_info = shared_contract['PersonalInfo']
-
-        _, order_id, agreement_id = self._generate_agree_event_share(exchange, personal_info)
-
-        # 環境変数設定
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
-
-        query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
-
-        assumed_body = {
-            'amount': 100,
-            'canceled': False,
-            'counterpart': eth_account['trader']['account_address'],
-            'buyer_address': eth_account['trader']['account_address'],
-            'seller_address': eth_account['issuer']['account_address'],
-            'paid': False,
-            'price': 1000
-        }
-
-        assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-        assert resp.json['data']['amount'] == assumed_body['amount']
-        assert resp.json['data']['canceled'] == assumed_body['canceled']
-        assert resp.json['data']['counterpart'] == assumed_body['counterpart']
-        assert resp.json['data']['buyer_address'] == assumed_body['buyer_address']
-        assert resp.json['data']['seller_address'] == assumed_body['seller_address']
-        assert resp.json['data']['paid'] == assumed_body['paid']
-        assert resp.json['data']['price'] == assumed_body['price']
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['data']['amount'] == assumed_body['amount']
+        assert resp.json()['data']['canceled'] == assumed_body['canceled']
+        assert resp.json()['data']['counterpart'] == assumed_body['counterpart']
+        assert resp.json()['data']['buyer_address'] == assumed_body['buyer_address']
+        assert resp.json()['data']['seller_address'] == assumed_body['seller_address']
+        assert resp.json()['data']['paid'] == assumed_body['paid']
+        assert resp.json()['data']['price'] == assumed_body['price']
 
     ########################################################################################
     # Error
@@ -358,68 +281,100 @@ class TestDEXMarketGetAgreement:
     # Error_1
     # 入力値エラー（query_stringなし）
     # 400
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         query_string = ""
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json()['meta'] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "order_id"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                },
+                {
+                    "loc": ["query", "agreement_id"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                },
+                {
+                    "loc": ["query", "exchange_address"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # Error_2
     # 入力値エラー（exchange_addressの型誤り）
     # 400
-    def test_error_2(self, client, session):
+    def test_error_2(self, client: TestClient, session: Session):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3B'  # アドレス長が短い
         query_string = f'order_id=2&agreement_id=102&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["exchange_address"],
+                    "msg": "owner_address is not a valid address",
+                    "type": "value_error"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # Error_3
     # 入力値エラー（数値項目の型誤り）
     # 400
-    def test_error_3(self, client, session):
+    def test_error_3(self, client: TestClient, session: Session):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         query_string = f'order_id=aa&agreement_id=bb&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
-            'code': 88,
-            'message': 'Invalid Parameter'
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "order_id"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer"
+                },
+                {
+                    "loc": ["query", "agreement_id"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # Error_4
     # 指定した約定情報が存在しない
     # 400
-    def test_error_4(self, client, session, shared_contract):
-        exchange = shared_contract['IbetStraightBondExchange']
-        personal_info = shared_contract['PersonalInfo']
-        payment_gateway = shared_contract['PaymentGateway']
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
+        exchange = shared_contract['IbetMembershipExchange']
 
-        _, order_id, agreement_id = self._generate_agree_event_bond(exchange, personal_info, payment_gateway)
+        _, order_id, agreement_id = self._generate_agree_event_membership(exchange)
         not_exist_order_id = 999
         not_exist_agreement_id = 999
 
         # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = exchange['address']
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={not_exist_order_id}&agreement_id={not_exist_agreement_id}&' \
                        f'exchange_address={exchange["address"]}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
             'description': 'Data not found'
@@ -428,22 +383,20 @@ class TestDEXMarketGetAgreement:
     # Error_5
     # exchangeアドレスが環境変数の値と異なる
     # 400
-    def test_error_5(self, client, session, shared_contract):
+    def test_error_5(self, client: TestClient, session: Session, shared_contract):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         order_id = 2
         agreement_id = 102
 
         # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = shared_contract['IbetStraightBondExchange']['address']
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = shared_contract['IbetMembershipExchange']['address']
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 400
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 88,
             'message': 'Invalid Parameter',
             'description': 'Invalid Address'
@@ -452,22 +405,20 @@ class TestDEXMarketGetAgreement:
     # Error_6
     # exchangeアドレスが未設定
     # 404
-    def test_error_6(self, client, session):
+    def test_error_6(self, client: TestClient, session: Session):
         exchange_address = '0x82b1c9374aB625380bd498a3d9dF4033B8A0E3Bb'
         order_id = 2
         agreement_id = 102
 
         # 環境変数設定
-        config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS = None
         config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS = None
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = None
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = None
 
         query_string = f'order_id={order_id}&agreement_id={agreement_id}&exchange_address={exchange_address}'
-        resp = client.simulate_get(self.apiurl, query_string=query_string)
+        resp = client.get(self.apiurl, params=query_string)
 
         assert resp.status_code == 404
-        assert resp.json['meta'] == {
+        assert resp.json()['meta'] == {
             'code': 10,
             'message': 'Not Supported',
             'description': 'method: GET, url: /DEX/Market/Agreement'

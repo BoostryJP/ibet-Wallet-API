@@ -191,7 +191,8 @@ class BondToken(TokenBase):
         token_contract = Contract.get_contract('IbetStraightBond', self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -201,8 +202,10 @@ class BondToken(TokenBase):
         is_offering = Contract.call_function(token_contract, "isOffering", (), False)
         transfer_approval_required = Contract.call_function(token_contract, "transferApprovalRequired", (), False)
         is_redeemed = Contract.call_function(token_contract, "isRedeemed", (), False)
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
@@ -211,6 +214,7 @@ class BondToken(TokenBase):
         self.is_offering = is_offering
         self.transfer_approval_required = transfer_approval_required
         self.is_redeemed = is_redeemed
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> BondToken:
@@ -392,7 +396,8 @@ class ShareToken(TokenBase):
         token_contract = Contract.get_contract("IbetShare", self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -406,8 +411,10 @@ class ShareToken(TokenBase):
         dividend_information = Contract.call_function(
             token_contract, "dividendInformation", (), (0, "", "")
         )
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
@@ -418,10 +425,11 @@ class ShareToken(TokenBase):
         self.principal_value = principal_value
         self.is_canceled = is_canceled
         self.dividend_information = {
-            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
+            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.0000000000001")),
             'dividend_record_date': dividend_information[1],
             'dividend_payment_date': dividend_information[2],
         }
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> ShareToken:
@@ -476,7 +484,7 @@ class ShareToken(TokenBase):
         sharetoken.issue_price = issue_price
         sharetoken.principal_value = principal_value
         sharetoken.dividend_information = {
-            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.01")),
+            'dividends': float(Decimal(str(dividend_information[0])) * Decimal("0.0000000000001")),
             'dividend_record_date': dividend_information[1],
             'dividend_payment_date': dividend_information[2],
         }
@@ -537,7 +545,8 @@ class MembershipToken(TokenBase):
         token_contract = Contract.get_contract('IbetMembership', self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -547,14 +556,17 @@ class MembershipToken(TokenBase):
         initial_offering_status = Contract.call_function(
             token_contract, "initialOfferingStatus", (), False
         )
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
         self.status = status
         self.transferable = transferable
         self.initial_offering_status = initial_offering_status
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> MembershipToken:
@@ -668,7 +680,8 @@ class CouponToken(TokenBase):
         token_contract = Contract.get_contract('IbetCoupon', self.token_address)
 
         # Fetch
-        company = CompanyList.get_find(to_checksum_address(self.owner_address))
+        owner_address = Contract.call_function(token_contract, "owner", (), ZERO_ADDRESS)
+        company = CompanyList.get_find(to_checksum_address(owner_address))
         company_name = company.corporate_name
         rsa_publickey = company.rsa_publickey
         total_supply = Contract.call_function(token_contract, "totalSupply", (), 0)
@@ -678,14 +691,17 @@ class CouponToken(TokenBase):
         initial_offering_status = Contract.call_function(
             token_contract, "initialOfferingStatus", (), False
         )
+        memo = Contract.call_function(token_contract, "memo", (), "")
 
         # Update
+        self.owner_address = owner_address
         self.company_name = company_name
         self.rsa_publickey = rsa_publickey
         self.total_supply = total_supply
         self.status = status
         self.transferable = transferable
         self.initial_offering_status = initial_offering_status
+        self.memo = memo
 
     @staticmethod
     def fetch(session: Session, token_address: str) -> CouponToken:

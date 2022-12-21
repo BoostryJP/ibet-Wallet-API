@@ -23,11 +23,13 @@ from importlib import reload
 
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
+from web3.types import RPCEndpoint
 
 from app import config
 from app.model.db import (
     Notification,
-    NotificationType
+    NotificationType,
+    NotificationBlockNumber
 )
 from tests.conftest import ibet_exchange_contract
 from tests.account_config import eth_account
@@ -54,7 +56,7 @@ def watcher_factory(session, shared_contract):
         coupon_exchange = ibet_exchange_contract(shared_contract["PaymentGateway"]["address"])
 
         config.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-        config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
+        config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS = coupon_exchange["address"]
 
         from batch import processor_Notifications_Coupon_Exchange
         test_module = reload(processor_Notifications_Coupon_Exchange)
@@ -114,6 +116,7 @@ class TestWatchCouponNewOrder:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.NEW_ORDER.value
@@ -137,6 +140,12 @@ class TestWatchCouponNewOrder:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.NEW_ORDER). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -155,8 +164,10 @@ class TestWatchCouponNewOrder:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 0)
         assert _notification.notification_type == NotificationType.NEW_ORDER.value
@@ -179,6 +190,7 @@ class TestWatchCouponNewOrder:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 0)
         assert _notification.notification_type == NotificationType.NEW_ORDER.value
@@ -202,6 +214,12 @@ class TestWatchCouponNewOrder:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.NEW_ORDER). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -212,11 +230,17 @@ class TestWatchCouponNewOrder:
 
         # Not Create Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -234,6 +258,9 @@ class TestWatchCouponNewOrder:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponCancelOrder:
@@ -264,6 +291,7 @@ class TestWatchCouponCancelOrder:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
         assert _notification.notification_type == NotificationType.CANCEL_ORDER.value
@@ -287,6 +315,12 @@ class TestWatchCouponCancelOrder:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_ORDER). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -309,8 +343,10 @@ class TestWatchCouponCancelOrder:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 0)
         assert _notification.notification_type == NotificationType.CANCEL_ORDER.value
@@ -333,6 +369,7 @@ class TestWatchCouponCancelOrder:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
         assert _notification.notification_type == NotificationType.CANCEL_ORDER.value
@@ -356,6 +393,12 @@ class TestWatchCouponCancelOrder:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.CANCEL_ORDER). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -370,11 +413,17 @@ class TestWatchCouponCancelOrder:
 
         # Not Cancel Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -392,6 +441,9 @@ class TestWatchCouponCancelOrder:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponForceCancelOrder:
@@ -441,6 +493,7 @@ class TestWatchCouponForceCancelOrder:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 0)
         assert _notification.notification_type == NotificationType.FORCE_CANCEL_ORDER.value
@@ -463,6 +516,12 @@ class TestWatchCouponForceCancelOrder:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.FORCE_CANCEL_ORDER). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -515,6 +574,7 @@ class TestWatchCouponForceCancelOrder:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
 
@@ -564,6 +624,12 @@ class TestWatchCouponForceCancelOrder:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.FORCE_CANCEL_ORDER). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -594,11 +660,17 @@ class TestWatchCouponForceCancelOrder:
         # Not Cancel Order
 
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -616,6 +688,9 @@ class TestWatchCouponForceCancelOrder:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponBuyAgreement:
@@ -647,6 +722,7 @@ class TestWatchCouponBuyAgreement:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_AGREEMENT.value
@@ -671,6 +747,12 @@ class TestWatchCouponBuyAgreement:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.BUY_AGREEMENT). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_2>
     # Multi event logs
     def test_normal_2(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -692,8 +774,10 @@ class TestWatchCouponBuyAgreement:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_AGREEMENT.value
@@ -717,6 +801,7 @@ class TestWatchCouponBuyAgreement:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_AGREEMENT.value
@@ -741,6 +826,12 @@ class TestWatchCouponBuyAgreement:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.BUY_AGREEMENT). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -755,11 +846,17 @@ class TestWatchCouponBuyAgreement:
 
         # Not Buy Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -777,6 +874,9 @@ class TestWatchCouponBuyAgreement:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponSellAgreement:
@@ -808,6 +908,7 @@ class TestWatchCouponSellAgreement:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_AGREEMENT.value
@@ -831,6 +932,12 @@ class TestWatchCouponSellAgreement:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.SELL_AGREEMENT). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -902,6 +1009,12 @@ class TestWatchCouponSellAgreement:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.SELL_AGREEMENT). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address).\
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -916,11 +1029,17 @@ class TestWatchCouponSellAgreement:
 
         # Not Buy Order
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -938,6 +1057,9 @@ class TestWatchCouponSellAgreement:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponBuySettlementOK:
@@ -972,6 +1094,7 @@ class TestWatchCouponBuySettlementOK:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_OK.value
@@ -995,6 +1118,12 @@ class TestWatchCouponBuySettlementOK:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_OK). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1021,8 +1150,10 @@ class TestWatchCouponBuySettlementOK:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_OK.value
@@ -1046,6 +1177,7 @@ class TestWatchCouponBuySettlementOK:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_OK.value
@@ -1070,6 +1202,12 @@ class TestWatchCouponBuySettlementOK:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_OK). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -1087,11 +1225,17 @@ class TestWatchCouponBuySettlementOK:
 
         # Not Confirm Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1109,6 +1253,9 @@ class TestWatchCouponBuySettlementOK:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponSellSettlementOK:
@@ -1143,6 +1290,7 @@ class TestWatchCouponSellSettlementOK:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_OK.value
@@ -1166,6 +1314,12 @@ class TestWatchCouponSellSettlementOK:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_OK). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1192,8 +1346,10 @@ class TestWatchCouponSellSettlementOK:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 1, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_OK.value
@@ -1217,6 +1373,7 @@ class TestWatchCouponSellSettlementOK:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 1, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_OK.value
@@ -1241,6 +1398,12 @@ class TestWatchCouponSellSettlementOK:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_OK). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -1258,11 +1421,17 @@ class TestWatchCouponSellSettlementOK:
 
         # Not Confirm Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1280,6 +1449,9 @@ class TestWatchCouponSellSettlementOK:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponBuySettlementNG:
@@ -1314,6 +1486,7 @@ class TestWatchCouponBuySettlementNG:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_NG.value
@@ -1337,6 +1510,12 @@ class TestWatchCouponBuySettlementNG:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_NG). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1363,8 +1542,10 @@ class TestWatchCouponBuySettlementNG:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_NG.value
@@ -1388,6 +1569,7 @@ class TestWatchCouponBuySettlementNG:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 1)
         assert _notification.notification_type == NotificationType.BUY_SETTLEMENT_NG.value
@@ -1412,6 +1594,12 @@ class TestWatchCouponBuySettlementNG:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.BUY_SETTLEMENT_NG). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -1429,11 +1617,17 @@ class TestWatchCouponBuySettlementNG:
 
         # Not Cancel Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1451,6 +1645,9 @@ class TestWatchCouponBuySettlementNG:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None
 
 
 class TestWatchCouponSellSettlementNG:
@@ -1485,6 +1682,7 @@ class TestWatchCouponSellSettlementNG:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_NG.value
@@ -1508,6 +1706,12 @@ class TestWatchCouponSellSettlementNG:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_NG). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
 
     # <Normal_2>
     # Multi event logs
@@ -1534,8 +1738,10 @@ class TestWatchCouponSellSettlementNG:
 
         # Assertion
         block_number = web3.eth.block_number
+
         _notification_list = session.query(Notification).order_by(Notification.created).all()
         assert len(_notification_list) == 2
+
         _notification = _notification_list[0]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number - 1, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_NG.value
@@ -1559,6 +1765,7 @@ class TestWatchCouponSellSettlementNG:
             "exchange_address": exchange_contract_address,
             "token_type": "IbetCoupon"
         }
+
         _notification = _notification_list[1]
         assert _notification.notification_id == "0x{:012x}{:06x}{:06x}{:02x}".format(block_number, 0, 0, 2)
         assert _notification.notification_type == NotificationType.SELL_SETTLEMENT_NG.value
@@ -1583,6 +1790,12 @@ class TestWatchCouponSellSettlementNG:
             "token_type": "IbetCoupon"
         }
 
+        _notification_block_number: NotificationBlockNumber = session.query(NotificationBlockNumber). \
+            filter(NotificationBlockNumber.notification_type == NotificationType.SELL_SETTLEMENT_NG). \
+            filter(NotificationBlockNumber.contract_address == exchange_contract_address). \
+            first()
+        assert _notification_block_number.latest_block_number == block_number
+
     # <Normal_3>
     # No event logs
     def test_normal_3(self, watcher_factory, session, shared_contract, mocked_company_list):
@@ -1600,11 +1813,17 @@ class TestWatchCouponSellSettlementNG:
 
         # Not Cancel Agreement
         # Run target process
+        web3.provider.make_request(RPCEndpoint("evm_mine"), [])
         watcher.loop()
 
         # Assertion
+        block_number = web3.eth.block_number
+
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number.latest_block_number == block_number
 
     ###########################################################################
     # Error Case
@@ -1622,3 +1841,6 @@ class TestWatchCouponSellSettlementNG:
         # Assertion
         _notification = session.query(Notification).order_by(Notification.created).first()
         assert _notification is None
+
+        _notification_block_number = session.query(NotificationBlockNumber).first()
+        assert _notification_block_number is None

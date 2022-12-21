@@ -18,4 +18,4 @@ SPDX-License-Identifier: Apache-2.0
 """
 from .contract import Contract
 
-contract_version = "v21.12.0"
+contract_version = "v22.12.0"

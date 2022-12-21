@@ -16,6 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from unittest import mock
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
 from app.model.db import Listing
 
 
@@ -24,7 +28,7 @@ class TestAdminTokenGET:
     apiurl_base = '/Admin/Tokens/'
 
     @staticmethod
-    def insert_listing_data(session, _token):
+    def insert_listing_data(session: Session, _token):
         token = Listing()
         token.token_address = _token["token_address"]
         token.is_public = _token["is_public"]
@@ -38,7 +42,7 @@ class TestAdminTokenGET:
     ###########################################################################
 
     # <Normal_1>
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -48,17 +52,21 @@ class TestAdminTokenGET:
         }
         self.insert_listing_data(session, token)
 
-        apiurl = self.apiurl_base + token["token_address"]
-        resp = client.simulate_get(apiurl)
+        apiurl = self.apiurl_base + str(token["token_address"])
+        resp = client.get(apiurl)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
-
-        resp_body = resp.json["data"]
-        assert resp_body["id"] == 1
-        del resp_body["id"]
-        del resp_body["created"]
-        assert resp_body == token
+        assert resp.json() == {
+            "meta": {
+                'code': 200,
+                'message': 'OK'
+            },
+            "data": {
+                "id": 1,
+                "created": mock.ANY,
+                **token
+            }
+        }
 
     ###########################################################################
     # Error
@@ -66,9 +74,9 @@ class TestAdminTokenGET:
 
     # <Error_1>
     # データなし
-    def test_error_1(self, client, session):
+    def test_error_1(self, client: TestClient, session: Session):
         apiurl = self.apiurl_base + "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b"
-        resp = client.simulate_get(apiurl)
+        resp = client.get(apiurl)
 
         assert resp.status_code == 404
-        assert resp.json["meta"] == {'code': 30, 'message': 'Data Not Exists'}
+        assert resp.json() == {"meta": {"code": 30, "message": "Data Not Exists"}}

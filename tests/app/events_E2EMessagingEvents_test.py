@@ -17,6 +17,8 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import json
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 from unittest.mock import ANY
 
 from web3 import Web3
@@ -41,14 +43,14 @@ class TestEventsE2EMessaging:
 
     # Normal_1
     # No event
-    def test_normal_1(self, client, session, shared_contract):
+    def test_normal_1(self, client: TestClient, session: Session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         latest_block_number = web3.eth.block_number
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number + 1,
@@ -59,15 +61,15 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == []
+        assert resp.json()["data"] == []
 
     # Normal_2_1
     # event = PublicKeyUpdated
-    def test_normal_2_1(self, client, session, shared_contract):
+    def test_normal_2_1(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -87,7 +89,7 @@ class TestEventsE2EMessaging:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -98,11 +100,11 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "PublicKeyUpdated",
                 "args": {
@@ -119,7 +121,7 @@ class TestEventsE2EMessaging:
 
     # Normal_2_2
     # event = Message
-    def test_normal_2_2(self, client, session, shared_contract):
+    def test_normal_2_2(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -140,7 +142,7 @@ class TestEventsE2EMessaging:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -151,11 +153,11 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "Message",
                 "args": {
@@ -173,7 +175,7 @@ class TestEventsE2EMessaging:
 
     # Normal_2_3
     # event = None
-    def test_normal_2_3(self, client, session, shared_contract):
+    def test_normal_2_3(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -193,7 +195,7 @@ class TestEventsE2EMessaging:
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -203,11 +205,11 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "PublicKeyUpdated",
                 "args": {
@@ -224,7 +226,7 @@ class TestEventsE2EMessaging:
 
     # Normal_3
     # Multiple events
-    def test_normal_3(self, client, session, shared_contract):
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         user2 = eth_account["user2"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
@@ -253,7 +255,7 @@ class TestEventsE2EMessaging:
         block_timestamp_2 = web3.eth.get_block(latest_block_number)["timestamp"]
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number - 1,
@@ -264,11 +266,11 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "Message",
                 "args": {
@@ -301,7 +303,7 @@ class TestEventsE2EMessaging:
     # event = PublicKeyUpdated
     # query with filter argument {"who": user1}
     # results 1 record.
-    def test_normal_4_1(self, client, session, shared_contract):
+    def test_normal_4_1(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -320,7 +322,7 @@ class TestEventsE2EMessaging:
         latest_block_number = web3.eth.block_number
         latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -334,11 +336,11 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == [
+        assert resp.json()["data"] == [
             {
                 "event": "PublicKeyUpdated",
                 "args": {
@@ -357,7 +359,7 @@ class TestEventsE2EMessaging:
     # event = PublicKeyUpdated
     # query with filter argument {"who": "0x0000000000000000000000000000000000000000"}
     # results no record.
-    def test_normal_4_2(self, client, session, shared_contract):
+    def test_normal_4_2(self, client: TestClient, session: Session, shared_contract):
         user1 = eth_account["user1"]["account_address"]
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
@@ -376,7 +378,7 @@ class TestEventsE2EMessaging:
         latest_block_number = web3.eth.block_number
         _latest_block_timestamp = web3.eth.get_block(latest_block_number)["timestamp"]
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -390,11 +392,11 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 200
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 200,
             "message": "OK"
         }
-        assert resp.json["data"] == []
+        assert resp.json()["data"] == []
 
     ###########################################################################
     # Error
@@ -403,42 +405,44 @@ class TestEventsE2EMessaging:
     # Error_1
     # InvalidParameterError
     # null value not allowed
-    def test_error_1(self, client, session, shared_contract):
+    def test_error_1(self, client: TestClient, session: Session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={}
         )
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            'code': 88,
-            'message': 'Invalid Parameter',
-            'description': {
-                'from_block': [
-                    "field 'from_block' cannot be coerced: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
-                    'null value not allowed'
-                ],
-                'to_block': [
-                    "field 'to_block' cannot be coerced: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
-                    'null value not allowed'
-                ]
-            }
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "from_block"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                },
+                {
+                    "loc": ["query", "to_block"],
+                    "msg": "field required",
+                    "type": "value_error.missing"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # Error_2
     # InvalidParameterError
     # from_block, to_block: min value
-    def test_error_2(self, client, session, shared_contract):
+    def test_error_2(self, client: TestClient, session: Session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": 0,
@@ -448,25 +452,35 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "from_block": ["min value is 1"],
-                "to_block": ["min value is 1"]
-            }
+            "description": [
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "from_block"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                },
+                {
+                    "ctx": {"limit_value": 1},
+                    "loc": ["query", "to_block"],
+                    "msg": "ensure this value is greater than or equal to 1",
+                    "type": "value_error.number.not_ge"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # Error_3_1
     # InvalidParameterError
     # event: unallowed value
-    def test_error_3_1(self, client, session, shared_contract):
+    def test_error_3_1(self, client: TestClient, session: Session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.block_number
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -477,22 +491,29 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
-            "description": {"event": ["unallowed value some_event"]}
+            "description": [
+                {
+                    "ctx": {"enum_values": ["PublicKeyUpdated", "Message"]},
+                    "loc": ["query", "event"],
+                    "msg": "value is not a valid enumeration member; permitted: 'PublicKeyUpdated', 'Message'",
+                    "type": "type_error.enum"
+                }
+            ],
+            "message": "Invalid Parameter"
         }
 
     # Error_3_2
     # InvalidParameterError
     # event: unallowed value in filter argument
-    def test_error_3_2(self, client, session, shared_contract):
+    def test_error_3_2(self, client: TestClient, session: Session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.block_number
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -506,55 +527,22 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "argument_filters": [{"who": ["must be of string type"]}]
-            }
-        }
-
-    # Error_3_3
-    # InvalidParameterError
-    # event: unknown field in filter argument
-    def test_error_3_3(self, client, session, shared_contract):
-        e2e_messaging_contract = shared_contract["E2EMessaging"]
-        config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
-        latest_block_number = web3.eth.block_number
-
-        # request target API
-        resp = client.simulate_get(
-            self.apiurl,
-            params={
-                "from_block": latest_block_number,
-                "to_block": latest_block_number,
-                "argument_filters": json.dumps({
-                    "some_key": "some_value"
-                }),
-                "event": "PublicKeyUpdated"
-            }
-        )
-
-        # assertion
-        assert resp.status_code == 400
-        assert resp.json["meta"] == {
-            "code": 88,
-            "message": "Invalid Parameter",
-            "description": {
-                "argument_filters": [{"some_key": ["unknown field"]}]
-            }
+            "description": "invalid argument_filters",
+            "message": "Invalid Parameter"
         }
 
     # Error_4
     # InvalidParameterError
     # to_block must be greater than or equal to the from_block
-    def test_error_4(self, client, session, shared_contract):
+    def test_error_4(self, client: TestClient, session: Session, shared_contract):
         e2e_messaging_contract = shared_contract["E2EMessaging"]
         config.E2E_MESSAGING_CONTRACT_ADDRESS = e2e_messaging_contract.address
         latest_block_number = web3.eth.block_number
 
         # request target API
-        resp = client.simulate_get(
+        resp = client.get(
             self.apiurl,
             params={
                 "from_block": latest_block_number,
@@ -564,8 +552,14 @@ class TestEventsE2EMessaging:
 
         # assertion
         assert resp.status_code == 400
-        assert resp.json["meta"] == {
+        assert resp.json()["meta"] == {
             "code": 88,
-            "message": "Invalid Parameter",
-            "description": "to_block must be greater than or equal to the from_block"
+            "description": [
+                {
+                    "loc": ["__root__"],
+                    "msg": "to_block must be greater than or equal to the from_block",
+                    "type": "value_error"
+                }
+            ],
+            "message": "Invalid Parameter"
         }

@@ -16,8 +16,21 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from pydantic import BaseModel
 
-class CORSMiddleware:
-    def process_request(self, req, resp):
-        resp.set_header('Access-Control-Allow-Origin', '*')
-        resp.set_header("Access-Control-Allow-Headers", '*')
+############################
+# COMMON
+############################
+
+
+############################
+# REQUEST
+############################
+
+
+############################
+# RESPONSE
+############################
+
+class ABI(BaseModel):
+    __root__: list[object]

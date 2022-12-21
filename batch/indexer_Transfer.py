@@ -185,7 +185,7 @@ class Processor:
         local_session = Session(autocommit=False, autoflush=True, bind=db_engine)
         latest_block = web3.eth.block_number
         try:
-            LOG.info("syncing to={}".format(latest_block))
+            LOG.info("Syncing to={}".format(latest_block))
 
             # Refresh listed tokens
             self.__get_token_list(local_session)

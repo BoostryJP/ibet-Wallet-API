@@ -17,349 +17,239 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from datetime import datetime
-
-from cerberus import Validator
 from eth_utils import to_checksum_address
+from fastapi import (
+    APIRouter,
+    Depends,
+    Path
+)
 from sqlalchemy import desc
-from web3 import Web3
+from sqlalchemy.orm import Session
 
 from app import log
-from app.api.common import BaseResource
+from app.database import db_session
 from app.errors import (
-    InvalidParameterError,
     DataNotExistsError
 )
 from app.model.db import Notification
+from app.model.schema import (
+    NotificationsResponse,
+    GenericSuccessResponse,
+    NotificationsQuery,
+    SuccessResponse,
+    NotificationReadRequest,
+    NotificationsCountResponse,
+    NotificationsCountQuery,
+    UpdateNotificationRequest,
+    NotificationUpdateResponse
+)
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
 
 
-class Notifications(BaseResource):
+router = APIRouter(
+    prefix="/Notifications",
+    tags=["Notifications"]
+)
+
+
+@router.get(
+    "",
+    summary="Notification List",
+    operation_id="GetNotifications",
+    response_model=GenericSuccessResponse[NotificationsResponse],
+    responses=get_routers_responses()
+)
+def list_all_notifications(
+    request_query: NotificationsQuery = Depends(),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Notifications/
     """
+    address = request_query.address
+    notification_type = request_query.notification_type
+    priority = request_query.priority
+    sort_item = request_query.sort_item
+    sort_order = request_query.sort_order  # default: asc
+    offset = request_query.offset
+    limit = request_query.limit
 
-    def on_get(self, req, res, **kwargs):
-        session = req.context["session"]
+    query = session.query(Notification)
+    total = query.count()
 
-        # Validate Request Data
-        request_json = self.validate_get(req)
+    # Search Filter
+    if address is not None:
+        query = query.filter(Notification.address == to_checksum_address(address))
+    if notification_type is not None:
+        query = query.filter(Notification.notification_type == notification_type)
+    if priority is not None:
+        query = query.filter(Notification.priority == priority)
+    count = query.count()
 
-        address = request_json["address"]
-        notification_type = request_json["notification_type"]
-        priority = request_json["priority"]
-        sort_item = "created" if request_json["sort_item"] is None else request_json["sort_item"]
-        sort_order = 0 if request_json["sort_order"] is None else request_json["sort_order"]  # default: asc
-        offset = request_json["offset"]
-        limit = request_json["limit"]
+    # Sort
+    sort_attr = getattr(Notification, sort_item, None)
+    if sort_order == 0:  # ASC
+        query = query.order_by(sort_attr)
+    else:  # DESC
+        query = query.order_by(desc(sort_attr))
+    if sort_item != "created":
+        # NOTE: Set secondary sort for consistent results
+        query = query.order_by(Notification.created)
 
-        query = session.query(Notification)
-        total = query.count()
+    # Pagination
+    if limit is not None:
+        query = query.limit(limit)
+    sort_id = 0
+    if offset is not None:
+        query = query.offset(offset)
+        sort_id = offset
 
-        # Search Filter
-        if address is not None:
-            query = query.filter(Notification.address == to_checksum_address(address))
-        if notification_type is not None:
-            query = query.filter(Notification.notification_type == notification_type)
-        if priority is not None:
-            query = query.filter(Notification.priority == priority)
-        count = query.count()
+    _notification_list = query.all()
 
-        # Sort
-        sort_attr = getattr(Notification, sort_item, None)
-        if sort_order == 0:  # ASC
-            query = query.order_by(sort_attr)
-        else:  # DESC
-            query = query.order_by(desc(sort_attr))
-        if sort_item != "created":
-            # NOTE: Set secondary sort for consistent results
-            query = query.order_by(Notification.created)
+    notifications = []
+    for _notification in _notification_list:
+        sort_id += 1
+        notification = _notification.json()
+        notification["sort_id"] = sort_id
+        notification["created"] = _notification.created.strftime("%Y/%m/%d %H:%M:%S")
+        notifications.append(notification)
 
-        # Pagination
-        if limit is not None:
-            query = query.limit(limit)
-        sort_id = 0
-        if offset is not None:
-            query = query.offset(offset)
-            sort_id = offset
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": offset,
+            "limit": limit,
+            "total": total
+        },
+        "notifications": notifications
+    }
 
-        _notification_list = query.all()
-
-        notifications = []
-        for _notification in _notification_list:
-            sort_id += 1
-            notification = _notification.json()
-            notification["sort_id"] = sort_id
-            notification["created"] = _notification.created.strftime("%Y/%m/%d %H:%M:%S")
-            notifications.append(notification)
-
-        data = {
-            "result_set": {
-                "count": count,
-                "offset": offset,
-                "limit": limit,
-                "total": total
-            },
-            "notifications": notifications
-        }
-        self.on_success(res, data)
-
-    @staticmethod
-    def validate_get(req):
-        request_json = {
-            "address": req.get_param("address"),
-            "notification_type": req.get_param("notification_type"),
-            "priority": req.get_param("priority"),
-            "sort_item": req.get_param("sort_item"),
-            "sort_order": req.get_param("sort_order"),
-            "offset": req.get_param("offset"),
-            "limit": req.get_param("limit"),
-        }
-
-        validator = Validator({
-            "address": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "empty": False,
-            },
-            "notification_type": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": [
-                    "NewOrder",
-                    "NewOrderCounterpart",
-                    "CancelOrder",
-                    "ForceCancelOrder",
-                    "CancelOrderCounterpart",
-                    "BuyAgreement",
-                    "BuySettlementOK",
-                    "BuySettlementNG",
-                    "SellAgreement",
-                    "SellSettlementOK",
-                    "SellSettlementNG",
-                    "Transfer",
-                    "ApplyForTransfer",
-                    "ApproveTransfer",
-                    "CancelTransfer"
-                ],
-            },
-            "priority": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "max": 2,
-                "required": False,
-                "nullable": True,
-            },
-            "sort_item": {
-                "type": "string",
-                "required": False,
-                "nullable": True,
-                "allowed": ["notification_type", "priority", "block_timestamp", "created"],
-            },
-            # NOTE: 0:asc, 1:desc
-            "sort_order": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "max": 1,
-                "required": False,
-                "nullable": True,
-            },
-            "offset": {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-            'limit': {
-                "type": "integer",
-                "coerce": int,
-                "min": 0,
-                "required": False,
-                "nullable": True,
-            },
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        if request_json["address"] is not None:
-            if not Web3.isAddress(request_json["address"]):
-                raise InvalidParameterError
-
-        return validator.document
+    return {
+        **SuccessResponse.use().dict(),
+        "data": data
+    }
 
 
-class NotificationsRead(BaseResource):
+@router.post(
+    "/Read",
+    summary="Mark all notifications as read",
+    operation_id="NotificationsRead",
+    response_model=SuccessResponse,
+    responses=get_routers_responses()
+)
+def read_all_notifications(
+    data: NotificationReadRequest,
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Notifications/Read/
     """
+    address = to_checksum_address(data.address)
 
-    def on_post(self, req, res, **kwargs):
-        session = req.context["session"]
+    # Update Data
+    session.query(Notification). \
+        filter(Notification.address == address). \
+        update({'is_read': data.is_read})
+    session.commit()
 
-        # Validate Request Data
-        request_json = self.validate(req)
-
-        address = to_checksum_address(request_json["address"])
-
-        # Update Data
-        session.query(Notification). \
-            filter(Notification.address == address). \
-            update({'is_read': request_json["is_read"]})
-        session.commit()
-
-        self.on_success(res)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context["data"]
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "address": {
-                "type": "string",
-                "required": True,
-                "empty": False,
-            },
-            "is_read": {
-                "type": "boolean",
-                "required": True,
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        if not Web3.isAddress(request_json["address"]):
-            raise InvalidParameterError
-
-        return validator.document
+    return SuccessResponse.use()
 
 
-class NotificationsCount(BaseResource):
+@router.get(
+    "/Count",
+    summary="Get the number of unread notifications",
+    operation_id="NotificationsCount",
+    response_model=GenericSuccessResponse[NotificationsCountResponse],
+    responses=get_routers_responses()
+)
+def count_notifications(
+    request_query: NotificationsCountQuery = Depends(),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Notifications/Count/
     """
+    # リクエストから情報を抽出
+    address = to_checksum_address(request_query.address)
 
-    def on_get(self, req, res, **kwargs):
-        session = req.context["session"]
+    # 未読数を取得
+    count = session.query(Notification). \
+        filter(Notification.address == address). \
+        filter(Notification.is_read == False). \
+        filter(Notification.is_deleted == False). \
+        count()
 
-        # 入力値チェック
-        request_json = self.validate(req)
-
-        # リクエストから情報を抽出
-        address = to_checksum_address(request_json["address"])
-
-        # 未読数を取得
-        count = session.query(Notification). \
-            filter(Notification.address == address). \
-            filter(Notification.is_read == False). \
-            filter(Notification.is_deleted == False). \
-            count()
-
-        self.on_success(res, {
+    return {
+        **SuccessResponse.use().dict(),
+        "data": {
             "unread_counts": count,
-        })
-
-    @staticmethod
-    def validate(req):
-        request_json = {
-            "address": req.get_param("address"),
         }
-
-        validator = Validator({
-            "address": {
-                "type": "string",
-                "required": True,
-                "empty": False,
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        if not Web3.isAddress(request_json["address"]):
-            raise InvalidParameterError
-
-        return validator.document
+    }
 
 
-class NotificationsId(BaseResource):
+@router.post(
+    "/{notification_id}",
+    summary="Update Notification",
+    operation_id="PostNotifications",
+    response_model=GenericSuccessResponse[NotificationUpdateResponse],
+    responses=get_routers_responses(DataNotExistsError)
+)
+def update_notification(
+    data: UpdateNotificationRequest,
+    notification_id: str = Path(description="Notification id"),
+    session: Session = Depends(db_session)
+):
     """
     Endpoint: /Notifications/{id}
     """
+    # Update Notification
+    notification: Notification = session.query(Notification). \
+        filter(Notification.notification_id == notification_id). \
+        first()
+    if notification is None:
+        raise DataNotExistsError("notification not found")
 
-    def on_post(self, req, res, id=None, **kwargs):
-        session = req.context["session"]
+    if data.is_read is not None:
+        notification.is_read = data.is_read
+    if data.is_flagged is not None:
+        notification.is_flagged = data.is_flagged
+    if data.is_deleted is not None:
+        notification.is_deleted = data.is_deleted
+        if data.is_deleted:
+            notification.deleted_at = datetime.utcnow()
+        else:
+            notification.deleted_at = None
 
-        # Validate Request Data
-        request_json = self.validate_post(req)
+    session.commit()
 
-        # Update Notification
-        notification = session.query(Notification). \
-            filter(Notification.notification_id == id). \
-            first()
-        if notification is None:
-            raise DataNotExistsError("notification not found")
+    return {
+        **SuccessResponse.use().dict(),
+        "data": notification.json()
+    }
 
-        if "is_read" in request_json:
-            notification.is_read = request_json["is_read"]
-        if "is_flagged" in request_json:
-            notification.is_flagged = request_json["is_flagged"]
-        if "is_deleted" in request_json:
-            notification.is_deleted = request_json["is_deleted"]
-            if request_json["is_deleted"]:
-                notification.deleted_at = datetime.utcnow()
-            else:
-                notification.deleted_at = None
 
-        session.commit()
+@router.delete(
+    "/{notification_id}",
+    summary="Delete Notification",
+    operation_id="DeleteNotification",
+    response_model=SuccessResponse,
+    responses=get_routers_responses(DataNotExistsError)
+)
+def delete_notification(
+    notification_id: str = Path(description="Notification id"),
+    session: Session = Depends(db_session)
+):
+    # Get Notification
+    _notification = session.query(Notification). \
+        filter(Notification.notification_id == notification_id). \
+        first()
+    if _notification is None:
+        raise DataNotExistsError("id: %s" % notification_id)
 
-        self.on_success(res, notification.json())
+    # Delete Notification
+    session.delete(_notification)
+    session.commit()
 
-    @staticmethod
-    def validate_post(req):
-        request_json = req.context["data"]
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "is_read": {
-                "type": "boolean",
-                "required": False,
-            },
-            "is_flagged": {
-                "type": "boolean",
-                "required": False,
-            },
-            "is_deleted": {
-                "type": "boolean",
-                "required": False,
-            },
-        })
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        return validator.document
-
-    def on_delete(self, req, res, id=None, **kwargs):
-        session = req.context["session"]
-
-        # Get Notification
-        _notification = session.query(Notification). \
-            filter(Notification.notification_id == id). \
-            first()
-        if _notification is None:
-            raise DataNotExistsError("id: %s" % id)
-
-        # Delete Notification
-        session.delete(_notification)
-        session.commit()
-
-        self.on_success(res)
+    return SuccessResponse.use()

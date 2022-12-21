@@ -318,24 +318,24 @@ class TestProcessor:
         token_list_contract = shared_contract["TokenList"]
         personal_info_contract = shared_contract["PersonalInfo"]
         token = self.issue_token_share(
-            self.issuer, config.ZERO_ADDRESS, personal_info_contract["address"], token_list_contract)
+            self.issuer,
+            config.ZERO_ADDRESS,
+            personal_info_contract["address"],
+            token_list_contract
+        )
         self.listing_token(token["address"], session)
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.authorizeLockAddress(
+
+        # Lock
+        token_contract.functions.lock(
             self.trader["account_address"],
-            True
+            3000,
+            "lock_message"
         ).transact({
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.wait_for_transaction_receipt(tx_hash)
-
-        # Lock
-        tx_hash = token_contract.functions.lock(self.trader["account_address"], 3000).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
-        )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -344,8 +344,10 @@ class TestProcessor:
         # Assertion
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+
         _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).\
-            filter(IDXPositionShareBlockNumber.token_address == token["address"]).first()
+            filter(IDXPositionShareBlockNumber.token_address == token["address"]).\
+            first()
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -370,27 +372,27 @@ class TestProcessor:
         self.listing_token(token["address"], session)
 
         token_contract = Contract.get_contract("IbetShare", token["address"])
-        tx_hash = token_contract.functions.authorizeLockAddress(
+
+        # Lock
+        token_contract.functions.lock(
             self.trader["account_address"],
-            True
+            3000,
+            "lock_message"
         ).transact({
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.wait_for_transaction_receipt(tx_hash)
-
-        # Lock
-        tx_hash = token_contract.functions.lock(self.trader["account_address"], 3000).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
-        )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Unlock
-        tx_hash = token_contract.functions.unlock(
-            self.issuer["account_address"], self.trader2["account_address"], 100).transact(
-            {'from': self.trader['account_address'], 'gas': 4000000}
+        token_contract.functions.unlock(
+            self.issuer["account_address"],
+            self.trader2["account_address"],
+            100,
+            "unlock_message"
+        ).transact({
+            'from': self.trader['account_address'],
+            'gas': 4000000}
         )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Run target process
         block_number = web3.eth.block_number
@@ -400,7 +402,9 @@ class TestProcessor:
         _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
         _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).\
-            filter(IDXPositionShareBlockNumber.token_address == token["address"]).first()
+            filter(IDXPositionShareBlockNumber.token_address == token["address"]).\
+            first()
+
         _position = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token["address"]
@@ -409,6 +413,7 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+
         _position = _position_list[1]
         assert _position.id == 2
         assert _position.token_address == token["address"]
@@ -1010,45 +1015,49 @@ class TestProcessor:
         personal_info_contract = shared_contract["PersonalInfo"]
 
         PersonalInfoUtils.register(
-            self.trader["account_address"], personal_info_contract["address"], self.issuer["account_address"])
+            self.trader["account_address"],
+            personal_info_contract["address"],
+            self.issuer["account_address"]
+        )
 
         token1 = self.issue_token_share(
-            self.issuer, exchange_contract["address"], personal_info_contract["address"], token_list_contract)
+            self.issuer,
+            exchange_contract["address"],
+            personal_info_contract["address"],
+            token_list_contract
+        )
         token2 = self.issue_token_share(
-            self.issuer, exchange_contract["address"], personal_info_contract["address"], token_list_contract)
+            self.issuer,
+            exchange_contract["address"],
+            personal_info_contract["address"],
+            token_list_contract
+        )
 
         # Token1 Listing
         self.listing_token(token1["address"], session)
 
         # Token1 Operation
-        share_transfer_to_exchange(
-            self.issuer, exchange_contract, token1, 10000)
+        share_transfer_to_exchange(self.issuer, exchange_contract, token1, 10000)
         make_buy(self.trader, exchange_contract, token1, 111, 1000)
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 55)
         cancel_agreement(agent, exchange_contract, get_latest_orderid(exchange_contract), get_latest_agreementid(exchange_contract, get_latest_orderid(exchange_contract)))
         make_buy(self.trader, exchange_contract, token1, 111, 1000)
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 66)
 
-        token_contract = Contract.get_contract(
-            "IbetStraightBond", token1["address"])
-        tx_hash = token_contract.functions.authorizeLockAddress(
+        token_contract = Contract.get_contract("IbetStraightBond", token1["address"])
+
+        # Lock
+        token_contract.functions.lock(
             self.trader["account_address"],
-            True
+            100,
+            "lock_message"
         ).transact({
             'from': self.issuer['account_address'],
             'gas': 4000000
         })
-        web3.eth.wait_for_transaction_receipt(tx_hash)
-
-        # Lock
-        tx_hash = token_contract.functions.lock(self.trader["account_address"], 100).transact(
-            {'from': self.issuer['account_address'], 'gas': 4000000}
-        )
-        web3.eth.wait_for_transaction_receipt(tx_hash)
 
         # Token2 Operation
-        share_transfer_to_exchange(
-            self.issuer, exchange_contract, token2, 10000)
+        share_transfer_to_exchange(self.issuer, exchange_contract, token2, 10000)
         make_buy(self.trader, exchange_contract, token2, 111, 1000)
         take_sell(self.issuer, exchange_contract, get_latest_orderid(exchange_contract), 55)
         cancel_agreement(agent, exchange_contract, get_latest_orderid(exchange_contract), get_latest_agreementid(exchange_contract, get_latest_orderid(exchange_contract)))
@@ -1060,11 +1069,12 @@ class TestProcessor:
         processor.sync_new_logs()
 
         # Assertion
-        _position_list = session.query(
-            IDXPosition).order_by(IDXPosition.created).all()
+        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 1
+
         _idx_position_share_block_number = session.query(IDXPositionShareBlockNumber).\
-            filter(IDXPositionShareBlockNumber.token_address == token1["address"]).first()
+            filter(IDXPositionShareBlockNumber.token_address == token1["address"]).\
+            first()
         _position: IDXPosition = _position_list[0]
         assert _position.id == 1
         assert _position.token_address == token1["address"]
@@ -1083,14 +1093,15 @@ class TestProcessor:
         processor.sync_new_logs()
 
         session.rollback()
-        _position_list = session.query(
-            IDXPosition).order_by(IDXPosition.created).all()
+        _position_list = session.query(IDXPosition).order_by(IDXPosition.created).all()
         assert len(_position_list) == 2
 
         _idx_position_share_block_number1 = session.query(IDXPositionShareBlockNumber).\
-            filter(IDXPositionShareBlockNumber.token_address == token1["address"]).first()
+            filter(IDXPositionShareBlockNumber.token_address == token1["address"]).\
+            first()
         _idx_position_share_block_number2 = session.query(IDXPositionShareBlockNumber).\
-            filter(IDXPositionShareBlockNumber.token_address == token2["address"]).first()
+            filter(IDXPositionShareBlockNumber.token_address == token2["address"]).\
+            first()
 
         _position1: IDXPosition = _position_list[0]
         assert _position1.id == 1
@@ -1334,6 +1345,5 @@ class TestProcessor:
             # Expect that sync_new_logs() raises ServiceUnavailable and handled in mainloop.
             main_func()
 
-        assert 1 == caplog.record_tuples.count((LOG.name, logging.DEBUG, "Initial sync is processed successfully"))
         assert 1 == caplog.record_tuples.count((LOG.name, logging.WARNING, "An external service was unavailable"))
         caplog.clear()

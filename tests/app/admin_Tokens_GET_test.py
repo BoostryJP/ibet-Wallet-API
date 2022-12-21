@@ -16,6 +16,9 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
 from app.model.db import Listing
 
 
@@ -39,7 +42,7 @@ class TestAdminTokensGET:
 
     # <Normal_1>
     # データ1件
-    def test_normal_1(self, client, session):
+    def test_normal_1(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -49,12 +52,12 @@ class TestAdminTokensGET:
         }
         self.insert_listing_data(session, token)
 
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
 
-        for i, resp_body in enumerate(reversed(resp.json["data"])):
+        for i, resp_body in enumerate(reversed(resp.json()["data"])):
             assert resp_body["id"] == i + 1
             del resp_body["created"]
             del resp_body["id"]
@@ -62,7 +65,7 @@ class TestAdminTokensGET:
 
     # <Normal_2>
     # データ複数件
-    def test_normal_2(self, client, session):
+    def test_normal_2(self, client: TestClient, session: Session):
         token = {
             "token_address": "0x9467ABe171e0da7D6aBDdA23Ba6e6Ec5BE0b4F7b",
             "is_public": True,
@@ -73,12 +76,12 @@ class TestAdminTokensGET:
         self.insert_listing_data(session, token)
         self.insert_listing_data(session, token)
 
-        resp = client.simulate_get(self.apiurl)
+        resp = client.get(self.apiurl)
 
         assert resp.status_code == 200
-        assert resp.json['meta'] == {'code': 200, 'message': 'OK'}
+        assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
 
-        for i, resp_body in enumerate(reversed(resp.json["data"])):
+        for i, resp_body in enumerate(reversed(resp.json()["data"])):
             assert resp_body["id"] == i + 1
             del resp_body["created"]
             del resp_body["id"]

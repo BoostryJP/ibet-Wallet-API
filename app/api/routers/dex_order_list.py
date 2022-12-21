@@ -16,13 +16,19 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from cerberus import Validator
 from sqlalchemy import or_
+from sqlalchemy.orm import Session
 from web3 import Web3
 from eth_utils import to_checksum_address
+from fastapi import (
+    APIRouter,
+    Depends,
+    Request,
+    Path
+)
 
 from app import log
-from app.api.common import BaseResource
+from app.database import db_session
 from app.errors import (
     InvalidParameterError,
     NotSupportedError
@@ -35,13 +41,26 @@ from app.model.db import (
     AgreementStatus
 )
 from app.model.blockchain import (
-    BondToken,
     MembershipToken,
-    CouponToken,
-    ShareToken
+    CouponToken
 )
+from app.model.schema import (
+    ListAllOrderListQuery,
+    GenericSuccessResponse,
+    ListAllOrderListResponse,
+    SuccessResponse,
+    TokenAddress,
+    RetrieveMembershipTokenResponse,
+    RetrieveCouponTokenResponse
+)
+from app.utils.docs_utils import get_routers_responses
 
 LOG = log.get_logger()
+
+router = APIRouter(
+    prefix="/DEX/OrderList",
+    tags=["IbetExchange"]
+)
 
 
 class BaseOrderList(object):
@@ -439,16 +458,184 @@ class BaseOrderList(object):
 
 
 # ------------------------------
+# 注文一覧・約定一覧（会員権）
+# ------------------------------
+class MembershipOrderList(BaseOrderList):
+    def __call__(
+        self,
+        req: Request,
+        request_query: ListAllOrderListQuery = Depends(),
+        session: Session = Depends(db_session)
+    ):
+        if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method="GET", url=req.url.path)
+
+        order_list = []
+        settlement_list = []
+        complete_list = []
+
+        for account_address in request_query.account_address_list:
+            try:
+                # order_list
+                order_list.extend(
+                    self.get_order_list(
+                        session=session,
+                        token_model=MembershipToken,
+                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address,
+                        include_canceled_items=request_query.include_canceled_items
+                    )
+                )
+                order_list = sorted(order_list, key=lambda x: x["sort_id"])
+
+                # settlement_list
+                settlement_list.extend(
+                    self.get_settlement_list(
+                        session=session,
+                        token_model=MembershipToken,
+                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
+                )
+                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
+
+                # complete_list
+                complete_list.extend(
+                    self.get_complete_list(
+                        session=session,
+                        token_model=MembershipToken,
+                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address,
+                        include_canceled_items=request_query.include_canceled_items
+                    )
+                )
+                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
+            except Exception as err:
+                LOG.exception(err)
+
+        response_json = {
+            "order_list": order_list,
+            "settlement_list": settlement_list,
+            "complete_list": complete_list
+        }
+        
+        return response_json
+
+
+@router.get(
+    "/Membership",
+    summary="Membership Order History (Bulk Get)",
+    operation_id="MembershipOrderList",
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveMembershipTokenResponse]],
+    responses=get_routers_responses(NotSupportedError)
+)
+def list_all_membership_order_history(
+    order_list_res: ListAllOrderListResponse[RetrieveMembershipTokenResponse] = Depends(MembershipOrderList())
+):
+    """
+    Endpoint: /DEX/OrderList/Membership
+    """
+    return {
+        **SuccessResponse.use().dict(),
+        "data": order_list_res
+    }
+
+
+# ------------------------------
+# 注文一覧・約定一覧（クーポン）
+# ------------------------------
+class CouponOrderList(BaseOrderList):
+    def __call__(
+        self,
+        req: Request,
+        request_query: ListAllOrderListQuery = Depends(),
+        session: Session = Depends(db_session)
+    ):
+        if config.COUPON_TOKEN_ENABLED is False or config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS is None:
+            raise NotSupportedError(method="GET", url=req.url.path)
+
+        order_list = []
+        settlement_list = []
+        complete_list = []
+
+        for account_address in request_query.account_address_list:
+            try:
+                # order_list
+                order_list.extend(
+                    self.get_order_list(
+                        session=session,
+                        token_model=CouponToken,
+                        exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address,
+                        include_canceled_items=request_query.include_canceled_items
+                    )
+                )
+                order_list = sorted(order_list, key=lambda x: x["sort_id"])
+
+                # settlement_list
+                settlement_list.extend(
+                    self.get_settlement_list(
+                        session=session,
+                        token_model=CouponToken,
+                        exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address
+                    )
+                )
+                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
+
+                # complete_list
+                complete_list.extend(
+                    self.get_complete_list(
+                        session=session,
+                        token_model=CouponToken,
+                        exchange_contract_address=config.IBET_COUPON_EXCHANGE_CONTRACT_ADDRESS,
+                        account_address=account_address,
+                        include_canceled_items=request_query.include_canceled_items
+                    )
+                )
+                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
+            except Exception as err:
+                LOG.exception(err)
+
+        response_json = {
+            "order_list": order_list,
+            "settlement_list": settlement_list,
+            "complete_list": complete_list
+        }
+        
+        return response_json
+
+
+@router.get(
+    "/Coupon",
+    summary="Coupon Order History (Bulk Get)",
+    operation_id="CouponOrderList",
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[RetrieveCouponTokenResponse]],
+    responses=get_routers_responses(NotSupportedError)
+)
+def list_all_coupon_order_history(
+    order_list_res: ListAllOrderListResponse[RetrieveCouponTokenResponse] = Depends(CouponOrderList())
+):
+    """
+    Endpoint: /DEX/OrderList/Coupon
+    """
+    return {
+        **SuccessResponse.use().dict(),
+        "data": order_list_res
+    }
+
+
+# ------------------------------
 # 注文一覧・約定一覧
 # ------------------------------
-class OrderList(BaseOrderList, BaseResource):
-    """
-    Endpoint: /DEX/OrderList/{token_address}
-    """
-
-    def on_post(self, req, res, token_address: str = None, **kwargs):
-        session = req.context["session"]
-
+class OrderList(BaseOrderList):
+    def __call__(
+        self,
+        req: Request,
+        request_query: ListAllOrderListQuery = Depends(),
+        token_address: str = Path(),
+        session: Session = Depends(db_session)
+    ):
         # path validation
         try:
             token_address = to_checksum_address(token_address)
@@ -459,13 +646,10 @@ class OrderList(BaseOrderList, BaseResource):
             description = "invalid token_address"
             raise InvalidParameterError(description=description)
 
-        # input validate
-        request_json = self.validate(req)
-
         order_list = []
         settlement_list = []
         complete_list = []
-        for account_address in request_json["account_address_list"]:
+        for account_address in request_query.account_address_list:
             try:
                 # order_list
                 order_list.extend(
@@ -473,7 +657,7 @@ class OrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_address=token_address,
                         account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 order_list = sorted(order_list, key=lambda x: x["sort_id"])
@@ -494,7 +678,7 @@ class OrderList(BaseOrderList, BaseResource):
                         session=session,
                         token_address=token_address,
                         account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
+                        include_canceled_items=request_query.include_canceled_items
                     )
                 )
                 complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
@@ -507,419 +691,23 @@ class OrderList(BaseOrderList, BaseResource):
             "complete_list": complete_list
         }
 
-        self.on_success(res, response_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context["data"]
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "account_address_list": {
-                "type": "list",
-                "schema": {"type": "string"},
-                "empty": False,
-                "required": True
-            },
-            "include_canceled_items": {
-                "type": "boolean",
-                "required": False
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        for account_address in request_json["account_address_list"]:
-            if not Web3.isAddress(account_address):
-                raise InvalidParameterError("invalid account address")
-
-        return request_json
+        return response_json
 
 
-# ------------------------------
-# 注文一覧・約定一覧（普通社債）
-# ------------------------------
-class StraightBondOrderList(BaseOrderList, BaseResource):
+@router.get(
+    "/{token_address}",
+    summary="Order History filtered by token (Bulk Get)",
+    operation_id="IbetExchange",
+    response_model=GenericSuccessResponse[ListAllOrderListResponse[TokenAddress]],
+    responses=get_routers_responses(NotSupportedError, InvalidParameterError)
+)
+def list_all_order_history_by_token_address(
+    order_list_res: ListAllOrderListResponse[TokenAddress] = Depends(OrderList())
+):
     """
-    Endpoint: /DEX/OrderList/StraightBond
+    Endpoint: /DEX/OrderList/{token_address}
     """
-
-    def on_post(self, req, res, **kwargs):
-        session = req.context["session"]
-
-        if config.BOND_TOKEN_ENABLED is False or config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.path)
-
-        # validate
-        request_json = self.validate(req)
-
-        order_list = []
-        settlement_list = []
-        complete_list = []
-        for account_address in request_json["account_address_list"]:
-            try:
-                # order_list
-                order_list.extend(
-                    self.get_order_list(
-                        session=session,
-                        token_model=BondToken,
-                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                order_list = sorted(order_list, key=lambda x: x["sort_id"])
-
-                # settlement_list
-                settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
-                        token_model=BondToken,
-                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
-                    )
-                )
-                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
-
-                # complete_list
-                complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
-                        token_model=BondToken,
-                        exchange_contract_address=config.IBET_SB_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
-            except Exception as err:
-                LOG.exception(err)
-
-        response_json = {
-            "order_list": order_list,
-            "settlement_list": settlement_list,
-            "complete_list": complete_list
-        }
-
-        self.on_success(res, response_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context["data"]
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "account_address_list": {
-                "type": "list",
-                "schema": {"type": "string"},
-                "empty": False,
-                "required": True
-            },
-            "include_canceled_items": {
-                "type": "boolean",
-                "required": False
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        for account_address in request_json["account_address_list"]:
-            if not Web3.isAddress(account_address):
-                raise InvalidParameterError
-
-        return request_json
-
-
-# ------------------------------
-# 注文一覧・約定一覧（会員権）
-# ------------------------------
-class MembershipOrderList(BaseOrderList, BaseResource):
-    """
-    Endpoint: /DEX/OrderList/Membership
-    """
-
-    def on_post(self, req, res, **kwargs):
-        session = req.context["session"]
-
-        if config.MEMBERSHIP_TOKEN_ENABLED is False or config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.path)
-
-        # validate
-        request_json = self.validate(req)
-
-        order_list = []
-        settlement_list = []
-        complete_list = []
-
-        for account_address in request_json["account_address_list"]:
-            try:
-                # order_list
-                order_list.extend(
-                    self.get_order_list(
-                        session=session,
-                        token_model=MembershipToken,
-                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                order_list = sorted(order_list, key=lambda x: x["sort_id"])
-
-                # settlement_list
-                settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
-                        token_model=MembershipToken,
-                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
-                    )
-                )
-                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
-
-                # complete_list
-                complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
-                        token_model=MembershipToken,
-                        exchange_contract_address=config.IBET_MEMBERSHIP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
-            except Exception as err:
-                LOG.exception(err)
-
-        response_json = {
-            "order_list": order_list,
-            "settlement_list": settlement_list,
-            "complete_list": complete_list
-        }
-
-        self.on_success(res, response_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context["data"]
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "account_address_list": {
-                "type": "list",
-                "schema": {"type": "string"},
-                "empty": False,
-                "required": True
-            },
-            "include_canceled_items": {
-                "type": "boolean",
-                "required": False
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        for account_address in request_json["account_address_list"]:
-            if not Web3.isAddress(account_address):
-                raise InvalidParameterError
-
-        return request_json
-
-
-# ------------------------------
-# 注文一覧・約定一覧（クーポン）
-# ------------------------------
-class CouponOrderList(BaseOrderList, BaseResource):
-    """
-    Endpoint: /DEX/OrderList/Coupon
-    """
-
-    def on_post(self, req, res, **kwargs):
-        session = req.context["session"]
-
-        if config.COUPON_TOKEN_ENABLED is False or config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.path)
-
-        # validate
-        request_json = self.validate(req)
-
-        order_list = []
-        settlement_list = []
-        complete_list = []
-
-        for account_address in request_json["account_address_list"]:
-            try:
-                # order_list
-                order_list.extend(
-                    self.get_order_list(
-                        session=session,
-                        token_model=CouponToken,
-                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                order_list = sorted(order_list, key=lambda x: x["sort_id"])
-
-                # settlement_list
-                settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
-                        token_model=CouponToken,
-                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
-                    )
-                )
-                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
-
-                # complete_list
-                complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
-                        token_model=CouponToken,
-                        exchange_contract_address=config.IBET_CP_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
-            except Exception as err:
-                LOG.exception(err)
-
-        response_json = {
-            "order_list": order_list,
-            "settlement_list": settlement_list,
-            "complete_list": complete_list
-        }
-
-        self.on_success(res, response_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context["data"]
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "account_address_list": {
-                "type": "list",
-                "schema": {"type": "string"},
-                "empty": False,
-                "required": True
-            },
-            "include_canceled_items": {
-                "type": "boolean",
-                "required": False
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        for account_address in request_json["account_address_list"]:
-            if not Web3.isAddress(account_address):
-                raise InvalidParameterError
-
-        return request_json
-
-
-# ------------------------------
-# 注文一覧・約定一覧（株式）
-# ------------------------------
-class ShareOrderList(BaseOrderList, BaseResource):
-    """
-    Endpoint: /DEX/OrderList/Share
-    """
-
-    def on_post(self, req, res, **kwargs):
-        session = req.context["session"]
-
-        if config.SHARE_TOKEN_ENABLED is False or config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS is None:
-            raise NotSupportedError(method="POST", url=req.path)
-
-        # validate
-        request_json = self.validate(req)
-
-        order_list = []
-        settlement_list = []
-        complete_list = []
-
-        for account_address in request_json["account_address_list"]:
-            try:
-                # order_list
-                order_list.extend(
-                    self.get_order_list(
-                        session=session,
-                        token_model=ShareToken,
-                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                order_list = sorted(order_list, key=lambda x: x["sort_id"])
-
-                # settlement_list
-                settlement_list.extend(
-                    self.get_settlement_list(
-                        session=session,
-                        token_model=ShareToken,
-                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address
-                    )
-                )
-                settlement_list = sorted(settlement_list, key=lambda x: x["sort_id"])
-
-                # complete_list
-                complete_list.extend(
-                    self.get_complete_list(
-                        session=session,
-                        token_model=ShareToken,
-                        exchange_contract_address=config.IBET_SHARE_EXCHANGE_CONTRACT_ADDRESS,
-                        account_address=account_address,
-                        include_canceled_items=request_json.get("include_canceled_items")
-                    )
-                )
-                complete_list = sorted(complete_list, key=lambda x: x["sort_id"])
-            except Exception as err:
-                LOG.exception(err)
-
-        response_json = {
-            "order_list": order_list,
-            "settlement_list": settlement_list,
-            "complete_list": complete_list
-        }
-
-        self.on_success(res, response_json)
-
-    @staticmethod
-    def validate(req):
-        request_json = req.context["data"]
-        if request_json is None:
-            raise InvalidParameterError
-
-        validator = Validator({
-            "account_address_list": {
-                "type": "list",
-                "schema": {"type": "string"},
-                "empty": False,
-                "required": True
-            },
-            "include_canceled_items": {
-                "type": "boolean",
-                "required": False
-            }
-        })
-
-        if not validator.validate(request_json):
-            raise InvalidParameterError(validator.errors)
-
-        for account_address in request_json["account_address_list"]:
-            if not Web3.isAddress(account_address):
-                raise InvalidParameterError
-
-        return request_json
+    return {
+        **SuccessResponse.use().dict(),
+        "data": order_list_res
+    }
