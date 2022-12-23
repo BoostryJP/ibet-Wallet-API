@@ -135,7 +135,7 @@ def send_raw_transaction(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].hex())
         except Exception as err:
             LOG.warning(f"RLP decoding failed: {err}")
             continue
@@ -169,7 +169,7 @@ def send_raw_transaction(
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({
@@ -248,7 +248,7 @@ def send_raw_transaction(
                 })
                 LOG.error(f"get sender address from signed transaction failed: {err}")
                 continue
-            nonce = int("0x0" if raw_tx[0].hex() == "" else raw_tx[0].hex(), 16)
+            nonce = int("0x0" if raw_tx[0].hex() == "0x" else raw_tx[0].hex(), 16)
             txpool_inspect = web3.geth.txpool.inspect()
             if from_address in txpool_inspect.queued:
                 if str(nonce) in txpool_inspect.queued[from_address]:
@@ -313,7 +313,7 @@ def send_raw_transaction_no_wait(
     for raw_tx_hex in raw_tx_hex_list:
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].hex())
         except Exception as err:
             LOG.warning(f"RLP decoding failed: {err}")
             continue
@@ -348,7 +348,7 @@ def send_raw_transaction_no_wait(
         # Get the contract address of the execution target.
         try:
             raw_tx = decode(HexBytes(raw_tx_hex))
-            to_contract_address = to_checksum_address("0x" + raw_tx[3].hex())
+            to_contract_address = to_checksum_address(raw_tx[3].hex())
             LOG.debug(raw_tx)
         except Exception as err:
             result.append({"id": i + 1, "status": 0})
