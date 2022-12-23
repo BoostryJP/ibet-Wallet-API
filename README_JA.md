@@ -73,6 +73,11 @@ API サーバーの起動（停止）
 $ ./bin/run_server.sh start(stop)
 ```
 
+ブラウザで、[http://0.0.0.0:5000](http://0.0.0.0:5000) を開くと、以下のJSONのレスポンスを確認できるはずです。
+```json
+{"server":"ibet-Wallet-API"}
+```
+
 また、バッチプロセスは以下のように起動します。
 ```bash
 $ ./bin/run_indexer.sh
