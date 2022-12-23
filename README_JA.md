@@ -79,6 +79,26 @@ $ ./bin/run_indexer.sh
 $ ./bin/run_processor_notification.sh (*optional)
 ```
 
+### API 仕様書
+
+#### Swagger UI
+
+サーバーを起動した状態で、[http://0.0.0.0:5000/docs](http://0.0.0.0:5000/docs) を開いてください。
+
+Swagger UI 形式のドキュメントを参照することができるはずです。
+
+![swagger](https://user-images.githubusercontent.com/963333/209300544-00afcea0-3deb-43a7-9b07-c77650459f5e.png)
+
+
+#### ReDoc
+
+同様に、[http://0.0.0.0:5000/redoc](http://0.0.0.0:5000/redoc) を開いてください。
+
+ReDoc 形式のドキュメントを参照することができるはずです。
+
+![redoc](https://user-images.githubusercontent.com/963333/209300694-2e8565e7-24ce-47ee-82a2-68d7cae92afb.png)
+
+
 ## テストの実行
 
 テストで利用するパッケージをインストールします。
