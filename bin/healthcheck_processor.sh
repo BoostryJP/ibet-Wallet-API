@@ -37,6 +37,8 @@ if [ "${EXCHANGE_NOTIFICATION_ENABLED}" = 1 ]; then
   fi
 fi
 
+PROC_LIST="${PROC_LIST} batch/processor_Block_Sync_Status.py"
+
 for i in ${PROC_LIST}; do
   # shellcheck disable=SC2009
   ps -ef | grep -v grep | grep "$i"

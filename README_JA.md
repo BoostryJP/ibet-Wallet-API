@@ -81,7 +81,7 @@ $ ./bin/run_server.sh start(stop)
 また、バッチプロセスは以下のように起動します。
 ```bash
 $ ./bin/run_indexer.sh
-$ ./bin/run_processor_notification.sh (*optional)
+$ ./bin/run_processor.sh
 ```
 
 ### API 仕様書

@@ -27,11 +27,11 @@ if [ "${RUN_MODE}" == "server" ]; then
   ./bin/run_server.sh start
 elif [ "${RUN_MODE}" == "indexer" ]; then
   ./bin/run_indexer.sh
-elif [ "${RUN_MODE}" == "processor_notification" ]; then
-  ./bin/run_processor_notification.sh
+elif [ "${RUN_MODE}" == "processor" ]; then
+  ./bin/run_processor.sh
 elif [ "${RUN_MODE}" == "batch" ]; then
   ./bin/run_indexer.sh &
-  ./bin/run_processor_notification.sh &
+  ./bin/run_processor.sh &
   tail -f /dev/null
 else
   echo "RUN_MODE is invalid value." >&2

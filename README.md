@@ -83,7 +83,7 @@ In addition, batch processes can be started with the following commands.
 
 ```bash
 $ ./bin/run_indexer.sh
-$ ./bin/run_processor_notification.sh (*optional)
+$ ./bin/run_processor.sh
 ```
 
 ### API docs
