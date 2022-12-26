@@ -90,8 +90,8 @@ def list_all_lock(
     else:  # DESC
         query = query.order_by(desc(sort_attr))
 
+    # NOTE: Set secondary sort for consistent results
     if sort_item != "token_address":
-        # NOTE: Set secondary sort for consistent results
         query = query.order_by(IDXLocked.token_address)
     else:
         query = query.order_by(IDXLocked.created)

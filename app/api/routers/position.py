@@ -338,10 +338,10 @@ class BasePosition:
         token = result[3]
 
         return {
-            "balance": _position.balance if _position else 0,
-            "pending_transfer": _position.pending_transfer if _position else 0,
-            "exchange_balance":_position.exchange_balance if _position else 0,
-            "exchange_commitment": _position.exchange_commitment if _position else 0,
+            "balance": _position.balance if _position and _position.balance else 0,
+            "pending_transfer": _position.pending_transfer if _position and _position.pending_transfer else 0,
+            "exchange_balance":_position.exchange_balance if _position and _position.exchange_balance else 0,
+            "exchange_commitment": _position.exchange_commitment if _position and _position.exchange_commitment else 0,
             "locked": _locked or 0,
             "token": self.token_model.from_model(token).__dict__
         }

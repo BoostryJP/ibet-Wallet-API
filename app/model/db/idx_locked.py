@@ -36,7 +36,7 @@ class IDXLocked(Base):
     # Account Address
     account_address = Column(String(42), primary_key=True)
     # Locked Amount
-    value = Column(BigInteger)
+    value = Column(BigInteger, nullable=False)
 
     FIELDS = {
         "token_address": str,

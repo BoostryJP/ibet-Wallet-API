@@ -31,7 +31,7 @@ table = Table(
     Column("token_address", String(42), primary_key=True),
     Column("lock_address", String(42), primary_key=True),
     Column("account_address", String(42), primary_key=True),
-    Column("value", BigInteger),
+    Column("value", BigInteger, nullable=False),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )
