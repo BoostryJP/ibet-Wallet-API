@@ -2855,6 +2855,15 @@ paths:
             type: string
           name: token_address
           in: path
+        - description: enable using indexed position data
+          required: false
+          schema:
+            title: Enable Index
+            type: boolean
+            description: enable using indexed position data
+            default: false
+          name: enable_index
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -2900,6 +2909,15 @@ paths:
             type: string
           name: token_address
           in: path
+        - description: enable using indexed position data
+          required: false
+          schema:
+            title: Enable Index
+            type: boolean
+            description: enable using indexed position data
+            default: false
+          name: enable_index
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -2945,6 +2963,15 @@ paths:
             type: string
           name: token_address
           in: path
+        - description: enable using indexed position data
+          required: false
+          schema:
+            title: Enable Index
+            type: boolean
+            description: enable using indexed position data
+            default: false
+          name: enable_index
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -2990,6 +3017,15 @@ paths:
             type: string
           name: token_address
           in: path
+        - description: enable using indexed position data
+          required: false
+          schema:
+            title: Enable Index
+            type: boolean
+            description: enable using indexed position data
+            default: false
+          name: enable_index
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -3894,6 +3930,99 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
+  /Locked:
+    get:
+      tags:
+        - Locked
+      summary: Locked List
+      description: 'Endpoint: /Locked'
+      operationId: ListAllLocked
+      parameters:
+        - description: lock address
+          required: false
+          schema:
+            title: Lock Address
+            type: string
+            description: lock address
+          name: lock_address
+          in: query
+        - description: account address
+          required: false
+          schema:
+            title: Account Address
+            type: string
+            description: account address
+          name: account_address
+          in: query
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: sort item
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ListAllLockedSortItem'
+            description: sort item
+            default: token_address
+          name: sort_item
+          in: query
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
+            default: 0
+          name: sort_order
+          in: query
+        - description: list of token address (**this affects total number**)
+          required: false
+          schema:
+            title: Token Address List
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            default: []
+          name: token_address_list
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListLockedResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Listalllocked
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
 components:
   schemas:
     ABI:
@@ -4846,6 +4975,22 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllTicksResponse'
+    GenericSuccessResponse_ListLockedResponse_:
+      title: GenericSuccessResponse[ListLockedResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListLockedResponse'
     GenericSuccessResponse_MembershipPositionWithDetail_:
       title: GenericSuccessResponse[MembershipPositionWithDetail]
       required:
@@ -5578,6 +5723,15 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/LastPrice'
+    ListAllLockedSortItem:
+      title: ListAllLockedSortItem
+      enum:
+        - token_address
+        - lock_address
+        - account_address
+        - value
+      type: string
+      description: An enumeration.
     ListAllMembershipTokenAddressesResponse:
       title: ListAllMembershipTokenAddressesResponse
       required:
@@ -5695,6 +5849,41 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Ticks'
+    ListLockedResponse:
+      title: ListLockedResponse
+      required:
+        - result_set
+        - locked_list
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        locked_list:
+          title: Locked List
+          type: array
+          items:
+            $ref: '#/components/schemas/Locked'
+    Locked:
+      title: Locked
+      required:
+        - token_address
+        - lock_address
+        - account_address
+        - value
+      type: object
+      properties:
+        token_address:
+          title: Token Address
+          type: string
+        lock_address:
+          title: Lock Address
+          type: string
+        account_address:
+          title: Account Address
+          type: string
+        value:
+          title: Value
+          type: integer
     MembershipImage:
       title: MembershipImage
       required:
@@ -6833,6 +7022,10 @@ components:
         exchange_commitment:
           title: Exchange Commitment
           type: integer
+        locked:
+          title: Locked
+          type: integer
+          description: set when enable_index=true
         token_address:
           title: Token Address
           type: string
@@ -6859,6 +7052,10 @@ components:
         exchange_commitment:
           title: Exchange Commitment
           type: integer
+        locked:
+          title: Locked
+          type: integer
+          description: set when enable_index=true
         token:
           title: Token
           anyOf:
@@ -7570,3 +7767,5 @@ tags:
     description: Contract event logs
   - name: IbetExchange
     description: Trade related features on IbetExchange (Only for utility tokens)
+  - name: Locked
+    description: Token locked amount

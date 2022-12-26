@@ -44,6 +44,7 @@ from .idx_block_data import (
     IDXBlockDataBlockNumber
 )
 from .idx_consume_coupon import IDXConsumeCoupon
+from .idx_locked import IDXLocked
 from .idx_position import (
     IDXPosition,
     IDXPositionBondBlockNumber,

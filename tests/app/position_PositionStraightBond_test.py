@@ -27,14 +27,18 @@ from app import config
 from app.contracts import Contract
 from app.model.db import (
     Listing,
-    IDXBondToken, IDXPosition
+    IDXBondToken,
+    IDXPosition,
+    IDXLocked
 )
 from tests.account_config import eth_account
 from tests.utils import PersonalInfoUtils
 from tests.contract_modules import (
     issue_bond_token,
     register_bond_list,
-    bond_transfer_to_exchange
+    bond_transfer_to_exchange,
+    bond_lock,
+    transfer_bond_token
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -219,6 +223,21 @@ class TestPositionStraightBond:
         session.commit()
 
     @staticmethod
+    def create_idx_locked(session: Session,
+                          token_address: str,
+                          lock_address: str,
+                          account_address: str,
+                          value: int):
+        # Issue token
+        idx_locked = IDXLocked()
+        idx_locked.token_address = token_address
+        idx_locked.lock_address = lock_address
+        idx_locked.account_address = account_address
+        idx_locked.value = value
+        session.add(idx_locked)
+        session.commit()
+
+    @staticmethod
     def list_token(token_address, session):
         listed_token = Listing()
         listed_token.token_address = token_address
@@ -297,6 +316,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_2["address"],
@@ -304,6 +324,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_3["address"],
@@ -311,6 +332,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                    "locked": None
                 },
                 {
                     "token_address": token_4["address"],
@@ -318,6 +340,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 1000000,
+                    "locked": None
                 },
             ]
         }
@@ -394,6 +417,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_3["address"],
@@ -401,6 +425,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                    "locked": None
                 },
             ]
         }
@@ -479,6 +504,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
             ]
         }
@@ -582,6 +608,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_2["address"],
@@ -589,6 +616,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_3["address"],
@@ -596,6 +624,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                    "locked": 0
                 },
                 {
                     "token_address": token_4["address"],
@@ -603,6 +632,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 1000000,
+                    "locked": 0
                 },
             ]
         }
@@ -710,6 +740,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_3["address"],
@@ -717,6 +748,7 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                    "locked": 0
                 },
             ]
         }
@@ -799,6 +831,82 @@ class TestPositionStraightBond:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
+                },
+            ]
+        }
+
+    # <Normal_7>
+    # locked amount
+    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Prepare data
+        token_1 = self.create_balance_data(
+            self.account_1,
+            {"address": config.ZERO_ADDRESS},
+            personal_info_contract,
+            token_list_contract
+        )
+
+        bond_lock(
+            invoker=self.account_1,
+            token=token_1,
+            lock_address=self.account_2["account_address"],
+            amount=1000
+        )
+        bond_lock(
+            invoker=self.account_1,
+            token=token_1,
+            lock_address=self.issuer["account_address"],
+            amount=2000
+        )
+        transfer_bond_token(
+            invoker=self.account_1,
+            to=self.account_2,
+            token=token_1,
+            amount=5000
+        )
+        bond_lock(
+            invoker=self.account_2,
+            token=token_1,
+            lock_address=self.issuer["account_address"],
+            amount=5000
+        )
+
+        self.create_idx_position(session, token_1["address"], self.account_1["account_address"], balance=1000000-3000)
+        self.create_idx_locked(session, token_1["address"], self.account_2["account_address"], self.account_1["account_address"], 1000)
+        self.create_idx_locked(session, token_1["address"], self.issuer["account_address"], self.account_1["account_address"], 2000)
+        self.create_idx_locked(session, token_1["address"], self.issuer["account_address"], self.account_2["account_address"], 5000)
+        self.list_token(token_1["address"], session)
+        self.create_idx_token(session, token_1["address"], personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            # Request target API
+            resp = client.get(
+                self.apiurl.format(account_address=self.issuer["account_address"]),
+                params={
+                    "enable_index": "true"
+                }
+            )
+
+        assert resp.status_code == 200
+        assert resp.json()["data"] == {
+            "result_set": {
+                "count": 1,
+                "offset": None,
+                "limit": None,
+                "total": 1,
+            },
+            "positions": [
+                {
+                    "token_address": token_1["address"],
+                    "balance": 0,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                    "locked": 7000
                 },
             ]
         }

@@ -41,7 +41,8 @@ from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
     IDXPosition,
-    IDXPositionBondBlockNumber
+    IDXPositionBondBlockNumber,
+    IDXLocked
 )
 from app.utils.web3_utils import Web3Wrapper
 import log
@@ -344,6 +345,27 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
+                lock_map: dict[str, dict[str, True]] = {}
+                for event in events:
+                    args = event["args"]
+                    account_address = args.get("accountAddress", "")
+                    lock_address = args.get("lockAddress", "")
+                    if lock_address not in lock_map:
+                        lock_map[lock_address] = {}
+                    lock_map[lock_address][account_address] = True
+                for lock_address in lock_map:
+                    for account_address in lock_map[lock_address]:
+                        value = self.__get_account_locked_token(token, lock_address, account_address)
+                        self.__sink_on_locked(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            lock_address=lock_address,
+                            account_address=account_address,
+                            value=value
+                        )
+            except Exception:
+                pass
+            try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["accountAddress"]
@@ -379,6 +401,27 @@ class Processor:
                 )
             except ABIEventFunctionNotFound:
                 events = []
+            try:
+                lock_map: dict[str, dict[str, True]] = {}
+                for event in events:
+                    args = event["args"]
+                    account_address = args.get("accountAddress", "")
+                    lock_address = args.get("lockAddress", "")
+                    if lock_address not in lock_map:
+                        lock_map[lock_address] = {}
+                    lock_map[lock_address][account_address] = True
+                for lock_address in lock_map:
+                    for account_address in lock_map[lock_address]:
+                        value = self.__get_account_locked_token(token, lock_address, account_address)
+                        self.__sink_on_locked(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            lock_address=lock_address,
+                            account_address=account_address,
+                            value=value
+                        )
+            except Exception:
+                pass
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
@@ -942,6 +985,17 @@ class Processor:
         return balance, pending_transfer
 
     @staticmethod
+    def __get_account_locked_token(token_contract, lock_address: str, account_address: str):
+        """Get locked on token"""
+        value = Contract.call_function(
+            contract=token_contract,
+            function_name="lockedOf",
+            args=(lock_address, account_address,),
+            default_returns=0
+        )
+        return value
+
+    @staticmethod
     def __get_account_balance_exchange(exchange_address: str,
                                        token_address: str,
                                        account_address: str):
@@ -1010,6 +1064,37 @@ class Processor:
             position.exchange_balance = exchange_balance or 0
             position.exchange_commitment = exchange_commitment or 0
             db_session.add(position)
+
+    @staticmethod
+    def __sink_on_locked(db_session: Session,
+                         token_address: str,
+                         lock_address: str,
+                         account_address: str,
+                         value: int):
+        """Update Locked data in DB
+
+        :param db_session: ORM session
+        :param token_address: token address
+        :param lock_address: account address
+        :param account_address: account address
+        :param value: updated locked amount
+        :return: None
+        """
+        locked = db_session.query(IDXLocked). \
+            filter(IDXLocked.token_address == token_address). \
+            filter(IDXLocked.lock_address == lock_address). \
+            filter(IDXLocked.account_address == account_address). \
+            first()
+        if locked is not None:
+            locked.value = value
+            db_session.merge(locked)
+        else:
+            locked = IDXLocked()
+            locked.token_address = token_address
+            locked.lock_address = lock_address
+            locked.account_address = account_address
+            locked.value = value
+            db_session.add(locked)
 
     @staticmethod
     def remove_duplicate_event_by_token_account_desc(events: List,

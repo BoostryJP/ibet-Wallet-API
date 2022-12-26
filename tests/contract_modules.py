@@ -275,7 +275,7 @@ def bond_lock(invoker, token, lock_address: str, amount: int):
     web3.eth.default_account = invoker['account_address']
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
-    tx_hash = TokenContract.functions.lock(lock_address, amount). \
+    tx_hash = TokenContract.functions.lock(lock_address, amount, ""). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.wait_for_transaction_receipt(tx_hash)
 
@@ -476,7 +476,7 @@ def share_lock(invoker, token, lock_address: str, amount: int):
     web3.eth.default_account = invoker['account_address']
 
     TokenContract = Contract.get_contract('IbetShare', token['address'])
-    tx_hash = TokenContract.functions.lock(lock_address, amount). \
+    tx_hash = TokenContract.functions.lock(lock_address, amount, ""). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.wait_for_transaction_receipt(tx_hash)
 

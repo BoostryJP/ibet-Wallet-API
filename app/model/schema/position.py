@@ -44,6 +44,11 @@ class ListAllPositionQuery:
     enable_index: Optional[bool] = Query(default=False, description="enable using indexed position data")
 
 
+@dataclass
+class GetPositionQuery:
+    enable_index: Optional[bool] = Query(default=False, description="enable using indexed position data")
+
+
 ############################
 # RESPONSE
 ############################
@@ -57,6 +62,7 @@ class SecurityTokenPosition(BaseModel):
     pending_transfer: int
     exchange_balance: int
     exchange_commitment: int
+    locked: Optional[int] = Field(default=None, description="set when enable_index=true")
 
 
 T = TypeVar("T")

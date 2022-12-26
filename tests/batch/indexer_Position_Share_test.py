@@ -34,7 +34,8 @@ from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
     IDXPosition,
-    IDXPositionShareBlockNumber
+    IDXPositionShareBlockNumber,
+    IDXLocked
 )
 from batch import indexer_Position_Share
 from batch.indexer_Position_Share import Processor
@@ -356,6 +357,16 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+
+        _locked_list = session.query(IDXLocked).order_by(IDXLocked.created).all()
+        assert len(_locked_list) == 1
+
+        _locked = _locked_list[0]
+        assert _locked.token_address == token["address"]
+        assert _locked.lock_address == self.trader["account_address"]
+        assert _locked.account_address == self.issuer["account_address"]
+        assert _locked.value == 3000
+
         assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_5>
@@ -422,6 +433,16 @@ class TestProcessor:
         assert _position.pending_transfer == 0
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
+
+        _locked_list = session.query(IDXLocked).order_by(IDXLocked.created).all()
+        assert len(_locked_list) == 1
+
+        _locked = _locked_list[0]
+        assert _locked.token_address == token["address"]
+        assert _locked.lock_address == self.trader["account_address"]
+        assert _locked.account_address == self.issuer["account_address"]
+        assert _locked.value == 2900
+
         assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_6>
