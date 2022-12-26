@@ -42,4 +42,6 @@ if [ "$EXCHANGE_NOTIFICATION_ENABLED" = 1 ]; then
   fi
 fi
 
+python batch/processor_Block_Sync_Status.py &
+
 tail -f /dev/null

@@ -39,7 +39,6 @@ function start () {
   KEEP_ALIVE=${KEEP_ALIVE:-2}
 
   # start
-  python batch/processor_Block_Sync_Status.py &
   gunicorn --worker-class server.AppUvicornWorker \
            --workers ${WORKER_COUNT} \
            --bind :5000 \
