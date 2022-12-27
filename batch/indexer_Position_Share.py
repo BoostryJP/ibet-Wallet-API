@@ -27,7 +27,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from web3.exceptions import ABIEventFunctionNotFound
-from web3.types import EventData
 
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
