@@ -104,7 +104,7 @@ tags_metadata = [
     },
     {
         "name": "user_position",
-        "description": "Token balance held by the user"
+        "description": "User's token balance"
     },
     {
         "name": "user_notification",
