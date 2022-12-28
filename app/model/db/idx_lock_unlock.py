@@ -16,7 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-from datetime import datetime
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 from sqlalchemy import (
     Column,
     String,
@@ -27,6 +31,8 @@ from sqlalchemy import (
 
 from app.model.db import Base
 
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
 class IDXLock(Base):
     """Token Lock Event (INDEX)"""
@@ -64,6 +70,13 @@ class IDXLock(Base):
     }
     FIELDS.update(Base.FIELDS)
 
+    @staticmethod
+    def replace_to_JST(_datetime: datetime) -> datetime | None:
+        if _datetime is None:
+            return None
+        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
+        return datetime_jp
+
     def json(self):
         return {
             "id": self.id,
@@ -74,7 +87,7 @@ class IDXLock(Base):
             "account_address": self.account_address,
             "value": self.value,
             "data": self.data,
-            "block_timestamp": self.block_timestamp
+            "block_timestamp": self.replace_to_JST(self.block_timestamp)
         }
 
 
@@ -117,6 +130,13 @@ class IDXUnlock(Base):
     }
     FIELDS.update(Base.FIELDS)
 
+    @staticmethod
+    def replace_to_JST(_datetime: datetime) -> datetime | None:
+        if _datetime is None:
+            return None
+        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
+        return datetime_jp
+
     def json(self):
         return {
             "id": self.id,
@@ -128,7 +148,7 @@ class IDXUnlock(Base):
             "recipient_address": self.recipient_address,
             "value": self.value,
             "data": self.data,
-            "block_timestamp": self.block_timestamp
+            "block_timestamp": self.replace_to_JST(self.block_timestamp)
         }
 
 
