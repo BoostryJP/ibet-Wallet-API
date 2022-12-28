@@ -100,7 +100,7 @@ tags_metadata = [
     },
     {
         "name": "user_info",
-        "description": "Account token balance"
+        "description": "User information"
     },
     {
         "name": "user_position",
@@ -108,7 +108,7 @@ tags_metadata = [
     },
     {
         "name": "user_notification",
-        "description": "Notifications for accounts"
+        "description": "Notifications for users"
     },
     {
         "name": "contract_log",
