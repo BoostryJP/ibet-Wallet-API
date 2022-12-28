@@ -71,58 +71,62 @@ LOG = log.get_logger()
 
 tags_metadata = [
     {
-        "name": "Admin",
+        "name": "root",
+        "description": ""
+    },
+    {
+        "name": "admin",
         "description": "System administration"
     },
     {
-        "name": "NodeInfo",
+        "name": "node_info",
         "description": "Information about blockchain and contracts"
     },
     {
-        "name": "ABI",
+        "name": "abi",
         "description": "Contract ABIs"
     },
     {
-        "name": "Companies",
-        "description": "Company information"
+        "name": "transaction",
+        "description": "Blockchain transactions"
     },
     {
-        "name": "User",
+        "name": "company_info",
+        "description": "Company(token issuer) information"
+    },
+    {
+        "name": "token_info",
+        "description": "Detailed information for listed tokens"
+    },
+    {
+        "name": "user_info",
         "description": "User information"
     },
     {
-        "name": "Eth",
-        "description": "Blockchain Transactions"
+        "name": "user_position",
+        "description": "User's token balance"
     },
     {
-        "name": "Token",
-        "description": "Attribute information of the listed tokens"
-    },
-    {
-        "name": "Position",
-        "description": "Token balance held by the user"
-    },
-    {
-        "name": "Notifications",
+        "name": "user_notification",
         "description": "Notifications for users"
     },
     {
-        "name": "E2EMessage",
-        "description": "Features related to the E2EMessaging contract"
-    },
-    {
-        "name": "Events",
+        "name": "contract_log",
         "description": "Contract event logs"
     },
     {
-        "name": "IbetExchange",
-        "description": "Trade related features on IbetExchange (Only for utility tokens)"
+        "name": "dex",
+        "description": "Trade related functions on IbetExchange (Only for utility tokens)"
+    },
+    {
+        "name": "messaging",
+        "description": "Messaging functions with external systems"
     }
 ]
 
 app = FastAPI(
     title="ibet Wallet API",
-    description="ibet Wallet API",
+    description="RPC services that provides utility tools for building a wallet system on ibet network",
     terms_of_service="",
     version="23.3.0",
     contact={"email": "dev@boostry.co.jp"},
@@ -137,7 +141,7 @@ app.openapi = custom_openapi(app)  # type: ignore
 # ROUTER
 ###############################################################
 
-@app.get("/", tags=["Root"])
+@app.get("/", tags=["root"])
 def root():
     return {"server": BRAND_NAME}
 

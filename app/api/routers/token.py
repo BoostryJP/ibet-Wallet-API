@@ -72,7 +72,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Token",
-    tags=["Token"]
+    tags=["token_info"]
 )
 
 

@@ -64,7 +64,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Admin",
-    tags=["Admin"]
+    tags=["admin"]
 )
 
 # ------------------------------

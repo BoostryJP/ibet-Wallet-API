@@ -55,7 +55,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Token/Coupon",
-    tags=["Token"]
+    tags=["token_info"]
 )
 
 

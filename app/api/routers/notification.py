@@ -50,7 +50,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Notifications",
-    tags=["Notifications"]
+    tags=["user_notification"]
 )
 
 
