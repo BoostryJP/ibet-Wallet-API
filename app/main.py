@@ -88,7 +88,7 @@ tags_metadata = [
     },
     {
         "name": "transaction",
-        "description": "Blockchain Transactions"
+        "description": "Blockchain transactions"
     },
     {
         "name": "company_info",
