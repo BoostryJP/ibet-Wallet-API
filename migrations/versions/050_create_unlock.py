@@ -27,11 +27,17 @@ from migrate import *
 meta = MetaData()
 
 table = Table(
-    "locked", meta,
-    Column("token_address", String(42), primary_key=True),
-    Column("lock_address", String(42), primary_key=True),
-    Column("account_address", String(42), primary_key=True),
+    "unlock", meta,
+    Column("id", BigInteger, primary_key=True, autoincrement=True),
+    Column("transaction_hash", String(66), index=True),
+    Column("block_number", BigInteger, nullable=False),
+    Column("token_address", String(42), index=True),
+    Column("lock_address", String(42), index=True),
+    Column("account_address", String(42), index=True),
+    Column("recipient_address", String(42), index=True),
     Column("value", BigInteger, nullable=False),
+    Column("data", JSON, nullable=False),
+    Column("block_timestamp", DateTime),
     Column("created", DateTime, default=datetime.utcnow),
     Column("modified", DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
 )

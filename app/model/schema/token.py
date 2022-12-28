@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from fastapi import Query
 from typing import Optional
@@ -28,6 +29,7 @@ from pydantic import (
 
 from app.model.schema.base import (
     ResultSet,
+    SortOrder,
 )
 
 
@@ -61,6 +63,56 @@ class ListAllTokenHoldersQuery:
 @dataclass
 class RetrieveTokenHoldersCountQuery:
     exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
+
+
+class LockEventsSortItem(str, Enum):
+    lock_address = "lock_address"
+    account_address = "account_address"
+    value = "value"
+    block_number = "block_number"
+    block_timestamp = "block_timestamp"
+
+
+@dataclass
+class ListAllLockEventsQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+
+    account_address: Optional[str] = Query(default=None, description="account address")
+    lock_address: Optional[str] = Query(default=None, description="lock address")
+    data: Optional[str] = Query(default=None, description="data")
+
+    sort_item: LockEventsSortItem = Query(
+        default=LockEventsSortItem.block_timestamp,
+        description="sort item"
+    )
+    sort_order: SortOrder = Query(default=SortOrder.DESC, description="sort order(0: ASC, 1: DESC)")
+
+
+class UnlockEventsSortItem(str, Enum):
+    lock_address = "lock_address"
+    account_address = "account_address"
+    recipient_address = "recipient_address"
+    value = "value"
+    block_number = "block_number"
+    block_timestamp = "block_timestamp"
+
+
+@dataclass
+class ListAllUnlockEventsQuery:
+    offset: Optional[int] = Query(default=None, description="start position", ge=0)
+    limit: Optional[int] = Query(default=None, description="number of set", ge=0)
+
+    account_address: Optional[str] = Query(default=None, description="account address")
+    lock_address: Optional[str] = Query(default=None, description="lock address")
+    recipient_address: Optional[str] = Query(default=None, description="recipient address")
+    data: Optional[str] = Query(default=None, description="data")
+
+    sort_item: UnlockEventsSortItem = Query(
+        default=UnlockEventsSortItem.block_timestamp,
+        description="sort item"
+    )
+    sort_order: SortOrder = Query(default=SortOrder.DESC, description="sort order(0: ASC, 1: DESC)")
 
 
 ############################
@@ -147,3 +199,34 @@ class TransferApprovalHistory(BaseModel):
 class TransferApprovalHistoriesResponse(BaseModel):
     result_set: ResultSet
     transfer_approval_history: list[TransferApprovalHistory] = Field(description="Transfer approval history")
+
+
+class LockEvent(BaseModel):
+    transaction_hash: str = Field(description="Transaction hash")
+    token_address: str = Field(description="Token address")
+    lock_address: str = Field(description="Lock address")
+    account_address: str = Field(description="Account address")
+    value: int = Field(description="Transfer quantity")
+    data: dict = Field(description="Data")
+    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (JST)")
+
+
+class LockEventsResponse(BaseModel):
+    result_set: ResultSet
+    lock_events: list[LockEvent] = Field(description="Lock event list")
+
+
+class UnlockEvent(BaseModel):
+    transaction_hash: str = Field(description="Transaction hash")
+    token_address: str = Field(description="Token address")
+    lock_address: str = Field(description="Lock address")
+    account_address: str = Field(description="Account address")
+    recipient_address: str = Field(description="Recipient address")
+    value: int = Field(description="Transfer quantity")
+    data: dict = Field(description="Data")
+    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (JST)")
+
+
+class UnlockEventsResponse(BaseModel):
+    result_set: ResultSet
+    unlock_events: list[UnlockEvent] = Field(description="Unlock event list")

@@ -16,6 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import json
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 from typing import Optional, List
 import os
 import sys
@@ -42,10 +48,14 @@ from app.model.db import (
     Listing,
     IDXPosition,
     IDXPositionBondBlockNumber,
-    IDXLocked
+    IDXLockedPosition,
+    IDXLock,
+    IDXUnlock
 )
 from app.utils.web3_utils import Web3Wrapper
 import log
+
+UTC = timezone(timedelta(hours=0), "UTC")
 
 process_name = "INDEXER-POSITION-BOND"
 LOG = log.get_logger(process_name=process_name)
@@ -350,13 +360,31 @@ class Processor:
                     args = event["args"]
                     account_address = args.get("accountAddress", "")
                     lock_address = args.get("lockAddress", "")
+                    value = args.get("value", "")
+                    data = args.get("data", "")
+                    event_created = self.__gen_block_timestamp(event=event)
+
+                    # Index Lock event
+                    self.__insert_lock_idx(
+                        db_session=db_session,
+                        transaction_hash=event["transactionHash"].hex(),
+                        block_number=event["blockNumber"],
+                        token_address=token.address,
+                        lock_address=lock_address,
+                        account_address=account_address,
+                        value=value,
+                        data_str=data,
+                        blocktimestamp=event_created
+                    )
                     if lock_address not in lock_map:
                         lock_map[lock_address] = {}
                     lock_map[lock_address][account_address] = True
+
                 for lock_address in lock_map:
                     for account_address in lock_map[lock_address]:
+                        # Update Locked Position
                         value = self.__get_account_locked_token(token, lock_address, account_address)
-                        self.__sink_on_locked(
+                        self.__sink_on_locked_position(
                             db_session=db_session,
                             token_address=to_checksum_address(token.address),
                             lock_address=lock_address,
@@ -407,13 +435,33 @@ class Processor:
                     args = event["args"]
                     account_address = args.get("accountAddress", "")
                     lock_address = args.get("lockAddress", "")
+                    recipient_address = args.get("recipientAddress", "")
+                    value = args.get("value", "")
+                    data = args.get("data", "")
+                    event_created = self.__gen_block_timestamp(event=event)
+
+                    # Index Unlock event
+                    self.__insert_unlock_idx(
+                        db_session=db_session,
+                        transaction_hash=event["transactionHash"].hex(),
+                        block_number=event["blockNumber"],
+                        token_address=token.address,
+                        lock_address=lock_address,
+                        account_address=account_address,
+                        recipient_address=recipient_address,
+                        value=value,
+                        data_str=data,
+                        blocktimestamp=event_created
+                    )
                     if lock_address not in lock_map:
                         lock_map[lock_address] = {}
                     lock_map[lock_address][account_address] = True
+
                 for lock_address in lock_map:
                     for account_address in lock_map[lock_address]:
+                        # Update Locked Position
                         value = self.__get_account_locked_token(token, lock_address, account_address)
-                        self.__sink_on_locked(
+                        self.__sink_on_locked_position(
                             db_session=db_session,
                             token_address=to_checksum_address(token.address),
                             lock_address=lock_address,
@@ -891,6 +939,13 @@ class Processor:
                 raise e
 
     @staticmethod
+    def __gen_block_timestamp(event):
+        return datetime.fromtimestamp(
+            web3.eth.get_block(event["blockNumber"])["timestamp"],
+            UTC
+        )
+
+    @staticmethod
     def __get_oldest_cursor(target_token_list: TargetTokenList, block_to: int) -> int:
         """Get the oldest block number for given target token list"""
         oldest_block_number = block_to
@@ -1017,6 +1072,67 @@ class Processor:
             default_returns=0
         )
         return exchange_balance, exchange_commitment
+    @staticmethod
+    def __insert_lock_idx(db_session: Session, transaction_hash: str, block_number: int,
+                          token_address: str, lock_address: str, account_address: str, value: int,
+                          data_str: str, blocktimestamp: datetime):
+        """Registry Lock data in DB
+
+        :param transaction_hash: transaction hash (same value for bulk transfer of token contract)
+        :param token_address: token address
+        :param lock_address: lock address
+        :param account_address: account address
+        :param value: amount
+        :param data_str: data string
+        :param blocktimestamp: block timestamp
+        :return: None
+        """
+        try:
+            data = json.loads(data_str)
+        except Exception:
+            data = {}
+        lock = IDXLock()
+        lock.transaction_hash = transaction_hash
+        lock.block_number = block_number
+        lock.token_address = token_address
+        lock.lock_address = lock_address
+        lock.account_address = account_address
+        lock.value = value
+        lock.data = data
+        lock.block_timestamp = blocktimestamp
+        db_session.add(lock)
+
+    @staticmethod
+    def __insert_unlock_idx(db_session: Session, transaction_hash: str, block_number: int,
+                            token_address: str, lock_address: str, account_address: str, recipient_address: str,
+                            value: int, data_str: str, blocktimestamp: datetime):
+        """Registry Unlock data in DB
+
+        :param transaction_hash: transaction hash (same value for bulk transfer of token contract)
+        :param token_address: token address
+        :param lock_address: lock address
+        :param account_address: account address
+        :param recipient_address: recipient address
+        :param value: amount
+        :param data_str: data string
+        :param blocktimestamp: block timestamp
+        :return: None
+        """
+        try:
+            data = json.loads(data_str)
+        except:
+            data = {}
+        unlock = IDXUnlock()
+        unlock.transaction_hash = transaction_hash
+        unlock.block_number = block_number
+        unlock.token_address = token_address
+        unlock.lock_address = lock_address
+        unlock.account_address = account_address
+        unlock.recipient_address = recipient_address
+        unlock.value = value
+        unlock.data = data
+        unlock.block_timestamp = blocktimestamp
+        db_session.add(unlock)
 
     @staticmethod
     def __sink_on_position(db_session: Session,
@@ -1066,12 +1182,12 @@ class Processor:
             db_session.add(position)
 
     @staticmethod
-    def __sink_on_locked(db_session: Session,
+    def __sink_on_locked_position(db_session: Session,
                          token_address: str,
                          lock_address: str,
                          account_address: str,
                          value: int):
-        """Update Locked data in DB
+        """Update Locked position in DB
 
         :param db_session: ORM session
         :param token_address: token address
@@ -1080,16 +1196,16 @@ class Processor:
         :param value: updated locked amount
         :return: None
         """
-        locked = db_session.query(IDXLocked). \
-            filter(IDXLocked.token_address == token_address). \
-            filter(IDXLocked.lock_address == lock_address). \
-            filter(IDXLocked.account_address == account_address). \
+        locked = db_session.query(IDXLockedPosition). \
+            filter(IDXLockedPosition.token_address == token_address). \
+            filter(IDXLockedPosition.lock_address == lock_address). \
+            filter(IDXLockedPosition.account_address == account_address). \
             first()
         if locked is not None:
             locked.value = value
             db_session.merge(locked)
         else:
-            locked = IDXLocked()
+            locked = IDXLockedPosition()
             locked.token_address = token_address
             locked.lock_address = lock_address
             locked.account_address = account_address

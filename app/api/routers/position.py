@@ -57,7 +57,7 @@ from app.model.db import (
     IDXBondToken,
     IDXCouponToken,
     IDXMembershipToken,
-    IDXLocked
+    IDXLockedPosition
 )
 from app.model.blockchain import (
     ShareToken,
@@ -149,7 +149,7 @@ class BasePosition:
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
-        query = session.query(Listing.token_address, IDXPosition, func.sum(IDXLocked.value), self.idx_token_model). \
+        query = session.query(Listing.token_address, IDXPosition, func.sum(IDXLockedPosition.value), self.idx_token_model). \
             join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
             outerjoin(
                 IDXPosition,
@@ -159,10 +159,10 @@ class BasePosition:
                 )
             ). \
             outerjoin(
-                IDXLocked,
+                IDXLockedPosition,
                 and_(
-                    Listing.token_address == IDXLocked.token_address,
-                    IDXLocked.lock_address == account_address
+                    Listing.token_address == IDXLockedPosition.token_address,
+                    IDXLockedPosition.account_address == account_address
                 )
             ). \
             filter(or_(
@@ -170,9 +170,9 @@ class BasePosition:
                 IDXPosition.pending_transfer != 0,
                 IDXPosition.exchange_balance != 0,
                 IDXPosition.exchange_commitment != 0,
-                IDXLocked.value != 0
+                IDXLockedPosition.value != 0
             )). \
-            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLocked.token_address). \
+            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLockedPosition.token_address). \
             order_by(Listing.id)
 
         total = query.count()
@@ -304,7 +304,7 @@ class BasePosition:
 
     def get_one_from_index(self, session: Session, account_address: str, token_address: str):
         query = (
-            session.query(Listing.token_address, IDXPosition, func.sum(IDXLocked.value), self.idx_token_model).
+            session.query(Listing.token_address, IDXPosition, func.sum(IDXLockedPosition.value), self.idx_token_model).
             join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address).
             outerjoin(
                 IDXPosition,
@@ -314,10 +314,10 @@ class BasePosition:
                 )
             ).
             outerjoin(
-                IDXLocked,
+                IDXLockedPosition,
                 and_(
-                    Listing.token_address == IDXLocked.token_address,
-                    IDXLocked.lock_address == account_address
+                    Listing.token_address == IDXLockedPosition.token_address,
+                    IDXLockedPosition.account_address == account_address
                 )
             ).
             filter(Listing.token_address == token_address).
@@ -326,9 +326,9 @@ class BasePosition:
                 IDXPosition.pending_transfer != 0,
                 IDXPosition.exchange_balance != 0,
                 IDXPosition.exchange_commitment != 0,
-                IDXLocked.value != 0
+                IDXLockedPosition.value != 0
             )).
-            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLocked.token_address)
+            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLockedPosition.token_address)
         )
         result: tuple[str, IDXPosition | None, int | None, IDXTokenInstance] | None = query.first()
         if result is None:

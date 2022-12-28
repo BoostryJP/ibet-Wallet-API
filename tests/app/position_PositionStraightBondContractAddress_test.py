@@ -29,7 +29,7 @@ from app.model.db import (
     Listing,
     IDXPosition,
     IDXBondToken,
-    IDXLocked
+    IDXLockedPosition
 )
 from tests.account_config import eth_account
 from tests.utils import PersonalInfoUtils
@@ -223,13 +223,13 @@ class TestPositionStraightBondContractAddress:
         session.commit()
 
     @staticmethod
-    def create_idx_locked(session: Session,
-                          token_address: str,
-                          lock_address: str,
-                          account_address: str,
-                          value: int):
+    def create_idx_locked_position(session: Session,
+                                   token_address: str,
+                                   lock_address: str,
+                                   account_address: str,
+                                   value: int):
         # Issue token
-        idx_locked = IDXLocked()
+        idx_locked = IDXLockedPosition()
         idx_locked.token_address = token_address
         idx_locked.lock_address = lock_address
         idx_locked.account_address = account_address
@@ -995,16 +995,16 @@ class TestPositionStraightBondContractAddress:
         )
 
         self.create_idx_position(session, token_1["address"], self.account_1["account_address"], balance=1000000-3000)
-        self.create_idx_locked(session, token_1["address"], self.account_2["account_address"], self.account_1["account_address"], 1000)
-        self.create_idx_locked(session, token_1["address"], self.issuer["account_address"], self.account_1["account_address"], 2000)
-        self.create_idx_locked(session, token_1["address"], self.issuer["account_address"], self.account_2["account_address"], 5000)
+        self.create_idx_locked_position(session, token_1["address"], self.account_2["account_address"], self.account_1["account_address"], 1000)
+        self.create_idx_locked_position(session, token_1["address"], self.issuer["account_address"], self.account_1["account_address"], 2000)
+        self.create_idx_locked_position(session, token_1["address"], self.issuer["account_address"], self.account_2["account_address"], 5000)
         self.list_token(token_1["address"], session)
         self.create_idx_token(session, token_1["address"], personal_info_contract["address"], config.ZERO_ADDRESS)
 
         with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
             # Request target API
             resp = client.get(
-                self.apiurl.format(account_address=self.issuer["account_address"],
+                self.apiurl.format(account_address=self.account_1["account_address"],
                                    contract_address=token_1["address"]),
                 params={
                     "enable_index": True
@@ -1053,11 +1053,11 @@ class TestPositionStraightBondContractAddress:
                 'personal_info_address': personal_info_contract["address"],
                 'transfer_approval_required': False,
             },
-            "balance": 0,
+            "balance": 997000,
             "pending_transfer": 0,
             "exchange_balance": 0,
             "exchange_commitment": 0,
-            "locked": 7000
+            "locked": 3000
         }
 
     ###########################################################################

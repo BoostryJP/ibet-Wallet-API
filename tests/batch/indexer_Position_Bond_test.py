@@ -35,7 +35,9 @@ from app.model.db import (
     Listing,
     IDXPosition,
     IDXPositionBondBlockNumber,
-    IDXLocked
+    IDXLockedPosition,
+    IDXLock,
+    IDXUnlock
 )
 from batch import indexer_Position_Bond
 from batch.indexer_Position_Bond import Processor
@@ -355,8 +357,16 @@ class TestProcessor:
         # Lock
         token_contract.functions.lock(
             self.trader["account_address"],
-            3000,
-            "lock_message"
+            1500,
+            '{"message": "locked1"}'
+        ).transact({
+            'from': self.issuer['account_address'],
+            'gas': 4000000
+        })
+        token_contract.functions.lock(
+            self.trader["account_address"],
+            1500,
+            '{"message": "locked2"}'
         ).transact({
             'from': self.issuer['account_address'],
             'gas': 4000000
@@ -384,14 +394,36 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _locked_list = session.query(IDXLocked).order_by(IDXLocked.created).all()
+        _locked_list = session.query(IDXLockedPosition).order_by(IDXLockedPosition.created).all()
         assert len(_locked_list) == 1
 
-        _locked = _locked_list[0]
-        assert _locked.token_address == token["address"]
-        assert _locked.lock_address == self.trader["account_address"]
-        assert _locked.account_address == self.issuer["account_address"]
-        assert _locked.value == 3000
+        _locked1 = _locked_list[0]
+        assert _locked1.token_address == token["address"]
+        assert _locked1.lock_address == self.trader["account_address"]
+        assert _locked1.account_address == self.issuer["account_address"]
+        assert _locked1.value == 3000
+
+        _lock_list = session.query(IDXLock).order_by(IDXLock.id).all()
+        assert len(_lock_list) == 2
+
+        _lock1 = _lock_list[0]
+        assert _lock1.id == 1
+        assert _lock1.token_address == token["address"]
+        assert _lock1.lock_address == self.trader["account_address"]
+        assert _lock1.account_address == self.issuer["account_address"]
+        assert _lock1.value == 1500
+        assert _lock1.data == {
+            "message": "locked1"
+        }
+        _lock2 = _lock_list[1]
+        assert _lock2.id == 2
+        assert _lock2.token_address == token["address"]
+        assert _lock2.lock_address == self.trader["account_address"]
+        assert _lock2.account_address == self.issuer["account_address"]
+        assert _lock2.value == 1500
+        assert _lock2.data == {
+            "message": "locked2"
+        }
 
         assert _idx_position_bond_block_number.latest_block_number == block_number
 
@@ -418,7 +450,7 @@ class TestProcessor:
         token_contract.functions.lock(
             self.trader["account_address"],
             3000,
-            "lock_message"
+            '{"message": "locked1"}'
         ).transact({
             'from': self.issuer['account_address'],
             'gas': 4000000
@@ -429,7 +461,7 @@ class TestProcessor:
             self.issuer["account_address"],
             self.trader2["account_address"],
             100,
-            "unlock_message"
+            '{"message": "unlocked1"}'
         ).transact({
             'from': self.trader['account_address'],
             'gas': 4000000
@@ -467,7 +499,7 @@ class TestProcessor:
         assert _position.exchange_balance == 0
         assert _position.exchange_commitment == 0
 
-        _locked_list = session.query(IDXLocked).order_by(IDXLocked.created).all()
+        _locked_list = session.query(IDXLockedPosition).order_by(IDXLockedPosition.created).all()
         assert len(_locked_list) == 1
 
         _locked = _locked_list[0]
@@ -475,6 +507,32 @@ class TestProcessor:
         assert _locked.lock_address == self.trader["account_address"]
         assert _locked.account_address == self.issuer["account_address"]
         assert _locked.value == 2900
+
+        _lock_list = session.query(IDXLock).order_by(IDXLock.id).all()
+        assert len(_lock_list) == 1
+
+        _lock1 = _lock_list[0]
+        assert _lock1.id == 1
+        assert _lock1.token_address == token["address"]
+        assert _lock1.lock_address == self.trader["account_address"]
+        assert _lock1.account_address == self.issuer["account_address"]
+        assert _lock1.value == 3000
+        assert _lock1.data == {
+            "message": "locked1"
+        }
+        _unlock_list = session.query(IDXUnlock).order_by(IDXUnlock.id).all()
+        assert len(_unlock_list) == 1
+
+        _unlock1 = _unlock_list[0]
+        assert _unlock1.id == 1
+        assert _unlock1.token_address == token["address"]
+        assert _unlock1.lock_address == self.trader["account_address"]
+        assert _unlock1.account_address == self.issuer["account_address"]
+        assert _unlock1.recipient_address == self.trader2["account_address"]
+        assert _unlock1.value == 100
+        assert _unlock1.data == {
+            "message": "unlocked1"
+        }
 
         assert _idx_position_bond_block_number.latest_block_number == block_number
 

@@ -112,6 +112,8 @@ from .token import (
     CreateTokenHoldersCollectionRequest,
     RetrieveTokenHoldersCountQuery,
     ListAllTokenHoldersQuery,
+    ListAllLockEventsQuery,
+    ListAllUnlockEventsQuery,
     # Response
     TokenStatusResponse,
     TokenHoldersResponse,
@@ -119,7 +121,9 @@ from .token import (
     CreateTokenHoldersCollectionResponse,
     TokenHoldersCollectionResponse,
     TransferHistoriesResponse,
-    TransferApprovalHistoriesResponse
+    TransferApprovalHistoriesResponse,
+    LockEventsResponse,
+    UnlockEventsResponse
 )
 from .position import (
     # Request

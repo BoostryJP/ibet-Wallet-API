@@ -26,7 +26,9 @@ from fastapi import (
 from sqlalchemy import (
     or_,
     desc,
-    asc
+    asc,
+    cast,
+    String
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
@@ -53,7 +55,11 @@ from app.model.schema import (
     TokenHoldersCollectionResponse,
     TransferHistoriesResponse,
     ListAllTokenHoldersQuery,
-    TransferApprovalHistoriesResponse
+    TransferApprovalHistoriesResponse,
+    LockEventsResponse,
+    ListAllLockEventsQuery,
+    UnlockEventsResponse,
+    ListAllUnlockEventsQuery
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.web3_utils import Web3Wrapper
@@ -64,7 +70,9 @@ from app.model.db import (
     IDXTransferApproval,
     TokenHoldersList,
     TokenHolderBatchStatus,
-    TokenHolder
+    TokenHolder,
+    IDXLock,
+    IDXUnlock
 )
 
 LOG = log.get_logger()
@@ -549,3 +557,164 @@ def list_all_transfer_approval_histories(
         "data": data
     }
 
+
+@router.get(
+    "/{token_address}/Lock",
+    summary="Token Lock Events",
+    operation_id="Lock",
+    response_model=GenericSuccessResponse[LockEventsResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+)
+def list_all_lock_events(
+    request_query: ListAllLockEventsQuery = Depends(),
+    token_address: str = Path(description="token address"),
+    session: Session = Depends(db_session)
+):
+    """
+    Endpoint: /Token/{contract_address}/Lock
+    """
+    # 入力値チェック
+    try:
+        contract_address = to_checksum_address(token_address)
+        if not Web3.isAddress(contract_address):
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+    except:
+        description = 'invalid contract_address'
+        raise InvalidParameterError(description=description)
+
+    # 取扱トークンチェック
+    listed_token = session.query(Listing). \
+        filter(Listing.token_address == contract_address). \
+        first()
+    if listed_token is None:
+        raise DataNotExistsError('contract_address: %s' % contract_address)
+
+    query = session.query(IDXLock).filter(IDXLock.token_address == contract_address)
+    total = query.count()
+
+    if request_query.account_address is not None:
+        query = query.filter(IDXLock.account_address == request_query.account_address)
+    if request_query.lock_address is not None:
+        query = query.filter(IDXLock.lock_address == request_query.lock_address)
+    if request_query.data is not None:
+        query = query.filter(cast(IDXLock.data, String).like("%" + request_query.data + "%"))
+    count = query.count()
+
+    # Sort
+    sort_attr = getattr(IDXLock, request_query.sort_item, None)
+    if request_query.sort_order == 0:  # ASC
+        query = query.order_by(sort_attr)
+    else:  # DESC
+        query = query.order_by(desc(sort_attr))
+    if request_query.sort_item != "block_timestamp":
+        # NOTE: Set secondary sort for consistent results
+        query = query.order_by(IDXLock.block_timestamp)
+
+    # Pagination
+    if request_query.offset is not None:
+        query = query.offset(request_query.offset)
+    if request_query.limit is not None:
+        query = query.limit(request_query.limit)
+    lock_events = query.all()
+
+    resp_data = []
+    for lock_event in lock_events:
+        resp_data.append(lock_event.json())
+
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": request_query.offset,
+            "limit": request_query.limit,
+            "total": total
+        },
+        "lock_events": resp_data
+    }
+
+    return {
+        **SuccessResponse.use().dict(),
+        "data": data
+    }
+
+
+@router.get(
+    "/{token_address}/Unlock",
+    summary="Token Unlock Events",
+    operation_id="Unlock",
+    response_model=GenericSuccessResponse[UnlockEventsResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+)
+def list_all_unlock_events(
+    request_query: ListAllUnlockEventsQuery = Depends(),
+    token_address: str = Path(description="token address"),
+    session: Session = Depends(db_session)
+):
+    """
+    Endpoint: /Token/{token_address}/Lock
+    """
+    # 入力値チェック
+    try:
+        contract_address = to_checksum_address(token_address)
+        if not Web3.isAddress(contract_address):
+            description = 'invalid contract_address'
+            raise InvalidParameterError(description=description)
+    except:
+        description = 'invalid contract_address'
+        raise InvalidParameterError(description=description)
+
+    # 取扱トークンチェック
+    listed_token = session.query(Listing). \
+        filter(Listing.token_address == contract_address). \
+        first()
+    if listed_token is None:
+        raise DataNotExistsError('contract_address: %s' % contract_address)
+
+    query = session.query(IDXUnlock).filter(IDXUnlock.token_address == contract_address)
+    total = query.count()
+
+    if request_query.account_address is not None:
+        query = query.filter(IDXUnlock.account_address == request_query.account_address)
+    if request_query.lock_address is not None:
+        query = query.filter(IDXUnlock.lock_address == request_query.lock_address)
+    if request_query.recipient_address is not None:
+        query = query.filter(IDXUnlock.recipient_address == request_query.recipient_address)
+    if request_query.data is not None:
+        query = query.filter(cast(IDXUnlock.data, String).like("%" + request_query.data + "%"))
+    count = query.count()
+
+    # Sort
+    sort_attr = getattr(IDXUnlock, request_query.sort_item, None)
+    if request_query.sort_order == 0:  # ASC
+        query = query.order_by(sort_attr)
+    else:  # DESC
+        query = query.order_by(desc(sort_attr))
+    if request_query.sort_item != "block_timestamp":
+        # NOTE: Set secondary sort for consistent results
+        query = query.order_by(IDXUnlock.block_timestamp)
+
+    # Pagination
+    if request_query.offset is not None:
+        query = query.offset(request_query.offset)
+    if request_query.limit is not None:
+        query = query.limit(request_query.limit)
+    unlock_events = query.all()
+
+    resp_data = []
+    for unlock_event in unlock_events:
+        resp_data.append(unlock_event.json())
+
+    data = {
+        "result_set": {
+            "count": count,
+            "offset": request_query.offset,
+            "limit": request_query.limit,
+            "total": total
+        },
+        "unlock_events": resp_data
+    }
+
+    return {
+        **SuccessResponse.use().dict(),
+        "data": data
+    }

@@ -36,7 +36,7 @@ from app.model.schema import (
     ListLockedResponse
 )
 from app.utils.docs_utils import get_routers_responses
-from app.model.db import IDXLocked
+from app.model.db import IDXLockedPosition
 
 LOG = log.get_logger()
 
@@ -71,19 +71,19 @@ def list_all_lock(
     sort_item = request_query.sort_item
     sort_order = request_query.sort_order  # default: asc
 
-    query = session.query(IDXLocked)
+    query = session.query(IDXLockedPosition)
     if len(token_address_list) > 0:
-        query = query.filter(IDXLocked.token_address.in_(token_address_list))
+        query = query.filter(IDXLockedPosition.token_address.in_(token_address_list))
 
     total = query.count()
 
     if lock_address is not None:
-        query = query.filter(IDXLocked.lock_address == lock_address)
+        query = query.filter(IDXLockedPosition.lock_address == lock_address)
     if account_address is not None:
-        query = query.filter(IDXLocked.account_address == account_address)
+        query = query.filter(IDXLockedPosition.account_address == account_address)
     count = query.count()
 
-    sort_attr = getattr(IDXLocked, sort_item, None)
+    sort_attr = getattr(IDXLockedPosition, sort_item, None)
 
     if sort_order == 0:  # ASC
         query = query.order_by(sort_attr)
@@ -92,16 +92,16 @@ def list_all_lock(
 
     # NOTE: Set secondary sort for consistent results
     if sort_item != "token_address":
-        query = query.order_by(IDXLocked.token_address)
+        query = query.order_by(IDXLockedPosition.token_address)
     else:
-        query = query.order_by(IDXLocked.created)
+        query = query.order_by(IDXLockedPosition.created)
 
     if limit is not None:
         query = query.limit(limit)
     if offset is not None:
         query = query.offset(offset)
 
-    _locked_list: list[IDXLocked] = query.all()
+    _locked_list: list[IDXLockedPosition] = query.all()
     locked_list = []
 
     for _locked in _locked_list:

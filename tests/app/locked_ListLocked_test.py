@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
-from app.model.db import IDXLocked
+from app.model.db import IDXLockedPosition
 from app import config
 from batch import indexer_Token_Detail
 from batch.indexer_Token_Detail import Processor
@@ -72,7 +72,7 @@ class TestTokenStraightBondTokens:
                           account_address: str,
                           value: int):
         # Issue token
-        idx_locked = IDXLocked()
+        idx_locked = IDXLockedPosition()
         idx_locked.token_address = token_address
         idx_locked.lock_address = lock_address
         idx_locked.account_address = account_address
@@ -457,7 +457,7 @@ class TestTokenStraightBondTokens:
         assert resp.json()["data"] == assumed_body
 
     # <Normal_5_4>
-    # Sort(account_address)
+    # Sort(value)
     def test_normal_5_4(self, client: TestClient, session: Session, shared_contract, processor: Processor):
         # Prepare Data
         self.setup_data(session)
