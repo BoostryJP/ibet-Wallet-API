@@ -46,7 +46,7 @@ web3 = Web3Wrapper()
 
 router = APIRouter(
     prefix="/Events",
-    tags=["Events"]
+    tags=["contract_log"]
 )
 
 

@@ -43,7 +43,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/E2EMessage",
-    tags=["E2EMessage"]
+    tags=["messaging"]
 )
 
 

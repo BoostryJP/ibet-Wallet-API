@@ -87,7 +87,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Position",
-    tags=["Position"]
+    tags=["user_position"]
 )
 
 

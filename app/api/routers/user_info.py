@@ -39,7 +39,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/User",
-    tags=["User"]
+    tags=["user_info"]
 )
 
 

@@ -59,7 +59,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/DEX/OrderList",
-    tags=["IbetExchange"]
+    tags=["dex"]
 )
 
 

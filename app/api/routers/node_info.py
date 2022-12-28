@@ -43,7 +43,7 @@ web3 = Web3Wrapper()
 
 router = APIRouter(
     prefix="/NodeInfo",
-    tags=["NodeInfo"]
+    tags=["node_info"]
 )
 
 

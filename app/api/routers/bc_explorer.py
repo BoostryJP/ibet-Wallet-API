@@ -63,7 +63,7 @@ TX_RESPONSE_LIMIT = 10000
 
 router = APIRouter(
     prefix="/NodeInfo",
-    tags=["NodeInfo"]
+    tags=["node_info"]
 )
 
 

@@ -64,7 +64,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Companies",
-    tags=["Companies"]
+    tags=["company_info"]
 )
 
 

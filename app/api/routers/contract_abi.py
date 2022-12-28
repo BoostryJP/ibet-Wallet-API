@@ -36,7 +36,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/ABI",
-    tags=["ABI"]
+    tags=["abi"]
 )
 
 
