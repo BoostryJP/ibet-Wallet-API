@@ -55,7 +55,7 @@ REQUEST_BLOCK_RANGE_LIMIT = 10000
 
 router = APIRouter(
     prefix="/Events",
-    tags=["Events"]
+    tags=["contract_log"]
 )
 
 

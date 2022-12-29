@@ -62,7 +62,7 @@ web3 = Web3Wrapper()
 
 router = APIRouter(
     prefix="/Eth",
-    tags=["Eth"]
+    tags=["transaction"]
 )
 
 
