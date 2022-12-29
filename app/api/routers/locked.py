@@ -43,7 +43,7 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Locked",
-    tags=["Locked"]
+    tags=["locked"]
 )
 
 

@@ -305,7 +305,7 @@ def list_all_ibet_security_token_escrow_event_logs(
 @router.get(
     "/IbetSecurityTokenInterface/{token_address}",
     summary="List all IbetSecurityTokenInterface event logs",
-    operation_id="IbetSecurityTokenEscrowEvents",
+    operation_id="IbetSecurityTokenInterfaceEvents",
     response_model=GenericSuccessResponse[ListAllEventsResponse],
     responses=get_routers_responses(
         InvalidParameterError,

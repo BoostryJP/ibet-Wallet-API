@@ -1,13 +1,13 @@
 openapi: 3.0.2
 info:
   title: ibet Wallet API
-  description: ibet Wallet API
+  description: RPC services that provides utility tools for building a wallet system on ibet network
   version: 23.3.0
 paths:
   /:
     get:
       tags:
-        - Root
+        - root
       summary: Root
       operationId: root__get
       responses:
@@ -16,7 +16,7 @@ paths:
   /Admin/Tokens:
     get:
       tags:
-        - Admin
+        - admin
       summary: List All Listed Tokens
       description: |-
         Endpoint: /Admin/Tokens
@@ -31,7 +31,7 @@ paths:
                 $ref: '#/components/schemas/GenericSuccessResponse_ListAllAdminTokensResponse_'
     post:
       tags:
-        - Admin
+        - admin
       summary: List a Token
       description: |-
         Endpoint: /Admin/Tokens
@@ -68,7 +68,7 @@ paths:
   /Admin/Tokens/Type:
     get:
       tags:
-        - Admin
+        - admin
       summary: Available status by token type
       description: |-
         Endpoint: /Admin/Tokens/Type
@@ -84,7 +84,7 @@ paths:
   /Admin/Tokens/{token_address}:
     get:
       tags:
-        - Admin
+        - admin
       summary: Retrieve a Listed Token
       description: |-
         Endpoint: /Admin/Tokens/{token_address}
@@ -120,7 +120,7 @@ paths:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
     post:
       tags:
-        - Admin
+        - admin
       summary: Update a Listed Token
       description: |-
         Endpoint: /Admin/Tokens/{contract_address}
@@ -165,7 +165,7 @@ paths:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
     delete:
       tags:
-        - Admin
+        - admin
       summary: Delete a Listed Token
       description: |-
         Endpoint: /Admin/Tokens/{contract_address}
@@ -202,7 +202,7 @@ paths:
   /NodeInfo:
     get:
       tags:
-        - NodeInfo
+        - node_info
       summary: Blockchain node information
       description: 'Endpoint: /NodeInfo'
       operationId: NodeInfo
@@ -216,7 +216,7 @@ paths:
   /NodeInfo/BlockSyncStatus:
     get:
       tags:
-        - NodeInfo
+        - node_info
       summary: Block synchronization status of the connected blockchain node
       description: 'Endpoint: /NodeInfo/BlockSyncStatus'
       operationId: NodeInfoBlockSyncStatus
@@ -230,7 +230,7 @@ paths:
   /NodeInfo/BlockData:
     get:
       tags:
-        - NodeInfo
+        - node_info
       summary: '[ibet Blockchain Explorer] List block data'
       description: |-
         Returns a list of block data within the specified block number range.
@@ -294,7 +294,7 @@ paths:
   /NodeInfo/BlockData/{block_number}:
     get:
       tags:
-        - NodeInfo
+        - node_info
       summary: '[ibet Blockchain Explorer] Retrieve block data'
       description: Returns block data in the specified block number.
       operationId: GetBlockData
@@ -331,7 +331,7 @@ paths:
   /NodeInfo/TxData:
     get:
       tags:
-        - NodeInfo
+        - node_info
       summary: '[ibet Blockchain Explorer] List tx data'
       description: |-
         Returns a list of transactions by various search parameters.
@@ -406,7 +406,7 @@ paths:
   /NodeInfo/TxData/{hash}:
     get:
       tags:
-        - NodeInfo
+        - node_info
       summary: '[ibet Blockchain Explorer] Retrieve transaction data'
       description: Searching for the transaction by transaction hash
       operationId: GetTxData
@@ -442,7 +442,7 @@ paths:
   /ABI/StraightBond:
     get:
       tags:
-        - ABI
+        - abi
       summary: StraightBond ABI
       description: 'Endpoint: /ABI/StraightBond'
       operationId: StraightBondABI
@@ -468,7 +468,7 @@ paths:
   /ABI/Share:
     get:
       tags:
-        - ABI
+        - abi
       summary: Share ABI
       description: 'Endpoint: /ABI/Share'
       operationId: ShareABI
@@ -494,7 +494,7 @@ paths:
   /ABI/Membership:
     get:
       tags:
-        - ABI
+        - abi
       summary: Membership ABI
       description: 'Endpoint: /ABI/Membership'
       operationId: MembershipABI
@@ -520,7 +520,7 @@ paths:
   /ABI/Coupon:
     get:
       tags:
-        - ABI
+        - abi
       summary: Coupon ABI
       description: 'Endpoint: /ABI/Coupon'
       operationId: CouponABI
@@ -546,7 +546,7 @@ paths:
   /Companies:
     get:
       tags:
-        - Companies
+        - company_info
       summary: Issuer Information List
       description: 'Endpoint: /Companies'
       operationId: Companies
@@ -576,7 +576,7 @@ paths:
   /Companies/{eth_address}:
     get:
       tags:
-        - Companies
+        - company_info
       summary: Issuer Information
       description: 'Endpoint: /Companies/{eth_address}'
       operationId: Company
@@ -614,7 +614,7 @@ paths:
   /Companies/{eth_address}/Tokens:
     get:
       tags:
-        - Companies
+        - company_info
       summary: List of tokens issued by issuer
       description: 'Endpoint: /Companies/{eth_address}/Tokens'
       operationId: retrieve_company_tokens_Companies__eth_address__Tokens_get
@@ -652,7 +652,7 @@ paths:
   /User/PaymentAccount:
     get:
       tags:
-        - User
+        - user_info
       summary: Registration status to PaymentGateway Contract
       description: 'Endpoint: /User/PaymentAccount'
       operationId: PaymentAccount
@@ -689,7 +689,7 @@ paths:
   /User/PersonalInfo:
     get:
       tags:
-        - User
+        - user_info
       summary: Registration status to PersonalInfo Contract
       description: 'Endpoint: /User/PersonalInfo'
       operationId: PersonalInfo
@@ -734,7 +734,7 @@ paths:
   /Eth/TransactionCount/{eth_address}:
     get:
       tags:
-        - Eth
+        - transaction
       summary: Transaction count for the specified eth_address
       description: 'Endpoint: /Eth/TransactionCount/{eth_address}'
       operationId: TransactionCount
@@ -769,7 +769,7 @@ paths:
   /Eth/SendRawTransaction:
     post:
       tags:
-        - Eth
+        - transaction
       summary: Send signed transaction
       description: 'Endpoint: /Eth/SendRawTransaction'
       operationId: SendRawTransaction
@@ -798,7 +798,7 @@ paths:
   /Eth/SendRawTransactionNoWait:
     post:
       tags:
-        - Eth
+        - transaction
       summary: Send signed transaction
       description: 'Endpoint: /Eth/SendRawTransactionNoWait'
       operationId: SendRawTransactionNoWait
@@ -827,7 +827,7 @@ paths:
   /Eth/WaitForTransactionReceipt:
     get:
       tags:
-        - Eth
+        - transaction
       summary: Wait for Transaction Receipt
       description: 'Endpoint: /Eth/WaitForTransactionReceipt'
       operationId: WaitForTransactionReceipt
@@ -873,7 +873,7 @@ paths:
   /Token/StraightBond:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token detail list of StraightBond tokens
       description: 'Endpoint: /Token/StraightBond'
       operationId: StraightBondTokens
@@ -1038,7 +1038,7 @@ paths:
   /Token/StraightBond/Addresses:
     get:
       tags:
-        - Token
+        - token_info
       summary: List of StraightBond token address
       description: 'Endpoint: /Token/StraightBond/Addresses'
       operationId: StraightBondTokenAddresses
@@ -1200,7 +1200,7 @@ paths:
   /Token/StraightBond/{token_address}:
     get:
       tags:
-        - Token
+        - token_info
       summary: StraightBond token details
       description: 'Endpoint: /Token/StraightBond/{contract_address}'
       operationId: StraightBondTokenDetails
@@ -1239,7 +1239,7 @@ paths:
   /Token/Share:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token detail list of Share tokens
       description: 'Endpoint: /Token/Share'
       operationId: ShareTokens
@@ -1404,7 +1404,7 @@ paths:
   /Token/Share/Addresses:
     get:
       tags:
-        - Token
+        - token_info
       summary: List of Share token address
       description: 'Endpoint: /Token/Share/Addresses'
       operationId: ShareTokenAddresses
@@ -1555,7 +1555,7 @@ paths:
   /Token/Share/{token_address}:
     get:
       tags:
-        - Token
+        - token_info
       summary: Share token details
       description: 'Endpoint: /Token/Share/{contract_address}'
       operationId: ShareTokenDetails
@@ -1591,7 +1591,7 @@ paths:
   /Token/Membership:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token detail list of Membership tokens
       description: 'Endpoint: /Token/Membership'
       operationId: MembershipTokens
@@ -1732,7 +1732,7 @@ paths:
   /Token/Membership/Addresses:
     get:
       tags:
-        - Token
+        - token_info
       summary: List of Membership token address
       description: 'Endpoint: /Token/Membership/Addresses'
       operationId: MembershipTokenAddresses
@@ -1859,7 +1859,7 @@ paths:
   /Token/Membership/{token_address}:
     get:
       tags:
-        - Token
+        - token_info
       summary: Membership token details
       description: 'Endpoint: /Token/Membership/{contract_address}'
       operationId: MembershipTokenDetails
@@ -1895,7 +1895,7 @@ paths:
   /Token/Coupon:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token detail list of Coupon tokens
       description: 'Endpoint: /Token/Coupon'
       operationId: CouponTokens
@@ -2036,7 +2036,7 @@ paths:
   /Token/Coupon/Addresses:
     get:
       tags:
-        - Token
+        - token_info
       summary: List of Coupon token address
       description: 'Endpoint: /Token/Coupon/Addresses'
       operationId: CouponTokenAddresses
@@ -2163,7 +2163,7 @@ paths:
   /Token/Coupon/{token_address}:
     get:
       tags:
-        - Token
+        - token_info
       summary: Coupon token details
       description: 'Endpoint: /Token/Coupon/{contract_address}'
       operationId: CouponTokenDetails
@@ -2202,7 +2202,7 @@ paths:
   /Token/{token_address}/Status:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token Status
       description: 'Endpoint: /Token/{contract_address}/Status'
       operationId: TokenStatus
@@ -2240,7 +2240,7 @@ paths:
   /Token/{token_address}/Holders:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token holders
       description: 'Endpoint: /Token/{contract_address}/Holders'
       operationId: TokenHolders
@@ -2287,7 +2287,7 @@ paths:
   /Token/{token_address}/Holders/Count:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token holders count
       description: 'Endpoint: /Token/{contract_address}/Holders/Count'
       operationId: TokenHoldersCount
@@ -2334,7 +2334,7 @@ paths:
   /Token/{token_address}/Holders/Collection:
     post:
       tags:
-        - Token
+        - token_info
       summary: Execute Batch Getting Token Holders At Specific BlockNumber
       description: 'Endpoint: /Token/{contract_address}/Holders/Collection'
       operationId: TokenHoldersCollection
@@ -2378,7 +2378,7 @@ paths:
   /Token/{token_address}/Holders/Collection/{list_id}:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token Holder At Specific BlockNumber
       description: 'Endpoint: /Token/{contract_address}/Holders/Collection/{list_id}'
       operationId: TokenHoldersList
@@ -2426,7 +2426,7 @@ paths:
   /Token/{token_address}/TransferHistory:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token Transfer History
       description: 'Endpoint: /Token/{contract_address}/TransferHistory'
       operationId: TransferHistory
@@ -2482,7 +2482,7 @@ paths:
   /Token/{token_address}/TransferApprovalHistory:
     get:
       tags:
-        - Token
+        - token_info
       summary: Token Transfer Approval History
       description: 'Endpoint: /Token/{contract_address}/TransferApprovalHistory'
       operationId: TransferApprovalHistory
@@ -2538,7 +2538,7 @@ paths:
   /Position/{account_address}/Share:
     get:
       tags:
-        - Position
+        - user_position
       summary: Share Token Position
       description: 'Endpoint: /Position/{account_address}/Share'
       operationId: GetShareTokenPosition
@@ -2613,7 +2613,7 @@ paths:
   /Position/{account_address}/StraightBond:
     get:
       tags:
-        - Position
+        - user_position
       summary: StraightBond Token Position
       description: 'Endpoint: /Position/{account_address}/StraightBond'
       operationId: GetStraightBondTokenPosition
@@ -2688,7 +2688,7 @@ paths:
   /Position/{account_address}/Membership:
     get:
       tags:
-        - Position
+        - user_position
       summary: Membership Token Position
       description: 'Endpoint: /Position/{account_address}/Membership'
       operationId: GetMembershipTokenPosition
@@ -2763,7 +2763,7 @@ paths:
   /Position/{account_address}/Coupon:
     get:
       tags:
-        - Position
+        - user_position
       summary: Coupon Token Position
       description: 'Endpoint: /Position/{account_address}/Coupon'
       operationId: GetCouponTokenPosition
@@ -2838,7 +2838,7 @@ paths:
   /Position/{account_address}/Share/{token_address}:
     get:
       tags:
-        - Position
+        - user_position
       summary: Share Token Position By Token Address
       description: 'Endpoint: /Position/{account_address}/Share/{contract_address}'
       operationId: GetShareTokenPositionByAddress
@@ -2892,7 +2892,7 @@ paths:
   /Position/{account_address}/StraightBond/{token_address}:
     get:
       tags:
-        - Position
+        - user_position
       summary: StraightBond Token Position By Token Address
       description: 'Endpoint: /Position/{account_address}/StraightBond/{contract_address}'
       operationId: GetStraightBondTokenPositionByAddress
@@ -2946,7 +2946,7 @@ paths:
   /Position/{account_address}/Membership/{token_address}:
     get:
       tags:
-        - Position
+        - user_position
       summary: Membership Token Position By Token Address
       description: 'Endpoint: /Position/{account_address}/Membership/{contract_address}'
       operationId: GetMembershipTokenPositionByAddress
@@ -3000,7 +3000,7 @@ paths:
   /Position/{account_address}/Coupon/{token_address}:
     get:
       tags:
-        - Position
+        - user_position
       summary: Coupon Token Position By Token Address
       description: 'Endpoint: /Position/{account_address}/Coupon/{contract_address}'
       operationId: GetCouponTokenPositionByAddress
@@ -3054,7 +3054,7 @@ paths:
   /Notifications:
     get:
       tags:
-        - Notifications
+        - user_notification
       summary: Notification List
       description: 'Endpoint: /Notifications/'
       operationId: GetNotifications
@@ -3130,7 +3130,7 @@ paths:
   /Notifications/Read:
     post:
       tags:
-        - Notifications
+        - user_notification
       summary: Mark all notifications as read
       description: 'Endpoint: /Notifications/Read/'
       operationId: NotificationsRead
@@ -3156,7 +3156,7 @@ paths:
   /Notifications/Count:
     get:
       tags:
-        - Notifications
+        - user_notification
       summary: Get the number of unread notifications
       description: 'Endpoint: /Notifications/Count/'
       operationId: NotificationsCount
@@ -3183,7 +3183,7 @@ paths:
   /Notifications/{notification_id}:
     post:
       tags:
-        - Notifications
+        - user_notification
       summary: Update Notification
       description: 'Endpoint: /Notifications/{id}'
       operationId: PostNotifications
@@ -3223,7 +3223,7 @@ paths:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
     delete:
       tags:
-        - Notifications
+        - user_notification
       summary: Delete Notification
       operationId: DeleteNotification
       parameters:
@@ -3257,7 +3257,7 @@ paths:
   /E2EMessage/EncryptionKey/{account_address}:
     get:
       tags:
-        - E2EMessage
+        - messaging
       summary: Retrieve message encryption key
       description: 'Endpoint: /E2EMessage/EncryptionKey/{account_address}'
       operationId: EncryptionKey
@@ -3295,7 +3295,7 @@ paths:
   /Events/E2EMessaging:
     get:
       tags:
-        - Events
+        - contract_log
       summary: List all E2EMessaging event logs
       description: List all E2EMessaging event logs
       operationId: E2EMessagingEvents
@@ -3349,11 +3349,12 @@ paths:
                 title: Response 400 E2Emessagingevents
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Events/IbetEscrow:
     get:
       tags:
-        - Events
+        - contract_log
       summary: List all IbetEscrow event logs
       description: List all IbetEscrow event logs
       operationId: IbetEscrowEvents
@@ -3407,11 +3408,12 @@ paths:
                 title: Response 400 Ibetescrowevents
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Events/IbetSecurityTokenEscrow:
     get:
       tags:
-        - Events
+        - contract_log
       summary: List all IbetSecurityTokenEscrow event logs
       description: List all IbetSecurityTokenEscrow event logs
       operationId: IbetSecurityTokenEscrowEvents
@@ -3465,11 +3467,79 @@ paths:
                 title: Response 400 Ibetsecuritytokenescrowevents
                 anyOf:
                   - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+  /Events/IbetSecurityTokenInterface/{token_address}:
+    get:
+      tags:
+        - contract_log
+      summary: List all IbetSecurityTokenInterface event logs
+      description: List all IbetSecurityTokenInterface event logs
+      operationId: IbetSecurityTokenInterfaceEvents
+      parameters:
+        - description: token address
+          required: true
+          schema:
+            title: Token Address
+            type: string
+            description: token address
+          name: token_address
+          in: path
+        - description: from block number
+          required: true
+          schema:
+            title: From Block
+            minimum: 1
+            type: integer
+            description: from block number
+          name: from_block
+          in: query
+        - description: to block number
+          required: true
+          schema:
+            title: To Block
+            minimum: 1
+            type: integer
+            description: to block number
+          name: to_block
+          in: query
+        - description: events to get
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/IbetSecurityTokenInterfaceEventType'
+            description: events to get
+          name: event
+          in: query
+        - description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "from": "0x0000000000000000000000000000000000000000"    "to": "0x0000000000000000000000000000000000000000"}```'
+          required: false
+          schema:
+            title: Argument Filters
+            type: string
+            description: 'filter argument. serialize obj to a JSON formatted str required.eg.```{    "from": "0x0000000000000000000000000000000000000000"    "to": "0x0000000000000000000000000000000000000000"}```'
+          name: argument_filters
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllEventsResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Ibetsecuritytokeninterfaceevents
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorResponse'
                   - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /DEX/Market/Agreement:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Agreement Details
       description: 約定情報参照
       operationId: GetAgreement
@@ -3523,7 +3593,7 @@ paths:
   /DEX/Market/OrderBook/Membership:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Membership Token Order Book
       description: '[会員権]板情報取得'
       operationId: MembershipOrderBook
@@ -3582,7 +3652,7 @@ paths:
   /DEX/Market/LastPrice/Membership:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Membership Token Last Price (Bulk Get)
       description: '[会員権]現在値取得'
       operationId: MembershipLastPrice
@@ -3619,7 +3689,7 @@ paths:
   /DEX/Market/Tick/Membership:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Membership Token Tick (Bulk Get)
       description: '[会員権]歩み値取得'
       operationId: MembershipTick
@@ -3656,7 +3726,7 @@ paths:
   /DEX/Market/OrderBook/Coupon:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Coupon Token Order Book
       description: '[クーポン]板情報取得'
       operationId: CouponOrderBook
@@ -3715,7 +3785,7 @@ paths:
   /DEX/Market/LastPrice/Coupon:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Coupon Token Last Price (Bulk Get)
       description: '[クーポン]現在値取得'
       operationId: CouponLastPrice
@@ -3752,7 +3822,7 @@ paths:
   /DEX/Market/Tick/Coupon:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Coupon Token Tick (Bulk Get)
       description: '[クーポン]歩み値取得'
       operationId: CouponTick
@@ -3789,7 +3859,7 @@ paths:
   /DEX/OrderList/Membership:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Membership Order History (Bulk Get)
       description: 'Endpoint: /DEX/OrderList/Membership'
       operationId: MembershipOrderList
@@ -3834,7 +3904,7 @@ paths:
   /DEX/OrderList/Coupon:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Coupon Order History (Bulk Get)
       description: 'Endpoint: /DEX/OrderList/Coupon'
       operationId: CouponOrderList
@@ -3879,7 +3949,7 @@ paths:
   /DEX/OrderList/{token_address}:
     get:
       tags:
-        - IbetExchange
+        - dex
       summary: Order History filtered by token (Bulk Get)
       description: 'Endpoint: /DEX/OrderList/{token_address}'
       operationId: IbetExchange
@@ -3933,7 +4003,7 @@ paths:
   /Locked:
     get:
       tags:
-        - Locked
+        - locked
       summary: Locked List
       description: 'Endpoint: /Locked'
       operationId: ListAllLocked
@@ -5627,6 +5697,24 @@ components:
         - FinishTransfer
       type: string
       description: An enumeration.
+    IbetSecurityTokenInterfaceEventType:
+      title: IbetSecurityTokenInterfaceEventType
+      enum:
+        - Allot
+        - ApplyForOffering
+        - ApplyForTransfer
+        - ApproveTransfer
+        - CancelTransfer
+        - ChangeOfferingStatus
+        - ChangeStatus
+        - ChangeTransferApprovalRequired
+        - Issue
+        - Lock
+        - Redeem
+        - Transfer
+        - Unlock
+      type: string
+      description: An enumeration.
     InvalidParameterErrorMetainfo:
       title: InvalidParameterErrorMetainfo
       required:
@@ -6318,6 +6406,32 @@ components:
           minimum: 0
           type: integer
           description: Maximum sell amount limit
+    RequestBlockRangeLimitExceededErrorMetainfo:
+      title: RequestBlockRangeLimitExceededErrorMetainfo
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          title: Code
+          type: integer
+          example: 31
+        message:
+          title: Message
+          type: string
+          example: Request Block Range Limit Exceeded
+    RequestBlockRangeLimitExceededErrorResponse:
+      title: RequestBlockRangeLimitExceededErrorResponse
+      required:
+        - meta
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/RequestBlockRangeLimitExceededErrorMetainfo'
+        details:
+          title: Details
+          type: object
     RequestValidationErrorDict:
       title: RequestValidationErrorDict
       required:
@@ -7743,29 +7857,31 @@ components:
           title: Token Address
           type: string
 tags:
-  - name: Admin
+  - name: root
+    description: ''
+  - name: admin
     description: System administration
-  - name: NodeInfo
+  - name: node_info
     description: Information about blockchain and contracts
-  - name: ABI
+  - name: abi
     description: Contract ABIs
-  - name: Companies
-    description: Company information
-  - name: User
+  - name: transaction
+    description: Blockchain transactions
+  - name: company_info
+    description: Company(token issuer) information
+  - name: token_info
+    description: Detailed information for listed tokens
+  - name: user_info
     description: User information
-  - name: Eth
-    description: Blockchain Transactions
-  - name: Token
-    description: Attribute information of the listed tokens
-  - name: Position
-    description: Token balance held by the user
-  - name: Notifications
+  - name: user_position
+    description: User's token balance
+  - name: user_notification
     description: Notifications for users
-  - name: E2EMessage
-    description: Features related to the E2EMessaging contract
-  - name: Events
+  - name: contract_log
     description: Contract event logs
-  - name: IbetExchange
-    description: Trade related features on IbetExchange (Only for utility tokens)
-  - name: Locked
+  - name: dex
+    description: Trade related functions on IbetExchange (Only for utility tokens)
+  - name: messaging
+    description: Messaging functions with external systems
+  - name: locked
     description: Token locked amount
