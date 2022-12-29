@@ -55,11 +55,7 @@ from app.model.schema import (
     TokenHoldersCollectionResponse,
     TransferHistoriesResponse,
     ListAllTokenHoldersQuery,
-    TransferApprovalHistoriesResponse,
-    LockEventsResponse,
-    ListAllLockEventsQuery,
-    UnlockEventsResponse,
-    ListAllUnlockEventsQuery
+    TransferApprovalHistoriesResponse
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.web3_utils import Web3Wrapper

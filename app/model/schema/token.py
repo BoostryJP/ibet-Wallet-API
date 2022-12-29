@@ -150,33 +150,3 @@ class TransferApprovalHistoriesResponse(BaseModel):
     result_set: ResultSet
     transfer_approval_history: list[TransferApprovalHistory] = Field(description="Transfer approval history")
 
-
-class LockEvent(BaseModel):
-    transaction_hash: str = Field(description="Transaction hash")
-    token_address: str = Field(description="Token address")
-    lock_address: str = Field(description="Lock address")
-    account_address: str = Field(description="Account address")
-    value: int = Field(description="Transfer quantity")
-    data: dict = Field(description="Data")
-    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (JST)")
-
-
-class LockEventsResponse(BaseModel):
-    result_set: ResultSet
-    lock_events: list[LockEvent] = Field(description="Lock event list")
-
-
-class UnlockEvent(BaseModel):
-    transaction_hash: str = Field(description="Transaction hash")
-    token_address: str = Field(description="Token address")
-    lock_address: str = Field(description="Lock address")
-    account_address: str = Field(description="Account address")
-    recipient_address: str = Field(description="Recipient address")
-    value: int = Field(description="Transfer quantity")
-    data: dict = Field(description="Data")
-    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (JST)")
-
-
-class UnlockEventsResponse(BaseModel):
-    result_set: ResultSet
-    unlock_events: list[UnlockEvent] = Field(description="Unlock event list")

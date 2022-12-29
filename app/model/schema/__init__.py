@@ -119,9 +119,7 @@ from .token import (
     CreateTokenHoldersCollectionResponse,
     TokenHoldersCollectionResponse,
     TransferHistoriesResponse,
-    TransferApprovalHistoriesResponse,
-    LockEventsResponse,
-    UnlockEventsResponse
+    TransferApprovalHistoriesResponse
 )
 from .position import (
     # Request
