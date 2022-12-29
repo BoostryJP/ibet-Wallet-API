@@ -112,8 +112,6 @@ from .token import (
     CreateTokenHoldersCollectionRequest,
     RetrieveTokenHoldersCountQuery,
     ListAllTokenHoldersQuery,
-    ListAllLockEventsQuery,
-    ListAllUnlockEventsQuery,
     # Response
     TokenStatusResponse,
     TokenHoldersResponse,
@@ -166,6 +164,9 @@ from .events import (
     IbetSecurityTokenEscrowEventsQuery,
     E2EMessagingEventArguments,
     EscrowEventArguments,
+    SecurityTokenEventArguments,
+    IbetSecurityTokenInterfaceEventType,
+    IbetSecurityTokenInterfaceEventsQuery,
     # Response
     ListAllEventsResponse
 )
