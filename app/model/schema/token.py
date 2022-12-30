@@ -82,6 +82,7 @@ class TokenHolder(BaseModel):
     pending_transfer: Optional[int] = Field(default=0)
     exchange_balance: Optional[int] = Field(default=0)
     exchange_commitment: Optional[int] = Field(default=0)
+    locked: Optional[int] = Field(default=0)
 
 
 class TokenHoldersResponse(BaseModel):

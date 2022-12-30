@@ -122,10 +122,6 @@ tags_metadata = [
     {
         "name": "messaging",
         "description": "Messaging functions with external systems"
-    },
-    {
-        "name": "locked",
-        "description": "Token locked amount"
     }
 ]
 

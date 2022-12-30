@@ -43,13 +43,13 @@ LOG = log.get_logger()
 
 router = APIRouter(
     prefix="/Locked",
-    tags=["locked"]
+    tags=["user_position"]
 )
 
 
 @router.get(
     "",
-    summary="Locked List",
+    summary="List of locked assets",
     operation_id="ListAllLocked",
     response_model=GenericSuccessResponse[ListLockedResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)

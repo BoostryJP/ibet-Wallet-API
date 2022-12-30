@@ -35,9 +35,7 @@ from app.model.db import (
     Listing,
     IDXPosition,
     IDXPositionShareBlockNumber,
-    IDXLockedPosition,
-    IDXLock,
-    IDXUnlock
+    IDXLockedPosition
 )
 from batch import indexer_Position_Share
 from batch.indexer_Position_Share import Processor
@@ -377,28 +375,6 @@ class TestProcessor:
         assert _locked1.account_address == self.issuer["account_address"]
         assert _locked1.value == 3000
 
-        _lock_list = session.query(IDXLock).order_by(IDXLock.id).all()
-        assert len(_lock_list) == 2
-
-        _lock1 = _lock_list[0]
-        assert _lock1.id == 1
-        assert _lock1.token_address == token["address"]
-        assert _lock1.lock_address == self.trader["account_address"]
-        assert _lock1.account_address == self.issuer["account_address"]
-        assert _lock1.value == 1500
-        assert _lock1.data == {
-            "message": "locked1"
-        }
-        _lock2 = _lock_list[1]
-        assert _lock2.id == 2
-        assert _lock2.token_address == token["address"]
-        assert _lock2.lock_address == self.trader["account_address"]
-        assert _lock2.account_address == self.issuer["account_address"]
-        assert _lock2.value == 1500
-        assert _lock2.data == {
-            "message": "locked2"
-        }
-
         assert _idx_position_share_block_number.latest_block_number == block_number
 
     # <Normal_5>
@@ -474,32 +450,6 @@ class TestProcessor:
         assert _locked.lock_address == self.trader["account_address"]
         assert _locked.account_address == self.issuer["account_address"]
         assert _locked.value == 2900
-
-        _lock_list = session.query(IDXLock).order_by(IDXLock.id).all()
-        assert len(_lock_list) == 1
-
-        _lock1 = _lock_list[0]
-        assert _lock1.id == 1
-        assert _lock1.token_address == token["address"]
-        assert _lock1.lock_address == self.trader["account_address"]
-        assert _lock1.account_address == self.issuer["account_address"]
-        assert _lock1.value == 3000
-        assert _lock1.data == {
-            "message": "locked1"
-        }
-        _unlock_list = session.query(IDXUnlock).order_by(IDXUnlock.id).all()
-        assert len(_unlock_list) == 1
-
-        _unlock1 = _unlock_list[0]
-        assert _unlock1.id == 1
-        assert _unlock1.token_address == token["address"]
-        assert _unlock1.lock_address == self.trader["account_address"]
-        assert _unlock1.account_address == self.issuer["account_address"]
-        assert _unlock1.recipient_address == self.trader2["account_address"]
-        assert _unlock1.value == 100
-        assert _unlock1.data == {
-            "message": "unlocked1"
-        }
 
         assert _idx_position_share_block_number.latest_block_number == block_number
 

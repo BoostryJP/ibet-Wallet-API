@@ -344,7 +344,7 @@ def list_all_ibet_security_token_interface_event_logs(
         address=str(token_address)
     )
     if request_query.event is None:
-        attr_list = [e.value for e in IbetSecurityTokenInterfaceEventType]
+        attr_list = [event_type for event_type in IbetSecurityTokenInterfaceEventType]
     else:
         attr_list = [request_query.event.value]
 

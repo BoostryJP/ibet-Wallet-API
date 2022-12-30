@@ -66,6 +66,7 @@ class ResponseLimitExceededError(AppError):
     error_code = 30
     message = "Response Limit Exceeded"
 
+
 class RequestBlockRangeLimitExceededError(AppError):
     """
     400 ERROR: Search request range is over the limit

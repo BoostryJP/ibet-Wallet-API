@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import json
 from datetime import (
     datetime,
     timezone,
@@ -48,9 +47,7 @@ from app.model.db import (
     Listing,
     IDXPosition,
     IDXPositionBondBlockNumber,
-    IDXLockedPosition,
-    IDXLock,
-    IDXUnlock
+    IDXLockedPosition
 )
 from app.utils.web3_utils import Web3Wrapper
 import log
@@ -360,22 +357,6 @@ class Processor:
                     args = event["args"]
                     account_address = args.get("accountAddress", "")
                     lock_address = args.get("lockAddress", "")
-                    value = args.get("value", "")
-                    data = args.get("data", "")
-                    event_created = self.__gen_block_timestamp(event=event)
-
-                    # Index Lock event
-                    self.__insert_lock_idx(
-                        db_session=db_session,
-                        transaction_hash=event["transactionHash"].hex(),
-                        block_number=event["blockNumber"],
-                        token_address=token.address,
-                        lock_address=lock_address,
-                        account_address=account_address,
-                        value=value,
-                        data_str=data,
-                        blocktimestamp=event_created
-                    )
                     if lock_address not in lock_map:
                         lock_map[lock_address] = {}
                     lock_map[lock_address][account_address] = True
@@ -435,24 +416,6 @@ class Processor:
                     args = event["args"]
                     account_address = args.get("accountAddress", "")
                     lock_address = args.get("lockAddress", "")
-                    recipient_address = args.get("recipientAddress", "")
-                    value = args.get("value", "")
-                    data = args.get("data", "")
-                    event_created = self.__gen_block_timestamp(event=event)
-
-                    # Index Unlock event
-                    self.__insert_unlock_idx(
-                        db_session=db_session,
-                        transaction_hash=event["transactionHash"].hex(),
-                        block_number=event["blockNumber"],
-                        token_address=token.address,
-                        lock_address=lock_address,
-                        account_address=account_address,
-                        recipient_address=recipient_address,
-                        value=value,
-                        data_str=data,
-                        blocktimestamp=event_created
-                    )
                     if lock_address not in lock_map:
                         lock_map[lock_address] = {}
                     lock_map[lock_address][account_address] = True
@@ -1072,67 +1035,6 @@ class Processor:
             default_returns=0
         )
         return exchange_balance, exchange_commitment
-    @staticmethod
-    def __insert_lock_idx(db_session: Session, transaction_hash: str, block_number: int,
-                          token_address: str, lock_address: str, account_address: str, value: int,
-                          data_str: str, blocktimestamp: datetime):
-        """Registry Lock data in DB
-
-        :param transaction_hash: transaction hash (same value for bulk transfer of token contract)
-        :param token_address: token address
-        :param lock_address: lock address
-        :param account_address: account address
-        :param value: amount
-        :param data_str: data string
-        :param blocktimestamp: block timestamp
-        :return: None
-        """
-        try:
-            data = json.loads(data_str)
-        except Exception:
-            data = {}
-        lock = IDXLock()
-        lock.transaction_hash = transaction_hash
-        lock.block_number = block_number
-        lock.token_address = token_address
-        lock.lock_address = lock_address
-        lock.account_address = account_address
-        lock.value = value
-        lock.data = data
-        lock.block_timestamp = blocktimestamp
-        db_session.add(lock)
-
-    @staticmethod
-    def __insert_unlock_idx(db_session: Session, transaction_hash: str, block_number: int,
-                            token_address: str, lock_address: str, account_address: str, recipient_address: str,
-                            value: int, data_str: str, blocktimestamp: datetime):
-        """Registry Unlock data in DB
-
-        :param transaction_hash: transaction hash (same value for bulk transfer of token contract)
-        :param token_address: token address
-        :param lock_address: lock address
-        :param account_address: account address
-        :param recipient_address: recipient address
-        :param value: amount
-        :param data_str: data string
-        :param blocktimestamp: block timestamp
-        :return: None
-        """
-        try:
-            data = json.loads(data_str)
-        except:
-            data = {}
-        unlock = IDXUnlock()
-        unlock.transaction_hash = transaction_hash
-        unlock.block_number = block_number
-        unlock.token_address = token_address
-        unlock.lock_address = lock_address
-        unlock.account_address = account_address
-        unlock.recipient_address = recipient_address
-        unlock.value = value
-        unlock.data = data
-        unlock.block_timestamp = blocktimestamp
-        db_session.add(unlock)
 
     @staticmethod
     def __sink_on_position(db_session: Session,

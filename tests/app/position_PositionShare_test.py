@@ -219,7 +219,6 @@ class TestPositionShare:
                          token_address: str,
                          personal_info_address: str,
                          exchange_address: str | None):
-        # Issue token
         idx_token = IDXShareToken()
         idx_token.token_address = token_address
         idx_token.owner_address = TestPositionShare.issuer["account_address"]
@@ -258,7 +257,6 @@ class TestPositionShare:
                                    lock_address: str,
                                    account_address: str,
                                    value: int):
-        # Issue token
         idx_locked = IDXLockedPosition()
         idx_locked.token_address = token_address
         idx_locked.lock_address = lock_address
