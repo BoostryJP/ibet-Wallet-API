@@ -27,7 +27,8 @@ from sqlalchemy import (
     or_,
     desc,
     asc,
-    func, and_
+    func,
+    and_
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
