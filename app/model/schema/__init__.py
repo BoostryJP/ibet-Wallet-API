@@ -124,6 +124,7 @@ from .token import (
 from .position import (
     # Request
     ListAllPositionQuery,
+    GetPositionQuery,
     # Response
     SecurityTokenPosition,
     GenericSecurityTokenPositionsResponse,
@@ -161,6 +162,9 @@ from .events import (
     IbetSecurityTokenEscrowEventsQuery,
     E2EMessagingEventArguments,
     EscrowEventArguments,
+    SecurityTokenEventArguments,
+    IbetSecurityTokenInterfaceEventType,
+    IbetSecurityTokenInterfaceEventsQuery,
     # Response
     ListAllEventsResponse
 )
@@ -182,4 +186,10 @@ from .dex_order_list import (
     # Response
     ListAllOrderListResponse,
     TokenAddress
+)
+from .locked import (
+    # Request
+    ListAllLockedQuery,
+    # Response
+    ListLockedResponse
 )

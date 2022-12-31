@@ -26,7 +26,9 @@ from fastapi import (
 from sqlalchemy import (
     or_,
     desc,
-    asc
+    asc,
+    func,
+    and_
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
@@ -64,7 +66,8 @@ from app.model.db import (
     IDXTransferApproval,
     TokenHoldersList,
     TokenHolderBatchStatus,
-    TokenHolder
+    TokenHolder,
+    IDXLockedPosition
 )
 
 LOG = log.get_logger()
@@ -180,27 +183,35 @@ def get_token_holders(
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    query = session.query(IDXPosition). \
-        filter(IDXPosition.token_address == contract_address). \
+    query = session.query(IDXPosition, func.sum(IDXLockedPosition.value)). \
+        outerjoin(
+            IDXLockedPosition,
+            and_(IDXLockedPosition.token_address == token_address ,
+                 IDXLockedPosition.account_address == IDXPosition.account_address)
+        ). \
         filter(or_(
             IDXPosition.balance > 0,
             IDXPosition.pending_transfer > 0,
             IDXPosition.exchange_balance > 0,
-            IDXPosition.exchange_commitment > 0))
+            IDXPosition.exchange_commitment > 0,
+            IDXLockedPosition.value > 0
+        )). \
+        group_by(IDXPosition.id, IDXLockedPosition.account_address)
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
-    holders: list[IDXPosition] = query.order_by(desc(IDXPosition.id)).all()
+    holders: list[tuple[IDXPosition, int | None]] = query.order_by(desc(IDXPosition.id)).all()
 
     resp_body = []
     for holder in holders:
         resp_body.append({
-            "token_address": holder.token_address,
-            "account_address": holder.account_address,
-            "amount": holder.balance,
-            "pending_transfer": holder.pending_transfer,
-            "exchange_balance": holder.exchange_balance,
-            "exchange_commitment": holder.exchange_commitment
+            "token_address": holder[0].token_address,
+            "account_address": holder[0].account_address,
+            "amount": holder[0].balance,
+            "pending_transfer": holder[0].pending_transfer,
+            "exchange_balance": holder[0].exchange_balance,
+            "exchange_commitment": holder[0].exchange_commitment,
+            "locked": holder[1] if holder[1] else 0
         })
 
     return {
@@ -243,13 +254,20 @@ def get_token_holders_count(
 
     # Get token holders
     # add order_by id to bridge the difference between postgres and mysql
-    query = session.query(IDXPosition). \
-        filter(IDXPosition.token_address == contract_address). \
+    query = session.query(IDXPosition, func.sum(IDXLockedPosition.value)). \
+        outerjoin(
+            IDXLockedPosition,
+            and_(IDXLockedPosition.token_address == token_address ,
+                 IDXLockedPosition.account_address == IDXPosition.account_address)
+        ). \
         filter(or_(
             IDXPosition.balance > 0,
             IDXPosition.pending_transfer > 0,
             IDXPosition.exchange_balance > 0,
-            IDXPosition.exchange_commitment > 0))
+            IDXPosition.exchange_commitment > 0,
+            IDXLockedPosition.value > 0
+        )). \
+        group_by(IDXPosition.id, IDXLockedPosition.account_address)
     if request_query.exclude_owner is True:
         query = query.filter(IDXPosition.account_address != listed_token.owner_address)
 
@@ -548,4 +566,3 @@ def list_all_transfer_approval_histories(
         **SuccessResponse.use().dict(),
         "data": data
     }
-

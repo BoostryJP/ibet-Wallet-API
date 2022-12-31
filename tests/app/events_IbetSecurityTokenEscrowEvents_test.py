@@ -1427,3 +1427,27 @@ class TestEventsIbetSecurityTokenEscrow:
             "message": "Invalid Parameter"
         }
 
+    # Error_5
+    # RequestBlockRangeLimitExceededError
+    # block range must be less than or equal to 10000
+    def test_error_5(self, client: TestClient, session: Session, shared_contract):
+        escrow_contract = shared_contract["IbetSecurityTokenEscrow"]
+        config.IBET_SECURITY_TOKEN_ESCROW_CONTRACT_ADDRESS = escrow_contract.address
+        latest_block_number = web3.eth.block_number
+
+        # request target API
+        resp = client.get(
+            self.apiurl,
+            params={
+                "from_block": latest_block_number,
+                "to_block": latest_block_number + 10001
+            }
+        )
+
+        # assertion
+        assert resp.status_code == 400
+        assert resp.json()["meta"] == {
+            "code": 31,
+            "description": "Search request range is over the limit",
+            "message": "Request Block Range Limit Exceeded"
+        }

@@ -37,8 +37,16 @@ sys.path.append(path)
 from app import config
 from app.config import ZERO_ADDRESS
 from app.contracts import Contract
-from app.model.db import TokenHoldersList, TokenHolderBatchStatus, TokenHolder, Listing
-from batch.indexer_Token_Holders import LOG, Processor
+from app.model.db import (
+    TokenHoldersList,
+    TokenHolderBatchStatus,
+    TokenHolder,
+    Listing
+)
+from batch.indexer_Token_Holders import (
+    LOG,
+    Processor
+)
 from tests.account_config import eth_account
 from tests.contract_modules import (
     issue_bond_token,
@@ -85,6 +93,10 @@ from tests.contract_modules import (
     finish_token_escrow,
     create_token_escrow,
     get_latest_escrow_id,
+    bond_lock,
+    bond_unlock,
+    share_lock,
+    share_unlock,
 )
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -258,6 +270,7 @@ class TestProcessor:
     #   - CancelAgreement/ConfirmAgreement
     # - IssueFrom
     # - RedeemFrom
+    # - Lock
     def test_normal_1(
         self,
         processor: Processor,
@@ -322,6 +335,9 @@ class TestProcessor:
         bond_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
         # user1: 6000 trader: 44000
 
+        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        # user1: 6000 trader: 44000
+
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
@@ -362,6 +378,8 @@ class TestProcessor:
     #   - CreateEscrow
     #   - FinishEscrow
     #   - ApproveTransfer
+    # - Lock
+    # - Unlock
     def test_normal_2(
         self,
         processor: Processor,
@@ -424,6 +442,12 @@ class TestProcessor:
         finish_security_token_escrow(self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id)
         # user1: 13000 trader: 17000
 
+        bond_lock(self.trader, token, self.issuer["account_address"], 3000)
+        # user1: 13000 trader: 17000
+
+        bond_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
+        # user1: 15000 trader: 15000
+
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
@@ -449,8 +473,8 @@ class TestProcessor:
             .first()
         )
 
-        assert user1_record.hold_balance == 13000
-        assert trader_record.hold_balance == 17000
+        assert user1_record.hold_balance == 15000
+        assert trader_record.hold_balance == 15000
 
         assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
@@ -554,6 +578,7 @@ class TestProcessor:
     #   - CancelAgreement/ConfirmAgreement
     # - IssueFrom
     # - RedeemFrom
+    # - Lock
     def test_normal_4(
         self,
         processor: Processor,
@@ -606,6 +631,9 @@ class TestProcessor:
         share_redeem_from(self.issuer, token, self.issuer["account_address"], 10000)
         # user1: 10000 trader: 40000
 
+        share_lock(self.trader, token, self.issuer["account_address"], 3000)
+        # user1: 10000 trader: 40000
+
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
@@ -646,6 +674,8 @@ class TestProcessor:
     #   - CreateEscrow
     #   - FinishEscrow
     #   - ApproveTransfer
+    # - Lock
+    # - Unlock
     def test_normal_5(
         self,
         processor: Processor,
@@ -708,6 +738,12 @@ class TestProcessor:
         finish_security_token_escrow(self.agent, {"address": escrow_contract.address}, _latest_security_escrow_id)
         # user1: 13000 trader: 17000
 
+        share_lock(self.trader, token, self.issuer["account_address"], 3000)
+        # user1: 13000 trader: 17000
+
+        share_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
+        # user1: 15000 trader: 15000
+
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
         session.add(target_token_holders_list)
@@ -734,8 +770,8 @@ class TestProcessor:
             .first()
         )
 
-        assert user1_record.hold_balance == 13000
-        assert trader_record.hold_balance == 17000
+        assert user1_record.hold_balance == 15000
+        assert trader_record.hold_balance == 15000
 
         assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 

@@ -24,9 +24,14 @@ from app import config
 from app.model.db import (
     Listing,
     IDXPosition,
-    IDXShareToken
+    IDXShareToken,
+    IDXLockedPosition
 )
 from tests.account_config import eth_account
+from tests.contract_modules import (
+    share_lock,
+    transfer_share_token
+)
 from tests.utils import (
     PersonalInfoUtils,
     IbetShareUtils
@@ -214,7 +219,6 @@ class TestPositionShare:
                          token_address: str,
                          personal_info_address: str,
                          exchange_address: str | None):
-        # Issue token
         idx_token = IDXShareToken()
         idx_token.token_address = token_address
         idx_token.owner_address = TestPositionShare.issuer["account_address"]
@@ -245,6 +249,20 @@ class TestPositionShare:
         idx_token.max_holding_quantity = 1
         idx_token.max_sell_amount = 1000
         session.add(idx_token)
+        session.commit()
+
+    @staticmethod
+    def create_idx_locked_position(session: Session,
+                                   token_address: str,
+                                   lock_address: str,
+                                   account_address: str,
+                                   value: int):
+        idx_locked = IDXLockedPosition()
+        idx_locked.token_address = token_address
+        idx_locked.lock_address = lock_address
+        idx_locked.account_address = account_address
+        idx_locked.value = value
+        session.add(idx_locked)
         session.commit()
 
     @staticmethod
@@ -396,6 +414,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_2.address,
@@ -403,6 +422,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_3.address,
@@ -410,6 +430,7 @@ class TestPositionShare:
                     "pending_transfer": 100,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_4.address,
@@ -417,6 +438,7 @@ class TestPositionShare:
                     "pending_transfer": 1000000,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_5.address,
@@ -424,6 +446,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                    "locked": None
                 },
                 {
                     "token_address": token_6.address,
@@ -431,6 +454,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 1000000,
+                    "locked": None
                 },
             ]
         }
@@ -578,6 +602,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
                 {
                     "token_address": token_3.address,
@@ -585,6 +610,7 @@ class TestPositionShare:
                     "pending_transfer": 100,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
             ]
         }
@@ -657,6 +683,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": None
                 },
             ]
         }
@@ -825,6 +852,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_2.address,
@@ -832,6 +860,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_3.address,
@@ -839,6 +868,7 @@ class TestPositionShare:
                     "pending_transfer": 100,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_4.address,
@@ -846,6 +876,7 @@ class TestPositionShare:
                     "pending_transfer": 1000000,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_5.address,
@@ -853,6 +884,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 100,
+                    "locked": 0
                 },
                 {
                     "token_address": token_6.address,
@@ -860,6 +892,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 1000000,
+                    "locked": 0
                 },
             ]
         }
@@ -1033,6 +1066,7 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
                 {
                     "token_address": token_3.address,
@@ -1040,6 +1074,7 @@ class TestPositionShare:
                     "pending_transfer": 100,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
                 },
             ]
         }
@@ -1116,6 +1151,82 @@ class TestPositionShare:
                     "pending_transfer": 0,
                     "exchange_balance": 0,
                     "exchange_commitment": 0,
+                    "locked": 0
+                },
+            ]
+        }
+
+    # <Normal_7>
+    # locked amount
+    def test_normal_7(self, client: TestClient, session: Session, shared_contract):
+        token_list_contract = shared_contract["TokenList"]
+        personal_info_contract = shared_contract["PersonalInfo"]
+
+        # Prepare data
+        token_1 = self.create_balance_data(
+            self.account_1,
+            self.zero_address,
+            personal_info_contract,
+            token_list_contract
+        )
+
+        share_lock(
+            invoker=self.account_1,
+            token={"address": token_1.address},
+            lock_address=self.account_2["account_address"],
+            amount=1000
+        )
+        share_lock(
+            invoker=self.account_1,
+            token={"address": token_1.address},
+            lock_address=self.issuer["account_address"],
+            amount=2000
+        )
+        transfer_share_token(
+            invoker=self.account_1,
+            to=self.account_2,
+            token={"address": token_1.address},
+            amount=5000
+        )
+        share_lock(
+            invoker=self.account_2,
+            token={"address": token_1.address},
+            lock_address=self.issuer["account_address"],
+            amount=5000
+        )
+
+        self.create_idx_position(session, token_1.address, self.account_1["account_address"], balance=1000000-3000)
+        self.create_idx_locked_position(session, token_1.address, self.account_2["account_address"], self.account_1["account_address"], 1000)
+        self.create_idx_locked_position(session, token_1.address, self.issuer["account_address"], self.account_1["account_address"], 2000)
+        self.create_idx_locked_position(session, token_1.address, self.issuer["account_address"], self.account_2["account_address"], 5000)
+        self.list_token(token_1.address, session)
+        self.create_idx_token(session, token_1.address, personal_info_contract["address"], config.ZERO_ADDRESS)
+
+        with mock.patch("app.config.TOKEN_LIST_CONTRACT_ADDRESS", token_list_contract["address"]):
+            # Request target API
+            resp = client.get(
+                self.apiurl.format(account_address=self.account_1["account_address"]),
+                params={
+                    "enable_index": "true"
+                }
+            )
+
+        assert resp.status_code == 200
+        assert resp.json()["data"] == {
+            "result_set": {
+                "count": 1,
+                "offset": None,
+                "limit": None,
+                "total": 1,
+            },
+            "positions": [
+                {
+                    "token_address": token_1.address,
+                    "balance": 997000,
+                    "pending_transfer": 0,
+                    "exchange_balance": 0,
+                    "exchange_commitment": 0,
+                    "locked": 3000
                 },
             ]
         }

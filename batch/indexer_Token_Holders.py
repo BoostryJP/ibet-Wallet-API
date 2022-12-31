@@ -198,6 +198,8 @@ class Processor:
         self.__process_transfer(block_from, block_to)
         self.__process_issue(block_from, block_to)
         self.__process_redeem(block_from, block_to)
+        if self.token_template in ["IbetStraightBond", "IbetShare"]:
+            self.__process_unlock(block_from, block_to)
         if self.token_template == "IbetCoupon":
             self.__process_consume(block_from, block_to)
 
@@ -281,8 +283,8 @@ class Processor:
                     # Update Balance（to account）
                     self.balance_book.store(account_address=to_account, amount=+amount)
 
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
 
     def __process_issue(self, block_from: int, block_to: int):
         """Process Issue Event
@@ -313,8 +315,8 @@ class Processor:
                         # Update Balance
                         self.balance_book.store(account_address=account_address, amount=+amount)
 
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
 
     def __process_redeem(self, block_from: int, block_to: int):
         """Process Redeem Event
@@ -344,8 +346,8 @@ class Processor:
                     if amount is not None and amount <= sys.maxsize:
                         # Update Balance
                         self.balance_book.store(account_address=account_address, amount=-amount)
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
 
     def __process_consume(self, block_from: int, block_to: int):
         """Process Consume Event
@@ -371,8 +373,37 @@ class Processor:
                 account = args.get("consumer", ZERO_ADDRESS)
                 amount = args.get("value", ZERO_ADDRESS)
                 self.balance_book.store(account_address=account, amount=-amount)
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
+
+    def __process_unlock(self, block_from: int, block_to: int):
+        """Process Unlock Event
+
+        - The process of updating Hold-Balance data by capturing the following events
+        - `Unlock` event on Token contracts
+
+        :param block_from: From block
+        :param block_to: To block
+        :return: None
+        """
+        try:
+            # Get "Consume" events from token contract
+            events = self.token_contract.events.Unlock.getLogs(
+                fromBlock=block_from,
+                toBlock=block_to
+            )
+        except ABIEventFunctionNotFound:
+            events = []
+        try:
+            for event in events:
+                args = event["args"]
+                account_address = args.get("accountAddress", ZERO_ADDRESS)
+                recipient_address = args.get("recipientAddress", ZERO_ADDRESS)
+                amount = args.get("value", ZERO_ADDRESS)
+                self.balance_book.store(account_address=account_address, amount=-amount)
+                self.balance_book.store(account_address=recipient_address, amount=+amount)
+        except Exception:
+            raise
 
     @staticmethod
     def __save_holders(

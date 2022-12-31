@@ -16,6 +16,11 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 from typing import Optional, List
 import os
 import sys
@@ -41,10 +46,13 @@ from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
     IDXPosition,
-    IDXPositionShareBlockNumber
+    IDXPositionShareBlockNumber,
+    IDXLockedPosition
 )
 from app.utils.web3_utils import Web3Wrapper
 import log
+
+UTC = timezone(timedelta(hours=0), "UTC")
 
 process_name = "INDEXER-POSITION-SHARE"
 LOG = log.get_logger(process_name=process_name)
@@ -344,6 +352,29 @@ class Processor:
             except ABIEventFunctionNotFound:
                 events = []
             try:
+                lock_map: dict[str, dict[str, True]] = {}
+                for event in events:
+                    args = event["args"]
+                    account_address = args.get("accountAddress", "")
+                    lock_address = args.get("lockAddress", "")
+                    if lock_address not in lock_map:
+                        lock_map[lock_address] = {}
+                    lock_map[lock_address][account_address] = True
+
+                for lock_address in lock_map:
+                    for account_address in lock_map[lock_address]:
+                        # Update Locked Position
+                        value = self.__get_account_locked_token(token, lock_address, account_address)
+                        self.__sink_on_locked_position(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            lock_address=lock_address,
+                            account_address=account_address,
+                            value=value
+                        )
+            except Exception:
+                pass
+            try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
                     account_keys=["accountAddress"]
@@ -379,6 +410,29 @@ class Processor:
                 )
             except ABIEventFunctionNotFound:
                 events = []
+            try:
+                lock_map: dict[str, dict[str, True]] = {}
+                for event in events:
+                    args = event["args"]
+                    account_address = args.get("accountAddress", "")
+                    lock_address = args.get("lockAddress", "")
+                    if lock_address not in lock_map:
+                        lock_map[lock_address] = {}
+                    lock_map[lock_address][account_address] = True
+
+                for lock_address in lock_map:
+                    for account_address in lock_map[lock_address]:
+                        # Update Locked Position
+                        value = self.__get_account_locked_token(token, lock_address, account_address)
+                        self.__sink_on_locked_position(
+                            db_session=db_session,
+                            token_address=to_checksum_address(token.address),
+                            lock_address=lock_address,
+                            account_address=account_address,
+                            value=value
+                        )
+            except Exception:
+                pass
             try:
                 accounts_filtered = self.remove_duplicate_event_by_token_account_desc(
                     events=events,
@@ -848,6 +902,13 @@ class Processor:
                 raise e
 
     @staticmethod
+    def __gen_block_timestamp(event):
+        return datetime.fromtimestamp(
+            web3.eth.get_block(event["blockNumber"])["timestamp"],
+            UTC
+        )
+
+    @staticmethod
     def __get_oldest_cursor(target_token_list: TargetTokenList, block_to: int) -> int:
         """Get the oldest block number for given target token list"""
         oldest_block_number = block_to
@@ -941,6 +1002,17 @@ class Processor:
         return balance, pending_transfer
 
     @staticmethod
+    def __get_account_locked_token(token_contract, lock_address: str, account_address: str):
+        """Get locked on token"""
+        value = Contract.call_function(
+            contract=token_contract,
+            function_name="lockedOf",
+            args=(lock_address, account_address,),
+            default_returns=0
+        )
+        return value
+
+    @staticmethod
     def __get_account_balance_exchange(exchange_address: str,
                                        token_address: str,
                                        account_address: str):
@@ -1009,6 +1081,37 @@ class Processor:
             position.exchange_balance = exchange_balance or 0
             position.exchange_commitment = exchange_commitment or 0
             db_session.add(position)
+
+    @staticmethod
+    def __sink_on_locked_position(db_session: Session,
+                         token_address: str,
+                         lock_address: str,
+                         account_address: str,
+                         value: int):
+        """Update Locked data in DB
+
+        :param db_session: ORM session
+        :param token_address: token address
+        :param lock_address: account address
+        :param account_address: account address
+        :param value: updated locked amount
+        :return: None
+        """
+        locked = db_session.query(IDXLockedPosition). \
+            filter(IDXLockedPosition.token_address == token_address). \
+            filter(IDXLockedPosition.lock_address == lock_address). \
+            filter(IDXLockedPosition.account_address == account_address). \
+            first()
+        if locked is not None:
+            locked.value = value
+            db_session.merge(locked)
+        else:
+            locked = IDXLockedPosition()
+            locked.token_address = token_address
+            locked.lock_address = lock_address
+            locked.account_address = account_address
+            locked.value = value
+            db_session.add(locked)
 
     @staticmethod
     def remove_duplicate_event_by_token_account_desc(events: List,

@@ -17,6 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from fastapi import Query
 from typing import Optional
@@ -28,6 +29,7 @@ from pydantic import (
 
 from app.model.schema.base import (
     ResultSet,
+    SortOrder,
 )
 
 
@@ -80,6 +82,7 @@ class TokenHolder(BaseModel):
     pending_transfer: Optional[int] = Field(default=0)
     exchange_balance: Optional[int] = Field(default=0)
     exchange_commitment: Optional[int] = Field(default=0)
+    locked: Optional[int] = Field(default=0)
 
 
 class TokenHoldersResponse(BaseModel):
@@ -147,3 +150,4 @@ class TransferApprovalHistory(BaseModel):
 class TransferApprovalHistoriesResponse(BaseModel):
     result_set: ResultSet
     transfer_approval_history: list[TransferApprovalHistory] = Field(description="Transfer approval history")
+

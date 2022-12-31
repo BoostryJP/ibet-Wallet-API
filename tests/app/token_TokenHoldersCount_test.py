@@ -20,8 +20,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.model.db import (
     IDXPosition,
+    IDXLockedPosition,
     Listing
 )
+from tests.account_config import eth_account
 
 
 class TestTokenTokenHoldersCount:
@@ -35,6 +37,8 @@ class TestTokenTokenHoldersCount:
     token_address = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A740"
     account_address = "0x52D0784B3460E206ED69393ae1f9Ed37941089eD"
     issuer_address = "0x02D0784B3460E206ED69393ae1f9Ed37941089eD"
+
+    lock_address_1 = eth_account["user1"]["account_address"]
 
     @staticmethod
     def insert_listing(session, listing: dict):
@@ -51,13 +55,20 @@ class TestTokenTokenHoldersCount:
         _position.token_address = position["token_address"]
         _position.account_address = position["account_address"]
         _position.balance = position.get("balance")  # nullable
-        _position.pending_transfer = position.get(
-            "pending_transfer")  # nullable
-        _position.exchange_balance = position.get(
-            "exchange_balance")  # nullable
-        _position.exchange_commitment = position.get(
-            "exchange_commitment")  # nullable
+        _position.pending_transfer = position.get("pending_transfer")  # nullable
+        _position.exchange_balance = position.get("exchange_balance")  # nullable
+        _position.exchange_commitment = position.get("exchange_commitment")  # nullable
         session.add(_position)
+
+    @staticmethod
+    def insert_locked_position(session: Session, locked_position: dict):
+        idx_locked = IDXLockedPosition()
+        idx_locked.token_address = locked_position["token_address"]
+        idx_locked.lock_address = locked_position["lock_address"]
+        idx_locked.account_address = locked_position["account_address"]
+        idx_locked.value = locked_position["value"]
+        session.add(idx_locked)
+        session.commit()
 
     ####################################################################
     # Normal
@@ -85,9 +96,9 @@ class TestTokenTokenHoldersCount:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # Normal_2
+    # Normal_2_1
     # Data exists
-    def test_normal_2(self, client: TestClient, session: Session):
+    def test_normal_2_1(self, client: TestClient, session: Session):
         listing = {
             "token_address": self.token_address,
             "is_public": True,
@@ -119,6 +130,48 @@ class TestTokenTokenHoldersCount:
         # Assertion
         assumed_body = {
             "count": 2
+        }
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # Normal_2_2
+    # Data exists: locked position
+    def test_normal_2_2(self, client: TestClient, session: Session):
+        listing = {
+            "token_address": self.token_address,
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=listing)
+
+        # Prepare data (balance > 0)
+        position = {
+            "token_address": self.token_address,
+            "account_address": self.account_address,
+            "balance": 0,
+            "exchange_balance": 0,
+            "pending_transfer": 0,
+            "exchange_commitment": 0
+        }
+        self.insert_position(session, position=position)
+
+        # Prepare data (locked position)
+        locked_position_1 = {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address_1,
+            "account_address": self.account_address,
+            "value": 1
+        }
+        self.insert_locked_position(session, locked_position_1)
+
+        # Request target API
+        apiurl = self.apiurl_base.format(contract_address=self.token_address)
+        query_string = ""
+        resp = client.get(apiurl, params=query_string)
+
+        # Assertion
+        assumed_body = {
+            "count": 1
         }
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}

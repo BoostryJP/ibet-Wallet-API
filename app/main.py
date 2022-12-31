@@ -49,7 +49,8 @@ from app.api.routers import (
     e2e_message as routers_e2e_message,
     events as routers_events,
     dex_market as routers_dex_market,
-    dex_order_list as routers_dex_order_list
+    dex_order_list as routers_dex_order_list,
+    locked as routers_locked,
 )
 from app.config import BRAND_NAME
 from app.errors import (
@@ -163,6 +164,7 @@ app.include_router(routers_e2e_message.router)
 app.include_router(routers_events.router)
 app.include_router(routers_dex_market.router)
 app.include_router(routers_dex_order_list.router)
+app.include_router(routers_locked.router)
 
 
 ###############################################################

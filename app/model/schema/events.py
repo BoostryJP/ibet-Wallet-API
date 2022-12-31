@@ -26,6 +26,7 @@ from pydantic import (
     StrictStr
 )
 from pydantic.dataclasses import dataclass
+from app.contracts import create_abi_event_argument_models
 
 ############################
 # COMMON
@@ -126,6 +127,42 @@ class IbetSecurityTokenEscrowEventsQuery(EventsQuery):
                     "{"
                     "    \"escrowId\": 0"
                     "    \"token\": \"0x0000000000000000000000000000000000000000\""
+                    "}"
+                    "```"
+    )
+
+class SecurityTokenEventArguments(BaseModel):
+    __root__: create_abi_event_argument_models("IbetSecurityTokenInterface")
+
+
+
+class IbetSecurityTokenInterfaceEventType(str, Enum):
+    Allot = "Allot"
+    ApplyForOffering = "ApplyForOffering"
+    ApplyForTransfer = "ApplyForTransfer"
+    ApproveTransfer = "ApproveTransfer"
+    CancelTransfer = "CancelTransfer"
+    ChangeOfferingStatus = "ChangeOfferingStatus"
+    ChangeStatus = "ChangeStatus"
+    ChangeTransferApprovalRequired = "ChangeTransferApprovalRequired"
+    Issue = "Issue"
+    Lock = "Lock"
+    Redeem = "Redeem"
+    Transfer = "Transfer"
+    Unlock = "Unlock"
+
+
+@dataclass
+class IbetSecurityTokenInterfaceEventsQuery(EventsQuery):
+    event: Optional[IbetSecurityTokenInterfaceEventType] = Query(default=None, description="events to get")
+    argument_filters: Optional[str] = Query(
+        default=None,
+        description="filter argument. serialize obj to a JSON formatted str required."
+                    "eg."
+                    "```"
+                    "{"
+                    "    \"from\": \"0x0000000000000000000000000000000000000000\""
+                    "    \"to\": \"0x0000000000000000000000000000000000000000\""
                     "}"
                     "```"
     )

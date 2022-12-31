@@ -26,7 +26,8 @@ from fastapi import (
 )
 from sqlalchemy import (
     or_,
-    and_
+    and_,
+    func
 )
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import sum as sum_
@@ -55,7 +56,8 @@ from app.model.db import (
     IDXShareToken,
     IDXBondToken,
     IDXCouponToken,
-    IDXMembershipToken
+    IDXMembershipToken,
+    IDXLockedPosition
 )
 from app.model.blockchain import (
     ShareToken,
@@ -79,6 +81,7 @@ from app.model.schema import (
     CouponPositionWithAddress,
     RetrieveStraightBondTokenResponse,
     RetrieveShareTokenResponse,
+    GetPositionQuery,
 )
 from app.utils.docs_utils import get_routers_responses
 
@@ -146,16 +149,30 @@ class BasePosition:
         offset = request_query.offset
         limit = request_query.limit
         include_token_details = request_query.include_token_details
-        query = session.query(Listing.token_address, IDXPosition, self.idx_token_model). \
+        query = session.query(Listing.token_address, IDXPosition, func.sum(IDXLockedPosition.value), self.idx_token_model). \
             join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address). \
-            join(IDXPosition, Listing.token_address == IDXPosition.token_address). \
-            filter(IDXPosition.account_address == account_address). \
+            outerjoin(
+                IDXPosition,
+                and_(
+                    Listing.token_address == IDXPosition.token_address,
+                    IDXPosition.account_address == account_address
+                )
+            ). \
+            outerjoin(
+                IDXLockedPosition,
+                and_(
+                    Listing.token_address == IDXLockedPosition.token_address,
+                    IDXLockedPosition.account_address == account_address
+                )
+            ). \
             filter(or_(
                 IDXPosition.balance != 0,
                 IDXPosition.pending_transfer != 0,
                 IDXPosition.exchange_balance != 0,
-                IDXPosition.exchange_commitment != 0
+                IDXPosition.exchange_commitment != 0,
+                IDXLockedPosition.value != 0
             )). \
+            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLockedPosition.token_address). \
             order_by(Listing.id)
 
         total = query.count()
@@ -165,7 +182,7 @@ class BasePosition:
         if offset is not None:
             query = query.offset(offset)
 
-        _token_position_list: list[tuple[str, IDXPosition, IDXTokenInstance]] = query.all()
+        _token_position_list: list[tuple[str, IDXPosition, int | None, IDXTokenInstance]] = query.all()
 
         position_list = []
         for item in _token_position_list:
@@ -173,12 +190,13 @@ class BasePosition:
                 "balance": item[1].balance if item[1] and item[1].balance else 0,
                 "pending_transfer": item[1].pending_transfer if item[1] and item[1].pending_transfer else 0,
                 "exchange_balance": item[1].exchange_balance if item[1] and item[1].exchange_balance else 0,
-                "exchange_commitment": item[1].exchange_commitment if item[1] and item[1].exchange_commitment else 0
+                "exchange_commitment": item[1].exchange_commitment if item[1] and item[1].exchange_commitment else 0,
+                "locked": item[2] if item[2] else 0
             }
             if include_token_details:
-                position["token"] = self.token_model.from_model(item[2]).__dict__
+                position["token"] = self.token_model.from_model(item[3]).__dict__
             else:
-                position["token_address"] = item[2].token_address
+                position["token_address"] = item[3].token_address
             position_list.append(position)
         return {
             "result_set": {
@@ -248,13 +266,7 @@ class BasePosition:
             "positions": position_list
         }
 
-    def get_from_contract_address(
-        self,
-        req: Request,
-        session: Session,
-        account_address: str,
-        token_address: str
-    ):
+    def get_one(self, req: Request, request_query: GetPositionQuery, session: Session, account_address: str, token_address: str):
         # API Enabled Check
         if self.token_enabled is False:
             raise NotSupportedError(method="GET", url=req.url.path)
@@ -272,7 +284,74 @@ class BasePosition:
                 raise InvalidParameterError(description="invalid contract_address")
         except:
             raise InvalidParameterError(description="invalid contract_address")
+        enable_index = request_query.enable_index
 
+        if enable_index:
+            # If enable_index flag is set true, get position data from DB.
+            data = self.get_one_from_index(
+                session=session,
+                account_address=account_address,
+                token_address=token_address
+            )
+            return data
+        # If enable_index flag is not set or set false, get position data from contract.
+        data = self.get_one_from_contract(
+            session=session,
+            account_address=account_address,
+            token_address=token_address
+        )
+        return data
+
+    def get_one_from_index(self, session: Session, account_address: str, token_address: str):
+        query = (
+            session.query(Listing.token_address, IDXPosition, func.sum(IDXLockedPosition.value), self.idx_token_model).
+            join(self.idx_token_model, Listing.token_address == self.idx_token_model.token_address).
+            outerjoin(
+                IDXPosition,
+                and_(
+                    Listing.token_address == IDXPosition.token_address,
+                    IDXPosition.account_address == account_address
+                )
+            ).
+            outerjoin(
+                IDXLockedPosition,
+                and_(
+                    Listing.token_address == IDXLockedPosition.token_address,
+                    IDXLockedPosition.account_address == account_address
+                )
+            ).
+            filter(Listing.token_address == token_address).
+            filter(or_(
+                IDXPosition.balance != 0,
+                IDXPosition.pending_transfer != 0,
+                IDXPosition.exchange_balance != 0,
+                IDXPosition.exchange_commitment != 0,
+                IDXLockedPosition.value != 0
+            )).
+            group_by(Listing.id, IDXPosition.id, self.idx_token_model.token_address, IDXLockedPosition.token_address)
+        )
+        result: tuple[str, IDXPosition | None, int | None, IDXTokenInstance] | None = query.first()
+        if result is None:
+            raise DataNotExistsError(description="contract_address: %s" % token_address)
+        _position = result[1]
+        _locked = result[2]
+        token = result[3]
+
+        return {
+            "balance": _position.balance if _position and _position.balance else 0,
+            "pending_transfer": _position.pending_transfer if _position and _position.pending_transfer else 0,
+            "exchange_balance":_position.exchange_balance if _position and _position.exchange_balance else 0,
+            "exchange_commitment": _position.exchange_commitment if _position and _position.exchange_commitment else 0,
+            "locked": _locked or 0,
+            "token": self.token_model.from_model(token).__dict__
+        }
+
+    def get_one_from_contract(
+        self,
+        session: Session,
+        account_address: str,
+        token_address: str
+    ):
         # Get Listing Token
         _token = session.query(Listing). \
             filter(Listing.token_address == token_address). \
@@ -783,11 +862,12 @@ class GetPosition:
     def __call__(
         self,
         req: Request,
+        request_query: GetPositionQuery = Depends(),
         account_address: str = Path(),
         token_address: str = Path(),
         session: Session = Depends(db_session)
     ):
-        return self.base_position().get_from_contract_address(req, session, account_address, token_address)
+        return self.base_position().get_one(req, request_query, session, account_address, token_address)
 
 
 # ------------------------------

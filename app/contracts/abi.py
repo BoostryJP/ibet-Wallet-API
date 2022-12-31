@@ -1,0 +1,157 @@
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+import json
+from functools import lru_cache
+import eth_utils.abi
+
+
+from enum import Enum
+from hexbytes import HexBytes
+from pydantic import (
+    BaseModel,
+    parse_obj_as,
+    create_model,
+    Extra
+)
+from typing import (
+    List,
+    Optional,
+    Union,
+    Literal,
+    Type,
+    Any
+)
+from web3 import Web3
+
+
+class ABIInputType(str, Enum):
+    address = "address"
+    uint256 = "uint256"
+    string = "string"
+    bool = "bool"
+
+    def to_python_type(self) -> Type:
+        match self:
+            case ABIInputType.address | ABIInputType.string:
+                return str
+            case ABIInputType.uint256:
+                return int
+            case ABIInputType.bool:
+                return bool
+            case _:
+                return Any
+
+
+class ABIDescriptionType(str, Enum):
+    function = "function"
+    constructor = "constructor"
+    fallback = "fallback"
+    event = "event"
+    receive = "receive"
+
+
+GENERIC_DESCRIPTION_TYPES = Union[
+    Literal[ABIDescriptionType.constructor],
+    Literal[ABIDescriptionType.fallback],
+    Literal[ABIDescriptionType.receive],
+]
+
+
+class ABIDescriptionFunctionInput(BaseModel):
+    name: str
+    type: str
+    components: Optional[List["ABIDescriptionFunctionInput"]]
+
+
+ABIDescriptionFunctionInput.update_forward_refs()
+
+
+class ABIDescriptionEventInput(BaseModel):
+    indexed: bool
+    name: str
+    type: ABIInputType
+
+
+class ABIGenericDescription(BaseModel):
+    type: GENERIC_DESCRIPTION_TYPES
+
+
+class ABIFunctionDescription(BaseModel):
+    type: Literal[ABIDescriptionType.function]
+    name: str
+    inputs: List[ABIDescriptionFunctionInput]
+
+    def get_selector(self) -> HexBytes:
+        signature = self.get_signature()
+        return Web3.keccak(text=signature)[0:4]
+
+    def get_signature(self) -> str:
+        joined_input_types = ",".join(
+            input.type
+            if input.type != "tuple"
+            else eth_utils.abi.collapse_if_tuple(input.dict())
+            for input in self.inputs
+        )
+        return f"{self.name}({joined_input_types})"
+
+
+class ABIEventDescription(BaseModel):
+    type: Literal[ABIDescriptionType.event]
+    name: str
+    inputs: List[ABIDescriptionEventInput]
+    anonymous: bool
+
+
+ABIDescription = Union[ABIEventDescription, ABIFunctionDescription, ABIGenericDescription]
+ABI = List[ABIDescription]
+
+
+@lru_cache(None)
+def create_abi_event_argument_models(contract_name: str) -> list[Type[BaseModel]]:
+    contract_file = f"app/contracts/json/{contract_name}.json"
+
+    contract_json = json.load(open(contract_file, 'r'))
+    abi_list = parse_obj_as(ABI, contract_json.get("abi"))
+
+    models = []
+    for abi in abi_list:
+        if abi.type != ABIDescriptionType.event:
+            continue
+
+        fields = {}
+        for i in abi.inputs:
+            if i.indexed is True:
+                fields[i.name] = (Optional[i.type.to_python_type()], None)
+
+        if len(fields.values()) == 0:
+            continue
+
+        class Config(BaseModel.Config):
+            extra = Extra.forbid
+
+        model = create_model(
+            f"{abi.name.capitalize()}{abi.type.capitalize()}Argument",
+            **fields,
+            __config__=Config
+        )
+
+        models.append(model)
+
+    parent_model = Union[tuple(models)]
+    return parent_model
