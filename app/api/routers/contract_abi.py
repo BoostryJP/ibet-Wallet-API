@@ -31,6 +31,7 @@ from app.model.schema import (
     ABI
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -59,10 +60,10 @@ def get_straight_bond_abi(req: Request):
 
     ibet_straightbond_json = json.load(open("app/contracts/json/IbetStraightBond.json", "r"))
     abi = ibet_straightbond_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": abi
-    }
+    })
 
 
 # ------------------------------
@@ -84,10 +85,10 @@ def get_share_abi(req: Request):
 
     ibet_share_json = json.load(open("app/contracts/json/IbetShare.json", "r"))
     abi = ibet_share_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": abi
-    }
+    })
 
 
 # ------------------------------
@@ -109,10 +110,10 @@ def get_membership_abi(req: Request):
 
     ibet_membership_json = json.load(open("app/contracts/json/IbetMembership.json", "r"))
     abi = ibet_membership_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": abi
-    }
+    })
 
 
 # ------------------------------
@@ -134,7 +135,7 @@ def get_coupon_abi(req: Request):
 
     ibet_coupon_json = json.load(open("app/contracts/json/IbetCoupon.json", "r"))
     abi = ibet_coupon_json['abi']
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": abi
-    }
+    })
