@@ -84,6 +84,7 @@ from app.model.schema import (
     GetPositionQuery,
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -519,7 +520,8 @@ class BasePositionShare(BasePosition):
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
-                    "exchange_commitment": _exchange_commitment
+                    "exchange_commitment": _exchange_commitment,
+                    "locked": None
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -592,7 +594,8 @@ class BasePositionStraightBond(BasePosition):
                     "balance": balance,
                     "pending_transfer": pending_transfer,
                     "exchange_balance": _exchange_balance,
-                    "exchange_commitment": _exchange_commitment
+                    "exchange_commitment": _exchange_commitment,
+                    "locked": None
                 }
                 if is_detail is True:
                     position["token"] = token.__dict__
@@ -889,10 +892,10 @@ def list_all_share_positions(
     """
     Endpoint: /Position/{account_address}/Share
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": positions
-    }
+    })
 
 
 # ------------------------------
@@ -914,10 +917,10 @@ def list_all_straight_bond_positions(
     """
     Endpoint: /Position/{account_address}/StraightBond
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": positions
-    }
+    })
 
 
 # ------------------------------
@@ -939,10 +942,10 @@ def list_all_membership_positions(
     """
     Endpoint: /Position/{account_address}/Membership
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": positions
-    }
+    })
 
 
 # ------------------------------
@@ -964,10 +967,10 @@ def list_all_coupon_positions(
     """
     Endpoint: /Position/{account_address}/Coupon
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": positions
-    }
+    })
 
 
 # ------------------------------
@@ -986,10 +989,10 @@ def retrieve_share_position_by_token_address(
     """
     Endpoint: /Position/{account_address}/Share/{contract_address}
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": position
-    }
+    })
 
 
 # ------------------------------
@@ -1008,10 +1011,10 @@ def retrieve_straight_bond_position_by_token_address(
     """
     Endpoint: /Position/{account_address}/StraightBond/{contract_address}
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": position
-    }
+    })
 
 
 # ------------------------------
@@ -1030,10 +1033,10 @@ def retrieve_membership_position_by_token_address(
     """
     Endpoint: /Position/{account_address}/Membership/{contract_address}
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": position
-    }
+    })
 
 
 # ------------------------------
@@ -1052,7 +1055,7 @@ def retrieve_coupon_position_by_token_address(
     """
     Endpoint: /Position/{account_address}/Coupon/{contract_address}
     """
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": position
-    }
+    })

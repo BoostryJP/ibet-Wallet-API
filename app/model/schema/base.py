@@ -71,8 +71,8 @@ class SuccessResponse(BaseModel):
     data: dict = {}
 
     @staticmethod
-    def use():
-        return SuccessResponse(meta=Success200MetaModel(code=200, message="OK"))
+    def default():
+        return SuccessResponse(meta=Success200MetaModel(code=200, message="OK")).dict()
 
 
 class GenericSuccessResponse(GenericModel, Generic[Data]):

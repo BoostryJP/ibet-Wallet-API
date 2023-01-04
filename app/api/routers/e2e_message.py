@@ -38,6 +38,7 @@ from app.model.schema import (
     SuccessResponse
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -86,7 +87,7 @@ def retrieve_encryption_key(
             "key": key,
             "key_type": key_type
         }
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": encryption_key
-    }
+    })

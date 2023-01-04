@@ -27,6 +27,9 @@ BRAND_NAME = 'ibet-Wallet-API'
 # Unit test mode
 UNIT_TEST_MODE = True if os.environ.get("UNIT_TEST_MODE") == "1" else False
 
+# Response validation mode
+RESPONSE_VALIDATION_MODE = True if os.environ.get("RESPONSE_VALIDATION_MODE") == "1" else False
+
 # Blockchain network
 NETWORK = os.environ.get("NETWORK") or "IBET"  # IBET or IBETFIN
 
