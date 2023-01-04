@@ -50,6 +50,7 @@ from app.model.db import (
     IDXBondToken
 )
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -166,10 +167,10 @@ def list_all_straight_bond_tokens(
         "tokens": tokens
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 
 @router.get(
@@ -267,10 +268,10 @@ def list_all_straight_bond_token_addresses(
         "address_list": [_token.token_address for _token in _token_list]
     }
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": data
-    }
+    })
 
 
 @router.get(
@@ -320,7 +321,7 @@ def retrieve_straight_bond_token(
     if token_detail is None:
         raise DataNotExistsError('contract_address: %s' % contract_address)
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": token_detail.__dict__
-    }
+    })

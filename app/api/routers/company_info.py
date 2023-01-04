@@ -59,6 +59,7 @@ from app.model.schema import (
 
 from app.utils.company_list import CompanyList
 from app.utils.docs_utils import get_routers_responses
+from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
@@ -145,10 +146,10 @@ def list_all_companies(
     has_listing_owner_function = has_listing_owner_function_creator(listing_owner_list)
     filtered_company_list = filter(has_listing_owner_function, company_list)
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": list(filtered_company_list)
-    }
+    })
 
 
 # ------------------------------
@@ -175,10 +176,10 @@ def retrieve_company(
     if company.address == "":
         raise DataNotExistsError("eth_address: %s" % eth_address)
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": company.json()
-    }
+    })
 
 
 # ------------------------------
@@ -244,10 +245,10 @@ def retrieve_company_tokens(
             else:
                 continue
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": token_list
-    }
+    })
 
 
 def available_token_template(token_template: str) -> bool:

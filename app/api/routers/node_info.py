@@ -35,6 +35,7 @@ from app.model.schema import (
     SuccessResponse,
     GetBlockSyncStatusResponse
 )
+from app.utils.fastapi import json_response
 from app.utils.web3_utils import Web3Wrapper
 
 LOG = log.get_logger()
@@ -83,10 +84,10 @@ def get_node_info():
         'e2e_messaging_address': config.E2E_MESSAGING_CONTRACT_ADDRESS,
         'e2e_messaging_abi': e2e_messaging_json['abi']
     }
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": nodeInfo
-    }
+    })
 
 
 # ------------------------------
@@ -117,10 +118,10 @@ def get_block_sync_status(
         is_synced = True
         latest_block_number = web3.eth.block_number
 
-    return {
-        **SuccessResponse.use().dict(),
+    return json_response({
+        **SuccessResponse.default(),
         "data": {
             "is_synced": is_synced,
             "latest_block_number": latest_block_number
         }
-    }
+    })
