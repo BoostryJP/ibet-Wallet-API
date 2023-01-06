@@ -125,6 +125,10 @@ from .position import (
     # Request
     ListAllPositionQuery,
     GetPositionQuery,
+    ListAllLockedPositionQuery,
+    LockHistoryCategory,
+    LockHistorySortItem,
+    ListAllLockEventQuery,
     # Response
     SecurityTokenPosition,
     GenericSecurityTokenPositionsResponse,
@@ -138,7 +142,9 @@ from .position import (
     MembershipPositionWithAddress,
     CouponPositionsResponse,
     CouponPositionWithDetail,
-    CouponPositionWithAddress
+    CouponPositionWithAddress,
+    ListLockedResponse,
+    LockEventsResponse
 )
 from .notification import (
     # Request
@@ -186,10 +192,4 @@ from .dex_order_list import (
     # Response
     ListAllOrderListResponse,
     TokenAddress
-)
-from .locked import (
-    # Request
-    ListAllLockedQuery,
-    # Response
-    ListLockedResponse
 )

@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import itertools
-import pytest
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -26,44 +25,30 @@ from web3.middleware import geth_poa_middleware
 
 from app.model.db import IDXLockedPosition
 from app import config
-from batch import indexer_Token_Detail
-from batch.indexer_Token_Detail import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 
-@pytest.fixture(scope="session")
-def test_module(shared_contract):
-    indexer_Token_Detail.TOKEN_LIST_CONTRACT_ADDRESS = shared_contract["TokenList"]["address"]
-    return indexer_Token_Detail
-
-
-@pytest.fixture(scope="function")
-def processor(test_module, session):
-    processor = test_module.Processor()
-    return processor
-
-
-class TestTokenStraightBondTokens:
+class TestPositionShareLock:
     """
-    Test Case for locked
+    Test Case for position.Share.Lock
     """
 
     # テスト対象API
-    apiurl = "/Locked"
+    apiurl_base = "/Position/{account_address}/Share/Lock"
 
-    token_1 = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A741"
-    token_2 = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A742"
-    token_3 = "0xe883A6f441Ad5682d37DF31d34fc012bcB07A743"
+    token_1 = "0xE883a6F441Ad5682D37Df31d34fC012bcb07A741"
+    token_2 = "0xE883A6f441AD5682D37df31d34FC012bcB07a742"
+    token_3 = "0xe883a6f441AD5682d37dF31D34fc012bCB07A743"
 
-    lock_1 = "0x52D0784B3460E206ED69393ae1f9Ed37941089e1"
-    lock_2 = "0x52D0784B3460E206ED69393ae1f9Ed37941089e2"
-    lock_3 = "0x52D0784B3460E206ED69393ae1f9Ed37941089e3"
+    lock_1 = "0x52D0784B3460E206Ed69393AE1f9eD37941089E1"
+    lock_2 = "0x52D0784B3460E206Ed69393aE1f9eD37941089E2"
+    lock_3 = "0x52D0784B3460E206ed69393ae1F9Ed37941089e3"
 
-    account_1 = "0x15d34aaf54267db7d7c367839aaf71a00a2c6a61"
-    account_2 = "0x15d34aaf54267db7d7c367839aaf71a00a2c6a62"
-    account_3 = "0x15d34aaf54267db7d7c367839aaf71a00a2c6a63"
+    account_1 = "0x15d34aaf54267dB7d7c367839aAf71A00A2C6A61"
+    account_2 = "0x15D34aaF54267DB7d7c367839Aaf71a00a2C6a62"
+    account_3 = "0x15D34AAF54267Db7d7c367839aAf71a00A2C6a63"
 
     @staticmethod
     def create_idx_locked(session: Session,
@@ -104,223 +89,15 @@ class TestTokenStraightBondTokens:
         self.setup_data(session)
 
         resp = client.get(
-            self.apiurl
-        )
-
-        assumed_body = {
-            "result_set": {
-                "count": 27,
-                "offset": None,
-                "limit": None,
-                "total": 27
-            },
-            "locked_list": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_2, "value": 2},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_3, "value": 3},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_2, "value": 5},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_3, "value": 6},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_2, "value": 8},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_3, "value": 9},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_2, "value": 11},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_3, "value": 12},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_1, "value": 13},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_2, "value": 14},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_3, "value": 15},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_1, "value": 16},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_2, "value": 17},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_3, "value": 18},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_2, "value": 20},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_3, "value": 21},
-                {"token_address": self.token_3, "lock_address": self.lock_2, "account_address": self.account_1, "value": 22},
-                {"token_address": self.token_3, "lock_address": self.lock_2, "account_address": self.account_2, "value": 23},
-                {"token_address": self.token_3, "lock_address": self.lock_2, "account_address": self.account_3, "value": 24},
-                {"token_address": self.token_3, "lock_address": self.lock_3, "account_address": self.account_1, "value": 25},
-                {"token_address": self.token_3, "lock_address": self.lock_3, "account_address": self.account_2, "value": 26},
-                {"token_address": self.token_3, "lock_address": self.lock_3, "account_address": self.account_3, "value": 27},
-            ]
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # <Normal_1_2>
-    # List specific tokens with query
-    def test_normal_1_2(self, client: TestClient, session: Session):
-        # Prepare Data
-        self.setup_data(session)
-
-        resp = client.get(
-            self.apiurl,
-            params={
-                "token_address_list": [
-                    self.token_1,
-                    self.token_2
-                ]
-            }
-        )
-
-        assumed_body = {
-            "result_set": {
-                "count": 18,
-                "offset": None,
-                "limit": None,
-                "total": 18
-            },
-            "locked_list": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_2, "value": 2},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_3, "value": 3},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_2, "value": 5},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_3, "value": 6},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_2, "value": 8},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_3, "value": 9},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_2, "value": 11},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_3, "value": 12},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_1, "value": 13},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_2, "value": 14},
-                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_3, "value": 15},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_1, "value": 16},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_2, "value": 17},
-                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_3, "value": 18}
-            ]
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # <Normal_2>
-    # Pagination
-    def test_normal_2(self, client: TestClient, session: Session, shared_contract, processor: Processor):
-        # Prepare Data
-        self.setup_data(session)
-
-        resp = client.get(
-            self.apiurl,
-            params={
-                "token_address_list": [
-                    self.token_1
-                ],
-                "offset": 3,
-                "limit": 5
-            }
+            self.apiurl_base.format(account_address=self.account_1)
         )
 
         assumed_body = {
             "result_set": {
                 "count": 9,
-                "offset": 3,
-                "limit": 5,
-                "total": 9
-            },
-            "locked_list": [
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_2, "value": 5},
-                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_3, "value": 6},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
-                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_2, "value": 8}
-            ]
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # <Normal_3>
-    # Pagination(over offset)
-    def test_normal_3(self, client: TestClient, session: Session, shared_contract, processor: Processor):
-        # Prepare Data
-        self.setup_data(session)
-
-        resp = client.get(
-            self.apiurl,
-            params={
-                "token_address_list": [
-                    self.token_1
-                ],
-                "offset": 9
-            }
-        )
-
-        assumed_body = {
-            "result_set": {
-                "count": 9,
-                "offset": 9,
+                "offset": None,
                 "limit": None,
                 "total": 9
-            },
-            "locked_list": []
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # <Normal_4_1>
-    # Filter(lock_address)
-    def test_normal_4_1(self, client: TestClient, session: Session, shared_contract, processor: Processor):
-        # Prepare Data
-        self.setup_data(session)
-
-        resp = client.get(
-            self.apiurl,
-            params={
-                "lock_address": self.lock_1
-            }
-        )
-
-        assumed_body = {
-            "result_set": {
-                "count": 9,
-                "offset": None,
-                "limit": None,
-                "total": 27
-            },
-            "locked_list": [
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_2, "value": 2},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_3, "value": 3},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_2, "value": 11},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_3, "value": 12},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_2, "value": 20},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_3, "value": 21}
-            ]
-        }
-
-        assert resp.status_code == 200
-        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
-        assert resp.json()["data"] == assumed_body
-
-    # <Normal_4_2>
-    # Filter(account_address)
-    def test_normal_4_2(self, client: TestClient, session: Session):
-        # Prepare Data
-        self.setup_data(session)
-
-        resp = client.get(
-            self.apiurl,
-            params={
-                "account_address": self.account_1
-            }
-        )
-
-        assumed_body = {
-            "result_set": {
-                "count": 9,
-                "offset": None,
-                "limit": None,
-                "total": 27
             },
             "locked_list": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
@@ -339,16 +116,147 @@ class TestTokenStraightBondTokens:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
 
-    # <Normal_5_1>
-    # Sort(token_address)
-    def test_normal_5_1(self, client: TestClient, session: Session, shared_contract, processor: Processor):
+    # <Normal_1_2>
+    # List specific tokens with query
+    def test_normal_1_2(self, client: TestClient, session: Session):
         # Prepare Data
         self.setup_data(session)
 
         resp = client.get(
-            self.apiurl,
+            self.apiurl_base.format(account_address=self.account_1),
             params={
-                "account_address": self.account_1,
+                "token_address_list": [
+                    self.token_1,
+                    self.token_2
+                ]
+            }
+        )
+
+        assumed_body = {
+            "result_set": {
+                "count": 6,
+                "offset": None,
+                "limit": None,
+                "total": 6
+            },
+            "locked_list": [
+                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
+                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
+                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
+                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
+                {"token_address": self.token_2, "lock_address": self.lock_2, "account_address": self.account_1, "value": 13},
+                {"token_address": self.token_2, "lock_address": self.lock_3, "account_address": self.account_1, "value": 16}
+            ]
+        }
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # <Normal_2>
+    # Pagination
+    def test_normal_2(self, client: TestClient, session: Session, shared_contract):
+        # Prepare Data
+        self.setup_data(session)
+
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
+                "token_address_list": [
+                    self.token_1
+                ],
+                "offset": 1,
+                "limit": 2
+            }
+        )
+
+        assumed_body = {
+            "result_set": {
+                "count": 3,
+                "offset": 1,
+                "limit": 2,
+                "total": 3
+            },
+            "locked_list": [
+                {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
+                {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7}
+            ]
+        }
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # <Normal_3>
+    # Pagination(over offset)
+    def test_normal_3(self, client: TestClient, session: Session, shared_contract):
+        # Prepare Data
+        self.setup_data(session)
+
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
+                "token_address_list": [
+                    self.token_1
+                ],
+                "offset": 9
+            }
+        )
+
+        assumed_body = {
+            "result_set": {
+                "count": 3,
+                "offset": 9,
+                "limit": None,
+                "total": 3
+            },
+            "locked_list": []
+        }
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # <Normal_4>
+    # Filter(lock_address)
+    def test_normal_4(self, client: TestClient, session: Session, shared_contract):
+        # Prepare Data
+        self.setup_data(session)
+
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
+                "lock_address": self.lock_1
+            }
+        )
+
+        assumed_body = {
+            "result_set": {
+                "count": 3,
+                "offset": None,
+                "limit": None,
+                "total": 9
+            },
+            "locked_list": [
+                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
+                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
+                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19}
+            ]
+        }
+
+        assert resp.status_code == 200
+        assert resp.json()["meta"] == {"code": 200, "message": "OK"}
+        assert resp.json()["data"] == assumed_body
+
+    # <Normal_5_1>
+    # Sort(token_address)
+    def test_normal_5_1(self, client: TestClient, session: Session, shared_contract):
+        # Prepare Data
+        self.setup_data(session)
+
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
                 "sort_order": 1,
                 "sort_item": "token_address"
             }
@@ -359,7 +267,7 @@ class TestTokenStraightBondTokens:
                 "count": 9,
                 "offset": None,
                 "limit": None,
-                "total": 27
+                "total": 9
             },
             "locked_list": [
                 {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
@@ -380,14 +288,13 @@ class TestTokenStraightBondTokens:
 
     # <Normal_5_2>
     # Sort(lock_address)
-    def test_normal_5_2(self, client: TestClient, session: Session, shared_contract, processor: Processor):
+    def test_normal_5_2(self, client: TestClient, session: Session, shared_contract):
         # Prepare Data
         self.setup_data(session)
 
         resp = client.get(
-            self.apiurl,
+            self.apiurl_base.format(account_address=self.account_1),
             params={
-                "account_address": self.account_1,
                 "sort_order": 0,
                 "sort_item": "lock_address"
             }
@@ -398,7 +305,7 @@ class TestTokenStraightBondTokens:
                 "count": 9,
                 "offset": None,
                 "limit": None,
-                "total": 27
+                "total": 9
             },
             "locked_list": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
@@ -419,12 +326,12 @@ class TestTokenStraightBondTokens:
 
     # <Normal_5_3>
     # Sort(account_address)
-    def test_normal_5_3(self, client: TestClient, session: Session, shared_contract, processor: Processor):
+    def test_normal_5_3(self, client: TestClient, session: Session, shared_contract):
         # Prepare Data
         self.setup_data(session)
 
         resp = client.get(
-            self.apiurl,
+            self.apiurl_base.format(account_address=self.account_1),
             params={
                 "lock_address": self.lock_1,
                 "sort_order": 0,
@@ -434,21 +341,15 @@ class TestTokenStraightBondTokens:
 
         assumed_body = {
             "result_set": {
-                "count": 9,
+                "count": 3,
                 "offset": None,
                 "limit": None,
-                "total": 27
+                "total": 9
             },
             "locked_list": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
                 {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_2, "value": 2},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_2, "value": 11},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_2, "value": 20},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_3, "value": 3},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_3, "value": 12},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_3, "value": 21},
+                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19}
             ]
         }
 
@@ -458,12 +359,12 @@ class TestTokenStraightBondTokens:
 
     # <Normal_5_4>
     # Sort(value)
-    def test_normal_5_4(self, client: TestClient, session: Session, shared_contract, processor: Processor):
+    def test_normal_5_4(self, client: TestClient, session: Session, shared_contract):
         # Prepare Data
         self.setup_data(session)
 
         resp = client.get(
-            self.apiurl,
+            self.apiurl_base.format(account_address=self.account_1),
             params={
                 "lock_address": self.lock_1,
                 "sort_order": 1,
@@ -473,20 +374,14 @@ class TestTokenStraightBondTokens:
 
         assumed_body = {
             "result_set": {
-                "count": 9,
+                "count": 3,
                 "offset": None,
                 "limit": None,
-                "total": 27
+                "total": 9
             },
             "locked_list": [
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_3, "value": 21},
-                {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_2, "value": 20},
                 {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_3, "value": 12},
-                {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_2, "value": 11},
                 {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_3, "value": 3},
-                {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_2, "value": 2},
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
             ]
         }
@@ -494,3 +389,90 @@ class TestTokenStraightBondTokens:
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == assumed_body
+
+    ###########################################################################
+    # Error
+    ###########################################################################
+
+    # <Error_1>
+    # ParameterError: invalid account_address
+    def test_error_1(self, client: TestClient, session: Session):
+
+        # Request target API
+        resp = client.get(
+            self.apiurl_base.format(account_address="invalid"),
+        )
+
+        # Assertion
+        assert resp.status_code == 400
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "message": "Invalid Parameter",
+            "description": "invalid account_address"
+        }
+
+    # <Error_2>
+    # ParameterError: offset/limit(minus value)
+    def test_error_2(self, client: TestClient, session: Session):
+
+        # Request target API
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
+                "offset": -1,
+                "limit": -1,
+            }
+        )
+
+        # Assertion
+        assert resp.status_code == 400
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "ctx": {"limit_value": 0},
+                    "loc": ["query", "offset"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge"
+                },
+                {
+                    "ctx": {"limit_value": 0},
+                    "loc": ["query", "limit"],
+                    "msg": "ensure this value is greater than or equal to 0",
+                    "type": "value_error.number.not_ge"
+                }
+            ],
+            "message": "Invalid Parameter"
+        }
+
+    # <Error_3>
+    # ParameterError: offset/limit(not int), include_token_details(not bool)
+    def test_error_3(self, client: TestClient, session: Session):
+
+        # Request target API
+        resp = client.get(
+            self.apiurl_base.format(account_address=self.account_1),
+            params={
+                "offset": "test",
+                "limit": "test",
+            }
+        )
+
+        # Assertion
+        assert resp.status_code == 400
+        assert resp.json()["meta"] == {
+            "code": 88,
+            "description": [
+                {
+                    "loc": ["query", "offset"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer"
+                },
+                {
+                    "loc": ["query", "limit"],
+                    "msg": "value is not a valid integer",
+                    "type": "type_error.integer"
+                }
+            ],
+            "message": "Invalid Parameter"
+        }

@@ -16,40 +16,138 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 from sqlalchemy import (
     Column,
     String,
-    BigInteger
+    BigInteger,
+    JSON,
+    DateTime
 )
 
 from app.model.db import Base
 
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
-class IDXLockedPosition(Base):
-    """Token Locked Amount (INDEX)"""
-    __tablename__ = "locked_position"
+class IDXLock(Base):
+    """Token Lock Event (INDEX)"""
+    __tablename__ = "lock"
 
+    # Sequence Id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Transaction Hash
+    transaction_hash = Column(String(66), index=True, nullable=False)
+    # Block Number
+    block_number = Column(BigInteger, nullable=False)
     # Token Address
-    token_address = Column(String(42), primary_key=True)
+    token_address = Column(String(42), index=True, nullable=False)
     # Lock Address
-    lock_address = Column(String(42), primary_key=True)
+    lock_address = Column(String(42), index=True, nullable=False)
     # Account Address
-    account_address = Column(String(42), primary_key=True)
+    account_address = Column(String(42), index=True, nullable=False)
     # Locked Amount
     value = Column(BigInteger, nullable=False)
+    # Data
+    data = Column(JSON, nullable=False)
+    # Lock Datetime
+    block_timestamp = Column(DateTime, nullable=False)
 
     FIELDS = {
+        "id": int,
+        "transaction_hash": str,
+        "block_number": int,
         "token_address": str,
         "lock_address": str,
         "account_address": str,
         "value": int,
+        "data": dict,
+        "block_timestamp": datetime
     }
     FIELDS.update(Base.FIELDS)
 
+    @staticmethod
+    def replace_to_JST(_datetime: datetime) -> datetime | None:
+        if _datetime is None:
+            return None
+        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
+        return datetime_jp
+
     def json(self):
         return {
+            "id": self.id,
+            "transaction_hash": self.transaction_hash,
+            "block_number": self.block_number,
             "token_address": self.token_address,
             "lock_address": self.lock_address,
             "account_address": self.account_address,
-            "value": self.value
+            "value": self.value,
+            "data": self.data,
+            "block_timestamp": self.replace_to_JST(self.block_timestamp)
+        }
+
+
+class IDXUnlock(Base):
+    """Token Unlock Event (INDEX)"""
+    __tablename__ = "unlock"
+
+    # Sequence Id
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    # Transaction Hash
+    transaction_hash = Column(String(66), index=True, nullable=False)
+    # Block Number
+    block_number = Column(BigInteger, nullable=False)
+    # Token Address
+    token_address = Column(String(42), index=True, nullable=False)
+    # Lock Address
+    lock_address = Column(String(42), index=True, nullable=False)
+    # Account Address
+    account_address = Column(String(42), index=True, nullable=False)
+    # Recipient Address
+    recipient_address = Column(String(42), index=True, nullable=False)
+    # Locked Amount
+    value = Column(BigInteger, nullable=False)
+    # Data
+    data = Column(JSON, nullable=False)
+    # Lock Datetime
+    block_timestamp = Column(DateTime, nullable=False)
+
+    FIELDS = {
+        "id": int,
+        "transaction_hash": str,
+        "block_number": int,
+        "token_address": str,
+        "lock_address": str,
+        "account_address": str,
+        "recipient_address": str,
+        "value": int,
+        "data": dict,
+        "block_timestamp": datetime
+    }
+    FIELDS.update(Base.FIELDS)
+
+    @staticmethod
+    def replace_to_JST(_datetime: datetime) -> datetime | None:
+        if _datetime is None:
+            return None
+        datetime_jp = _datetime.replace(tzinfo=UTC).astimezone(JST)
+        return datetime_jp
+
+    def json(self):
+        return {
+            "id": self.id,
+            "transaction_hash": self.transaction_hash,
+            "block_number": self.block_number,
+            "token_address": self.token_address,
+            "lock_address": self.lock_address,
+            "account_address": self.account_address,
+            "recipient_address": self.recipient_address,
+            "value": self.value,
+            "data": self.data,
+            "block_timestamp": self.replace_to_JST(self.block_timestamp)
         }

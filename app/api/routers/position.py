@@ -27,7 +27,13 @@ from fastapi import (
 from sqlalchemy import (
     or_,
     and_,
-    func
+    func,
+    desc,
+    literal,
+    String,
+    null,
+    column,
+    cast
 )
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import sum as sum_
@@ -57,7 +63,9 @@ from app.model.db import (
     IDXBondToken,
     IDXCouponToken,
     IDXMembershipToken,
-    IDXLockedPosition
+    IDXLockedPosition,
+    IDXLock,
+    IDXUnlock
 )
 from app.model.blockchain import (
     ShareToken,
@@ -82,6 +90,12 @@ from app.model.schema import (
     RetrieveStraightBondTokenResponse,
     RetrieveShareTokenResponse,
     GetPositionQuery,
+    ListAllLockedPositionQuery,
+    ListLockedResponse,
+    ListAllLockEventQuery,
+    LockHistoryCategory,
+    LockHistorySortItem,
+    LockEventsResponse,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
@@ -93,6 +107,275 @@ router = APIRouter(
     prefix="/Position",
     tags=["user_position"]
 )
+
+
+
+class ListAllLock:
+    token_enabled: bool
+
+    def __init__(self, token_enabled: bool):
+        self.token_enabled = token_enabled
+
+    def __call__(
+        self,
+        req: Request,
+        request_query: ListAllLockedPositionQuery = Depends(),
+        account_address: str = Path(),
+        session: Session = Depends(db_session)
+    ):
+        if self.token_enabled is False:
+            raise NotSupportedError(method="GET", url=req.url.path)
+
+        # Validation
+        try:
+            account_address = to_checksum_address(account_address)
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError(description="invalid account_address")
+        except:
+            raise InvalidParameterError(description="invalid account_address")
+
+        token_address_list = request_query.token_address_list
+        lock_address = request_query.lock_address
+        limit = request_query.limit
+        offset = request_query.offset
+
+        sort_item = request_query.sort_item
+        sort_order = request_query.sort_order  # default: asc
+
+        query = session.query(IDXLockedPosition)
+        if len(token_address_list) > 0:
+            query = query.filter(IDXLockedPosition.token_address.in_(token_address_list))
+        query = query.filter(IDXLockedPosition.account_address == account_address)
+
+        total = query.count()
+
+        if lock_address is not None:
+            query = query.filter(IDXLockedPosition.lock_address == lock_address)
+
+        count = query.count()
+
+        sort_attr = getattr(IDXLockedPosition, sort_item, None)
+
+        if sort_order == 0:  # ASC
+            query = query.order_by(sort_attr)
+        else:  # DESC
+            query = query.order_by(desc(sort_attr))
+
+        # NOTE: Set secondary sort for consistent results
+        if sort_item != "token_address":
+            query = query.order_by(IDXLockedPosition.token_address)
+        else:
+            query = query.order_by(IDXLockedPosition.created)
+
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.offset(offset)
+
+        _locked_list: list[IDXLockedPosition] = query.all()
+        locked_list = []
+
+        for _locked in _locked_list:
+            locked_list.append(_locked.json())
+
+        data = {
+            "result_set": {
+                "count": count,
+                "offset": offset,
+                "limit": limit,
+                "total": total
+            },
+            "locked_list": locked_list
+        }
+
+        return data
+
+
+class ListAllLockEvent:
+    token_enabled: bool
+
+    def __init__(self, token_enabled: bool):
+        self.token_enabled = token_enabled
+
+    def __call__(
+        self,
+        req: Request,
+        request_query: ListAllLockEventQuery = Depends(),
+        account_address: str = Path(),
+        session: Session = Depends(db_session)
+    ):
+        if self.token_enabled is False:
+            raise NotSupportedError(method="GET", url=req.url.path)
+
+        # Validation
+        try:
+            account_address = to_checksum_address(account_address)
+            if not Web3.isAddress(account_address):
+                raise InvalidParameterError(description="invalid account_address")
+        except:
+            raise InvalidParameterError(description="invalid account_address")
+
+        category = request_query.category
+
+        query_lock = session.query(
+            literal(value=LockHistoryCategory.Lock.value, type_=String).label("history_category"),
+            IDXLock.transaction_hash.label("transaction_hash"),
+            IDXLock.token_address.label("token_address"),
+            IDXLock.lock_address.label("lock_address"),
+            IDXLock.account_address.label("account_address"),
+            null().label("recipient_address"),
+            IDXLock.value.label("value"),
+            IDXLock.data.label("data"),
+            IDXLock.block_timestamp.label("block_timestamp")
+        )
+        query_unlock = session.query(
+            literal(value=LockHistoryCategory.Unlock.value, type_=String).label("history_category"),
+            IDXUnlock.transaction_hash.label("transaction_hash"),
+            IDXUnlock.token_address.label("token_address"),
+            IDXUnlock.lock_address.label("lock_address"),
+            IDXUnlock.account_address.label("account_address"),
+            IDXUnlock.recipient_address.label("recipient_address"),
+            IDXUnlock.value.label("value"),
+            IDXUnlock.data.label("data"),
+            IDXUnlock.block_timestamp.label("block_timestamp")
+        )
+
+        match category:
+            case LockHistoryCategory.Lock:
+                query = query_lock
+            case LockHistoryCategory.Unlock:
+                query = query_unlock
+            case _:
+                query = query_lock.union_all(query_unlock)
+
+        query = query.filter(column("account_address") == account_address)
+        total = query.count()
+
+        if request_query.token_address is not None:
+            query = query.filter(column("token_address") == request_query.token_address)
+        if request_query.lock_address is not None:
+            query = query.filter(column("lock_address") == request_query.lock_address)
+        if request_query.recipient_address is not None:
+            query = query.filter(column("recipient_address") == request_query.recipient_address)
+        if request_query.data is not None:
+            query = query.filter(cast(column("data"), String).like("%" + request_query.data + "%"))
+        count = query.count()
+
+        # Sort
+        sort_attr = column(request_query.sort_item)
+        if request_query.sort_order == 0:  # ASC
+            query = query.order_by(sort_attr)
+        else:  # DESC
+            query = query.order_by(desc(sort_attr))
+        if request_query.sort_item != LockHistorySortItem.block_timestamp:
+            # NOTE: Set secondary sort for consistent results
+            query = query.order_by(desc(column(LockHistorySortItem.block_timestamp)))
+
+        # Pagination
+        if request_query.offset is not None:
+            query = query.offset(request_query.offset)
+        if request_query.limit is not None:
+            query = query.limit(request_query.limit)
+        lock_histories = query.all()
+
+        resp_data = []
+        for lock_history in lock_histories:
+            resp_data.append({
+                "history_category": lock_history[0],
+                "transaction_hash": lock_history[1],
+                "token_address": lock_history[2],
+                "lock_address": lock_history[3],
+                "account_address": lock_history[4],
+                "recipient_address": lock_history[5],
+                "value": lock_history[6],
+                "data": lock_history[7],
+                "block_timestamp": IDXLock.replace_to_JST(lock_history[8])
+            })
+
+        data = {
+            "result_set": {
+                "count": count,
+                "offset": request_query.offset,
+                "limit": request_query.limit,
+                "total": total
+            },
+            "lock_history": resp_data
+        }
+        return data
+
+# ------------------------------
+# Get Lock(Share)
+# ------------------------------
+@router.get(
+    "/{account_address}/Share/Lock",
+    summary="Share Token Locked Position",
+    operation_id="GetShareTokenLockedPosition",
+    response_model=GenericSuccessResponse[ListLockedResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+)
+def list_all_share_locks(
+    data: dict = Depends(ListAllLock(config.SHARE_TOKEN_ENABLED))
+):
+    return json_response({
+        **SuccessResponse.default(),
+        "data": data
+    })
+
+
+# ------------------------------
+# Get Lock Event(Share)
+# ------------------------------
+@router.get(
+    "/{account_address}/Share/Lock/Event",
+    summary="Share Token Lock Events",
+    operation_id="GetShareTokenLockEvent",
+    response_model=GenericSuccessResponse[LockEventsResponse],
+    responses=get_routers_responses()
+)
+def list_all_share_lock_events(
+    data: dict = Depends(ListAllLockEvent(config.SHARE_TOKEN_ENABLED))
+):
+    return json_response({
+        **SuccessResponse.default(),
+        "data": data
+    })
+
+# ------------------------------
+# Get Lock(StraightBond)
+# ------------------------------
+@router.get(
+    "/{account_address}/StraightBond/Lock",
+    summary="StraightBond Token Locked Position",
+    operation_id="GetStraightBondTokenLockedPosition",
+    response_model=GenericSuccessResponse[ListLockedResponse],
+    responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
+)
+def list_all_straight_bond_locks(
+    data: dict = Depends(ListAllLock(config.BOND_TOKEN_ENABLED))
+):
+    return json_response({
+        **SuccessResponse.default(),
+        "data": data
+    })
+
+
+# ------------------------------
+# Get Lock Event(StraightBond)
+# ------------------------------
+@router.get(
+    "/{account_address}/StraightBond/Lock/Event",
+    summary="StraightBond Token Lock Events",
+    operation_id="GetStraightBondTokenLockEvent",
+    response_model=GenericSuccessResponse[LockEventsResponse],
+    responses=get_routers_responses()
+)
+def list_all_straight_bond_lock_events(
+    data: dict = Depends(ListAllLockEvent(config.BOND_TOKEN_ENABLED))
+):
+    return json_response({
+        **SuccessResponse.default(),
+        "data": data
+    })
 
 
 class BasePosition:
@@ -862,6 +1145,7 @@ class GetPosition:
 
     def __init__(self, base_position: BasePositionType):
         self.base_position = base_position
+
     def __call__(
         self,
         req: Request,

@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
 from fastapi import Query
 from typing import Optional
@@ -28,8 +27,7 @@ from pydantic import (
 )
 
 from app.model.schema.base import (
-    ResultSet,
-    SortOrder,
+    ResultSet
 )
 
 

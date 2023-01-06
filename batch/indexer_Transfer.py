@@ -242,6 +242,7 @@ class Processor:
 
     def __sync_all(self, db_session: Session, block_from: int, block_to: int):
         self.__sync_transfer(db_session, block_from, block_to)
+        self.__sync_unlock(db_session, block_from, block_to)
         self.__update_skip_block(db_session)
 
     def __sync_transfer(self, db_session: Session, block_from: int, block_to: int):
@@ -304,6 +305,66 @@ class Processor:
                         )
             except Exception as e:
                 raise e
+
+    def __sync_unlock(self, db_session: Session, block_from: int, block_to: int):
+        """Synchronize Unlock events
+
+        :param db_session: database session
+        :param block_from: from block number
+        :param block_to: to block number
+        :return: None
+        """
+        for target in self.token_list:
+            token = target.token_contract
+            skip_block = target.skip_block
+
+            # Get "Unlock" logs
+            try:
+                if skip_block is not None and block_to <= skip_block:
+                    # Skip if the token has already been synchronized to block_to.
+                    LOG.debug(f"{token.address}: block_to <= skip_block")
+                    continue
+                elif skip_block is not None and block_from <= skip_block < block_to:
+                    # block_from <= skip_block < block_to
+                    LOG.debug(f"{token.address}: block_from <= skip_block < block_to")
+                    events = token.events.Unlock.getLogs(
+                        fromBlock=skip_block+1,
+                        toBlock=block_to
+                    )
+                else:
+                    # No logs or
+                    # skip_block < block_from < block_to
+                    LOG.debug(f"{token.address}: skip_block < block_from < block_to")
+                    events = token.events.Unlock.getLogs(
+                        fromBlock=block_from,
+                        toBlock=block_to
+                    )
+            except ABIEventFunctionNotFound:
+                events = []
+
+            # Index logs
+            try:
+                for event in events:
+                    args = event["args"]
+                    transaction_hash = event["transactionHash"].hex()
+                    block_timestamp = datetime.utcfromtimestamp(web3.eth.get_block(event["blockNumber"])["timestamp"])
+                    if args["value"] > sys.maxsize:
+                        pass
+                    else:
+                        from_address = args.get("accountAddress", ZERO_ADDRESS)
+                        to_address = args.get("recipientAddress", ZERO_ADDRESS)
+                        if from_address != to_address:
+                            self.__insert_idx(
+                                db_session=db_session,
+                                transaction_hash=transaction_hash,
+                                token_address=to_checksum_address(token.address),
+                                from_account_address=from_address,
+                                to_account_address=to_address,
+                                value=args["value"],
+                                event_created=block_timestamp
+                            )
+            except Exception:
+                raise
 
     def __update_skip_block(self, db_session: Session):
         """Memorize the block number where next processing should start from
