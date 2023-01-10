@@ -168,7 +168,7 @@ class TestTokenTokenHoldersCollection:
 
         apiurl = self.apiurl_after_post.format(contract_address=token["address"], list_id=list_id)
         resp = client.get(apiurl)
-        holders = [{"account_address": self.trader["account_address"], "hold_balance": 30000, "locked": 0}]
+        holders = [{"account_address": self.trader["account_address"], "hold_balance": 30000, "current_locked_balance": 0}]
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}
