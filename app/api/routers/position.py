@@ -271,9 +271,9 @@ class ListAllLockEvent:
         # Sort
         sort_attr = column(request_query.sort_item)
         if request_query.sort_order == 0:  # ASC
-            query = query.order_by(sort_attr)
+            query = query.order_by(sort_attr.is_(None), sort_attr)
         else:  # DESC
-            query = query.order_by(desc(sort_attr))
+            query = query.order_by(sort_attr.is_(None), desc(sort_attr))
         if request_query.sort_item != LockEventSortItem.block_timestamp:
             # NOTE: Set secondary sort for consistent results
             query = query.order_by(desc(column(LockEventSortItem.block_timestamp)))

@@ -28,7 +28,7 @@ def upgrade(migrate_engine):
     meta.bind = migrate_engine
     try:
         token_holder = Table("token_holder", meta, autoload=True)
-        Column("locked", Boolean, default=0, nullable=False).create(token_holder)
+        Column("locked", BigInteger, default=0, nullable=False).create(token_holder)
     except sqlalchemy.exc.ProgrammingError as err:
         LOG.warning(err.orig)
 
