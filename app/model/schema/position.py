@@ -44,7 +44,7 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 ############################
 
 
-class LockHistoryCategory(str, Enum):
+class LockEventCategory(str, Enum):
     Lock = "Lock"
     Unlock = "Unlock"
 
@@ -85,7 +85,7 @@ class ListAllLockedPositionQuery:
     token_address_list: list[StrictStr] = Query(default=[], description="list of token address (**this affects total number**)")
 
 
-class LockHistorySortItem(str, Enum):
+class LockEventSortItem(str, Enum):
     token_address = "token_address"
     lock_address = "lock_address"
     recipient_address = "recipient_address"
@@ -102,10 +102,10 @@ class ListAllLockEventQuery:
     lock_address: Optional[str] = Query(default=None, description="lock address")
     recipient_address: Optional[str] = Query(default=None, description="recipient address")
     data: Optional[str] = Query(default=None, description="data")
-    category: Optional[LockHistoryCategory] = Query(default=None, description="history item category (**this affects total number**)")
+    category: Optional[LockEventCategory] = Query(default=None, description="history item category (**this affects total number**)")
 
-    sort_item: LockHistorySortItem = Query(
-        default=LockHistorySortItem.block_timestamp,
+    sort_item: LockEventSortItem = Query(
+        default=LockEventSortItem.block_timestamp,
         description="sort item"
     )
     sort_order: SortOrder = Query(default=SortOrder.DESC, description="sort order(0: ASC, 1: DESC)")
@@ -194,8 +194,8 @@ class ListLockedResponse(BaseModel):
     locked_list: list[Locked]
 
 
-class LockHistory(BaseModel):
-    history_category: LockHistoryCategory = Field(description="history item category")
+class LockEvent(BaseModel):
+    category: LockEventCategory = Field(description="history item category")
     transaction_hash: str = Field(description="Transaction hash")
     token_address: str = Field(description="Token address")
     lock_address: str = Field(description="Lock address")
@@ -208,4 +208,4 @@ class LockHistory(BaseModel):
 
 class LockEventsResponse(BaseModel):
     result_set: ResultSet
-    lock_history: list[LockHistory] = Field(description="Lock history list")
+    events: list[LockEvent] = Field(description="Lock/Unlock event list")

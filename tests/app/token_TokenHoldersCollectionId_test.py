@@ -39,6 +39,8 @@ from tests.contract_modules import (
     transfer_token,
     bond_transfer_to_exchange,
     register_personalinfo,
+    bond_lock,
+    bond_unlock,
 )
 
 
@@ -169,6 +171,8 @@ class TestTokenTokenHoldersCollectionId:
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 30000)
         transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 50000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 30000)
+        bond_lock(self.trader, token, self.user1["account_address"], 3000)
+        bond_unlock(self.user1, token, self.trader["account_address"], self.user1["account_address"], 2000)
 
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = token["address"]
@@ -187,10 +191,12 @@ class TestTokenTokenHoldersCollectionId:
 
         holders = [{
             "account_address": self.trader["account_address"],
-            "hold_balance": 30000
+            "hold_balance": 27000,
+            "locked": 1000
         }, {
             "account_address": self.user1["account_address"],
-            "hold_balance": 50000
+            "hold_balance": 52000,
+            "locked": 0
         }]
 
         sorted_holders = sorted(holders, key=lambda x: x['account_address'])
@@ -204,6 +210,7 @@ class TestTokenTokenHoldersCollectionId:
             for resp_holder in resp_holders:
                 if resp_holder["account_address"] == holder["account_address"]:
                     assert resp_holder["hold_balance"] == holder["hold_balance"]
+                    assert resp_holder["locked"] == holder["locked"]
 
     ####################################################################
     # Error

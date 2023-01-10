@@ -16,6 +16,10 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from datetime import (
+    timedelta,
+    timezone
+)
 from decimal import Decimal
 from eth_utils import to_checksum_address
 from fastapi import (
@@ -93,8 +97,8 @@ from app.model.schema import (
     ListAllLockedPositionQuery,
     ListLockedResponse,
     ListAllLockEventQuery,
-    LockHistoryCategory,
-    LockHistorySortItem,
+    LockEventCategory,
+    LockEventSortItem,
     LockEventsResponse,
 )
 from app.utils.docs_utils import get_routers_responses
@@ -102,6 +106,8 @@ from app.utils.fastapi import json_response
 
 LOG = log.get_logger()
 
+UTC = timezone(timedelta(hours=0), "UTC")
+JST = timezone(timedelta(hours=+9), "JST")
 
 router = APIRouter(
     prefix="/Position",
@@ -218,7 +224,7 @@ class ListAllLockEvent:
         category = request_query.category
 
         query_lock = session.query(
-            literal(value=LockHistoryCategory.Lock.value, type_=String).label("history_category"),
+            literal(value=LockEventCategory.Lock.value, type_=String).label("history_category"),
             IDXLock.transaction_hash.label("transaction_hash"),
             IDXLock.token_address.label("token_address"),
             IDXLock.lock_address.label("lock_address"),
@@ -229,7 +235,7 @@ class ListAllLockEvent:
             IDXLock.block_timestamp.label("block_timestamp")
         )
         query_unlock = session.query(
-            literal(value=LockHistoryCategory.Unlock.value, type_=String).label("history_category"),
+            literal(value=LockEventCategory.Unlock.value, type_=String).label("history_category"),
             IDXUnlock.transaction_hash.label("transaction_hash"),
             IDXUnlock.token_address.label("token_address"),
             IDXUnlock.lock_address.label("lock_address"),
@@ -240,16 +246,17 @@ class ListAllLockEvent:
             IDXUnlock.block_timestamp.label("block_timestamp")
         )
 
+        total = query_lock.count() + query_unlock.count()
+
         match category:
-            case LockHistoryCategory.Lock:
+            case LockEventCategory.Lock:
                 query = query_lock
-            case LockHistoryCategory.Unlock:
+            case LockEventCategory.Unlock:
                 query = query_unlock
             case _:
                 query = query_lock.union_all(query_unlock)
 
         query = query.filter(column("account_address") == account_address)
-        total = query.count()
 
         if request_query.token_address is not None:
             query = query.filter(column("token_address") == request_query.token_address)
@@ -267,9 +274,9 @@ class ListAllLockEvent:
             query = query.order_by(sort_attr)
         else:  # DESC
             query = query.order_by(desc(sort_attr))
-        if request_query.sort_item != LockHistorySortItem.block_timestamp:
+        if request_query.sort_item != LockEventSortItem.block_timestamp:
             # NOTE: Set secondary sort for consistent results
-            query = query.order_by(desc(column(LockHistorySortItem.block_timestamp)))
+            query = query.order_by(desc(column(LockEventSortItem.block_timestamp)))
 
         # Pagination
         if request_query.offset is not None:
@@ -281,7 +288,7 @@ class ListAllLockEvent:
         resp_data = []
         for lock_history in lock_histories:
             resp_data.append({
-                "history_category": lock_history[0],
+                "category": lock_history[0],
                 "transaction_hash": lock_history[1],
                 "token_address": lock_history[2],
                 "lock_address": lock_history[3],
@@ -289,7 +296,7 @@ class ListAllLockEvent:
                 "recipient_address": lock_history[5],
                 "value": lock_history[6],
                 "data": lock_history[7],
-                "block_timestamp": IDXLock.replace_to_JST(lock_history[8])
+                "block_timestamp": lock_history[8].replace(tzinfo=UTC).astimezone(JST)
             })
 
         data = {
@@ -299,7 +306,7 @@ class ListAllLockEvent:
                 "limit": request_query.limit,
                 "total": total
             },
-            "lock_history": resp_data
+            "events": resp_data
         }
         return data
 

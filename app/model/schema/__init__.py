@@ -126,8 +126,8 @@ from .position import (
     ListAllPositionQuery,
     GetPositionQuery,
     ListAllLockedPositionQuery,
-    LockHistoryCategory,
-    LockHistorySortItem,
+    LockEventCategory,
+    LockEventSortItem,
     ListAllLockEventQuery,
     # Response
     SecurityTokenPosition,

@@ -108,6 +108,7 @@ class TokenHoldersCollectionHolder(BaseModel):
     account_address: str = Field(description="Account address of token holder.")
     hold_balance: int = Field(description="Amount of balance."
                                           "This includes balance/pending_transfer/exchange_balance/exchange_commitment.")
+    locked: int = Field(description="Amount of locked.")
 
 
 class TokenHoldersCollectionResponse(BaseModel):

@@ -17,7 +17,7 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import itertools
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import ANY
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -27,7 +27,7 @@ from app.model.db import (
     IDXLock,
     IDXUnlock
 )
-from app.model.schema import LockHistoryCategory
+from app.model.schema import LockEventCategory
 
 
 class TestPositionShareLockEvent:
@@ -62,7 +62,7 @@ class TestPositionShareLockEvent:
     @staticmethod
     def create_idx_lock_event(
         session: Session, transaction_hash: str, block_number: int, token_address: str, lock_address: str,
-        account_address: str, value: int
+        account_address: str, value: int, block_timestamp: datetime
     ):
         _lock = IDXLock()
         _lock.transaction_hash = transaction_hash
@@ -74,13 +74,13 @@ class TestPositionShareLockEvent:
         _lock.data = {
             "message": f"{value}"
         }
-        _lock.block_timestamp = datetime.now()
+        _lock.block_timestamp = block_timestamp
         session.add(_lock)
 
     @staticmethod
     def create_idx_unlock_event(
         session: Session, transaction_hash: str, block_number: int, token_address: str, lock_address: str,
-        account_address: str, recipient_address: str ,value: int
+        account_address: str, recipient_address: str ,value: int, block_timestamp: datetime
     ):
         _unlock = IDXUnlock()
         _unlock.transaction_hash = transaction_hash
@@ -93,10 +93,10 @@ class TestPositionShareLockEvent:
         _unlock.data = {
             "message": f"{value}"
         }
-        _unlock.block_timestamp = datetime.now()
+        _unlock.block_timestamp = block_timestamp
         session.add(_unlock)
 
-    def setup_data(self, session: Session, token_address: str):
+    def setup_data(self, session: Session, token_address: str, base_time: datetime):
         self.insert_listing(session=session, token_address=token_address)
 
         lock_address_list = [self.lock_1, self.lock_2]
@@ -113,8 +113,10 @@ class TestPositionShareLockEvent:
                 token_address=token_address,
                 lock_address=lock_address,
                 account_address=account_address,
-                value=value+1
+                value=value+1,
+                block_timestamp=base_time
             )
+            base_time = base_time + timedelta(seconds=1)
 
         for value, (account_address, (lock_address, recipient_address)) in enumerate(
             itertools.product(account_address_list, zip(lock_address_list, recipient_address_list))
@@ -127,8 +129,10 @@ class TestPositionShareLockEvent:
                 lock_address=lock_address,
                 account_address=account_address,
                 recipient_address=recipient_address,
-                value=value+1
+                value=value+1,
+                block_timestamp=base_time
             )
+            base_time = base_time + timedelta(seconds=1)
 
     ####################################################################
     # Normal
@@ -138,7 +142,8 @@ class TestPositionShareLockEvent:
     # List all Events
     def test_normal_1(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -151,28 +156,28 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -182,15 +187,16 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_2
     # Pagination
     def test_normal_2(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -206,7 +212,7 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -216,15 +222,16 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": 3,
             "limit": 1,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_3
     # Pagination(over offset)
     def test_normal_3(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -241,16 +248,18 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": 4,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_4_1
     # Filter(token_address)
     def test_normal_4_1(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
-        self.setup_data(session=session, token_address=self.token_2)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
+        base_time = datetime(2023, 1, 2)
+        self.setup_data(session=session, token_address=self.token_2, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -265,28 +274,28 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -296,15 +305,16 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": None,
             "limit": None,
-            "total": 8
+            "total": 16
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_4_2
     # Filter(lock_address)
     def test_normal_4_2(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -319,14 +329,14 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -336,15 +346,16 @@ class TestPositionShareLockEvent:
             "count": 2,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_4_3
     # Filter(recipient_address)
     def test_normal_4_3(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -359,7 +370,7 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             }
         ]
 
@@ -369,20 +380,21 @@ class TestPositionShareLockEvent:
             "count": 1,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_4_4
     # Filter(category=Lock)
     def test_normal_4_4(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={
-                "category": LockHistoryCategory.Lock.value,
+                "category": LockEventCategory.Lock.value,
                 "lock_address": self.lock_1
             }
         )
@@ -393,7 +405,7 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -403,20 +415,21 @@ class TestPositionShareLockEvent:
             "count": 1,
             "offset": None,
             "limit": None,
-            "total": 2
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_4_6
     # Filter(category=Unlock)
     def test_normal_4_6(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
             params={
-                "category": LockHistoryCategory.Unlock.value,
+                "category": LockEventCategory.Unlock.value,
                 "offset": 1
             }
         )
@@ -427,7 +440,7 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             }
         ]
 
@@ -437,15 +450,16 @@ class TestPositionShareLockEvent:
             "count": 2,
             "offset": 1,
             "limit": None,
-            "total": 2
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_4_7
     # Filter(data)
     def test_normal_4_7(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -460,14 +474,14 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -477,16 +491,18 @@ class TestPositionShareLockEvent:
             "count": 2,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_5_1
     # Sort(token_address)
     def test_normal_5_1(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
-        self.setup_data(session=session, token_address=self.token_2)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
+        base_time = datetime(2023, 1, 2)
+        self.setup_data(session=session, token_address=self.token_2, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -502,56 +518,56 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             },
             {
                 "token_address": self.token_2, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             },
             {
                 "token_address": self.token_2, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_2, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             },
             {
                 "token_address": self.token_2, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -561,15 +577,16 @@ class TestPositionShareLockEvent:
             "count": 8,
             "offset": None,
             "limit": None,
-            "total": 8
+            "total": 16
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_5_2
     # Sort(lock_address)
     def test_normal_5_2(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -585,28 +602,28 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             }
         ]
 
@@ -616,15 +633,16 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_5_3
     # Sort(recipient_address)
     def test_normal_5_3(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -640,28 +658,28 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             }
         ]
 
@@ -671,15 +689,16 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_5_5
     # Sort(value)
     def test_normal_5_5(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -695,28 +714,28 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             }
         ]
 
@@ -726,15 +745,16 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     # Normal_5_6
     # Sort(block_timestamp)
     def test_normal_5_6(self, client: TestClient, session: Session):
         # Prepare Data
-        self.setup_data(session=session, token_address=self.token_1)
+        base_time = datetime(2023, 1, 1)
+        self.setup_data(session=session, token_address=self.token_1, base_time=base_time)
 
         resp = client.get(
             self.apiurl_base.format(account_address=self.account_1),
@@ -750,28 +770,28 @@ class TestPositionShareLockEvent:
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Lock
+                "category": LockEventCategory.Lock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": None,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "3"}, "value": 3,
-                "history_category": LockHistoryCategory.Lock,
+                "category": LockEventCategory.Lock,
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_1,
                 "account_address": self.account_1, "recipient_address": self.recipient_1,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "1"}, "value": 1,
-                "history_category": LockHistoryCategory.Unlock
+                "category": LockEventCategory.Unlock
             },
             {
                 "token_address": self.token_1, "lock_address": self.lock_2,
                 "account_address": self.account_1, "recipient_address": self.recipient_2,
                 "block_timestamp": ANY, "transaction_hash": self.transaction_hash,
                 "data": {"message": "2"}, "value": 2,
-                "history_category": LockHistoryCategory.Unlock,
+                "category": LockEventCategory.Unlock,
             }
         ]
 
@@ -781,9 +801,9 @@ class TestPositionShareLockEvent:
             "count": 4,
             "offset": None,
             "limit": None,
-            "total": 4
+            "total": 8
         }
-        assert resp.json()["data"]["lock_history"] == assumed_body
+        assert resp.json()["data"]["events"] == assumed_body
 
     ###########################################################################
     # Error
