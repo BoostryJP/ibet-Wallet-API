@@ -212,11 +212,11 @@ class TestTokenTokenHoldersCollectionId:
         holders = [{
             "account_address": self.trader["account_address"],
             "hold_balance": 29000,
-            "currently_locked_balance": 2000
+            "current_locked_balance": 2000
         }, {
             "account_address": self.user1["account_address"],
             "hold_balance": 51000,
-            "currently_locked_balance": 0
+            "current_locked_balance": 0
         }]
 
         sorted_holders = sorted(holders, key=lambda x: x['account_address'])
@@ -230,7 +230,7 @@ class TestTokenTokenHoldersCollectionId:
             for resp_holder in resp_holders:
                 if resp_holder["account_address"] == holder["account_address"]:
                     assert resp_holder["hold_balance"] == holder["hold_balance"]
-                    assert resp_holder["currently_locked_balance"] == holder["currently_locked_balance"]
+                    assert resp_holder["current_locked_balance"] == holder["current_locked_balance"]
 
     ####################################################################
     # Error

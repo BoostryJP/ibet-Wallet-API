@@ -445,7 +445,7 @@ def get_token_holders_collection(
     token_holders = [
         {
             **_token_holder[0].json(),
-            "currently_locked_balance": _token_holder[1] or 0
+            "current_locked_balance": _token_holder[1] or 0
         }
         for _token_holder in _token_holders
     ]
