@@ -54,28 +54,21 @@ class TokenHolder(Base):
 
     # Related to TokenHoldersList primary key
     holder_list = Column(BigInteger, primary_key=True)
-
     # Account Address
     account_address = Column(String(42), primary_key=True)
-
     # Amounts(including balance/pending_transfer/exchange_balance/exchange_commitment)
     hold_balance = Column(BigInteger)
-
-    # Amounts(locked)
-    locked = Column(BigInteger, default=0, nullable=False)
 
     def json(self):
         return {
             "account_address": self.account_address,
-            "hold_balance": self.hold_balance,
-            "locked": self.locked
+            "hold_balance": self.hold_balance
         }
 
     FIELDS = {
         "holder_list_id": int,
         "account_address": str,
-        "hold_balance": int,
-        "locked": int
+        "hold_balance": int
     }
 
     FIELDS.update(Base.FIELDS)

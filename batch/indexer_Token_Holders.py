@@ -59,16 +59,14 @@ class Processor:
         def __init__(self):
             self.pages = {}
 
-        def store(self, account_address: str, hold_balance: int = 0, locked: int = 0):
+        def store(self, account_address: str, amount: int = 0):
             if account_address not in self.pages:
                 token_holder = TokenHolder()
-                token_holder.hold_balance = 0 + hold_balance
-                token_holder.locked = 0 + locked
+                token_holder.hold_balance = 0 + amount
                 token_holder.account_address = account_address
                 self.pages[account_address] = token_holder
             else:
-                self.pages[account_address].hold_balance += hold_balance
-                self.pages[account_address].locked += locked
+                self.pages[account_address].hold_balance += amount
 
     target: Optional[TokenHoldersList]
     balance_book: BalanceBook
@@ -147,7 +145,7 @@ class Processor:
                 local_session.query(TokenHolder).filter(TokenHolder.holder_list == _checkpoint.id).all()
             )
             for holder in _holders:
-                self.balance_book.store(account_address=holder.account_address, hold_balance=holder.hold_balance)
+                self.balance_book.store(account_address=holder.account_address, amount=holder.hold_balance)
             self.block_from = _checkpoint.block_number + 1
             self.checkpoint_used = True
         return True
@@ -201,7 +199,6 @@ class Processor:
         self.__process_issue(block_from, block_to)
         self.__process_redeem(block_from, block_to)
         if self.token_template in ["IbetStraightBond", "IbetShare"]:
-            self.__process_lock(block_from, block_to)
             self.__process_unlock(block_from, block_to)
         if self.token_template == "IbetCoupon":
             self.__process_consume(block_from, block_to)
@@ -282,9 +279,9 @@ class Processor:
 
                 if amount is not None and amount <= sys.maxsize:
                     # Update Balance（from account）
-                    self.balance_book.store(account_address=from_account, hold_balance=-amount)
+                    self.balance_book.store(account_address=from_account, amount=-amount)
                     # Update Balance（to account）
-                    self.balance_book.store(account_address=to_account, hold_balance=+amount)
+                    self.balance_book.store(account_address=to_account, amount=+amount)
 
         except Exception:
             raise
@@ -316,7 +313,7 @@ class Processor:
                 if lock_address == ZERO_ADDRESS:
                     if amount is not None and amount <= sys.maxsize:
                         # Update Balance
-                        self.balance_book.store(account_address=account_address, hold_balance=+amount)
+                        self.balance_book.store(account_address=account_address, amount=+amount)
 
         except Exception:
             raise
@@ -348,7 +345,7 @@ class Processor:
                 if lock_address == ZERO_ADDRESS:
                     if amount is not None and amount <= sys.maxsize:
                         # Update Balance
-                        self.balance_book.store(account_address=account_address, hold_balance=-amount)
+                        self.balance_book.store(account_address=account_address, amount=-amount)
         except Exception:
             raise
 
@@ -375,34 +372,7 @@ class Processor:
                 args = event["args"]
                 account = args.get("consumer", ZERO_ADDRESS)
                 amount = args.get("value", ZERO_ADDRESS)
-                self.balance_book.store(account_address=account, hold_balance=-amount)
-        except Exception:
-            raise
-
-    def __process_lock(self, block_from: int, block_to: int):
-        """Process Lock Event
-
-        - The process of updating Hold-Balance data by capturing the following events
-        - `Lock` event on Token contracts
-
-        :param block_from: From block
-        :param block_to: To block
-        :return: None
-        """
-        try:
-            # Get "Lock" events from token contract
-            events = self.token_contract.events.Lock.getLogs(
-                fromBlock=block_from,
-                toBlock=block_to
-            )
-        except ABIEventFunctionNotFound:
-            events = []
-        try:
-            for event in events:
-                args = event["args"]
-                account_address = args.get("accountAddress", ZERO_ADDRESS)
-                amount = args.get("value", ZERO_ADDRESS)
-                self.balance_book.store(account_address=account_address, hold_balance=-amount, locked=+amount)
+                self.balance_book.store(account_address=account, amount=-amount)
         except Exception:
             raise
 
@@ -417,7 +387,7 @@ class Processor:
         :return: None
         """
         try:
-            # Get "Unlock" events from token contract
+            # Get "Consume" events from token contract
             events = self.token_contract.events.Unlock.getLogs(
                 fromBlock=block_from,
                 toBlock=block_to
@@ -430,8 +400,8 @@ class Processor:
                 account_address = args.get("accountAddress", ZERO_ADDRESS)
                 recipient_address = args.get("recipientAddress", ZERO_ADDRESS)
                 amount = args.get("value", ZERO_ADDRESS)
-                self.balance_book.store(account_address=account_address, locked=-amount)
-                self.balance_book.store(account_address=recipient_address, hold_balance=+amount)
+                self.balance_book.store(account_address=account_address, amount=-amount)
+                self.balance_book.store(account_address=recipient_address, amount=+amount)
         except Exception:
             raise
 

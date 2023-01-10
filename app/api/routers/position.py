@@ -283,20 +283,20 @@ class ListAllLockEvent:
             query = query.offset(request_query.offset)
         if request_query.limit is not None:
             query = query.limit(request_query.limit)
-        lock_histories = query.all()
+        lock_events = query.all()
 
         resp_data = []
-        for lock_history in lock_histories:
+        for lock_event in lock_events:
             resp_data.append({
-                "category": lock_history[0],
-                "transaction_hash": lock_history[1],
-                "token_address": lock_history[2],
-                "lock_address": lock_history[3],
-                "account_address": lock_history[4],
-                "recipient_address": lock_history[5],
-                "value": lock_history[6],
-                "data": lock_history[7],
-                "block_timestamp": lock_history[8].replace(tzinfo=UTC).astimezone(JST)
+                "category": lock_event[0],
+                "transaction_hash": lock_event[1],
+                "token_address": lock_event[2],
+                "lock_address": lock_event[3],
+                "account_address": lock_event[4],
+                "recipient_address": lock_event[5],
+                "value": lock_event[6],
+                "data": lock_event[7],
+                "block_timestamp": lock_event[8].replace(tzinfo=UTC).astimezone(JST)
             })
 
         data = {

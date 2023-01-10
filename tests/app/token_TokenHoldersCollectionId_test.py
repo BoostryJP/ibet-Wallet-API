@@ -26,7 +26,12 @@ from web3.middleware import geth_poa_middleware
 from web3 import Web3
 from app import config
 from app.contracts import Contract
-from app.model.db import TokenHolderBatchStatus, TokenHoldersList, Listing
+from app.model.db import (
+    TokenHolderBatchStatus,
+    TokenHoldersList,
+    Listing,
+    IDXLockedPosition
+)
 from batch.indexer_Token_Holders import Processor
 
 web3 = Web3(Web3.HTTPProvider(config.WEB3_HTTP_PROVIDER))
@@ -171,8 +176,23 @@ class TestTokenTokenHoldersCollectionId:
         transfer_token(token_contract, self.issuer["account_address"], self.trader["account_address"], 30000)
         transfer_token(token_contract, self.issuer["account_address"], self.user1["account_address"], 50000)
         bond_transfer_to_exchange(self.user1, {"address": escrow_contract.address}, token, 30000)
-        bond_lock(self.trader, token, self.user1["account_address"], 3000)
-        bond_unlock(self.user1, token, self.trader["account_address"], self.user1["account_address"], 2000)
+        bond_lock(self.trader, token, self.user1["account_address"], 2000)
+        bond_lock(self.trader, token, self.issuer["account_address"], 1000)
+        bond_unlock(self.user1, token, self.trader["account_address"], self.user1["account_address"], 1000)
+
+        idx_locked_position1 = IDXLockedPosition()
+        idx_locked_position1.token_address = token["address"]
+        idx_locked_position1.account_address = self.trader["account_address"]
+        idx_locked_position1.lock_address = self.user1["account_address"]
+        idx_locked_position1.value = 1000
+        session.merge(idx_locked_position1)
+
+        idx_locked_position2 = IDXLockedPosition()
+        idx_locked_position2.token_address = token["address"]
+        idx_locked_position2.account_address = self.trader["account_address"]
+        idx_locked_position2.lock_address = self.issuer["account_address"]
+        idx_locked_position2.value = 1000
+        session.merge(idx_locked_position2)
 
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = token["address"]
@@ -191,12 +211,12 @@ class TestTokenTokenHoldersCollectionId:
 
         holders = [{
             "account_address": self.trader["account_address"],
-            "hold_balance": 27000,
-            "locked": 1000
+            "hold_balance": 29000,
+            "currently_locked_balance": 2000
         }, {
             "account_address": self.user1["account_address"],
-            "hold_balance": 52000,
-            "locked": 0
+            "hold_balance": 51000,
+            "currently_locked_balance": 0
         }]
 
         sorted_holders = sorted(holders, key=lambda x: x['account_address'])
@@ -210,7 +230,7 @@ class TestTokenTokenHoldersCollectionId:
             for resp_holder in resp_holders:
                 if resp_holder["account_address"] == holder["account_address"]:
                     assert resp_holder["hold_balance"] == holder["hold_balance"]
-                    assert resp_holder["locked"] == holder["locked"]
+                    assert resp_holder["currently_locked_balance"] == holder["currently_locked_balance"]
 
     ####################################################################
     # Error

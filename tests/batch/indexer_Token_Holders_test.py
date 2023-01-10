@@ -336,7 +336,7 @@ class TestProcessor:
         # user1: 6000 trader: 44000
 
         bond_lock(self.trader, token, self.issuer["account_address"], 3000)
-        # user1: 6000 trader: 44000(balance: 41000, locked: 3000)
+        # user1: 6000 trader: 44000
 
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
@@ -364,9 +364,7 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 6000
-        assert user1_record.locked == 0
-        assert trader_record.hold_balance == 41000
-        assert trader_record.locked == 3000
+        assert trader_record.hold_balance == 44000
 
         assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
@@ -445,10 +443,10 @@ class TestProcessor:
         # user1: 13000 trader: 17000
 
         bond_lock(self.trader, token, self.issuer["account_address"], 3000)
-        # user1: 13000 trader: 17000(balance: 14000, locked: 3000)
+        # user1: 13000 trader: 17000
 
         bond_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
-        # user1: 15000 trader: 15000(balance: 14000, locked: 1000)
+        # user1: 15000 trader: 15000
 
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
@@ -476,8 +474,7 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 15000
-        assert trader_record.hold_balance == 14000
-        assert trader_record.locked == 1000
+        assert trader_record.hold_balance == 15000
 
         assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
@@ -635,7 +632,7 @@ class TestProcessor:
         # user1: 10000 trader: 40000
 
         share_lock(self.trader, token, self.issuer["account_address"], 3000)
-        # user1: 10000 trader: 40000(balance: 37000, locked: 3000)
+        # user1: 10000 trader: 40000
 
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
@@ -663,9 +660,7 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 10000
-        assert user1_record.locked == 0
-        assert trader_record.hold_balance == 37000
-        assert trader_record.locked == 3000
+        assert trader_record.hold_balance == 40000
 
         assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 
@@ -744,10 +739,10 @@ class TestProcessor:
         # user1: 13000 trader: 17000
 
         share_lock(self.trader, token, self.issuer["account_address"], 3000)
-        # user1: 13000 trader: 17000(balance: 14000, locked: 3000)
+        # user1: 13000 trader: 17000
 
         share_unlock(self.issuer, token, self.trader["account_address"], self.user1["account_address"], 2000)
-        # user1: 15000 trader: 15000(balance: 14000, locked: 1000)
+        # user1: 15000 trader: 15000
 
         # Insert collection record with above token and current block number
         target_token_holders_list = self.token_holders_list(token, web3.eth.block_number)
@@ -776,9 +771,7 @@ class TestProcessor:
         )
 
         assert user1_record.hold_balance == 15000
-        assert user1_record.locked == 0
-        assert trader_record.hold_balance == 14000
-        assert trader_record.locked == 1000
+        assert trader_record.hold_balance == 15000
 
         assert len(list(session.query(TokenHolder).filter(TokenHolder.holder_list == target_token_holders_list.id))) == 2
 

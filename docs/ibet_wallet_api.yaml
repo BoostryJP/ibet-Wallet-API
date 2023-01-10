@@ -7836,7 +7836,7 @@ components:
       required:
         - account_address
         - hold_balance
-        - locked
+        - currently_locked_balance
       type: object
       properties:
         account_address:
@@ -7846,11 +7846,11 @@ components:
         hold_balance:
           title: Hold Balance
           type: integer
-          description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment.
-        locked:
-          title: Locked
+          description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked.
+        currently_locked_balance:
+          title: Currently Locked Balance
           type: integer
-          description: Amount of locked.
+          description: Amount of locked in current.
     TokenHoldersCollectionResponse:
       title: TokenHoldersCollectionResponse
       required:
