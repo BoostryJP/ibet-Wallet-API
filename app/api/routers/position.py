@@ -95,11 +95,11 @@ from app.model.schema import (
     RetrieveShareTokenResponse,
     GetPositionQuery,
     ListAllLockedPositionQuery,
-    ListLockedResponse,
+    ListAllLockedPositionResponse,
     ListAllLockEventQuery,
     LockEventCategory,
     LockEventSortItem,
-    LockEventsResponse,
+    ListAllLockEventsResponse,
 )
 from app.utils.docs_utils import get_routers_responses
 from app.utils.fastapi import json_response
@@ -191,7 +191,7 @@ class ListAllLock:
                 "limit": limit,
                 "total": total
             },
-            "locked_list": locked_list
+            "locked_positions": locked_list
         }
 
         return data
@@ -317,10 +317,10 @@ class ListAllLockEvent:
     "/{account_address}/Share/Lock",
     summary="Share Token Locked Position",
     operation_id="GetShareTokenLockedPosition",
-    response_model=GenericSuccessResponse[ListLockedResponse],
+    response_model=GenericSuccessResponse[ListAllLockedPositionResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
-def list_all_share_locks(
+def list_all_share_locked_position(
     data: dict = Depends(ListAllLock(config.SHARE_TOKEN_ENABLED))
 ):
     return json_response({
@@ -336,7 +336,7 @@ def list_all_share_locks(
     "/{account_address}/Share/Lock/Event",
     summary="Share Token Lock Events",
     operation_id="GetShareTokenLockEvent",
-    response_model=GenericSuccessResponse[LockEventsResponse],
+    response_model=GenericSuccessResponse[ListAllLockEventsResponse],
     responses=get_routers_responses()
 )
 def list_all_share_lock_events(
@@ -354,10 +354,10 @@ def list_all_share_lock_events(
     "/{account_address}/StraightBond/Lock",
     summary="StraightBond Token Locked Position",
     operation_id="GetStraightBondTokenLockedPosition",
-    response_model=GenericSuccessResponse[ListLockedResponse],
+    response_model=GenericSuccessResponse[ListAllLockedPositionResponse],
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
-def list_all_straight_bond_locks(
+def list_all_straight_bond_locked_position(
     data: dict = Depends(ListAllLock(config.BOND_TOKEN_ENABLED))
 ):
     return json_response({
@@ -373,7 +373,7 @@ def list_all_straight_bond_locks(
     "/{account_address}/StraightBond/Lock/Event",
     summary="StraightBond Token Lock Events",
     operation_id="GetStraightBondTokenLockEvent",
-    response_model=GenericSuccessResponse[LockEventsResponse],
+    response_model=GenericSuccessResponse[ListAllLockEventsResponse],
     responses=get_routers_responses()
 )
 def list_all_straight_bond_lock_events(

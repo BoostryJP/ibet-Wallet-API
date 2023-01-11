@@ -2609,7 +2609,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListLockedResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_'
         '400':
           description: Bad Request
           content:
@@ -2720,7 +2720,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_LockEventsResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_'
         '400':
           description: Bad Request
           content:
@@ -2801,7 +2801,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListLockedResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_'
         '400':
           description: Bad Request
           content:
@@ -2912,7 +2912,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_LockEventsResponse_'
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_'
         '400':
           description: Bad Request
           content:
@@ -5208,6 +5208,38 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllLastPriceResponse'
+    GenericSuccessResponse_ListAllLockEventsResponse_:
+      title: GenericSuccessResponse[ListAllLockEventsResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockEventsResponse'
+    GenericSuccessResponse_ListAllLockedPositionResponse_:
+      title: GenericSuccessResponse[ListAllLockedPositionResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockedPositionResponse'
     GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_:
       title: GenericSuccessResponse[ListAllMembershipTokenAddressesResponse]
       required:
@@ -5336,38 +5368,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllTicksResponse'
-    GenericSuccessResponse_ListLockedResponse_:
-      title: GenericSuccessResponse[ListLockedResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/ListLockedResponse'
-    GenericSuccessResponse_LockEventsResponse_:
-      title: GenericSuccessResponse[LockEventsResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/LockEventsResponse'
     GenericSuccessResponse_MembershipPositionWithDetail_:
       title: GenericSuccessResponse[MembershipPositionWithDetail]
       required:
@@ -6118,6 +6118,35 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/LastPrice'
+    ListAllLockEventsResponse:
+      title: ListAllLockEventsResponse
+      required:
+        - result_set
+        - events
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        events:
+          title: Events
+          type: array
+          items:
+            $ref: '#/components/schemas/LockEvent'
+          description: Lock/Unlock event list
+    ListAllLockedPositionResponse:
+      title: ListAllLockedPositionResponse
+      required:
+        - result_set
+        - locked_positions
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        locked_positions:
+          title: Locked Positions
+          type: array
+          items:
+            $ref: '#/components/schemas/Locked'
     ListAllLockedSortItem:
       title: ListAllLockedSortItem
       enum:
@@ -6244,20 +6273,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Ticks'
-    ListLockedResponse:
-      title: ListLockedResponse
-      required:
-        - result_set
-        - locked_list
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        locked_list:
-          title: Locked List
-          type: array
-          items:
-            $ref: '#/components/schemas/Locked'
     LockEvent:
       title: LockEvent
       required:
@@ -6325,21 +6340,6 @@ components:
         - block_timestamp
       type: string
       description: An enumeration.
-    LockEventsResponse:
-      title: LockEventsResponse
-      required:
-        - result_set
-        - events
-      type: object
-      properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        events:
-          title: Events
-          type: array
-          items:
-            $ref: '#/components/schemas/LockEvent'
-          description: Lock/Unlock event list
     Locked:
       title: Locked
       required:
@@ -7848,7 +7848,7 @@ components:
           type: integer
           description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked.
         current_locked_balance:
-          title: Currently Locked Balance
+          title: Current Locked Balance
           type: integer
           description: Amount of locked in current.
     TokenHoldersCollectionResponse:

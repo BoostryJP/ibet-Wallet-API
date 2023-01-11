@@ -143,8 +143,8 @@ from .position import (
     CouponPositionsResponse,
     CouponPositionWithDetail,
     CouponPositionWithAddress,
-    ListLockedResponse,
-    LockEventsResponse
+    ListAllLockedPositionResponse,
+    ListAllLockEventsResponse
 )
 from .notification import (
     # Request

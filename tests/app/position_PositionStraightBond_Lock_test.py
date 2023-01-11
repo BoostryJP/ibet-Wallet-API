@@ -99,7 +99,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 9
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
                 {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
                 {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
@@ -139,7 +139,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 6
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
                 {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
                 {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7},
@@ -177,7 +177,7 @@ class TestPositionStraightBondLock:
                 "limit": 2,
                 "total": 3
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_1, "lock_address": self.lock_2, "account_address": self.account_1, "value": 4},
                 {"token_address": self.token_1, "lock_address": self.lock_3, "account_address": self.account_1, "value": 7}
             ]
@@ -210,7 +210,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 3
             },
-            "locked_list": []
+            "locked_positions": []
         }
 
         assert resp.status_code == 200
@@ -237,7 +237,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 9
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
                 {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
                 {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19}
@@ -269,7 +269,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 9
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
                 {"token_address": self.token_3, "lock_address": self.lock_2, "account_address": self.account_1, "value": 22},
                 {"token_address": self.token_3, "lock_address": self.lock_3, "account_address": self.account_1, "value": 25},
@@ -307,7 +307,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 9
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
                 {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
                 {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
@@ -346,7 +346,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 9
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},
                 {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
                 {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19}
@@ -379,7 +379,7 @@ class TestPositionStraightBondLock:
                 "limit": None,
                 "total": 9
             },
-            "locked_list": [
+            "locked_positions": [
                 {"token_address": self.token_3, "lock_address": self.lock_1, "account_address": self.account_1, "value": 19},
                 {"token_address": self.token_2, "lock_address": self.lock_1, "account_address": self.account_1, "value": 10},
                 {"token_address": self.token_1, "lock_address": self.lock_1, "account_address": self.account_1, "value": 1},

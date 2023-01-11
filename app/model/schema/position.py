@@ -44,9 +44,80 @@ from app.model.schema.token_membership import RetrieveMembershipTokenResponse
 ############################
 
 
+class TokenAddress(BaseModel):
+    token_address: str
+
+
+class SecurityTokenPosition(BaseModel):
+    balance: int
+    pending_transfer: int
+    exchange_balance: int
+    exchange_commitment: int
+    locked: Optional[int] = Field(default=None, description="set when enable_index=true")
+
+
+T = TypeVar("T")
+
+
+class SecurityTokenPositionWithDetail(SecurityTokenPosition, Generic[T]):
+    token: T | TokenAddress = Field(description="set when include_token_details=false or null")
+
+
+class SecurityTokenPositionWithAddress(SecurityTokenPosition):
+    token_address: str = Field(description="set when include_token_details=true")
+
+
+class MembershipPosition(BaseModel):
+    balance: int
+    exchange_balance: int
+    exchange_commitment: int
+
+
+class MembershipPositionWithDetail(MembershipPosition):
+    token: RetrieveMembershipTokenResponse = Field(description="set when include_token_details=false or null")
+
+
+class MembershipPositionWithAddress(MembershipPosition):
+    token_address: str = Field(description="set when include_token_details=true")
+
+
+class CouponPosition(BaseModel):
+    balance: int
+    exchange_balance: int
+    exchange_commitment: int
+    used: int
+
+
+class CouponPositionWithDetail(CouponPosition):
+    token: RetrieveCouponTokenResponse = Field(description="set when include_token_details=false or null")
+
+
+class CouponPositionWithAddress(CouponPosition):
+    token_address: str = Field(description="set when include_token_details=true")
+
+
 class LockEventCategory(str, Enum):
     Lock = "Lock"
     Unlock = "Unlock"
+
+
+class Locked(BaseModel):
+    token_address: str
+    lock_address: str
+    account_address: str
+    value: int
+
+
+class LockEvent(BaseModel):
+    category: LockEventCategory = Field(description="history item category")
+    transaction_hash: str = Field(description="Transaction hash")
+    token_address: str = Field(description="Token address")
+    lock_address: str = Field(description="Lock address")
+    account_address: str = Field(description="Account address")
+    recipient_address: Optional[str] = Field(default=None, description="Recipient address")
+    value: int = Field(description="Transfer quantity")
+    data: dict = Field(description="Data")
+    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (JST)")
 
 
 ############################
@@ -115,46 +186,9 @@ class ListAllLockEventQuery:
 # RESPONSE
 ############################
 
-class TokenAddress(BaseModel):
-    token_address: str
-
-
-class SecurityTokenPosition(BaseModel):
-    balance: int
-    pending_transfer: int
-    exchange_balance: int
-    exchange_commitment: int
-    locked: Optional[int] = Field(default=None, description="set when enable_index=true")
-
-
-T = TypeVar("T")
-
-
-class SecurityTokenPositionWithDetail(SecurityTokenPosition, Generic[T]):
-    token: T | TokenAddress = Field(description="set when include_token_details=false or null")
-
-
-class SecurityTokenPositionWithAddress(SecurityTokenPosition):
-    token_address: str = Field(description="set when include_token_details=true")
-
-
 class GenericSecurityTokenPositionsResponse(BaseModel, Generic[T]):
     result_set: ResultSet
     positions: Union[list[SecurityTokenPositionWithDetail[T]], list[SecurityTokenPositionWithAddress]]
-
-
-class MembershipPosition(BaseModel):
-    balance: int
-    exchange_balance: int
-    exchange_commitment: int
-
-
-class MembershipPositionWithDetail(MembershipPosition):
-    token: RetrieveMembershipTokenResponse = Field(description="set when include_token_details=false or null")
-
-
-class MembershipPositionWithAddress(MembershipPosition):
-    token_address: str = Field(description="set when include_token_details=true")
 
 
 class MembershipPositionsResponse(BaseModel):
@@ -162,50 +196,16 @@ class MembershipPositionsResponse(BaseModel):
     positions: Union[list[MembershipPositionWithDetail], list[MembershipPositionWithAddress]]
 
 
-class CouponPosition(BaseModel):
-    balance: int
-    exchange_balance: int
-    exchange_commitment: int
-    used: int
-
-
-class CouponPositionWithDetail(CouponPosition):
-    token: RetrieveCouponTokenResponse = Field(description="set when include_token_details=false or null")
-
-
-class CouponPositionWithAddress(CouponPosition):
-    token_address: str = Field(description="set when include_token_details=true")
-
-
 class CouponPositionsResponse(BaseModel):
     result_set: ResultSet
     positions: Union[list[CouponPositionWithDetail], list[CouponPositionWithAddress]]
 
 
-class Locked(BaseModel):
-    token_address: str
-    lock_address: str
-    account_address: str
-    value: int
-
-
-class ListLockedResponse(BaseModel):
+class ListAllLockedPositionResponse(BaseModel):
     result_set: ResultSet
-    locked_list: list[Locked]
+    locked_positions: list[Locked]
 
 
-class LockEvent(BaseModel):
-    category: LockEventCategory = Field(description="history item category")
-    transaction_hash: str = Field(description="Transaction hash")
-    token_address: str = Field(description="Token address")
-    lock_address: str = Field(description="Lock address")
-    account_address: str = Field(description="Account address")
-    recipient_address: Optional[str] = Field(default=None, description="Recipient address")
-    value: int = Field(description="Transfer quantity")
-    data: dict = Field(description="Data")
-    block_timestamp: datetime = Field(description="block_timestamp when Lock log was emitted (JST)")
-
-
-class LockEventsResponse(BaseModel):
+class ListAllLockEventsResponse(BaseModel):
     result_set: ResultSet
     events: list[LockEvent] = Field(description="Lock/Unlock event list")
