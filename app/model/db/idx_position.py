@@ -146,3 +146,33 @@ class IDXPositionMembershipBlockNumber(Base):
     }
 
     FIELDS.update(Base.FIELDS)
+
+
+class IDXLockedPosition(Base):
+    """Token Locked Amount (INDEX)"""
+    __tablename__ = "locked_position"
+
+    # Token Address
+    token_address = Column(String(42), primary_key=True)
+    # Lock Address
+    lock_address = Column(String(42), primary_key=True)
+    # Account Address
+    account_address = Column(String(42), primary_key=True)
+    # Locked Amount
+    value = Column(BigInteger, nullable=False)
+
+    FIELDS = {
+        "token_address": str,
+        "lock_address": str,
+        "account_address": str,
+        "value": int,
+    }
+    FIELDS.update(Base.FIELDS)
+
+    def json(self):
+        return {
+            "token_address": self.token_address,
+            "lock_address": self.lock_address,
+            "account_address": self.account_address,
+            "value": self.value
+        }

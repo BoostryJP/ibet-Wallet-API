@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
 from fastapi import Query
 from typing import Optional
@@ -28,8 +27,7 @@ from pydantic import (
 )
 
 from app.model.schema.base import (
-    ResultSet,
-    SortOrder,
+    ResultSet
 )
 
 
@@ -109,7 +107,8 @@ class CreateTokenHoldersCollectionResponse(BaseModel):
 class TokenHoldersCollectionHolder(BaseModel):
     account_address: str = Field(description="Account address of token holder.")
     hold_balance: int = Field(description="Amount of balance."
-                                          "This includes balance/pending_transfer/exchange_balance/exchange_commitment.")
+                                          "This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked.")
+    current_locked_balance: int = Field(description="Amount of locked in current.")
 
 
 class TokenHoldersCollectionResponse(BaseModel):

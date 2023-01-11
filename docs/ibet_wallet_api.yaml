@@ -2535,6 +2535,390 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
+  /Position/{account_address}/Share/Lock:
+    get:
+      tags:
+        - user_position
+      summary: Share Token Locked Position
+      operationId: GetShareTokenLockedPosition
+      parameters:
+        - required: true
+          schema:
+            title: Account Address
+            type: string
+          name: account_address
+          in: path
+        - description: lock address
+          required: false
+          schema:
+            title: Lock Address
+            type: string
+            description: lock address
+          name: lock_address
+          in: query
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: sort item
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ListAllLockedSortItem'
+            description: sort item
+            default: token_address
+          name: sort_item
+          in: query
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
+            default: 0
+          name: sort_order
+          in: query
+        - description: list of token address (**this affects total number**)
+          required: false
+          schema:
+            title: Token Address List
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            default: []
+          name: token_address_list
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Getsharetokenlockedposition
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+  /Position/{account_address}/Share/Lock/Event:
+    get:
+      tags:
+        - user_position
+      summary: Share Token Lock Events
+      operationId: GetShareTokenLockEvent
+      parameters:
+        - required: true
+          schema:
+            title: Account Address
+            type: string
+          name: account_address
+          in: path
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: token address
+          required: false
+          schema:
+            title: Token Address
+            type: string
+            description: token address
+          name: token_address
+          in: query
+        - description: lock address
+          required: false
+          schema:
+            title: Lock Address
+            type: string
+            description: lock address
+          name: lock_address
+          in: query
+        - description: recipient address
+          required: false
+          schema:
+            title: Recipient Address
+            type: string
+            description: recipient address
+          name: recipient_address
+          in: query
+        - description: data
+          required: false
+          schema:
+            title: Data
+            type: string
+            description: data
+          name: data
+          in: query
+        - description: history item category (**this affects total number**)
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/LockEventCategory'
+            description: history item category (**this affects total number**)
+          name: category
+          in: query
+        - description: sort item
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/LockEventSortItem'
+            description: sort item
+            default: block_timestamp
+          name: sort_item
+          in: query
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
+            default: 1
+          name: sort_order
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
+  /Position/{account_address}/StraightBond/Lock:
+    get:
+      tags:
+        - user_position
+      summary: StraightBond Token Locked Position
+      operationId: GetStraightBondTokenLockedPosition
+      parameters:
+        - required: true
+          schema:
+            title: Account Address
+            type: string
+          name: account_address
+          in: path
+        - description: lock address
+          required: false
+          schema:
+            title: Lock Address
+            type: string
+            description: lock address
+          name: lock_address
+          in: query
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: sort item
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ListAllLockedSortItem'
+            description: sort item
+            default: token_address
+          name: sort_item
+          in: query
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
+            default: 0
+          name: sort_order
+          in: query
+        - description: list of token address (**this affects total number**)
+          required: false
+          schema:
+            title: Token Address List
+            type: array
+            items:
+              type: string
+            description: list of token address (**this affects total number**)
+            default: []
+          name: token_address_list
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockedPositionResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Getstraightbondtokenlockedposition
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataNotExistsErrorResponse'
+  /Position/{account_address}/StraightBond/Lock/Event:
+    get:
+      tags:
+        - user_position
+      summary: StraightBond Token Lock Events
+      operationId: GetStraightBondTokenLockEvent
+      parameters:
+        - required: true
+          schema:
+            title: Account Address
+            type: string
+          name: account_address
+          in: path
+        - description: start position
+          required: false
+          schema:
+            title: Offset
+            minimum: 0
+            type: integer
+            description: start position
+          name: offset
+          in: query
+        - description: number of set
+          required: false
+          schema:
+            title: Limit
+            minimum: 0
+            type: integer
+            description: number of set
+          name: limit
+          in: query
+        - description: token address
+          required: false
+          schema:
+            title: Token Address
+            type: string
+            description: token address
+          name: token_address
+          in: query
+        - description: lock address
+          required: false
+          schema:
+            title: Lock Address
+            type: string
+            description: lock address
+          name: lock_address
+          in: query
+        - description: recipient address
+          required: false
+          schema:
+            title: Recipient Address
+            type: string
+            description: recipient address
+          name: recipient_address
+          in: query
+        - description: data
+          required: false
+          schema:
+            title: Data
+            type: string
+            description: data
+          name: data
+          in: query
+        - description: history item category (**this affects total number**)
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/LockEventCategory'
+            description: history item category (**this affects total number**)
+          name: category
+          in: query
+        - description: sort item
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/LockEventSortItem'
+            description: sort item
+            default: block_timestamp
+          name: sort_item
+          in: query
+        - description: 'sort order(0: ASC, 1: DESC)'
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/SortOrder'
+            description: 'sort order(0: ASC, 1: DESC)'
+            default: 1
+          name: sort_order
+          in: query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericSuccessResponse_ListAllLockEventsResponse_'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Position/{account_address}/Share:
     get:
       tags:
@@ -4000,99 +4384,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotSupportedErrorResponse'
-  /Locked:
-    get:
-      tags:
-        - locked
-      summary: Locked List
-      description: 'Endpoint: /Locked'
-      operationId: ListAllLocked
-      parameters:
-        - description: lock address
-          required: false
-          schema:
-            title: Lock Address
-            type: string
-            description: lock address
-          name: lock_address
-          in: query
-        - description: account address
-          required: false
-          schema:
-            title: Account Address
-            type: string
-            description: account address
-          name: account_address
-          in: query
-        - description: start position
-          required: false
-          schema:
-            title: Offset
-            minimum: 0
-            type: integer
-            description: start position
-          name: offset
-          in: query
-        - description: number of set
-          required: false
-          schema:
-            title: Limit
-            minimum: 0
-            type: integer
-            description: number of set
-          name: limit
-          in: query
-        - description: sort item
-          required: false
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/ListAllLockedSortItem'
-            description: sort item
-            default: token_address
-          name: sort_item
-          in: query
-        - description: 'sort order(0: ASC, 1: DESC)'
-          required: false
-          schema:
-            allOf:
-              - $ref: '#/components/schemas/SortOrder'
-            description: 'sort order(0: ASC, 1: DESC)'
-            default: 0
-          name: sort_order
-          in: query
-        - description: list of token address (**this affects total number**)
-          required: false
-          schema:
-            title: Token Address List
-            type: array
-            items:
-              type: string
-            description: list of token address (**this affects total number**)
-            default: []
-          name: token_address_list
-          in: query
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GenericSuccessResponse_ListLockedResponse_'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                title: Response 400 Listalllocked
-                anyOf:
-                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
-                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataNotExistsErrorResponse'
 components:
   schemas:
     ABI:
@@ -4917,6 +5208,38 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllLastPriceResponse'
+    GenericSuccessResponse_ListAllLockEventsResponse_:
+      title: GenericSuccessResponse[ListAllLockEventsResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockEventsResponse'
+    GenericSuccessResponse_ListAllLockedPositionResponse_:
+      title: GenericSuccessResponse[ListAllLockedPositionResponse]
+      required:
+        - meta
+        - data
+      type: object
+      properties:
+        meta:
+          title: Meta
+          allOf:
+            - $ref: '#/components/schemas/Success200MetaModel'
+          example:
+            code: 200
+            message: OK
+        data:
+          $ref: '#/components/schemas/ListAllLockedPositionResponse'
     GenericSuccessResponse_ListAllMembershipTokenAddressesResponse_:
       title: GenericSuccessResponse[ListAllMembershipTokenAddressesResponse]
       required:
@@ -5045,22 +5368,6 @@ components:
             message: OK
         data:
           $ref: '#/components/schemas/ListAllTicksResponse'
-    GenericSuccessResponse_ListLockedResponse_:
-      title: GenericSuccessResponse[ListLockedResponse]
-      required:
-        - meta
-        - data
-      type: object
-      properties:
-        meta:
-          title: Meta
-          allOf:
-            - $ref: '#/components/schemas/Success200MetaModel'
-          example:
-            code: 200
-            message: OK
-        data:
-          $ref: '#/components/schemas/ListLockedResponse'
     GenericSuccessResponse_MembershipPositionWithDetail_:
       title: GenericSuccessResponse[MembershipPositionWithDetail]
       required:
@@ -5811,6 +6118,35 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/LastPrice'
+    ListAllLockEventsResponse:
+      title: ListAllLockEventsResponse
+      required:
+        - result_set
+        - events
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        events:
+          title: Events
+          type: array
+          items:
+            $ref: '#/components/schemas/LockEvent'
+          description: Lock/Unlock event list
+    ListAllLockedPositionResponse:
+      title: ListAllLockedPositionResponse
+      required:
+        - result_set
+        - locked_positions
+      type: object
+      properties:
+        result_set:
+          $ref: '#/components/schemas/ResultSet'
+        locked_positions:
+          title: Locked Positions
+          type: array
+          items:
+            $ref: '#/components/schemas/Locked'
     ListAllLockedSortItem:
       title: ListAllLockedSortItem
       enum:
@@ -5937,20 +6273,73 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Ticks'
-    ListLockedResponse:
-      title: ListLockedResponse
+    LockEvent:
+      title: LockEvent
       required:
-        - result_set
-        - locked_list
+        - category
+        - transaction_hash
+        - token_address
+        - lock_address
+        - account_address
+        - value
+        - data
+        - block_timestamp
       type: object
       properties:
-        result_set:
-          $ref: '#/components/schemas/ResultSet'
-        locked_list:
-          title: Locked List
-          type: array
-          items:
-            $ref: '#/components/schemas/Locked'
+        category:
+          allOf:
+            - $ref: '#/components/schemas/LockEventCategory'
+          description: history item category
+        transaction_hash:
+          title: Transaction Hash
+          type: string
+          description: Transaction hash
+        token_address:
+          title: Token Address
+          type: string
+          description: Token address
+        lock_address:
+          title: Lock Address
+          type: string
+          description: Lock address
+        account_address:
+          title: Account Address
+          type: string
+          description: Account address
+        recipient_address:
+          title: Recipient Address
+          type: string
+          description: Recipient address
+        value:
+          title: Value
+          type: integer
+          description: Transfer quantity
+        data:
+          title: Data
+          type: object
+          description: Data
+        block_timestamp:
+          title: Block Timestamp
+          type: string
+          description: block_timestamp when Lock log was emitted (JST)
+          format: date-time
+    LockEventCategory:
+      title: LockEventCategory
+      enum:
+        - Lock
+        - Unlock
+      type: string
+      description: An enumeration.
+    LockEventSortItem:
+      title: LockEventSortItem
+      enum:
+        - token_address
+        - lock_address
+        - recipient_address
+        - value
+        - block_timestamp
+      type: string
+      description: An enumeration.
     Locked:
       title: Locked
       required:
@@ -7430,6 +7819,10 @@ components:
           title: Exchange Commitment
           type: integer
           default: 0
+        locked:
+          title: Locked
+          type: integer
+          default: 0
     TokenHoldersCollectionBatchStatus:
       title: TokenHoldersCollectionBatchStatus
       enum:
@@ -7443,6 +7836,7 @@ components:
       required:
         - account_address
         - hold_balance
+        - current_locked_balance
       type: object
       properties:
         account_address:
@@ -7452,7 +7846,11 @@ components:
         hold_balance:
           title: Hold Balance
           type: integer
-          description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment.
+          description: Amount of balance.This includes balance/pending_transfer/exchange_balance/exchange_commitment/locked.
+        current_locked_balance:
+          title: Current Locked Balance
+          type: integer
+          description: Amount of locked in current.
     TokenHoldersCollectionResponse:
       title: TokenHoldersCollectionResponse
       required:
@@ -7883,5 +8281,3 @@ tags:
     description: Trade related functions on IbetExchange (Only for utility tokens)
   - name: messaging
     description: Messaging functions with external systems
-  - name: locked
-    description: Token locked amount

@@ -54,10 +54,8 @@ class TokenHolder(Base):
 
     # Related to TokenHoldersList primary key
     holder_list = Column(BigInteger, primary_key=True)
-
     # Account Address
     account_address = Column(String(42), primary_key=True)
-
     # Amounts(including balance/pending_transfer/exchange_balance/exchange_commitment)
     hold_balance = Column(BigInteger)
 
