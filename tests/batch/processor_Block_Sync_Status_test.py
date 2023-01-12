@@ -163,6 +163,7 @@ class TestProcessor:
 
         # process
         processor.process()
+        session.commit()
 
         # assertion-2
         new_node = session.query(Node).first()
