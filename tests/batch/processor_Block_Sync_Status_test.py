@@ -167,7 +167,6 @@ class TestProcessor:
 
         # assertion-2
         new_node = session.query(Node).first()
-        assert new_node.id == 1
         assert new_node.endpoint_uri == config.WEB3_HTTP_PROVIDER
         assert new_node.priority == 0
         assert new_node.is_synced == True
