@@ -63,7 +63,7 @@ class TestProcessor:
 
         time.sleep(config.BLOCK_SYNC_STATUS_SLEEP_INTERVAL)
 
-        # Run 2st: block generation speed down(same the previous)
+        # Run 2nd: block generation speed down(same the previous)
         with mock.patch("app.config.BLOCK_GENERATION_SPEED_THRESHOLD", 100):
             processor.process()
             session.commit()
@@ -141,6 +141,35 @@ class TestProcessor:
         # assertion
         _node = session.query(Node).filter(Node.endpoint_uri == "http://test1:1000").first()
         assert _node.is_synced == True
+
+    # <Normal_3>
+    # Delete old node data
+    def test_normal_3(self, session):
+        node = Node()
+        node.id = 1
+        node.endpoint_uri = "old_node"
+        node.priority = 1
+        node.is_synced = True
+        session.add(node)
+        session.commit()
+
+        processor = Processor()
+
+        # assertion-1
+        old_node = session.query(Node).\
+            filter(Node.endpoint_uri.not_in(list(config.WEB3_HTTP_PROVIDER))).\
+            all()
+        assert len(old_node) == 0
+
+        # process
+        processor.process()
+        session.commit()
+
+        # assertion-2
+        new_node = session.query(Node).first()
+        assert new_node.endpoint_uri == config.WEB3_HTTP_PROVIDER
+        assert new_node.priority == 0
+        assert new_node.is_synced == True
 
     ###########################################################################
     # Error Case
