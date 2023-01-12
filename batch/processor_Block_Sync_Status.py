@@ -92,6 +92,13 @@ class Processor:
     def __init__(self):
         local_session = self.__get_db_session()
         try:
+            # Delete old node data
+            valid_endpoint_uri_list = list(config.WEB3_HTTP_PROVIDER) + config.WEB3_HTTP_PROVIDER_STANDBY
+            self.__delete_old_node(
+                db_session=local_session,
+                valid_endpoint_uri_list=valid_endpoint_uri_list
+            )
+            # Initial setting
             self.node_info = {}
             self.__set_node_info(
                 db_session=local_session,
@@ -228,6 +235,10 @@ class Processor:
         except Exception as ex:
             # Unexpected errors(DB error, etc)
             LOG.exception(ex)
+
+    @staticmethod
+    def __delete_old_node(db_session: Session, valid_endpoint_uri_list: list[str]):
+        _node = db_session.query(Node).filter(Node.endpoint_uri.not_in(valid_endpoint_uri_list)).delete()
 
     @staticmethod
     def __sink_on_node(db_session: Session, endpoint_uri: str, priority: int, is_synced: bool):
