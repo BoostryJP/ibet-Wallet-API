@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import json
 import logging
 from datetime import datetime
 import pytest
@@ -34,7 +35,8 @@ from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
     IDXTransfer,
-    IDXTransferBlockNumber
+    IDXTransferBlockNumber,
+    IDXTransferSourceEventType
 )
 from batch import indexer_Transfer
 from batch.indexer_Transfer import LOG, UTC
@@ -253,7 +255,8 @@ class TestProcessor:
             share_token,
             self.trader["account_address"],
             self.trader2["account_address"],
-            50000
+            50000,
+            json.dumps({"message": "unlock"})
         )
         block_number_2 = web3.eth.block_number
 
@@ -272,6 +275,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
         assert idx_transfer.value == 100000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -283,6 +288,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 50000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
+        assert idx_transfer.data == {"message": "unlock"}
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -398,7 +405,8 @@ class TestProcessor:
             share_token,
             self.trader["account_address"],
             self.trader2["account_address"],
-            50000
+            50000,
+            json.dumps({"message": "unlock"})
         )
         block_number_3 = web3.eth.block_number
 
@@ -407,7 +415,8 @@ class TestProcessor:
             share_token,
             self.trader["account_address"],
             self.trader2["account_address"],
-            50000
+            50000,
+            json.dumps({"message": "unlock"})
         )
         block_number_4 = web3.eth.block_number
 
@@ -426,6 +435,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
         assert idx_transfer.value == 100000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -437,6 +448,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 200000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -448,6 +461,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 50000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
+        assert idx_transfer.data == {"message": "unlock"}
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -459,6 +474,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.trader["account_address"]
         assert idx_transfer.to_address == self.trader2["account_address"]
         assert idx_transfer.value == 50000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.UNLOCK.value
+        assert idx_transfer.data == {"message": "unlock"}
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -538,6 +555,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
         assert idx_transfer.value == 100000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -549,6 +568,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
         assert idx_transfer.value == 200000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -560,6 +581,8 @@ class TestProcessor:
         assert idx_transfer.from_address == self.issuer["account_address"]
         assert idx_transfer.to_address == self.trader["account_address"]
         assert idx_transfer.value == 300000
+        assert idx_transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert idx_transfer.data is None
         assert idx_transfer.created is not None
         assert idx_transfer.modified is not None
 
@@ -624,6 +647,8 @@ class TestProcessor:
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
         assert _transfer.value == 100000
+        assert _transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert _transfer.data is None
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
@@ -703,6 +728,8 @@ class TestProcessor:
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
         assert _transfer.value == 100000
+        assert _transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert _transfer.data is None
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
@@ -785,6 +812,8 @@ class TestProcessor:
         assert _transfer.from_address == self.issuer["account_address"]
         assert _transfer.to_address == self.trader["account_address"]
         assert _transfer.value == 100000
+        assert _transfer.source_event == IDXTransferSourceEventType.TRANSFER.value
+        assert _transfer.data is None
         assert _transfer.created is not None
         assert _transfer.modified is not None
 
@@ -863,6 +892,7 @@ class TestProcessor:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.issuer["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         idx_transfer.token_address = share_token["address"]
         idx_transfer.created = datetime.fromtimestamp(block["timestamp"], UTC)
         session.merge(idx_transfer)

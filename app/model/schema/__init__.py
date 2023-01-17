@@ -112,6 +112,7 @@ from .token import (
     CreateTokenHoldersCollectionRequest,
     RetrieveTokenHoldersCountQuery,
     ListAllTokenHoldersQuery,
+    ListAllTransferHistoryQuery,
     # Response
     TokenStatusResponse,
     TokenHoldersResponse,

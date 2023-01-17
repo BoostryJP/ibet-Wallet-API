@@ -24,6 +24,7 @@ from uuid import UUID
 from pydantic import (
     BaseModel,
     Field,
+    NonNegativeInt
 )
 
 from app.model.schema.base import (
@@ -40,6 +41,11 @@ class TokenType(str, Enum):
     IbetShare = "IbetShare"
     IbetMembership = "IbetMembership"
     IbetCoupon = "IbetCoupon"
+
+
+class TransferSourceEvent(str, Enum):
+    Transfer = "Transfer"
+    Unlock = "Unlock"
 
 
 ############################
@@ -61,6 +67,14 @@ class ListAllTokenHoldersQuery:
 @dataclass
 class RetrieveTokenHoldersCountQuery:
     exclude_owner: Optional[bool] = Query(default=False, description="exclude owner")
+
+
+@dataclass
+class ListAllTransferHistoryQuery:
+    offset: Optional[NonNegativeInt] = Query(default=None, description="start position")
+    limit: Optional[NonNegativeInt] = Query(default=None, description="number of set")
+    source_event: Optional[TransferSourceEvent] = Query(default=None, description="source event of transfer")
+    data: Optional[str] = Query(default=None, description="source event data")
 
 
 ############################
@@ -123,6 +137,8 @@ class TransferHistory(BaseModel):
     from_address: str = Field(description="Account address of transfer source")
     to_address: str = Field(description="Account address of transfer destination")
     value: int = Field(description="Transfer quantity")
+    source_event: TransferSourceEvent = Field(description="Source Event")
+    data: dict | None = Field(description="Event data")
     created: str = Field(description="block_timestamp when Transfer log was emitted (JST)")
 
 

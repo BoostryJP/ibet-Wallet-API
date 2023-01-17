@@ -2457,6 +2457,22 @@ paths:
             description: number of set
           name: limit
           in: query
+        - description: source event of transfer
+          required: false
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/TransferSourceEvent'
+            description: source event of transfer
+          name: source_event
+          in: query
+        - description: source event data
+          required: false
+          schema:
+            title: Data
+            type: string
+            description: source event data
+          name: data
+          in: query
       responses:
         '200':
           description: Successful Response
@@ -8025,6 +8041,7 @@ components:
         - from_address
         - to_address
         - value
+        - source_event
         - created
       type: object
       properties:
@@ -8048,10 +8065,25 @@ components:
           title: Value
           type: integer
           description: Transfer quantity
+        source_event:
+          allOf:
+            - $ref: '#/components/schemas/TransferSourceEvent'
+          description: Source Event
+        data:
+          title: Data
+          type: object
+          description: Event data
         created:
           title: Created
           type: string
           description: block_timestamp when Transfer log was emitted (JST)
+    TransferSourceEvent:
+      title: TransferSourceEvent
+      enum:
+        - Transfer
+        - Unlock
+      type: string
+      description: An enumeration.
     TxData:
       title: TxData
       required:

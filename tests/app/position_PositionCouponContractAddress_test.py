@@ -27,7 +27,8 @@ from app import config
 from app.contracts import Contract
 from app.model.db import (
     Listing,
-    IDXTransfer
+    IDXTransfer,
+    IDXTransferSourceEventType
 )
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -203,6 +204,7 @@ class TestPositionCouponContractAddress:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)
@@ -302,6 +304,7 @@ class TestPositionCouponContractAddress:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)
@@ -401,6 +404,7 @@ class TestPositionCouponContractAddress:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)
@@ -500,6 +504,7 @@ class TestPositionCouponContractAddress:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)
@@ -599,6 +604,7 @@ class TestPositionCouponContractAddress:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)
@@ -698,6 +704,7 @@ class TestPositionCouponContractAddress:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)

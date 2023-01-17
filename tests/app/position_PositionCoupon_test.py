@@ -30,7 +30,8 @@ from app.model.db import (
     IDXTransfer,
     IDXPosition,
     IDXCouponToken,
-    IDXConsumeCoupon
+    IDXConsumeCoupon,
+    IDXTransferSourceEventType
 )
 from tests.account_config import eth_account
 from tests.contract_modules import (
@@ -271,6 +272,7 @@ class TestPositionAccountAddressCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)
@@ -397,6 +399,7 @@ class TestPositionAccountAddressCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
         token_non = self.create_non_balance_data(
             self.account_1, self.account_2, {"address": config.ZERO_ADDRESS}, token_list_contract)
@@ -605,6 +608,7 @@ class TestPositionAccountAddressCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
 
         token_non = self.create_non_balance_data(
@@ -786,6 +790,7 @@ class TestPositionAccountAddressCoupon:
         idx_transfer.from_address = self.issuer["account_address"]
         idx_transfer.to_address = self.account_1["account_address"]
         idx_transfer.value = 100000
+        idx_transfer.source_event = IDXTransferSourceEventType.TRANSFER.value
         session.add(idx_transfer)
 
         token_non = self.create_non_balance_data(

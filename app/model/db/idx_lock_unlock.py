@@ -35,6 +35,7 @@ from app.model.db import Base
 UTC = timezone(timedelta(hours=0), "UTC")
 JST = timezone(timedelta(hours=+9), "JST")
 
+
 class IDXLock(Base):
     """Token Lock Event (INDEX)"""
     __tablename__ = "lock"

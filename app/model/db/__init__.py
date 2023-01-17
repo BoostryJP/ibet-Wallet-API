@@ -27,7 +27,8 @@ from .listing import Listing
 from .executable_contract import ExecutableContract
 from .idx_transfer import (
     IDXTransfer,
-    IDXTransferBlockNumber
+    IDXTransferBlockNumber,
+    IDXTransferSourceEventType
 )
 from .idx_transfer_approval import (
     IDXTransferApproval,
