@@ -17,7 +17,6 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 from uuid import UUID
-from typing import List
 from fastapi import (
     APIRouter,
     Depends,
@@ -28,7 +27,9 @@ from sqlalchemy import (
     desc,
     asc,
     func,
-    and_
+    and_,
+    cast,
+    String
 )
 from web3 import Web3
 from eth_utils import to_checksum_address
@@ -43,9 +44,12 @@ from app.errors import (
 from app import config
 from app.contracts import Contract
 from app.model.schema import (
+    # Request
     CreateTokenHoldersCollectionRequest,
     RetrieveTokenHoldersCountQuery,
     ResultSetQuery,
+    ListAllTransferHistoryQuery,
+    # Response
     GenericSuccessResponse,
     TokenStatusResponse,
     SuccessResponse,
@@ -467,11 +471,10 @@ def get_token_holders_collection(
     responses=get_routers_responses(DataNotExistsError, InvalidParameterError)
 )
 def list_all_transfer_histories(
-    request_query: ResultSetQuery = Depends(),
+    request_query: ListAllTransferHistoryQuery = Depends(),
     token_address: str = Path(description="token address"),
     session: Session = Depends(db_session)
 ):
-
     """
     Endpoint: /Token/{contract_address}/TransferHistory
     """
@@ -496,7 +499,14 @@ def list_all_transfer_histories(
     query = session.query(IDXTransfer). \
         filter(IDXTransfer.token_address == contract_address). \
         order_by(IDXTransfer.id)
-    list_length = query.count()
+    total = query.count()
+
+    if request_query.source_event is not None:
+        query = query.filter(IDXTransfer.source_event == request_query.source_event.value)
+    if request_query.data is not None:
+        query = query.filter(cast(IDXTransfer.data, String).like("%" + request_query.data + "%"))
+
+    count = query.count()
 
     if request_query.offset is not None:
         query = query.offset(request_query.offset)
@@ -510,10 +520,10 @@ def list_all_transfer_histories(
 
     data = {
         "result_set": {
-            "count": list_length,
+            "count": count,
             "offset": request_query.offset,
             "limit": request_query.limit,
-            "total": list_length
+            "total": total
         },
         "transfer_history": resp_data
     }

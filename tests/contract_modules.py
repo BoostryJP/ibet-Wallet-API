@@ -281,11 +281,11 @@ def bond_lock(invoker, token, lock_address: str, amount: int):
 
 
 # トークン資産アンロック
-def bond_unlock(invoker, token, target: str, recipient: str, amount: int):
+def bond_unlock(invoker, token, target: str, recipient: str, amount: int, data_str: str = ""):
     web3.eth.default_account = invoker['account_address']
 
     TokenContract = Contract.get_contract('IbetStraightBond', token['address'])
-    tx_hash = TokenContract.functions.unlock(target, recipient, amount, ""). \
+    tx_hash = TokenContract.functions.unlock(target, recipient, amount, data_str). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.wait_for_transaction_receipt(tx_hash)
 
@@ -482,11 +482,11 @@ def share_lock(invoker, token, lock_address: str, amount: int):
 
 
 # トークン資産アンロック
-def share_unlock(invoker, token, target: str, recipient: str, amount: int):
+def share_unlock(invoker, token, target: str, recipient: str, amount: int, data_str: str = ""):
     web3.eth.default_account = invoker['account_address']
 
     TokenContract = Contract.get_contract('IbetShare', token['address'])
-    tx_hash = TokenContract.functions.unlock(target, recipient, amount, ""). \
+    tx_hash = TokenContract.functions.unlock(target, recipient, amount, data_str). \
         transact({'from': invoker['account_address'], 'gas': 4000000})
     web3.eth.wait_for_transaction_receipt(tx_hash)
 

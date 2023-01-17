@@ -16,6 +16,7 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+import json
 import os
 import sys
 import time
@@ -48,7 +49,8 @@ from app.errors import ServiceUnavailable
 from app.model.db import (
     Listing,
     IDXTransfer,
-    IDXTransferBlockNumber
+    IDXTransferBlockNumber,
+    IDXTransferSourceEventType
 )
 from app.utils.web3_utils import Web3Wrapper
 import log
@@ -140,7 +142,7 @@ class Processor:
     @staticmethod
     def __insert_idx(db_session: Session, transaction_hash: str,
                      token_address: str, from_account_address: str, to_account_address: str, value: int,
-                     event_created: datetime):
+                     source_event: IDXTransferSourceEventType, data_str: str | None, event_created: datetime):
         """Registry Transfer data in DB
 
         :param transaction_hash: transaction hash (same value for bulk transfer of token contract)
@@ -148,10 +150,18 @@ class Processor:
         :param from_account_address: from address
         :param to_account_address: to address
         :param value: transfer amount
+        :param source_event: source event of transfer
+        :param data_str: event data string
         :param event_created: block timestamp (same value for bulk transfer of token contract)
         :return: None
         """
-        LOG.debug(f"Transfer: transaction_hash={transaction_hash}")
+        if data_str is not None:
+            try:
+                data = json.loads(data_str)
+            except:
+                data = {}
+        else:
+            data = None
         transfer = IDXTransfer()
         transfer.transaction_hash = transaction_hash
         transfer.token_address = token_address
@@ -160,6 +170,8 @@ class Processor:
         transfer.value = value
         transfer.created = event_created
         transfer.modified = event_created
+        transfer.source_event = source_event.value
+        transfer.data = data
         db_session.add(transfer)
 
     @staticmethod
@@ -301,6 +313,8 @@ class Processor:
                             from_account_address=args.get("from", ZERO_ADDRESS),
                             to_account_address=args.get("to", ZERO_ADDRESS),
                             value=value,
+                            source_event=IDXTransferSourceEventType.TRANSFER,
+                            data_str=None,
                             event_created=event_created
                         )
             except Exception as e:
@@ -353,6 +367,7 @@ class Processor:
                     else:
                         from_address = args.get("accountAddress", ZERO_ADDRESS)
                         to_address = args.get("recipientAddress", ZERO_ADDRESS)
+                        data_str = args.get("data", "")
                         if from_address != to_address:
                             self.__insert_idx(
                                 db_session=db_session,
@@ -361,6 +376,8 @@ class Processor:
                                 from_account_address=from_address,
                                 to_account_address=to_address,
                                 value=args["value"],
+                                source_event=IDXTransferSourceEventType.UNLOCK,
+                                data_str=data_str,
                                 event_created=block_timestamp
                             )
             except Exception:

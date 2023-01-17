@@ -16,10 +16,12 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
+from enum import Enum
 from sqlalchemy import (
     Column,
     String,
-    BigInteger
+    BigInteger,
+    JSON
 )
 from datetime import (
     datetime,
@@ -31,6 +33,12 @@ from app.model.db import Base
 
 UTC = timezone(timedelta(hours=0), "UTC")
 JST = timezone(timedelta(hours=+9), "JST")
+
+
+class IDXTransferSourceEventType(str, Enum):
+    """Transfer source event type"""
+    TRANSFER = "Transfer"
+    UNLOCK = "Unlock"
 
 
 class IDXTransfer(Base):
@@ -49,6 +57,10 @@ class IDXTransfer(Base):
     to_address = Column(String(42))
     # Transfer Amount
     value = Column(BigInteger)
+    # Source Event (IDXTransferSourceEventType)
+    source_event = Column(String(50), nullable=False)
+    # Data
+    data = Column(JSON)
 
     @staticmethod
     def format_timestamp(_datetime: datetime) -> str:
@@ -68,6 +80,8 @@ class IDXTransfer(Base):
             "from_address": self.from_address,
             "to_address": self.to_address,
             "value": self.value,
+            "source_event": self.source_event,
+            "data": self.data,
             "created": self.format_timestamp(self.created),
         }
 
@@ -78,6 +92,8 @@ class IDXTransfer(Base):
         "from_address": str,
         "to_address": str,
         "value": int,
+        "source_event": str,
+        "data": dict
     }
     FIELDS.update(Base.FIELDS)
 

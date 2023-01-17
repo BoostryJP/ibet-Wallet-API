@@ -44,6 +44,7 @@ class BlockData(BaseModel):
     gas_used: int
     size: NonNegativeInt
 
+
 class BlockDataDetail(BaseModel):
     number: NonNegativeInt = Field(description="Block number")
     parent_hash: str
