@@ -191,9 +191,10 @@ def get_token_holders(
     query = session.query(IDXPosition, func.sum(IDXLockedPosition.value)). \
         outerjoin(
             IDXLockedPosition,
-            and_(IDXLockedPosition.token_address == token_address ,
+            and_(IDXLockedPosition.token_address == token_address,
                  IDXLockedPosition.account_address == IDXPosition.account_address)
         ). \
+        filter(IDXPosition.token_address == token_address). \
         filter(or_(
             IDXPosition.balance > 0,
             IDXPosition.pending_transfer > 0,
@@ -262,9 +263,10 @@ def get_token_holders_count(
     query = session.query(IDXPosition, func.sum(IDXLockedPosition.value)). \
         outerjoin(
             IDXLockedPosition,
-            and_(IDXLockedPosition.token_address == token_address ,
+            and_(IDXLockedPosition.token_address == token_address,
                  IDXLockedPosition.account_address == IDXPosition.account_address)
         ). \
+        filter(IDXPosition.token_address == token_address). \
         filter(or_(
             IDXPosition.balance > 0,
             IDXPosition.pending_transfer > 0,

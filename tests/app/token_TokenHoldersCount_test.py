@@ -105,6 +105,12 @@ class TestTokenTokenHoldersCount:
         }
         self.insert_listing(session, listing=listing)
 
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
         # Prepare data (balance > 0)
         position_1 = {
             "token_address": self.token_address,
@@ -121,6 +127,17 @@ class TestTokenTokenHoldersCount:
             "pending_transfer": 5
         }
         self.insert_position(session, position=position_2)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address,
+            "balance": 10,
+            "exchange_balance": 10,
+            "pending_transfer": 10,
+            "exchange_commitment": 10
+        }
+        self.insert_position(session, other_position_1)
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -144,6 +161,12 @@ class TestTokenTokenHoldersCount:
         }
         self.insert_listing(session, listing=listing)
 
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
         # Prepare data (balance > 0)
         position = {
             "token_address": self.token_address,
@@ -163,6 +186,17 @@ class TestTokenTokenHoldersCount:
             "value": 1
         }
         self.insert_locked_position(session, locked_position_1)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address,
+            "balance": 10,
+            "exchange_balance": 10,
+            "pending_transfer": 10,
+            "exchange_commitment": 10
+        }
+        self.insert_position(session, other_position_1)
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
@@ -185,6 +219,12 @@ class TestTokenTokenHoldersCount:
             "is_public": True,
         }
         self.insert_listing(session, listing=listing)
+
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
 
         # Prepare data (balance = 0)
         position_1 = {
@@ -218,6 +258,17 @@ class TestTokenTokenHoldersCount:
         }
         self.insert_position(session, position=position_4)
 
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address,
+            "balance": 10,
+            "exchange_balance": 10,
+            "pending_transfer": 10,
+            "exchange_commitment": 10
+        }
+        self.insert_position(session, other_position_1)
+
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
         query_string = ""
@@ -240,6 +291,12 @@ class TestTokenTokenHoldersCount:
         }
         self.insert_listing(session, listing=listing)
 
+        other_listing = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "is_public": True,
+        }
+        self.insert_listing(session, listing=other_listing)
+
         # Prepare data (balance > 0)
         position_1 = {
             "token_address": self.token_address,
@@ -256,6 +313,17 @@ class TestTokenTokenHoldersCount:
             "pending_transfer": 5
         }
         self.insert_position(session, position=position_2)
+
+        # Prepare data (other token position)
+        other_position_1 = {
+            "token_address": "0x55126b4e2a868E7519C32aA3945e7298d768975b",
+            "account_address": self.account_address,
+            "balance": 10,
+            "exchange_balance": 10,
+            "pending_transfer": 10,
+            "exchange_commitment": 10
+        }
+        self.insert_position(session, other_position_1)
 
         # Request target API
         apiurl = self.apiurl_base.format(contract_address=self.token_address)
