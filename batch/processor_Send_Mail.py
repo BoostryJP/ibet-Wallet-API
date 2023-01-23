@@ -1,0 +1,94 @@
+"""
+Copyright BOOSTRY Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
+"""
+import os
+import sys
+import time
+from smtplib import SMTPException
+
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+path = os.path.join(os.path.dirname(__file__), "../")
+sys.path.append(path)
+
+from app.config import (
+    DATABASE_URL,
+    SMTP_SERVER_HOST,
+    SMTP_SERVER_PORT,
+    SMTP_SENDER_EMAIL,
+    SMTP_SENDER_PASSWORD
+)
+from app.model.db import Mail
+from app.model.mail import Mail as SMTPMail
+import log
+
+LOG = log.get_logger(process_name="PROCESSOR-SEND-MAIL")
+
+db_engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+
+
+class Processor:
+
+    def process(self):
+        db_session = Session(autocommit=False, autoflush=True, bind=db_engine)
+        try:
+            mail_list: list[Mail] = db_session.query(Mail).all()
+            if len(mail_list) > 0:
+                LOG.info("Process start")
+                for mail in mail_list:
+                    try:
+                        smtp_mail = SMTPMail(
+                            server_host=SMTP_SERVER_HOST,
+                            server_port=SMTP_SERVER_PORT,
+                            sender_email=SMTP_SENDER_EMAIL,
+                            to_email=mail.to_email,
+                            subject=mail.subject,
+                            text_content=mail.text_content,
+                            html_content=mail.html_content
+                        )
+                        smtp_mail.send_mail(SMTP_SENDER_PASSWORD)
+                        db_session.delete(mail)
+                        db_session.commit()
+                    except SMTPException as err:
+                        LOG.warning(f"Could not send email: {err}")
+                        continue
+                LOG.info("Process end")
+        finally:
+            db_session.close()
+
+
+def main():
+    LOG.info("Service started successfully")
+    processor = Processor()
+    while True:
+        start_time = time.time()
+        try:
+            processor.process()
+        except SQLAlchemyError as sa_err:
+            LOG.error(f"A database error has occurred: code={sa_err.code}\n{sa_err}")
+        except Exception as ex:
+            LOG.exception(ex)
+
+        elapsed_time = time.time() - start_time
+        time.sleep(max(30 - elapsed_time, 0))
+
+
+if __name__ == "__main__":
+    main()

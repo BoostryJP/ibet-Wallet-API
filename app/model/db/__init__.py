@@ -75,3 +75,4 @@ from .tokenholders import (
     TokenHolderBatchStatus,
     TokenHolder
 )
+from .mail import Mail

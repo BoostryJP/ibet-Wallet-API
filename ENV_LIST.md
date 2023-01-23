@@ -65,3 +65,11 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | Variable Name       | Required | Details                                             | Example                   | Default | 
 |---------------------|----------|-----------------------------------------------------|---------------------------|---------|
 | BC_EXPLORER_ENABLED | False    | Parameter for starting the Blockchain Explorer      | 0 (not using) / 1 (using) | 0       |
+
+### Email
+| Variable Name        | Required | Details               | Example             | Default | 
+|----------------------|----------|-----------------------|---------------------|---------|
+| SMTP_SERVER_HOST     | False    | SMTP server name      | smtp.office365.com  | --      |
+| SMTP_SERVER_PORT     | False    | SMTP server port      | 587                 | --      |
+| SMTP_SENDER_EMAIL    | False    | Sender email address  | example@example.com | --      |
+| SMTP_SENDER_PASSWORD | False    | Sender email password |                     | --      |
