@@ -42,6 +42,10 @@ if [ "$EXCHANGE_NOTIFICATION_ENABLED" = 1 ]; then
   fi
 fi
 
+if [ ! -z "$SMTP_SERVER_HOST" ]; then
+  python batch/processor_Send_Mail.py &
+fi
+
 python batch/processor_Block_Sync_Status.py &
 
 tail -f /dev/null

@@ -194,3 +194,7 @@ from .dex_order_list import (
     ListAllOrderListResponse,
     TokenAddress
 )
+from .mail import (
+    # Request
+    SendMailRequest
+)

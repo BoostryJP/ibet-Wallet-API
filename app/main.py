@@ -47,6 +47,7 @@ from app.api.routers import (
     position as routers_position,
     notification as routers_notification,
     e2e_message as routers_e2e_message,
+    mail as routers_mail,
     events as routers_events,
     dex_market as routers_dex_market,
     dex_order_list as routers_dex_order_list
@@ -160,6 +161,7 @@ app.include_router(routers_token.router)
 app.include_router(routers_position.router)
 app.include_router(routers_notification.router)
 app.include_router(routers_e2e_message.router)
+app.include_router(routers_mail.router)
 app.include_router(routers_events.router)
 app.include_router(routers_dex_market.router)
 app.include_router(routers_dex_order_list.router)

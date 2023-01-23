@@ -37,6 +37,10 @@ if [ "${EXCHANGE_NOTIFICATION_ENABLED}" = 1 ]; then
   fi
 fi
 
+if [ ! -z "${SMTP_SERVER_HOST}" ]; then
+  PROC_LIST="${PROC_LIST} batch/processor_Send_Mail.py"
+fi
+
 PROC_LIST="${PROC_LIST} batch/processor_Block_Sync_Status.py"
 
 for i in ${PROC_LIST}; do

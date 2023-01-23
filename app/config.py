@@ -180,6 +180,14 @@ TOKEN_SHORT_TERM_FETCH_INTERVAL_MSEC = int(os.environ.get("TOKEN_SHORT_TERM_FETC
 BC_EXPLORER_ENABLED = True if os.environ.get("BC_EXPLORER_ENABLED") == "1" else False
 
 ####################################################
+# Email settings
+####################################################
+SMTP_SERVER_HOST = os.environ.get("SMTP_SERVER_HOST")
+SMTP_SERVER_PORT = os.environ.get("SMTP_SERVER_PORT")
+SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL")
+SMTP_SENDER_PASSWORD = os.environ.get("SMTP_SENDER_PASSWORD")
+
+####################################################
 # Other settings
 ####################################################
 # Load test
