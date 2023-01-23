@@ -3692,6 +3692,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataNotExistsErrorResponse'
+  /Mail:
+    post:
+      tags:
+        - messaging
+      summary: Send Email
+      description: Send Email
+      operationId: SendEmail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMailRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                title: Response 400 Sendemail
+                anyOf:
+                  - $ref: '#/components/schemas/InvalidParameterErrorResponse'
+                  - $ref: '#/components/schemas/RequestValidationErrorResponse'
   /Events/E2EMessaging:
     get:
       tags:
@@ -7581,6 +7610,37 @@ components:
             - {}
             - $ref: '#/components/schemas/app__model__schema__position__TokenAddress'
           description: set when include_token_details=false or null
+    SendMailRequest:
+      title: SendMailRequest
+      required:
+        - to_emails
+        - subject
+      type: object
+      properties:
+        to_emails:
+          title: To Emails
+          maxItems: 100
+          minItems: 1
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+            format: email
+        subject:
+          title: Subject
+          maxLength: 100
+          type: string
+          description: Mail subject
+        text_content:
+          title: Text Content
+          type: string
+          description: Plain text mail content
+          default: ''
+        html_content:
+          title: Html Content
+          type: string
+          description: HTML mail content
+          default: ''
     SendRawTransactionNoWaitResponse:
       title: SendRawTransactionNoWaitResponse
       required:
