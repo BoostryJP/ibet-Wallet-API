@@ -17,8 +17,10 @@ limitations under the License.
 SPDX-License-Identifier: Apache-2.0
 """
 import smtplib
+from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formataddr
 
 import boto3
 
@@ -50,7 +52,7 @@ class Mail:
         self.msg.attach(MIMEText(text_content, "plain"))
         self.msg.attach(MIMEText(html_content, "html"))
         self.msg["Subject"] = subject
-        self.msg["From"] = f"{SMTP_SENDER_NAME} <{SMTP_SENDER_EMAIL}>"
+        self.msg["From"] = formataddr((str(Header(SMTP_SENDER_NAME, "utf-8")), SMTP_SENDER_EMAIL))
         self.msg["To"] = to_email
 
     def send_mail(self):
