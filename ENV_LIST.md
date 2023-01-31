@@ -67,9 +67,24 @@ See [Gunicorn's official documentation](https://docs.gunicorn.org/en/stable/run.
 | BC_EXPLORER_ENABLED | False    | Parameter for starting the Blockchain Explorer      | 0 (not using) / 1 (using) | 0       |
 
 ### Email
+Common
+
+| Variable Name     | Required | Details              | Example                     | Default | 
+|-------------------|----------|----------------------|-----------------------------|---------|
+| SMTP_METHOD       | False    | Email sending method | 0:SMTP server, 1:Amazon SES | 0       |
+| SMTP_SENDER_NAME  | False    | Sender name          |                             | --      |
+| SMTP_SENDER_EMAIL | False    | Sender email address | example@example.com         | --      |
+
+SMTP server
+
 | Variable Name        | Required | Details               | Example             | Default | 
 |----------------------|----------|-----------------------|---------------------|---------|
 | SMTP_SERVER_HOST     | False    | SMTP server name      | smtp.office365.com  | --      |
 | SMTP_SERVER_PORT     | False    | SMTP server port      | 587                 | --      |
-| SMTP_SENDER_EMAIL    | False    | Sender email address  | example@example.com | --      |
 | SMTP_SENDER_PASSWORD | False    | Sender email password |                     | --      |
+
+Amazon SES
+
+| Variable Name       | Required | Details         | Example   | Default | 
+|---------------------|----------|-----------------|-----------|---------|
+| AWS_SES_REGION_NAME | False    | AWS region name | us-east-1 | --      |

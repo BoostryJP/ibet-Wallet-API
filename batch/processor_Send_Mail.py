@@ -21,6 +21,7 @@ import sys
 import time
 from smtplib import SMTPException
 
+from botocore.exceptions import ClientError as SESException
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -28,13 +29,7 @@ from sqlalchemy.orm import Session
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.config import (
-    DATABASE_URL,
-    SMTP_SERVER_HOST,
-    SMTP_SERVER_PORT,
-    SMTP_SENDER_EMAIL,
-    SMTP_SENDER_PASSWORD
-)
+from app.config import DATABASE_URL
 from app.model.db import Mail
 from app.model.mail import Mail as SMTPMail
 import log
@@ -55,18 +50,15 @@ class Processor:
                 for mail in mail_list:
                     try:
                         smtp_mail = SMTPMail(
-                            server_host=SMTP_SERVER_HOST,
-                            server_port=SMTP_SERVER_PORT,
-                            sender_email=SMTP_SENDER_EMAIL,
                             to_email=mail.to_email,
                             subject=mail.subject,
                             text_content=mail.text_content,
                             html_content=mail.html_content
                         )
-                        smtp_mail.send_mail(SMTP_SENDER_PASSWORD)
+                        smtp_mail.send_mail()
                         db_session.delete(mail)
                         db_session.commit()
-                    except SMTPException as err:
+                    except (SMTPException, SESException) as err:
                         LOG.warning(f"Could not send email: {err}")
                         continue
                 LOG.info("Process end")

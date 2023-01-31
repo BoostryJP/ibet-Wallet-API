@@ -53,10 +53,6 @@ class TestProcessorSendMail:
 
     # Normal_1
     # No unsent email exists
-    @mock.patch("app.config.SMTP_SERVER_HOST", "smtp.office365.com")
-    @mock.patch("app.config.SMTP_SERVER_PORT", 587)
-    @mock.patch("app.config.SMTP_SENDER_EMAIL", "sender@example.com")
-    @mock.patch("app.config.SMTP_SENDER_PASSWORD", "password")
     def test_normal_1(self, processor, session, caplog):
         # Run processor
         with mock.patch("app.model.mail.mail.Mail.send_mail", None):
@@ -72,10 +68,6 @@ class TestProcessorSendMail:
 
     # Normal_2
     # Unsent email exists
-    @mock.patch("app.config.SMTP_SERVER_HOST", "smtp.office365.com")
-    @mock.patch("app.config.SMTP_SERVER_PORT", 587)
-    @mock.patch("app.config.SMTP_SENDER_EMAIL", "sender@example.com")
-    @mock.patch("app.config.SMTP_SENDER_PASSWORD", "password")
     def test_normal_2(self, processor, session, caplog):
         # Prepare data
         mail = Mail()
@@ -102,10 +94,6 @@ class TestProcessorSendMail:
 
     # Normal_3
     # SMTPException -> skip
-    @mock.patch("app.config.SMTP_SERVER_HOST", "smtp.office365.com")
-    @mock.patch("app.config.SMTP_SERVER_PORT", 587)
-    @mock.patch("app.config.SMTP_SENDER_EMAIL", "sender@example.com")
-    @mock.patch("app.config.SMTP_SENDER_PASSWORD", "password")
     def test_normal_3(self, processor, session, caplog):
         # Prepare data
         mail = Mail()
@@ -143,10 +131,6 @@ class TestProcessorSendMail:
 
     # Error_1
     # SQLAlchemyError
-    @mock.patch("app.config.SMTP_SERVER_HOST", "smtp.office365.com")
-    @mock.patch("app.config.SMTP_SERVER_PORT", 587)
-    @mock.patch("app.config.SMTP_SENDER_EMAIL", "sender@example.com")
-    @mock.patch("app.config.SMTP_SENDER_PASSWORD", "password")
     def test_error_1(self, processor, session, caplog):
         # Prepare data
         mail = Mail()

@@ -1,3 +1,4 @@
+boto3== 1.26.59
 coincurve==18.0.0
 eth-keyfile==0.5.1
 eth-utils==1.10.0
