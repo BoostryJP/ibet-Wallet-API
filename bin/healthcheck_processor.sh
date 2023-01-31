@@ -37,7 +37,7 @@ if [ "${EXCHANGE_NOTIFICATION_ENABLED}" = 1 ]; then
   fi
 fi
 
-if [ ! -z "${SMTP_SERVER_HOST}" ]; then
+if [ ! -z "${SMTP_METHOD}" ]; then
   PROC_LIST="${PROC_LIST} batch/processor_Send_Mail.py"
 fi
 

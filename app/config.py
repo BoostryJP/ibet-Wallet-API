@@ -182,10 +182,18 @@ BC_EXPLORER_ENABLED = True if os.environ.get("BC_EXPLORER_ENABLED") == "1" else 
 ####################################################
 # Email settings
 ####################################################
+# Common
+SMTP_METHOD = int(os.environ.get("SMTP_METHOD")) if os.environ.get("SMTP_METHOD") else 0  # 0:SMTP server, 1:Amazon SES
+SMTP_SENDER_NAME = os.environ.get("SMTP_SENDER_NAME")
+SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL")
+
+# SMTP server
 SMTP_SERVER_HOST = os.environ.get("SMTP_SERVER_HOST")
 SMTP_SERVER_PORT = os.environ.get("SMTP_SERVER_PORT")
-SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL")
 SMTP_SENDER_PASSWORD = os.environ.get("SMTP_SENDER_PASSWORD")
+
+# Amazon SES
+AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
 
 ####################################################
 # Other settings
