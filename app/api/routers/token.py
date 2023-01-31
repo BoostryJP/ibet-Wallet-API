@@ -430,31 +430,12 @@ def get_token_holders_collection(
         raise InvalidParameterError(description=description)
 
     _token_holders = (
-        session.query(TokenHolder, func.sum(IDXLockedPosition.value)).
-        outerjoin(
-            IDXLockedPosition,
-            and_(
-                IDXLockedPosition.account_address == TokenHolder.account_address,
-                IDXLockedPosition.token_address == _same_list_id_record.token_address,
-            )
-        ).
+        session.query(TokenHolder).
         filter(TokenHolder.holder_list == _same_list_id_record.id).
-        group_by(
-            TokenHolder.holder_list,
-            TokenHolder.account_address,
-            IDXLockedPosition.token_address,
-            IDXLockedPosition.account_address
-        ).
         order_by(asc(TokenHolder.account_address)).
         all()
     )
-    token_holders = [
-        {
-            **_token_holder[0].json(),
-            "current_locked_balance": _token_holder[1] or 0
-        }
-        for _token_holder in _token_holders
-    ]
+    token_holders = [_token_holder.json() for _token_holder in _token_holders]
 
     return json_response({
         **SuccessResponse.default(),

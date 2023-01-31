@@ -155,8 +155,7 @@ class TestTokenTokenHoldersCollection:
 
         request_params = {"block_number": block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -168,7 +167,7 @@ class TestTokenTokenHoldersCollection:
 
         apiurl = self.apiurl_after_post.format(contract_address=token["address"], list_id=list_id)
         resp = client.get(apiurl)
-        holders = [{"account_address": self.trader["account_address"], "hold_balance": 30000, "current_locked_balance": 0}]
+        holders = [{"account_address": self.trader["account_address"], "hold_balance": 30000, "locked_balance": 0}]
         assert resp.status_code == 200
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"] == {"status": TokenHolderBatchStatus.DONE.value, "holders": holders}
@@ -201,8 +200,7 @@ class TestTokenTokenHoldersCollection:
 
             request_params = {"block_number": block_number - i, "list_id": list_id}
             headers = {"Content-Type": "application/json"}
-            request_body = json.dumps(request_params)
-            resp = client.post(apiurl, headers=headers, data=request_body)
+            resp = client.post(apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
             assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -232,8 +230,7 @@ class TestTokenTokenHoldersCollection:
 
             request_params = {"block_number": block_number, "list_id": list_id}
             headers = {"Content-Type": "application/json"}
-            request_body = json.dumps(request_params)
-            resp = client.post(apiurl, headers=headers, data=request_body)
+            resp = client.post(apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
             assert resp.json()["meta"] == {"code": 200, "message": "OK"}
@@ -251,8 +248,7 @@ class TestTokenTokenHoldersCollection:
         block_number = web3.eth.block_number
         request_params = {"block_number": block_number}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -276,8 +272,7 @@ class TestTokenTokenHoldersCollection:
         list_id = str(uuid.uuid4())
         request_params = {"block_number": block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {"code": 88, "message": "Invalid Parameter", "description": "Invalid contract address"}
@@ -290,8 +285,7 @@ class TestTokenTokenHoldersCollection:
         block_number = web3.eth.block_number
         request_params = {"block_number": block_number, "list_id": "some_id"}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -314,8 +308,7 @@ class TestTokenTokenHoldersCollection:
         block_number = web3.eth.block_number + 100
         request_params = {"block_number": block_number, "list_id": str(uuid.uuid4())}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -328,8 +321,7 @@ class TestTokenTokenHoldersCollection:
         block_number = 0
         request_params = {"block_number": block_number, "list_id": str(uuid.uuid4())}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -357,8 +349,7 @@ class TestTokenTokenHoldersCollection:
         block_number = web3.eth.block_number
         request_params = {"block_number": block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {"code": 88, "message": "Invalid Parameter", "description": "list_id must be unique."}
@@ -372,8 +363,7 @@ class TestTokenTokenHoldersCollection:
         block_number = web3.eth.block_number
         request_params = {"block_number": block_number, "list_id": list_id}
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps(request_params)
-        resp = client.post(apiurl, headers=headers, data=request_body)
+        resp = client.post(apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 404
         assert resp.json()["meta"] == {

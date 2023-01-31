@@ -125,13 +125,12 @@ class TestUserInfoPersonalInfo:
     # 404: Not Supported
     def test_error_1(self, client: TestClient, session: Session):
         headers = {"Content-Type": "application/json"}
-        request_body = json.dumps({})
 
         # Request target API
         resp = client.post(
             self.apiurl,
             headers=headers,
-            data=request_body
+            json={}
         )
 
         # Assertion

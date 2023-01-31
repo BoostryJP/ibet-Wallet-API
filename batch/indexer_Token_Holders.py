@@ -32,7 +32,11 @@ import log
 path = os.path.join(os.path.dirname(__file__), "../")
 sys.path.append(path)
 
-from app.model.db import TokenHoldersList, TokenHolderBatchStatus, TokenHolder
+from app.model.db import (
+    TokenHoldersList,
+    TokenHolderBatchStatus,
+    TokenHolder
+)
 from app.contracts import Contract as ContractOperator
 from app.config import (
     DATABASE_URL,
@@ -59,14 +63,16 @@ class Processor:
         def __init__(self):
             self.pages = {}
 
-        def store(self, account_address: str, amount: int = 0):
+        def store(self, account_address: str, amount: int = 0, locked: int = 0):
             if account_address not in self.pages:
                 token_holder = TokenHolder()
                 token_holder.hold_balance = 0 + amount
                 token_holder.account_address = account_address
+                token_holder.locked_balance = 0 + locked
                 self.pages[account_address] = token_holder
             else:
                 self.pages[account_address].hold_balance += amount
+                self.pages[account_address].locked_balance += locked
 
     target: Optional[TokenHoldersList]
     balance_book: BalanceBook
@@ -199,6 +205,7 @@ class Processor:
         self.__process_issue(block_from, block_to)
         self.__process_redeem(block_from, block_to)
         if self.token_template in ["IbetStraightBond", "IbetShare"]:
+            self.__process_lock(block_from, block_to)
             self.__process_unlock(block_from, block_to)
         if self.token_template == "IbetCoupon":
             self.__process_consume(block_from, block_to)
@@ -376,6 +383,34 @@ class Processor:
         except Exception:
             raise
 
+    def __process_lock(self, block_from: int, block_to: int):
+        """Process Lock Event
+
+        - The process of updating Hold-Balance data by capturing the following events
+        - `Lock` event on Token contracts
+
+        :param block_from: From block
+        :param block_to: To block
+        :return: None
+        """
+        try:
+            # Get "Lock" events from token contract
+            events = self.token_contract.events.Lock.getLogs(
+                fromBlock=block_from,
+                toBlock=block_to
+            )
+        except ABIEventFunctionNotFound:
+            events = []
+        try:
+            for event in events:
+                args = event["args"]
+                account_address = args.get("accountAddress", ZERO_ADDRESS)
+                amount = args.get("value")
+                if amount is not None and amount <= sys.maxsize:
+                    self.balance_book.store(account_address=account_address, amount=-amount, locked=+amount)
+        except Exception:
+            raise
+
     def __process_unlock(self, block_from: int, block_to: int):
         """Process Unlock Event
 
@@ -387,7 +422,7 @@ class Processor:
         :return: None
         """
         try:
-            # Get "Consume" events from token contract
+            # Get "Unlock" events from token contract
             events = self.token_contract.events.Unlock.getLogs(
                 fromBlock=block_from,
                 toBlock=block_to
@@ -399,9 +434,10 @@ class Processor:
                 args = event["args"]
                 account_address = args.get("accountAddress", ZERO_ADDRESS)
                 recipient_address = args.get("recipientAddress", ZERO_ADDRESS)
-                amount = args.get("value", ZERO_ADDRESS)
-                self.balance_book.store(account_address=account_address, amount=-amount)
-                self.balance_book.store(account_address=recipient_address, amount=+amount)
+                amount = args.get("value")
+                if amount is not None and amount <= sys.maxsize:
+                    self.balance_book.store(account_address=account_address, locked=-amount)
+                    self.balance_book.store(account_address=recipient_address, amount=+amount)
         except Exception:
             raise
 
@@ -411,6 +447,7 @@ class Processor:
     ):
         for account_address, page in zip(balance_book.pages.keys(), balance_book.pages.values()):
             if page.account_address == token_owner_address:
+                # Skip storing data for token owner
                 continue
             token_holder: TokenHolder = (
                 db_session.query(TokenHolder)
@@ -419,10 +456,10 @@ class Processor:
                 .first()
             )
             if token_holder is not None:
-                if page.hold_balance is not None:
-                    token_holder.hold_balance = page.hold_balance
+                token_holder.hold_balance = page.hold_balance
+                token_holder.locked_balance = page.locked_balance
                 db_session.merge(token_holder)
-            elif page.hold_balance is not None and page.hold_balance > 0:
+            elif page.hold_balance > 0 or page.locked_balance > 0:
                 LOG.debug(f"Collection record created : token_address={token_address}, account_address={account_address}")
                 page.holder_list = holder_list_id
                 db_session.add(page)

@@ -162,9 +162,7 @@ class TestEthSendRawTransaction:
 
             request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
             headers = {'Content-Type': 'application/json'}
-            request_body = json.dumps(request_params)
-
-            resp = client.post(self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -273,10 +271,8 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex(), signed_tx_2.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -346,7 +342,6 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         # タイムアウト
         # NOTE: GanacheにはRPCメソッド:txpool_inspectが存在しないためMock化
@@ -359,8 +354,7 @@ class TestEthSendRawTransaction:
                     }),
                     "queued": AttributeDict({})
                 })])):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -395,10 +389,7 @@ class TestEthSendRawTransaction:
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -422,10 +413,7 @@ class TestEthSendRawTransaction:
         request_params = {"raw_tx_hex_list": []}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -448,10 +436,7 @@ class TestEthSendRawTransaction:
         request_params = {}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -474,10 +459,7 @@ class TestEthSendRawTransaction:
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -501,10 +483,7 @@ class TestEthSendRawTransaction:
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -529,10 +508,7 @@ class TestEthSendRawTransaction:
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -603,8 +579,7 @@ class TestEthSendRawTransaction:
         with mock.patch("app.utils.web3_utils.FailOverHTTPProvider.fail_over_mode", True):
             insert_node_data(session, is_synced=False)
             insert_node_data(session, is_synced=False, endpoint_uri="http://localhost:8546", priority=1)
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
         assert resp.status_code == 503
         assert resp.json()['meta'] == {
             'code': 503,
@@ -665,10 +640,8 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
@@ -720,10 +693,8 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -778,11 +749,9 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="130401"):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -839,11 +808,9 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="Message sender balance is insufficient."):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -905,11 +872,9 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         with mock.patch("app.api.routers.eth.inspect_tx_failure", return_value="execution reverted"):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -971,11 +936,9 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         with mock.patch.object(eth.web3.eth, "get_transaction", ConnectionError):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
             assert resp.status_code == 200
             assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -1041,12 +1004,10 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         # waitForTransactionReceiptエラー
         with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=Exception())) as m:
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         # wait_for_transaction_receipt should be called with timeout/poll_latency value from config
         m.assert_called_with(
@@ -1122,14 +1083,12 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         # タイムアウト
         # recover_transactionエラー
         with mock.patch("web3.eth.Eth.wait_for_transaction_receipt", MagicMock(side_effect=TimeExhausted())), mock.patch(
                 "eth_account.Account.recover_transaction", MagicMock(side_effect=Exception())):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -1195,7 +1154,6 @@ class TestEthSendRawTransaction:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         # タイムアウト
         # queuedに滞留
@@ -1209,8 +1167,7 @@ class TestEthSendRawTransaction:
                         })
                     })
                 })])):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         # wait_for_transaction_receipt should be called with timeout/poll_latency value from config
         m.assert_called_with(
