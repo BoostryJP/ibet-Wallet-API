@@ -50,7 +50,7 @@ class Mail:
         self.msg.attach(MIMEText(text_content, "plain"))
         self.msg.attach(MIMEText(html_content, "html"))
         self.msg["Subject"] = subject
-        self.msg["From"] = f"{SMTP_SENDER_NAME}<{SMTP_SENDER_EMAIL}>"
+        self.msg["From"] = f"{SMTP_SENDER_NAME} <{SMTP_SENDER_EMAIL}>"
         self.msg["To"] = to_email
 
     def send_mail(self):
