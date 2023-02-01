@@ -856,7 +856,7 @@ class TestDEXOrderListMembership:
         _, membership_exchange, _, token_list = self.set_env(shared_contract)
 
         # emit CancelOrder event
-        token, order_id, agreement_id = self.order_event(membership_exchange, token_list)
+        token, order_id, agreement_id = self.cancel_order_event(membership_exchange, token_list)
 
         # add order event record
         order = Order()

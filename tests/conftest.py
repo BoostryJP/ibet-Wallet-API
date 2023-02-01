@@ -261,7 +261,7 @@ def db(request):
 
 
 # ブロックナンバーの保存・復元
-@pytest.fixture(scope='function')
+@pytest.fixture(autouse=True)
 def block_number(request):
     evm_snapshot = web3.provider.make_request(RPCEndpoint("evm_snapshot"), [])
 
@@ -271,13 +271,10 @@ def block_number(request):
     request.addfinalizer(teardown)
 
 
-# セッションの作成・自動ロールバック
+# セッションの作成
 @pytest.fixture(scope='function')
 def session(request, db: Session):
     yield db
-
-    # Rollback DB after session is closed
-    db.rollback()
 
 
 # 発行企業リストのモック
