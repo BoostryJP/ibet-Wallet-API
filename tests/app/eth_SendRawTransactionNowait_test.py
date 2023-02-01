@@ -16,7 +16,6 @@ limitations under the License.
 
 SPDX-License-Identifier: Apache-2.0
 """
-import json
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from unittest.mock import patch
@@ -133,10 +132,7 @@ class TestEthSendRawTransactionNoWait:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -245,10 +241,7 @@ class TestEthSendRawTransactionNoWait:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex(), signed_tx_2.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -287,10 +280,7 @@ class TestEthSendRawTransactionNoWait:
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -314,10 +304,7 @@ class TestEthSendRawTransactionNoWait:
         request_params = {"raw_tx_hex_list": []}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -340,10 +327,7 @@ class TestEthSendRawTransactionNoWait:
         request_params = {}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
@@ -366,10 +350,7 @@ class TestEthSendRawTransactionNoWait:
         request_params = {"raw_tx_hex_list": raw_tx_1}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -392,10 +373,7 @@ class TestEthSendRawTransactionNoWait:
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()["meta"] == {
@@ -420,10 +398,7 @@ class TestEthSendRawTransactionNoWait:
         request_params = {"raw_tx_hex_list": [raw_tx_1]}
 
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -482,10 +457,7 @@ class TestEthSendRawTransactionNoWait:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 400
         assert resp.json()['meta'] == {
@@ -537,10 +509,7 @@ class TestEthSendRawTransactionNoWait:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
-
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}
@@ -594,11 +563,9 @@ class TestEthSendRawTransactionNoWait:
 
         request_params = {"raw_tx_hex_list": [signed_tx_1.rawTransaction.hex()]}
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps(request_params)
 
         with patch("web3.eth.Eth.send_raw_transaction", side_effect=ConnectionError):
-            resp = client.post(
-                self.apiurl, headers=headers, data=request_body)
+            resp = client.post(self.apiurl, headers=headers, json=request_params)
 
         assert resp.status_code == 200
         assert resp.json()['meta'] == {'code': 200, 'message': 'OK'}

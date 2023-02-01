@@ -55,7 +55,10 @@ class TestProcessorSendMail:
     # No unsent email exists
     def test_normal_1(self, processor, session, caplog):
         # Run processor
-        with mock.patch("app.model.mail.mail.Mail.send_mail", None):
+        with (
+            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())),
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test")
+        ):
             processor.process()
             session.commit()
 
@@ -79,12 +82,15 @@ class TestProcessorSendMail:
         session.commit()
 
         # Run processor
-        with mock.patch("app.model.mail.mail.Mail.send_mail", return_value = None):
+        with (
+            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())),
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test")
+        ):
             processor.process()
             session.commit()
 
         # Assertion
-        assert session.query(Mail).all() == []
+        assert session.query(Mail).count() == 1
 
         assert 1 == caplog.record_tuples.count((
             LOG.name,
@@ -105,7 +111,10 @@ class TestProcessorSendMail:
         session.commit()
 
         # Run processor
-        with mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())):
+        with (
+            mock.patch("app.model.mail.mail.Mail.send_mail", MagicMock(side_effect=SMTPException())),
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test")
+        ):
             processor.process()
             session.commit()
 
@@ -142,9 +151,12 @@ class TestProcessorSendMail:
         session.commit()
 
         # Run processor
-        with mock.patch("app.model.mail.mail.Mail.send_mail", return_value=None),\
-                mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),\
-                pytest.raises(SQLAlchemyError):
+        with (
+            mock.patch("app.model.mail.mail.Mail.send_mail", return_value=None),
+            mock.patch("app.model.mail.mail.SMTP_SENDER_EMAIL", "sender@a.test"),
+            mock.patch.object(Session, "commit", side_effect=SQLAlchemyError()),
+            pytest.raises(SQLAlchemyError)
+        ):
             processor.process()
 
         # Assertion

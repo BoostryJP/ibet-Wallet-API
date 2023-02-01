@@ -180,20 +180,6 @@ class TestTokenTokenHoldersCollectionId:
         bond_lock(self.trader, token, self.issuer["account_address"], 1000)
         bond_unlock(self.user1, token, self.trader["account_address"], self.user1["account_address"], 1000)
 
-        idx_locked_position1 = IDXLockedPosition()
-        idx_locked_position1.token_address = token["address"]
-        idx_locked_position1.account_address = self.trader["account_address"]
-        idx_locked_position1.lock_address = self.user1["account_address"]
-        idx_locked_position1.value = 1000
-        session.merge(idx_locked_position1)
-
-        idx_locked_position2 = IDXLockedPosition()
-        idx_locked_position2.token_address = token["address"]
-        idx_locked_position2.account_address = self.trader["account_address"]
-        idx_locked_position2.lock_address = self.issuer["account_address"]
-        idx_locked_position2.value = 1000
-        session.merge(idx_locked_position2)
-
         target_token_holders_list = TokenHoldersList()
         target_token_holders_list.token_address = token["address"]
         target_token_holders_list.list_id = str(uuid.uuid4())
@@ -211,12 +197,12 @@ class TestTokenTokenHoldersCollectionId:
 
         holders = [{
             "account_address": self.trader["account_address"],
-            "hold_balance": 29000,
-            "current_locked_balance": 2000
+            "hold_balance": 27000,
+            "locked_balance": 2000
         }, {
             "account_address": self.user1["account_address"],
             "hold_balance": 51000,
-            "current_locked_balance": 0
+            "locked_balance": 0
         }]
 
         sorted_holders = sorted(holders, key=lambda x: x['account_address'])
@@ -225,12 +211,7 @@ class TestTokenTokenHoldersCollectionId:
         assert resp.json()["meta"] == {"code": 200, "message": "OK"}
         assert resp.json()["data"]["status"] == TokenHolderBatchStatus.DONE.value
         assert len(resp.json()["data"]["holders"]) == 2
-        resp_holders = resp.json()["data"]["holders"]
-        for holder in sorted_holders:
-            for resp_holder in resp_holders:
-                if resp_holder["account_address"] == holder["account_address"]:
-                    assert resp_holder["hold_balance"] == holder["hold_balance"]
-                    assert resp_holder["current_locked_balance"] == holder["current_locked_balance"]
+        assert resp.json()["data"]["holders"] == sorted_holders
 
     ####################################################################
     # Error

@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.model.db import Notification
 
+
 class TestNotificationCount:
     # テスト対象API
     apiurl = "/Notifications/Count"

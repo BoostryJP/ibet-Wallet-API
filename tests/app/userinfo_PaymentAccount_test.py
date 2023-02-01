@@ -91,10 +91,8 @@ class TestUserInfoPaymentAccount:
     # -> 404エラー
     def test_paymentaccount_error_1(self, client: TestClient, session: Session):
         headers = {'Content-Type': 'application/json'}
-        request_body = json.dumps({})
 
-        resp = client.post(
-            self.apiurl, headers=headers, data=request_body)
+        resp = client.post(self.apiurl, headers=headers, json={})
 
         assert resp.status_code == 405
         assert resp.json()['meta'] == {
