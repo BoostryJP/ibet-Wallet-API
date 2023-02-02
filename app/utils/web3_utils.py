@@ -29,7 +29,10 @@ from web3.types import (
     RPCResponse
 )
 from eth_typing import URI
-from requests.exceptions import ConnectionError
+from requests.exceptions import (
+    ConnectionError,
+    HTTPError
+)
 
 from app import config
 from app.database import get_engine
@@ -114,7 +117,7 @@ class FailOverHTTPProvider(Web3.HTTPProvider):
                         self.endpoint_uri = URI(_node.endpoint_uri)
                         try:
                             return super().make_request(method, params)
-                        except (ConnectionError, JSONDecodeError):
+                        except (ConnectionError, JSONDecodeError, HTTPError):
                             # NOTE:
                             #  JSONDecodeError will be raised if a request is sent
                             #  while Quorum is terminating.
